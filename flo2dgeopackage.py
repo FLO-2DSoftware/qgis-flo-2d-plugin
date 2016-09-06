@@ -33,6 +33,7 @@ from .utils import *
 import os.path
 import pyspatialite.dbapi2 as db
 from .user_communication import UserCommunication
+from dat_parser import ParseDAT
 
 
 class Flo2dGeoPackage(object):
@@ -43,8 +44,7 @@ class Flo2dGeoPackage(object):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.cell_size = None
-        
-        
+
     def database_connect(self):
         """Connect database with sqlite3"""
         try:
@@ -53,7 +53,6 @@ class Flo2dGeoPackage(object):
         except:
             self.msg = "Couldn't connect to GeoPackage"
             return False
-        
 
     def check_gpkg(self):
         """Check if file is GeoPackage """
@@ -64,8 +63,7 @@ class Flo2dGeoPackage(object):
             return True
         except:
             return False
-        
-        
+
     def execute(self, statement, inputs=None):
         """Execute a prepared SQL statement on this geopackage database."""
         with self.conn as db_con:
@@ -75,8 +73,7 @@ class Flo2dGeoPackage(object):
             else:
                 result_cursor = cursor.execute(statement)
             return result_cursor
-        
-        
+
     def import_fplain(self, fname):
         fp = open(fname, "r").readlines()
         # we also need CADPTS with actual coordinates of grid points (centroids)
@@ -122,7 +119,7 @@ class Flo2dGeoPackage(object):
             pass
         
         # insert grid data into gpkg
-        sql  = """INSERT INTO grid
+        sql = """INSERT INTO grid
 (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom)
 VALUES\n"""
         inp = []
@@ -133,18 +130,14 @@ VALUES\n"""
         self.uc.log_info(sql)
         self.execute(sql)
         self.uc.bar_info('Grid imported', dur=3)            
-        
-        
+
     def import_topo(self, fname):
         # in case FPLAIN is missing this require finding each grid cell neighbours
         pass
-    
-    
+
     def is_table_empty(self, table):
         r = self.execute("SELECT rowid FROM {};".format(table))
         if r.fetchone():
             return False
         else:
             return True
-
-        
