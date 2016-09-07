@@ -118,10 +118,10 @@ CREATE TABLE inflow (
 
         # insert grid data into gpkg
         sql = """
-INSERT INTO grid
-(fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom)
-VALUES
-    """
+        INSERT INTO grid
+        (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom)
+        VALUES
+        """
         inp = []
         for d in data:
             g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
@@ -157,13 +157,47 @@ VALUES
             self.execute(sql)
         else:
             pass
+        if not self.is_table_empty('time_series'):
+            sql = 'DELETE FROM time_series;'
+            self.execute(sql)
+        else:
+            pass
+        if not self.is_table_empty('time_series_data'):
+            sql = 'DELETE FROM time_series_data;'
+            self.execute(sql)
+        else:
+            pass
         if not self.is_table_empty('reservoirs'):
             sql = 'DELETE FROM reservoirs;'
             self.execute(sql)
         else:
             pass
-        inflow = iter(self.parser.parse_inflow())
-        head = next(inflow)
+
+        head, inf, res = self.parser.parse_inflow()
+        gids = inf.keys() + res.keys()
+        grids = {}
+
+        for i in gids:
+            sql = '''SELECT ST_AsText(GeomFromGPB(geom)) FROM grid WHERE fid = {};'''.format(i)
+            geom = self.execute(sql).fetchone()[0]
+            grids[i] = geom
+
+        time_series_sql = """INSERT INTO time_series (fid, name, type, hourdaily) VALUES"""
+        inflow_sql = """INSERT INTO inflow (fid, name, time_series_fid, type, inoutfc, geom, note) VALUES"""
+        time_series_data_sql = """INSERT INTO time_series_data (fid, series_fid, time, value) VALUES"""
+        fid = 1
+        nfid = 1
+        for gid in inf:
+            time_series_sql += "\n({}, NULL, NULL, {}),".format(fid, head['IHOURDAILY'])
+            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_GeomFromText('{}')), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid])
+            for n in inf[gid]['nodes']:
+                time_series_data_sql += "\n({}, {}, {}, {}),".format(nfid, fid, n[1], n[2])
+                nfid += 1
+            fid += 1
+
+        self.execute(time_series_sql[:-1])
+        self.execute(inflow_sql[:-1])
+        self.execute(time_series_data_sql[:-1])
 
     def import_topo(self):
         # in case FPLAIN is missing this require finding each grid cell neighbours
