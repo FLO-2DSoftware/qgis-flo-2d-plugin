@@ -23,11 +23,13 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
+from qgis.gui import QgsProjectionSelectionWidget
 import os
 from flo2d_dialog import Flo2DDialog
 from .user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
 from .utils import *
+from shutil import copyfile
 
 class Flo2D:
 
@@ -36,6 +38,7 @@ class Flo2D:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         self.uc = UserCommunication(iface, 'FLO-2D')
+        self.crs_widget = QgsProjectionSelectionWidget()
         # initialize locale
         s = QSettings()
         locale = s.value('locale/userLocale')[0:2]
@@ -58,8 +61,6 @@ class Flo2D:
         self.toolbar.setObjectName(u'Flo2D')
         self.conn = None
 
-    def log(self, msg, level):
-        s
     
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -107,6 +108,12 @@ class Flo2D:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.add_action(
+            os.path.join(self.plugin_dir,'img/create_db.svg'),
+            text=self.tr(u'Create FLO-2D Database'),
+            callback=self.create_db,
+            parent=self.iface.mainWindow())
+        
+        self.add_action(
             os.path.join(self.plugin_dir,'img/connect.svg'),
             text=self.tr(u'Connect to FLO-2D Database'),
             callback=self.connect,
@@ -136,6 +143,58 @@ class Flo2D:
         del self.toolbar
 
 
+    def create_db(self):
+        """Create FLO-2D model database (GeoPackage)"""
+        self.gpkg_fname = None
+        # CRS
+        self.crs_widget.selectCrs()
+        if self.crs_widget.crs().isValid():
+            self.crs = self.crs_widget.crs()
+            auth, crsid = self.crs.authid().split(':')
+            proj = 'PROJCS["{}"]'.format(self.crs.toProj4())
+        else:
+            msg = 'Choose a valid CRS!'
+            self.uc.show_warn(msg)
+            return
+        s = QSettings()
+        last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
+        gpkg_fname = QFileDialog.getSaveFileName(None,
+                         'Create GeoPackage As...',
+                         directory=last_gpkg_dir)
+        if not gpkg_fname:
+            return
+        
+        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
+        db0 = os.path.join(self.plugin_dir, '0.gpkg')
+        copyfile(db0, gpkg_fname)
+
+        self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
+        self.gpkg.database_connect()
+        self.uc.log_info("Connected to {}".format(gpkg_fname))
+        if self.gpkg.check_gpkg():
+            self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+        else:
+            self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
+        
+        # check if the CRS exist in the db
+        sql = 'SELECT srs_id FROM gpkg_spatial_ref_sys WHERE organization=? AND organization_coordsys_id=?;'
+        rc = self.gpkg.execute(sql, (auth, crsid))
+        rt = rc.fetchone()
+        if not rt:
+            sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
+            data = (self.crs.description(), crsid, auth, crsid, proj, '')
+            rc = self.gpkg.execute(sql, data)
+            del rc
+            srsid = crsid
+        else:
+            srsid = rt[0]
+        
+        # assign the CRS to all geometries
+        sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
+            
+            
+            
+            
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
         self.gpkg_fname = None

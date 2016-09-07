@@ -7,17 +7,18 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=Flo2D
+name=FLO-2D
 qgisMinimumVersion=2.14
+qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
 version=0.1
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
-about=QGIS tools for FLO-2D model preprocessing
+about=QGIS tools for FLO-2D
 
-tracker=http://gitlab.com
-repository=http://gitlab.com
+tracker=https://github.com/lutraconsulting/qgis-flo-2d-plugin/issues
+repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +29,7 @@ repository=http://gitlab.com
 # Tags are comma separated with spaces allowed
 tags=flow, 2d, grid, preprocess, geopackage
 
-homepage=http://gitlab.com
+homepage=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 category=Plugins
 icon=icon.png
 # experimental flag
