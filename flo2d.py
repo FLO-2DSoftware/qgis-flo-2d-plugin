@@ -225,10 +225,11 @@ class Flo2D(object):
             if bname == 'FPLAIN.DAT':
                 self.gpkg.import_fplain()
                 self.gpkg.import_cont_toler()
+                self.gpkg.import_inflow()
             elif bname == 'TOPO.DAT':
-                self.gpkg.import_topo()
+                pass
             elif bname == 'CADPTS.DAT':
-                self.gpkg.import_cadpts()
+                pass
             elif bname == 'COND.DAT':
                 pass
             else:

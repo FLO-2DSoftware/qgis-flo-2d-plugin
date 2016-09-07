@@ -133,26 +133,31 @@ class ParseDAT(object):
         return results
 
     def parse_inflow(self):
-        results = []
-        nodes = []
         inflow = self.dat_files['INFLOW.DAT']
-        for row in self.single_parser(inflow):
-            if row[0] == 'H':
-                nodes.append(row)
+        par = self.single_parser(inflow)
+        head = dict(zip(['IHOURDAILY', 'IDEPLT'], next(par)))
+        inf = {}
+        res = {}
+        gid = None
+        for row in par:
+            flag = row[0]
+            if flag == 'H':
+                inf[gid]['nodes'].append(row)
+            elif flag == 'C' or flag == 'F':
+                gid = row[-1]
+                inf[gid] = {'row': row, 'nodes': []}
+            elif flag == 'R':
+                gid = row[1]
+                res[gid] = {'row': row}
             else:
-                if nodes:
-                    results.append(nodes)
-                else:
-                    pass
-                nodes = []
-                results.append(row)
-        return results
+                pass
+        return head, inf, res
 
 
 if __name__ == '__main__':
     x = ParseDAT(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\FPLAIN.DAT')
-    c1, d1 = x.parse_fplain_cadpts()
-    d2 = x.parse_mannings_n_topo()
-    print(c1)
-    for i in d1:
-        print(i)
+    h, i, r = x.parse_inflow()
+    print(h)
+    for e in i.items():
+        print(e)
+    print(r)
