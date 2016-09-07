@@ -53,7 +53,29 @@ class Flo2dGeoPackage(object):
         except:
             self.msg = "Couldn't connect to GeoPackage"
             return False
+        
+        
+    def create_tables(self):
+        # inflow
+        sqls= ["""
+CREATE TABLE inflow (
+    "fid" integer NOT NULL PRIMARY KEY,
+    "name" varchar(255), -- name of inflow
+    "time_series_fid" integer REFERENCES time_series(fid), -- id of time series used for inflow
+    "type" character(1) NOT NULL, -- destination element type Channel, Floodplain (Reservoir data goes into separate table resorvoirs)
+    "inoutfc" integer NOT NULL, -- INOUTFC = 0 for inflow and 1 for outflow
+    "geom" POLYGON, -- area of inflow/reservoir
+    "note" varchar (255)
+);
+""",
+"insert into gpkg_geometry_columns values ('inflow', 'geom', 'POLYGON', {}, 0, 0);",
+"insert into gpkg_contents (table_name, data_type, srs_id) values ('inflow', 'features', {});"]
 
+        # spatial index
+        slq = 'CREATE VIRTUAL TABLE rtree_{}_geom USING rtree(id, minx, maxx, miny, maxy)'
+
+
+        
     def check_gpkg(self):
         """Check if file is GeoPackage """
         try:

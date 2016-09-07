@@ -182,7 +182,7 @@ class Flo2D:
         rt = rc.fetchone()
         if not rt:
             sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
-            data = (self.crs.description(), crsid, auth, crsid, proj, '')
+            data = (self.crs.description(), crsid, auth, crsid, proj, '',)
             rc = self.gpkg.execute(sql, data)
             del rc
             srsid = crsid
@@ -191,7 +191,10 @@ class Flo2D:
         
         # assign the CRS to all geometries
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
-            
+        print srsid, type(srsid)
+        rc = self.gpkg.execute(sql, (srsid,))
+        
+
             
             
             
