@@ -31,7 +31,7 @@ tags=flow, 2d, grid, preprocess, geopackage
 
 homepage=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 category=Plugins
-icon=icon.png
+icon=img/flo2d.svg
 # experimental flag
 experimental=False
 
