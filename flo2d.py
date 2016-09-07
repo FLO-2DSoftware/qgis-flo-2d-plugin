@@ -31,7 +31,8 @@ from flo2dgeopackage import Flo2dGeoPackage
 from .utils import *
 from shutil import copyfile
 
-class Flo2D:
+
+class Flo2D(object):
 
     def __init__(self, iface):
         self.iface = iface
@@ -61,14 +62,12 @@ class Flo2D:
         self.toolbar.setObjectName(u'Flo2D')
         self.conn = None
 
-    
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
-
 
     def add_action(
             self,
@@ -103,7 +102,6 @@ class Flo2D:
 
         self.actions.append(action)
         return action
-    
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -131,7 +129,6 @@ class Flo2D:
             callback=self.export_gds,
             parent=self.iface.mainWindow())
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -141,7 +138,6 @@ class Flo2D:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
@@ -195,9 +191,6 @@ class Flo2D:
         rc = self.gpkg.execute(sql, (srsid,))
         
 
-            
-            
-            
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
         self.gpkg_fname = None
@@ -217,56 +210,50 @@ class Flo2D:
                 self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
         else:
             pass
-    
-    
+
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         fname = QFileDialog.getOpenFileName(None,
-                         'Select FLO-2D file to import',
-                         directory=last_dir)
+                                            'Select FLO-2D file to import',
+                                            directory=last_dir)
         if fname:
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
-            
+            self.gpkg.set_parser(fname)
             if bname == 'FPLAIN.DAT':
-                self.gpkg.import_fplain(fname)
+                self.gpkg.import_fplain()
             elif bname == 'TOPO.DAT':
-                self.gpkg.import_topo(fname)
+                self.gpkg.import_topo()
             elif bname == 'CADPTS.DAT':
-                self.gpkg.import_cadpts(fname)
+                self.gpkg.import_cadpts()
             elif bname == 'COND.DAT':
                 pass
             else:
                 pass
-            
+
         else:
             pass
-    
-    
+
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         pass
-                
-    
+
     def settings(self):
         self.dlg_settings = SettingsDialog(self)
         self.dlg_settings.show()
         result = self.dlg_settings.exec_()
         if result:
             self.dlg_settings.save_settings()
-            
 
     def restore_settings(self):
         pass
-            
-            
+
     def show_help(self, page='index.html'):
         helpFile = 'file:///{0}/help/{1}'.format(self.plugin_dir, page)
         self.uc.log_info(helpFile)
         QDesktopServices.openUrl(QUrl(helpFile))
-
 
     def help_clicked(self):
         self.show_help(page='index.html')

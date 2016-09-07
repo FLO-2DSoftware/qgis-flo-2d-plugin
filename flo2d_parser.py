@@ -1,3 +1,25 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ Flo2D
+                                 A QGIS plugin
+ FLO-2D tools for QGIS
+                             -------------------
+        begin                : 2016-08-28
+        copyright            : (C) 2016 by Lutra Consulting for FLO-2D
+        email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
 import os
 from itertools import izip, izip_longest
 
@@ -14,8 +36,8 @@ class ParseDAT(object):
         'OUTFLOW.DAT': None
     }
 
-    def __init__(self, fplain):
-        self.project_dir = os.path.dirname(fplain)
+    def __init__(self, fname):
+        self.project_dir = os.path.dirname(fname)
         for f in os.listdir(self.project_dir):
             if f in self.dat_files:
                 self.dat_files[f] = os.path.join(self.project_dir, f)
@@ -80,16 +102,35 @@ class ParseDAT(object):
     def parse_fplain_cadpts(self):
         fplain = self.dat_files['FPLAIN.DAT']
         cadpts = self.dat_files['CADPTS.DAT']
-        head = ['DUM_F', 'FP_IJ', 'FP_I5', 'FP_I6', 'DUM_C', 'XCOORD', 'YCOORD']
+        neighbour = None
+        side = 0
+
+        with open(fplain) as fpl:
+            for n in fpl.readline().split()[1:5]:
+                if n != '0':
+                    neighbour = int(n)
+                    break
+                else:
+                    pass
+                side += 1
+
+        with open(cadpts) as cad:
+            x1, y1 = cad.readline().split()[1:]
+            for l in xrange(neighbour-2):
+                cad.readline()
+            x2, y2 = cad.readline().split()[1:]
+
+        dtx = abs(float(x1) - float(x2))
+        dty = abs(float(y1) - float(y2))
+        cell_size = dty if side % 2 == 0 else dtx
         results = self.double_parser(fplain, cadpts)
-        return head, results
+        return cell_size, results
 
     def parse_mannings_n_topo(self):
         mannings_n = self.dat_files['MANNINGS_N.DAT']
         topo = self.dat_files['TOPO.DAT']
-        head = ['DUM', 'FP_IJ', 'XCOORD', 'YCOORD', 'ELEV']
         results = self.double_parser(mannings_n, topo)
-        return head, results
+        return results
 
     def parse_inflow(self):
         results = []
@@ -110,7 +151,8 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\FPLAIN.DAT')
-    h1, d1 = x.parse_fplain_cadpts()
-    h2, d2 = x.parse_mannings_n_topo()
-    for i in d2:
+    c1, d1 = x.parse_fplain_cadpts()
+    d2 = x.parse_mannings_n_topo()
+    print(c1)
+    for i in d1:
         print(i)

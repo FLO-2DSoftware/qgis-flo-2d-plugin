@@ -33,7 +33,7 @@ from .utils import *
 import os.path
 import pyspatialite.dbapi2 as db
 from .user_communication import UserCommunication
-from dat_parser import ParseDAT
+from flo2d_parser import ParseDAT
 
 
 class Flo2dGeoPackage(object):
@@ -43,7 +43,11 @@ class Flo2dGeoPackage(object):
         self.path = path
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
+        self.parser = None
         self.cell_size = None
+
+    def set_parser(self, fname):
+        self.parser = ParseDAT(fname)
 
     def database_connect(self):
         """Connect database with sqlite3"""
@@ -53,8 +57,7 @@ class Flo2dGeoPackage(object):
         except:
             self.msg = "Couldn't connect to GeoPackage"
             return False
-        
-        
+
     def create_tables(self):
         # inflow
         sqls= ["""
@@ -74,8 +77,6 @@ CREATE TABLE inflow (
         # spatial index
         slq = 'CREATE VIRTUAL TABLE rtree_{}_geom USING rtree(id, minx, maxx, miny, maxy)'
 
-
-        
     def check_gpkg(self):
         """Check if file is GeoPackage """
         try:
@@ -96,37 +97,12 @@ CREATE TABLE inflow (
                 result_cursor = cursor.execute(statement)
             return result_cursor
 
-    def import_fplain(self, fname):
-        fp = open(fname, "r").readlines()
-        # we also need CADPTS with actual coordinates of grid points (centroids)
-        cp = open(os.path.join(os.path.dirname(fname),'CADPTS.DAT')).readlines()
-        if not len(fp) == len(cp):
-            self.uc.bar_error("Line numbers of FPLAIN and CADPTS are different! ({} and {})".format(len(fp), len(cp)))
-            return
-        data = []
-        for i, cpl in enumerate(cp):
-            d = fp[i].split()
-            nr, x, y = cp[i].split()
-            data.append(d + [x, y])
-        # find cell size
-        for side, n in enumerate(data[0][1:5]):
-            # check if this side has a neighbour
-            if not n == '0':
-                # check if this is a neighbour along y axis
-                if is_even(side):
-                    cs = abs(float(data[0][-1]) - float(data[int(n)-1][-1]))
-
-                # or along x axis
-                else: 
-                    cs = abs(float(data[0][-2]) - float(data[int(n)-1][-2]))
-                break
-
-        if cs == 0:
+    def import_fplain(self):
+        self.cell_size, data = self.parser.parse_fplain_cadpts()
+        if self.cell_size == 0:
             self.uc.bar_error("Cell size is 0 - something went wrong!")
         else:
             pass
-        self.cell_size = cs
-        
         # check if a grid exists in the grid table
         if not self.is_table_empty('grid'):
             r = self.uc.question('There is a grid already defined in GeoPackage. Overwrite it?')
@@ -139,21 +115,58 @@ CREATE TABLE inflow (
                 return
         else:
             pass
-        
+
         # insert grid data into gpkg
-        sql = """INSERT INTO grid
+        sql = """
+INSERT INTO grid
 (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom)
-VALUES\n"""
+VALUES
+    """
         inp = []
         for d in data:
-            g = square_from_center_and_size(d[-2], d[-1], cs)
+            g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
             inp.append('({0}, {1})'.format(','.join(d[:7]), g))
         sql += '\n{};'.format(',\n'.join(inp))
         self.uc.log_info(sql)
         self.execute(sql)
-        self.uc.bar_info('Grid imported', dur=3)            
+        self.uc.bar_info('Grid imported', dur=3)
 
-    def import_topo(self, fname):
+    def import_cont_toler(self):
+        if not self.is_table_empty('cont'):
+            sql = 'DELETE FROM cont;'
+            self.execute(sql)
+        else:
+            pass
+        sql = """
+        INSERT INTO cont
+        (fid, name, value, note)
+        VALUES
+        """
+        cont = self.parser.parse_cont()
+        toler = self.parser.parse_toler()
+        cont.update(toler)
+        c = 1
+        for option in cont:
+            sql += '({} {} {} NULL)\n'.format(c, option, cont[option])
+            c += 1
+        self.uc.log_info(sql)
+        self.execute(sql)
+
+    def import_inflow(self):
+        if not self.is_table_empty('inflow'):
+            sql = 'DELETE FROM inflow;'
+            self.execute(sql)
+        else:
+            pass
+        if not self.is_table_empty('reservoirs'):
+            sql = 'DELETE FROM reservoirs;'
+            self.execute(sql)
+        else:
+            pass
+        inflow = iter(self.parser.parse_inflow())
+        head = next(inflow)
+
+    def import_topo(self):
         # in case FPLAIN is missing this require finding each grid cell neighbours
         pass
 
