@@ -11,7 +11,7 @@ name=FLO-2D
 qgisMinimumVersion=2.14
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.1
+version=0.2
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 

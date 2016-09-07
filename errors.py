@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- MMTools
+ ViolMapDialog
                                  A QGIS plugin
-        Print composer, mask and markers creation
-                              -------------------
-        begin                : 2016-08-09
+ Violence Mapping for Public Health Wales
+                             -------------------
+        begin                : 2016-06-05
         git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra
         email                : info@lutraconsulting.co.uk
@@ -20,32 +20,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-import os.path
-    
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-    
-    
-def is_even(number):
-    return number % 2 == 0
+
+class Flo2dError(Exception):
+    '''General class for the plugin errors'''
 
 
-def square_from_center_and_size(x, y, size):
-    x, y, size = (float(x), float(y), float(size))
-    g = "AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))".format(
-        x-size/2, y-size/2,
-        x+size/2, y-size/2,
-        x+size/2, y+size/2,
-        x-size/2, y+size/2,
-        x-size/2, y-size/2
-    )
-    return g
+class Flo2dLayerNotFound(Flo2dError):
+    '''Raise when layer was not found in the layers tree'''
+    
 
-def get_file_path(*paths):
-    temp_dir = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(temp_dir, *paths)
-    return path
+class Flo2dNotString(Flo2dError):
+    '''Raise when a string or unicode was expected'''
+    
+    
+class Flo2dLayerInvalid(Flo2dError):
+    '''Raise when a layer is invalid'''

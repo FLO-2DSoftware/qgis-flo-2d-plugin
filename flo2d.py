@@ -24,11 +24,13 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
 from qgis.gui import QgsProjectionSelectionWidget
+from qgis.core import QgsDataSourceURI
 import os
 from flo2d_dialog import Flo2DDialog
 from .user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
 from .utils import *
+from .layers import Layers
 from shutil import copyfile
 
 
@@ -61,6 +63,7 @@ class Flo2D(object):
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
         self.conn = None
+        self.lyrs  = Layers()
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -226,6 +229,13 @@ class Flo2D(object):
                 self.gpkg.import_fplain()
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
+                uri = self.gpkg.path + '|layerid=1'
+                self.lyrs.load_layer(uri, 'FLO-2D', 'Inflow', style='inflow.qml')
+                uri = self.gpkg.path + '|layerid=2'
+                self.lyrs.load_layer(uri, 'FLO-2D', 'Reservoirs', style='reservoirs.qml')
+                uri = self.gpkg.path + '|layerid=0'
+                self.lyrs.load_layer(uri, 'FLO-2D', 'Grid', style='grid.qml')
+                
             elif bname == 'TOPO.DAT':
                 pass
             elif bname == 'CADPTS.DAT':

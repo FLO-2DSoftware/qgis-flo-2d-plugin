@@ -58,25 +58,6 @@ class Flo2dGeoPackage(object):
             self.msg = "Couldn't connect to GeoPackage"
             return False
 
-    def create_tables(self):
-        # inflow
-        sqls= ["""
-CREATE TABLE inflow (
-    "fid" integer NOT NULL PRIMARY KEY,
-    "name" varchar(255), -- name of inflow
-    "time_series_fid" integer REFERENCES time_series(fid), -- id of time series used for inflow
-    "type" character(1) NOT NULL, -- destination element type Channel, Floodplain (Reservoir data goes into separate table resorvoirs)
-    "inoutfc" integer NOT NULL, -- INOUTFC = 0 for inflow and 1 for outflow
-    "geom" POLYGON, -- area of inflow/reservoir
-    "note" varchar (255)
-);
-""",
-"insert into gpkg_geometry_columns values ('inflow', 'geom', 'POLYGON', {}, 0, 0);",
-"insert into gpkg_contents (table_name, data_type, srs_id) values ('inflow', 'features', {});"]
-
-        # spatial index
-        slq = 'CREATE VIRTUAL TABLE rtree_{}_geom USING rtree(id, minx, maxx, miny, maxy)'
-
     def check_gpkg(self):
         """Check if file is GeoPackage """
         try:
@@ -127,7 +108,7 @@ CREATE TABLE inflow (
             g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
             inp.append('({0}, {1})'.format(','.join(d[:7]), g))
         sql += '\n{};'.format(',\n'.join(inp))
-        self.uc.log_info(sql)
+#        self.uc.log_info(sql)
         self.execute(sql)
         self.uc.bar_info('Grid imported', dur=3)
 
@@ -148,7 +129,7 @@ CREATE TABLE inflow (
         for option in cont:
             sql += "\n({}, '{}', '{}', NULL),".format(c, option, cont[option])
             c += 1
-        self.uc.log_info(sql[:-1])
+#        self.uc.log_info(sql[:-1])
         self.execute(sql[:-1])
 
     def import_inflow(self):
@@ -178,7 +159,7 @@ CREATE TABLE inflow (
         grids = {}
 
         for i in gids:
-            sql = '''SELECT ST_AsText(GeomFromGPB(geom)) FROM grid WHERE fid = {};'''.format(i)
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = {};'''.format(i)
             geom = self.execute(sql).fetchone()[0]
             grids[i] = geom
 
@@ -189,7 +170,7 @@ CREATE TABLE inflow (
         nfid = 1
         for gid in inf:
             time_series_sql += "\n({}, NULL, NULL, {}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_GeomFromText('{}')), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid])
+            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_Buffer(ST_GeomFromText('{}'), {})), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid], self.cell_size/4)
             for n in inf[gid]['nodes']:
                 time_series_data_sql += "\n({}, {}, {}, {}),".format(nfid, fid, n[1], n[2])
                 nfid += 1
