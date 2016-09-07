@@ -106,7 +106,7 @@ class Flo2D(object):
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.add_action(
-            os.path.join(self.plugin_dir,'img/create_db.svg'),
+            os.path.join(self.plugin_dir,'img/new_db.svg'),
             text=self.tr(u'Create FLO-2D Database'),
             callback=self.create_db,
             parent=self.iface.mainWindow())
@@ -224,6 +224,7 @@ class Flo2D(object):
             self.gpkg.set_parser(fname)
             if bname == 'FPLAIN.DAT':
                 self.gpkg.import_fplain()
+                self.gpkg.import_cont_toler()
             elif bname == 'TOPO.DAT':
                 self.gpkg.import_topo()
             elif bname == 'CADPTS.DAT':

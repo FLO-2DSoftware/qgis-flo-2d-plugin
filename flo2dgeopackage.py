@@ -140,17 +140,16 @@ VALUES
         sql = """
         INSERT INTO cont
         (fid, name, value, note)
-        VALUES
-        """
+        VALUES"""
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
         c = 1
         for option in cont:
-            sql += '({} {} {} NULL)\n'.format(c, option, cont[option])
+            sql += "\n({}, '{}', '{}', NULL),".format(c, option, cont[option])
             c += 1
-        self.uc.log_info(sql)
-        self.execute(sql)
+        self.uc.log_info(sql[:-1])
+        self.execute(sql[:-1])
 
     def import_inflow(self):
         if not self.is_table_empty('inflow'):
