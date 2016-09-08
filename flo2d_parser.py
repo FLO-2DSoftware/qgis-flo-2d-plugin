@@ -36,8 +36,8 @@ class ParseDAT(object):
         'OUTFLOW.DAT': None
     }
 
-    def __init__(self, fname):
-        self.project_dir = os.path.dirname(fname)
+    def __init__(self, fpath):
+        self.project_dir = os.path.dirname(fpath)
         for f in os.listdir(self.project_dir):
             if f in self.dat_files:
                 self.dat_files[f] = os.path.join(self.project_dir, f)
@@ -140,15 +140,49 @@ class ParseDAT(object):
         res = {}
         gid = None
         for row in par:
-            flag = row[0]
-            if flag == 'H':
-                inf[gid]['nodes'].append(row)
-            elif flag == 'C' or flag == 'F':
+            char = row[0]
+            if char == 'C' or char == 'F':
                 gid = row[-1]
                 inf[gid] = {'row': row, 'nodes': []}
-            elif flag == 'R':
+            elif char == 'H':
+                inf[gid]['nodes'].append(row)
+            elif char == 'R':
                 gid = row[1]
                 res[gid] = {'row': row}
             else:
                 pass
         return head, inf, res
+
+    def parse_outflow(self):
+        outflow = self.dat_files['OUTFLOW.DAT']
+        par = self.single_parser(outflow)
+        channel = {}
+        time_stage = {}
+        floodplain = {}
+        gid = None
+        for row in par:
+            char = row[0]
+            if char == 'K':
+                gid = row[-1]
+                channel[gid] = {'row': row, 'nodes': []}
+            elif char == 'H' or char == 'T':
+                channel[gid]['nodes'].append(row)
+            elif char == 'N':
+                gid = row[-1]
+                time_stage[gid] = {'row': row, 'nodes': []}
+            elif char == 'S':
+                time_stage[gid]['nodes'].append(row)
+            elif char.startswith('O'):
+                gid = row[-1]
+                floodplain[gid] = {'row': row}
+            else:
+                pass
+        return channel, time_stage, floodplain
+
+
+if __name__ == '__main__':
+    x = ParseDAT(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\FPLAIN.DAT')
+    c, t, f = x.parse_outflow()
+    print(c)
+    print(t)
+    print(f)
