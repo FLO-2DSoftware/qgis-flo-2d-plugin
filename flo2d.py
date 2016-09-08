@@ -165,6 +165,7 @@ class Flo2D(object):
         
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
         db0 = os.path.join(self.plugin_dir, '0.gpkg')
+        gpkg_fname += '.gpkg'
         copyfile(db0, gpkg_fname)
 
         self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
