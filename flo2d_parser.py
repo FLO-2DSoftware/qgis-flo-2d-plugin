@@ -156,28 +156,28 @@ class ParseDAT(object):
     def parse_outflow(self):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
-        channel = {}
-        time_stage = {}
-        floodplain = {}
+        koutflow = {}
+        noutflow = {}
+        ooutflow = {}
         gid = None
         for row in par:
             char = row[0]
             if char == 'K':
                 gid = row[-1]
-                channel[gid] = {'row': row, 'nodes': []}
+                koutflow[gid] = {'row': row, 'nodes': []}
             elif char == 'H' or char == 'T':
-                channel[gid]['nodes'].append(row)
+                koutflow[gid]['nodes'].append(row)
             elif char == 'N':
                 gid = row[-1]
-                time_stage[gid] = {'row': row, 'nodes': []}
+                noutflow[gid] = {'row': row, 'nodes': []}
             elif char == 'S':
-                time_stage[gid]['nodes'].append(row)
+                noutflow[gid]['nodes'].append(row)
             elif char.startswith('O'):
                 gid = row[-1]
-                floodplain[gid] = {'row': row}
+                ooutflow[gid] = {'row': row}
             else:
                 pass
-        return channel, time_stage, floodplain
+        return koutflow, noutflow, ooutflow
 
 
 if __name__ == '__main__':

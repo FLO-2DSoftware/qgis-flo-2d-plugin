@@ -102,7 +102,7 @@ class Flo2dGeoPackage(object):
         return cells
 
     def get_max(self, table, field='fid'):
-        sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(table, field)
+        sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(field, table)
         max_val = self.execute(sql).fetchone()[0]
         return max_val
 
@@ -124,13 +124,13 @@ class Flo2dGeoPackage(object):
 
     def import_cont_toler(self):
         self.clear_tables('cont')
-        sql = """INSERT INTO cont (fid, name, value, note) VALUES"""
+        sql = """INSERT INTO cont (fid, name, value) VALUES"""
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
         c = 1
         for option in cont:
-            sql += "\n({0}, '{1}', '{2}', NULL),".format(c, option, cont[option])
+            sql += "\n({0}, '{1}', '{2}'),".format(c, option, cont[option])
             c += 1
 #        self.uc.log_info(sql[:-1])
         self.execute(sql[:-1])
@@ -142,33 +142,33 @@ class Flo2dGeoPackage(object):
         gids = inf.keys() + res.keys()
         cells = self.get_centroids(gids)
 
-        time_series_sql = """INSERT INTO time_series (fid, name, type, hourdaily) VALUES"""
-        inflow_sql = """INSERT INTO inflow (fid, name, time_series_fid, type, inoutfc, geom, note) VALUES"""
-        time_series_data_sql = """INSERT INTO time_series_data (fid, series_fid, time, value) VALUES"""
-        reservoirs_sql = """INSERT INTO reservoirs (fid, name, grid_fid, wsel, geom, note) VALUES"""
+        inflow_sql = """INSERT INTO inflow (fid, time_series_fid, type, inoutfc, geom) VALUES"""
+        ts_sql = """INSERT INTO time_series (fid, hourdaily) VALUES"""
+        tsd_sql = """INSERT INTO time_series_data (fid, series_fid, time, value) VALUES"""
+        reservoirs_sql = """INSERT INTO reservoirs (fid, grid_fid, wsel, geom) VALUES"""
 
         fid = 1
         nfid = 1
         buff = self.cell_size/4
         for gid in inf:
             row = inf[gid]['row']
-            time_series_sql += "\n({0}, NULL, NULL, {1}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[0], row[1], cells[gid], buff)
+            inflow_sql += "\n({0}, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),".format(fid, row[0], row[1], cells[gid], buff)
+            ts_sql += "\n({0}, {1}),".format(fid, head['IHOURDAILY'])
             for n in inf[gid]['nodes']:
-                time_series_data_sql += "\n({0}, {1}, {2}, {3}),".format(nfid, fid, n[1], n[2])
+                tsd_sql += "\n({0}, {1}, {2}, {3}),".format(nfid, fid, n[1], n[2])
                 nfid += 1
             fid += 1
         fid = 1
         for gid in res:
             row = res[gid]['row']
             wsel = row[-1] if len(row) == 3 else 'NULL'
-            reservoirs_sql += "\n({0}, NULL, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[1], wsel, cells[gid], buff)
+            reservoirs_sql += "\n({0}, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),".format(fid, row[1], wsel, cells[gid], buff)
             fid += 1
 
         if len(inf) > 0:
-            self.execute(time_series_sql[:-1])
+            self.execute(ts_sql[:-1])
             self.execute(inflow_sql[:-1])
-            self.execute(time_series_data_sql[:-1])
+            self.execute(tsd_sql[:-1])
         else:
             pass
         if len(res) > 0:
@@ -178,11 +178,36 @@ class Flo2dGeoPackage(object):
 
     def import_outflow(self):
         self.clear_tables('outflow', 'outflow_chan_elems', 'outflow_hydrographs')
-        ch, ts, fp = self.parser.parse_outflow()
-        gids = ch.keys() + ts.keys() + fp.keys()
+        koutflow, noutflow, ooutflow = self.parser.parse_outflow()
+        gids = koutflow.keys() + noutflow.keys() + ooutflow.keys()
         cells = self.get_centroids(gids)
 
+        outflow_sql = """INSERT INTO outflow (fid, time_series_fid, ident, type, geom) VALUES"""
+        ts_sql = """INSERT INTO time_series (fid) VALUES"""
+        tsd_sql = """INSERT INTO time_series_data (fid, series_fid, time, value) VALUES"""
+        fid = 1
+        fid_ts = self.get_max('time_series') + 1
+        fid_tsd = self.get_max('time_series_data') + 1
+        buff = self.cell_size / 4
+        for gid in koutflow:
+            row = koutflow[gid]['row']
+            outflow_sql += "\n({0}, {1}, NULL, '{2}', AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),".format(fid, fid_ts, row[0], cells[gid], buff)
+            ts_sql += "\n({0}),".format(fid_ts)
+            for n in koutflow[gid]['nodes']:
+                tsd_sql += "\n({0}, {1}, {2}, {3}),".format(fid_tsd, fid_ts, n[1], n[2])
+                fid_tsd += 1
+            fid += 1
+            fid_ts += 1
 
+        if len(koutflow) > 0:
+            self.execute(ts_sql[:-1])
+            self.execute(outflow_sql[:-1])
+            if tsd_sql.endswith(','):
+                self.execute(tsd_sql[:-1])
+            else:
+                pass
+        else:
+            pass
 
     def import_topo(self):
         # in case FPLAIN is missing this require finding each grid cell neighbours

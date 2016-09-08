@@ -236,6 +236,7 @@ class Flo2D(object):
                 self.gpkg.import_fplain()
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
+                self.gpkg.import_outflow()
                 uri = self.gpkg.path + '|layerid=1'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
                 uri = self.gpkg.path + '|layerid=2'
