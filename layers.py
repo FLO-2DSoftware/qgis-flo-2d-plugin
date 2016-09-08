@@ -59,6 +59,11 @@ class Layers(QObject):
 
         QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
         grp = self.get_layer_group(group)
+        # if a layer exists with the same uri, remove it
+        lyr_exists = self.layer_exists_in_group(uri, group)
+        if lyr_exists:
+            self.remove_layer(lyr_exists)
+        # add layer to the group
         grp.addLayer(vlayer)
 
         if style:
@@ -108,6 +113,15 @@ class Layers(QObject):
         if not grp:
             grp = self.root.addGroup(name)
         return grp
+    
+    
+    def layer_exists_in_group(self, uri, group):
+        grp = self.root.findGroup(group)
+        if grp:
+            for lyr in grp.findLayers():
+                if lyr.layer().dataProvider().dataSourceUri() == uri:
+                    return lyr.layer().id()
+        return None
 
 
     def remove_layer_by_name(self, name):

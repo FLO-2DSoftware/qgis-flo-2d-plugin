@@ -159,13 +159,12 @@ class Flo2D(object):
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_fname = QFileDialog.getSaveFileName(None,
                          'Create GeoPackage As...',
-                         directory=last_gpkg_dir)
+                         directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_fname:
             return
         
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
         db0 = os.path.join(self.plugin_dir, '0.gpkg')
-        gpkg_fname += '.gpkg'
         copyfile(db0, gpkg_fname)
 
         self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
@@ -191,7 +190,6 @@ class Flo2D(object):
         
         # assign the CRS to all geometries
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
-        print srsid, type(srsid)
         rc = self.gpkg.execute(sql, (srsid,))
         
 
@@ -231,11 +229,11 @@ class Flo2D(object):
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
                 uri = self.gpkg.path + '|layerid=1'
-                self.lyrs.load_layer(uri, 'FLO-2D', 'Inflow', style='inflow.qml')
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
                 uri = self.gpkg.path + '|layerid=2'
-                self.lyrs.load_layer(uri, 'FLO-2D', 'Reservoirs', style='reservoirs.qml')
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
                 uri = self.gpkg.path + '|layerid=0'
-                self.lyrs.load_layer(uri, 'FLO-2D', 'Grid', style='grid.qml')
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
                 
             elif bname == 'TOPO.DAT':
                 pass

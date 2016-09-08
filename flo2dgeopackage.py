@@ -41,6 +41,7 @@ class Flo2dGeoPackage(object):
 
     def __init__(self, path, iface):
         self.path = path
+        self.group = 'FLO-2D_{}'.format(os.path.basename(path).replace('.gpkg', ''))
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.parser = None
@@ -170,7 +171,7 @@ class Flo2dGeoPackage(object):
         nfid = 1
         for gid in inf:
             time_series_sql += "\n({}, NULL, NULL, {}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_Buffer(ST_GeomFromText('{}'), {})), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid], self.cell_size/4)
+            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_Buffer(ST_GeomFromText('{}'), {}, 3)), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid], self.cell_size/4)
             for n in inf[gid]['nodes']:
                 time_series_data_sql += "\n({}, {}, {}, {}),".format(nfid, fid, n[1], n[2])
                 nfid += 1
