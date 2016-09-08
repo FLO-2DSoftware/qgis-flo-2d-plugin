@@ -78,49 +78,53 @@ class Flo2dGeoPackage(object):
                 result_cursor = cursor.execute(statement)
             return result_cursor
 
+    def is_table_empty(self, table):
+        r = self.execute("SELECT rowid FROM {0};".format(table))
+        if r.fetchone():
+            return False
+        else:
+            return True
+
+    def clear_tables(self, *tables):
+        for tab in tables:
+            if not self.is_table_empty(tab):
+                sql = 'DELETE FROM "{0}";'.format(tab)
+                self.execute(sql)
+            else:
+                pass
+
+    def get_centroids(self, gids):
+        cells = {}
+        for i in set(gids):
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = {0};'''.format(i)
+            geom = self.execute(sql).fetchone()[0]
+            cells[i] = geom
+        return cells
+
+    def get_max(self, table, field='fid'):
+        sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(table, field)
+        max_val = self.execute(sql).fetchone()[0]
+        return max_val
+
     def import_fplain(self):
         self.cell_size, data = self.parser.parse_fplain_cadpts()
         if self.cell_size == 0:
             self.uc.bar_error("Cell size is 0 - something went wrong!")
         else:
             pass
-        # check if a grid exists in the grid table
-        if not self.is_table_empty('grid'):
-            r = self.uc.question('There is a grid already defined in GeoPackage. Overwrite it?')
-            if r == QMessageBox.Yes:
-                # delete previous grid
-                sql = 'DELETE FROM grid;'
-                self.execute(sql)
-            else:
-                self.uc.bar_info('Import cancelled', dur=3)
-                return
-        else:
-            pass
-
+        self.clear_tables('grid')
         # insert grid data into gpkg
-        sql = """
-        INSERT INTO grid
-        (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom)
-        VALUES
-        """
+        sql = """INSERT INTO grid (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom) VALUES"""
         inp = []
         for d in data:
             g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
             inp.append('({0}, {1})'.format(','.join(d[:7]), g))
         sql += '\n{0};'.format(',\n'.join(inp))
-#        self.uc.log_info(sql)
         self.execute(sql)
 
     def import_cont_toler(self):
-        if not self.is_table_empty('cont'):
-            sql = 'DELETE FROM cont;'
-            self.execute(sql)
-        else:
-            pass
-        sql = """
-        INSERT INTO cont
-        (fid, name, value, note)
-        VALUES"""
+        self.clear_tables('cont')
+        sql = """INSERT INTO cont (fid, name, value, note) VALUES"""
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
@@ -132,35 +136,11 @@ class Flo2dGeoPackage(object):
         self.execute(sql[:-1])
 
     def import_inflow(self):
-        if not self.is_table_empty('inflow'):
-            sql = 'DELETE FROM inflow;'
-            self.execute(sql)
-        else:
-            pass
-        if not self.is_table_empty('time_series'):
-            sql = 'DELETE FROM time_series;'
-            self.execute(sql)
-        else:
-            pass
-        if not self.is_table_empty('time_series_data'):
-            sql = 'DELETE FROM time_series_data;'
-            self.execute(sql)
-        else:
-            pass
-        if not self.is_table_empty('reservoirs'):
-            sql = 'DELETE FROM reservoirs;'
-            self.execute(sql)
-        else:
-            pass
+        self.clear_tables('inflow', 'time_series', 'time_series_data', 'reservoirs')
 
         head, inf, res = self.parser.parse_inflow()
         gids = inf.keys() + res.keys()
-        grids = {}
-
-        for i in gids:
-            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = {0};'''.format(i)
-            geom = self.execute(sql).fetchone()[0]
-            grids[i] = geom
+        cells = self.get_centroids(gids)
 
         time_series_sql = """INSERT INTO time_series (fid, name, type, hourdaily) VALUES"""
         inflow_sql = """INSERT INTO inflow (fid, name, time_series_fid, type, inoutfc, geom, note) VALUES"""
@@ -173,7 +153,7 @@ class Flo2dGeoPackage(object):
         for gid in inf:
             row = inf[gid]['row']
             time_series_sql += "\n({0}, NULL, NULL, {1}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[0], row[1], grids[gid], buff)
+            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[0], row[1], cells[gid], buff)
             for n in inf[gid]['nodes']:
                 time_series_data_sql += "\n({0}, {1}, {2}, {3}),".format(nfid, fid, n[1], n[2])
                 nfid += 1
@@ -182,7 +162,7 @@ class Flo2dGeoPackage(object):
         for gid in res:
             row = res[gid]['row']
             wsel = row[-1] if len(row) == 3 else 'NULL'
-            reservoirs_sql += "\n({0}, NULL, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4})), NULL),".format(fid, row[1], wsel, grids[gid], buff)
+            reservoirs_sql += "\n({0}, NULL, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[1], wsel, cells[gid], buff)
             fid += 1
 
         if len(inf) > 0:
@@ -196,13 +176,14 @@ class Flo2dGeoPackage(object):
         else:
             pass
 
+    def import_outflow(self):
+        self.clear_tables('outflow', 'outflow_chan_elems', 'outflow_hydrographs')
+        ch, ts, fp = self.parser.parse_outflow()
+        gids = ch.keys() + ts.keys() + fp.keys()
+        cells = self.get_centroids(gids)
+
+
+
     def import_topo(self):
         # in case FPLAIN is missing this require finding each grid cell neighbours
         pass
-
-    def is_table_empty(self, table):
-        r = self.execute("SELECT rowid FROM {0};".format(table))
-        if r.fetchone():
-            return False
-        else:
-            return True

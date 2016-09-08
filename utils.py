@@ -21,15 +21,16 @@
  ***************************************************************************/
 """
 import os.path
-    
+
+
 def is_number(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
-    
-    
+
+
 def is_even(number):
     return number % 2 == 0
 
@@ -44,6 +45,7 @@ def square_from_center_and_size(x, y, size):
         x-size/2, y-size/2
     )
     return g
+
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))

@@ -216,14 +216,23 @@ class Flo2D(object):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getOpenFileName(None,
-                                            'Select FLO-2D file to import',
-                                            directory=last_dir)
+        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir)
         if fname:
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
             if bname == 'FPLAIN.DAT':
+                empty = self.gpkg.is_table_empty('grid')
+                # check if a grid exists in the grid table
+                if not empty:
+                    r = self.uc.question('There is a grid already defined in GeoPackage. Overwrite it?')
+                    if r == QMessageBox.Yes:
+                        pass
+                    else:
+                        self.uc.bar_info('Import cancelled', dur=3)
+                        return
+                else:
+                    pass
                 self.gpkg.import_fplain()
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
@@ -234,13 +243,6 @@ class Flo2D(object):
                 uri = self.gpkg.path + '|layerid=0'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
                 self.uc.bar_info('Flo2D model imported', dur=3)
-                
-            elif bname == 'TOPO.DAT':
-                pass
-            elif bname == 'CADPTS.DAT':
-                pass
-            elif bname == 'COND.DAT':
-                pass
             else:
                 pass
         else:
