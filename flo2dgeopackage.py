@@ -30,7 +30,6 @@ import processing
 import logging
 
 from .utils import *
-import os.path
 import pyspatialite.dbapi2 as db
 from .user_communication import UserCommunication
 from flo2d_parser import ParseDAT
@@ -107,10 +106,9 @@ class Flo2dGeoPackage(object):
         for d in data:
             g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
             inp.append('({0}, {1})'.format(','.join(d[:7]), g))
-        sql += '\n{};'.format(',\n'.join(inp))
+        sql += '\n{0};'.format(',\n'.join(inp))
 #        self.uc.log_info(sql)
         self.execute(sql)
-        self.uc.bar_info('Grid imported', dur=3)
 
     def import_cont_toler(self):
         if not self.is_table_empty('cont'):
@@ -127,7 +125,7 @@ class Flo2dGeoPackage(object):
         cont.update(toler)
         c = 1
         for option in cont:
-            sql += "\n({}, '{}', '{}', NULL),".format(c, option, cont[option])
+            sql += "\n({0}, '{1}', '{2}', NULL),".format(c, option, cont[option])
             c += 1
 #        self.uc.log_info(sql[:-1])
         self.execute(sql[:-1])
@@ -159,33 +157,50 @@ class Flo2dGeoPackage(object):
         grids = {}
 
         for i in gids:
-            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = {};'''.format(i)
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = {0};'''.format(i)
             geom = self.execute(sql).fetchone()[0]
             grids[i] = geom
 
         time_series_sql = """INSERT INTO time_series (fid, name, type, hourdaily) VALUES"""
         inflow_sql = """INSERT INTO inflow (fid, name, time_series_fid, type, inoutfc, geom, note) VALUES"""
         time_series_data_sql = """INSERT INTO time_series_data (fid, series_fid, time, value) VALUES"""
+        reservoirs_sql = """INSERT INTO reservoirs (fid, name, grid_fid, wsel, geom, note) VALUES"""
+
         fid = 1
         nfid = 1
+        buff = self.cell_size/4
         for gid in inf:
-            time_series_sql += "\n({}, NULL, NULL, {}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({}, NULL, {}, '{}', {}, AsGPB(ST_Buffer(ST_GeomFromText('{}'), {})), NULL),".format(fid, fid, inf[gid]['row'][0], inf[gid]['row'][1], grids[gid], self.cell_size/4)
+            row = inf[gid]['row']
+            time_series_sql += "\n({0}, NULL, NULL, {1}),".format(fid, head['IHOURDAILY'])
+            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4})), NULL),".format(fid, row[0], row[1], grids[gid], buff)
             for n in inf[gid]['nodes']:
-                time_series_data_sql += "\n({}, {}, {}, {}),".format(nfid, fid, n[1], n[2])
+                time_series_data_sql += "\n({0}, {1}, {2}, {3}),".format(nfid, fid, n[1], n[2])
                 nfid += 1
             fid += 1
+        fid = 1
+        for gid in res:
+            row = res[gid]['row']
+            wsel = row[-1] if len(row) == 3 else 'NULL'
+            reservoirs_sql += "\n({0}, NULL, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4})), NULL),".format(fid, row[1], wsel, grids[gid], buff)
+            fid += 1
 
-        self.execute(time_series_sql[:-1])
-        self.execute(inflow_sql[:-1])
-        self.execute(time_series_data_sql[:-1])
+        if len(inf) > 0:
+            self.execute(time_series_sql[:-1])
+            self.execute(inflow_sql[:-1])
+            self.execute(time_series_data_sql[:-1])
+        else:
+            pass
+        if len(res) > 0:
+            self.execute(reservoirs_sql[:-1])
+        else:
+            pass
 
     def import_topo(self):
         # in case FPLAIN is missing this require finding each grid cell neighbours
         pass
 
     def is_table_empty(self, table):
-        r = self.execute("SELECT rowid FROM {};".format(table))
+        r = self.execute("SELECT rowid FROM {0};".format(table))
         if r.fetchone():
             return False
         else:
