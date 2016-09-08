@@ -191,7 +191,6 @@ class Flo2D(object):
         # assign the CRS to all geometries
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
         rc = self.gpkg.execute(sql, (srsid,))
-        
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
@@ -234,6 +233,7 @@ class Flo2D(object):
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
                 uri = self.gpkg.path + '|layerid=0'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
+                self.uc.bar_info('Flo2D model imported', dur=3)
                 
             elif bname == 'TOPO.DAT':
                 pass
@@ -243,7 +243,6 @@ class Flo2D(object):
                 pass
             else:
                 pass
-
         else:
             pass
 

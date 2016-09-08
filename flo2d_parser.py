@@ -152,12 +152,3 @@ class ParseDAT(object):
             else:
                 pass
         return head, inf, res
-
-
-if __name__ == '__main__':
-    x = ParseDAT(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\FPLAIN.DAT')
-    h, i, r = x.parse_inflow()
-    print(h)
-    for e in i.items():
-        print(e)
-    print(r)
