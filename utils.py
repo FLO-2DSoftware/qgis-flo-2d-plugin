@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- MMTools
+ Flo2D
                                  A QGIS plugin
-        Print composer, mask and markers creation
+ FLO-2D tools for QGIS
                               -------------------
-        begin                : 2016-08-09
+        begin                : 2016-08-28
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Lutra
+        copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
  ***************************************************************************/
 

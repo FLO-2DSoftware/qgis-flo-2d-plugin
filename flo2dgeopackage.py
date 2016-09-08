@@ -173,7 +173,7 @@ class Flo2dGeoPackage(object):
         for gid in inf:
             row = inf[gid]['row']
             time_series_sql += "\n({0}, NULL, NULL, {1}),".format(fid, head['IHOURDAILY'])
-            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4})), NULL),".format(fid, row[0], row[1], grids[gid], buff)
+            inflow_sql += "\n({0}, NULL, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3)), NULL),".format(fid, row[0], row[1], grids[gid], buff)
             for n in inf[gid]['nodes']:
                 time_series_data_sql += "\n({0}, {1}, {2}, {3}),".format(nfid, fid, n[1], n[2])
                 nfid += 1

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 /***************************************************************************
- ViolMapDialog
+ Flo2D
                                  A QGIS plugin
- Violence Mapping for Public Health Wales
-                             -------------------
-        begin                : 2016-06-05
+ FLO-2D tools for QGIS
+                              -------------------
+        begin                : 2016-08-28
         git sha              : $Format:%H$
-        copyright            : (C) 2016 by Lutra
+        copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
  ***************************************************************************/
 
@@ -100,7 +100,7 @@ class Layers(QObject):
     def new_subgroup(self, group, name):
         grp = self.root.findGroup(name)
         grp.addGroup(name)
-        
+
             
     def remove_group_by_name(self, name):
         grp = self.root.findGroup(name)
