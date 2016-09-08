@@ -97,15 +97,15 @@ class Layers(QObject):
             raise Flo2dNotString('{} is not a string or unicode'.format(repr(name)))
     
     
-    def new_subgroup(self, group, name):
-        grp = self.root.findGroup(name)
-        grp.addGroup(name)
+    def new_subgroup(self, group, subgroup):
+        grp = self.root.findGroup(group)
+        grp.addGroup(subgroup)
 
             
     def remove_group_by_name(self, name):
         grp = self.root.findGroup(name)
         if grp:
-            root.removeChildNode(grp)
+            self.root.removeChildNode(grp)
             
     
     def get_layer_group(self, name):
