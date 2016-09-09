@@ -237,6 +237,7 @@ class Flo2D(object):
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
                 self.gpkg.import_outflow()
+                self.gpkg.export_fplain()
                 uri = self.gpkg.path + '|layerid=1'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
                 uri = self.gpkg.path + '|layerid=2'
@@ -251,7 +252,12 @@ class Flo2D(object):
 
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
-        pass
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastGdsDir', '')
+        fname = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
+        if fname:
+            s.setValue('FLO-2D/lastGdsDir', fname)
+            bname = os.path.basename(fname)
 
     def settings(self):
         self.dlg_settings = SettingsDialog(self)
