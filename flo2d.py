@@ -221,6 +221,7 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
+            self.uc.log_info(repr(self.gpkg.parser.dat_files))
             if bname == 'FPLAIN.DAT':
                 empty = self.gpkg.is_table_empty('grid')
                 # check if a grid exists in the grid table
@@ -254,10 +255,12 @@ class Flo2D(object):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
-        if fname:
-            s.setValue('FLO-2D/lastGdsDir', fname)
-            bname = os.path.basename(fname)
+        outdir = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
+        if outdir:
+            s.setValue('FLO-2D/lastGdsDir', outdir)
+            self.gpkg.export_cont(outdir)
+            self.gpkg.export_fplain(outdir)
+            self.uc.bar_info('Flo2D model exported', dur=3)
 
     def settings(self):
         self.dlg_settings = SettingsDialog(self)

@@ -246,9 +246,73 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # in case FPLAIN is missing this require finding each grid cell neighbours
         pass
 
-    def export_fplain(self):
+    def export_fplain(self, outdir):
         sql = 'SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'
         records = self.execute(sql)
-        for row in records:
-            fid, n, e, s, w, man, elev, geom = row
-            x, y = geom.strip('POINT()').split()
+        fplain = os.path.join(outdir, 'FPLAIN.DAT')
+        cadpts = os.path.join(outdir, 'CADPTS.DAT')
+
+        fline = '{0: <10} {1: <10} {2: <10} {3: <10} {4: <10} {5: <10} {6: <10}\n'
+        cline = '{0: <10} {1: <15} {2: <10}\n'
+        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
+
+            for row in records:
+                fid, n, e, s, w, man, elev, geom = row
+                x, y = geom.strip('POINT()').split()
+                f.write(fline.format(fid, n, e, s, w, '{0:.3f}'.format(man), '{0:.2f}'.format(elev)))
+                c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
+
+    def export_cont(self, outdir):
+        lines = [
+            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
+            ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
+            ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
+            ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
+            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
+            ['NOPRTFP', 'SUPER'],
+            ['NOPRTC'],
+            ['ITIMTEP', 'TIMTEP'],
+            ['GRAPTIM']
+        ]
+        tlines = [
+            ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
+            ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
+            ['COURCHAR_T', 'TIME_ACCEL']
+
+        ]
+        sql = 'SELECT name, value FROM cont;'
+        options = {o: v for o, v in self.execute(sql).fetchall()}
+
+        cont = os.path.join(outdir, 'CONT.DAT')
+        toler = os.path.join(outdir, 'TOLER.DAT')
+        rline = ' {0}'
+        with open(cont, 'w') as c:
+            nr = 1
+            for row in lines:
+                lst = ''
+                for o in row:
+                    val = options[o]
+                    if val != 'None':
+                        self.uc.log_info(val)
+                        lst += rline.format(val)
+                    else:
+                        pass
+                if nr == 1:
+                    lst += ' Pro Model - Build No. 15.07.12'
+                else:
+                    pass
+                lst += '\n'
+                c.write(lst)
+                nr += 1
+
+        with open(toler, 'w') as t:
+            for row in tlines:
+                lst = ''
+                for o in row:
+                    val = options[o]
+                    if val != 'None':
+                        lst += rline.format(val)
+                    else:
+                        pass
+                lst += '\n'
+                t.write(lst)

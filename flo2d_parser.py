@@ -25,18 +25,18 @@ from itertools import izip, izip_longest
 
 
 class ParseDAT(object):
-    dat_files = {
-        'CONT.DAT': None,
-        'TOLER.DAT': None,
-        'FPLAIN.DAT': None,
-        'CADPTS.DAT': None,
-        'MANNINGS_N.DAT': None,
-        'TOPO.DAT': None,
-        'INFLOW.DAT': None,
-        'OUTFLOW.DAT': None
-    }
 
     def __init__(self, fpath):
+        self.dat_files = {
+            'CONT.DAT': None,
+            'TOLER.DAT': None,
+            'FPLAIN.DAT': None,
+            'CADPTS.DAT': None,
+            'MANNINGS_N.DAT': None,
+            'TOPO.DAT': None,
+            'INFLOW.DAT': None,
+            'OUTFLOW.DAT': None
+        }
         self.project_dir = os.path.dirname(fpath)
         for f in os.listdir(self.project_dir):
             if f in self.dat_files:
@@ -178,11 +178,3 @@ class ParseDAT(object):
             else:
                 pass
         return koutflow, noutflow, ooutflow
-
-
-if __name__ == '__main__':
-    x = ParseDAT(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\FPLAIN.DAT')
-    c, t, f = x.parse_outflow()
-    print(c)
-    print(t)
-    print(f)
