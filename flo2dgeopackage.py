@@ -249,7 +249,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_fplain(self):
         sql = 'SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'
         records = self.execute(sql)
-        #with open()
         for row in records:
             fid, n, e, s, w, man, elev, geom = row
             x, y = geom.strip('POINT()').split()
