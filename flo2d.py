@@ -221,7 +221,6 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
-            self.uc.log_info(repr(self.gpkg.parser.dat_files))
             if bname == 'FPLAIN.DAT':
                 empty = self.gpkg.is_table_empty('grid')
                 # check if a grid exists in the grid table
@@ -238,7 +237,6 @@ class Flo2D(object):
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
                 self.gpkg.import_outflow()
-                self.gpkg.export_fplain()
                 uri = self.gpkg.path + '|layerid=1'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
                 uri = self.gpkg.path + '|layerid=2'

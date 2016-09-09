@@ -293,7 +293,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for o in row:
                     val = options[o]
                     if val != 'None':
-                        self.uc.log_info(val)
                         lst += rline.format(val)
                     else:
                         pass
