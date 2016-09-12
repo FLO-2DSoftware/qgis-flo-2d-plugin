@@ -218,12 +218,12 @@ class Flo2D(object):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir)
+        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='*.DAT')
         if fname:
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
-            if bname == 'FPLAIN.DAT':
+            if bname in self.gpkg.parser.dat_files:
                 empty = self.gpkg.is_table_empty('grid')
                 # check if a grid exists in the grid table
                 if not empty:

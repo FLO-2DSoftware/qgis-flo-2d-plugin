@@ -23,18 +23,6 @@
 import os.path
 
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
-
-def is_even(number):
-    return number % 2 == 0
-
-
 def square_from_center_and_size(x, y, size):
     x, y, size = (float(x), float(y), float(size))
     g = "AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))".format(

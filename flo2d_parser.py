@@ -25,38 +25,39 @@ from itertools import izip, izip_longest
 
 
 class ParseDAT(object):
-    dat_files = {
-        'CONT.DAT': None,
-        'TOLER.DAT': None,
-        'FPLAIN.DAT': None,
-        'CADPTS.DAT': None,
-        'MANNINGS_N.DAT': None,
-        'TOPO.DAT': None,
-        'INFLOW.DAT': None,
-        'OUTFLOW.DAT': None
-    }
-    cont_rows = [
-        ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
-        ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
-        ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
-        ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
-        ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
-        ['NOPRTFP', 'SUPER'],
-        ['NOPRTC'],
-        ['ITIMTEP', 'TIMTEP'],
-        ['GRAPTIM']
-    ]
-    toler_rows = [
-        ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
-        ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
-        ['COURCHAR_T', 'TIME_ACCEL']
-    ]
+    def __init__(self):
+        self.project_dir = None
+        self.dat_files = {
+            'CONT.DAT': None,
+            'TOLER.DAT': None,
+            'FPLAIN.DAT': None,
+            'CADPTS.DAT': None,
+            'MANNINGS_N.DAT': None,
+            'TOPO.DAT': None,
+            'INFLOW.DAT': None,
+            'OUTFLOW.DAT': None
+        }
+        self.cont_rows = [
+            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
+            ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
+            ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
+            ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
+            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
+            ['NOPRTFP', 'SUPER'],
+            ['NOPRTC'],
+            ['ITIMTEP', 'TIMTEP'],
+            ['GRAPTIM']
+        ]
+        self.toler_rows = [
+            ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
+            ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
+            ['COURCHAR_T', 'TIME_ACCEL']
+        ]
 
-    def __init__(self, fpath):
-
-        self.project_dir = os.path.dirname(fpath)
+    def scan_project_dir(self, path):
+        self.project_dir = os.path.dirname(path)
         for f in os.listdir(self.project_dir):
-            if f in self.dat_files:
+            if f.upper() in self.dat_files:
                 self.dat_files[f] = os.path.join(self.project_dir, f)
             else:
                 pass

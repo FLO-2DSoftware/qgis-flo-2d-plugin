@@ -21,14 +21,6 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.gui import *
-from qgis.core import *
-import processing
-import logging
-
 from .utils import *
 import pyspatialite.dbapi2 as db
 from .user_communication import UserCommunication
@@ -107,12 +99,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.group = 'FLO-2D_{}'.format(os.path.basename(path).replace('.gpkg', ''))
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
-        self.parser = None
+        self.parser = ParseDAT()
         self.cell_size = None
         self.chunksize = float('inf')
 
-    def set_parser(self, fname):
-        self.parser = ParseDAT(fname)
+    def set_parser(self, fpath):
+        self.parser.scan_project_dir(fpath)
 
     def import_fplain(self):
         self.cell_size, data = self.parser.parse_fplain_cadpts()
@@ -279,13 +271,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v for o, v in self.execute(sql).fetchall()}
-
         cont = os.path.join(outdir, 'CONT.DAT')
         toler = os.path.join(outdir, 'TOLER.DAT')
         rline = ' {0}'
         with open(cont, 'w') as c:
             nr = 1
-            for row in ParseDAT.cont_rows:
+            for row in self.parser.cont_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
@@ -302,7 +293,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 nr += 1
 
         with open(toler, 'w') as t:
-            for row in ParseDAT.toler_rows:
+            for row in self.parser.toler_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
