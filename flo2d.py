@@ -188,8 +188,10 @@ class Flo2D(object):
         else:
             srsid = rt[0]
         
-        # assign the CRS to all geometries
+        # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
+        rc = self.gpkg.execute(sql, (srsid,))
+        sql = "UPDATE gpkg_contents SET srs_id = ?"
         rc = self.gpkg.execute(sql, (srsid,))
 
     def connect(self):

@@ -145,15 +145,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_cont_toler(self):
         self.clear_tables('cont')
-        sql = '''INSERT INTO cont (fid, name, value) VALUES'''
-        sql_part = '''\n({0}, '{1}', '{2}'),'''
+        sql = '''INSERT INTO cont (name, value) VALUES'''
+        sql_part = '''\n('{0}', '{1}'),'''
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
-        c = 1
         for option in cont:
-            sql += sql_part.format(c, option, cont[option])
-            c += 1
+            sql += sql_part.format(option, cont[option])
         self.execute(sql[:-1])
 
     def import_inflow(self):
@@ -167,6 +165,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_sql = '''INSERT INTO time_series (fid, hourdaily) VALUES'''
         tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value) VALUES'''
         reservoirs_sql = '''INSERT INTO reservoirs (fid, grid_fid, wsel, geom) VALUES'''
+        cont_sql = '''INSERT INTO cont (name, value) VALUES ('IDEPLT', '{0}');'''
 
         inflow_part = '''\n({0}, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),'''
         ts_part = '''\n({0}, {1}),'''
@@ -193,6 +192,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             reservoirs_sql += reservoirs_part.format(fid, row[1], wsel, cells[gid], buff)
             fid += 1
 
+        self.execute(cont_sql.format(head['IDEPLT']))
         if len(inf) > 0:
             self.execute(ts_sql[:-1])
             self.execute(inflow_sql[:-1])
@@ -205,7 +205,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
     def import_outflow(self):
-        self.clear_tables('outflow', 'outflow_chan_elems', 'outflow_hydrographs')
+        self.clear_tables('outflow', 'outflow_hydrographs')
         koutflow, noutflow, ooutflow = self.parser.parse_outflow()
         gids = koutflow.keys() + noutflow.keys() + ooutflow.keys()
         cells = self.get_centroids(gids, 'grid')
@@ -213,32 +213,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
         outflow_sql = '''INSERT INTO outflow (fid, time_series_fid, ident, type, geom) VALUES'''
         ts_sql = '''INSERT INTO time_series (fid) VALUES'''
         tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value) VALUES'''
+        hydchar_sql = '''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES'''
 
-        outflow_part = '''\n({0}, {1}, NULL, '{2}', AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),'''
+        outflow_part = '''\n({0}, {1}, '{2}', {3}, AsGPB(ST_Buffer(ST_GeomFromText('{4}'), {5}, 3))),'''
         ts_part = '''\n({0}),'''
         tsd_part = '''\n({0}, {1}, {2}, {3}),'''
+        hydchar_part_sql = '''\n('{0}', {1}),'''
 
         fid = 1
         fid_ts = self.get_max('time_series') + 1
         fid_tsd = self.get_max('time_series_data') + 1
         buff = self.cell_size * 0.4
-        for gid in koutflow:
-            row = koutflow[gid]['row']
-            outflow_sql += outflow_part.format(fid, fid_ts, row[0], cells[gid], buff)
+        skey = lambda x: int(x[0])
+        outflow = sorted(koutflow.items(), key=skey) + sorted(noutflow.items(), key=skey)
+        for gid, val in outflow:
+            row, nodes = val['row'], val['nodes']
+            ident = row[0]
+            nostacfp = row[-1] if ident == 'N' else 'NULL'
+            outflow_sql += outflow_part.format(fid, fid_ts, ident, nostacfp, cells[gid], buff)
             ts_sql += ts_part.format(fid_ts)
-            for n in koutflow[gid]['nodes']:
+            for n in nodes:
                 tsd_sql += tsd_part.format(fid_tsd, fid_ts, n[1], n[2])
                 fid_tsd += 1
             fid += 1
             fid_ts += 1
+        for gid, val in sorted(ooutflow.items(), key=skey):
+            row = val['row']
+            hydchar_sql += hydchar_part_sql.format(*row)
 
-        if len(koutflow) > 0:
+        if len(outflow) > 0:
             self.execute(ts_sql[:-1])
             self.execute(outflow_sql[:-1])
             if tsd_sql.endswith(','):
                 self.execute(tsd_sql[:-1])
             else:
                 pass
+        else:
+            pass
+        if len(ooutflow) > 0:
+            self.execute(hydchar_sql[:-1])
         else:
             pass
 
