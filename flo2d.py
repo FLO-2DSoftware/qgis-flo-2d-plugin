@@ -262,6 +262,7 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.gpkg.export_cont(outdir)
             self.gpkg.export_fplain(outdir)
+            self.gpkg.export_inflow(outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
 
     def settings(self):

@@ -163,13 +163,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         inflow_sql = '''INSERT INTO inflow (fid, time_series_fid, type, inoutfc, geom) VALUES'''
         ts_sql = '''INSERT INTO time_series (fid, hourdaily) VALUES'''
-        tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value) VALUES'''
+        tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value, value2) VALUES'''
         reservoirs_sql = '''INSERT INTO reservoirs (fid, grid_fid, wsel, geom) VALUES'''
         cont_sql = '''INSERT INTO cont (name, value) VALUES ('IDEPLT', '{0}');'''
 
         inflow_part = '''\n({0}, {0}, '{1}', {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),'''
         ts_part = '''\n({0}, {1}),'''
-        tsd_part = '''\n({0}, {1}, {2}, {3}),'''
+        tsd_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
         reservoirs_part = '''\n({0}, {1}, {2}, AsGPB(ST_Buffer(ST_GeomFromText('{3}'), {4}, 3))),'''
 
         fid = 1
@@ -181,7 +181,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflow_sql += inflow_part.format(fid, row[0], row[1], cells[gid], buff)
             ts_sql += ts_part.format(fid, head['IHOURDAILY'])
             for n in inf[gid]['nodes']:
-                tsd_sql += tsd_part.format(nfid, fid, n[1], n[2])
+                values = n[1:]
+                tsd_sql += tsd_part.format(nfid, fid, *values)
                 nfid += 1
             fid += 1
 
@@ -260,7 +261,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         pass
 
     def export_fplain(self, outdir):
-        sql = 'SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'
+        sql = '''SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
         records = self.execute(sql)
         fplain = os.path.join(outdir, 'FPLAIN.DAT')
         cadpts = os.path.join(outdir, 'CADPTS.DAT')
@@ -276,24 +277,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
 
     def export_cont(self, outdir):
-        lines = [
-            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
-            ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
-            ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
-            ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
-            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
-            ['NOPRTFP', 'SUPER'],
-            ['NOPRTC'],
-            ['ITIMTEP', 'TIMTEP'],
-            ['GRAPTIM']
-        ]
-        tlines = [
-            ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
-            ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
-            ['COURCHAR_T', 'TIME_ACCEL']
-
-        ]
-        sql = 'SELECT name, value FROM cont;'
+        sql = '''SELECT name, value FROM cont;'''
         options = {o: v for o, v in self.execute(sql).fetchall()}
 
         cont = os.path.join(outdir, 'CONT.DAT')
@@ -301,7 +285,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         rline = ' {0}'
         with open(cont, 'w') as c:
             nr = 1
-            for row in lines:
+            for row in ParseDAT.cont_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
@@ -318,7 +302,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 nr += 1
 
         with open(toler, 'w') as t:
-            for row in tlines:
+            for row in ParseDAT.toler_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
@@ -328,3 +312,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         pass
                 lst += '\n'
                 t.write(lst)
+
+    def export_inflow(self, outdir):
+        cont_sql = '''SELECT value FROM cont WHERE name = 'IDEPLT';'''
+        inflow_sql = '''SELECT fid, time_series_fid, type, inoutfc FROM inflow;'''
+        inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells;'''
+        ts_sql = '''SELECT hourdaily FROM time_series;'''
+        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0};'''
+        reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs;'''
+
+        head_line = ' {0: <15} {1}'
+        inf_line = '\n{0: <15} {1: <15} {2}'
+        tsd_line = '\nH              {0: <15} {1: <15} {2}'
+        res_line = '\nR              {0: <15} {1}'
+
+        inf_rows = self.execute(inflow_sql).fetchall()
+        inf_cells = dict(self.execute(inflow_cells_sql).fetchall())
+        hourdaily = self.execute(ts_sql).fetchone()[0]
+        idplt = self.execute(cont_sql).fetchall()[0][0]
+
+        inflow = os.path.join(outdir, 'INFLOW.DAT')
+        with open(inflow, 'w') as i:
+            i.write(head_line.format(hourdaily, idplt))
+            for row in inf_rows:
+                fid, ts_fid, tp, inoutfc = row
+                gid = inf_cells[fid]
+                i.write(inf_line.format(tp, inoutfc, gid))
+                series = self.execute(ts_data_sql.format(ts_fid))
+                for tsd_row in series:
+                    i.write(tsd_line.format(*tsd_row).replace('None', '').rstrip())
+            for res in self.execute(reservoirs_sql):
+                i.write(res_line.format(*res).replace('None', '').rstrip())

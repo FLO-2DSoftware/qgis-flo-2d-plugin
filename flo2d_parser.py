@@ -25,18 +25,35 @@ from itertools import izip, izip_longest
 
 
 class ParseDAT(object):
+    dat_files = {
+        'CONT.DAT': None,
+        'TOLER.DAT': None,
+        'FPLAIN.DAT': None,
+        'CADPTS.DAT': None,
+        'MANNINGS_N.DAT': None,
+        'TOPO.DAT': None,
+        'INFLOW.DAT': None,
+        'OUTFLOW.DAT': None
+    }
+    cont_rows = [
+        ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
+        ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
+        ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
+        ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
+        ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
+        ['NOPRTFP', 'SUPER'],
+        ['NOPRTC'],
+        ['ITIMTEP', 'TIMTEP'],
+        ['GRAPTIM']
+    ]
+    toler_rows = [
+        ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
+        ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
+        ['COURCHAR_T', 'TIME_ACCEL']
+    ]
 
     def __init__(self, fpath):
-        self.dat_files = {
-            'CONT.DAT': None,
-            'TOLER.DAT': None,
-            'FPLAIN.DAT': None,
-            'CADPTS.DAT': None,
-            'MANNINGS_N.DAT': None,
-            'TOPO.DAT': None,
-            'INFLOW.DAT': None,
-            'OUTFLOW.DAT': None
-        }
+
         self.project_dir = os.path.dirname(fpath)
         for f in os.listdir(self.project_dir):
             if f in self.dat_files:
@@ -46,43 +63,27 @@ class ParseDAT(object):
 
     def parse_cont(self):
         results = {}
-        lines = [
-            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
-            ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
-            ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
-            ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
-            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
-            ['NOPRTFP', 'SUPER'],
-            ['NOPRTC'],
-            ['ITIMTEP', 'TIMTEP'],
-            ['GRAPTIM']
-        ]
         cont = self.dat_files['CONT.DAT']
         with open(cont, 'r') as f:
             c = 1
-            for l in lines:
+            for row in self.cont_rows:
                 if c == 1:
-                    results.update(dict(izip_longest(l, f.readline().split()[:5])))
+                    results.update(dict(izip_longest(row, f.readline().split()[:5])))
                 elif c == 7 and results['ICHANNEL'] == '0':
                     results['NOPRTC'] = None
                 elif c == 9 and results['LGPLOT'] == '0':
                     results['GRAPTIM'] = None
                 else:
-                    results.update(dict(izip_longest(l, f.readline().split())))
+                    results.update(dict(izip_longest(row, f.readline().split())))
                 c += 1
         return results
 
     def parse_toler(self):
         results = {}
-        lines = [
-            ['TOLGLOBAL', 'DEPTOL', 'WAVEMAX'],
-            ['COURCHAR_C', 'COURANTFP', 'COURANTC', 'COURANTST'],
-            ['COURCHAR_T', 'TIME_ACCEL']
-        ]
         toler = self.dat_files['TOLER.DAT']
         with open(toler, 'r') as f:
-            for l in lines:
-                results.update(dict(izip_longest(l, f.readline().split())))
+            for row in self.toler_rows:
+                results.update(dict(izip_longest(row, f.readline().split())))
         return results
 
     @staticmethod
@@ -145,6 +146,10 @@ class ParseDAT(object):
                 gid = row[-1]
                 inf[gid] = {'row': row, 'nodes': []}
             elif char == 'H':
+                if len(row) < 4:
+                    row.append('NULL')
+                else:
+                    pass
                 inf[gid]['nodes'].append(row)
             elif char == 'R':
                 gid = row[1]
