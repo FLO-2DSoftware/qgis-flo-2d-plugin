@@ -239,6 +239,8 @@ class Flo2D(object):
                 self.gpkg.import_outflow()
                 uri = self.gpkg.path + '|layerid=1'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
+                uri = self.gpkg.path + '|layerid=3'
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
                 uri = self.gpkg.path + '|layerid=2'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
                 uri = self.gpkg.path + '|layerid=0'

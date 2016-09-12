@@ -10,10 +10,10 @@
     <edittype widgetv2type="TextEdit" name="time_series_fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="type">
+    <edittype widgetv2type="TextEdit" name="ident">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="inoutfc">
+    <edittype widgetv2type="TextEdit" name="type">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="note">
@@ -25,14 +25,14 @@
       <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
         <layer pass="0" class="SimpleFill" locked="0">
           <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="88,207,65,255"/>
+          <prop k="color" v="0,66,255,255"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="offset" v="0,0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="outline_color" v="54,176,238,255"/>
+          <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="no"/>
-          <prop k="outline_width" v="0.5"/>
+          <prop k="outline_width" v="0.26"/>
           <prop k="outline_width_unit" v="MM"/>
           <prop k="style" v="solid"/>
         </layer>
@@ -211,7 +211,6 @@
   <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
     <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="100000">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
-      <attribute field="" color="#000000" label=""/>
     </DiagramCategory>
     <symbol alpha="1" clip_to_extent="1" type="marker" name="sizeSymbol">
       <layer pass="0" class="SimpleMarker" locked="0">
@@ -246,8 +245,8 @@
       <column width="-1" hidden="0" type="field" name="fid"/>
       <column width="-1" hidden="0" type="field" name="name"/>
       <column width="-1" hidden="0" type="field" name="time_series_fid"/>
+      <column width="-1" hidden="0" type="field" name="ident"/>
       <column width="-1" hidden="0" type="field" name="type"/>
-      <column width="-1" hidden="0" type="field" name="inoutfc"/>
       <column width="-1" hidden="0" type="field" name="note"/>
       <column width="-1" hidden="1" type="actions"/>
     </columns>

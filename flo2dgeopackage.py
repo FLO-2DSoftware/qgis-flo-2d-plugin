@@ -175,7 +175,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         fid = 1
         nfid = 1
-        buff = self.cell_size * 0.25
+        buff = self.cell_size * 0.4
 
         for gid in inf:
             row = inf[gid]['row']
@@ -221,7 +221,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         fid = 1
         fid_ts = self.get_max('time_series') + 1
         fid_tsd = self.get_max('time_series_data') + 1
-        buff = self.cell_size * 0.25
+        buff = self.cell_size * 0.4
         for gid in koutflow:
             row = koutflow[gid]['row']
             outflow_sql += outflow_part.format(fid, fid_ts, row[0], cells[gid], buff)
