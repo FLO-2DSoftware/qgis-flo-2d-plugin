@@ -38,28 +38,27 @@ class GeoPackageUtils(object):
 
     def database_create(self):
         """Create geopackage with SpatiaLite functions"""
-#        try:
-#            # delete db file if exists
-        if os.path.exists(self.path):
-            try:
-                os.remove(self.path)
-            except:
-                self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
-                return False
-        self.conn = db.connect(self.path)
-        plugin_dir = os.path.dirname(__file__)
-        script = os.path.join(plugin_dir, 'db_structure.sql')
-        qry = open(script, 'r').read()
-        c = self.conn.cursor()
-        c.executescript(qry)
-        self.conn.commit()
-        c.close()
-        return True
-#        except:
-#            self.msg = "Couldn't create GeoPackage"
-#            return False
-        
-    
+        try:
+            # delete db file if exists
+            if os.path.exists(self.path):
+                try:
+                    os.remove(self.path)
+                except:
+                    self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
+                    return False
+            self.conn = db.connect(self.path)
+            plugin_dir = os.path.dirname(__file__)
+            script = os.path.join(plugin_dir, 'db_structure.sql')
+            qry = open(script, 'r').read()
+            c = self.conn.cursor()
+            c.executescript(qry)
+            self.conn.commit()
+            c.close()
+            return True
+        except:
+            self.msg = "Couldn't create GeoPackage"
+            return False
+
     def database_connect(self):
         """Connect database with sqlite3"""
         try:
@@ -131,13 +130,71 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def set_parser(self, fpath):
         self.parser.scan_project_dir(fpath)
+        self.cell_size = self.parser.calculate_cellsize()
+
+    def _import_fplain(self):
+        if self.cell_size == 0:
+            self.uc.bar_error("Cell size is 0 - something went wrong!")
+        else:
+            pass
+        self.clear_tables('grid')
+        # insert grid data into gpkg
+        sql = '''INSERT INTO grid (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom) VALUES'''
+        inp = []
+        c = 0
+        sql_chunk = sql
+        data = self.parser.parse_fplain_cadpts()
+        for d in data:
+            coords = slice(8, 10)
+            fplain = slice(0, 7)
+            if c < self.chunksize:
+                g = square_from_center_and_size(self.cell_size, *d[coords])
+                inp.append('({0}, {1})'.format(','.join(d[fplain]), g))
+                c += 1
+            else:
+                sql_chunk += '\n{0};'.format(',\n'.join(inp))
+                self.execute(sql_chunk)
+                sql_chunk = sql
+                c = 0
+                del inp[:]
+        if len(inp) > 0:
+            sql_chunk += '\n{0};'.format(',\n'.join(inp))
+            self.execute(sql_chunk)
+        else:
+            pass
+
+    def _export_fplain(self, outdir):
+        sql = '''SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
+        records = self.execute(sql)
+        fplain = os.path.join(outdir, 'FPLAIN.DAT')
+        cadpts = os.path.join(outdir, 'CADPTS.DAT')
+
+        fline = '{0: <10} {1: <10} {2: <10} {3: <10} {4: <10} {5: <10} {6: <10}\n'
+        cline = '{0: <10} {1: <15} {2: <10}\n'
+
+        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
+            for row in records:
+                fid, n, e, s, w, man, elev, geom = row
+                x, y = geom.strip('POINT()').split()
+                f.write(fline.format(fid, n, e, s, w, '{0:.3f}'.format(man), '{0:.2f}'.format(elev)))
+                c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
+
+    def import_cont_toler(self):
+        self.clear_tables('cont')
+        sql = '''INSERT INTO cont (name, value) VALUES'''
+        sql_part = '''\n('{0}', '{1}'),'''
+        cont = self.parser.parse_cont()
+        toler = self.parser.parse_toler()
+        cont.update(toler)
+        for option in cont:
+            sql += sql_part.format(option, cont[option])
+        self.execute(sql.replace("'None'", 'NULL').rstrip(','))
 
     def import_mannings_n_topo(self):
         if self.cell_size == 0:
             self.uc.bar_error("Cell size is 0 - something went wrong!")
         else:
             pass
-
         self.clear_tables('grid')
         # insert grid data into gpkg
         sql = '''INSERT INTO grid (fid, n_value, elevation, geom) VALUES'''
@@ -164,48 +221,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(sql_chunk)
         else:
             pass
-
-    def import_fplain(self):
-        self.cell_size, data = self.parser.parse_fplain_cadpts()
-        if self.cell_size == 0:
-            self.uc.bar_error("Cell size is 0 - something went wrong!")
-        else:
-            pass
-        self.clear_tables('grid')
-        # insert grid data into gpkg
-        sql = '''INSERT INTO grid (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom) VALUES'''
-        inp = []
-        c = 0
-        sql_chunk = sql
-        for d in data:
-            coords = slice(8, 10)
-            fplain = slice(0, 7)
-            if c < self.chunksize:
-                g = square_from_center_and_size(self.cell_size, *d[coords])
-                inp.append('({0}, {1})'.format(','.join(d[fplain]), g))
-                c += 1
-            else:
-                sql_chunk += '\n{0};'.format(',\n'.join(inp))
-                self.execute(sql_chunk)
-                sql_chunk = sql
-                c = 0
-                del inp[:]
-        if len(inp) > 0:
-            sql_chunk += '\n{0};'.format(',\n'.join(inp))
-            self.execute(sql_chunk)
-        else:
-            pass
-
-    def import_cont_toler(self):
-        self.clear_tables('cont')
-        sql = '''INSERT INTO cont (name, value) VALUES'''
-        sql_part = '''\n('{0}', '{1}'),'''
-        cont = self.parser.parse_cont()
-        toler = self.parser.parse_toler()
-        cont.update(toler)
-        for option in cont:
-            sql += sql_part.format(option, cont[option])
-        self.execute(sql.rstrip(','))
 
     def import_inflow(self):
         self.clear_tables('inflow', 'time_series', 'time_series_data', 'reservoirs')
@@ -313,6 +328,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
+    def export_cont(self, outdir):
+        sql = '''SELECT name, value FROM cont;'''
+        options = {o: v for o, v in self.execute(sql).fetchall()}
+        cont = os.path.join(outdir, 'CONT.DAT')
+        toler = os.path.join(outdir, 'TOLER.DAT')
+        rline = ' {0}'
+        with open(cont, 'w') as c:
+            for row in self.parser.cont_rows:
+                lst = ''
+                for o in row:
+                    val = options[o]
+                    lst += rline.format(val)
+                lst += '\n'
+                c.write(lst.replace('None', ''))
+
+        with open(toler, 'w') as t:
+            for row in self.parser.toler_rows:
+                lst = ''
+                for o in row:
+                    val = options[o]
+                    lst += rline.format(val)
+                lst += '\n'
+                t.write(lst.replace('None', ''))
+
     def export_mannings_n_topo(self, outdir):
         sql = '''SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
         records = self.execute(sql)
@@ -328,58 +367,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 x, y = geom.strip('POINT()').split()
                 m.write(mline.format(fid, '{0:.3f}'.format(man)))
                 t.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
-
-    def export_fplain(self, outdir):
-        sql = '''SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
-        records = self.execute(sql)
-        fplain = os.path.join(outdir, 'FPLAIN.DAT')
-        cadpts = os.path.join(outdir, 'CADPTS.DAT')
-
-        fline = '{0: <10} {1: <10} {2: <10} {3: <10} {4: <10} {5: <10} {6: <10}\n'
-        cline = '{0: <10} {1: <15} {2: <10}\n'
-
-        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
-            for row in records:
-                fid, n, e, s, w, man, elev, geom = row
-                x, y = geom.strip('POINT()').split()
-                f.write(fline.format(fid, n, e, s, w, '{0:.3f}'.format(man), '{0:.2f}'.format(elev)))
-                c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
-
-    def export_cont(self, outdir):
-        sql = '''SELECT name, value FROM cont;'''
-        options = {o: v for o, v in self.execute(sql).fetchall()}
-        cont = os.path.join(outdir, 'CONT.DAT')
-        toler = os.path.join(outdir, 'TOLER.DAT')
-        rline = ' {0}'
-        with open(cont, 'w') as c:
-            nr = 1
-            for row in self.parser.cont_rows:
-                lst = ''
-                for o in row:
-                    val = options[o]
-                    if val != 'None':
-                        lst += rline.format(val)
-                    else:
-                        pass
-                if nr == 1:
-                    lst += ' Pro Model - Build No. 15.07.12'
-                else:
-                    pass
-                lst += '\n'
-                c.write(lst)
-                nr += 1
-
-        with open(toler, 'w') as t:
-            for row in self.parser.toler_rows:
-                lst = ''
-                for o in row:
-                    val = options[o]
-                    if val != 'None':
-                        lst += rline.format(val)
-                    else:
-                        pass
-                lst += '\n'
-                t.write(lst)
 
     def export_inflow(self, outdir):
         cont_sql = '''SELECT value FROM cont WHERE name = 'IDEPLT';'''
