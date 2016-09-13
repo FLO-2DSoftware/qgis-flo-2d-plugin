@@ -20,6 +20,8 @@ VALUES (
 
 -- FLO-2D tables definitions
 
+-- The main table with model control parameters (from CONT.DAT and others)
+
 CREATE TABLE cont (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -28,19 +30,24 @@ CREATE TABLE cont (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('cont', 'aspatial');
 
+
+-- Grid table - data from FPLAIN.DAT, CADPTS.DAT, TOPO.DAT, MANNINGS_N.DAT
+
 CREATE TABLE "grid" ( `fid` INTEGER PRIMARY KEY AUTOINCREMENT,
    "cell_north" INTEGER,
    "cell_east" INTEGER,
    "cell_south" INTEGER,
    "cell_west" INTEGER,
    "n_value" REAL,
-   "elevation" REAL,
-   "version" INTEGER
+   "elevation" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('grid', 'geom');
 SELECT gpkgAddSpatialIndex('grid', 'geom');
+
+
+-- Inflow - INFLOW.DAT
 
 CREATE TABLE "inflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -88,6 +95,7 @@ CREATE TRIGGER "find_inflow_cells_delete"
         DELETE FROM "inflow_cells" WHERE inflow_fid = OLD."fid";
     END;
 
+-- Outflows
 
 CREATE TABLE "outflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -106,7 +114,8 @@ SELECT gpkgAddSpatialIndex('outflow', 'geom');
 CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "outflow_fid" INTEGER NOT NULL,
-    "grid_fid" INTEGER NOT NULL
+    "grid_fid" INTEGER NOT NULL,
+    "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
 
@@ -117,13 +126,13 @@ CREATE TABLE "outflow_chan_elems" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 'aspatial');
 
-
 CREATE TRIGGER "find_outflow_cells_insert"
     AFTER INSERT ON "outflow"
     WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom") AND NEW."ident" = 'N')
     BEGIN
         DELETE FROM "outflow_cells" WHERE outflow_fid = NEW."fid";
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid as g
+        INSERT INTO "outflow_cells" (outflow_fid, grid_fid, area_factor) 
+        SELECT NEW.fid, g.fid, ST_Area(ST_Intersection(CastAutomagic(g.geom), CastAutomagic(NEW.geom))/ST_Area(NEW.geom) FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
@@ -179,7 +188,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_params', 'aspatial
 CREATE TABLE "outflow_hydrographs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "hydro_fid" TEXT NOT NULL,
-    "grid_fid" INTEGER NOT NULL REFERENCES "grid"("fid")
+    "grid_fid" INTEGER NOT NULL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_hydrographs', 'aspatial');
 
@@ -212,3 +221,6 @@ CREATE TABLE "time_series_data" (
     "value3" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_data', 'aspatial');
+
+
+-- 
