@@ -141,7 +141,7 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-
+        
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
         self.gpkg_fname = None
@@ -165,11 +165,12 @@ class Flo2D(object):
         
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
         db0 = os.path.join(self.plugin_dir, '0.gpkg')
-        copyfile(db0, gpkg_fname)
 
         self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
-        self.gpkg.database_connect()
-        self.uc.log_info("Connected to {}".format(gpkg_fname))
+        if not self.gpkg.database_create():
+            self.uc.show_warn("Couldn't create new database {}\n{}".format(gpkg_fname, self.gpkg.msg))
+        else:
+            self.uc.log_info("Connected to {}".format(gpkg_fname))
         if self.gpkg.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
         else:
@@ -241,9 +242,9 @@ class Flo2D(object):
                 self.gpkg.import_outflow()
                 uri = self.gpkg.path + '|layerid=1'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
-                uri = self.gpkg.path + '|layerid=3'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
                 uri = self.gpkg.path + '|layerid=2'
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
+                uri = self.gpkg.path + '|layerid=3'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
                 uri = self.gpkg.path + '|layerid=0'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
