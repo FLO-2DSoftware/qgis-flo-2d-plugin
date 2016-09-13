@@ -39,7 +39,7 @@ class ParseDAT(object):
             'OUTFLOW.DAT': None
         }
         self.cont_rows = [
-            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont'],
+            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
             ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
             ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
             ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
@@ -63,52 +63,7 @@ class ParseDAT(object):
             else:
                 pass
 
-    def parse_cont(self):
-        results = {}
-        cont = self.dat_files['CONT.DAT']
-        with open(cont, 'r') as f:
-            c = 1
-            for row in self.cont_rows:
-                if c == 1:
-                    results.update(dict(izip_longest(row, f.readline().split()[:5])))
-                elif c == 7 and results['ICHANNEL'] == '0':
-                    results['NOPRTC'] = None
-                elif c == 9 and results['LGPLOT'] == '0':
-                    results['GRAPTIM'] = None
-                else:
-                    results.update(dict(izip_longest(row, f.readline().split())))
-                c += 1
-        return results
-
-    def parse_toler(self):
-        results = {}
-        toler = self.dat_files['TOLER.DAT']
-        with open(toler, 'r') as f:
-            for row in self.toler_rows:
-                results.update(dict(izip_longest(row, f.readline().split())))
-        return results
-
-    @staticmethod
-    def single_parser(file1):
-        with open(file1, 'r') as f1:
-            for line in f1:
-                row = line.split()
-                yield row
-
-    @staticmethod
-    def double_parser(file1, file2):
-        with open(file1, 'r') as f1, open(file2, 'r') as f2:
-            for line1, line2 in izip(f1, f2):
-                row = line1.split() + line2.split()
-                yield row
-
-    @staticmethod
-    def fix_row_size(row, fix_size, default='NULL'):
-        loops = fix_size - len(row)
-        for l in range(loops):
-            row.append(default)
-
-    def parse_fplain_cadpts(self):
+    def calculate_cellsize(self):
         fplain = self.dat_files['FPLAIN.DAT']
         cadpts = self.dat_files['CADPTS.DAT']
         neighbour = None
@@ -132,8 +87,56 @@ class ParseDAT(object):
         dtx = abs(float(x1) - float(x2))
         dty = abs(float(y1) - float(y2))
         cell_size = dty if side % 2 == 0 else dtx
+        return cell_size
+
+    @staticmethod
+    def single_parser(file1):
+        with open(file1, 'r') as f1:
+            for line in f1:
+                row = line.split()
+                yield row
+
+    @staticmethod
+    def double_parser(file1, file2):
+        with open(file1, 'r') as f1, open(file2, 'r') as f2:
+            for line1, line2 in izip(f1, f2):
+                row = line1.split() + line2.split()
+                yield row
+
+    @staticmethod
+    def fix_row_size(row, fix_size, default='NULL'):
+        loops = fix_size - len(row)
+        for l in range(loops):
+            row.append(default)
+
+    def parse_cont(self):
+        results = {}
+        cont = self.dat_files['CONT.DAT']
+        with open(cont, 'r') as f:
+            for c, row in enumerate(self.cont_rows):
+                if c == 0:
+                    results.update(dict(izip_longest(row, f.readline().rstrip().split(None, 5))))
+                elif c == 6 and results['ICHANNEL'] == '0':
+                    results['NOPRTC'] = None
+                elif c == 8 and results['LGPLOT'] == '0':
+                    results['GRAPTIM'] = None
+                else:
+                    results.update(dict(izip_longest(row, f.readline().split())))
+        return results
+
+    def parse_toler(self):
+        results = {}
+        toler = self.dat_files['TOLER.DAT']
+        with open(toler, 'r') as f:
+            for row in self.toler_rows:
+                results.update(dict(izip_longest(row, f.readline().split())))
+        return results
+
+    def parse_fplain_cadpts(self):
+        fplain = self.dat_files['FPLAIN.DAT']
+        cadpts = self.dat_files['CADPTS.DAT']
         results = self.double_parser(fplain, cadpts)
-        return cell_size, results
+        return results
 
     def parse_mannings_n_topo(self):
         mannings_n = self.dat_files['MANNINGS_N.DAT']

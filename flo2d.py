@@ -20,18 +20,17 @@
  *                                                                         *
  ***************************************************************************/
 """
+import os
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.core import QgsDataSourceURI
-import os
 from flo2d_dialog import Flo2DDialog
 from .user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
 from .utils import *
 from .layers import Layers
-from shutil import copyfile
 
 
 class Flo2D(object):
@@ -224,7 +223,6 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
-            self.gpkg.cell_size = 100
             if bname in self.gpkg.parser.dat_files:
                 empty = self.gpkg.is_table_empty('grid')
                 # check if a grid exists in the grid table
@@ -237,7 +235,6 @@ class Flo2D(object):
                         return
                 else:
                     pass
-                #self.gpkg.import_fplain()
                 self.gpkg.import_mannings_n_topo()
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
@@ -264,7 +261,6 @@ class Flo2D(object):
         if outdir:
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.gpkg.export_cont(outdir)
-            #self.gpkg.export_fplain(outdir)
             self.gpkg.export_mannings_n_topo(outdir)
             self.gpkg.export_inflow(outdir)
             self.gpkg.export_outflow(outdir)
