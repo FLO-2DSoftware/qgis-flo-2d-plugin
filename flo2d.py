@@ -141,6 +141,7 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
+        del self.conn, self.gpkg, self.lyrs
         
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
@@ -242,14 +243,27 @@ class Flo2D(object):
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
                 self.gpkg.import_outflow()
-                uri = self.gpkg.path + '|layerid=1'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
-                uri = self.gpkg.path + '|layerid=2'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
-                uri = self.gpkg.path + '|layerid=3'
+                uri = self.gpkg.path + '|layername=inflow'
+                self.lyr_inflow = self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
+                uri = self.gpkg.path + '|layername=outflow'
+                self.lyr_outflow = self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
+                # edit config
+                # TODO: find an elegant way to load layers and tables and set attributes edit config
+                # Example:
+                c_outflow = self.lyrs.get_layer_tree_item(self.lyr_outflow).layer().editFormConfig()
+                c_outflow.setWidgetType(1, "ValueMap") # 1 - field number
+                c_outflow.setWidgetConfig(1, {u'Grid element': u'N', u'Channel element': u'K'})
+                c_outflow.setWidgetType(2, "ValueMap")
+                c_outflow.setWidgetConfig(2, {u'Channel': 0, u'Floodplain': 1})
+                
+                uri = self.gpkg.path + '|layername=reservoirs'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
-                uri = self.gpkg.path + '|layerid=0'
+                uri = self.gpkg.path + '|layername=grid'
                 self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
+                uri = self.gpkg.path + '|layername=outflow_cells'
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Outflow Cells', subgroup='Tables')
+                uri = self.gpkg.path + '|layername=outflow_chan_elems'
+                self.lyrs.load_layer(uri, self.gpkg.group, 'Outflow Channel Elements', subgroup='Tables')
                 self.uc.bar_info('Flo2D model imported', dur=3)
             else:
                 pass

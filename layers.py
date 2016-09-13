@@ -51,14 +51,17 @@ class Layers(QObject):
         self.root = QgsProject.instance().layerTreeRoot()
     
 
-    def load_layer(self, uri, group, name, style=None, provider='ogr'):
+    def load_layer(self, uri, group, name, subgroup=None, style=None, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
         if not vlayer.isValid():
             msg = 'Unable to load layer {}'.format(name)
             raise Flo2dLayerInvalid(msg)
 
         QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
-        grp = self.get_layer_group(group)
+        if subgroup:
+            grp = self.get_subgroup(group, subgroup)
+        else:
+            grp = self.get_group(group)
         # if a layer exists with the same uri, remove it
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
@@ -108,12 +111,20 @@ class Layers(QObject):
             self.root.removeChildNode(grp)
             
     
-    def get_layer_group(self, name):
+    def get_group(self, name):
         grp = self.root.findGroup(name)
         if not grp:
             grp = self.root.addGroup(name)
         return grp
     
+    
+    def get_subgroup(self, group, subgroup):
+        grp = self.get_group(group)
+        subgrp = grp.findGroup(subgroup)
+        if not subgrp:
+            subgrp = grp.addGroup(subgroup)
+        return subgrp
+
     
     def layer_exists_in_group(self, uri, group):
         grp = self.root.findGroup(group)
@@ -140,6 +151,6 @@ class Layers(QObject):
             return True
         else:
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
-            raise ViolMapNotString(msg)
+            raise Flo2dNotString(msg)
 
 

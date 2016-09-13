@@ -132,7 +132,7 @@ CREATE TRIGGER "find_outflow_cells_insert"
     BEGIN
         DELETE FROM "outflow_cells" WHERE outflow_fid = NEW."fid";
         INSERT INTO "outflow_cells" (outflow_fid, grid_fid, area_factor) 
-        SELECT NEW.fid, g.fid, ST_Area(ST_Intersection(CastAutomagic(g.geom), CastAutomagic(NEW.geom))/ST_Area(NEW.geom) FROM grid as g
+        SELECT NEW.fid, g.fid, ST_Area(ST_Intersection(CastAutomagic(g.geom), CastAutomagic(NEW.geom)))/ST_Area(NEW.geom) FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 

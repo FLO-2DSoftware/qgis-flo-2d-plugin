@@ -38,26 +38,26 @@ class GeoPackageUtils(object):
 
     def database_create(self):
         """Create geopackage with SpatiaLite functions"""
-        try:
-            # delete db file if exists
-            if os.path.exists(self.path):
-                try:
-                    os.remove(self.path)
-                except:
-                    self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
-                    return False
-            self.conn = db.connect(self.path)
-            plugin_dir = os.path.dirname(__file__)
-            script = os.path.join(plugin_dir, 'db_structure.sql')
-            qry = open(script, 'r').read()
-            c = self.conn.cursor()
-            c.executescript(qry)
-            self.conn.commit()
-            c.close()
-            return True
-        except:
-            self.msg = "Couldn't create GeoPackage"
-            return False
+#        try:
+#            # delete db file if exists
+        if os.path.exists(self.path):
+            try:
+                os.remove(self.path)
+            except:
+                self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
+                return False
+        self.conn = db.connect(self.path)
+        plugin_dir = os.path.dirname(__file__)
+        script = os.path.join(plugin_dir, 'db_structure.sql')
+        qry = open(script, 'r').read()
+        c = self.conn.cursor()
+        c.executescript(qry)
+        self.conn.commit()
+        c.close()
+        return True
+#        except:
+#            self.msg = "Couldn't create GeoPackage"
+#            return False
         
     
     def database_connect(self):
