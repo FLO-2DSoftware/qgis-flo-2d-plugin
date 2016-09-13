@@ -21,11 +21,12 @@
  ***************************************************************************/
  This script initializes the plugin, making it known to QGIS.
 """
-from .utils import *
+import os
 import pyspatialite.dbapi2 as db
+from .utils import *
+from itertools import chain
 from .user_communication import UserCommunication
 from flo2d_parser import ParseDAT
-import os
 
 
 class GeoPackageUtils(object):
@@ -131,6 +132,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def set_parser(self, fpath):
         self.parser.scan_project_dir(fpath)
 
+    def import_mannings_n_topo(self):
+        if self.cell_size == 0:
+            self.uc.bar_error("Cell size is 0 - something went wrong!")
+        else:
+            pass
+
+        self.clear_tables('grid')
+        # insert grid data into gpkg
+        sql = '''INSERT INTO grid (fid, n_value, elevation, geom) VALUES'''
+        inp = []
+        c = 0
+        sql_chunk = sql
+        data = self.parser.parse_mannings_n_topo()
+        for d in data:
+            man = slice(0, 2)
+            coords = slice(2, 4)
+            elev = slice(4, None)
+            if c < self.chunksize:
+                g = square_from_center_and_size(self.cell_size, *d[coords])
+                inp.append('({0}, {1})'.format(','.join(d[man] + d[elev]), g))
+                c += 1
+            else:
+                sql_chunk += '\n{0};'.format(',\n'.join(inp))
+                self.execute(sql_chunk)
+                sql_chunk = sql
+                c = 0
+                del inp[:]
+        if len(inp) > 0:
+            sql_chunk += '\n{0};'.format(',\n'.join(inp))
+            self.execute(sql_chunk)
+        else:
+            pass
+
     def import_fplain(self):
         self.cell_size, data = self.parser.parse_fplain_cadpts()
         if self.cell_size == 0:
@@ -144,9 +178,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         c = 0
         sql_chunk = sql
         for d in data:
+            coords = slice(8, 10)
+            fplain = slice(0, 7)
             if c < self.chunksize:
-                g = square_from_center_and_size(d[-2], d[-1], self.cell_size)
-                inp.append('({0}, {1})'.format(','.join(d[:7]), g))
+                g = square_from_center_and_size(self.cell_size, *d[coords])
+                inp.append('({0}, {1})'.format(','.join(d[fplain]), g))
                 c += 1
             else:
                 sql_chunk += '\n{0};'.format(',\n'.join(inp))
@@ -169,7 +205,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cont.update(toler)
         for option in cont:
             sql += sql_part.format(option, cont[option])
-        self.execute(sql[:-1])
+        self.execute(sql.rstrip(','))
 
     def import_inflow(self):
         self.clear_tables('inflow', 'time_series', 'time_series_data', 'reservoirs')
@@ -178,7 +214,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         gids = inf.keys() + res.keys()
         cells = self.get_centroids(gids, 'grid')
 
-        inflow_sql = '''INSERT INTO inflow (fid, time_series_fid, type, inoutfc, geom) VALUES'''
+        inflow_sql = '''INSERT INTO inflow (fid, time_series_fid, ident, inoutfc, geom) VALUES'''
         ts_sql = '''INSERT INTO time_series (fid, hourdaily) VALUES'''
         tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value, value2) VALUES'''
         reservoirs_sql = '''INSERT INTO reservoirs (fid, grid_fid, wsel, geom) VALUES'''
@@ -197,9 +233,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             row = inf[gid]['row']
             inflow_sql += inflow_part.format(fid, row[0], row[1], cells[gid], buff)
             ts_sql += ts_part.format(fid, head['IHOURDAILY'])
-            for n in inf[gid]['nodes']:
-                values = n[1:]
-                tsd_sql += tsd_part.format(nfid, fid, *values)
+            values = slice(1, None)
+            for n in inf[gid]['time_series']:
+                tsd_sql += tsd_part.format(nfid, fid, *n[values])
                 nfid += 1
             fid += 1
 
@@ -211,71 +247,87 @@ class Flo2dGeoPackage(GeoPackageUtils):
             fid += 1
 
         self.execute(cont_sql.format(head['IDEPLT']))
-        if len(inf) > 0:
-            self.execute(ts_sql[:-1])
-            self.execute(inflow_sql[:-1])
-            self.execute(tsd_sql[:-1])
-        else:
-            pass
-        if len(res) > 0:
-            self.execute(reservoirs_sql[:-1])
-        else:
-            pass
+        sql_list = [ts_sql, inflow_sql, tsd_sql, reservoirs_sql]
+        for sql in sql_list:
+            if sql.endswith(','):
+                self.execute(sql.rstrip(','))
+            else:
+                pass
 
     def import_outflow(self):
-        self.clear_tables('outflow', 'outflow_hydrographs')
+        self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params')
         koutflow, noutflow, ooutflow = self.parser.parse_outflow()
         gids = koutflow.keys() + noutflow.keys() + ooutflow.keys()
         cells = self.get_centroids(gids, 'grid')
 
-        outflow_sql = '''INSERT INTO outflow (fid, time_series_fid, ident, type, geom) VALUES'''
+        outflow_sql = '''INSERT INTO outflow (fid, time_series_fid, ident, nostacfp, qh_params_fid, geom) VALUES'''
+        qh_sql = '''INSERT INTO qh_params (hmax, coef, expontent) VALUES'''
         ts_sql = '''INSERT INTO time_series (fid) VALUES'''
-        tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value) VALUES'''
+        tsd_sql = '''INSERT INTO time_series_data (fid, series_fid, time, value, value2) VALUES'''
         hydchar_sql = '''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES'''
 
-        outflow_part = '''\n({0}, {1}, '{2}', {3}, AsGPB(ST_Buffer(ST_GeomFromText('{4}'), {5}, 3))),'''
+        outflow_part = '''\n({0}, {1}, '{2}', {3}, {4}, AsGPB(ST_Buffer(ST_GeomFromText('{5}'), {6}, 3))),'''
+        qh_part = '''\n({0}, {1}, {2}),'''
         ts_part = '''\n({0}),'''
-        tsd_part = '''\n({0}, {1}, {2}, {3}),'''
+        tsd_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
         hydchar_part_sql = '''\n('{0}', {1}),'''
 
         fid = 1
+        fid_qh = 1
         fid_ts = self.get_max('time_series') + 1
         fid_tsd = self.get_max('time_series_data') + 1
         buff = self.cell_size * 0.4
-        skey = lambda x: int(x[0])
-        outflow = sorted(koutflow.items(), key=skey) + sorted(noutflow.items(), key=skey)
+        outflow = chain(koutflow.iteritems(), noutflow.iteritems())
+
         for gid, val in outflow:
-            row, nodes = val['row'], val['nodes']
+            row, time_series, qh = val['row'], val['time_series'], val['qh']
+            if qh:
+                qhfid = fid_qh
+                fid_qh += 1
+                qh_sql += qh_part.format(*qh[0])
+            else:
+                qhfid = 'NULL'
+            if time_series:
+                tsfid = fid_ts
+                fid_ts += 1
+                ts_sql += ts_part.format(tsfid)
+            else:
+                tsfid = 'NULL'
             ident = row[0]
             nostacfp = row[-1] if ident == 'N' else 'NULL'
-            outflow_sql += outflow_part.format(fid, fid_ts, ident, nostacfp, cells[gid], buff)
-            ts_sql += ts_part.format(fid_ts)
-            for n in nodes:
-                tsd_sql += tsd_part.format(fid_tsd, fid_ts, n[1], n[2])
+            outflow_sql += outflow_part.format(fid, tsfid, ident, nostacfp, qhfid, cells[gid], buff)
+            values = slice(1, None)
+            for n in time_series:
+                tsd_sql += tsd_part.format(fid_tsd, fid_ts, *n[values])
                 fid_tsd += 1
             fid += 1
-            fid_ts += 1
-        for gid, val in sorted(ooutflow.items(), key=skey):
+
+        for gid, val in ooutflow.iteritems():
             row = val['row']
             hydchar_sql += hydchar_part_sql.format(*row)
 
-        if len(outflow) > 0:
-            self.execute(ts_sql[:-1])
-            self.execute(outflow_sql[:-1])
-            if tsd_sql.endswith(','):
-                self.execute(tsd_sql[:-1])
+        sql_list = [ts_sql, qh_sql, outflow_sql, tsd_sql, hydchar_sql]
+        for sql in sql_list:
+            if sql.endswith(','):
+                self.execute(sql.rstrip(','))
             else:
                 pass
-        else:
-            pass
-        if len(ooutflow) > 0:
-            self.execute(hydchar_sql[:-1])
-        else:
-            pass
 
-    def import_topo(self):
-        # in case FPLAIN is missing this require finding each grid cell neighbours
-        pass
+    def export_mannings_n_topo(self, outdir):
+        sql = '''SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
+        records = self.execute(sql)
+        mannings = os.path.join(outdir, 'MANNINGS_N.DAT')
+        topo = os.path.join(outdir, 'TOPO.DAT')
+
+        mline = '{0: >10} {1: >10}\n'
+        tline = '{0: >15} {1: >15} {2: >10}\n'
+
+        with open(mannings, 'w') as m, open(topo, 'w') as t:
+            for row in records:
+                fid, man, elev, geom = row
+                x, y = geom.strip('POINT()').split()
+                m.write(mline.format(fid, '{0:.3f}'.format(man)))
+                t.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
 
     def export_fplain(self, outdir):
         sql = '''SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
@@ -285,8 +337,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         fline = '{0: <10} {1: <10} {2: <10} {3: <10} {4: <10} {5: <10} {6: <10}\n'
         cline = '{0: <10} {1: <15} {2: <10}\n'
-        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
 
+        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
             for row in records:
                 fid, n, e, s, w, man, elev, geom = row
                 x, y = geom.strip('POINT()').split()
@@ -331,7 +383,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_inflow(self, outdir):
         cont_sql = '''SELECT value FROM cont WHERE name = 'IDEPLT';'''
-        inflow_sql = '''SELECT fid, time_series_fid, type, inoutfc FROM inflow;'''
+        inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow;'''
         inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells;'''
         ts_sql = '''SELECT hourdaily FROM time_series;'''
         ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0};'''
@@ -351,11 +403,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(inflow, 'w') as i:
             i.write(head_line.format(hourdaily, idplt))
             for row in inf_rows:
-                fid, ts_fid, tp, inoutfc = row
+                fid, ts_fid, ident, inoutfc = row
                 gid = inf_cells[fid]
-                i.write(inf_line.format(tp, inoutfc, gid))
+                i.write(inf_line.format(ident, inoutfc, gid))
                 series = self.execute(ts_data_sql.format(ts_fid))
                 for tsd_row in series:
                     i.write(tsd_line.format(*tsd_row).replace('None', '').rstrip())
             for res in self.execute(reservoirs_sql):
                 i.write(res_line.format(*res).replace('None', '').rstrip())
+
+    def export_outflow(self, outdir):
+        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid FROM outflow;'''
+        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells;'''
+        outflow_chan_sql = '''SELECT outflow_fid, elem_fid FROM outflow_chan_elems;'''
+        qh_sql = '''SELECT hmax, coef, expotent FROM qh_params WHERE fid = {0};'''
+        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0};'''
+        hydchar_sql = '''SELECT hydro_fid, grid_fid FROM outflow_hydrographs;'''
+
+        out_line = '{0: <15} {1: <15} {2}\n'
+        qh_line = 'H {0: <15} {1: <15} {2}\n'
+        tsd_line = '{0: <15} {1: <15} {2}\n'
+        hyd_line = '{0: <15} {1}\n'
+
+        out_rows = self.execute(outflow_sql).fetchall()
+        out_cells = dict(self.execute(outflow_cells_sql).fetchall())
+        out_chan = dict(self.execute(outflow_chan_sql).fetchall())
+
+        outflow = os.path.join(outdir, 'OUTFLOW.DAT')
+        with open(outflow, 'w') as o:
+            for row in out_rows:
+                fid, ts_fid, ident, nostacfp, qh_fid = row
+                gid = out_chan[fid] if ident == 'K' else out_cells[fid]
+                o.write(out_line.format(ident, gid, nostacfp).replace('None', ''))
+                if qh_fid is not None:
+                    qh_params = self.execute(qh_sql.format(qh_fid)).fetchone()
+                    o.write(qh_line.format(*qh_params[0]))
+                else:
+                    pass
+                if ts_fid is not None:
+                    series = self.execute(ts_data_sql.format(ts_fid))
+                    for tsd_row in series:
+                        o.write(tsd_line.format(*tsd_row).replace('None', ''))
+                else:
+                    pass
+            for hyd in self.execute(hydchar_sql):
+                o.write(hyd_line.format(*hyd))

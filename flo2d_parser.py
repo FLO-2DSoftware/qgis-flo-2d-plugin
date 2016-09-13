@@ -21,6 +21,7 @@
  ***************************************************************************/
 """
 import os
+from collections import OrderedDict
 from itertools import izip, izip_longest
 
 
@@ -101,6 +102,12 @@ class ParseDAT(object):
                 row = line1.split() + line2.split()
                 yield row
 
+    @staticmethod
+    def fix_row_size(row, fix_size, default='NULL'):
+        loops = fix_size - len(row)
+        for l in range(loops):
+            row.append(default)
+
     def parse_fplain_cadpts(self):
         fplain = self.dat_files['FPLAIN.DAT']
         cadpts = self.dat_files['CADPTS.DAT']
@@ -138,23 +145,20 @@ class ParseDAT(object):
         inflow = self.dat_files['INFLOW.DAT']
         par = self.single_parser(inflow)
         head = dict(zip(['IHOURDAILY', 'IDEPLT'], next(par)))
-        inf = {}
-        res = {}
+        inf = OrderedDict()
+        res = OrderedDict()
         gid = None
         for row in par:
             char = row[0]
             if char == 'C' or char == 'F':
                 gid = row[-1]
-                inf[gid] = {'row': row, 'nodes': []}
+                inf[gid] = OrderedDict([('row', row), ('time_series', [])])
             elif char == 'H':
-                if len(row) < 4:
-                    row.append('NULL')
-                else:
-                    pass
-                inf[gid]['nodes'].append(row)
+                self.fix_row_size(row, 4)
+                inf[gid]['time_series'].append(row)
             elif char == 'R':
                 gid = row[1]
-                res[gid] = {'row': row}
+                res[gid] = OrderedDict([('row', row)])
             else:
                 pass
         return head, inf, res
@@ -162,25 +166,28 @@ class ParseDAT(object):
     def parse_outflow(self):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
-        koutflow = {}
-        noutflow = {}
-        ooutflow = {}
+        koutflow = OrderedDict()
+        noutflow = OrderedDict()
+        ooutflow = OrderedDict()
         gid = None
         for row in par:
             char = row[0]
             if char == 'K':
                 gid = row[-1]
-                koutflow[gid] = {'row': row, 'nodes': []}
-            elif char == 'H' or char == 'T':
-                koutflow[gid]['nodes'].append(row)
+                koutflow[gid] = OrderedDict([('row', row), ('time_series', []), ('qh', [])])
+            elif char == 'H':
+                self.fix_row_size(row, 4)
+                koutflow[gid]['qh'].append(row)
+            elif char == 'T':
+                koutflow[gid]['ts'].append(row)
             elif char == 'N':
-                gid = row[-1]
-                noutflow[gid] = {'row': row, 'nodes': []}
+                gid = row[1]
+                noutflow[gid] = OrderedDict([('row', row), ('time_series', [])])
             elif char == 'S':
-                noutflow[gid]['nodes'].append(row)
+                noutflow[gid]['time_series'].append(row)
             elif char.startswith('O'):
                 gid = row[-1]
-                ooutflow[gid] = {'row': row}
+                ooutflow[gid] = OrderedDict([('row', row)])
             else:
                 pass
         return koutflow, noutflow, ooutflow
