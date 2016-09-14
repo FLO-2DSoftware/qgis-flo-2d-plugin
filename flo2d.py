@@ -31,6 +31,7 @@ from .user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
 from .utils import *
 from .layers import Layers
+from collections import OrderedDict
 
 
 class Flo2D(object):
@@ -63,6 +64,7 @@ class Flo2D(object):
         self.toolbar.setObjectName(u'Flo2D')
         self.conn = None
         self.lyrs  = Layers()
+        self.gpkg = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -240,32 +242,99 @@ class Flo2D(object):
                 self.gpkg.import_cont_toler()
                 self.gpkg.import_inflow()
                 self.gpkg.import_outflow()
-                uri = self.gpkg.path + '|layername=inflow'
-                self.lyr_inflow = self.lyrs.load_layer(uri, self.gpkg.group, 'Inflow', style='inflow.qml')
-                uri = self.gpkg.path + '|layername=outflow'
-                self.lyr_outflow = self.lyrs.load_layer(uri, self.gpkg.group, 'Outlow', style='outflow.qml')
-                # edit config
-                # TODO: find an elegant way to load layers and tables and set attributes edit config
-                # Example:
-                c_outflow = self.lyrs.get_layer_tree_item(self.lyr_outflow).layer().editFormConfig()
-                c_outflow.setWidgetType(1, "ValueMap") # 1 - field number
-                c_outflow.setWidgetConfig(1, {u'Grid element': u'N', u'Channel element': u'K'})
-                c_outflow.setWidgetType(2, "ValueMap")
-                c_outflow.setWidgetConfig(2, {u'Channel': 0, u'Floodplain': 1})
-                
-                uri = self.gpkg.path + '|layername=reservoirs'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Reservoirs', style='reservoirs.qml')
-                uri = self.gpkg.path + '|layername=grid'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Grid', style='grid.qml')
-                uri = self.gpkg.path + '|layername=outflow_cells'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Outflow Cells', subgroup='Tables')
-                uri = self.gpkg.path + '|layername=outflow_chan_elems'
-                self.lyrs.load_layer(uri, self.gpkg.group, 'Outflow Channel Elements', subgroup='Tables')
+                # load layers and tables
+                self.load_layers()
                 self.uc.bar_info('Flo2D model imported', dur=3)
             else:
                 pass
         else:
             pass
+
+    def load_layers(self):
+        self.layers_data = OrderedDict([
+        
+        # LAYERS
+        
+            ('inflow', {
+                'name': 'Inflow',
+                'sgroup': None,
+                'styles': ['inflow.qml'],
+                'attrs_edit_widgets': {
+                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
+                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
+                }
+            }),
+            ('outflow', {
+                'name': 'Outflow',
+                'sgroup': None,
+                'styles': ['outflow.qml'],
+                'attrs_edit_widgets': {
+                    1: {'name': 'ValueMap', 'config': {u'Grid element': u'N', u'Channel element': u'K'}},
+                    2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
+                }
+            }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': None,
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('reservoirs', {
+                'name': 'Reservoirs',
+                'sgroup': None,
+                'styles': ['reservoirs.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('grid', {
+                'name': 'Grid',
+                'sgroup': None,
+                'styles': ['grid.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            
+            # TABLES
+            
+            ('outflow_cells', {
+                'name': 'Outflow Cells',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('outflow_chan_elems', {
+                'name': 'Outflow Channel Elements',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('rain', {
+                'name': 'Rain',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('rain_arf_cells', {
+                'name': 'Rain ARF Cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            })
+        ])
+        for lyr in self.layers_data:
+            data = self.layers_data[lyr]
+            if data['styles']:
+                lstyle = data['styles'][0]
+            else:
+                lstyle = None
+            uri = self.gpkg.path + '|layername={}'.format(lyr)
+            lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'])
+            if data['attrs_edit_widgets']:
+                c = self.lyrs.get_layer_tree_item(lyr_id).layer().editFormConfig()
+                for attr, widget_data in data['attrs_edit_widgets'].iteritems():
+                    print attr, widget_data
+                    c.setWidgetType(attr, widget_data['name'])
+                    c.setWidgetConfig(attr, widget_data['config'])
+            else:
+                pass # no attributes edit widgets config
 
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""

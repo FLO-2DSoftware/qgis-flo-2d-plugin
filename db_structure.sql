@@ -90,7 +90,7 @@ CREATE TRIGGER "find_inflow_cells_update"
 
 CREATE TRIGGER "find_inflow_cells_delete"
     AFTER DELETE ON "inflow"
-    WHEN (OLD."geom" NOT NULL AND NOT ST_IsEmpty(OLD."geom"))
+--     WHEN (OLD."geom" NOT NULL AND NOT ST_IsEmpty(OLD."geom"))
     BEGIN
         DELETE FROM "inflow_cells" WHERE inflow_fid = OLD."fid";
     END;
@@ -165,14 +165,14 @@ CREATE TRIGGER "find_outflow_chan_elems_update"
 
 CREATE TRIGGER "find_outflow_cells_delete"
     AFTER DELETE ON "outflow"
-    WHEN (OLD."geom" NOT NULL AND NOT ST_IsEmpty(OLD."geom") AND OLD."ident" = 'N')
+    WHEN (OLD."ident" = 'N')
     BEGIN
         DELETE FROM "outflow_cells" WHERE outflow_fid = OLD."fid";
     END;
 
 CREATE TRIGGER "find_outflow_chan_elems_delete"
     AFTER DELETE ON "outflow"
-    WHEN (OLD."geom" NOT NULL AND NOT ST_IsEmpty(OLD."geom") AND OLD."ident" = 'K')
+    WHEN (OLD."ident" = 'K')
     BEGIN
         DELETE FROM "outflow_chan_elems" WHERE outflow_fid = OLD."fid";
     END;
@@ -223,4 +223,65 @@ CREATE TABLE "time_series_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_data', 'aspatial');
 
 
--- 
+-- RAIN.DAT
+
+CREATE TABLE "rain" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT, -- name of rain
+    "irainreal" INTEGER, -- IRAINREAL switch for real-time rainfall (NEXRAD)
+    "ireainbuilding" INTEGER, -- IRAINBUILDING, switch, if 1 rainfall on ARF portion of grid will be contributed to surface runoff
+    "time_series_fid" INTEGER, -- id of time series used for rain cumulative distribution (in time)
+    "tot_rainfall" REAL, -- RTT, total storm rainfall [inch or mm]
+    "rainabs" REAL, -- RAINABS, rain interception or abstraction
+    "irainarf" REAL, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
+    "movingstrom" INTEGER, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
+    "rainspeed" REAL, -- RAINSPEED, speed of moving storm
+    "iraindir" INTEGER, -- IRAINDIR, direction of moving storm
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain', 'aspatial');
+
+CREATE TABLE "rain_arf_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "rain_fid" INTEGER, -- fid of rain the area is defined for
+    "arf" REAL, -- RAINARF(I), area reduction factor
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rain_arf_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('rain_arf_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('rain_arf_areas', 'geom');
+SELECT gpkgAddSpatialIndex('rain_arf_areas', 'geom');
+
+CREATE TABLE "rain_arf_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "rain_arf_area_fid" INTEGER, -- fid of area with ARF defined
+    "grid_fid" INTEGER, -- IRGRID(I), nr of grid element
+    "arf" REAL -- RAINARF(I), ARF value for a grid elemen
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_arf_cells', 'aspatial');
+
+CREATE TRIGGER "find_rain_arf_cells_insert"
+    AFTER INSERT ON "rain_arf_areas"
+    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
+        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf) 
+        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_rain_arf_cells_update"
+    AFTER UPDATE ON "rain_arf_areas"
+    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
+        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf) 
+        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_rain_arf_cells_delete"
+    AFTER DELETE ON "rain_arf_areas"
+    BEGIN
+        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = OLD."fid";
+    END;
