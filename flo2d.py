@@ -143,7 +143,7 @@ class Flo2D(object):
         # remove the toolbar
         del self.toolbar
         del self.conn, self.gpkg, self.lyrs
-        
+
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
         self.gpkg_fname = None
@@ -217,8 +217,23 @@ class Flo2D(object):
         else:
             pass
 
+    def call_methods(self, calls, *args):
+        for call in calls:
+            try:
+                method = getattr(self.gpkg, call)
+                method(*args)
+            except Exception as e:
+                self.uc.log_info(repr((call, e)))
+
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
+        import_calls = [
+            'import_cont_toler',
+            'import_mannings_n_topo',
+            'import_inflow',
+            'import_outflow',
+            'import_rain'
+        ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='*.DAT')
@@ -238,10 +253,7 @@ class Flo2D(object):
                         return
                 else:
                     pass
-                self.gpkg.import_mannings_n_topo()
-                self.gpkg.import_cont_toler()
-                self.gpkg.import_inflow()
-                self.gpkg.import_outflow()
+                self.call_methods(import_calls)
                 # load layers and tables
                 self.load_layers()
                 self.uc.bar_info('Flo2D model imported', dur=3)
@@ -252,9 +264,8 @@ class Flo2D(object):
 
     def load_layers(self):
         self.layers_data = OrderedDict([
-        
         # LAYERS
-        
+
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': None,
@@ -291,9 +302,9 @@ class Flo2D(object):
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
-            
+
             # TABLES
-            
+
             ('outflow_cells', {
                 'name': 'Outflow Cells',
                 'sgroup': 'Tables',
@@ -338,15 +349,19 @@ class Flo2D(object):
 
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
+        export_calls = [
+            'export_cont',
+            'export_mannings_n_topo',
+            'export_mannings_n_topo',
+            'export_outflow',
+            'export_rain'
+        ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         outdir = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
         if outdir:
             s.setValue('FLO-2D/lastGdsDir', outdir)
-            self.gpkg.export_cont(outdir)
-            self.gpkg.export_mannings_n_topo(outdir)
-            self.gpkg.export_inflow(outdir)
-            self.gpkg.export_outflow(outdir)
+            self.call_methods(export_calls, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
 
     def settings(self):

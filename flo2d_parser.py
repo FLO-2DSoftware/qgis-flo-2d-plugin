@@ -22,7 +22,7 @@
 """
 import os
 from collections import OrderedDict
-from itertools import izip, izip_longest
+from itertools import izip, izip_longest, chain
 
 
 class ParseDAT(object):
@@ -36,7 +36,11 @@ class ParseDAT(object):
             'MANNINGS_N.DAT': None,
             'TOPO.DAT': None,
             'INFLOW.DAT': None,
-            'OUTFLOW.DAT': None
+            'OUTFLOW.DAT': None,
+            'RAIN.DAT': None,
+            'RAINCELL.DAT': None,
+            'INFIL.DAT': None,
+            'EVAPOR.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -194,3 +198,60 @@ class ParseDAT(object):
             else:
                 pass
         return koutflow, noutflow, ooutflow
+
+    def parse_rain(self):
+        rain = self.dat_files['RAIN.DAT']
+        head = ['IRAINREAL', 'IRAINBUILDING', 'RTT', 'RAINABS', 'RAINARF', 'MOVINGSTORM']
+        par = self.single_parser(rain)
+        line1 = next(par)
+        line2 = next(par)
+        options = OrderedDict(zip(head, chain(line1, line2)))
+        time_series = []
+        rain_arf = []
+        for row in par:
+            rainchar = row[0]
+            if rainchar == 'R':
+                time_series.append(row)
+            elif options['MOVINGSTORM'] != '0' and 'RAINSPEED' not in options:
+                rainspeed, iraindir = row
+                options['RAINSPEED'] = rainspeed
+                options['IRAINDIR'] = iraindir
+            else:
+                rain_arf.append(row)
+            if 'RAINSPEED' not in options:
+                options['RAINSPEED'] = 'NULL'
+                options['IRAINDIR'] = 'NULL'
+            else:
+                pass
+        return options, time_series, rain_arf
+
+    def parse_raincell(self):
+        pass
+
+    def parse_infil(self):
+        infil_rows = [
+            ['INFMETHOD'],
+            ['ABSTR', 'SATI', 'SATF', 'POROS', 'SOILD', 'INFCHAN'],
+            ['HYDCALL', 'SOILALL', 'HYDCADJ'],
+
+            ['HYDCXX'],
+            ['INFILCHAR_R', 'HYDCX', 'HYDCXFINAL'],
+
+            ['SCSNALL', 'ABSTR1'],
+
+            ['INFILCHAR_F', 'INFGRID', 'HYDC', 'SOILS', 'DTHETA', 'ABSTRINF', 'RTIMPF', 'SOIL_DEPTH'],
+            ['INFILCHAR_C', 'INFGRID',  'SCSCN'],
+            ['INFILCHAR_I', 'FHORTONI', 'FHORTONF', 'DECAYA'],
+            ['INFILCHAR_H', 'INFGRID', 'FHORTI', 'FHORTF', 'DECA']
+        ]
+
+    def parse_evapor(self):
+        pass
+
+
+if __name__ == '__main__':
+    x = ParseDAT()
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Barn\RAIN.DAT')
+    res = x.parse_rain()
+    print(res)
+
