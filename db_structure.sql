@@ -299,7 +299,7 @@ CREATE TABLE "chan" (
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan', 'geom');
 SELECT gpkgAddSpatialIndex('chan', 'geom');
 
@@ -317,7 +317,7 @@ CREATE TABLE "chan_r" (
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_r', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_r', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan_r', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_r', 'geom');
 SELECT gpkgAddSpatialIndex('chan_r', 'geom');
 
@@ -347,7 +347,7 @@ CREATE TABLE "chan_v" (
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_v', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_v', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan_v', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_v', 'geom');
 SELECT gpkgAddSpatialIndex('chan_v', 'geom');
 
@@ -367,7 +367,7 @@ CREATE TABLE "chan_t" (
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_t', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_t', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan_t', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_t', 'geom');
 SELECT gpkgAddSpatialIndex('chan_t', 'geom');
 
@@ -382,16 +382,29 @@ CREATE TABLE "chan_n" (
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_n', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_n', 'geom');
 SELECT gpkgAddSpatialIndex('chan_n', 'geom');
+
+CREATE VIEW "chan_elems_in_segment" (
+    chan_elem_fid,
+    seg_fid
+) AS 
+SELECT DISTINCT ichangrid, seg_fid FROM chan_r
+UNION ALL
+SELECT DISTINCT ichangrid, seg_fid FROM chan_v
+UNION ALL
+SELECT DISTINCT ichangrid, seg_fid FROM chan_t
+UNION ALL
+SELECT DISTINCT ichangrid, seg_fid FROM chan_n
+;
 
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "iconflo1" INTEGER, -- ICONFLO1, tributary channel element at confluence
     "iconflo2" INTEGER, -- ICONFLO2, main channel element at confluence
-    "nr_in_seg" INTEGER, -- cross-section number in segment
-    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "trib_seg_fid" INTEGER, -- fid of tributary channel segment 
+    "main_seg_fid" INTEGER, -- fid of main channel segment
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_confluences', 'features', 4326);
@@ -408,13 +421,38 @@ SELECT gpkgAddGeometryColumn('noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0
 SELECT gpkgAddGeometryTriggers('noexchange_chan_areas', 'geom');
 SELECT gpkgAddSpatialIndex('noexchange_chan_areas', 'geom');
 
--- TODO: trigger
-
 CREATE TABLE "noexchange_chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "noex_area_fid" INTEGER, -- fid of noexchange_chan_area polygon
     "chan_elem_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('noexchange_chan_areas', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_elems', 'aspatial');
+
+CREATE TRIGGER "find_noexchange_cells_insert"
+    AFTER INSERT ON "noexchange_chan_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_noexchange_cells_update"
+    AFTER UPDATE ON "noexchange_chan_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_noexchange_cells_delete"
+    AFTER DELETE ON "noexchange_chan_areas"
+    BEGIN
+        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = OLD."fid";
+    END;
 
 CREATE TABLE "chan_wsel" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -424,4 +462,4 @@ CREATE TABLE "chan_wsel" (
     "iend" INTEGER, -- IEND, last channel element with a starting WSEL specified
     "wselend" REAL -- WSELEND, last channel element starting WSEL
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_wsel', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_wsel', 'aspatial');
