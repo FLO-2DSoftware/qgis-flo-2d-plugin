@@ -40,7 +40,8 @@ class ParseDAT(object):
             'RAIN.DAT': None,
             'RAINCELL.DAT': None,
             'INFIL.DAT': None,
-            'EVAPOR.DAT': None
+            'EVAPOR.DAT': None,
+            'CHAN.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -243,35 +244,14 @@ class ParseDAT(object):
                 pass
         else:
             pass
+        chars = ['R', 'F', 'S', 'C', 'I', 'H']
         for row in par:
             char = row[0]
-            if char == 'R':
-                data['R'].append(row)
-            elif char == 'F':
-                if 'F' in data:
-                    data['F'].append(row)
+            if char in chars:
+                if char in data:
+                    data[char].append(row)
                 else:
-                    data['F'] = [row]
-            elif char == 'S':
-                if 'S' in data:
-                    data['S'].append(row)
-                else:
-                    data['S'] = [row]
-            elif char == 'C':
-                if 'C' in data:
-                    data['C'].append(row)
-                else:
-                    data['C'] = [row]
-            elif char == 'I':
-                if 'I' in data:
-                    data['I'].append(row)
-                else:
-                    data['I'] = [row]
-            elif char == 'H':
-                if 'H' in data:
-                    data['H'].append(row)
-                else:
-                    data['H'] = [row]
+                    data[char] = [row]
             else:
                 data.update(zip(line5, row))
         return data
@@ -293,6 +273,6 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\RioGrande\EVAPOR.DAT')
-    res = x.parse_evapor()
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
+    res = x.parse_infil()
     print(res)
