@@ -63,8 +63,9 @@ class ParseDAT(object):
     def scan_project_dir(self, path):
         self.project_dir = os.path.dirname(path)
         for f in os.listdir(self.project_dir):
-            if f.upper() in self.dat_files:
-                self.dat_files[f.upper()] = os.path.join(self.project_dir, f)
+            fname = f.upper()
+            if fname in self.dat_files:
+                self.dat_files[fname] = os.path.join(self.project_dir, f)
             else:
                 pass
 
@@ -270,9 +271,42 @@ class ParseDAT(object):
                 data[month]['time_series'].append(row)
         return data
 
+    def parse_chan(self):
+        chan = self.dat_files['CHAN.DAT']
+        par = self.single_parser(chan)
+        start = True
+        segments = []
+        wsel = []
+        confluence = []
+        noexchange = []
+        shape = ['R', 'V', 'T', 'N']
+        chanchar = ['C', 'E']
+        for row in par:
+            char = row[0]
+            if char not in shape and char not in chanchar and len(row) > 2:
+                self.fix_row_size(row, 4)
+                segments.append(row)
+                segments[-1].append([])
+            elif char in shape:
+                segments[-1][-1].append(row)
+            elif char == 'C':
+                confluence.append(row)
+            elif char == 'E':
+                noexchange.append(row)
+            else:
+                if start is True:
+                    wsel.append(row)
+                    start = False
+                else:
+                    wsel[-1].extend(row)
+                    start = True
+        return segments, wsel, confluence, noexchange
+
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
-    res = x.parse_infil()
-    print(res)
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\CHAN.DAT')
+    res = x.parse_chan()
+    segments, wsel, confluence, noexchenge = res
+    for i in chain(*res):
+        print(i)

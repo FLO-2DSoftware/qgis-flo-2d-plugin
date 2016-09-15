@@ -111,6 +111,16 @@ class GeoPackageUtils(object):
             cells[i] = geom
         return cells
 
+    def build_linestring(self, gids, table='grid', field='fid'):
+        line_sql = '''LINESTRING('''
+        for i in gids:
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, i)
+            geom = self.execute(sql).fetchone()[0]
+            points = geom.strip('POINT()') + ','
+            line_sql += points
+        line_sql = line_sql.strip(',') + ')'
+        return line_sql
+
     def get_max(self, table, field='fid'):
         sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(field, table)
         max_val = self.execute(sql).fetchone()[0]
@@ -355,6 +365,70 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rain_arf_sql += rain_arf_part.format(fid, val, cells[gid], buff)
 
         sql_list = [ts_sql, rain_sql, tsd_sql, rain_arf_sql]
+        for sql in sql_list:
+            if sql.endswith(','):
+                self.execute(sql.rstrip(','))
+            else:
+                pass
+
+    def import_chan(self):
+        self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences', 'noexchange_chan_areas', 'chan_wsel')
+        segments, wsel, confluence, noexchange = self.parser.parse_chan()
+        chan_sql = '''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES'''
+        chan_r_sql = '''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen) VALUES'''
+        chan_v_sql = '''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22) VALUES'''
+        chan_t_sql = '''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr) VALUES'''
+        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum) VALUES'''
+        chan_wsel_sql = '''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES'''
+        chan_conf_sql = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid) VALUES'''
+        noex_chan_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
+
+        chan_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}, {3}, {4}),'''
+        chan_r_part = '\n(' + ','.join(['{} '] * 9) + '),'
+        chan_v_part = '\n(' + ','.join(['{} '] * 21) + '),'
+        chan_t_part = '\n(' + ','.join(['{} '] * 11) + '),'
+        chan_n_part = '\n(' + ','.join(['{} '] * 6) + '),'
+        chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + '),'
+        chan_conf_part = '\n(' + ','.join(['{} '] * 3) + '),'
+        noex_chan_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3))),'''
+
+        sqls = {
+            'R': [chan_r_sql, chan_r_part],
+            'V': [chan_v_sql, chan_v_part],
+            'T': [chan_t_sql, chan_t_part],
+            'N': [chan_n_sql, chan_n_part]
+        }
+
+        for i, seg in enumerate(segments):
+            xs = seg[-1]
+            gids = []
+            for ii, row in enumerate(xs):
+                char = row[0]
+                gid = row[1]
+                params = row[1:]
+                gids.append(gid)
+                sqls[char][0] += sqls[char][1].format(i+1, ii+2, *params)
+            options = seg[:-1]
+            geom = self.build_linestring(gids)
+            chan_sql += chan_part.format(geom, *options)
+
+        for row in wsel:
+            chan_wsel_sql += chan_wsel_part.format(*row)
+
+        for i, row in enumerate(confluence):
+            conf_fid = i + 1
+            chan_conf_sql += chan_conf_part.format(conf_fid, 0, row[1])
+            chan_conf_sql += chan_conf_part.format(conf_fid, 1, row[2])
+
+        buff = self.cell_size * 0.4
+        for row in noexchange:
+            gid = row[-1]
+            geom = self.get_centroids([gid])[0]
+            noex_chan_sql += noex_chan_part.format(geom, buff)
+
+        sql_list = [x[0] for x in sqls.values()]
+        sql_list.insert(0, chan_sql)
+        sql_list.extend([chan_conf_sql, noex_chan_sql, chan_wsel_sql])
         for sql in sql_list:
             if sql.endswith(','):
                 self.execute(sql.rstrip(','))

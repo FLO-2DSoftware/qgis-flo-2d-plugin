@@ -164,9 +164,8 @@ class Flo2D(object):
                          directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_fname:
             return
-        
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
-        db0 = os.path.join(self.plugin_dir, '0.gpkg')
+        #db0 = os.path.join(self.plugin_dir, '0.gpkg')
 
         self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
         if not self.gpkg.database_create():
@@ -232,7 +231,8 @@ class Flo2D(object):
             'import_mannings_n_topo',
             'import_inflow',
             'import_outflow',
-            'import_rain'
+            'import_rain',
+            'import_chan'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
@@ -347,7 +347,6 @@ class Flo2D(object):
             if data['attrs_edit_widgets']:
                 c = self.lyrs.get_layer_tree_item(lyr_id).layer().editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].iteritems():
-                    print attr, widget_data
                     c.setWidgetType(attr, widget_data['name'])
                     c.setWidgetConfig(attr, widget_data['config'])
             else:
