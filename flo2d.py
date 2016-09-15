@@ -296,6 +296,12 @@ class Flo2D(object):
                 'styles': ['reservoirs.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('chan_confluences', {
+                'name': 'Channel confluences',
+                'sgroup': None,
+                'styles': ['chan_confluences.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('grid', {
                 'name': 'Grid',
                 'sgroup': None,

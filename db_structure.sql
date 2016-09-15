@@ -401,16 +401,33 @@ SELECT DISTINCT ichangrid, seg_fid FROM chan_n
 
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "iconflo1" INTEGER, -- ICONFLO1, tributary channel element at confluence
-    "iconflo2" INTEGER, -- ICONFLO2, main channel element at confluence
-    "trib_seg_fid" INTEGER, -- fid of tributary channel segment 
-    "main_seg_fid" INTEGER, -- fid of main channel segment
+    "conf_fid" INTEGER, -- confluence fid
+    "type" INTEGER, -- switch, tributary (0 if ICONFLO1) or main channel (1 if ICONFLO2) 
+    "chan_elem_fid" INTEGER, -- ICONFLO1 or ICONFLO2, tributary or main channel element fid
+    "seg_fid" INTEGER, -- fid of channel segment 
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_confluences', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_confluences', 'geom', 'MULTIPOINT', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('chan_confluences', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_confluences', 'geom');
 SELECT gpkgAddSpatialIndex('chan_confluences', 'geom');
+
+-- automatically create/modify geometry of confluences on iconflo1/2 insert/update
+CREATE TRIGGER "confluence_geom_insert"
+    AFTER INSERT ON "chan_confluences"
+    WHEN (NEW."chan_elem_fid" NOT NULL)
+    BEGIN
+        UPDATE "chan_confluences" 
+            SET geom = ( SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+    END;
+
+CREATE TRIGGER "confluence_geom_update"
+    AFTER UPDATE ON "chan_confluences"
+    WHEN (NEW."chan_elem_fid" NOT NULL)
+    BEGIN
+        UPDATE "chan_confluences" 
+            SET geom = ( SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+    END;
 
 CREATE TABLE "noexchange_chan_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
