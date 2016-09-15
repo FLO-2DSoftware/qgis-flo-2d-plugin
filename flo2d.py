@@ -265,7 +265,33 @@ class Flo2D(object):
     def load_layers(self):
         self.layers_data = OrderedDict([
         # LAYERS
-
+            ('chan_r', {
+                'name': 'Rectangular cross-sections',
+                'sgroup': 'XSections',
+                'styles': ['xsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            
+            ('chan_v', {
+                'name': 'Var Area cross-sections',
+                'sgroup': 'XSections',
+                'styles': ['xsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            
+            ('chan_t', {
+                'name': 'Trapez cross-sections',
+                'sgroup': 'XSections',
+                'styles': ['xsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            
+            ('chan_n', {
+                'name': 'Natural cross-sections',
+                'sgroup': 'XSections',
+                'styles': ['xsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': None,
@@ -294,6 +320,12 @@ class Flo2D(object):
                 'name': 'Reservoirs',
                 'sgroup': None,
                 'styles': ['reservoirs.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('chan', {
+                'name': 'Channel segments (left bank)',
+                'sgroup': None,
+                'styles': ['chan.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('chan_confluences', {

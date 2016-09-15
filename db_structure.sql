@@ -314,6 +314,7 @@ CREATE TABLE "chan_r" (
     "fcw" REAL, -- FCW, channel width
     "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
     "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_r', 'features', 4326);
@@ -344,6 +345,7 @@ CREATE TABLE "chan_v" (
     "b22" REAL, -- B22,
     "c11" REAL, -- C11,
     "c22" REAL, -- C22,
+    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_v', 'features', 4326);
@@ -364,6 +366,8 @@ CREATE TABLE "chan_t" (
     "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "zl" REAL, -- ZL left side slope
     "zr" REAL, --ZR right side slope
+    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
+    
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_t', 'features', 4326);
@@ -379,12 +383,51 @@ CREATE TABLE "chan_n" (
     "fcn" REAL, -- FCN, average Manning's n in the grid element
     "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "nxecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_n', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_n', 'geom');
 SELECT gpkgAddSpatialIndex('chan_n', 'geom');
+
+-- create geometry when rightbank and leftbank are given
+CREATE TRIGGER "chan_n_geom_insert"
+    AFTER INSERT ON "chan_n"
+    WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
+    BEGIN
+        UPDATE "chan_n" 
+            SET geom = (
+                SELECT 
+                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+                    (ST_Centroid(CastAutomagic(g2.geom)))))
+                FROM grid AS g1, grid AS g2
+                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
+    END;
+
+-- --update left and bank fids when geometry changed
+-- CREATE TRIGGER "chan_n_banks_update_geom_changed"
+--     AFTER UPDATE OF geom ON "chan_n"
+--     WHEN (NOT OLD.geom = NEW.geom)
+--     BEGIN
+--         UPDATE "chan_n" SET ichangrid = (SELECT g.fid FROM grid AS g
+--             WHERE ST_Intersects(g.geom,StartPoint(CastAutomagic(geom))));
+--         UPDATE "chan_n" SET rbankgrid = (SELECT g.fid FROM grid AS g
+--             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(geom))));
+--     END;
+
+CREATE TRIGGER "chan_n_geom_update_banks_changed"
+    AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
+    WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
+    BEGIN
+        UPDATE "chan_n" 
+            SET geom = (
+                SELECT 
+                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+                    (ST_Centroid(CastAutomagic(g2.geom)))))
+                FROM grid AS g1, grid AS g2
+                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
+    END;
 
 CREATE VIEW "chan_elems_in_segment" (
     chan_elem_fid,
@@ -396,8 +439,7 @@ SELECT DISTINCT ichangrid, seg_fid FROM chan_v
 UNION ALL
 SELECT DISTINCT ichangrid, seg_fid FROM chan_t
 UNION ALL
-SELECT DISTINCT ichangrid, seg_fid FROM chan_n
-;
+SELECT DISTINCT ichangrid, seg_fid FROM chan_n;
 
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -418,7 +460,8 @@ CREATE TRIGGER "confluence_geom_insert"
     WHEN (NEW."chan_elem_fid" NOT NULL)
     BEGIN
         UPDATE "chan_confluences" 
-            SET geom = ( SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+            SET geom = (SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+        -- TODO: set also seg_fid
     END;
 
 CREATE TRIGGER "confluence_geom_update"
@@ -426,7 +469,8 @@ CREATE TRIGGER "confluence_geom_update"
     WHEN (NEW."chan_elem_fid" NOT NULL)
     BEGIN
         UPDATE "chan_confluences" 
-            SET geom = ( SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+            SET geom = (SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
+        -- TODO: set also seg_fid
     END;
 
 CREATE TABLE "noexchange_chan_areas" (
