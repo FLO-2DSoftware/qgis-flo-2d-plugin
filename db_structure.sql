@@ -285,3 +285,143 @@ CREATE TRIGGER "find_rain_arf_cells_delete"
     BEGIN
         DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = OLD."fid";
     END;
+
+
+-- CHAN.DAT
+
+CREATE TABLE "chan" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT, -- name of segment (optional)
+    "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
+    "froudc" REAL, -- FROUDC, max Froude channel number
+    "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
+    "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan', 'geom');
+SELECT gpkgAddSpatialIndex('chan', 'geom');
+
+CREATE TABLE "chan_r" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- fid of cross-section's segment
+    "nr_in_seg" INTEGER, -- cross-section number in segment
+    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_r', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_r', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_r', 'geom');
+SELECT gpkgAddSpatialIndex('chan_r', 'geom');
+
+CREATE TABLE "chan_v" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- fid of cross-section's segment
+    "nr_in_seg" INTEGER, -- cross-section number in segment
+    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "a1" REAL, -- A1,
+    "a2" REAL, -- A2,
+    "b1" REAL, -- B1,
+    "b2" REAL, -- B2,
+    "c1" REAL, -- C1,
+    "c2" REAL, -- C2,
+    "excdep" REAL, -- EXCDEP, channel depth above which second variable area relationship will be applied
+    "a11" REAL, -- A11,
+    "a22" REAL, -- A22,
+    "b11" REAL, -- B11,
+    "b22" REAL, -- B22,
+    "c11" REAL, -- C11,
+    "c22" REAL, -- C22,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_v', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_v', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_v', 'geom');
+SELECT gpkgAddSpatialIndex('chan_v', 'geom');
+
+CREATE TABLE "chan_t" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- fid of cross-section's segment
+    "nr_in_seg" INTEGER, -- cross-section number in segment
+    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "zl" REAL, -- ZL left side slope
+    "zr" REAL, --ZR right side slope
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_t', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_t', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_t', 'geom');
+SELECT gpkgAddSpatialIndex('chan_t', 'geom');
+
+CREATE TABLE "chan_n" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- fid of cross-section's segment
+    "nr_in_seg" INTEGER, -- cross-section number in segment
+    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "nxecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_n', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'POLYLINE', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_n', 'geom');
+SELECT gpkgAddSpatialIndex('chan_n', 'geom');
+
+CREATE TABLE "chan_confluences" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iconflo1" INTEGER, -- ICONFLO1, tributary channel element at confluence
+    "iconflo2" INTEGER, -- ICONFLO2, main channel element at confluence
+    "nr_in_seg" INTEGER, -- cross-section number in segment
+    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_confluences', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_confluences', 'geom', 'MULTIPOINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_confluences', 'geom');
+SELECT gpkgAddSpatialIndex('chan_confluences', 'geom');
+
+CREATE TABLE "noexchange_chan_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('noexchange_chan_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('noexchange_chan_areas', 'geom');
+SELECT gpkgAddSpatialIndex('noexchange_chan_areas', 'geom');
+
+-- TODO: trigger
+
+CREATE TABLE "noexchange_chan_elems" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "chan_elem_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('noexchange_chan_areas', 'aspatial');
+
+CREATE TABLE "chan_wsel" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- found by geoprocessing trigger, channel segment for which the WSELs are specified
+    "istart" INTEGER, -- ISTART, first channel element with a starting WSEL specified
+    "wselstart" REAL, -- WSELSTART, first channel element starting WSEL
+    "iend" INTEGER, -- IEND, last channel element with a starting WSEL specified
+    "wselend" REAL -- WSELEND, last channel element starting WSEL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_wsel', 'aspatial');
