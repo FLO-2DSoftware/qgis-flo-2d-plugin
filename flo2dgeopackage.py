@@ -474,10 +474,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells;'''
         ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0};'''
 
-        rain_line1 = '{0: <10} {1}\n'
-        rain_line2 = '{0: <10} {1: <10} {2:<10} {3}\n'
-        rain_line4 = '{0: <10} {1}\n'
-        tsd_line = 'R {0: <10} {1}\n'
+        rain_line1 = '{0}  {1}\n'
+        rain_line2 = '{0}   {1}  {2}  {3}\n'
+        rain_line4 = '{0}   {1}\n'
+        tsd_line = 'R {0:.3f}   {1:.3f}\n'
         cell_line = '{0: <10} {1}\n'
 
         rain_row = self.execute(rain_sql).fetchone()

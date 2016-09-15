@@ -40,7 +40,8 @@ class ParseDAT(object):
             'RAIN.DAT': None,
             'RAINCELL.DAT': None,
             'INFIL.DAT': None,
-            'EVAPOR.DAT': None
+            'EVAPOR.DAT': None,
+            'CHAN.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -63,7 +64,7 @@ class ParseDAT(object):
         self.project_dir = os.path.dirname(path)
         for f in os.listdir(self.project_dir):
             if f.upper() in self.dat_files:
-                self.dat_files[f] = os.path.join(self.project_dir, f)
+                self.dat_files[f.upper()] = os.path.join(self.project_dir, f)
             else:
                 pass
 
@@ -205,53 +206,73 @@ class ParseDAT(object):
         par = self.single_parser(rain)
         line1 = next(par)
         line2 = next(par)
-        options = OrderedDict(zip(head, chain(line1, line2)))
+        data = OrderedDict(zip(head, chain(line1, line2)))
         time_series = []
         rain_arf = []
         for row in par:
             rainchar = row[0]
             if rainchar == 'R':
                 time_series.append(row)
-            elif options['MOVINGSTORM'] != '0' and 'RAINSPEED' not in options:
+            elif data['MOVINGSTORM'] != '0' and 'RAINSPEED' not in data:
                 rainspeed, iraindir = row
-                options['RAINSPEED'] = rainspeed
-                options['IRAINDIR'] = iraindir
+                data['RAINSPEED'] = rainspeed
+                data['IRAINDIR'] = iraindir
             else:
                 rain_arf.append(row)
-            if 'RAINSPEED' not in options:
-                options['RAINSPEED'] = 'NULL'
-                options['IRAINDIR'] = 'NULL'
+            if 'RAINSPEED' not in data:
+                data['RAINSPEED'] = 'NULL'
+                data['IRAINDIR'] = 'NULL'
             else:
                 pass
-        return options, time_series, rain_arf
-
-    def parse_raincell(self):
-        pass
+        return data, time_series, rain_arf
 
     def parse_infil(self):
-        infil_rows = [
-            ['INFMETHOD'],
-            ['ABSTR', 'SATI', 'SATF', 'POROS', 'SOILD', 'INFCHAN'],
-            ['HYDCALL', 'SOILALL', 'HYDCADJ'],
-
-            ['HYDCXX'],
-            ['INFILCHAR_R', 'HYDCX', 'HYDCXFINAL'],
-
-            ['SCSNALL', 'ABSTR1'],
-
-            ['INFILCHAR_F', 'INFGRID', 'HYDC', 'SOILS', 'DTHETA', 'ABSTRINF', 'RTIMPF', 'SOIL_DEPTH'],
-            ['INFILCHAR_C', 'INFGRID',  'SCSCN'],
-            ['INFILCHAR_I', 'FHORTONI', 'FHORTONF', 'DECAYA'],
-            ['INFILCHAR_H', 'INFGRID', 'FHORTI', 'FHORTF', 'DECA']
-        ]
+        infil = self.dat_files['INFIL.DAT']
+        line1 = ['INFMETHOD']
+        line2 = ['ABSTR', 'SATI', 'SATF', 'POROS', 'SOILD', 'INFCHAN']
+        line3 = ['HYDCALL', 'SOILALL', 'HYDCADJ']
+        line5 = ['SCSNALL', 'ABSTR1']
+        par = self.single_parser(infil)
+        data = OrderedDict(zip(line1, next(par)))
+        method = data['INFMETHOD']
+        if method == '1' or method == '3':
+            data.update(zip(line2, next(par)))
+            data.update(zip(line3, next(par)))
+            if data['INFCHAN'] == '1':
+                data['R'] = [next(par)]
+            else:
+                pass
+        else:
+            pass
+        chars = ['R', 'F', 'S', 'C', 'I', 'H']
+        for row in par:
+            char = row[0]
+            if char in chars:
+                if char in data:
+                    data[char].append(row)
+                else:
+                    data[char] = [row]
+            else:
+                data.update(zip(line5, row))
+        return data
 
     def parse_evapor(self):
-        pass
+        evapor = self.dat_files['EVAPOR.DAT']
+        par = self.single_parser(evapor)
+        head = ['IEVAPMONTH', 'IDAY', 'CLOCKTIME']
+        data = OrderedDict(zip(head, next(par)))
+        month = None
+        for row in par:
+            if len(row) > 1:
+                month = row[0]
+                data[month] = {'row': row, 'time_series': []}
+            else:
+                data[month]['time_series'].append(row)
+        return data
 
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Barn\RAIN.DAT')
-    res = x.parse_rain()
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
+    res = x.parse_infil()
     print(res)
-
