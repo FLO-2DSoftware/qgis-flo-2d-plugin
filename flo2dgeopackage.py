@@ -405,6 +405,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid = row[1]
                 params = row[1:]
                 gids.append(gid)
+                self.uc.log_info(repr(row))
                 sqls[char][0] += sqls[char][1].format(i+1, ii+1, *params)
             options = seg[:-1]
             geom = self.build_linestring(gids)

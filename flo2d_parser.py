@@ -282,7 +282,7 @@ class ParseDAT(object):
         wsel = []
         confluence = []
         noexchange = []
-        shape = ['R', 'V', 'T', 'N']
+        shape = {'R': 8, 'V': 20, 'T': 10, 'N': 5}
         chanchar = ['C', 'E']
         for row in par:
             char = row[0]
@@ -291,6 +291,7 @@ class ParseDAT(object):
                 segments.append(row)
                 segments[-1].append([])
             elif char in shape:
+                self.fix_row_size(row, shape[char])
                 rbank = next(parbank)[1:]
                 segments[-1][-1].append(row + rbank)
             elif char == 'C':
@@ -309,7 +310,7 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\CHAN.DAT')
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\CHAN.dat')
     res = x.parse_chan()
     segments, wsel, confluence, noexchenge = res
     for i in chain(*res):
