@@ -211,6 +211,7 @@ class Flo2D(object):
             self.uc.log_info("Connected to {}".format(gpkg_fname))
             if self.gpkg.check_gpkg():
                 self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+                self.load_layers()
             else:
                 self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
         else:

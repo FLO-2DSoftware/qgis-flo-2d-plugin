@@ -405,20 +405,22 @@ CREATE TRIGGER "chan_n_geom_insert"
                 WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
     END;
 
+-- TODO: resolve trigger loop 
 -- --update left and bank fids when geometry changed
 -- CREATE TRIGGER "chan_n_banks_update_geom_changed"
 --     AFTER UPDATE OF geom ON "chan_n"
---     WHEN (NOT OLD.geom = NEW.geom)
+--     WHEN ( OLD.ichangrid = NEW.ichangrid AND 
+--             OLD.rbankgrid = NEW.rbankgrid)
 --     BEGIN
 --         UPDATE "chan_n" SET ichangrid = (SELECT g.fid FROM grid AS g
---             WHERE ST_Intersects(g.geom,StartPoint(CastAutomagic(geom))));
+--             WHERE ST_Intersects(g.geom,StartPoint(CastAutomagic(NEW.geom))));
 --         UPDATE "chan_n" SET rbankgrid = (SELECT g.fid FROM grid AS g
---             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(geom))));
+--             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(NEW.geom))));
 --     END;
 
 CREATE TRIGGER "chan_n_geom_update_banks_changed"
     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
-    WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
+--     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
     BEGIN
         UPDATE "chan_n" 
             SET geom = (
