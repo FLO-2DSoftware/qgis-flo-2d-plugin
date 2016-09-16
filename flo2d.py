@@ -265,7 +265,9 @@ class Flo2D(object):
 
     def load_layers(self):
         self.layers_data = OrderedDict([
+        
         # LAYERS
+            
             ('chan_r', {
                 'name': 'Rectangular cross-sections',
                 'sgroup': 'XSections',
@@ -364,6 +366,12 @@ class Flo2D(object):
             }),
             ('rain_arf_cells', {
                 'name': 'Rain ARF Cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('xsec_n_data', {
+                'name': 'Natural xsecs data',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
