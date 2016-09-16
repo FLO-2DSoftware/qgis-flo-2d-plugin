@@ -407,7 +407,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid = row[1]
                 params = row[1:]
                 gids.append(gid)
-                sqls[char][0] += sqls[char][1].format(i+1, ii+2, *params)
+                sqls[char][0] += sqls[char][1].format(i+1, ii+1, *params)
             options = seg[:-1]
             geom = self.build_linestring(gids)
             chan_sql += chan_part.format(geom, *options)
