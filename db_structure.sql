@@ -537,5 +537,30 @@ CREATE TABLE "xsec_n_data" (
     "x" REAL, -- XI, station distance from left point
     "y" REAL -- YI, elevation
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_wsel', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('xsec_n_data', 'aspatial');
 
+
+-- EVAPOR.DAT
+
+CREATE TABLE "evapor" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "ievapmonth" INTEGER, -- IEVAPMONTH, starting month of simulation
+    "iday" INTEGER, -- IDAY, starting day of the week (1-7)
+    "clocktime" REAL -- CLOCKTIME, starting clock time
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor', 'aspatial');
+
+CREATE TABLE "evapor_monthly" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "month" TEXT, -- EMONTH, name of the month
+    "monthly_evap" REAL -- EVAP, monthly evaporation rate
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_month', 'aspatial');
+
+CREATE TABLE "evapor_hourly" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "month" TEXT, -- EMONTH, name of the month
+    "hour" INTEGER, -- hour of the day (1-24)
+    "hourly_evap" REAL -- EVAPER, Hourly percentage of the daily total evaporation
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_hourly', 'aspatial');
