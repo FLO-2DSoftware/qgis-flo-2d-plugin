@@ -369,6 +369,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
+    def import_infil(self):
+        pass
+
+    def import_evapor(self):
+        self.clear_tables('evapor', 'evapor_monthly', 'evapor_hourly')
+        head, data = self.parser.parse_evapor()
+        evapor_sql = '''INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES'''
+        evapor_mont_sql = '''INSERT INTO evapor_monthly (month, monthly_evap) VALUES'''
+        evapor_hour_sql = '''INSERT INTO evapor_hourly (month, hour, hourly_evap) VALUES'''
+
+        evapor_part = '''\n({0}, {1}, {2}),'''
+        evapor_month_part = '''\n('{0}', {1}),'''
+        evapor_hour_part = '''\n('{0}', {1}, {2}),'''
+
+        evapor_sql += evapor_part.format(*head)
+        for month in data:
+            row = data[month]['row']
+            time_series = data[month]['time_series']
+            evapor_mont_sql += evapor_month_part.format(*row)
+            for h, ts in enumerate(time_series):
+                evapor_hour_sql += evapor_hour_part.format(month, h+1, ts)
+
+        sql_list = [evapor_sql, evapor_mont_sql, evapor_hour_sql]
+        for sql in sql_list:
+            if sql.endswith(','):
+                self.execute(sql.rstrip(','))
+            else:
+                pass
+
     def import_chan(self):
         self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences', 'noexchange_chan_areas', 'chan_wsel')
         segments, wsel, confluence, noexchange = self.parser.parse_chan()
@@ -379,7 +408,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, rbankgrid) VALUES'''
         chan_wsel_sql = '''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES'''
         chan_conf_sql = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid) VALUES'''
-        noex_chan_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
+        chan_e_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
 
         chan_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}, {3}, {4}),'''
         chan_r_part = '\n(' + ','.join(['{} '] * 10) + '),'
@@ -388,7 +417,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_n_part = '\n(' + ','.join(['{} '] * 7) + '),'
         chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + '),'
         chan_conf_part = '\n(' + ','.join(['{} '] * 3) + '),'
-        noex_chan_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3))),'''
+        chan_e_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3))),'''
 
         sqls = {
             'R': [chan_r_sql, chan_r_part],
@@ -405,7 +434,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid = row[1]
                 params = row[1:]
                 gids.append(gid)
-                self.uc.log_info(repr(row))
                 sqls[char][0] += sqls[char][1].format(i+1, ii+1, *params)
             options = seg[:-1]
             geom = self.build_linestring(gids)
@@ -422,16 +450,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in noexchange:
             gid = row[-1]
             geom = self.get_centroids([gid])[0]
-            noex_chan_sql += noex_chan_part.format(geom, self.buffer)
+            chan_e_sql += chan_e_part.format(geom, self.buffer)
 
         sql_list = [x[0] for x in sqls.values()]
         sql_list.insert(0, chan_sql)
-        sql_list.extend([chan_conf_sql, noex_chan_sql, chan_wsel_sql])
+        sql_list.extend([chan_conf_sql, chan_e_sql, chan_wsel_sql])
         for sql in sql_list:
             if sql.endswith(','):
                 self.execute(sql.rstrip(','))
             else:
                 pass
+
+    def import_xsec(self):
+        self.clear_tables('xsec_n_data')
+        xsec_sql = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES'''
+        chan_n_sql = '''UPDATE chan_n SET xsecname = '{0}' WHERE nxecnum = {1};'''
+        xsec_part = '''\n({0}, {1}, {2}),'''
+        data = self.parser.parse_xsec()
+        for xsec in data:
+            nr, name, nodes = xsec
+            self.execute(chan_n_sql.format(name, nr))
+            for row in nodes:
+                xsec_sql += xsec_part.format(nr, *row)
+        if xsec_sql.endswith(','):
+            self.execute(xsec_sql.rstrip(','))
+        else:
+            pass
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
@@ -458,7 +502,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 t.write(lst.replace('None', ''))
 
     def export_mannings_n_topo(self, outdir):
-        sql = '''SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
+        sql = '''SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;'''
         records = self.execute(sql)
         mannings = os.path.join(outdir, 'MANNINGS_N.DAT')
         topo = os.path.join(outdir, 'TOPO.DAT')
@@ -475,11 +519,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_inflow(self, outdir):
         cont_sql = '''SELECT value FROM cont WHERE name = 'IDEPLT';'''
-        inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow;'''
-        inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells;'''
+        inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow ORDER BY fid;'''
+        inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY fid;'''
         ts_sql = '''SELECT hourdaily FROM time_series;'''
-        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0};'''
-        reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs;'''
+        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
+        reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;'''
 
         head_line = ' {0: <15} {1}'
         inf_line = '\n{0: <15} {1: <15} {2}'
@@ -505,12 +549,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i.write(res_line.format(*res).replace('None', '').rstrip())
 
     def export_outflow(self, outdir):
-        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid FROM outflow;'''
-        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells;'''
-        outflow_chan_sql = '''SELECT outflow_fid, elem_fid FROM outflow_chan_elems;'''
+        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid FROM outflow ORDER BY fid;'''
+        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid;'''
+        outflow_chan_sql = '''SELECT outflow_fid, elem_fid FROM outflow_chan_elems ORDER BY fid;'''
         qh_sql = '''SELECT hmax, coef, expotent FROM qh_params WHERE fid = {0};'''
-        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0};'''
-        hydchar_sql = '''SELECT hydro_fid, grid_fid FROM outflow_hydrographs;'''
+        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
+        hydchar_sql = '''SELECT hydro_fid, grid_fid FROM outflow_hydrographs ORDER BY fid;'''
 
         out_line = '{0: <15} {1: <15} {2}\n'
         qh_line = 'H {0: <15} {1: <15} {2}\n'
@@ -543,8 +587,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_rain(self, outdir):
         rain_sql = '''SELECT time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
-        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells;'''
-        ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0};'''
+        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells; ORDER BY fid'''
+        ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
 
         rain_line1 = '{0}  {1}\n'
         rain_line2 = '{0}   {1}  {2}  {3}\n'
@@ -566,3 +610,91 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             for row in self.execute(rain_cells_sql):
                 r.write(cell_line.format(*row))
+
+    def export_infil(self, outdir):
+        pass
+
+    def export_evapor(self, outdir):
+        evapor_sql = '''SELECT ievapmonth, iday, clocktime FROM evapor;'''
+        evapor_month_sql = '''SELECT month, monthly_evap FROM evapor_monthly ORDER BY fid;'''
+        evapor_hour_sql = '''SELECT hourly_evap FROM evapor_hourly WHERE month = '{0}' ORDER BY fid;'''
+
+        head = '{0}   {1}   {2:.2f}\n'
+        monthly = '  {0}  {1:.2f}\n'
+        hourly = '    {0:.4f}\n'
+
+        month_rows = self.execute(evapor_month_sql)
+        evapor = os.path.join(outdir, 'EVAPOR.DAT')
+        with open(evapor, 'w') as e:
+            e.write(head.format(*self.execute(evapor_sql).fetchone()))
+            for mrow in month_rows:
+                month = mrow[0]
+                e.write(monthly.format(*mrow))
+                for hrow in self.execute(evapor_hour_sql.format(month)):
+                    e.write(hourly.format(*hrow))
+
+    def export_chan(self, outdir):
+        chan_sql = '''SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
+
+        chan_r_sql = '''SELECT * FROM chan_r WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
+        chan_v_sql = '''SELECT * FROM chan_v WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
+        chan_t_sql = '''SELECT * FROM chan_t WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
+        chan_n_sql = '''SELECT * FROM chan_n WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
+
+        chan_wsel_sql = '''SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;'''
+        chan_conf_sql = '''SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;'''
+        chan_e_sql = '''SELECT chan_elem_fid FROM noexchange_chan_elems ORDER BY fid;'''
+
+        segment = '   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n'
+        xsec = '{} '
+        chanbank = ' {0: <10} {1}\n'
+        wsel = '{0} {1:.2f}\n'
+        conf = ' C {0}  {1}\n'
+        chan_e = ' E {0}\n'
+
+        chan = os.path.join(outdir, 'CHAN.DAT')
+        bank = os.path.join(outdir, 'CHANBANK.DAT')
+
+        with open(chan, 'w') as c, open(bank, 'w') as b:
+            for row in self.execute(chan_sql):
+                fid = row[0]
+                c.write(segment.format(*row[1:]).replace('None', ''))
+                chan_r_rows = self.execute(chan_r_sql.format(fid))
+                chan_v_rows = self.execute(chan_v_sql.format(fid))
+                chan_t_rows = self.execute(chan_t_sql.format(fid))
+                chan_n_rows = self.execute(chan_n_sql.format(fid))
+                cross_sections = chain(chan_r_rows, chan_v_rows, chan_t_rows, chan_n_rows)
+                for xs in cross_sections:
+                    row_len = len(xs)
+                    xsslice = slice(3, -3)
+                    if row_len == 12:
+                        char = 'R'
+                    elif row_len == 25:
+                        char = 'V'
+                    elif row_len == 15:
+                        char = 'T'
+                    else:
+                        char = 'N'
+                        xsslice = slice(3, -4)
+                    params = [char] + list(xs[xsslice])
+                    params = [x for x in params if x is not None]
+                    form = xsec * len(params) + '\n'
+                    c.write(form.format(*params))
+                    b.write(chanbank.format(xs[3], xs[-3]))
+
+            for row in self.execute(chan_wsel_sql):
+                c.write(wsel.format(*row[:2]))
+                c.write(wsel.format(*row[2:]))
+
+            pairs = []
+            for row in self.execute(chan_conf_sql):
+                chan_elem = row[0]
+                if not pairs:
+                    pairs.append(chan_elem)
+                else:
+                    pairs.append(chan_elem)
+                    c.write(conf.format(*pairs))
+                    del pairs[:]
+
+            for row in self.execute(chan_e_sql):
+                c.write(chan_e.format(row[0]))

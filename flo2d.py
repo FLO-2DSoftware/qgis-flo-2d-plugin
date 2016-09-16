@@ -233,7 +233,10 @@ class Flo2D(object):
             'import_inflow',
             'import_outflow',
             'import_rain',
-            'import_chan'
+            'import_evapor',
+            'import_infil',
+            'import_chan',
+            'import_xsec'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
@@ -400,7 +403,11 @@ class Flo2D(object):
             'export_mannings_n_topo',
             'export_mannings_n_topo',
             'export_outflow',
-            'export_rain'
+            'export_rain',
+            'export_infil',
+            'export_evapor',
+            'export_chan',
+            'export_xsec'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
