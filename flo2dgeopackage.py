@@ -136,11 +136,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.parser = ParseDAT()
         self.cell_size = None
+        self.buffer = None
         self.chunksize = float('inf')
 
     def set_parser(self, fpath):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
+        self.buffer = self.cell_size * 0.4
 
     def _import_fplain(self):
         if self.cell_size == 0:
@@ -251,11 +253,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         reservoirs_part = '''\n({0}, {1}, AsGPB(ST_Buffer(ST_GeomFromText('{2}'), {3}, 3))),'''
 
         fid = 1
-        buff = self.cell_size * 0.4
-
         for gid in inf:
             row = inf[gid]['row']
-            inflow_sql += inflow_part.format(fid, row[0], row[1], cells[gid], buff)
+            inflow_sql += inflow_part.format(fid, row[0], row[1], cells[gid], self.buffer)
             ts_sql += ts_part.format(head['IHOURDAILY'])
             values = slice(1, None)
             for n in inf[gid]['time_series']:
@@ -265,7 +265,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for gid in res:
             row = res[gid]['row']
             wsel = row[-1] if len(row) == 3 else 'NULL'
-            reservoirs_sql += reservoirs_part.format(row[1], wsel, cells[gid], buff)
+            reservoirs_sql += reservoirs_part.format(row[1], wsel, cells[gid], self.buffer)
 
         self.execute(cont_sql.format(head['IDEPLT']))
         sql_list = [ts_sql, inflow_sql, tsd_sql, reservoirs_sql]
@@ -296,7 +296,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         fid = 1
         fid_qh = 1
         fid_ts = self.get_max('time_series') + 1
-        buff = self.cell_size * 0.4
         tsd_val = slice(1, None)
         outflow = chain(koutflow.iteritems(), noutflow.iteritems())
 
@@ -318,7 +317,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             ident = row[0]
             nostacfp = row[-1] if ident == 'N' else 'NULL'
-            outflow_sql += outflow_part.format(tsfid, ident, nostacfp, qhfid, cells[gid], buff)
+            outflow_sql += outflow_part.format(tsfid, ident, nostacfp, qhfid, cells[gid], self.buffer)
             for n in time_series:
                 tsd_sql += tsd_part.format(fid_ts, *n[tsd_val])
             fid += 1
@@ -351,7 +350,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         fid = 1
         fid_ts = self.get_max('time_series') + 1
-        buff = self.cell_size * 0.4
 
         rain_sql += rain_part.format(fid_ts, *options.values())
         ts_sql += ts_part.format(fid_ts)
@@ -362,7 +360,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         for row in rain_arf:
             gid, val = row
-            rain_arf_sql += rain_arf_part.format(fid, val, cells[gid], buff)
+            rain_arf_sql += rain_arf_part.format(fid, val, cells[gid], self.buffer)
 
         sql_list = [ts_sql, rain_sql, tsd_sql, rain_arf_sql]
         for sql in sql_list:
@@ -375,19 +373,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences', 'noexchange_chan_areas', 'chan_wsel')
         segments, wsel, confluence, noexchange = self.parser.parse_chan()
         chan_sql = '''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES'''
-        chan_r_sql = '''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen) VALUES'''
-        chan_v_sql = '''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22) VALUES'''
-        chan_t_sql = '''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr) VALUES'''
-        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum) VALUES'''
+        chan_r_sql = '''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, rbankgrid) VALUES'''
+        chan_v_sql = '''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22, rbankgrid) VALUES'''
+        chan_t_sql = '''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr, rbankgrid) VALUES'''
+        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, rbankgrid) VALUES'''
         chan_wsel_sql = '''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES'''
         chan_conf_sql = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid) VALUES'''
         noex_chan_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
 
         chan_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}, {3}, {4}),'''
-        chan_r_part = '\n(' + ','.join(['{} '] * 9) + '),'
-        chan_v_part = '\n(' + ','.join(['{} '] * 21) + '),'
-        chan_t_part = '\n(' + ','.join(['{} '] * 11) + '),'
-        chan_n_part = '\n(' + ','.join(['{} '] * 6) + '),'
+        chan_r_part = '\n(' + ','.join(['{} '] * 10) + '),'
+        chan_v_part = '\n(' + ','.join(['{} '] * 22) + '),'
+        chan_t_part = '\n(' + ','.join(['{} '] * 12) + '),'
+        chan_n_part = '\n(' + ','.join(['{} '] * 7) + '),'
         chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + '),'
         chan_conf_part = '\n(' + ','.join(['{} '] * 3) + '),'
         noex_chan_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3))),'''
@@ -420,11 +418,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_conf_sql += chan_conf_part.format(conf_fid, 0, row[1])
             chan_conf_sql += chan_conf_part.format(conf_fid, 1, row[2])
 
-        buff = self.cell_size * 0.4
         for row in noexchange:
             gid = row[-1]
             geom = self.get_centroids([gid])[0]
-            noex_chan_sql += noex_chan_part.format(geom, buff)
+            noex_chan_sql += noex_chan_part.format(geom, self.buffer)
 
         sql_list = [x[0] for x in sqls.values()]
         sql_list.insert(0, chan_sql)

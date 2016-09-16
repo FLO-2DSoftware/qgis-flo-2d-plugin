@@ -533,7 +533,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_wsel', 'aspatial
 
 CREATE TABLE "xsec_n_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "chan_n_fid" INTEGER, -- NXSECNUM, fid of cross-section in chan_n
+    "chan_n_nxsecnum" INTEGER, -- NXSECNUM, fid of cross-section in chan_n
     "x" REAL, -- XI, station distance from left point
     "y" REAL -- YI, elevation
 );

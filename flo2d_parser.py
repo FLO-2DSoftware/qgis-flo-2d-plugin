@@ -41,7 +41,8 @@ class ParseDAT(object):
             'RAINCELL.DAT': None,
             'INFIL.DAT': None,
             'EVAPOR.DAT': None,
-            'CHAN.DAT': None
+            'CHAN.DAT': None,
+            'CHANBANK.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -273,7 +274,9 @@ class ParseDAT(object):
 
     def parse_chan(self):
         chan = self.dat_files['CHAN.DAT']
+        bank = self.dat_files['CHANBANK.DAT']
         par = self.single_parser(chan)
+        parbank = self.single_parser(bank)
         start = True
         segments = []
         wsel = []
@@ -288,7 +291,8 @@ class ParseDAT(object):
                 segments.append(row)
                 segments[-1].append([])
             elif char in shape:
-                segments[-1][-1].append(row)
+                rbank = next(parbank)[1:]
+                segments[-1][-1].append(row + rbank)
             elif char == 'C':
                 confluence.append(row)
             elif char == 'E':
