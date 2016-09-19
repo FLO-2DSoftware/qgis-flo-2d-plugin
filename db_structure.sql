@@ -667,6 +667,10 @@ CREATE TABLE "infil_cells_scs" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_scs', 'aspatial');
 
+-- TODO: triggers for infil_areas_scs -> find infil_cells_scs
+
+    -- HORTON
+
 CREATE TABLE "infil_areas_horton" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "fhorti" REAL, -- FHORTI, Horton’s equation floodplain initial infiltration rate
@@ -685,6 +689,10 @@ CREATE TABLE "infil_cells_horton" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_horton', 'aspatial');
 
+-- TODO: triggers for infil_areas_horton -> find infil_cells_horton
+
+    -- CHANNELS
+
 CREATE TABLE "infil_areas_chan" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "hydconch" REAL -- HYDCONCH, hydraulic conductivity for a channel element
@@ -701,6 +709,7 @@ CREATE TABLE "infil_chan_elems" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_elems', 'aspatial');
 
+-- TODO: triggers for infil_areas_chan -> find infil_chan_elems
 
 -- HYSTRUC.DAT
 
@@ -723,7 +732,7 @@ SELECT gpkgAddGeometryColumn('struct', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('struct', 'geom');
 SELECT gpkgAddSpatialIndex('struct', 'geom');
 
--- TODO: triggers
+-- TODO: triggers for creating the struct geom based on in- and outflonod
 
 CREATE TABLE "rat_curves" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -776,3 +785,42 @@ CREATE TABLE "storm_drains" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('storm_drains', 'aspatial');
 
 
+-- STREET.DAT
+
+CREATE TABLE "street_general" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "strman" REAL, -- STRMAN, global n-value for street flow
+    "istrflo" INTEGER, -- ISTRFLO, if equal to 1 specifies that the floodplain inflow hydrograph will enter the streets rather than entering the overland portion of the grid element
+    "strfno" REAL, -- STRFNO, maximum street Froude number
+    "depx" REAL, -- DEPX, street curb height
+    "widst" REAL -- WIDST, global assignment of street width to all streets
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_general', 'aspatial');
+
+CREATE TABLE "streets" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "stname" TEXT, -- STNAME, character name of the street. Up to 15 characters can be used
+    "notes" TEXT -- notes for a street
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('streets', 'aspatial');
+
+CREATE TABLE "street_seg" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "str_fid" INTEGER, -- street fid for the street segment (from streets table)
+    "igridn" INTEGER, -- IGRIDN, grid element number
+    "depex" REAL, -- DEPX(L) or DEPEX(L), optional curb height, 0 to use global DEPX
+    "stman" REAL, -- STMAN(L), optional spatially variable street n-value within a given grid element. 0 for global
+    "elstr" REAL -- ELSTR(L), optional street elevation. If 0, the model will assign the street elevation as grid element elevation
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('street_seg', 'features', 4326);
+SELECT gpkgAddGeometryColumn('street_seg', 'geom', 'MULTILINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('street_seg', 'geom');
+SELECT gpkgAddSpatialIndex('street_seg', 'geom');
+
+CREATE TABLE "street_elems" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "seg_fid" INTEGER, -- street segment fid for the street element (from street_seg table)
+    "istdir" INTEGER, -- ISTDIR, street element direction (flow direction) from the center of the grid element to a neighboring element, 1-8
+    "widr" REAL -- WIDR, optional grid element street width in the ISTDIR direction
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspatial');
