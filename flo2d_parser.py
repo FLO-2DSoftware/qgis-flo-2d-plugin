@@ -242,19 +242,24 @@ class ParseDAT(object):
             data.update(zip(line2, next(par)))
             data.update(zip(line3, next(par)))
             if data['INFCHAN'] == '1':
-                data['R'] = [next(par)]
+                data['HYDCXX'] = next(par)[0]
             else:
                 pass
         else:
             pass
-        chars = ['R', 'F', 'S', 'C', 'I', 'H']
+        chars = {'R': 5, 'F': 8, 'S': 3, 'C': 3, 'H': 5}
+        for char in chars:
+            data[char] = []
         for row in par:
             char = row[0]
             if char in chars:
-                if char in data:
-                    data[char].append(row)
-                else:
-                    data[char] = [row]
+                self.fix_row_size(row, chars[char])
+                data[char].append(row[1:])
+            elif char == 'I':
+                self.fix_row_size(row, 3)
+                data['FHORTONI'] = row[1]
+                data['FHORTONF'] = row[2]
+                data['DECAYA'] = row[3]
             else:
                 data.update(zip(line5, row))
         return data
@@ -323,9 +328,7 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\RioGrande\CHAN.dat')
-    res = x.parse_chan()
-    segments, wsel, confluence, noexchenge = res
-    for i in chain(*res):
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
+    res = x.parse_infil()
+    for i in res.items():
         print(i)
-

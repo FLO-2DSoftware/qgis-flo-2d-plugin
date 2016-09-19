@@ -21,6 +21,7 @@
  ***************************************************************************/
 """
 import os
+import traceback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
@@ -223,7 +224,7 @@ class Flo2D(object):
                 method = getattr(self.gpkg, call)
                 method(*args)
             except Exception as e:
-                self.uc.log_info(repr((call, e)))
+                self.uc.log_info(traceback.format_exc())
 
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""

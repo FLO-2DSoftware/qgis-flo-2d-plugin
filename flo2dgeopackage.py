@@ -25,8 +25,9 @@ import os
 import pyspatialite.dbapi2 as db
 from .utils import *
 from itertools import chain
-from .user_communication import UserCommunication
+from .utils import *
 from flo2d_parser import ParseDAT
+from .user_communication import UserCommunication
 
 
 class GeoPackageUtils(object):
@@ -370,7 +371,51 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
     def import_infil(self):
-        pass
+        self.clear_tables('infil', 'infil_chan_seg', 'infil_areas_green', 'infil_areas_scs',  'infil_areas_horton ', 'infil_areas_chan')
+        data = self.parser.parse_infil()
+        infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
+        infil_sql = 'INSERT INTO infil (' + ', '.join(infil_params) + ') VALUES ('
+        infil_sql += ', '.join([data[k.upper()] if k.upper() in data else 'NULL' for k in infil_params]) + '),'
+        infil_seg_sql = '''INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES'''
+        infil_green_sql = '''INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES'''
+        infil_scs_sql = '''INSERT INTO infil_areas_scs (geom, scscn) VALUES'''
+        infil_chan_sql = '''INSERT INTO infil_areas_chan (geom, hydconch) VALUES'''
+        infil_horton_sql = '''INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES'''
+
+
+        seg_part = '\n({0}, {1}, {2}, {3}),'
+        green_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3)), {2}, {3}, {4}, {5}, {6}, {7}),'''
+        scs_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3)), {2}),'''
+        chan_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3)), {2}),'''
+        horton_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3)), {2}, {3}, {4}),'''
+
+        sqls = {
+            'F': [infil_green_sql, green_part],
+            'S': [infil_scs_sql, scs_part],
+            'H': [infil_horton_sql, horton_part]
+        }
+
+        gids = [x[0] for x in chain(data['F'], data['S'], data['H'])]
+        cells = self.get_centroids(gids)
+        for i, row in enumerate(data['R']):
+            infil_seg_sql += seg_part.format(i+1, *row)
+        for i, row in enumerate(data['C']):
+            pass
+        for k in sqls:
+            if len(data[k]) == 0:
+                continue
+            else:
+                for row in data[k]:
+                    self.uc.log_info(repr(row))
+                    gid = row[0]
+                    sqls[k][0] += sqls[k][1].format(cells[gid], self.cell_size, *row[1:])
+        sql_list = [infil_sql, infil_seg_sql] + [x[0] for x in sqls.values()]
+        for sql in sql_list:
+            self.uc.log_info(sql)
+            if sql.endswith(','):
+                self.execute(sql.rstrip(','))
+            else:
+                pass
 
     def import_evapor(self):
         self.clear_tables('evapor', 'evapor_monthly', 'evapor_hourly')
@@ -463,18 +508,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         
         # create geometry for the newly added cross-sections
         for chtype in ['r', 'v', 't', 'n']:
-            sql="UPDATE chan_{0} SET notes='imported';"
+            sql = "UPDATE chan_{0} SET notes='imported';"
             self.execute(sql.format(chtype))
-            sql = """UPDATE "chan_{0}" 
-                SET geom = (
-                    SELECT 
-                        AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
-                        (ST_Centroid(CastAutomagic(g2.geom)))))
-                    FROM grid AS g1, grid AS g2
-                    WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
+            sql = """
+            UPDATE "chan_{0}"
+            SET geom = (
+                SELECT
+                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+                    (ST_Centroid(CastAutomagic(g2.geom)))))
+                FROM grid AS g1, grid AS g2
+                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
             """
             self.execute(sql.format(chtype))
-            sql="UPDATE chan_{0} SET notes=NULL;"
+            sql = "UPDATE chan_{0} SET notes=NULL;"
             self.execute(sql.format(chtype))
             
     def import_xsec(self):
@@ -714,3 +760,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             for row in self.execute(chan_e_sql):
                 c.write(chan_e.format(row[0]))
+
+    def export_xsec(self, outdir):
+        chan_n_sql = '''SELECT nxecnum, xsecname FROM chan_n ORDER BY nxecnum;'''
+        xsec_sql = '''SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = {0} ORDER BY fid;'''
+
+        xsec_line = '''X     {0}  {1}\n'''
+        pkt_line = ''' {0:<10} {1: >10}\n'''
+        nr = '{0:.2f}'
+
+        xsec = os.path.join(outdir, 'XSEC.DAT')
+        with open(xsec, 'w') as x:
+            for nxecnum, xsecname in self.execute(chan_n_sql):
+                x.write(xsec_line.format(nxecnum, xsecname))
+                for xi, yi in self.execute(xsec_sql.format(nxecnum)):
+                    x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
