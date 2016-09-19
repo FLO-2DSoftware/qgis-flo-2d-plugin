@@ -36,24 +36,19 @@ class UserCommunication:
         
     def show_info(self, msg):
         QMessageBox.information(self.iface.mainWindow(), self.context, msg)
-        
-        
+
     def show_warn(self, msg):
         QMessageBox.warning(self.iface.mainWindow(), self.context, msg)
-        
-    
+
     def log(self, msg, level):
         QgsMessageLog.logMessage(msg, self.context, level)
-        
-        
+
     def log_info(self, msg):
         QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
-        
-        
+
     def bar_error(self, msg):
         self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.CRITICAL)
-        
-        
+
     def bar_info(self, msg, dur=5):
         self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.INFO, duration=dur)
         
