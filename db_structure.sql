@@ -700,3 +700,79 @@ CREATE TABLE "infil_chan_elems" (
     "infil_area_fid" INTEGER -- polygon fid from infil_areas_chan table
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_elems', 'aspatial');
+
+
+-- HYSTRUC.DAT
+
+CREATE TABLE "struct" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "type" TEXT, -- type of the structure, equal to the next line's STRUCHAR, decides in which table the data are stored (C for rating_curves table, R for repl_rat_curves, T for rat_table, F for culvert_equations, or D for storm_drains)
+    "structname" TEXT, -- STRUCTNAME, name of the structure
+    "ifporchan" INTEGER, -- IFPORCHAN, switch, 0 for floodplain structure (shares discharge between 2 floodplain elements), 1 for channel structure (channel to channel), 2 for floodplain to channel, 3 for channel to floodplain
+    "icurvtable" INTEGER, -- ICURVTABLE, switch, 0 for rating curve, 1 for rating table, 2 for culvert equation
+    "inflonod" INTEGER, -- INFLONOD, grid element containing the structure or structure inlet
+    "outflonod" INTEGER, -- OUTFLONOD, grid element receiving the structure discharge (structure outlet)
+    "inoutcont" INTEGER, -- INOUTCONT, 0 for no tailwater effects - compute discharge based on headwater, 1 for reduced discharge (no upstream flow allowed), 2 for reduced discharge and upstream flow allowed
+    "headrefel" REAL, -- HEADREFEL, reference elevation above which the headwater is determined, Set 0.0 to use existing channel bed
+    "clength" REAL, -- CLENGTH, culvert length,
+    "cdiameter" REAL, -- CDIAMETER, culvert diameter,
+    "notes" TEXT -- structure notes
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('struct', 'features', 4326);
+SELECT gpkgAddGeometryColumn('struct', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('struct', 'geom');
+SELECT gpkgAddSpatialIndex('struct', 'geom');
+
+-- TODO: triggers
+
+CREATE TABLE "rat_curves" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "hdepexc" REAL, -- HDEPEXC, maximum depth that a hydraulic structure rating curve is valid
+    "coefq" REAL, -- COEFQ, discharge rating curve coefficients as a power function of the headwater depth. If 0 discharge is calculated as normal depth flow routing
+    "expq" REAL, -- EXPQ, hydraulic structure discharge exponent where the discharge is expressed as a power function of the headwater depth
+    "coefa" REAL, -- COEFA, flow area rating curve coefficient where the flow area A is expressed as a power function of the headwater depth, A = COEFA * depth**EXPA
+    "expa" REAL -- EXPA, hydraulic structure flow area exponent where the flow area is expressed as a power function of the headwater depth
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rat_curves', 'aspatial');
+
+CREATE TABLE "repl_rat_curves" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "repdep" REAL, -- REPDEP, flow depth that if exceeded will invoke the replacement structure rating curve parameters
+    "rqcoef" REAL, -- RQCOEFQ (or RQCOEF), structure rating curve discharge replacement coefficients
+    "rqexp" REAL, -- RQEXP, structure rating curve discharge replacement exponent
+    "racoef" REAL, -- RACOEF, structure rating curve flow area replacement coefficient
+    "raexp" REAL -- RAEXP, structure rating curve flow area replacement exponent
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('repl_rat_curves', 'aspatial');
+
+CREATE TABLE "rat_table" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "hdepth" REAL, -- HDEPTH, headwater depth for the structure headwater depth-discharge rating table
+    "qtable" REAL, -- QTABLE, hydraulic structure discharges for the headwater depths
+    "atable" REAL -- ATABLE, hydraulic structure flow area for each headwater depth in the rating table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rat_table', 'aspatial');
+
+CREATE TABLE "culvert_equations" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "typec" INTEGER, -- TYPEC, culvert switch, 1 for a box culvert and 2 for a pipe culvert
+    "typeen" INTEGER, -- TYPEEN, culvert switch for entrance type 1, 2, or 3
+    "culvertn" REAL, -- CULVERTN, culvert Manning’s roughness coefficient
+    "ke" REAL, -- KE, culvert entrance loss coefficient
+    "cubase" REAL -- CUBASE, flow width of box culvert for TYPEC = 1. For a circular culvert, CUBASE = 0
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('culvert_equations', 'aspatial');
+
+CREATE TABLE "storm_drains" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "istormdout" INTEGER, -- ISTORMDOUT, hydraulic structure outflow grid element number used to simulate a simplified storm drain (junction or outflow node)
+    "stormdmax" REAL -- STORMDMAX, maximum allowable discharge (conveyance capacity) of the collection pipe represented by the ISTORMDOUT element.
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('storm_drains', 'aspatial');
+
+
