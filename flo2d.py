@@ -298,24 +298,6 @@ class Flo2D(object):
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('inflow', {
-                'name': 'Inflow',
-                'sgroup': None,
-                'styles': ['inflow.qml'],
-                'attrs_edit_widgets': {
-                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
-                }
-            }),
-            ('outflow', {
-                'name': 'Outflow',
-                'sgroup': None,
-                'styles': ['outflow.qml'],
-                'attrs_edit_widgets': {
-                    1: {'name': 'ValueMap', 'config': {u'Grid element': u'N', u'Channel element': u'K'}},
-                    2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
-                }
-            }),
             ('rain_arf_areas', {
                 'name': 'Rain ARF Areas',
                 'sgroup': None,
@@ -340,10 +322,53 @@ class Flo2D(object):
                 'styles': ['chan_confluences.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('inflow', {
+                'name': 'Inflow',
+                'sgroup': None,
+                'styles': ['inflow.qml'],
+                'attrs_edit_widgets': {
+                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
+                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
+                }
+            }),
+            ('outflow', {
+                'name': 'Outflow',
+                'sgroup': None,
+                'styles': ['outflow.qml'],
+                'attrs_edit_widgets': {
+                    1: {'name': 'ValueMap', 'config': {u'Grid element': u'N', u'Channel element': u'K'}},
+                    2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
+                }
+            }),
             ('grid', {
                 'name': 'Grid',
                 'sgroup': None,
                 'styles': ['grid.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_areas_green', {
+                'name': 'Areas Green Ampt',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_areas_scs', {
+                'name': 'Areas SCS',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_areas_horton', {
+                'name': 'Areas Horton',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {}
+            })
+            ,
+            ('infil_areas_chan', {
+                'name': 'Areas for Channels',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {}
             }),
 
@@ -375,6 +400,30 @@ class Flo2D(object):
             }),
             ('xsec_n_data', {
                 'name': 'Natural xsecs data',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_green', {
+                'name': 'Infiltration cells Green Ampt',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_scs', {
+                'name': 'Infiltration cells SCS',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_horton', {
+                'name': 'Infiltration cells Horton',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_chan_elems', {
+                'name': 'Infiltration Channel',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
