@@ -42,7 +42,8 @@ class ParseDAT(object):
             'INFIL.DAT': None,
             'EVAPOR.DAT': None,
             'CHAN.DAT': None,
-            'CHANBANK.DAT': None
+            'CHANBANK.DAT': None,
+            'XSEC.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -261,16 +262,16 @@ class ParseDAT(object):
     def parse_evapor(self):
         evapor = self.dat_files['EVAPOR.DAT']
         par = self.single_parser(evapor)
-        head = ['IEVAPMONTH', 'IDAY', 'CLOCKTIME']
-        data = OrderedDict(zip(head, next(par)))
+        head = next(par)
+        data = OrderedDict()
         month = None
         for row in par:
             if len(row) > 1:
                 month = row[0]
                 data[month] = {'row': row, 'time_series': []}
             else:
-                data[month]['time_series'].append(row)
-        return data
+                data[month]['time_series'].extend(row)
+        return head, data
 
     def parse_chan(self):
         chan = self.dat_files['CHAN.DAT']
@@ -282,7 +283,7 @@ class ParseDAT(object):
         wsel = []
         confluence = []
         noexchange = []
-        shape = ['R', 'V', 'T', 'N']
+        shape = {'R': 8, 'V': 20, 'T': 10, 'N': 5}
         chanchar = ['C', 'E']
         for row in par:
             char = row[0]
@@ -291,6 +292,7 @@ class ParseDAT(object):
                 segments.append(row)
                 segments[-1].append([])
             elif char in shape:
+                self.fix_row_size(row, shape[char])
                 rbank = next(parbank)[1:]
                 segments[-1][-1].append(row + rbank)
             elif char == 'C':
@@ -306,11 +308,24 @@ class ParseDAT(object):
                     start = True
         return segments, wsel, confluence, noexchange
 
+    def parse_xsec(self):
+        xsec = self.dat_files['XSEC.DAT']
+        par = self.single_parser(xsec)
+        data = []
+        for row in par:
+            if row[0] == 'X':
+                row.append([])
+                data.append(row[1:])
+            else:
+                data[-1][-1].append(row)
+        return data
+
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Alawai\CHAN.DAT')
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\RioGrande\CHAN.dat')
     res = x.parse_chan()
     segments, wsel, confluence, noexchenge = res
     for i in chain(*res):
         print(i)
+

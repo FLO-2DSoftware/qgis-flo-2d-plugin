@@ -383,8 +383,8 @@ CREATE TABLE "chan_n" (
     "fcn" REAL, -- FCN, average Manning's n in the grid element
     "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "nxecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
-    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
     "xsecname" TEXT, -- xsection name
+    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_n', 'features', 4326);
@@ -536,8 +536,8 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_wsel', 'aspatial
 CREATE TABLE "xsec_n_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "chan_n_nxsecnum" INTEGER, -- NXSECNUM, fid of cross-section in chan_n
-    "x" REAL, -- XI, station distance from left point
-    "y" REAL -- YI, elevation
+    "xi" REAL, -- XI, station distance from left point
+    "yi" REAL -- YI, elevation
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('xsec_n_data', 'aspatial');
 
@@ -557,7 +557,7 @@ CREATE TABLE "evapor_monthly" (
     "month" TEXT, -- EMONTH, name of the month
     "monthly_evap" REAL -- EVAP, monthly evaporation rate
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_month', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_monthly', 'aspatial');
 
 CREATE TABLE "evapor_hourly" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
