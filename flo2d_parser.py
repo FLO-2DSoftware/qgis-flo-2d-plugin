@@ -21,7 +21,7 @@
  ***************************************************************************/
 """
 import os
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from itertools import izip, izip_longest, chain
 
 
@@ -43,7 +43,8 @@ class ParseDAT(object):
             'EVAPOR.DAT': None,
             'CHAN.DAT': None,
             'CHANBANK.DAT': None,
-            'XSEC.DAT': None
+            'XSEC.DAT': None,
+            'HYSTRUC.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -325,10 +326,27 @@ class ParseDAT(object):
                 data[-1][-1].append(row)
         return data
 
+    def parse_hystruct(self):
+        hystruct = self.dat_files['HYSTRUC.DAT']
+        par = self.single_parser(hystruct)
+        data = []
+        params = defaultdict(list)
+        for row in par:
+            char = row[0]
+            if char == 'S':
+                row.append(params)
+                data.append(row[1:])
+            else:
+                data[-1][-1][char].append(row[1:])
+        return data
+
 
 if __name__ == '__main__':
     x = ParseDAT()
     x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
-    res = x.parse_infil()
-    for i in res.items():
-        print(i)
+    # res = x.parse_infil()
+    # for i in res.items():
+    #     print(i)
+    res = x.parse_hystruct()
+    for s in res:
+        print(s)

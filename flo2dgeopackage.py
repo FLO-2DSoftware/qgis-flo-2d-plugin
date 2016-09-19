@@ -22,6 +22,7 @@
  This script initializes the plugin, making it known to QGIS.
 """
 import os
+import traceback
 import pyspatialite.dbapi2 as db
 from .utils import *
 from itertools import chain
@@ -32,8 +33,10 @@ from .user_communication import UserCommunication
 
 class GeoPackageUtils(object):
     """GeoPackage utils for handling GPKG files"""
-    def __init__(self, path):
+    def __init__(self, path, iface):
         self.path = path
+        self.iface = iface
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.conn = None
         self.msg = None
 
@@ -89,6 +92,17 @@ class GeoPackageUtils(object):
                 result_cursor = cursor.execute(statement)
             return result_cursor
 
+    def batch_execute(self, sql_list, strip_char=' '):
+        for sql in sql_list:
+            try:
+                if sql.endswith(strip_char):
+                    self.execute(sql.rstrip(strip_char))
+                else:
+                    pass
+            except Exception as e:
+                self.uc.log_info(sql)
+                self.uc.log_info(traceback.format_exc())
+
     def is_table_empty(self, table):
         r = self.execute('''SELECT rowid FROM {0};'''.format(table))
         if r.fetchone():
@@ -131,10 +145,8 @@ class GeoPackageUtils(object):
 class Flo2dGeoPackage(GeoPackageUtils):
     """GeoPackage object class for storing FLO-2D model data"""
     def __init__(self, path, iface):
-        super(Flo2dGeoPackage, self).__init__(path)
+        super(Flo2dGeoPackage, self).__init__(path, iface)
         self.group = 'FLO-2D_{}'.format(os.path.basename(path).replace('.gpkg', ''))
-        self.iface = iface
-        self.uc = UserCommunication(iface, 'FLO-2D')
         self.parser = ParseDAT()
         self.cell_size = None
         self.buffer = None
@@ -270,11 +282,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.execute(cont_sql.format(head['IDEPLT']))
         sql_list = [ts_sql, inflow_sql, tsd_sql, reservoirs_sql]
-        for sql in sql_list:
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
 
     def import_outflow(self):
         self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params')
@@ -328,11 +336,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             hydchar_sql += hydchar_part_sql.format(*row)
 
         sql_list = [ts_sql, qh_sql, outflow_sql, tsd_sql, hydchar_sql]
-        for sql in sql_list:
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
 
     def import_rain(self):
         self.clear_tables('rain', 'rain_arf_areas')
@@ -364,15 +368,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             rain_arf_sql += rain_arf_part.format(fid, val, cells[gid], self.buffer)
 
         sql_list = [ts_sql, rain_sql, tsd_sql, rain_arf_sql]
-        for sql in sql_list:
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
 
     def import_infil(self):
         self.clear_tables('infil', 'infil_chan_seg', 'infil_areas_green', 'infil_areas_scs',  'infil_areas_horton ', 'infil_areas_chan')
         data = self.parser.parse_infil()
+
         infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
         infil_sql = 'INSERT INTO infil (' + ', '.join(infil_params) + ') VALUES ('
         infil_sql += ', '.join([data[k.upper()] if k.upper() in data else 'NULL' for k in infil_params]) + '),'
@@ -381,7 +382,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil_scs_sql = '''INSERT INTO infil_areas_scs (geom, scscn) VALUES'''
         infil_chan_sql = '''INSERT INTO infil_areas_chan (geom, hydconch) VALUES'''
         infil_horton_sql = '''INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES'''
-
 
         seg_part = '\n({0}, {1}, {2}, {3}),'
         green_part = '''\n(AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, 3)), {2}, {3}, {4}, {5}, {6}, {7}),'''
@@ -392,15 +392,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         sqls = {
             'F': [infil_green_sql, green_part],
             'S': [infil_scs_sql, scs_part],
-            'H': [infil_horton_sql, horton_part]
+            'H': [infil_horton_sql, horton_part],
+            'C': [infil_chan_sql, chan_part]
+
         }
 
-        gids = [x[0] for x in chain(data['F'], data['S'], data['H'])]
+        gids = [x[0] for x in chain(data['F'], data['S'], data['C'], data['H'])]
         cells = self.get_centroids(gids)
+
         for i, row in enumerate(data['R']):
             infil_seg_sql += seg_part.format(i+1, *row)
-        for i, row in enumerate(data['C']):
-            pass
+
         for k in sqls:
             if len(data[k]) == 0:
                 continue
@@ -408,14 +410,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in data[k]:
                     self.uc.log_info(repr(row))
                     gid = row[0]
-                    sqls[k][0] += sqls[k][1].format(cells[gid], self.cell_size, *row[1:])
+                    sqls[k][0] += sqls[k][1].format(cells[gid], self.buffer, *row[1:])
+
         sql_list = [infil_sql, infil_seg_sql] + [x[0] for x in sqls.values()]
-        for sql in sql_list:
-            self.uc.log_info(sql)
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
 
     def import_evapor(self):
         self.clear_tables('evapor', 'evapor_monthly', 'evapor_hourly')
@@ -437,11 +435,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 evapor_hour_sql += evapor_hour_part.format(month, h+1, ts)
 
         sql_list = [evapor_sql, evapor_mont_sql, evapor_hour_sql]
-        for sql in sql_list:
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
 
     def import_chan(self):
         self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences', 'noexchange_chan_areas', 'chan_wsel')
@@ -500,11 +494,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         sql_list = [x[0] for x in sqls.values()]
         sql_list.insert(0, chan_sql)
         sql_list.extend([chan_conf_sql, chan_e_sql, chan_wsel_sql])
-        for sql in sql_list:
-            if sql.endswith(','):
-                self.execute(sql.rstrip(','))
-            else:
-                pass
+        self.batch_execute(sql_list, strip_char=',')
         
         # create geometry for the newly added cross-sections
         for chtype in ['r', 'v', 't', 'n']:
