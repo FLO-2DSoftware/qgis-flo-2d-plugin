@@ -431,6 +431,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.execute(sql.rstrip(','))
             else:
                 pass
+            
+        # create geometry for the newly added cross-sections
+        for chtype in ['r', 'v', 't', 'n']:
+            sql="UPDATE chan_{0} SET notes='imported';"
+            self.execute(sql.format(chtype))
+            sql = """UPDATE "chan_{0}" 
+                SET geom = (
+                    SELECT 
+                        AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+                        (ST_Centroid(CastAutomagic(g2.geom)))))
+                    FROM grid AS g1, grid AS g2
+                    WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
+            """
+            self.execute(sql.format(chtype))
+            sql="UPDATE chan_{0} SET notes=NULL;"
+            self.execute(sql.format(chtype))
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''

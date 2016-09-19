@@ -392,45 +392,47 @@ SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_n', 'geom');
 SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 
--- create geometry when rightbank and leftbank are given
-CREATE TRIGGER "chan_n_geom_insert"
-    AFTER INSERT ON "chan_n"
-    WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
-    BEGIN
-        UPDATE "chan_n" 
-            SET geom = (
-                SELECT 
-                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
-                    (ST_Centroid(CastAutomagic(g2.geom)))))
-                FROM grid AS g1, grid AS g2
-                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
-    END;
-
--- TODO: resolve trigger loop 
--- --update left and bank fids when geometry changed
--- CREATE TRIGGER "chan_n_banks_update_geom_changed"
---     AFTER UPDATE OF geom ON "chan_n"
---     WHEN ( OLD.ichangrid = NEW.ichangrid AND 
---             OLD.rbankgrid = NEW.rbankgrid)
+-- TODO: create triggers for geometry INSERT and UPDATE
+-- use notes column to flag features created by user!
+-- -- create geometry when rightbank and leftbank are given
+-- CREATE TRIGGER "chan_n_geom_insert"
+--     AFTER INSERT ON "chan_n"
+--     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
 --     BEGIN
---         UPDATE "chan_n" SET ichangrid = (SELECT g.fid FROM grid AS g
---             WHERE ST_Intersects(g.geom,StartPoint(CastAutomagic(NEW.geom))));
---         UPDATE "chan_n" SET rbankgrid = (SELECT g.fid FROM grid AS g
---             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(NEW.geom))));
+--         UPDATE "chan_n" 
+--             SET geom = (
+--                 SELECT 
+--                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+--                     (ST_Centroid(CastAutomagic(g2.geom)))))
+--                 FROM grid AS g1, grid AS g2
+--                 WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
 --     END;
 
-CREATE TRIGGER "chan_n_geom_update_banks_changed"
-    AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
---     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
-    BEGIN
-        UPDATE "chan_n" 
-            SET geom = (
-                SELECT 
-                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
-                    (ST_Centroid(CastAutomagic(g2.geom)))))
-                FROM grid AS g1, grid AS g2
-                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
-    END;
+--update left and right bank fids when geometry changed
+-- CREATE TRIGGER "chan_n_banks_update_geom_changed"
+--     AFTER UPDATE ON "chan_n"
+--     WHEN ( NEW.notes IS NULL )
+--     BEGIN
+--         UPDATE "chan_n" SET ichangrid = (SELECT g.fid FROM grid AS g
+--             WHERE ST_Intersects(g.geom,StartPoint(CastAutomagic(geom))))
+--             WHERE fid = NEW.fid;
+--         UPDATE "chan_n" SET rbankgrid = (SELECT g.fid FROM grid AS g
+--             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(geom))))
+--             WHERE fid = NEW.fid;
+--     END;
+
+-- CREATE TRIGGER "chan_n_geom_update_banks_changed"
+--     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
+-- --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
+--     BEGIN
+--         UPDATE "chan_n" 
+--             SET geom = (
+--                 SELECT 
+--                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
+--                     (ST_Centroid(CastAutomagic(g2.geom)))))
+--                 FROM grid AS g1, grid AS g2
+--                 WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
+--     END;
 
 CREATE VIEW "chan_elems_in_segment" (
     chan_elem_fid,
@@ -564,3 +566,137 @@ CREATE TABLE "evapor_hourly" (
     "hourly_evap" REAL -- EVAPER, Hourly percentage of the daily total evaporation
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_hourly', 'aspatial');
+
+
+-- INFIL.DAT
+
+CREATE TABLE "infil" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "infmethod" INTEGER, -- INFMETHOD, infiltration method number
+    "abstr" REAL, -- ABSTR, Green Ampt global floodplain rainfall abstraction or interception
+    "sati" REAL, -- SATI, Global initial saturation of the soil
+    "satf" REAL, -- SATF, Global final saturation of the soil
+    "poros" REAL, -- POROS, global floodplain soil porosity
+    "soild" REAL, -- SOILD, Green Ampt global soil limiting depth storage
+    "infchan" INTEGER, -- INFCHAN, switch for simulating channel infiltration
+    "hydcall" REAL, -- HYDCALL, average global floodplain hydraulic conductivity
+    "soilall" REAL, -- SOILALL, average global floodplain capillary suction
+    "hydcadj" REAL, -- HYDCADJ, hydraulic conductivity adjustment variable
+    "hydcxx" REAL, -- HYDCXX, global channel infiltration hydraulic conductivity
+    "scsnall" REAL, -- SCSNALL, global floodplain SCS curve number
+    "abstr1" REAL, -- ABSTR1, SCS global floodplain rainfall abstraction or interception
+    "fhortoni" REAL, -- FHORTONI, global Horton’s equation initial infiltration rate
+    "fhortonf" REAL, -- FHORTONF, global Horton’s equation final infiltration rate
+    "decaya" REAL --DECAYA, Horton’s equation decay coefficient
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil', 'aspatial');
+
+CREATE TABLE "infil_chan_seg" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "chan_seg_fid" INTEGER, -- channel segment fid from chan table
+    "hydcx" REAL, -- HYDCX, initial hydraulic conductivity for a channel segment
+    "hydcxfinal" REAL, -- HYDCXFINAL, final hydraulic conductivity for a channel segment
+    "soildepthcx" REAL -- SOILDEPTHCX, maximum soil depth for the initial channel infiltration
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_seg', 'aspatial');
+
+CREATE TABLE "infil_areas_green" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "hydc" REAL, -- HYDC, grid element average hydraulic conductivity
+    "soils" REAL, -- SOILS, capillary suction head for floodplain grid elements
+    "dtheta" REAL, -- DTHETA, grid element soil moisture deficit
+    "abstrinf" REAL -- ABSTRINF, grid element rainfall abstraction
+    "rtimpf" REAL, -- RTIMPF, percent impervious floodplain area on a grid element
+    "soil_depth" REAL -- SOIL_DEPTH, maximum soil depth for infiltration on a grid element
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_green', 'features', 4326);
+SELECT gpkgAddGeometryColumn('infil_areas_green', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('infil_areas_green', 'geom');
+SELECT gpkgAddSpatialIndex('infil_areas_green', 'geom');
+
+    -- Green Ampt
+
+CREATE TABLE "infil_cells_green" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid element number from grid table
+    "infil_area_fid" INTEGER -- polygon fid from infil_areas_green table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_green', 'aspatial');
+
+CREATE TRIGGER "find_infil_cells_green_insert"
+    AFTER INSERT ON "infil_areas_green"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "infil_areas_green" WHERE infil_area_fid = NEW."fid";
+        INSERT INTO "infil_areas_green" (infil_area_fid, grid_fid) 
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_infil_cells_green_update"
+    AFTER UPDATE ON "infil_areas_green"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "infil_areas_green" WHERE infil_area_fid = NEW."fid";
+        INSERT INTO "infil_areas_green" (infil_area_fid, grid_fid) 
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_infil_cells_green_delete"
+    AFTER DELETE ON "infil_areas_green"
+    BEGIN
+        DELETE FROM "infil_areas_green" WHERE infil_area_fid = OLD."fid";
+    END;
+
+    -- SCS
+
+CREATE TABLE "infil_areas_scs" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "scscn" REAL -- SCSCN, SCS curve numbers of the floodplain grid elements
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_scs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('infil_areas_scs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('infil_areas_scs', 'geom');
+SELECT gpkgAddSpatialIndex('infil_areas_scs', 'geom');
+
+CREATE TABLE "infil_cells_scs" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid element number from grid table
+    "infil_area_fid" INTEGER -- polygon fid from infil_areas_scs table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_scs', 'aspatial');
+
+CREATE TABLE "infil_areas_horton" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "fhorti" REAL, -- FHORTI, Horton’s equation floodplain initial infiltration rate
+    "fhortf" REAL, -- FHORTF, Horton’s equation floodplain final infiltration rate
+    "deca" REAL --DECA, Horton’s equation decay coefficient
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_horton', 'features', 4326);
+SELECT gpkgAddGeometryColumn('infil_areas_horton', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('infil_areas_horton', 'geom');
+SELECT gpkgAddSpatialIndex('infil_areas_horton', 'geom');
+
+CREATE TABLE "infil_cells_horton" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid element number from grid table
+    "infil_area_fid" INTEGER -- polygon fid from infil_areas_horton table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_horton', 'aspatial');
+
+CREATE TABLE "infil_areas_chan" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "hydconch" REAL -- HYDCONCH, hydraulic conductivity for a channel element
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_chan', 'features', 4326);
+SELECT gpkgAddGeometryColumn('infil_areas_chan', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('infil_areas_chan', 'geom');
+SELECT gpkgAddSpatialIndex('infil_areas_chan', 'geom');
+
+CREATE TABLE "infil_chan_elems" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid element number from grid table
+    "infil_area_fid" INTEGER -- polygon fid from infil_areas_chan table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_elems', 'aspatial');
