@@ -272,28 +272,28 @@ class Flo2D(object):
         # LAYERS
             
             ('chan_r', {
-                'name': 'Rectangular cross-sections',
+                'name': 'Rectangular Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
             
             ('chan_v', {
-                'name': 'Var Area cross-sections',
+                'name': 'Variable Area Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
             
             ('chan_t', {
-                'name': 'Trapez cross-sections',
+                'name': 'Trapezoidal Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
             
             ('chan_n', {
-                'name': 'Natural cross-sections',
+                'name': 'Natural Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
@@ -405,26 +405,26 @@ class Flo2D(object):
                 'attrs_edit_widgets': {}
             }),
             ('infil_cells_green', {
-                'name': 'Infiltration cells Green Ampt',
-                'sgroup': "Tables",
+                'name': 'Cells Green Ampt',
+                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('infil_cells_scs', {
-                'name': 'Infiltration cells SCS',
-                'sgroup': "Tables",
+                'name': 'Cells SCS',
+                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('infil_cells_horton', {
-                'name': 'Infiltration cells Horton',
-                'sgroup': "Tables",
+                'name': 'Cells Horton',
+                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('infil_chan_elems', {
-                'name': 'Infiltration Channel',
-                'sgroup': "Tables",
+                'name': 'Channel elements',
+                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             })
