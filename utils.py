@@ -23,18 +23,6 @@
 import os.path
 
 
-def square_from_center_and_size(size, x, y):
-    x, y, size = (float(x), float(y), float(size))
-    g = "AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))".format(
-        x-size/2, y-size/2,
-        x+size/2, y-size/2,
-        x+size/2, y+size/2,
-        x-size/2, y+size/2,
-        x-size/2, y-size/2
-    )
-    return g
-
-
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(temp_dir, *paths)

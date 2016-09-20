@@ -218,13 +218,22 @@ class Flo2D(object):
         else:
             pass
 
-    def call_methods(self, calls, *args):
+    def call_methods(self, calls, debug=True, *args):
         for call in calls:
+            dat = call.split('_')[-1].upper() + '.DAT'
+            if self.gpkg.parser.dat_files[dat] is None:
+                self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
+                continue
+            else:
+                pass
             try:
                 method = getattr(self.gpkg, call)
                 method(*args)
             except Exception as e:
-                self.uc.log_info(traceback.format_exc())
+                if debug is True:
+                    self.uc.log_info(traceback.format_exc())
+                else:
+                    raise
 
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
@@ -237,7 +246,8 @@ class Flo2D(object):
             'import_evapor',
             'import_infil',
             'import_chan',
-            'import_xsec'
+            'import_xsec',
+            'import_hystruc'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')

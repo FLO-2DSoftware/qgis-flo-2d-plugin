@@ -330,10 +330,10 @@ class ParseDAT(object):
         hystruct = self.dat_files['HYSTRUC.DAT']
         par = self.single_parser(hystruct)
         data = []
-        params = defaultdict(list)
         for row in par:
             char = row[0]
             if char == 'S':
+                params = defaultdict(list)
                 row.append(params)
                 data.append(row[1:])
             else:

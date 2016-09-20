@@ -136,6 +136,18 @@ class GeoPackageUtils(object):
         line_sql = line_sql.strip(',') + ')'
         return line_sql
 
+    @staticmethod
+    def square_from_center_and_size(size, x, y):
+        x, y, size = (float(x), float(y), float(size))
+        g = "AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))".format(
+            x - size / 2, y - size / 2,
+            x + size / 2, y - size / 2,
+            x + size / 2, y + size / 2,
+            x - size / 2, y + size / 2,
+            x - size / 2, y - size / 2
+        )
+        return g
+
     def get_max(self, table, field='fid'):
         sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(field, table)
         max_val = self.execute(sql).fetchone()[0]
@@ -173,7 +185,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             coords = slice(8, 10)
             fplain = slice(0, 7)
             if c < self.chunksize:
-                g = square_from_center_and_size(self.cell_size, *d[coords])
+                g = self.square_from_center_and_size(self.cell_size, *d[coords])
                 inp.append('({0}, {1})'.format(','.join(d[fplain]), g))
                 c += 1
             else:
@@ -232,7 +244,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             coords = slice(2, 4)
             elev = slice(4, None)
             if c < self.chunksize:
-                g = square_from_center_and_size(self.cell_size, *d[coords])
+                g = self.square_from_center_and_size(self.cell_size, *d[coords])
                 inp.append('({0}, {1})'.format(','.join(d[man] + d[elev]), g))
                 c += 1
             else:
@@ -528,6 +540,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(xsec_sql.rstrip(','))
         else:
             pass
+
+    def import_hystruc(self):
+        self.clear_tables('struct', 'rat_curves', 'repl_rat_curves', 'rat_table', 'culvert_equations', 'storm_drains')
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
