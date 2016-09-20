@@ -897,31 +897,7 @@ CREATE TABLE "street_elems" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspatial');
 
--- CREATE TRIGGER "find_street_elems_insert"
---     AFTER INSERT ON "street_seg"
---     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---     BEGIN
---         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
---         INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
---             SELECT NEW.fid, g.fid FROM grid as g
---             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---     END;
--- 
--- CREATE TRIGGER "find_street_elems_update"
---     AFTER UPDATE ON "street_seg"
---     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---     BEGIN
---         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
---         INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
---         SELECT NEW.fid, g.fid FROM grid as g
---         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---     END;
--- 
--- CREATE TRIGGER "find_street_elems_delete"
---     AFTER DELETE ON "street_seg"
---     BEGIN
---         DELETE FROM "blocked_cells_tot" WHERE area_fid = OLD."fid";
---     END;
+-- TODO: geometry triggers fro streets
 
 
 -- ARF.DAT
@@ -1015,4 +991,64 @@ CREATE TRIGGER "find_cells_arf_delete"
     AFTER DELETE ON "blocked_areas"
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = OLD."fid";
+    END;
+
+
+-- MULT.DAT
+
+CREATE TABLE "mult" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "wmc" REAL, -- WMC, incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded
+    "wdrall" REAL, -- WDRALL, global assignment of the multiple channel width
+    "dmall" REAL, -- DMALL, global assignment of the maximum depth
+    "nodchansall" INTEGER, -- NODCHNSALL, global assignment of the number of multiple channels
+    "xnmultall" REAL, -- XNMULTALL, global assignment of the multiple channel n-values
+    "sslopemin" REAL, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
+    "sslopemax" REAL, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
+
+CREATE TABLE "mult_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "wdr" REAL, -- WDR, channel width for individual grid elements
+    "dm" REAL, -- DM, maximum depth of multiple channels
+    "nodchns" REAL, -- NODCHNS, number of multiple channels assigned in a grid element
+    "xnmult" REAL -- XNMULT, channel n-values for individual grid elements
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('mult_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('mult_areas', 'geom');
+SELECT gpkgAddSpatialIndex('mult_areas', 'geom');
+
+CREATE TABLE "mult_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- equal to fid from grid table
+    "area_fid" INTEGER -- fid of area from mult_areas table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatial');
+
+CREATE TRIGGER "find_cells_mult_insert"
+    AFTER INSERT ON "mult_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid) 
+            SELECT NEW.fid, g.fid FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_cells_mult_update"
+    AFTER UPDATE ON "mult_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid) 
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER "find_cells_mult_delete"
+    AFTER DELETE ON "mult_areas"
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
     END;
