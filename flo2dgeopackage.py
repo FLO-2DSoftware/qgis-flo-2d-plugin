@@ -510,9 +510,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         
         # create geometry for the newly added cross-sections
         for chtype in ['r', 'v', 't', 'n']:
-            sql = "UPDATE chan_{0} SET notes='imported';"
+            sql = '''UPDATE chan_{0} SET notes='imported';'''
             self.execute(sql.format(chtype))
-            sql = """
+            sql = '''
             UPDATE "chan_{0}"
             SET geom = (
                 SELECT
@@ -520,9 +520,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     (ST_Centroid(CastAutomagic(g2.geom)))))
                 FROM grid AS g1, grid AS g2
                 WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
-            """
+            '''
             self.execute(sql.format(chtype))
-            sql = "UPDATE chan_{0} SET notes=NULL;"
+            sql = 'UPDATE chan_{0} SET notes=NULL;'
             self.execute(sql.format(chtype))
             
     def import_xsec(self):
