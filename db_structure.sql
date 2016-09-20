@@ -1004,7 +1004,7 @@ CREATE TABLE "mult" (
     "nodchansall" INTEGER, -- NODCHNSALL, global assignment of the number of multiple channels
     "xnmultall" REAL, -- XNMULTALL, global assignment of the multiple channel n-values
     "sslopemin" REAL, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
-    "sslopemax" REAL, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
+    "sslopemax" REAL -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
 
