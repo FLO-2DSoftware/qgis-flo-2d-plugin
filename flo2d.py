@@ -293,6 +293,12 @@ class Flo2D(object):
                 'styles': ['struc.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('street_seg', {
+                'name': 'Streets',
+                'sgroup': None,
+                'styles': ['steet.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('chan_r', {
                 'name': 'Rectangular Xsec',
                 'sgroup': 'XSections',

@@ -4,37 +4,19 @@
     <edittype widgetv2type="TextEdit" name="fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="type">
+    <edittype widgetv2type="TextEdit" name="str_fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="structname">
+    <edittype widgetv2type="TextEdit" name="igridn">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="ifporchan">
+    <edittype widgetv2type="TextEdit" name="depex">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="icurvtable">
+    <edittype widgetv2type="TextEdit" name="stman">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="inflonod">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="outflonod">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="inoutcont">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="headrefel">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="clength">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="cdiameter">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="notes">
+    <edittype widgetv2type="TextEdit" name="elstr">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
@@ -48,9 +30,9 @@
           <prop k="customdash_unit" v="MM"/>
           <prop k="draw_inside_polygon" v="0"/>
           <prop k="joinstyle" v="bevel"/>
-          <prop k="line_color" v="46,52,228,255"/>
+          <prop k="line_color" v="0,234,27,255"/>
           <prop k="line_style" v="solid"/>
-          <prop k="line_width" v="1.5"/>
+          <prop k="line_width" v="0.9"/>
           <prop k="line_width_unit" v="MM"/>
           <prop k="offset" v="0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
@@ -58,40 +40,22 @@
           <prop k="use_custom_dash" v="0"/>
           <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
         </layer>
-        <layer pass="0" class="MarkerLine" locked="0">
-          <prop k="interval" v="3"/>
-          <prop k="interval_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="interval_unit" v="MM"/>
+        <layer pass="0" class="SimpleLine" locked="0">
+          <prop k="capstyle" v="square"/>
+          <prop k="customdash" v="5;2"/>
+          <prop k="customdash_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="customdash_unit" v="MM"/>
+          <prop k="draw_inside_polygon" v="0"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="line_color" v="0,0,0,255"/>
+          <prop k="line_style" v="solid"/>
+          <prop k="line_width" v="0.26"/>
+          <prop k="line_width_unit" v="MM"/>
           <prop k="offset" v="0"/>
-          <prop k="offset_along_line" v="0"/>
-          <prop k="offset_along_line_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="offset_along_line_unit" v="MM"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="placement" v="vertex"/>
-          <prop k="rotate" v="1"/>
-          <symbol alpha="1" clip_to_extent="1" type="marker" name="@0@1">
-            <layer pass="0" class="SimpleMarker" locked="0">
-              <prop k="angle" v="0"/>
-              <prop k="color" v="255,255,255,255"/>
-              <prop k="horizontal_anchor_point" v="1"/>
-              <prop k="joinstyle" v="bevel"/>
-              <prop k="name" v="circle"/>
-              <prop k="offset" v="0,0"/>
-              <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
-              <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,0,0,255"/>
-              <prop k="outline_style" v="solid"/>
-              <prop k="outline_width" v="0"/>
-              <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
-              <prop k="outline_width_unit" v="MM"/>
-              <prop k="scale_method" v="area"/>
-              <prop k="size" v="1.5"/>
-              <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
-              <prop k="size_unit" v="MM"/>
-              <prop k="vertical_anchor_point" v="1"/>
-            </layer>
-          </symbol>
+          <prop k="use_custom_dash" v="0"/>
+          <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
         </layer>
       </symbol>
     </symbols>
@@ -243,7 +207,7 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield>structname</displayfield>
+  <displayfield>fid</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -268,7 +232,6 @@
   <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
     <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="100000">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
-      <attribute field="" color="#000000" label=""/>
     </DiagramCategory>
     <symbol alpha="1" clip_to_extent="1" type="marker" name="sizeSymbol">
       <layer pass="0" class="SimpleMarker" locked="0">
@@ -298,20 +261,14 @@
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="577070450">
+  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="601208896">
     <columns>
       <column width="-1" hidden="0" type="field" name="fid"/>
-      <column width="-1" hidden="0" type="field" name="type"/>
-      <column width="-1" hidden="0" type="field" name="structname"/>
-      <column width="-1" hidden="0" type="field" name="ifporchan"/>
-      <column width="-1" hidden="0" type="field" name="icurvtable"/>
-      <column width="-1" hidden="0" type="field" name="inflonod"/>
-      <column width="-1" hidden="0" type="field" name="outflonod"/>
-      <column width="-1" hidden="0" type="field" name="inoutcont"/>
-      <column width="-1" hidden="0" type="field" name="headrefel"/>
-      <column width="-1" hidden="0" type="field" name="clength"/>
-      <column width="-1" hidden="0" type="field" name="cdiameter"/>
-      <column width="-1" hidden="0" type="field" name="notes"/>
+      <column width="-1" hidden="0" type="field" name="str_fid"/>
+      <column width="-1" hidden="0" type="field" name="igridn"/>
+      <column width="-1" hidden="0" type="field" name="depex"/>
+      <column width="-1" hidden="0" type="field" name="stman"/>
+      <column width="-1" hidden="0" type="field" name="elstr"/>
       <column width="-1" hidden="1" type="actions"/>
     </columns>
   </attributetableconfig>
