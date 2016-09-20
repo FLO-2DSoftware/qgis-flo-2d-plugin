@@ -1072,7 +1072,7 @@ CREATE TABLE "levee_data" (
     "levcrest" REAL -- LEVCREST, the elevation of the levee crest
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('levee_data', 'features', 4326);
-SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('levee_data', 'geom');
 SELECT gpkgAddSpatialIndex('levee_data', 'geom');
 
@@ -1085,7 +1085,7 @@ CREATE TABLE "levee_failure" (
     "levbase" REAL, -- LEVBASE, the prescribed final failure elevation
     "failwidthmax" REAL, -- FAILWIDTHMAX, the maximum breach width
     "failrate" REAL, -- FAILRATE, the rate of vertical levee failure
-    "failwidrate" REAL -- FAILWIDREAL, the rate at which the levee breach widens
+    "failwidrate" REAL -- FAILWIDRATE, the rate at which the levee breach widens
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_failure', 'aspatial');
 

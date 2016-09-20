@@ -158,6 +158,24 @@ class GeoPackageUtils(object):
             gpb += gpb_part.format(x1, y1, x2, y2)
         gpb = gpb.strip(',') + ')\'))'
         return gpb
+    
+    def build_levee_schem_line(self, gid, dir, table='grid', field='fid'):
+        qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
+        wkt_geom = self.execute(qry).fetchone()[0]
+        xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
+        dir_tab = {
+            '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
+            '2': (lambda x, y, s: (x + s, y + s/2.414, x + s, y - s/2.414)),
+            '3': (lambda x, y, s: (x + s/2.414, y - s, x - s/2.414, y - s)),
+            '4': (lambda x, y, s: (x - s, y - s/2.414, x - s, y + s/2.414)),
+            '5': (lambda x, y, s: (x + s/2.414, y + s, x + s, y + s/2.414)),
+            '6': (lambda x, y, s: (x + s, y - s/2.414, x + s/2.414, y - s)),
+            '7': (lambda x, y, s: (x - s/2.414, y - s, x - s, y - s/2.414)),
+            '8': (lambda x, y, s: (x - s, y + s/2.414, x - s/2.414, y + s))
+        }
+        x1, y1, x2, y2 = dirtab[dir](xc, yc, self.cell_size*0.45)
+        gpb = '''AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
+        return gpb
 
     @staticmethod
     def build_buffer(wkt_geom, distance, quadrantsegments=3):
