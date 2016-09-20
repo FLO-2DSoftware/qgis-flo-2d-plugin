@@ -120,19 +120,42 @@ class GeoPackageUtils(object):
 
     def get_centroids(self, gids, table='grid', field='fid'):
         cells = {}
-        for i in set(gids):
-            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, i)
-            geom = self.execute(sql).fetchone()[0]
-            cells[i] = geom
+        for g in set(gids):
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, g)
+            wkt_geom = self.execute(sql).fetchone()[0]
+            cells[g] = wkt_geom
         return cells
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''AsGPB(ST_GeomFromText('LINESTRING('''
-        for i in gids:
-            qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, i)
-            geom = self.execute(qry).fetchone()[0]
-            points = geom.strip('POINT()') + ','
+        for g in gids:
+            qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, g)
+            wkt_geom = self.execute(qry).fetchone()[0]
+            points = wkt_geom.strip('POINT()') + ','
             gpb += points
+        gpb = gpb.strip(',') + ')\'))'
+        return gpb
+
+    def build_multilinestring(self, gid, directions, cellsize, table='grid', field='fid'):
+        dir_tab = {
+            '1': (lambda x, y, shift: (x, y + shift)),
+            '2': (lambda x, y, shift: (x + shift, y)),
+            '3': (lambda x, y, shift: (x, y - shift)),
+            '4': (lambda x, y, shift: (x - shift, y)),
+            '5': (lambda x, y, shift: (x + shift, y + shift)),
+            '6': (lambda x, y, shift: (x + shift, y - shift)),
+            '7': (lambda x, y, shift: (x - shift, y - shift)),
+            '8': (lambda x, y, shift: (x - shift, y + shift))
+        }
+        half_cell = cellsize * 0.5
+        gpb = '''AsGPB(ST_GeomFromText('MULTILINESTRING('''
+        gpb_part = '''({0} {1}, {2} {3}),'''
+        qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
+        wkt_geom = self.execute(qry).fetchone()[0]
+        x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()]
+        for d in directions:
+            x2, y2 = dir_tab[d](x1, y1, half_cell)
+            gpb += gpb_part.format(x1, y1, x2, y2)
         gpb = gpb.strip(',') + ')\'))'
         return gpb
 
@@ -590,6 +613,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 sqls[char][0] += sqls[char][1].format(i+1, *row)
 
         sql_list = [hystruc_sql] + [x[0] for x in sqls.values()]
+        self.batch_execute(sql_list, strip_char=',')
+
+    def import_street(self):
+        self.clear_tables('street_general', 'streets', 'street_seg', 'street_elems')
+        general_sql = '''INSERT INTO street_general (strman, istrflo, strfno, depx, widst)
+        VALUES ({0}, {1}, {2}, {3}, {4}),'''
+        streets_sql = '''INSERT INTO streets (stname) VALUES'''
+        seg_sql = '''INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES'''
+        elem_sql = '''INSERT INTO street_elems (seg_fid, istdir, widr) VALUES'''
+
+        streets_part = '''\n('{0}'),'''
+        seg_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}),'''
+        elem_part = '''\n({0}, {1}, {2}),'''
+
+        sqls = {
+            'N': [streets_sql, streets_part],
+            'S': [seg_sql, seg_part],
+            'W': [elem_sql, elem_part]
+        }
+
+        head, data = self.parser.parse_street()
+        general_sql = general_sql.format(*head)
+        for i, n in enumerate(data):
+            name = n[0]
+            sqls['N'][0] += sqls['N'][1].format(name)
+            for ii, s in enumerate(n[-1]):
+                gid = s[0]
+                directions = []
+                s_params = s[:-1]
+                for w in s[-1]:
+                    d = w[0]
+                    directions.append(d)
+                    sqls['W'][0] += sqls['W'][1].format(ii+1, *w)
+                geom = self.build_multilinestring(gid, directions, self.cell_size)
+                sqls['S'][0] += sqls['S'][1].format(geom, i + 1, *s_params)
+
+        sql_list = [general_sql] + [x[0] for x in sqls.values()]
         self.batch_execute(sql_list, strip_char=',')
 
     def export_cont(self, outdir):

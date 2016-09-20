@@ -44,7 +44,10 @@ class ParseDAT(object):
             'CHAN.DAT': None,
             'CHANBANK.DAT': None,
             'XSEC.DAT': None,
-            'HYSTRUC.DAT': None
+            'HYSTRUC.DAT': None,
+            'STREET.DAT': None,
+            'ARF.DAT': None,
+            'MULT.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -342,8 +345,26 @@ class ParseDAT(object):
                 data[-1][-1][char].append(row[1:])
         return data
 
-    def parse_streets(self):
-        pass
+    def parse_street(self):
+        street = self.dat_files['STREET.DAT']
+        par = self.single_parser(street)
+        head = next(par)
+        data = []
+        vals = slice(1, None)
+        chars = {'N': 2, 'S': 5, 'W': 3}
+        for row in par:
+            char = row[0]
+            self.fix_row_size(row, chars[char])
+            if char == 'N':
+                row.append([])
+                data.append(row[vals])
+            elif char == 'S':
+                row.append([])
+                data[-1][-1].append(row[vals])
+            elif char == 'W':
+                data[-1][-1][-1][-1].append(row[vals])
+        return head, data
+
 
 if __name__ == '__main__':
     x = ParseDAT()
@@ -351,6 +372,6 @@ if __name__ == '__main__':
     # res = x.parse_infil()
     # for i in res.items():
     #     print(i)
-    res = x.parse_hystruct()
-    for s in res:
-        print(s)
+    head, data = x.parse_street()
+    for n in data:
+        print(n[-1])
