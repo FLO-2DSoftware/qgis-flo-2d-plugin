@@ -127,19 +127,19 @@ class GeoPackageUtils(object):
         return cells
 
     def build_linestring(self, gids, table='grid', field='fid'):
-        line_sql = '''AsGPB(ST_GeomFromText('LINESTRING('''
+        gpb = '''AsGPB(ST_GeomFromText('LINESTRING('''
         for i in gids:
-            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, i)
-            geom = self.execute(sql).fetchone()[0]
+            qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, i)
+            geom = self.execute(qry).fetchone()[0]
             points = geom.strip('POINT()') + ','
-            line_sql += points
-        line_sql = line_sql.strip(',') + ')\'))'
-        return line_sql
+            gpb += points
+        gpb = gpb.strip(',') + ')\'))'
+        return gpb
 
     @staticmethod
     def build_buffer(wkt_geom, distance, quadrantsegments=3):
-        sql = '''AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, {2}))'''
-        gpb = sql.format(wkt_geom, distance, quadrantsegments)
+        gpb = '''AsGPB(ST_Buffer(ST_GeomFromText('{0}'), {1}, {2}))'''
+        gpb = gpb.format(wkt_geom, distance, quadrantsegments)
         return gpb
 
     @staticmethod
@@ -416,7 +416,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'S': [infil_scs_sql, scs_part],
             'H': [infil_horton_sql, horton_part],
             'C': [infil_chan_sql, chan_part]
-
         }
 
         self.clear_tables('infil', 'infil_chan_seg', 'infil_areas_green', 'infil_areas_scs',  'infil_areas_horton ', 'infil_areas_chan')
@@ -578,6 +577,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'F': [culvert_sql, culvert_part],
             'D': [storm_sql, storm_part]
         }
+
         data = self.parser.parse_hystruct()
         nodes = slice(3, 5)
         for i, hs in enumerate(data):

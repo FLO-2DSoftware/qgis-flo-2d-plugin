@@ -1052,3 +1052,47 @@ CREATE TRIGGER "find_cells_mult_delete"
     BEGIN
         DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
     END;
+
+
+-- LEVEE.DAT
+
+CREATE TABLE "levee_general" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "raiselev" REAL, -- RAISELEV, incremental height that all the levee grid element crest elevations are raised
+    "ilevfail" INTEGER, -- ILEVFAIL, switch identifying levee failure mode: 0 for no failure, 1 for prescribed level failure rates, 2 for initiation of levee or dam breach failure routine
+    "gfragchar" TEXT, -- GFRAGCHAR, global levee fragility curve ID
+    "gfragprob" REAL -- GFRAGPROB, global levee fragility curve failure probability
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_general', 'aspatial');
+
+CREATE TABLE "levee_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER -- LGRIDNO, grid element fid with a levee
+    "ldir" INTEGER -- LDIR, flow direction that will be cutoff (1-8)
+    "levcrest" REAL -- LEVCREST, the elevation of the levee crest
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('levee_data', 'features', 4326);
+SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('levee_data', 'geom');
+SELECT gpkgAddSpatialIndex('levee_data', 'geom');
+
+CREATE TABLE "levee_failure" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- LFAILGRID, grid element fid with a failure potential
+    "lfaildir" INTEGER, -- LFAILDIR, the potential failure direction
+    "failevel" REAL, -- FAILEVEL, the maximum elevation of the prescribed levee failure
+    "failtime" REAL, -- FAILTIME, the duration (hr) that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth
+    "levbase" REAL, -- LEVBASE, the prescribed final failure elevation
+    "failwidthmax" REAL, -- FAILWIDTHMAX, the maximum breach width
+    "failrate" REAL, -- FAILRATE, the rate of vertical levee failure
+    "failwidrate" REAL -- FAILWIDREAL, the rate at which the levee breach widens
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_failure', 'aspatial');
+
+CREATE TABLE "levee_fragility" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- LEVFRAGGRID, grid element fid with an individual fragility curve assignment
+    "levfragchar" TEXT, -- LEVFRAGCHAR, levee fragility curve ID
+    "levfragprob" REAL -- LEVFRAGPROB, levee fragility curve failure probability
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_fragility', 'aspatial');

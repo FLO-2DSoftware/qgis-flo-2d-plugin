@@ -21,6 +21,7 @@
  ***************************************************************************/
 """
 import os
+import time
 import traceback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -227,8 +228,10 @@ class Flo2D(object):
             else:
                 pass
             try:
+                start_time = time.time()
                 method = getattr(self.gpkg, call)
                 method(*args)
+                self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())

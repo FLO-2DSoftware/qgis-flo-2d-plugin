@@ -342,6 +342,8 @@ class ParseDAT(object):
                 data[-1][-1][char].append(row[1:])
         return data
 
+    def parse_streets(self):
+        pass
 
 if __name__ == '__main__':
     x = ParseDAT()
