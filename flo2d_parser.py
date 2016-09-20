@@ -46,8 +46,7 @@ class ParseDAT(object):
             'XSEC.DAT': None,
             'HYSTRUC.DAT': None,
             'STREET.DAT': None,
-            'ARF.DAT': None,
-            'MULT.DAT': None
+            'ARF.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -365,6 +364,21 @@ class ParseDAT(object):
                 data[-1][-1][-1][-1].append(row[vals])
         return head, data
 
+    def parse_arf(self):
+        arf = self.dat_files['ARF.DAT']
+        par = self.single_parser(arf)
+        head = next(par)[-1]
+        data = defaultdict(list)
+        for row in par:
+            char = row[0]
+            size = 2 if char == 'T' else 10
+            self.fix_row_size(row, size)
+            if char == 'T':
+                data[char].append(row[1:])
+            else:
+                data['PB'].append(row)
+        return head, data
+
 
 if __name__ == '__main__':
     x = ParseDAT()
@@ -372,6 +386,5 @@ if __name__ == '__main__':
     # res = x.parse_infil()
     # for i in res.items():
     #     print(i)
-    head, data = x.parse_street()
-    for n in data:
-        print(n[-1])
+    head, data = x.parse_arf()
+    print(data)
