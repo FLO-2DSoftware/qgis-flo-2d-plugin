@@ -250,7 +250,8 @@ class Flo2D(object):
             'import_infil',
             'import_chan',
             'import_xsec',
-            'import_hystruc'
+            'import_hystruc',
+            'import_street'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
