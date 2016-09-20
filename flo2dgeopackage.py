@@ -137,7 +137,7 @@ class GeoPackageUtils(object):
         return gpb
 
     def build_multilinestring(self, gid, directions, cellsize, table='grid', field='fid'):
-        dir_tab = {
+        move = {
             '1': (lambda x, y, shift: (x, y + shift)),
             '2': (lambda x, y, shift: (x + shift, y)),
             '3': (lambda x, y, shift: (x, y - shift)),
@@ -154,7 +154,7 @@ class GeoPackageUtils(object):
         wkt_geom = self.execute(qry).fetchone()[0]
         x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()]
         for d in directions:
-            x2, y2 = dir_tab[d](x1, y1, half_cell)
+            x2, y2 = move[d](x1, y1, half_cell)
             gpb += gpb_part.format(x1, y1, x2, y2)
         gpb = gpb.strip(',') + ')\'))'
         return gpb
@@ -186,13 +186,13 @@ class GeoPackageUtils(object):
     @staticmethod
     def build_square(wkt_geom, size):
         x, y = [float(x) for x in wkt_geom.strip('POINT()').split()]
-        size =float(size)
+        half_size = float(size) * 0.5
         gpb = '''AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))'''.format(
-            x - size / 2, y - size / 2,
-            x + size / 2, y - size / 2,
-            x + size / 2, y + size / 2,
-            x - size / 2, y + size / 2,
-            x - size / 2, y - size / 2
+            x - half_size, y - half_size,
+            x + half_size, y - half_size,
+            x + half_size, y + half_size,
+            x - half_size, y + half_size,
+            x - half_size, y - half_size
         )
         return gpb
 
@@ -376,7 +376,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         for gid, val in outflow:
             row, time_series, qh = val['row'], val['time_series'], val['qh']
-
             if qh:
                 qhfid = fid_qh
                 fid_qh += 1
@@ -389,7 +388,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ts_sql += ts_part.format(tsfid)
             else:
                 tsfid = 'NULL'
-
             ident = row[0]
             nostacfp = row[-1] if ident == 'N' else 'NULL'
             outflow_sql += outflow_part.format(tsfid, ident, nostacfp, qhfid, self.build_buffer(cells[gid], self.buffer))
@@ -579,10 +577,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(sql.format(chtype))
             
     def import_xsec(self):
-        self.clear_tables('xsec_n_data')
         xsec_sql = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES'''
         chan_n_sql = '''UPDATE chan_n SET xsecname = '{0}' WHERE nxecnum = {1};'''
         xsec_part = '''\n({0}, {1}, {2}),'''
+        self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
         for xsec in data:
             nr, name, nodes = xsec
@@ -595,7 +593,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
     def import_hystruc(self):
-        self.clear_tables('struct', 'rat_curves', 'repl_rat_curves', 'rat_table', 'culvert_equations', 'storm_drains')
         hystruc_params = ['geom', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont', 'headrefel', 'clength', 'cdiameter']
         hystruc_sql = 'INSERT INTO struct (' + ', '.join(hystruc_params) + ') VALUES'
         ratc_sql = '''INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES'''
@@ -619,6 +616,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'D': [storm_sql, storm_part]
         }
 
+        self.clear_tables('struct', 'rat_curves', 'repl_rat_curves', 'rat_table', 'culvert_equations', 'storm_drains')
         data = self.parser.parse_hystruct()
         nodes = slice(3, 5)
         for i, hs in enumerate(data):
@@ -634,7 +632,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql_list, strip_char=',')
 
     def import_street(self):
-        self.clear_tables('street_general', 'streets', 'street_seg', 'street_elems')
         general_sql = '''INSERT INTO street_general (strman, istrflo, strfno, depx, widst)
         VALUES ({0}, {1}, {2}, {3}, {4}),'''
         streets_sql = '''INSERT INTO streets (stname) VALUES'''
@@ -651,6 +648,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'W': [elem_sql, elem_part]
         }
 
+        self.clear_tables('street_general', 'streets', 'street_seg', 'street_elems')
         head, data = self.parser.parse_street()
         general_sql = general_sql.format(*head)
         for i, n in enumerate(data):
@@ -668,6 +666,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 sqls['S'][0] += sqls['S'][1].format(geom, i + 1, *s_params)
 
         sql_list = [general_sql] + [x[0] for x in sqls.values()]
+        self.batch_execute(sql_list, strip_char=',')
+
+    def import_arf(self):
+        cont_sql = '''INSERT INTO cont (value, name) VALUES ('arfblockmod', {0}),'''
+        blocked_sql = '''INSERT INTO blocked_areas_tot (geom) VALUES'''
+        pblocked_sql = '''INSERT INTO blocked_areas (geom, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES'''
+
+        blocked_part = '''\n({0}),'''
+        pblocked_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}),'''
+
+        self.clear_tables('blocked_areas_tot', 'blocked_areas')
+        head, data = self.parser.parse_arf()
+        cont_sql = cont_sql.format(head)
+        gids = [x[0] for x in chain(data['T'], data['PB'])]
+        cells = self.get_centroids(gids)
+        for row in data['T']:
+            gid = row[0]
+            geom = self.build_square(cells[gid], self.cell_size)
+            blocked_sql += blocked_part.format(geom, *row)
+        for row in data['PB']:
+            gid = row[0]
+            geom = self.build_square(cells[gid], self.cell_size)
+            pblocked_sql += pblocked_part.format(geom, *row)
+
+        sql_list = [cont_sql, blocked_sql, pblocked_sql]
         self.batch_execute(sql_list, strip_char=',')
 
     def export_cont(self, outdir):

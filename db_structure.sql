@@ -906,7 +906,7 @@ CREATE TABLE "blocked_areas_tot" (
     "fid" INTEGER NOT NULL PRIMARY KEY
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas_tot', 'features', 4326);
-SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'MULTILINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
 SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
 
@@ -956,7 +956,7 @@ CREATE TABLE "blocked_areas" (
     "wrf8" REAL  -- WRF(I,J), width reduction factor for the Northwest direction
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
-SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'MULTILINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('blocked_areas', 'geom');
 SELECT gpkgAddSpatialIndex('blocked_areas', 'geom');
 
