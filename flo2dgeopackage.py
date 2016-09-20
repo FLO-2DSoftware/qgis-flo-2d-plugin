@@ -435,7 +435,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 for row in data[k]:
                     gid = row[0]
-                    sqls[k][0] += sqls[k][1].format(self.build_buffer(cells[gid], self.buffer), *row[1:])
+                    sqls[k][0] += sqls[k][1].format(self.build_square(cells[gid], self.cell_size*0.95), *row[1:])
 
         sql_list = [infil_sql, infil_seg_sql] + [x[0] for x in sqls.values()]
         self.batch_execute(sql_list, strip_char=',')

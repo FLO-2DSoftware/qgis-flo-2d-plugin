@@ -282,27 +282,30 @@ class Flo2D(object):
         
         # LAYERS
             
+            ('struct', {
+                'name': 'Structures',
+                'sgroup': None,
+                'styles': ['struc.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('chan_r', {
                 'name': 'Rectangular Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
-            
             ('chan_v', {
                 'name': 'Variable Area Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
-            
             ('chan_t', {
                 'name': 'Trapezoidal Xsec',
                 'sgroup': 'XSections',
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
-            
             ('chan_n', {
                 'name': 'Natural Xsec',
                 'sgroup': 'XSections',
@@ -385,6 +388,30 @@ class Flo2D(object):
 
             # TABLES
 
+            ('infil_cells_green', {
+                'name': 'Cells Green Ampt',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_scs', {
+                'name': 'Cells SCS',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_horton', {
+                'name': 'Cells Horton',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_chan_elems', {
+                'name': 'Channel elements',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
             ('outflow_cells', {
                 'name': 'Outflow Cells',
                 'sgroup': 'Tables',
@@ -412,30 +439,6 @@ class Flo2D(object):
             ('xsec_n_data', {
                 'name': 'Natural xsecs data',
                 'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_cells_green', {
-                'name': 'Cells Green Ampt',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_cells_scs', {
-                'name': 'Cells SCS',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_cells_horton', {
-                'name': 'Cells Horton',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_chan_elems', {
-                'name': 'Channel elements',
-                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             })
