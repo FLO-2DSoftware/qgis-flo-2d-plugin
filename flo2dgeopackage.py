@@ -803,7 +803,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_rain(self, outdir):
         rain_sql = '''SELECT time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
-        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells; ORDER BY fid'''
+        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid'''
         ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
 
         rain_line1 = '{0}  {1}\n'
