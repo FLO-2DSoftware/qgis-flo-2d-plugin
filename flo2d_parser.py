@@ -381,7 +381,30 @@ class ParseDAT(object):
         return head, data
 
     def parse_levee(self):
-        pass
+        levee = self.dat_files['LEVEE.DAT']
+        par = self.single_parser(levee)
+        head = next(par)
+        data = defaultdict(list)
+        vals = slice(1, None)
+        chars = {'L': 2, 'D': 3, 'F': 2, 'W': 8, 'C': 3, 'P': 4}
+        for row in par:
+            char = row[0]
+            self.fix_row_size(row, chars[char])
+            if char == 'L' or char == 'F':
+                row.append([])
+                data[char].append(row[vals])
+            elif char == 'D':
+                data['L'][-1][-1].append(row[vals])
+            elif char == 'W':
+                data['F'][-1][-1].append(row[vals])
+            elif char == 'C':
+                head.extend(row[vals])
+            elif char == 'P':
+                data[char].append(row[vals])
+            else:
+                pass
+        self.fix_row_size(head, 4)
+        return head, data
 
 
 if __name__ == '__main__':
@@ -390,5 +413,6 @@ if __name__ == '__main__':
     # res = x.parse_infil()
     # for i in res.items():
     #     print(i)
-    head, data = x.parse_arf()
+    head, data = x.parse_levee()
+    print(head)
     print(data)
