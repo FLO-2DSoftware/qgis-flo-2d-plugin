@@ -296,7 +296,19 @@ class Flo2D(object):
             ('street_seg', {
                 'name': 'Streets',
                 'sgroup': None,
-                'styles': ['steet.qml'],
+                'styles': ['street.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('blocked_areas', {
+                'name': 'Partially blocked cells',
+                'sgroup': None,
+                'styles': ['blocked_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('blocked_areas_tot', {
+                'name': 'Totally blocked cells',
+                'sgroup': None,
+                'styles': ['blocked_areas_tot.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('chan_r', {
