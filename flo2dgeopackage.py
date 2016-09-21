@@ -137,7 +137,7 @@ class GeoPackageUtils(object):
         return gpb
 
     def build_multilinestring(self, gid, directions, cellsize, table='grid', field='fid'):
-        move = {
+        functions = {
             '1': (lambda x, y, shift: (x, y + shift)),
             '2': (lambda x, y, shift: (x + shift, y)),
             '3': (lambda x, y, shift: (x, y - shift)),
@@ -147,23 +147,20 @@ class GeoPackageUtils(object):
             '7': (lambda x, y, shift: (x - shift, y - shift)),
             '8': (lambda x, y, shift: (x - shift, y + shift))
         }
-        half_cell = cellsize * 0.5
         gpb = '''AsGPB(ST_GeomFromText('MULTILINESTRING('''
         gpb_part = '''({0} {1}, {2} {3}),'''
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
         wkt_geom = self.execute(qry).fetchone()[0]
         x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()]
+        half_cell = cellsize * 0.5
         for d in directions:
-            x2, y2 = move[d](x1, y1, half_cell)
+            x2, y2 = functions[d](x1, y1, half_cell)
             gpb += gpb_part.format(x1, y1, x2, y2)
         gpb = gpb.strip(',') + ')\'))'
         return gpb
-    
-    def build_levee_schem_line(self, gid, dir, table='grid', field='fid'):
-        qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
-        wkt_geom = self.execute(qry).fetchone()[0]
-        xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
-        dir_tab = {
+
+    def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
+        functions = {
             '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
             '2': (lambda x, y, s: (x + s, y + s/2.414, x + s, y - s/2.414)),
             '3': (lambda x, y, s: (x + s/2.414, y - s, x - s/2.414, y - s)),
@@ -173,7 +170,10 @@ class GeoPackageUtils(object):
             '7': (lambda x, y, s: (x - s/2.414, y - s, x - s, y - s/2.414)),
             '8': (lambda x, y, s: (x - s, y + s/2.414, x - s/2.414, y + s))
         }
-        x1, y1, x2, y2 = dirtab[dir](xc, yc, self.cell_size*0.45)
+        qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
+        wkt_geom = self.execute(qry).fetchone()[0]
+        xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
+        x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.45)
         gpb = '''AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
         return gpb
 
