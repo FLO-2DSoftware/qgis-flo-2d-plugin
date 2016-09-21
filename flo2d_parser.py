@@ -368,7 +368,7 @@ class ParseDAT(object):
     def parse_arf(self):
         arf = self.dat_files['ARF.DAT']
         par = self.single_parser(arf)
-        head = next(par)[-1]
+        head = []
         data = defaultdict(list)
         for row in par:
             char = row[0]
@@ -376,8 +376,11 @@ class ParseDAT(object):
             self.fix_row_size(row, size)
             if char == 'T':
                 data[char].append(row[1:])
+            elif char == 'S':
+                head.append(row[-1])
             else:
                 data['PB'].append(row)
+        self.fix_row_size(head, 1)
         return head, data
 
     def parse_levee(self):

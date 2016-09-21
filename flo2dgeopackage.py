@@ -25,7 +25,7 @@ import os
 import traceback
 import pyspatialite.dbapi2 as db
 from .utils import *
-from itertools import chain
+from itertools import chain, izip
 from .utils import *
 from flo2d_parser import ParseDAT
 from .user_communication import UserCommunication
@@ -648,25 +648,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('street_general', 'streets', 'street_seg', 'street_elems')
         head, data = self.parser.parse_street()
         general_sql = general_sql.format(*head)
+        seg_fid = 1
         for i, n in enumerate(data):
             name = n[0]
             sqls['N'][0] += sqls['N'][1].format(name)
-            for ii, s in enumerate(n[-1]):
+            for s in n[-1]:
                 gid = s[0]
                 directions = []
                 s_params = s[:-1]
                 for w in s[-1]:
                     d = w[0]
                     directions.append(d)
-                    sqls['W'][0] += sqls['W'][1].format(ii+1, *w)
+                    sqls['W'][0] += sqls['W'][1].format(seg_fid, *w)
                 geom = self.build_multilinestring(gid, directions, self.cell_size)
-                sqls['S'][0] += sqls['S'][1].format(geom, i + 1, *s_params)
+                sqls['S'][0] += sqls['S'][1].format(geom, i+1, *s_params)
+                seg_fid += 1
 
         sql_list = [general_sql] + [x[0] for x in sqls.values()]
         self.batch_execute(sql_list, strip_char=',')
 
     def import_arf(self):
-        cont_sql = '''INSERT INTO cont (value, name) VALUES ('arfblockmod', {0}),'''
+        cont_sql = '''INSERT INTO cont (name, value) VALUES ('arfblockmod', {0}),'''
         blocked_sql = '''INSERT INTO blocked_areas_tot (geom) VALUES'''
         pblocked_sql = '''INSERT INTO blocked_areas (geom, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES'''
 
@@ -675,7 +677,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('blocked_areas_tot', 'blocked_areas')
         head, data = self.parser.parse_arf()
-        cont_sql = cont_sql.format(head)
+        cont_sql = cont_sql.format(*head)
         gids = [x[0] for x in chain(data['T'], data['PB'])]
         cells = self.get_centroids(gids)
         for row in data['T']:
@@ -685,7 +687,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data['PB']:
             gid = row[0]
             geom = self.build_square(cells[gid], self.cell_size)
-            pblocked_sql += pblocked_part.format(geom, *row)
+            pblocked_sql += pblocked_part.format(geom, *row[1:])
 
         sql_list = [cont_sql, blocked_sql, pblocked_sql]
         self.batch_execute(sql_list, strip_char=',')
@@ -974,3 +976,94 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 x.write(xsec_line.format(nxecnum, xsecname))
                 for xi, yi in self.execute(xsec_sql.format(nxecnum)):
                     x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+
+    def export_hystruc(self, outdir):
+        hystruct_sql = '''SELECT * FROM struct ORDER BY fid;'''
+        ratc_sql = '''SELECT * FROM rat_curves WHERE struct_fid = {0} ORDER BY fid;'''
+        repl_ratc_sql = '''SELECT * FROM repl_rat_curves WHERE struct_fid = {0} ORDER BY fid;'''
+        ratt_sql = '''SELECT * FROM rat_table WHERE struct_fid = {0} ORDER BY fid;'''
+        culvert_sql = '''SELECT * FROM culvert_equations WHERE struct_fid = {0} ORDER BY fid;'''
+        storm_sql = '''SELECT * FROM storm_drains WHERE struct_fid = {0} ORDER BY fid;'''
+
+        line1 = 'S' + '  {}' * 9 + '\n'
+        line2 = 'C' + '  {}' * 5 + '\n'
+        line3 = 'R' + '  {}' * 5 + '\n'
+        line4 = 'T' + '  {}' * 3 + '\n'
+        line5 = 'F' + '  {}' * 5 + '\n'
+        line6 = 'D' + '  {}' * 2 + '\n'
+
+        pairs = [
+            [ratc_sql, line2],
+            [repl_ratc_sql, line3],
+            [ratt_sql, line4],
+            [culvert_sql, line5],
+            [storm_sql, line6]
+            ]
+
+        hystruc = os.path.join(outdir, 'HYSTRUC.DAT')
+        with open(hystruc, 'w') as h:
+            for stru in self.execute(hystruct_sql):
+                fid = stru[0]
+                vals = [x if x is not None else '' for x in stru[2:-2]]
+                h.write(line1.format(*vals))
+                for qry, line in pairs:
+                    for row in self.execute(qry.format(fid)):
+                        subvals = [x if x is not None else '' for x in row[2:]]
+                        h.write(line.format(*subvals))
+
+    def export_street(self, outdir):
+        street_gen_sql = '''SELECT * FROM street_general ORDER BY fid;'''
+        streets_sql = '''SELECT stname FROM streets ORDER BY fid;'''
+        streets_seg_sql = '''SELECT igridn, depex, stman, elstr FROM street_seg WHERE str_fid = {0} ORDER BY fid;'''
+        streets_elem_sql = '''SELECT istdir, widr FROM street_elems WHERE seg_fid = {0} ORDER BY fid;'''
+
+        line1 = '  {}' * 5 + '\n'
+        line2 = ' N {}\n'
+        line3 = ' S' + '  {}' * 4 + '\n'
+        line4 = ' W' + '  {}' * 2 + '\n'
+
+        head = self.execute(street_gen_sql).fetchone()
+        if head is None:
+            return
+        else:
+            pass
+        street = os.path.join(outdir, 'STREET.DAT')
+        with open(street, 'w') as s:
+            s.write(line1.format(*head[1:]))
+            seg_fid = 1
+            for i, sts in enumerate(self.execute(streets_sql)):
+                s.write(line2.format(*sts))
+                for seg in self.execute(streets_seg_sql.format(i+1)):
+                    s.write(line3.format(*seg))
+                    for elem in self.execute(streets_elem_sql.format(seg_fid)):
+                        s.write(line4.format(*elem))
+                    seg_fid += 1
+
+    def export_arf(self, outdir):
+        cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
+        bct_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells_tot ORDER BY fid;'''
+        bac_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells ORDER BY fid;'''
+        ba_sql = '''SELECT * FROM blocked_areas ORDER BY fid;'''
+
+        line1 = 'S  {}\n'
+        line2 = ' T   {}\n'
+        line3 = '   {}' * 10 + '\n'
+
+        option = self.execute(cont_sql).fetchone()
+        if option is None:
+            return
+        else:
+            pass
+        arf = os.path.join(outdir, 'ARF.DAT')
+        with open(arf, 'w') as a:
+            head = option[-1]
+            if head is not None:
+                a.write(line1.format(head))
+            else:
+                pass
+            for row in self.execute(bct_sql):
+                a.write(line2.format(*row))
+            for row1, row2 in izip(self.execute(bac_sql), self.execute(ba_sql)):
+                vals = row1 + row2[1:-1]
+                vals = [x if x is not None else '' for x in vals]
+                a.write(line3.format(*vals))
