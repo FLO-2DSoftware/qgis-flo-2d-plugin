@@ -219,10 +219,11 @@ class Flo2D(object):
         else:
             pass
 
-    def call_methods(self, calls, debug=True, *args):
+    def call_methods(self, calls, *args):
         for call in calls:
+            action = call.split('_')[0]
             dat = call.split('_')[-1].upper() + '.DAT'
-            if self.gpkg.parser.dat_files[dat] is None:
+            if action == 'import' and self.gpkg.parser.dat_files[dat] is None:
                 self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                 continue
             else:
@@ -233,10 +234,7 @@ class Flo2D(object):
                 method(*args)
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
             except Exception as e:
-                if debug is True:
-                    self.uc.log_info(traceback.format_exc())
-                else:
-                    raise
+                self.uc.log_info(traceback.format_exc())
 
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
@@ -486,7 +484,6 @@ class Flo2D(object):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
             'export_cont',
-            'export_mannings_n_topo',
             'export_mannings_n_topo',
             'export_outflow',
             'export_rain',
