@@ -681,11 +681,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data['T']:
             gid = row[0]
-            geom = self.build_square(cells[gid], self.cell_size)
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
             blocked_sql += blocked_part.format(geom, *row)
         for row in data['PB']:
             gid = row[0]
-            geom = self.build_square(cells[gid], self.cell_size)
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
             pblocked_sql += pblocked_part.format(geom, *row[1:])
 
         sql_list = [cont_sql, blocked_sql, pblocked_sql]
@@ -1040,9 +1040,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        bct_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells_tot ORDER BY fid;'''
-        bac_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells ORDER BY fid;'''
-        ba_sql = '''SELECT * FROM blocked_areas ORDER BY fid;'''
+        bct_sql = '''SELECT grid_fid FROM blocked_cells_tot ORDER BY grid_fid;'''
+        bac_sql = '''SELECT grid_fid, area_fid FROM blocked_cells ORDER BY grid_fid;'''
+        ba_sql = '''SELECT * FROM blocked_areas WHERE fid = {0};'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
@@ -1062,7 +1062,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             for row in self.execute(bct_sql):
                 a.write(line2.format(*row))
-            for row1, row2 in izip(self.execute(bac_sql), self.execute(ba_sql)):
-                vals = row1 + row2[1:-1]
-                vals = [x if x is not None else '' for x in vals]
-                a.write(line3.format(*vals))
+            for gid, aid in self.execute(bac_sql):
+                for row in self.execute(ba_sql.format(aid)):
+                    vals = [x if x is not None else '' for x in row[:-1]]
+                    a.write(line3.format(gid, *vals))
