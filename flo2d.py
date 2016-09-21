@@ -474,6 +474,8 @@ class Flo2D(object):
                 lstyle = None
             uri = self.gpkg.path + '|layername={}'.format(lyr)
             lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'])
+            if lyr == 'blocked_areas':
+                self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
                 c = self.lyrs.get_layer_tree_item(lyr_id).layer().editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].iteritems():
@@ -502,7 +504,30 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
-
+    
+    def update_style_blocked(self, lyr_id):
+        if not self.gpkg.cell_size:
+            sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
+            self.gpkg.cell_size = float(self.execute(sql).fetchone()[0])
+        else:
+            pass
+        s = self.gpkg.cell_size * 0.45
+        dir_lines = {
+            1: (-s/2.414, s, s/2.414, s),
+            2: (s, s/2.414, s, -s/2.414),
+            3: (s/2.414, -s, -s/2.414, -s),
+            4: (-s, -s/2.414, -s, s/2.414),
+            5: (s/2.414, s, s, s/2.414),
+            6: (s, -s/2.414, s/2.414, -s),
+            7: (-s/2.414, -s, -s, -s/2.414),
+            8: (-s, s/2.414, -s/2.414, s)
+        } 
+        lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        sym = lyr.rendererV2().symbol()
+        for nr in range(sym.symbolLayerCount()):
+            exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
+            sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
+        
     def settings(self):
         self.dlg_settings = SettingsDialog(self)
         self.dlg_settings.show()

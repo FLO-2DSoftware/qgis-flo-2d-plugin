@@ -212,6 +212,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
         self.buffer = self.cell_size * 0.4
+        sql = '''INSERT INTO cont (name, value) VALUES ("CELLSIZE", {})'''.format(self.cell_size)
 
     def _import_fplain(self):
         # insert grid data into gpkg
