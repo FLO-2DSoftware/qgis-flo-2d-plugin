@@ -287,6 +287,12 @@ class Flo2D(object):
         
         # LAYERS
             
+            ('levee_data', {
+                'name': 'Levees',
+                'sgroup': None,
+                'styles': ['levee.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('struct', {
                 'name': 'Structures',
                 'sgroup': None,
@@ -511,7 +517,7 @@ class Flo2D(object):
             self.gpkg.cell_size = float(self.execute(sql).fetchone()[0])
         else:
             pass
-        s = self.gpkg.cell_size * 0.45
+        s = self.gpkg.cell_size * 0.44
         dir_lines = {
             1: (-s/2.414, s, s/2.414, s),
             2: (s, s/2.414, s, -s/2.414),

@@ -169,7 +169,7 @@ class GeoPackageUtils(object):
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
         wkt_geom = self.execute(qry).fetchone()[0]
         xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
-        x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.45)
+        x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.48)
         gpb = '''AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
         return gpb
 
