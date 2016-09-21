@@ -690,7 +690,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql_list, strip_char=',')
 
     def import_levee(self):
-        pass
+        lgeneral_sql = '''INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES'''
+        ldata_sql = '''INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES'''
+        lfailure_sql = '''INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate) VALUES'''
+        lfragility_sql = '''INSERT INTO levee_fragility (grid_fid, levfragchar, levfragprob) VALUES'''
+
+        lgeneral_part = '''\n({0}, {1}, '{2}', {3}),'''
+        ldata_part = '''\n({0}, {1}, {2}, {3}),'''
+        lfailure_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
+        lfragility_part = '''\n({0}, '{1}', {2}),'''
+
+        self.clear_tables('levee_general', 'levee_data', 'levee_failure', 'levee_fragility')
+        head, data = self.parser.parse_levee()
+
+        if head[2] == 'NULL':
+            lgeneral_sql += lgeneral_part.replace("'", '').format(*head)
+        else:
+            lgeneral_sql += lgeneral_part.format(*head)
+
+        for gid, directions in data['L']:
+            for row in directions:
+                ldir, levcrest = row
+                geom = self.build_levee(gid, ldir, self.cell_size)
+                ldata_sql += ldata_part.format(geom, gid, ldir, levcrest)
+        for gid, directions in data['F']:
+            for row in directions:
+                lfailure_sql += lfailure_part.format(gid, *row)
+
+        for row in data['P']:
+            if row[1] == 'NULL':
+                lfragility_sql += lfragility_part.replace("'", '').format(*row)
+            else:
+                lfragility_sql += lfragility_part.format(*row)
+
+        sql_list = [lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql]
+        self.batch_execute(sql_list, strip_char=',')
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
