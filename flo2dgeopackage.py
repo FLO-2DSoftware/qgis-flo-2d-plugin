@@ -42,7 +42,6 @@ class GeoPackageUtils(object):
 
     def database_create(self):
         """Create geopackage with SpatiaLite functions"""
-#        try:
         # delete db file if exists
         if os.path.exists(self.path):
             try:
@@ -59,9 +58,6 @@ class GeoPackageUtils(object):
         self.conn.commit()
         c.close()
         return True
-#        except:
-#            self.msg = "Couldn't create GeoPackage"
-#            return False
 
     def database_connect(self):
         """Connect database with sqlite3"""
@@ -693,6 +689,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         sql_list = [cont_sql, blocked_sql, pblocked_sql]
         self.batch_execute(sql_list, strip_char=',')
 
+    def import_levee(self):
+        pass
+
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v for o, v in self.execute(sql).fetchall()}
@@ -746,7 +745,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         tsd_line = '\nH              {0: <15} {1: <15} {2}'
         res_line = '\nR              {0: <15} {1}'
 
-        inf_rows = self.execute(inflow_sql)
         inf_cells = dict(self.execute(inflow_cells_sql).fetchall())
         hourdaily = self.execute(ts_sql).fetchone()[0]
         idplt = self.execute(cont_sql).fetchone()[0]
@@ -754,7 +752,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         inflow = os.path.join(outdir, 'INFLOW.DAT')
         with open(inflow, 'w') as i:
             i.write(head_line.format(hourdaily, idplt))
-            for row in inf_rows:
+            for row in self.execute(inflow_sql):
                 fid, ts_fid, ident, inoutfc = row
                 gid = inf_cells[fid]
                 i.write(inf_line.format(ident, inoutfc, gid))
@@ -777,13 +775,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         tsd_line = '{0: <15} {1: <15} {2}\n'
         hyd_line = '{0: <15} {1}\n'
 
-        out_rows = self.execute(outflow_sql)
         out_cells = dict(self.execute(outflow_cells_sql).fetchall())
         out_chan = dict(self.execute(outflow_chan_sql).fetchall())
 
         outflow = os.path.join(outdir, 'OUTFLOW.DAT')
         with open(outflow, 'w') as o:
-            for row in out_rows:
+            for row in self.execute(outflow_sql):
                 fid, ts_fid, ident, nostacfp, qh_fid = row
                 gid = out_chan[fid] if ident == 'K' else out_cells[fid]
                 o.write(out_line.format(ident, gid, nostacfp).replace('None', ''))
@@ -813,6 +810,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cell_line = '{0: <10} {1}\n'
 
         rain_row = self.execute(rain_sql).fetchone()
+        if rain_row is None:
+            return
+        else:
+            pass
         rain = os.path.join(outdir, 'RAIN.DAT')
         with open(rain, 'w') as r:
             fid = rain_row[0]
@@ -839,11 +840,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         monthly = '  {0}  {1:.2f}\n'
         hourly = '    {0:.4f}\n'
 
-        month_rows = self.execute(evapor_month_sql)
+        evapor_row = self.execute(evapor_sql).fetchone()
+        if evapor_row is None:
+            return
+        else:
+            pass
         evapor = os.path.join(outdir, 'EVAPOR.DAT')
         with open(evapor, 'w') as e:
-            e.write(head.format(*self.execute(evapor_sql).fetchone()))
-            for mrow in month_rows:
+            e.write(head.format(*evapor_row))
+            for mrow in self.execute(evapor_month_sql):
                 month = mrow[0]
                 e.write(monthly.format(*mrow))
                 for hrow in self.execute(evapor_hour_sql.format(month)):
@@ -923,9 +928,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         pkt_line = ''' {0:<10} {1: >10}\n'''
         nr = '{0:.2f}'
 
+        chan_n = self.execute(chan_n_sql).fetchall()
+        if not chan_n:
+            return
+        else:
+            pass
         xsec = os.path.join(outdir, 'XSEC.DAT')
         with open(xsec, 'w') as x:
-            for nxecnum, xsecname in self.execute(chan_n_sql):
+            for nxecnum, xsecname in chan_n:
                 x.write(xsec_line.format(nxecnum, xsecname))
                 for xi, yi in self.execute(xsec_sql.format(nxecnum)):
                     x.write(pkt_line.format(nr.format(xi), nr.format(yi)))

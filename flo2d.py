@@ -167,7 +167,6 @@ class Flo2D(object):
         if not gpkg_fname:
             return
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
-        #db0 = os.path.join(self.plugin_dir, '0.gpkg')
 
         self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
         if not self.gpkg.database_create():
@@ -219,11 +218,10 @@ class Flo2D(object):
         else:
             pass
 
-    def call_methods(self, calls, *args):
+    def call_methods(self, calls, debug, *args):
         for call in calls:
-            action = call.split('_')[0]
             dat = call.split('_')[-1].upper() + '.DAT'
-            if action == 'import' and self.gpkg.parser.dat_files[dat] is None:
+            if call.startswith('import') and self.gpkg.parser.dat_files[dat] is None:
                 self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                 continue
             else:
@@ -234,7 +232,10 @@ class Flo2D(object):
                 method(*args)
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
             except Exception as e:
-                self.uc.log_info(traceback.format_exc())
+                if debug is True:
+                    self.uc.log_info(traceback.format_exc())
+                else:
+                    raise
 
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
@@ -250,11 +251,12 @@ class Flo2D(object):
             'import_xsec',
             'import_hystruc',
             'import_street',
-            'import_arf'
+            'import_arf',
+            'import_levee'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='*.DAT')
+        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if fname:
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             bname = os.path.basename(fname)
@@ -271,7 +273,7 @@ class Flo2D(object):
                         return
                 else:
                     pass
-                self.call_methods(import_calls)
+                self.call_methods(import_calls, True)
                 # load layers and tables
                 self.load_layers()
                 self.uc.bar_info('Flo2D model imported', dur=3)
@@ -485,6 +487,7 @@ class Flo2D(object):
         export_calls = [
             'export_cont',
             'export_mannings_n_topo',
+            'export_inflow',
             'export_outflow',
             'export_rain',
             'export_infil',
@@ -497,7 +500,7 @@ class Flo2D(object):
         outdir = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
         if outdir:
             s.setValue('FLO-2D/lastGdsDir', outdir)
-            self.call_methods(export_calls, outdir)
+            self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
 
     def settings(self):

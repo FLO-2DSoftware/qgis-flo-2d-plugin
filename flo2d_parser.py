@@ -46,7 +46,8 @@ class ParseDAT(object):
             'XSEC.DAT': None,
             'HYSTRUC.DAT': None,
             'STREET.DAT': None,
-            'ARF.DAT': None
+            'ARF.DAT': None,
+            'LEVEE.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -378,6 +379,9 @@ class ParseDAT(object):
             else:
                 data['PB'].append(row)
         return head, data
+
+    def parse_levee(self):
+        pass
 
 
 if __name__ == '__main__':
