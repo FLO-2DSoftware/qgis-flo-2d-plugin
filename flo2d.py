@@ -27,7 +27,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
 from qgis.gui import QgsProjectionSelectionWidget
-from qgis.core import QgsDataSourceURI
+from qgis.core import *
 from flo2d_dialog import Flo2DDialog
 from .user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
@@ -67,6 +67,7 @@ class Flo2D(object):
         self.conn = None
         self.lyrs  = Layers()
         self.gpkg = None
+        self.prep_sql = None
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -196,6 +197,7 @@ class Flo2D(object):
         rc = self.gpkg.execute(sql, (srsid,))
         sql = "UPDATE gpkg_contents SET srs_id = ?"
         rc = self.gpkg.execute(sql, (srsid,))
+        self.srs_id = srsid
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
@@ -212,6 +214,11 @@ class Flo2D(object):
             self.uc.log_info("Connected to {}".format(gpkg_fname))
             if self.gpkg.check_gpkg():
                 self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+                sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
+                rc = self.gpkg.execute(sql)
+                rt = rc.fetchone()[0]
+                print 'srs', rt
+                self.srs_id = rt
                 self.load_layers()
             else:
                 self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
@@ -417,6 +424,12 @@ class Flo2D(object):
 
             # TABLES
 
+            ('cont', {
+                'name': 'Control',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
             ('infil_cells_green', {
                 'name': 'Cells Green Ampt',
                 'sgroup': "Infiltration Tables",
@@ -470,6 +483,24 @@ class Flo2D(object):
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
+            }),
+            ('evapor', {
+                'name': 'Evaporation',
+                'sgroup': 'Evaporation Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('evapor_hourly', {
+                'name': 'Hourly data',
+                'sgroup': "Evaporation Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('evapor_monthly', {
+                'name': 'Monthly data',
+                'sgroup': "Evaporation Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
             })
         ])
         for lyr in self.layers_data:
@@ -517,7 +548,7 @@ class Flo2D(object):
     def update_style_blocked(self, lyr_id):
         if not self.gpkg.cell_size:
             sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
-            self.gpkg.cell_size = float(self.execute(sql).fetchone()[0])
+            self.gpkg.cell_size = float(self.gpkg.execute(sql).fetchone()[0])
         else:
             pass
         s = self.gpkg.cell_size * 0.44
@@ -536,7 +567,7 @@ class Flo2D(object):
         for nr in range(sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
-        
+
     def settings(self):
         self.dlg_settings = SettingsDialog(self)
         self.dlg_settings.show()
