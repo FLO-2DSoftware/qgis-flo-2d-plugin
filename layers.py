@@ -92,7 +92,22 @@ class Layers(QObject):
         else:
             raise Flo2dLayerNotFound('Layer id not specified')
 
-    
+    def get_layer_by_name(self, name, group=None):
+        if group:
+            gr = self.get_group(group)
+        else:
+            gr = self.root
+        if name:
+            layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+            for layer in layers:
+                layeritem = gr.findLayer(layer.id())
+                if not layeritem:
+                    msg = 'Layer {} doesn\'t exist in the layers tree.'.format(name)
+                    raise Flo2dLayerNotFound(msg)
+                return layeritem
+        else:
+            raise Flo2dLayerNotFound('Layer name not specified')
+        
     def new_group(self, name):
         if isinstance(name, (str, unicode)):
             self.root.addGroup(name)
