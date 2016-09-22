@@ -372,15 +372,14 @@ class ParseDAT(object):
         data = defaultdict(list)
         for row in par:
             char = row[0]
-            size = 2 if char == 'T' else 10
+            size = 2 if char in 'ST' else 10
             self.fix_row_size(row, size)
-            if char == 'T':
-                data[char].append(row[1:])
-            elif char == 'S':
+            if char == 'S':
                 head.append(row[-1])
+            elif char == 'T':
+                data[char].append(row[1:])
             else:
                 data['PB'].append(row)
-        self.fix_row_size(head, 1)
         return head, data
 
     def parse_levee(self):

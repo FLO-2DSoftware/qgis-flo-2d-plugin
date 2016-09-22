@@ -24,8 +24,8 @@
 import os
 import traceback
 import pyspatialite.dbapi2 as db
-from .utils import *
-from itertools import chain, izip
+from operator import itemgetter
+from itertools import chain, groupby
 from .utils import *
 from flo2d_parser import ParseDAT
 from .user_communication import UserCommunication
@@ -683,11 +683,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data['T']:
             gid = row[0]
-            geom = self.build_square(cells[gid], self.cell_size)
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
             blocked_sql += blocked_part.format(geom, *row)
         for row in data['PB']:
             gid = row[0]
-            geom = self.build_square(cells[gid], self.cell_size)
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
             pblocked_sql += pblocked_part.format(geom, *row[1:])
 
         sql_list = [cont_sql, blocked_sql, pblocked_sql]
@@ -1042,9 +1042,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        bct_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells_tot ORDER BY fid;'''
-        bac_sql = '''SELECT DISTINCT grid_fid FROM blocked_cells ORDER BY fid;'''
-        ba_sql = '''SELECT * FROM blocked_areas ORDER BY fid;'''
+        bct_sql = '''SELECT grid_fid FROM blocked_cells_tot ORDER BY grid_fid;'''
+        bac_sql = '''SELECT grid_fid, area_fid FROM blocked_cells ORDER BY grid_fid;'''
+        ba_sql = '''SELECT * FROM blocked_areas WHERE fid = {0};'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
@@ -1064,7 +1064,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             for row in self.execute(bct_sql):
                 a.write(line2.format(*row))
-            for row1, row2 in izip(self.execute(bac_sql), self.execute(ba_sql)):
-                vals = row1 + row2[1:-1]
-                vals = [x if x is not None else '' for x in vals]
-                a.write(line3.format(*vals))
+            for gid, aid in self.execute(bac_sql):
+                for row in self.execute(ba_sql.format(aid)):
+                    vals = [x if x is not None else '' for x in row[:-1]]
+                    a.write(line3.format(gid, *vals))
+
+    def export_levee(self, outdir):
+        levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
+        levee_data_sql = '''SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid;'''
+        levee_fail_sql = '''SELECT * FROM levee_failure ORDER BY fid;'''
+        levee_frag_sql = '''SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY fid;'''
+
+        line1 = '{0}  {1}\n'
+        line2 = 'L  {0}\n'
+        line3 = 'D  {0}  {1}\n'
+        line4 = 'F  {0}\n'
+        line5 = 'W  {0}  {1}  {2}  {3}  {4}  {5}\n'
+        line6 = 'C  {0}  {1}\n'
+        line7 = 'P  {0}  {1}  {2}\n'
+
+        general = self.execute(levee_gen_sql).fetchone()
+        if general is None:
+            return
+        else:
+            pass
+        head = general[:2]
+        glob_frag = general[2:]
+        levee = os.path.join(outdir, 'LEVEE.DAT')
+        with open(levee, 'w') as l:
+            l.write(line1.format(*head))
+            levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
+            for gid, directions in levee_rows:
+                l.write(line2.format(gid))
+                for row in directions:
+                    l.write(line3.format(*row[1:]))
+            fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
+            for gid, directions in fail_rows:
+                l.write(line4.format(gid))
+                for row in directions:
+                    l.write(line5.format(*row[2:]))
+            if None not in glob_frag:
+                l.write(line6.format(*glob_frag))
+            else:
+                pass
+            for row in self.execute(levee_frag_sql):
+                l.write(line7.format(row))

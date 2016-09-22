@@ -535,7 +535,8 @@ class Flo2D(object):
             'export_xsec',
             'export_hystruc',
             'export_street',
-            'export_arf'
+            'export_arf',
+            'export_levee'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
