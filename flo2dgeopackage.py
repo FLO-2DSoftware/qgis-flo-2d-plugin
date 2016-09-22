@@ -67,7 +67,7 @@ class GeoPackageUtils(object):
         except:
             self.msg = "Couldn't connect to GeoPackage"
             return False
-
+        
     def check_gpkg(self):
         """Check if file is GeoPackage """
         try:
@@ -212,7 +212,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
         self.buffer = self.cell_size * 0.4
-        sql = '''INSERT INTO cont (name, value) VALUES ("CELLSIZE", {})'''.format(self.cell_size)
 
     def _import_fplain(self):
         # insert grid data into gpkg
@@ -275,6 +274,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for option in cont:
             sql += sql_part.format(option, cont[option])
         self.execute(sql.replace("'None'", 'NULL').rstrip(','))
+        sql = '''INSERT INTO cont (name, value) VALUES ('CELLSIZE', '{}');'''.format(self.cell_size)
+        self.execute(sql)
 
     def import_mannings_n_topo(self):
         # insert grid data into gpkg
