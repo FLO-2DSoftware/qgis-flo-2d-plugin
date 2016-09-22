@@ -24,8 +24,8 @@
 import os
 import traceback
 import pyspatialite.dbapi2 as db
-from .utils import *
-from itertools import chain, izip
+from operator import itemgetter
+from itertools import chain, groupby
 from .utils import *
 from flo2d_parser import ParseDAT
 from .user_communication import UserCommunication
@@ -1066,3 +1066,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(ba_sql.format(aid)):
                     vals = [x if x is not None else '' for x in row[:-1]]
                     a.write(line3.format(gid, *vals))
+
+    def export_levee(self, outdir):
+        levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
+        levee_data_sql = '''SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid;'''
+        levee_fail_sql = '''SELECT * FROM levee_failure ORDER BY fid;'''
+        levee_frag_sql = '''SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY fid;'''
+
+        line1 = '{0}  {1}\n'
+        line2 = 'L  {0}\n'
+        line3 = 'D  {0}  {1}\n'
+        line4 = 'F  {0}\n'
+        line5 = 'W  {0}  {1}  {2}  {3}  {4}  {5}\n'
+        line6 = 'C  {0}  {1}\n'
+        line7 = 'P  {0}  {1}  {2}\n'
+
+        general = self.execute(levee_gen_sql).fetchone()
+        if general is None:
+            return
+        else:
+            pass
+        head = general[:2]
+        glob_frag = general[2:]
+        levee = os.path.join(outdir, 'LEVEE.DAT')
+        with open(levee, 'w') as l:
+            l.write(line1.format(*head))
+            levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
+            for gid, directions in levee_rows:
+                l.write(line2.format(gid))
+                for row in directions:
+                    l.write(line3.format(*row[1:]))
+            fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
+            for gid, directions in fail_rows:
+                l.write(line4.format(gid))
+                for row in directions:
+                    l.write(line5.format(*row[2:]))
+            if None not in glob_frag:
+                l.write(line6.format(*glob_frag))
+            else:
+                pass
+            for row in self.execute(levee_frag_sql):
+                l.write(line7.format(row))
