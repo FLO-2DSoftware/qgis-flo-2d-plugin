@@ -33,13 +33,14 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('cont', 'aspatial');
 
 -- Grid table - data from FPLAIN.DAT, CADPTS.DAT, TOPO.DAT, MANNINGS_N.DAT
 
-CREATE TABLE "grid" ( `fid` INTEGER PRIMARY KEY AUTOINCREMENT,
-   "cell_north" INTEGER,
-   "cell_east" INTEGER,
-   "cell_south" INTEGER,
-   "cell_west" INTEGER,
-   "n_value" REAL,
-   "elevation" REAL
+CREATE TABLE "grid" ( 
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "cell_north" INTEGER,
+    "cell_east" INTEGER,
+    "cell_south" INTEGER,
+    "cell_west" INTEGER,
+    "n_value" REAL,
+    "elevation" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);
@@ -420,7 +421,7 @@ SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 --             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(geom))))
 --             WHERE fid = NEW.fid;
 --     END;
-
+-- 
 -- CREATE TRIGGER "chan_n_geom_update_banks_changed"
 --     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
 -- --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
@@ -434,17 +435,58 @@ SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 --                 WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
 --     END;
 
-CREATE VIEW "chan_elems_in_segment" (
-    chan_elem_fid,
-    seg_fid
-) AS 
-SELECT DISTINCT ichangrid, seg_fid FROM chan_r
-UNION ALL
-SELECT DISTINCT ichangrid, seg_fid FROM chan_v
-UNION ALL
-SELECT DISTINCT ichangrid, seg_fid FROM chan_t
-UNION ALL
-SELECT DISTINCT ichangrid, seg_fid FROM chan_n;
+-- CREATE VIEW "chan_elems_in_segment" (
+--     chan_elem_fid,
+--     seg_fid
+-- ) AS 
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_r
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_v
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_t
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_n;
+
+-- CREATE TABLE "rightbanks" (
+--     "fid" INTEGER NOT NULL PRIMARY KEY,
+--     "seg_fid" INTEGER
+-- );
+-- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rightbanks', 'features', 4326);
+-- SELECT gpkgAddGeometryColumn('rightbanks', 'geom', 'LINESTRING', 0, 0, 0);
+-- SELECT gpkgAddGeometryTriggers('rightbanks', 'geom');
+-- SELECT gpkgAddSpatialIndex('rightbanks', 'geom');
+-- 
+-- CREATE TRIGGER "find_rbank_n_insert"
+--     AFTER INSERT ON "chan_n"
+--     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+--     BEGIN
+--         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
+--         INSERT INTO "rightbanks" (seg_fid, geom)
+--             SELECT 
+--                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
+--             WHERE 
+--                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
+--             GROUP BY seg_fid;
+--     END;
+-- 
+-- CREATE TRIGGER "find_rbank_n_update"
+--     AFTER UPDATE ON "chan_n"
+--     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+--     BEGIN
+--         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
+--         INSERT INTO "rightbanks" (seg_fid, geom) 
+--             SELECT 
+--                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
+--             WHERE 
+--                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
+--             GROUP BY seg_fid;
+--     END;
+-- 
+-- CREATE TRIGGER "find_rbank_n_delete"
+--     AFTER DELETE ON "chan_n"
+--     BEGIN
+--         DELETE FROM "rightbanks" WHERE seg_fid = OLD."seg_fid";
+--     END;
 
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
