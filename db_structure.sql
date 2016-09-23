@@ -1177,3 +1177,53 @@ CREATE TABLE "fpfroude_cells" (
     "grid_fid" INTEGER -- grid element fid that has an individual Froude number
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'aspatial');
+
+
+-- SWMMFLO.DAT
+
+CREATE TABLE "swmmflo" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "swmm_jt" INTEGER -- SWMM_JT, fid of the grid element with storm drain inlet
+    "intype" INTEGER, -- INTYPE, inlet type (1-5)
+    "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
+    "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
+    "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
+    "flapgate" INTEGER -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
+    "name" TEXT -- optional inlet name
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
+SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('swmmflo', 'geom');
+SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
+
+
+-- SWMMFLORT.DAT
+
+CREATE TABLE "swmmflort" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER -- SWMM_JT, fid of the grid element with a storm drain inlet
+    "name" TEXT -- optional name of the rating table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort', 'aspatial');
+
+CREATE TABLE "swmmflort_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "swmm_rt_fid" INTEGER, -- fid of a rating table from swmmflort
+    "depth" REAL, -- DEPTHSWMMRT, flow depths for the discharge rating table pairs
+    "q" REAL -- QSWMMRT, discharge values for the storm drain inlet rating table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort_data', 'aspatial');
+
+
+-- SWMMOUTF.DAT
+
+CREATE TABLE "swmmoutf" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- OUTF_GRID, fid of the grid element with a storm drain outflow
+    "name" TEXT, -- OUTF_NAME, name of the outflow
+    "outf_flo" INTEGER -- OUTF_FLO2DVOL, switch, 0 for all discharge removed from strom drain system, 1 allows for the discharge to be returned to FLO-2D
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'features', 4326);
+SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
+SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
