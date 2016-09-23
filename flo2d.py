@@ -261,7 +261,8 @@ class Flo2D(object):
             'import_mult',
             'import_levee',
             'import_fpxsec',
-            'import_fpfroude'
+            'import_fpfroude',
+            'import_swmmflo'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
@@ -567,7 +568,8 @@ class Flo2D(object):
             'export_mult',
             'export_levee',
             'export_fpxsec',
-            'export_fpfroude'
+            'export_fpfroude',
+            'export_swmmflo'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')

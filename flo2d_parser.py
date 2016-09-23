@@ -50,7 +50,8 @@ class ParseDAT(object):
             'MULT.DAT': None,
             'LEVEE.DAT': None,
             'FPXSEC.DAT': None,
-            'FPFROUDE.DAT': None
+            'FPFROUDE.DAT': None,
+            'SWMMFLO.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -443,6 +444,12 @@ class ParseDAT(object):
     def parse_fpfroude (self):
         fpfroude = self.dat_files['FPFROUDE.DAT']
         par = self.single_parser(fpfroude)
+        data = (row[1:] for row in par)
+        return data
+
+    def parse_swmmflo (self):
+        swmmflo = self.dat_files['SWMMFLO.DAT']
+        par = self.single_parser(swmmflo)
         data = (row[1:] for row in par)
         return data
 

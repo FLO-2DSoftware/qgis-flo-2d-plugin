@@ -1188,6 +1188,7 @@ CREATE TABLE "swmmflo" (
     "intype" INTEGER, -- INTYPE, inlet type (1-5)
     "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
     "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
+    "swmm_width" REAL, -- SWMMwidth
     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
     "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
     "name" TEXT -- optional inlet name
@@ -1273,4 +1274,4 @@ CREATE TABLE "wstime" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wstime', 'features', 4326);
 SELECT gpkgAddGeometryColumn('wstime', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('wstime', 'geom');
-SELECT gpkgAddSpatialIndex('wsurf', 'geom');
+SELECT gpkgAddSpatialIndex('wstime', 'geom');

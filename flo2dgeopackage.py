@@ -789,6 +789,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         sql_list = [fpfroude_sql, cell_sql]
         self.batch_execute(sql_list, strip_char=',')
 
+    def import_swmmflo(self):
+        swmmflo_sql = '''INSERT INTO swmmflo (geom, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate) VALUES'''
+        swmmflo_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
+
+        self.clear_tables('swmmflo')
+        data = self.parser.parse_swmmflo()
+        gids = (x[0] for x in data)
+        cells = self.get_centroids(gids)
+        for row in data:
+            gid = row[0]
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
+            swmmflo_sql += swmmflo_part.format(geom, *row)
+        sql_list = [swmmflo_sql]
+        self.batch_execute(sql_list, strip_char=',')
+
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v for o, v in self.execute(sql).fetchall()}
@@ -1285,8 +1300,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         line1 = 'F {0} {1}\n'
 
-        fpfroude_rows = self.execute(fpfroude_sql).fetchone()
-        if fpfroude_rows is None:
+        fpfroude_rows = self.execute(fpfroude_sql).fetchall()
+        if not fpfroude_rows:
             return
         else:
             pass
@@ -1295,3 +1310,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for fid, froudefp in fpfroude_rows:
                 gid = self.execute(cell_sql.format(fid)).fetchone()[0]
                 f.write(line1.format(froudefp, gid))
+
+    def export_swmmflo(self, outdir):
+        swmmflo_sql = '''SELECT swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate FROM swmmflo ORDER BY fid;'''
+
+        line1 = 'D  {0} {1} {2} {3} {4} {5} {6}\n'
+
+        swmmflo_rows = self.execute(swmmflo_sql).fetchall()
+        if not swmmflo_rows:
+            return
+        else:
+            pass
+        swmmflo = os.path.join(outdir, 'SWMMFLO.DAT')
+        with open(swmmflo, 'w') as s:
+            for row in swmmflo_rows:
+                s.write(line1.format(*row))
