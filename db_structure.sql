@@ -33,7 +33,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('cont', 'aspatial');
 
 -- Grid table - data from FPLAIN.DAT, CADPTS.DAT, TOPO.DAT, MANNINGS_N.DAT
 
-CREATE TABLE "grid" ( 
+CREATE TABLE "grid" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "cell_north" INTEGER,
     "cell_east" INTEGER,
@@ -421,7 +421,7 @@ SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 --             WHERE ST_Intersects(g.geom,EndPoint(CastAutomagic(geom))))
 --             WHERE fid = NEW.fid;
 --     END;
--- 
+--
 -- CREATE TRIGGER "chan_n_geom_update_banks_changed"
 --     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
 -- --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
@@ -438,7 +438,7 @@ SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 -- CREATE VIEW "chan_elems_in_segment" (
 --     chan_elem_fid,
 --     seg_fid
--- ) AS 
+-- ) AS
 -- SELECT DISTINCT ichangrid, seg_fid FROM chan_r
 -- UNION ALL
 -- SELECT DISTINCT ichangrid, seg_fid FROM chan_v
@@ -455,33 +455,33 @@ SELECT gpkgAddSpatialIndex('chan_n', 'geom');
 -- SELECT gpkgAddGeometryColumn('rightbanks', 'geom', 'LINESTRING', 0, 0, 0);
 -- SELECT gpkgAddGeometryTriggers('rightbanks', 'geom');
 -- SELECT gpkgAddSpatialIndex('rightbanks', 'geom');
--- 
+--
 -- CREATE TRIGGER "find_rbank_n_insert"
 --     AFTER INSERT ON "chan_n"
 --     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --     BEGIN
 --         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
 --         INSERT INTO "rightbanks" (seg_fid, geom)
---             SELECT 
+--             SELECT
 --                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
---             WHERE 
+--             WHERE
 --                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
 --             GROUP BY seg_fid;
 --     END;
--- 
+--
 -- CREATE TRIGGER "find_rbank_n_update"
 --     AFTER UPDATE ON "chan_n"
 --     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --     BEGIN
 --         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
---         INSERT INTO "rightbanks" (seg_fid, geom) 
---             SELECT 
+--         INSERT INTO "rightbanks" (seg_fid, geom)
+--             SELECT
 --                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
---             WHERE 
+--             WHERE
 --                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
 --             GROUP BY seg_fid;
 --     END;
--- 
+--
 -- CREATE TRIGGER "find_rbank_n_delete"
 --     AFTER DELETE ON "chan_n"
 --     BEGIN

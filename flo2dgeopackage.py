@@ -25,7 +25,7 @@ import os
 import traceback
 import pyspatialite.dbapi2 as db
 from operator import itemgetter
-from itertools import chain, groupby
+from itertools import chain, groupby, izip
 from .utils import *
 from flo2d_parser import ParseDAT
 from .user_communication import UserCommunication
@@ -67,7 +67,7 @@ class GeoPackageUtils(object):
         except:
             self.msg = "Couldn't connect to GeoPackage"
             return False
-        
+
     def check_gpkg(self):
         """Check if file is GeoPackage """
         try:
@@ -386,6 +386,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ts_sql += ts_part.format(tsfid)
             else:
                 tsfid = 'NULL'
+
             ident = row[0]
             nostacfp = row[-1] if ident == 'N' else 'NULL'
             outflow_sql += outflow_part.format(tsfid, ident, nostacfp, qhfid, self.build_buffer(cells[gid], self.buffer))
@@ -434,7 +435,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql_list, strip_char=',')
 
     def import_infil(self):
-        infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
+        infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj', 'hydcxx', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
         infil_sql = 'INSERT INTO infil (' + ', '.join(infil_params) + ') VALUES ('
         infil_seg_sql = '''INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES'''
         infil_green_sql = '''INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES'''
@@ -466,12 +467,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_seg_sql += seg_part.format(i+1, *row)
 
         for k in sqls:
-            if len(data[k]) == 0:
-                continue
-            else:
+            if len(data[k]) > 0:
                 for row in data[k]:
                     gid = row[0]
-                    sqls[k][0] += sqls[k][1].format(self.build_square(cells[gid], self.cell_size*0.95), *row[1:])
+                    geom = self.build_square(cells[gid], self.cell_size*0.95)
+                    sqls[k][0] += sqls[k][1].format(geom, *row[1:])
+            else:
+                pass
 
         sql_list = [infil_sql, infil_seg_sql] + [x[0] for x in sqls.values()]
         self.batch_execute(sql_list, strip_char=',')
@@ -838,7 +840,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_rain(self, outdir):
         rain_sql = '''SELECT time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
-        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid'''
+        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;'''
         ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
 
         rain_line1 = '{0}  {1}\n'
@@ -867,7 +869,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 r.write(cell_line.format(*row))
 
     def export_infil(self, outdir):
-        pass
+        infil_sql = '''SELECT * FROM infil;'''
+        infil_r_sql = '''SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;'''
+        iarea_green_sql = '''SELECT hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_areas_green WHERE fid = {0};'''
+        icell_green_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_green ORDER BY grid_fid;'''
+        iarea_scs_sql = '''SELECT scscn FROM infil_areas_scs WHERE fid = {0};'''
+        icell_scs_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_scs ORDER BY grid_fid;'''
+        iarea_horton_sql = '''SELECT fhorti, fhortf, deca FROM infil_areas_horton WHERE fid = {0};'''
+        icell_horton_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_horton ORDER BY grid_fid;'''
+        iarea_chan_sql = '''SELECT hydconch FROM infil_areas_chan WHERE fid = {0};'''
+        ielem_chan_sql = '''SELECT grid_fid, infil_area_fid FROM infil_chan_elems ORDER BY grid_fid;'''
+
+        line1 = '{0}'
+        line2 = '\n' + '  {}' * 6
+        line3 = '\n' + '  {}' * 3
+        line4 = '\n{0}'
+        line4ab = '\nR  {0}  {1}  {2}'
+        line5 = '\n{0}  {1}'
+        line6 = '\n' + 'F' + '  {}' * 7
+        line7 = '\nS  {0}  {1}'
+        line8 = '\nC  {0}  {1}'
+        line9 = '\nI  {0}  {1}  {2}'
+        line10 = '\nH  {0}  {1}  {2}  {3}'
+
+        infil_row = self.execute(infil_sql).fetchone()
+        if infil_row is None:
+            return
+        else:
+            pass
+        infil = os.path.join(outdir, 'INFIL.DAT')
+        with open(infil, 'w') as i:
+            gen = [x if x is not None else '' for x in infil_row[1:]]
+            v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], [gen[10]], gen[11:13], gen[13:]
+            i.write(line1.format(v1))
+            for val, line in izip([v2, v3, v4], [line2, line3, line4]):
+                if any(val) is True:
+                    i.write(line.format(*val))
+                else:
+                    pass
+            for row in self.execute(infil_r_sql):
+                i.write(line4ab.format(*row).replace('None', ''))
+            if any(v5) is True:
+                i.write(line5.format(*v5))
+            else:
+                pass
+            for gid, iid in self.execute(icell_green_sql):
+                for row in self.execute(iarea_green_sql.format(iid)):
+                    i.write(line6.format(gid, *row))
+            for gid, iid in self.execute(icell_scs_sql):
+                for row in self.execute(iarea_scs_sql.format(iid)):
+                    i.write(line7.format(gid, *row))
+            for gid, iid in self.execute(icell_horton_sql):
+                for row in self.execute(iarea_horton_sql.format(iid)):
+                    i.write(line8.format(gid, *row))
+            if any(v9) is True:
+                i.write(line9.format(*v9))
+            else:
+                pass
+            for gid, iid in self.execute(ielem_chan_sql):
+                for row in self.execute(iarea_chan_sql.format(iid)):
+                    i.write(line10.format(gid, *row))
 
     def export_evapor(self, outdir):
         evapor_sql = '''SELECT ievapmonth, iday, clocktime FROM evapor;'''
@@ -895,10 +956,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_chan(self, outdir):
         chan_sql = '''SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
 
-        chan_r_sql = '''SELECT * FROM chan_r WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
-        chan_v_sql = '''SELECT * FROM chan_v WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
-        chan_t_sql = '''SELECT * FROM chan_t WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
-        chan_n_sql = '''SELECT * FROM chan_n WHERE seg_fid = {0} ORDER BY nr_in_seg DESC;'''
+        chan_r_sql = '''SELECT * FROM chan_r WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
+        chan_v_sql = '''SELECT * FROM chan_v WHERE seg_fid = {0} ORDER BY nr_in_seg '''
+        chan_t_sql = '''SELECT * FROM chan_t WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
+        chan_n_sql = '''SELECT * FROM chan_n WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
 
         chan_wsel_sql = '''SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;'''
         chan_conf_sql = '''SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;'''
@@ -915,15 +976,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         bank = os.path.join(outdir, 'CHANBANK.DAT')
 
         with open(chan, 'w') as c, open(bank, 'w') as b:
+            sqls = [chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql]
             for row in self.execute(chan_sql):
                 fid = row[0]
                 c.write(segment.format(*row[1:]).replace('None', ''))
-                chan_r_rows = self.execute(chan_r_sql.format(fid))
-                chan_v_rows = self.execute(chan_v_sql.format(fid))
-                chan_t_rows = self.execute(chan_t_sql.format(fid))
-                chan_n_rows = self.execute(chan_n_sql.format(fid))
-                cross_sections = chain(chan_r_rows, chan_v_rows, chan_t_rows, chan_n_rows)
-                for xs in cross_sections:
+
+                cross_sections = []
+                for qry in sqls:
+                    res = self.execute(qry.format(fid)).fetchall()
+                    if res:
+                        cross_sections.append(res)
+                    else:
+                        pass
+
+                cross_sections.sort(key=lambda i: i[0][0])
+                for xs in chain.from_iterable(cross_sections):
                     row_len = len(xs)
                     xsslice = slice(3, -3)
                     if row_len == 12:
@@ -935,8 +1002,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         char = 'N'
                         xsslice = slice(3, -4)
-                    params = [char] + list(xs[xsslice])
-                    params = [x for x in params if x is not None]
+                    params = [x for x in xs[xsslice] if x is not None]
+                    params.insert(0, char)
                     form = xsec * len(params) + '\n'
                     c.write(form.format(*params))
                     b.write(chanbank.format(xs[3], xs[-3]))
@@ -1071,9 +1138,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_levee(self, outdir):
         levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
-        levee_data_sql = '''SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid;'''
-        levee_fail_sql = '''SELECT * FROM levee_failure ORDER BY fid;'''
-        levee_frag_sql = '''SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY fid;'''
+        levee_data_sql = '''SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;'''
+        levee_fail_sql = '''SELECT * FROM levee_failure ORDER BY grid_fid, fid;'''
+        levee_frag_sql = '''SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;'''
 
         line1 = '{0}  {1}\n'
         line2 = 'L  {0}\n'
