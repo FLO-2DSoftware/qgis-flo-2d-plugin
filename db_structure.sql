@@ -1258,3 +1258,18 @@ CREATE TABLE "wsurf" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wsurf', 'features', 4326);
 SELECT gpkgAddGeometryColumn('wsurf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('wsurf', 'geom');
+SELECT gpkgAddSpatialIndex('wsurf', 'geom');
+
+
+-- WSTIME.DAT
+
+CREATE TABLE "wstime" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- IGRIDXSEC, fid of grid cell containing WSEL data
+    "wselev" REAL, -- WSELEVTIME, water surface elevation for comparison
+    "wstime" REAL -- WSTIME, water surface elevation for comparison
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wstime', 'features', 4326);
+SELECT gpkgAddGeometryColumn('wstime', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('wstime', 'geom');
+SELECT gpkgAddSpatialIndex('wsurf', 'geom');
