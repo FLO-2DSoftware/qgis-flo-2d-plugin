@@ -341,6 +341,12 @@ class Flo2D(object):
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('fpxsec', {
+                'name': 'Flodplain cross-sections',
+                'sgroup': None,
+                'styles': ['fpxsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('chan_confluences', {
                 'name': 'Channel confluences',
                 'sgroup': None,
@@ -366,12 +372,6 @@ class Flo2D(object):
                     1: {'name': 'ValueMap', 'config': {u'Grid element': u'N', u'Channel element': u'K'}},
                     2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
                 }
-            }),
-            ('fpxsec', {
-                'name': 'Flodplain cross-sections',
-                'sgroup': None,
-                'styles': ['fpxsec.qml'],
-                'attrs_edit_widgets': {}
             }),
             ('grid', {
                 'name': 'Grid',
@@ -401,6 +401,12 @@ class Flo2D(object):
                 'name': 'Totally blocked cells',
                 'sgroup': None,
                 'styles': ['blocked_areas_tot.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('fpfroude', {
+                'name': 'Froude numbers for grid elems',
+                'sgroup': None,
+                'styles': ['fpfroude.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('infil_areas_green', {
@@ -493,6 +499,12 @@ class Flo2D(object):
             }),
             ('fpxsec_cells', {
                 'name': 'Floodplain cross-sections cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('fpfroude_cells', {
+                'name': 'Froude numbers for grid elems',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}

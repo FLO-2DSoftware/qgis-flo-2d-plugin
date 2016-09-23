@@ -32,23 +32,6 @@
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
-        <layer pass="0" class="SimpleFill" locked="0">
-          <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="246,217,116,255"/>
-          <prop k="color_dd_active" v="1"/>
-          <prop k="color_dd_expression" v="CASE&#xd;&#xa;WHEN &quot;arf&quot; &lt; 1 THEN darker(@symbol_color, &quot;arf&quot; * 100)&#xd;&#xa;ELSE darker(@symbol_color, &quot;arf&quot; * 200)&#xd;&#xa;END"/>
-          <prop k="color_dd_field" v=""/>
-          <prop k="color_dd_useexpr" v="1"/>
-          <prop k="joinstyle" v="bevel"/>
-          <prop k="offset" v="0,0"/>
-          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="offset_unit" v="MM"/>
-          <prop k="outline_color" v="0,0,0,255"/>
-          <prop k="outline_style" v="no"/>
-          <prop k="outline_width" v="0.26"/>
-          <prop k="outline_width_unit" v="MM"/>
-          <prop k="style" v="solid"/>
-        </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
           <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , -80, 200), translate( centroid( $geometry) , 80, 200))"/>
@@ -263,6 +246,23 @@
               <prop k="use_custom_dash" v="0"/>
               <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
             </layer>
+            <layer pass="0" class="SimpleFill" locked="0">
+                      <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
+                      <prop k="color" v="246,217,116,255"/>
+                      <prop k="color_dd_active" v="1"/>
+                      <prop k="color_dd_expression" v="CASE&#xd;&#xa;WHEN &quot;arf&quot; &lt; 1 THEN darker(@symbol_color, &quot;arf&quot; * 100)&#xd;&#xa;ELSE darker(@symbol_color, &quot;arf&quot; * 200)&#xd;&#xa;END"/>
+                      <prop k="color_dd_field" v=""/>
+                      <prop k="color_dd_useexpr" v="1"/>
+                      <prop k="joinstyle" v="bevel"/>
+                      <prop k="offset" v="0,0"/>
+                      <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+                      <prop k="offset_unit" v="MM"/>
+                      <prop k="outline_color" v="0,0,0,255"/>
+                      <prop k="outline_style" v="no"/>
+                      <prop k="outline_width" v="0.26"/>
+                      <prop k="outline_width_unit" v="MM"/>
+                      <prop k="style" v="solid"/>
+                    </layer>
           </symbol>
         </layer>
       </symbol>

@@ -1158,3 +1158,22 @@ CREATE TABLE "fpxsec_cells" (
     "grid_fid" INTEGER -- NODX, fid of grid cell contained in a fpxsection
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpxsec_cells', 'aspatial');
+
+
+-- FPFROUDE.DAT
+
+CREATE TABLE "fpfroude" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "froudefp" REAL -- FROUDEFP, Froude number for grid elements
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpfroude', 'features', 4326);
+SELECT gpkgAddGeometryColumn('fpfroude', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('fpfroude', 'geom');
+SELECT gpkgAddSpatialIndex('fpfroude', 'geom');
+
+CREATE TABLE "fpfroude_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "area_fid" INTEGER, -- fid of area from frfroude table
+    "grid_fid" INTEGER -- grid element fid that has an individual Froude number
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'aspatial');
