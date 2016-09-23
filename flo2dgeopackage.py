@@ -414,7 +414,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('rain', 'rain_arf_areas')
         options, time_series, rain_arf = self.parser.parse_rain()
-        gids = [x[0] for x in rain_arf]
+        gids = (x[0] for x in rain_arf)
         cells = self.get_centroids(gids)
 
         fid = 1
@@ -460,7 +460,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         data = self.parser.parse_infil()
 
         infil_sql += ', '.join([data[k.upper()] if k.upper() in data else 'NULL' for k in infil_params]) + '),'
-        gids = [x[0] for x in chain(data['F'], data['S'], data['C'], data['H'])]
+        gids = (x[0] for x in chain(data['F'], data['S'], data['C'], data['H']))
         cells = self.get_centroids(gids)
 
         for i, row in enumerate(data['R']):
@@ -505,7 +505,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_r_sql = '''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, rbankgrid) VALUES'''
         chan_v_sql = '''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22, rbankgrid) VALUES'''
         chan_t_sql = '''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr, rbankgrid) VALUES'''
-        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, rbankgrid) VALUES'''
+        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, rbankgrid, xsecname) VALUES'''
         chan_wsel_sql = '''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES'''
         chan_conf_sql = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid) VALUES'''
         chan_e_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
@@ -514,7 +514,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_r_part = '\n(' + ','.join(['{} '] * 10) + '),'
         chan_v_part = '\n(' + ','.join(['{} '] * 22) + '),'
         chan_t_part = '\n(' + ','.join(['{} '] * 12) + '),'
-        chan_n_part = '\n(' + ','.join(['{} '] * 7) + '),'
+        chan_n_part = '\n(' + ','.join(['{} '] * 8) + '),'
         chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + '),'
         chan_conf_part = '\n(' + ','.join(['{} '] * 3) + '),'
         chan_e_part = '''\n({0}),'''
@@ -578,13 +578,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             
     def import_xsec(self):
         xsec_sql = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES'''
-        chan_n_sql = '''UPDATE chan_n SET xsecname = '{0}' WHERE nxecnum = {1};'''
         xsec_part = '''\n({0}, {1}, {2}),'''
         self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
         for xsec in data:
-            nr, name, nodes = xsec
-            self.execute(chan_n_sql.format(name, nr))
+            nr, nodes = xsec
             for row in nodes:
                 xsec_sql += xsec_part.format(nr, *row)
         if xsec_sql.endswith(','):
@@ -681,7 +679,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('blocked_areas_tot', 'blocked_areas')
         head, data = self.parser.parse_arf()
         cont_sql = cont_sql.format(*head)
-        gids = [x[0] for x in chain(data['T'], data['PB'])]
+        gids = (x[0] for x in chain(data['T'], data['PB']))
         cells = self.get_centroids(gids)
         for row in data['T']:
             gid = row[0]
@@ -693,6 +691,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pblocked_sql += pblocked_part.format(geom, *row[1:])
 
         sql_list = [cont_sql, blocked_sql, pblocked_sql]
+        self.batch_execute(sql_list, strip_char=',')
+
+    def import_mult(self):
+        mult_sql = '''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax) VALUES'''
+        mult_area_sql = '''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES'''
+
+        mult_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}),'''
+        mult_area_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
+
+        self.clear_tables('mult', 'mult_areas')
+        head, data = self.parser.parse_mult()
+        mult_sql += mult_part.format(*head)
+        gids = (x[0] for x in data)
+        cells = self.get_centroids(gids)
+        for row in data:
+            gid = row[0]
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
+            mult_area_sql += mult_area_part.format(geom, *row[1:])
+        sql_list = [mult_sql, mult_area_sql]
         self.batch_execute(sql_list, strip_char=',')
 
     def import_levee(self):
@@ -900,7 +917,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil = os.path.join(outdir, 'INFIL.DAT')
         with open(infil, 'w') as i:
             gen = [x if x is not None else '' for x in infil_row[1:]]
-            v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], [gen[10]], gen[11:13], gen[13:]
+            v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
             i.write(line1.format(v1))
             for val, line in izip([v2, v3, v4], [line2, line3, line4]):
                 if any(val) is True:
@@ -1135,6 +1152,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(ba_sql.format(aid)):
                     vals = [x if x is not None else '' for x in row[:-1]]
                     a.write(line3.format(gid, *vals))
+
+    def export_mult(self, outdir):
+        mult_sql = '''SELECT * FROM mult;'''
+        mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
+        mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = {0};'''
+
+        line1 = ' {}' * 7 + '\n'
+        line2 = ' {}' * 5 + '\n'
+
+        head = self.execute(mult_sql).fetchone()
+        if head is None:
+            return
+        else:
+            pass
+        mult = os.path.join(outdir, 'MULT.DAT')
+        with open(mult, 'w') as m:
+            m.write(line1.format(*head[1:]).replace('None', ''))
+            for gid, aid in self.execute(mult_cell_sql):
+                for row in self.execute(mult_area_sql.format(aid)):
+                    vals = [x if x is not None else '' for x in row]
+                    m.write(line2.format(gid, *vals))
 
     def export_levee(self, outdir):
         levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
