@@ -258,6 +258,7 @@ class Flo2D(object):
             'import_hystruc',
             'import_street',
             'import_arf',
+            'import_mult',
             'import_levee'
         ]
         s = QSettings()
@@ -561,6 +562,7 @@ class Flo2D(object):
             'export_hystruc',
             'export_street',
             'export_arf',
+            'export_mult',
             'export_levee'
         ]
         s = QSettings()

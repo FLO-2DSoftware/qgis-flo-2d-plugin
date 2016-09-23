@@ -22,7 +22,7 @@
 """
 import os
 from collections import OrderedDict, defaultdict
-from itertools import izip, izip_longest, chain
+from itertools import izip, izip_longest, chain, repeat
 
 
 class ParseDAT(object):
@@ -47,6 +47,7 @@ class ParseDAT(object):
             'HYSTRUC.DAT': None,
             'STREET.DAT': None,
             'ARF.DAT': None,
+            'MULT.DAT': None,
             'LEVEE.DAT': None
         }
         self.cont_rows = [
@@ -285,8 +286,13 @@ class ParseDAT(object):
     def parse_chan(self):
         chan = self.dat_files['CHAN.DAT']
         bank = self.dat_files['CHANBANK.DAT']
+        xsec = self.dat_files['XSEC.DAT']
         par = self.single_parser(chan)
         parbank = self.single_parser(bank)
+        if xsec is not None:
+            parxs = (["'{0}'".format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
+        else:
+            parxs = repeat(['NULL'])
         start = True
         segments = []
         wsel = []
@@ -303,7 +309,8 @@ class ParseDAT(object):
             elif char in shape:
                 self.fix_row_size(row, shape[char])
                 rbank = next(parbank)[1:]
-                segments[-1][-1].append(row + rbank)
+                xsec = next(parxs)[0:1] if char == 'N' else []
+                segments[-1][-1].append(row + rbank + xsec)
             elif char == 'C':
                 confluence.append(row)
             elif char == 'E':
@@ -323,8 +330,8 @@ class ParseDAT(object):
         data = []
         for row in par:
             if row[0] == 'X':
-                row.append([])
-                data.append(row[1:])
+                vals = [row[1], []]
+                data.append(vals)
             else:
                 data[-1][-1].append(row)
         return data
@@ -380,6 +387,17 @@ class ParseDAT(object):
                 data[char].append(row[1:])
             else:
                 data['PB'].append(row)
+        return head, data
+
+    def parse_mult(self):
+        mult = self.dat_files['MULT.DAT']
+        par = self.single_parser(mult)
+        head = next(par)
+        self.fix_row_size(head, 7)
+        data = []
+        for row in par:
+            self.fix_row_size(row, 5)
+            data.append(row)
         return head, data
 
     def parse_levee(self):
