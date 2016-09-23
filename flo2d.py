@@ -312,18 +312,6 @@ class Flo2D(object):
                 'styles': ['street.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('blocked_areas', {
-                'name': 'Partially blocked cells',
-                'sgroup': None,
-                'styles': ['blocked_areas.qml'],
-                'attrs_edit_widgets': {}
-            }),
-            ('blocked_areas_tot', {
-                'name': 'Totally blocked cells',
-                'sgroup': None,
-                'styles': ['blocked_areas_tot.qml'],
-                'attrs_edit_widgets': {}
-            }),
             ('chan_r', {
                 'name': 'Rectangular Xsec',
                 'sgroup': 'XSections',
@@ -348,18 +336,6 @@ class Flo2D(object):
                 'styles': ['xsec.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('rain_arf_areas', {
-                'name': 'Rain ARF Areas',
-                'sgroup': None,
-                'styles': ['rain_arf_areas.qml'],
-                'attrs_edit_widgets': {}
-            }),
-            ('reservoirs', {
-                'name': 'Reservoirs',
-                'sgroup': None,
-                'styles': ['reservoirs.qml'],
-                'attrs_edit_widgets': {}
-            }),
             ('chan', {
                 'name': 'Channel segments (left bank)',
                 'sgroup': None,
@@ -370,7 +346,9 @@ class Flo2D(object):
                 'name': 'Channel confluences',
                 'sgroup': None,
                 'styles': ['chan_confluences.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {
+                    1: {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
+                }
             }),
             ('inflow', {
                 'name': 'Inflow',
@@ -390,10 +368,40 @@ class Flo2D(object):
                     2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
                 }
             }),
+            ('fpxsec', {
+                'name': 'Flodplain cross-sections',
+                'sgroup': None,
+                'styles': ['fpxsec.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('grid', {
                 'name': 'Grid',
                 'sgroup': None,
                 'styles': ['grid.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': None,
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('reservoirs', {
+                'name': 'Reservoirs',
+                'sgroup': None,
+                'styles': ['reservoirs.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('blocked_areas', {
+                'name': 'Area and Width Reduction',
+                'sgroup': None,
+                'styles': ['blocked_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('blocked_areas_tot', {
+                'name': 'Totally blocked cells',
+                'sgroup': None,
+                'styles': ['blocked_areas_tot.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('infil_areas_green', {
@@ -480,6 +488,12 @@ class Flo2D(object):
             }),
             ('xsec_n_data', {
                 'name': 'Natural xsecs data',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('fpxsec_cells', {
+                'name': 'Floodplain cross-sections cells',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}

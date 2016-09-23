@@ -1138,3 +1138,23 @@ CREATE TABLE "levee_fragility" (
     "levfragprob" REAL -- LEVFRAGPROB, levee fragility curve failure probability
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_fragility', 'aspatial');
+
+
+-- FPXSEC.DAT
+
+CREATE TABLE "fpxsec" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iflo" INTEGER, -- IFLO, general direction that the flow is expected to cross the floodplain cross section
+    "nnxsec" INTEGER -- NNXSEC, number of floodplain elements in a given cross section
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec', 'features', 4326);
+SELECT gpkgAddGeometryColumn('fpxsec', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('fpxsec', 'geom');
+SELECT gpkgAddSpatialIndex('fpxsec', 'geom');
+
+CREATE TABLE "fpxsec_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "fpxsec_fid" INTEGER, -- fid of a floodplain xsection from fpxsec table
+    "grid_fid" INTEGER -- NODX, fid of grid cell contained in a fpxsection
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpxsec_cells', 'aspatial');
