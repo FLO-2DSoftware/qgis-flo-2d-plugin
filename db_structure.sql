@@ -1183,12 +1183,12 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'asp
 
 CREATE TABLE "swmmflo" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "swmm_jt" INTEGER -- SWMM_JT, fid of the grid element with storm drain inlet
+    "swmm_jt" INTEGER, -- SWMM_JT, fid of the grid element with storm drain inlet
     "intype" INTEGER, -- INTYPE, inlet type (1-5)
     "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
     "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
-    "flapgate" INTEGER -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
+    "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
     "name" TEXT -- optional inlet name
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
@@ -1201,7 +1201,7 @@ SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
 
 CREATE TABLE "swmmflort" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" INTEGER -- SWMM_JT, fid of the grid element with a storm drain inlet
+    "grid_fid" INTEGER, -- SWMM_JT, fid of the grid element with a storm drain inlet
     "name" TEXT -- optional name of the rating table
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort', 'aspatial');
@@ -1227,3 +1227,34 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'f
 SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
+
+
+-- TOLSPATIAL.DAT
+
+CREATE TABLE "tolspatial" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "tol" REAL -- TOL, tollerance for grid cells contained in the polygon. A grid cell is considered contained in a polygon if its centroid is contained in it.
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('tolspatial', 'features', 4326);
+SELECT gpkgAddGeometryColumn('tolspatial', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('tolspatial', 'geom');
+SELECT gpkgAddSpatialIndex('tolspatial', 'geom');
+
+CREATE TABLE "tolspatial_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "area_fid" REAL, -- fid of a polygon from tolspatial table
+    "grid_fid" INTEGER -- IDUM, fid of grid cell contained in a fpxsection
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
+
+
+-- WSURF.DAT
+
+CREATE TABLE "wsurf" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- IGRIDXSEC, fid of grid cell containing WSEL data
+    "wselev" REAL -- WSELEV, water surface elevation for comparison
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wsurf', 'features', 4326);
+SELECT gpkgAddGeometryColumn('wsurf', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('wsurf', 'geom');
