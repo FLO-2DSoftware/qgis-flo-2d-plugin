@@ -412,9 +412,9 @@ class ParseDAT(object):
 if __name__ == '__main__':
     x = ParseDAT()
     x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
-    # res = x.parse_infil()
-    # for i in res.items():
-    #     print(i)
-    head, data = x.parse_levee()
-    print(head)
-    print(data)
+    res = x.parse_infil()
+    for i in res.items():
+        print(i)
+    # head, data = x.parse_levee()
+    # print(head)
+    # print(data)

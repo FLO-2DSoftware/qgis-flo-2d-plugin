@@ -217,7 +217,6 @@ class Flo2D(object):
                 sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
                 rc = self.gpkg.execute(sql)
                 rt = rc.fetchone()[0]
-                print 'srs', rt
                 self.srs_id = rt
                 self.load_layers()
             else:
