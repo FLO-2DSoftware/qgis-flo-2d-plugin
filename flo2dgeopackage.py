@@ -195,6 +195,7 @@ class GeoPackageUtils(object):
     def get_max(self, table, field='fid'):
         sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(field, table)
         max_val = self.execute(sql).fetchone()[0]
+        max_val = 0 if max_val is None else max_val
         return max_val
 
 
@@ -694,10 +695,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql_list, strip_char=',')
 
     def import_mult(self):
-        mult_sql = '''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax) VALUES'''
+        mult_sql = '''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50) VALUES'''
         mult_area_sql = '''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES'''
 
-        mult_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}),'''
+        mult_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
         mult_area_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
 
         self.clear_tables('mult', 'mult_areas')
@@ -747,6 +748,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 lfragility_sql += lfragility_part.format(*row)
 
         sql_list = [lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql]
+        self.batch_execute(sql_list, strip_char=',')
+
+    def import_fpxsec(self):
+        cont_sql = '''INSERT INTO cont (name, value) VALUES ('NXPRT', {0}),'''
+        fpxsec_sql = '''INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES'''
+        cell_sql = '''INSERT INTO fpxsec_cells (fpxsec_fid, grid_fid) VALUES'''
+
+        fpxsec_part = '''\n({0}, {1}, {2}),'''
+        cell_part = '''\n({0}, {1}),'''
+
+        self.clear_tables('fpxsec', 'fpxsec_cells')
+        head, data = self.parser.parse_fpxsec()
+        cont_sql = cont_sql.format(head)
+        for i, xs in enumerate(data):
+            params, gids = xs
+            geom = self.build_linestring(gids)
+            fpxsec_sql += fpxsec_part.format(geom, *params)
+            for gid in gids:
+                cell_sql += cell_part.format(i+1, gid)
+        sql_list = [cont_sql, fpxsec_sql, cell_sql]
+        self.batch_execute(sql_list, strip_char=',')
+
+    def import_fpfroude(self):
+        fpfroude_sql = '''INSERT INTO fpfroude (geom, froudefp) VALUES'''
+        cell_sql = '''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES'''
+
+        fpfroude_part = '''\n({0}, {1}),'''
+        cell_part = '''\n({0}, {1}),'''
+
+        self.clear_tables('fpfroude', 'fpfroude_cells')
+        data = self.parser.parse_fpfroude()
+        gids = (x[0] for x in data)
+        cells = self.get_centroids(gids)
+        for i, row in enumerate(data):
+            gid, froudefp = row
+            geom = self.build_square(cells[gid], self.cell_size * 0.95)
+            fpfroude_sql += fpfroude_part.format(geom, froudefp)
+            cell_sql += cell_part.format(i+1, gid)
+        sql_list = [fpfroude_sql, cell_sql]
         self.batch_execute(sql_list, strip_char=',')
 
     def export_cont(self, outdir):
@@ -1158,7 +1198,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
         mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = {0};'''
 
-        line1 = ' {}' * 7 + '\n'
+        line1 = ' {}' * 8 + '\n'
         line2 = ' {}' * 5 + '\n'
 
         head = self.execute(mult_sql).fetchone()
@@ -1214,3 +1254,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             for row in self.execute(levee_frag_sql):
                 l.write(line7.format(row))
+
+    def export_fpxsec(self, outdir):
+        cont_sql = '''SELECT name, value FROM cont WHERE name = 'NXPRT';'''
+        fpxsec_sql = '''SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;'''
+        cell_sql = '''SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = {0} ORDER BY grid_fid;'''
+
+        line1 = 'P  {}\n'
+        line2 = 'X {0} {1} {2}\n'
+
+        option = self.execute(cont_sql).fetchone()
+        if option is None:
+            return
+        else:
+            pass
+        fpxsec = os.path.join(outdir, 'FPXSEC.DAT')
+        with open(fpxsec, 'w') as f:
+            head = option[-1]
+            f.write(line1.format(head))
+
+            for row in self.execute(fpxsec_sql):
+                fid, iflo, nnxsec = row
+                grids = self.execute(cell_sql.format(fid))
+                grids_txt = ' '.join(['{}'.format(x[0]) for x in grids])
+                f.write(line2.format(iflo, nnxsec, grids_txt))
+
+    def export_fpfroude(self, outdir):
+        fpfroude_sql = '''SELECT fid, froudefp FROM fpfroude ORDER BY fid;'''
+        cell_sql = '''SELECT grid_fid FROM fpfroude_cells WHERE area_fid = {0} ORDER BY grid_fid;'''
+
+        line1 = 'F {0} {1}\n'
+
+        fpfroude_rows = self.execute(fpfroude_sql).fetchone()
+        if fpfroude_rows is None:
+            return
+        else:
+            pass
+        fpfroude = os.path.join(outdir, 'FPFROUDE.DAT')
+        with open(fpfroude, 'w') as f:
+            for fid, froudefp in fpfroude_rows:
+                gid = self.execute(cell_sql.format(fid)).fetchone()[0]
+                f.write(line1.format(froudefp, gid))

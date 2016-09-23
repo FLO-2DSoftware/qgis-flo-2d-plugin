@@ -964,7 +964,7 @@ CREATE TRIGGER "find_cells_arf_tot_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -974,7 +974,7 @@ CREATE TRIGGER "find_cells_arf_tot_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -1014,7 +1014,7 @@ CREATE TRIGGER "find_cells_arf_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells" (area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -1024,7 +1024,7 @@ CREATE TRIGGER "find_cells_arf_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells" (area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -1046,7 +1046,8 @@ CREATE TABLE "mult" (
     "nodchansall" INTEGER, -- NODCHNSALL, global assignment of the number of multiple channels
     "xnmultall" REAL, -- XNMULTALL, global assignment of the multiple channel n-values
     "sslopemin" REAL, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
-    "sslopemax" REAL -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
+    "sslopemax" REAL, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
+    "avuld50" REAL -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
 

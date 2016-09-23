@@ -48,7 +48,9 @@ class ParseDAT(object):
             'STREET.DAT': None,
             'ARF.DAT': None,
             'MULT.DAT': None,
-            'LEVEE.DAT': None
+            'LEVEE.DAT': None,
+            'FPXSEC.DAT': None,
+            'FPFROUDE.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -387,13 +389,14 @@ class ParseDAT(object):
                 data[char].append(row[1:])
             else:
                 data['PB'].append(row)
+        self.fix_row_size(head, 1)
         return head, data
 
     def parse_mult(self):
         mult = self.dat_files['MULT.DAT']
         par = self.single_parser(mult)
         head = next(par)
-        self.fix_row_size(head, 7)
+        self.fix_row_size(head, 8)
         data = []
         for row in par:
             self.fix_row_size(row, 5)
@@ -426,13 +429,30 @@ class ParseDAT(object):
         self.fix_row_size(head, 4)
         return head, data
 
+    def parse_fpxsec(self):
+        fpxsec = self.dat_files['FPXSEC.DAT']
+        par = self.single_parser(fpxsec)
+        head = next(par)[-1]
+        data = []
+        for row in par:
+            params = row[1:3]
+            gids = row[3:]
+            data.append([params, gids])
+        return head, data
+
+    def parse_fpfroude (self):
+        fpfroude = self.dat_files['FPFROUDE.DAT']
+        par = self.single_parser(fpfroude)
+        data = (row[1:] for row in par)
+        return data
+
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Truckee\INFIL.dat')
-    res = x.parse_infil()
-    for i in res.items():
-        print(i)
-    # head, data = x.parse_levee()
-    # print(head)
-    # print(data)
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Sediment Transport Channel Example\FPXSEC.DAT')
+    # res = x.parse_infil()
+    # for i in res.items():
+    #     print(i)
+    head, data = x.parse_fpxsec()
+    print(head)
+    print(data)
