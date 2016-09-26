@@ -252,7 +252,7 @@ class Flo2D(object):
             'import_outflow',
             'import_rain',
             'import_evapor',
-            'import_infil',
+            #'import_infil',
             'import_chan',
             'import_xsec',
             'import_hystruc',
@@ -262,7 +262,12 @@ class Flo2D(object):
             'import_levee',
             'import_fpxsec',
             'import_fpfroude',
-            'import_swmmflo'
+            'import_swmmflo',
+            'import_swmmflort',
+            'import_swmmoutf',
+            'import_tolspatial',
+            'import_wsurf',
+            'import_wstime'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
@@ -569,7 +574,12 @@ class Flo2D(object):
             'export_levee',
             'export_fpxsec',
             'export_fpfroude',
-            'export_swmmflo'
+            'export_swmmflo',
+            'export_swmmflort',
+            'export_swmmoutf',
+            'export_tolspatial',
+            'export_wsurf',
+            'export_wstime'
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')

@@ -51,7 +51,12 @@ class ParseDAT(object):
             'LEVEE.DAT': None,
             'FPXSEC.DAT': None,
             'FPFROUDE.DAT': None,
-            'SWMMFLO.DAT': None
+            'SWMMFLO.DAT': None,
+            'SWMMFLORT.DAT': None,
+            'SWMMOUTF.DAT': None,
+            'TOLSPATIAL.DAT': None,
+            'WSURF.DAT': None,
+            'WSTIME.DAT': None
         }
         self.cont_rows = [
             ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
@@ -313,7 +318,7 @@ class ParseDAT(object):
                 self.fix_row_size(row, shape[char])
                 rbank = next(parbank)[1:]
                 xsec = next(parxs)[0:1] if char == 'N' else []
-                segments[-1][-1].append(row + rbank + xsec)
+                segments[-1][-1].append(row + xsec + rbank)
             elif char == 'C':
                 confluence.append(row)
             elif char == 'E':
@@ -444,22 +449,61 @@ class ParseDAT(object):
     def parse_fpfroude (self):
         fpfroude = self.dat_files['FPFROUDE.DAT']
         par = self.single_parser(fpfroude)
-        data = (row[1:] for row in par)
+        data = [row[1:] for row in par]
         return data
 
     def parse_swmmflo (self):
         swmmflo = self.dat_files['SWMMFLO.DAT']
         par = self.single_parser(swmmflo)
-        data = (row[1:] for row in par)
+        data = [row[1:] for row in par]
         return data
+
+    def parse_swmmflort(self):
+        swmmflort = self.dat_files['SWMMFLORT.DAT']
+        par = self.single_parser(swmmflort)
+        data = []
+        for row in par:
+            char = row[0]
+            if char == 'D':
+                row.append([])
+                data.append(row[1:])
+            else:
+                data[-1][-1].append(row[1:])
+        return data
+
+    def parse_swmmoutf(self):
+        swmmoutf = self.dat_files['SWMMOUTF.DAT']
+        par = self.single_parser(swmmoutf)
+        data = [row for row in par]
+        return data
+
+    def parse_tolspatial(self):
+        tolspatial = self.dat_files['TOLSPATIAL.DAT']
+        par = self.single_parser(tolspatial)
+        data = [row for row in par]
+        return data
+
+    def parse_wsurf(self):
+        wsurf = self.dat_files['WSURF.DAT']
+        par = self.single_parser(wsurf)
+        head = next(par)[0]
+        data = []
+        for row in par:
+            data.append(row)
+        return head, data
+
+    def parse_wstime(self):
+        wstime = self.dat_files['WSTIME.DAT']
+        par = self.single_parser(wstime)
+        head = next(par)[0]
+        data = []
+        for row in par:
+            data.append(row)
+        return head, data
 
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Sediment Transport Channel Example\FPXSEC.DAT')
-    # res = x.parse_infil()
-    # for i in res.items():
-    #     print(i)
-    head, data = x.parse_fpxsec()
-    print(head)
-    print(data)
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\flo2d_inputs\INFIL.DAT')
+    res = x.parse_infil()
+    print(res)
