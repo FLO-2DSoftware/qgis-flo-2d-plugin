@@ -96,11 +96,10 @@ class GeoPackageUtils(object):
             else:
                 pass
             try:
-                qry = sql[0]
-                del sql[0]
+                qry = sql.pop(0)
                 qry += ','.join(sql)
-                self.execute(qry)
                 del sql[:]
+                self.execute(qry)
             except Exception as e:
                 self.uc.log_info(qry)
                 self.uc.log_info(traceback.format_exc())
@@ -226,57 +225,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
         self.buffer = self.cell_size * 0.4
 
-    def _import_fplain(self):
-        # insert grid data into gpkg
-        sql = '''INSERT INTO grid (fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, geom) VALUES'''
-        sql_chunk = sql
-
-        if self.cell_size == 0:
-            self.uc.bar_error("Cell size is 0 - something went wrong!")
-        else:
-            pass
-
-        self.clear_tables('grid')
-        data = self.parser.parse_fplain_cadpts()
-
-        c = 0
-        inp = []
-        for d in data:
-            coords = slice(8, 10)
-            fplain = slice(0, 7)
-            if c < self.chunksize:
-                geom = ' '.join(d[coords])
-                g = self.build_square(geom, self.cell_size)
-                inp.append('({0}, {1})'.format(','.join(d[fplain]), g))
-                c += 1
-            else:
-                sql_chunk += '\n{0};'.format(',\n'.join(inp))
-                self.execute(sql_chunk)
-                sql_chunk = sql
-                c = 0
-                del inp[:]
-        if len(inp) > 0:
-            sql_chunk += '\n{0};'.format(',\n'.join(inp))
-            self.execute(sql_chunk)
-        else:
-            pass
-
-    def _export_fplain(self, outdir):
-        sql = '''SELECT fid, cell_north, cell_east, cell_south, cell_west, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid;'''
-        records = self.execute(sql)
-        fplain = os.path.join(outdir, 'FPLAIN.DAT')
-        cadpts = os.path.join(outdir, 'CADPTS.DAT')
-
-        fline = '{0: <10} {1: <10} {2: <10} {3: <10} {4: <10} {5: <10} {6: <10}\n'
-        cline = '{0: <10} {1: <15} {2: <10}\n'
-
-        with open(fplain, 'w') as f, open(cadpts, 'w') as c:
-            for row in records:
-                fid, n, e, s, w, man, elev, geom = row
-                x, y = geom.strip('POINT()').split()
-                f.write(fline.format(fid, n, e, s, w, '{0:.3f}'.format(man), '{0:.2f}'.format(elev)))
-                c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
-
     def import_cont_toler(self):
         sql = ['''INSERT INTO cont (name, value) VALUES''']
         sql_part = '''\n('{0}', '{1}')'''
@@ -291,14 +239,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_mannings_n_topo(self):
         # insert grid data into gpkg
-        sql = '''INSERT INTO grid (fid, n_value, elevation, geom) VALUES'''
-        sql_chunk = sql
+        sql = ['''INSERT INTO grid (fid, n_value, elevation, geom) VALUES''']
 
         self.clear_tables('grid')
         data = self.parser.parse_mannings_n_topo()
 
         c = 0
-        inp = []
         for d in data:
             man = slice(0, 2)
             coords = slice(2, 4)
@@ -306,17 +252,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if c < self.chunksize:
                 geom = ' '.join(d[coords])
                 g = self.build_square(geom, self.cell_size)
-                inp.append('({0}, {1})'.format(','.join(d[man] + d[elev]), g))
+                sql += ['\n({0}, {1})'.format(','.join(d[man] + d[elev]), g)]
                 c += 1
             else:
-                sql_chunk += '\n{0};'.format(',\n'.join(inp))
-                self.execute(sql_chunk)
-                sql_chunk = sql
+                qry = sql[0] + ','.join(sql[1:])
+                del sql[1:]
+                self.execute(qry)
+                del qry
                 c = 0
-                del inp[:]
-        if len(inp) > 0:
-            sql_chunk += '\n{0};'.format(',\n'.join(inp))
-            self.execute(sql_chunk)
+        if len(sql) > 1:
+            qry = sql[0] + ','.join(sql[1:])
+            del sql[1:]
+            self.execute(qry)
         else:
             pass
 
