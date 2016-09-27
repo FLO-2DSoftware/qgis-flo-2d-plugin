@@ -50,6 +50,7 @@ class ParseDAT(object):
             'MULT.DAT': None,
             'LEVEE.DAT': None,
             'FPXSEC.DAT': None,
+            'BREACH.DAT': None,
             'FPFROUDE.DAT': None,
             'SWMMFLO.DAT': None,
             'SWMMFLORT.DAT': None,
@@ -446,6 +447,26 @@ class ParseDAT(object):
             data.append([params, gids])
         return head, data
 
+    def parse_breach(self):
+        breach = self.dat_files['BREACH.DAT']
+        par = self.single_parser(breach)
+        data = defaultdict(list)
+        for row in par:
+            char = row[0][0]
+            if char == 'B' and len(row) == 5:
+                data['G'].append(row[1:])
+            elif char == 'B' and len(row) == 3:
+                data['D'].append(row[1:])
+            elif char == 'G' or char == 'D':
+                data[char][-1] += row[1:]
+            else:
+                data['F'].append(row[1:])
+        chars = {'G': 32, 'D': 33, 'F': 3}
+        for k in data.iterkeys():
+            for row in data[k]:
+                self.fix_row_size(row, chars[k])
+        return data
+
     def parse_fpfroude (self):
         fpfroude = self.dat_files['FPFROUDE.DAT']
         par = self.single_parser(fpfroude)
@@ -504,6 +525,6 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\flo2d_inputs\INFIL.DAT')
-    res = x.parse_infil()
+    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Breach Example\BREACH.DAT')
+    res = x.parse_breach()
     print(res)

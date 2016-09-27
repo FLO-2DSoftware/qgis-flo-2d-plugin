@@ -752,6 +752,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(cont_sql, fpxsec_sql, cells_sql)
 
+    def import_breach(self):
+        glob = [
+            'ibreachsedeqn', 'gbratio', 'gweircoef', 'gbreachtime', 'gzu', 'gzd', 'gzc', 'gcrestwidth', 'gcrestlength',
+            'gbrbotwidmax', 'gbrtopwidmax', 'gbrbottomel', 'gd50c', 'gporc', 'guwc', 'gcnc', 'gafrc', 'gcohc', 'gunfcc',
+            'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
+            'gsedconmax', 'd50df', 'gunfcdf'
+        ]
+        local = [
+            'geom', 'ibreachdir', 'zu', 'zd', 'zc', 'crestwidth', 'crestlength', 'brbotwidmax', 'brtopwidmax',
+            'brbottomel', 'weircoef', 'd50c', 'porc', 'uwc', 'cnc', 'afrc', 'cohc', 'unfcc', 'd50s', 'pors', 'uws',
+            'cns', 'afrs', 'cohs', 'unfcs', 'bratio', 'grasslength', 'grasscond', 'grassvmaxp', 'sedconmax', 'd50df',
+            'unfcdf', 'breachtime'
+        ]
+        global_sql = ['INSERT INTO breach_global (' + ', '.join(glob) + ') VALUES']
+        local_sql = ['INSERT INTO breach (' + ', '.join(local) + ') VALUES']
+        cells_sql = ['''INSERT INTO breach_cells (breach_fid, grid_fid) VALUES''']
+        frag_sql = ['''INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES''']
+
+        global_part = '\n(' + ','.join(['{} '] * 32) + ')'
+        local_part = '\n(' + ','.join(['{} '] * 33) + ')'
+        cells_part = '''\n({0}, {1})'''
+        frag_part = '''\n('{0}', {1}, {2})'''
+
+        self.clear_tables('breach_global', 'breach', 'breach_cells', 'breach_fragility_curves')
+        data = self.parser.parse_breach()
+        gids = (x[0] for x in data['D'])
+        cells = self.get_centroids(gids)
+        for row in data['G']:
+            global_sql += [global_part.format(*row)]
+        for i, row in enumerate(data['D'], 1):
+            gid = row[0]
+            geom = "AsGPB(ST_GeomFromText('{}'))".format(cells[gid])
+            local_sql += [local_part.format(geom, *row[1:])]
+            cells_sql += [cells_part.format(i, gid)]
+        for row in data['F']:
+            frag_sql += [frag_part.format(row)]
+
+        self.batch_execute(global_sql, local_sql, cells_sql, frag_sql)
+
     def import_fpfroude(self):
         fpfroude_sql = ['''INSERT INTO fpfroude (geom, froudefp) VALUES''']
         cells_sql = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''']
@@ -1378,6 +1417,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 grids = self.execute(cell_sql.format(fid))
                 grids_txt = ' '.join(['{}'.format(x[0]) for x in grids])
                 f.write(line2.format(iflo, nnxsec, grids_txt))
+
+    def export_breach(self, outdir):
+        global_sql = '''SELECT * FROM breach_global ORDER BY fid;'''
+        local_sql = '''SELECT * FROM breach ORDER BY fid;'''
+        cells_sql = '''SELECT grid_fid FROM breach_cells WHERE breach_fid = {0};'''
+        frag_sql = '''SELECT fragchar, prfail, prdepth FROM breach_fragility_curves ORDER BY fid;'''
+
+        b1, g1, g2, g3, g4 = slice(1, 5), slice(5, 13), slice(13, 20), slice(20, 27), slice(27, 33)
+        b2, d1, d2, d3, d4 = slice(0, 2), slice(2, 11), slice(11, 18), slice(18, 25), slice(25, 33)
+
+        bline = 'B{0} {1}\n'
+        line_1 = '{0}1 {1}\n'
+        line_2 = '{0}2 {1}\n'
+        line_3 = '{0}3 {1}\n'
+        line_4 = '{0}4 {1}\n'
+        fline = '{0} {1} {2}\n'
+
+        parts = [
+            [g1, d1, line_1],
+            [g2, d2, line_2],
+            [g3, d3, line_3],
+            [g4, d4, line_4]
+        ]
+
+        global_rows = self.execute(global_sql).fetchall()
+        local_rows = self.execute(local_sql).fetchall()
+        if not global_rows and not local_rows:
+            return
+        else:
+            pass
+        breach = os.path.join(outdir, 'BREACH.DAT')
+        with open(breach, 'w') as b:
+            c = 1
+            for row in global_rows:
+                row_slice = [str(x) if x is not None else '' for x in row[b1]]
+                b.write(bline.format(c, ' '.join(row_slice)))
+                for gslice, dslice, line in parts:
+                    row_slice = [str(x) if x is not None else '' for x in row[gslice]]
+                    if any(row_slice) is True:
+                        b.write(line.format('G', '  '.join(row_slice)))
+                    else:
+                        pass
+                c += 1
+            for row in local_rows:
+                row = list(row)
+                fid = row[0]
+                gid = self.execute(cells_sql.format(fid)).fetchone()[0]
+                row[0] = gid
+                row_slice = [str(x) if x is not None else '' for x in row[b2]]
+                b.write(bline.format(c, ' '.join(row_slice)))
+                for gslice, dslice, line in parts:
+                    row_slice = [str(x) if x is not None else '' for x in row[dslice]]
+                    if any(row_slice) is True:
+                        b.write(line.format('D', '  '.join(row_slice)))
+                    else:
+                        pass
+                c += 1
+            for row in self.execute(frag_sql):
+                b.write(fline.format(*row))
 
     def export_fpfroude(self, outdir):
         fpfroude_sql = '''SELECT fid, froudefp FROM fpfroude ORDER BY fid;'''

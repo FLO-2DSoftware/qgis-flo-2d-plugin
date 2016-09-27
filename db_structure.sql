@@ -1285,7 +1285,6 @@ CREATE TABLE "breach_global" (
     "gbratio" REAL, -- GBRATIO, global ratio of the initial breach width to breach depth
     "gweircoef" REAL, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
     "gbreachtime" REAL, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
-    --"gzu" REAL, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzu" REAL, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzd" REAL, -- GZD, global slope of the downstream face of the levee or dam
     "gzc" REAL, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material
@@ -1322,10 +1321,9 @@ CREATE TABLE "breach" (
     "ibreachdir" INTEGER, -- IBREACHDIR, direction of breach
     "zu" REAL, -- ZU, slope of the upstream face of the levee or dam
     "zd" REAL, -- ZD, slope of the downstream face of the levee or dam
-    "zc" REAL -- ZC, average slope of the upstream and downstream face of the levee or dam core material
+    "zc" REAL, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
     "crestwidth" REAL, -- CRESTWIDTH, crest width of the levee or dam
     "crestlength" REAL, -- CRESTLENGTH, length of the crest of the levee or dam
-    --"zc" REAL, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
     "brbotwidmax" REAL, -- BRBOTWIDMAX, maximum allowable breach bottom width (ft or m) as constrained by the valley cross section
     "brtopwidmax" REAL, -- BRTOPWIDMAX, maximum allowable breach top width (ft or m) as constrained by the valley cross section
     "brbottomel" REAL, -- BRBOTTOMEL, initial breach or pipe bottom elevation (ft or m)
