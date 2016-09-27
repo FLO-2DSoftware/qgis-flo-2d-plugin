@@ -88,15 +88,21 @@ class GeoPackageUtils(object):
                 result_cursor = cursor.execute(statement)
             return result_cursor
 
-    def batch_execute(self, sql_list, strip_char=' '):
-        for sql in sql_list:
+    def batch_execute(self, *sqls):
+        for sql in sqls:
+            qry = None
+            if len(sql) == 1:
+                continue
+            else:
+                pass
             try:
-                if sql.endswith(strip_char):
-                    self.execute(sql.rstrip(strip_char))
-                else:
-                    pass
+                qry = sql[0]
+                del sql[0]
+                qry += ','.join(sql)
+                self.execute(qry)
+                del sql[:]
             except Exception as e:
-                self.uc.log_info(sql)
+                self.uc.log_info(qry)
                 self.uc.log_info(traceback.format_exc())
 
     def is_table_empty(self, table):
@@ -124,12 +130,12 @@ class GeoPackageUtils(object):
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''AsGPB(ST_GeomFromText('LINESTRING('''
+        points = []
         for g in gids:
             qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, g)
             wkt_geom = self.execute(qry).fetchone()[0]
-            points = wkt_geom.strip('POINT()') + ','
-            gpb += points
-        gpb = gpb.strip(',') + ')\'))'
+            points.append(wkt_geom.strip('POINT()'))
+        gpb = gpb + ','.join(points) + ')\'))'
         return gpb
 
     def build_multilinestring(self, gid, directions, cellsize, table='grid', field='fid'):
@@ -144,15 +150,16 @@ class GeoPackageUtils(object):
             '8': (lambda x, y, shift: (x - shift, y + shift))
         }
         gpb = '''AsGPB(ST_GeomFromText('MULTILINESTRING('''
-        gpb_part = '''({0} {1}, {2} {3}),'''
+        gpb_part = '''({0} {1}, {2} {3})'''
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = {2};'''.format(table, field, gid)
         wkt_geom = self.execute(qry).fetchone()[0]
         x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()]
         half_cell = cellsize * 0.5
+        parts = []
         for d in directions:
             x2, y2 = functions[d](x1, y1, half_cell)
-            gpb += gpb_part.format(x1, y1, x2, y2)
-        gpb = gpb.strip(',') + ')\'))'
+            parts.append(gpb_part.format(x1, y1, x2, y2))
+        gpb = gpb + ','.join(parts) + ')\'))'
         return gpb
 
     def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
@@ -271,16 +278,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 c.write(cline.format(fid, '{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y))))
 
     def import_cont_toler(self):
-        sql = '''INSERT INTO cont (name, value) VALUES'''
-        sql_part = '''\n('{0}', '{1}'),'''
+        sql = ['''INSERT INTO cont (name, value) VALUES''']
+        sql_part = '''\n('{0}', '{1}')'''
         self.clear_tables('cont')
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
         for option in cont:
-            sql += sql_part.format(option, cont[option])
-        sql += sql_part.format('CELLSIZE', self.cell_size)
-        self.execute(sql.replace("'None'", 'NULL').rstrip(','))
+            sql += [sql_part.format(option, cont[option]).replace("'None'", 'NULL')]
+        sql += [sql_part.format('CELLSIZE', self.cell_size)]
+        self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
         # insert grid data into gpkg
@@ -314,18 +321,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
     def import_inflow(self):
-        inflow_sql = '''INSERT INTO inflow (time_series_fid, ident, inoutfc, geom) VALUES'''
-        cells_sql = '''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES'''
-        ts_sql = '''INSERT INTO time_series (hourdaily) VALUES'''
-        tsd_sql = '''INSERT INTO time_series_data (series_fid, time, value, value2) VALUES'''
-        reservoirs_sql = '''INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES'''
+        inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc, geom) VALUES''']
+        cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''']
+        ts_sql = ['''INSERT INTO time_series (hourdaily) VALUES''']
+        tsd_sql = ['''INSERT INTO time_series_data (series_fid, time, value, value2) VALUES''']
+        reservoirs_sql = ['''INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES''']
         cont_sql = '''INSERT INTO cont (name, value) VALUES ('IDEPLT', '{0}');'''
 
-        inflow_part = '''\n({0}, '{1}', {2}, {3}),'''
-        cells_part = '''\n({0}, {1}),'''
-        ts_part = '''\n({0}),'''
-        tsd_part = '''\n({0}, {1}, {2}, {3}),'''
-        reservoirs_part = '''\n({0}, {1}, {2}),'''
+        inflow_part = '''\n({0}, '{1}', {2}, {3})'''
+        cells_part = '''\n({0}, {1})'''
+        ts_part = '''\n({0})'''
+        tsd_part = '''\n({0}, {1}, {2}, {3})'''
+        reservoirs_part = '''\n({0}, {1}, {2})'''
 
         self.clear_tables('inflow', 'inflow_cells', 'time_series', 'time_series_data', 'reservoirs')
         head, inf, res = self.parser.parse_inflow()
@@ -334,37 +341,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for i, gid in enumerate(inf):
             fid = i + 1
             row = inf[gid]['row']
-            inflow_sql += inflow_part.format(fid, row[0], row[1], self.build_buffer(cells[gid], self.buffer))
-            cells_sql += cells_part.format(fid, gid)
-            ts_sql += ts_part.format(head['IHOURDAILY'])
+            inflow_sql += [inflow_part.format(fid, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
+            cells_sql += [cells_part.format(fid, gid)]
+            ts_sql += [ts_part.format(head['IHOURDAILY'])]
             values = slice(1, None)
             for n in inf[gid]['time_series']:
-                tsd_sql += tsd_part.format(fid, *n[values])
+                tsd_sql += [tsd_part.format(fid, *n[values])]
 
         for gid in res:
             row = res[gid]['row']
             wsel = row[-1] if len(row) == 3 else 'NULL'
-            reservoirs_sql += reservoirs_part.format(row[1], wsel, self.build_buffer(cells[gid], self.buffer))
+            reservoirs_sql += [reservoirs_part.format(row[1], wsel, self.build_buffer(cells[gid], self.buffer))]
 
         self.execute(cont_sql.format(head['IDEPLT']))
-        sql_list = [ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
 
     def import_outflow(self):
-        outflow_sql = '''INSERT INTO outflow (time_series_fid, ident, nostacfp, qh_params_fid, geom) VALUES'''
-        cells_sql = '''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES'''
-        chan_sql = '''INSERT INTO outflow_chan_elems (outflow_fid, elem_fid) VALUES'''
-        qh_sql = '''INSERT INTO qh_params (hmax, coef, expontent) VALUES'''
-        ts_sql = '''INSERT INTO time_series (fid) VALUES'''
-        tsd_sql = '''INSERT INTO time_series_data (series_fid, time, value, value2) VALUES'''
-        hydchar_sql = '''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES'''
+        outflow_sql = ['''INSERT INTO outflow (time_series_fid, ident, nostacfp, qh_params_fid, geom) VALUES''']
+        cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''']
+        chan_sql = ['''INSERT INTO outflow_chan_elems (outflow_fid, elem_fid) VALUES''']
+        qh_sql = ['''INSERT INTO qh_params (hmax, coef, expontent) VALUES''']
+        ts_sql = ['''INSERT INTO time_series (fid) VALUES''']
+        tsd_sql = ['''INSERT INTO time_series_data (series_fid, time, value, value2) VALUES''']
+        hydchar_sql = ['''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES''']
 
-        outflow_part = '''\n({0}, '{1}', {2}, {3}, {4}),'''
-        cells_chan_part = '''\n({0}, {1}),'''
-        qh_part = '''\n({0}, {1}, {2}),'''
-        ts_part = '''\n({0}),'''
-        tsd_part = '''\n({0}, {1}, {2}, {3}),'''
-        hydchar_part_sql = '''\n('{0}', {1}),'''
+        outflow_part = '''\n({0}, '{1}', {2}, {3}, {4})'''
+        cells_chan_part = '''\n({0}, {1})'''
+        qh_part = '''\n({0}, {1}, {2})'''
+        ts_part = '''\n({0})'''
+        tsd_part = '''\n({0}, {1}, {2}, {3})'''
+        hydchar_part_sql = '''\n('{0}', {1})'''
 
         self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params')
         koutflow, noutflow, ooutflow = self.parser.parse_outflow()
@@ -382,49 +388,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if qh:
                 qhfid = fid_qh
                 fid_qh += 1
-                qh_sql += qh_part.format(*qh[0])
+                qh_sql += [qh_part.format(*qh[0])]
             else:
                 qhfid = 'NULL'
             if time_series:
                 tsfid = fid_ts
                 fid_ts += 1
-                ts_sql += ts_part.format(tsfid)
+                ts_sql += [ts_part.format(tsfid)]
             else:
                 tsfid = 'NULL'
 
             ident = row[0]
             if ident == 'N':
                 nostacfp = gid
-                cells_sql += cells_chan_part.format(fid, nostacfp)
+                cells_sql += [cells_chan_part.format(fid, nostacfp)]
             else:
                 nostacfp = 'NULL'
-                chan_sql += cells_chan_part.format(fid, gid)
+                chan_sql += [cells_chan_part.format(fid, gid)]
 
-            outflow_sql += outflow_part.format(tsfid, ident, nostacfp, qhfid, self.build_buffer(cells[gid], self.buffer))
+            outflow_sql += [outflow_part.format(tsfid, ident, nostacfp, qhfid, self.build_buffer(cells[gid], self.buffer))]
 
             for n in time_series:
-                tsd_sql += tsd_part.format(fid_ts, *n[tsd_val])
+                tsd_sql += [tsd_part.format(fid_ts, *n[tsd_val])]
             fid += 1
 
         for gid, val in ooutflow.iteritems():
             row = val['row']
-            hydchar_sql += hydchar_part_sql.format(*row)
+            hydchar_sql += [hydchar_part_sql.format(*row)]
 
-        sql_list = [ts_sql, qh_sql, outflow_sql, cells_sql, chan_sql, tsd_sql, hydchar_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(ts_sql, qh_sql, outflow_sql, cells_sql, chan_sql, tsd_sql, hydchar_sql)
 
     def import_rain(self):
-        rain_sql = '''INSERT INTO rain (time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES'''
-        ts_sql = '''INSERT INTO time_series (fid) VALUES'''
-        tsd_sql = '''INSERT INTO time_series_data (series_fid, time, value) VALUES'''
-        rain_arf_sql = '''INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES'''
-        cells_sql = '''INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES'''
+        rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''']
+        ts_sql = ['''INSERT INTO time_series (fid) VALUES''']
+        tsd_sql = ['''INSERT INTO time_series_data (series_fid, time, value) VALUES''']
+        rain_arf_sql = ['''INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES''']
+        cells_sql = ['''INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES''']
 
-        rain_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}),'''
-        ts_part = '''\n({0}),'''
-        tsd_part = '''\n({0}, {1}, {2}),'''
-        rain_arf_part = '''\n({0}, {1}, {2}),'''
-        cells_part = '''\n({0}, {1}, {2}),'''
+        rain_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8})'''
+        ts_part = '''\n({0})'''
+        tsd_part = '''\n({0}, {1}, {2})'''
+        rain_arf_part = '''\n({0}, {1}, {2})'''
+        cells_part = '''\n({0}, {1}, {2})'''
 
         self.clear_tables('rain', 'rain_arf_areas', 'rain_arf_cells')
         options, time_series, rain_arf = self.parser.parse_rain()
@@ -434,41 +439,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
         fid = 1
         fid_ts = self.get_max('time_series') + 1
 
-        rain_sql += rain_part.format(fid_ts, *options.values())
-        ts_sql += ts_part.format(fid_ts)
+        rain_sql += [rain_part.format(fid_ts, *options.values())]
+        ts_sql += [ts_part.format(fid_ts)]
 
         for row in time_series:
             char, time, value = row
-            tsd_sql += tsd_part.format(fid_ts, time, value)
+            tsd_sql += [tsd_part.format(fid_ts, time, value)]
 
         for i, row in enumerate(rain_arf):
             gid, val = row
-            rain_arf_sql += rain_arf_part.format(fid, val, self.build_buffer(cells[gid], self.buffer))
-            cells_sql += cells_part.format(i+1, gid, val)
+            rain_arf_sql += [rain_arf_part.format(fid, val, self.build_buffer(cells[gid], self.buffer))]
+            cells_sql += [cells_part.format(i+1, gid, val)]
 
-        sql_list = [ts_sql, rain_sql, tsd_sql, rain_arf_sql, cells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(ts_sql, rain_sql, tsd_sql, rain_arf_sql, cells_sql)
 
     def import_infil(self):
         infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj', 'hydcxx', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
-        infil_sql = 'INSERT INTO infil (' + ', '.join(infil_params) + ') VALUES ('
-        infil_seg_sql = '''INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES'''
-        infil_green_sql = '''INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES'''
-        infil_scs_sql = '''INSERT INTO infil_areas_scs (geom, scscn) VALUES'''
-        infil_horton_sql = '''INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES'''
-        infil_chan_sql = '''INSERT INTO infil_areas_chan (geom, hydconch) VALUES'''
+        infil_sql = ['INSERT INTO infil (' + ', '.join(infil_params) + ') VALUES']
+        infil_seg_sql = ['''INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES''']
+        infil_green_sql = ['''INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES''']
+        infil_scs_sql = ['''INSERT INTO infil_areas_scs (geom, scscn) VALUES''']
+        infil_horton_sql = ['''INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES''']
+        infil_chan_sql = ['''INSERT INTO infil_areas_chan (geom, hydconch) VALUES''']
 
-        cells_green_sql = '''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES'''
-        cells_scs_sql = '''INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES'''
-        cells_horton_sql = '''INSERT INTO infil_cells_horton (infil_area_fid, grid_fid) VALUES'''
-        chan_sql = '''INSERT INTO infil_chan_elems (infil_area_fid, grid_fid) VALUES'''
+        cells_green_sql = ['''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES''']
+        cells_scs_sql = ['''INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES''']
+        cells_horton_sql = ['''INSERT INTO infil_cells_horton (infil_area_fid, grid_fid) VALUES''']
+        chan_sql = ['''INSERT INTO infil_chan_elems (infil_area_fid, grid_fid) VALUES''']
 
-        seg_part = '\n({0}, {1}, {2}, {3}),'
-        green_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}),'''
-        scs_part = '''\n({0}, {1}),'''
-        chan_part = '''\n({0}, {1}),'''
-        horton_part = '''\n({0}, {1}, {2}, {3}),'''
-        cells_chan_part = '''\n({0}, {1}),'''
+        seg_part = '\n({0}, {1}, {2}, {3})'
+        green_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6})'''
+        scs_part = '''\n({0}, {1})'''
+        chan_part = '''\n({0}, {1})'''
+        horton_part = '''\n({0}, {1}, {2}, {3})'''
+        cells_chan_part = '''\n({0}, {1})'''
 
         sqls = {
             'F': [infil_green_sql, green_part, cells_green_sql],
@@ -482,71 +486,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
                           'infil_cells_green', 'infil_cells_scs', 'infil_cells_horton', 'infil_chan_elems')
         data = self.parser.parse_infil()
 
-        infil_sql += ', '.join([data[k.upper()] if k.upper() in data else 'NULL' for k in infil_params]) + '),'
+        infil_sql += ['(' + ', '.join([data[k.upper()] if k.upper() in data else 'NULL' for k in infil_params]) + ')']
         gids = (x[0] for x in chain(data['F'], data['S'], data['C'], data['H']))
         cells = self.get_centroids(gids)
 
         for i, row in enumerate(data['R']):
-            infil_seg_sql += seg_part.format(i+1, *row)
+            infil_seg_sql += [seg_part.format(i+1, *row)]
 
         for k in sqls:
             if len(data[k]) > 0:
                 for i, row in enumerate(data[k]):
                     gid = row[0]
                     geom = self.build_square(cells[gid], self.cell_size*0.95)
-                    sqls[k][0] += sqls[k][1].format(geom, *row[1:])
-                    sqls[k][-1] += cells_chan_part.format(i+1, gid)
+                    sqls[k][0] += [sqls[k][1].format(geom, *row[1:])]
+                    sqls[k][-1] += [cells_chan_part.format(i+1, gid)]
             else:
                 pass
-
-        sql_list = [infil_sql, infil_seg_sql]
-        for sql in sqls.itervalues():
-            sql_list.append(sql[0])
-            sql_list.append(sql[-1])
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(infil_sql, infil_seg_sql, infil_green_sql, infil_scs_sql, infil_horton_sql, infil_chan_sql,
+                           cells_green_sql, cells_scs_sql, cells_horton_sql, chan_sql)
 
     def import_evapor(self):
-        evapor_sql = '''INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES'''
-        evapor_mont_sql = '''INSERT INTO evapor_monthly (month, monthly_evap) VALUES'''
-        evapor_hour_sql = '''INSERT INTO evapor_hourly (month, hour, hourly_evap) VALUES'''
+        evapor_sql = ['''INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES''']
+        evapor_month_sql = ['''INSERT INTO evapor_monthly (month, monthly_evap) VALUES''']
+        evapor_hour_sql = ['''INSERT INTO evapor_hourly (month, hour, hourly_evap) VALUES''']
 
-        evapor_part = '''\n({0}, {1}, {2}),'''
-        evapor_month_part = '''\n('{0}', {1}),'''
-        evapor_hour_part = '''\n('{0}', {1}, {2}),'''
+        evapor_part = '''\n({0}, {1}, {2})'''
+        evapor_month_part = '''\n('{0}', {1})'''
+        evapor_hour_part = '''\n('{0}', {1}, {2})'''
 
         self.clear_tables('evapor', 'evapor_monthly', 'evapor_hourly')
         head, data = self.parser.parse_evapor()
-        evapor_sql += evapor_part.format(*head)
+        evapor_sql += [evapor_part.format(*head)]
         for month in data:
             row = data[month]['row']
             time_series = data[month]['time_series']
-            evapor_mont_sql += evapor_month_part.format(*row)
+            evapor_month_sql += [evapor_month_part.format(*row)]
             for h, ts in enumerate(time_series):
-                evapor_hour_sql += evapor_hour_part.format(month, h+1, ts)
+                evapor_hour_sql += [evapor_hour_part.format(month, h+1, ts)]
 
-        sql_list = [evapor_sql, evapor_mont_sql, evapor_hour_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
-        chan_sql = '''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES'''
-        chan_r_sql = '''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, rbankgrid) VALUES'''
-        chan_v_sql = '''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22, rbankgrid) VALUES'''
-        chan_t_sql = '''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr, rbankgrid) VALUES'''
-        chan_n_sql = '''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, xsecname, rbankgrid) VALUES'''
-        chan_wsel_sql = '''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES'''
-        chan_conf_sql = '''INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES'''
-        chan_e_sql = '''INSERT INTO noexchange_chan_areas (geom) VALUES'''
-        elems_e_sql = '''INSERT INTO noexchange_chan_elems (noex_area_fid, chan_elem_fid) VALUES'''
+        chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''']
+        chan_r_sql = ['''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, rbankgrid) VALUES''']
+        chan_v_sql = ['''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22, rbankgrid) VALUES''']
+        chan_t_sql = ['''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr, rbankgrid) VALUES''']
+        chan_n_sql = ['''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, xsecname, rbankgrid) VALUES''']
+        chan_wsel_sql = ['''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES''']
+        chan_conf_sql = ['''INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES''']
+        chan_e_sql = ['''INSERT INTO noexchange_chan_areas (geom) VALUES''']
+        elems_e_sql = ['''INSERT INTO noexchange_chan_elems (noex_area_fid, chan_elem_fid) VALUES''']
 
-        chan_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
-        chan_r_part = '\n(' + ','.join(['{} '] * 10) + '),'
-        chan_v_part = '\n(' + ','.join(['{} '] * 22) + '),'
-        chan_t_part = '\n(' + ','.join(['{} '] * 12) + '),'
-        chan_n_part = '\n(' + ','.join(['{} '] * 8) + '),'
-        chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + '),'
-        chan_conf_part = '\n(' + ','.join(['{} '] * 4) + '),'
-        chan_e_part = '''\n({0}),'''
-        elems_part = '''\n({0}, {1}),'''
+        chan_part = '''\n({0}, {1}, {2}, {3}, {4})'''
+        chan_r_part = '\n(' + ','.join(['{} '] * 10) + ')'
+        chan_v_part = '\n(' + ','.join(['{} '] * 22) + ')'
+        chan_t_part = '\n(' + ','.join(['{} '] * 12) + ')'
+        chan_n_part = '\n(' + ','.join(['{} '] * 8) + ')'
+        chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + ')'
+        chan_conf_part = '\n(' + ','.join(['{} '] * 4) + ')'
+        chan_e_part = '''\n({0})'''
+        elems_part = '''\n({0}, {1})'''
 
         sqls = {
             'R': [chan_r_sql, chan_r_part],
@@ -566,32 +565,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid = row[1]
                 params = row[1:]
                 gids.append(gid)
-                sqls[char][0] += sqls[char][1].format(i+1, ii+1, *params)
+                sqls[char][0] += [sqls[char][1].format(i+1, ii+1, *params)]
             options = seg[:-1]
             geom = self.build_linestring(gids)
-            chan_sql += chan_part.format(geom, *options)
+            chan_sql += [chan_part.format(geom, *options)]
 
         for row in wsel:
-            chan_wsel_sql += chan_wsel_part.format(*row)
+            chan_wsel_sql += [chan_wsel_part.format(*row)]
 
         for i, row in enumerate(confluence):
             conf_fid = i + 1
             gid1, gid2 = row[1], row[2]
             cells = self.get_centroids([gid1, gid2])
             geom1, geom2 = ["AsGPB(ST_GeomFromText('{}'))".format(g) for g in [cells[gid1], cells[gid2]]]
-            chan_conf_sql += chan_conf_part.format(geom1, conf_fid, 0, gid1)
-            chan_conf_sql += chan_conf_part.format(geom2, conf_fid, 1, gid2)
+            chan_conf_sql += [chan_conf_part.format(geom1, conf_fid, 0, gid1)]
+            chan_conf_sql += [chan_conf_part.format(geom2, conf_fid, 1, gid2)]
 
         for i, row in enumerate(noexchange):
             gid = row[-1]
             geom = self.get_centroids([gid])[0]
-            chan_e_sql += chan_e_part.format(self.build_buffer(geom, self.buffer))
-            elems_e_sql += elems_part.format(i+1, gid)
+            chan_e_sql += [chan_e_part.format(self.build_buffer(geom, self.buffer))]
+            elems_e_sql += [elems_part.format(i+1, gid)]
 
-        sql_list = [x[0] for x in sqls.values()]
-        sql_list.insert(0, chan_sql)
-        sql_list.extend([chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql])
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(chan_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
+                           chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql)
         
         # create geometry for the newly added cross-sections
         for chtype in ['r', 'v', 't', 'n']:
@@ -611,35 +608,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(sql.format(chtype))
 
     def import_xsec(self):
-        xsec_sql = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES'''
-        xsec_part = '''\n({0}, {1}, {2}),'''
+        xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''']
+        xsec_part = '''\n({0}, {1}, {2})'''
         self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
         for xsec in data:
             nr, nodes = xsec
             for row in nodes:
-                xsec_sql += xsec_part.format(nr, *row)
-        if xsec_sql.endswith(','):
-            self.execute(xsec_sql.rstrip(','))
-        else:
-            pass
+                xsec_sql += [xsec_part.format(nr, *row)]
+        self.batch_execute(xsec_sql)
 
     def import_hystruc(self):
         hystruc_params = ['geom', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont',
                           'headrefel', 'clength', 'cdiameter']
-        hystruc_sql = 'INSERT INTO struct (' + ', '.join(hystruc_params) + ') VALUES'
-        ratc_sql = '''INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES'''
-        repl_ratc_sql = '''INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES'''
-        ratt_sql = '''INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES'''
-        culvert_sql = '''INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES'''
-        storm_sql = '''INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES'''
+        hystruc_sql = ['INSERT INTO struct (' + ', '.join(hystruc_params) + ') VALUES']
+        ratc_sql = ['''INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES''']
+        repl_ratc_sql = ['''INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES''']
+        ratt_sql = ['''INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES''']
+        culvert_sql = ['''INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES''']
+        storm_sql = ['''INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES''']
 
-        hystruc_part = '''\n({0}, '{1}', '{2}', {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}),'''
-        ratc_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}),'''
-        repl_ratc_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}),'''
-        ratt_part = '''\n({0}, {1}, {2}, {3}),'''
-        culvert_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}),'''
-        storm_part = '''\n({0}, {1}, {2}),'''
+        hystruc_part = '''\n({0}, '{1}', '{2}', {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10})'''
+        ratc_part = '''\n({0}, {1}, {2}, {3}, {4}, {5})'''
+        repl_ratc_part = '''\n({0}, {1}, {2}, {3}, {4}, {5})'''
+        ratt_part = '''\n({0}, {1}, {2}, {3})'''
+        culvert_part = '''\n({0}, {1}, {2}, {3}, {4}, {5})'''
+        storm_part = '''\n({0}, {1}, {2})'''
 
         sqls = {
             'C': [ratc_sql, ratc_part],
@@ -657,23 +651,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             elems = hs[-1]
             geom = self.build_linestring(params[nodes])
             char = elems.keys()[0] if len(elems) == 1 else 'C'
-            hystruc_sql += hystruc_part.format(geom, char, *params)
+            hystruc_sql += [hystruc_part.format(geom, char, *params)]
             for row in elems[char]:
-                sqls[char][0] += sqls[char][1].format(i+1, *row)
+                sqls[char][0] += [sqls[char][1].format(i+1, *row)]
 
-        sql_list = [hystruc_sql] + [x[0] for x in sqls.values()]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql)
 
     def import_street(self):
-        general_sql = '''INSERT INTO street_general (strman, istrflo, strfno, depx, widst)
-        VALUES ({0}, {1}, {2}, {3}, {4}),'''
-        streets_sql = '''INSERT INTO streets (stname) VALUES'''
-        seg_sql = '''INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES'''
-        elem_sql = '''INSERT INTO street_elems (seg_fid, istdir, widr) VALUES'''
+        general_sql = ['''INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES''']
+        streets_sql = ['''INSERT INTO streets (stname) VALUES''']
+        seg_sql = ['''INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES''']
+        elem_sql = ['''INSERT INTO street_elems (seg_fid, istdir, widr) VALUES''']
 
-        streets_part = '''\n('{0}'),'''
-        seg_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}),'''
-        elem_part = '''\n({0}, {1}, {2}),'''
+        head_part = '''\n({0}, {1}, {2}, {3}, {4})'''
+        streets_part = '''\n('{0}')'''
+        seg_part = '''\n({0}, {1}, {2}, {3}, {4}, {5})'''
+        elem_part = '''\n({0}, {1}, {2})'''
 
         sqls = {
             'N': [streets_sql, streets_part],
@@ -683,11 +676,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('street_general', 'streets', 'street_seg', 'street_elems')
         head, data = self.parser.parse_street()
-        general_sql = general_sql.format(*head)
+        general_sql += [head_part.format(*head)]
         seg_fid = 1
         for i, n in enumerate(data):
             name = n[0]
-            sqls['N'][0] += sqls['N'][1].format(name)
+            sqls['N'][0] += [sqls['N'][1].format(name)]
             for s in n[-1]:
                 gid = s[0]
                 directions = []
@@ -695,129 +688,128 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for w in s[-1]:
                     d = w[0]
                     directions.append(d)
-                    sqls['W'][0] += sqls['W'][1].format(seg_fid, *w)
+                    sqls['W'][0] += [sqls['W'][1].format(seg_fid, *w)]
                 geom = self.build_multilinestring(gid, directions, self.cell_size)
-                sqls['S'][0] += sqls['S'][1].format(geom, i+1, *s_params)
+                sqls['S'][0] += [sqls['S'][1].format(geom, i+1, *s_params)]
                 seg_fid += 1
 
-        sql_list = [general_sql] + [x[0] for x in sqls.values()]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(general_sql, streets_sql, seg_sql, elem_sql)
 
     def import_arf(self):
-        cont_sql = '''INSERT INTO cont (name, value) VALUES ('arfblockmod', {0}),'''
-        blocked_sql = '''INSERT INTO blocked_areas_tot (geom) VALUES'''
-        pblocked_sql = '''INSERT INTO blocked_areas (geom, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES'''
-        bcells_sql = '''INSERT INTO blocked_cells_tot (area_fid, grid_fid) VALUES'''
-        pbcells_sql = '''INSERT INTO blocked_cells (area_fid, grid_fid) VALUES'''
+        cont_sql = ['''INSERT INTO cont (name, value) VALUES''']
+        blocked_sql = ['''INSERT INTO blocked_areas_tot (geom) VALUES''']
+        pblocked_sql = ['''INSERT INTO blocked_areas (geom, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''']
+        bcells_sql = ['''INSERT INTO blocked_cells_tot (area_fid, grid_fid) VALUES''']
+        pbcells_sql = ['''INSERT INTO blocked_cells (area_fid, grid_fid) VALUES''']
 
-        blocked_part = '''\n({0}),'''
-        pblocked_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}),'''
-        cells_part = '''\n({0}, {1}),'''
+        cont_part = '''\n('arfblockmod', {0})'''
+        blocked_part = '''\n({0})'''
+        pblocked_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9})'''
+        cells_part = '''\n({0}, {1})'''
 
         self.clear_tables('blocked_areas_tot', 'blocked_areas', 'blocked_cells_tot', 'blocked_cells')
         head, data = self.parser.parse_arf()
-        cont_sql = cont_sql.format(*head)
+        cont_sql += [cont_part.format(*head)]
         gids = (x[0] for x in chain(data['T'], data['PB']))
         cells = self.get_centroids(gids)
         for i, row in enumerate(data['T']):
             gid = row[0]
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            blocked_sql += blocked_part.format(geom, *row)
-            bcells_sql += cells_part.format(i+1, gid)
+            blocked_sql += [blocked_part.format(geom, *row)]
+            bcells_sql += [cells_part.format(i+1, gid)]
         for i, row in enumerate(data['PB']):
             gid = row[0]
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            pblocked_sql += pblocked_part.format(geom, *row[1:])
-            pbcells_sql += cells_part.format(i+1, gid)
+            pblocked_sql += [pblocked_part.format(geom, *row[1:])]
+            pbcells_sql += [cells_part.format(i+1, gid)]
 
-        sql_list = [cont_sql, blocked_sql, pblocked_sql, bcells_sql, pbcells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(cont_sql, blocked_sql, pblocked_sql, bcells_sql, pbcells_sql)
 
     def import_mult(self):
-        mult_sql = '''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50) VALUES'''
-        mult_area_sql = '''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES'''
-        cells_sql = '''INSERT INTO mult_cells (area_fid, grid_fid) VALUES'''
+        mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50) VALUES''']
+        mult_area_sql = ['''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES''']
+        cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid) VALUES''']
 
-        mult_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
-        mult_area_part = '''\n({0}, {1}, {2}, {3}, {4}),'''
-        cells_part = '''\n({0}, {1}),'''
+        mult_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})'''
+        mult_area_part = '''\n({0}, {1}, {2}, {3}, {4})'''
+        cells_part = '''\n({0}, {1})'''
 
         self.clear_tables('mult', 'mult_areas')
         head, data = self.parser.parse_mult()
-        mult_sql += mult_part.format(*head)
+        mult_sql += [mult_part.format(*head)]
         gids = (x[0] for x in data)
         cells = self.get_centroids(gids)
         for i, row in enumerate(data):
             gid = row[0]
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            mult_area_sql += mult_area_part.format(geom, *row[1:])
-            cells_sql += cells_part.format(i+1, gid)
-        sql_list = [mult_sql, mult_area_sql, cells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            mult_area_sql += [mult_area_part.format(geom, *row[1:])]
+            cells_sql += [cells_part.format(i+1, gid)]
+
+        self.batch_execute(mult_sql, mult_area_sql, cells_sql)
 
     def import_levee(self):
-        lgeneral_sql = '''INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES'''
-        ldata_sql = '''INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES'''
-        lfailure_sql = '''INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate) VALUES'''
-        lfragility_sql = '''INSERT INTO levee_fragility (grid_fid, levfragchar, levfragprob) VALUES'''
+        lgeneral_sql = ['''INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES''']
+        ldata_sql = ['''INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES''']
+        lfailure_sql = ['''INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate) VALUES''']
+        lfragility_sql = ['''INSERT INTO levee_fragility (grid_fid, levfragchar, levfragprob) VALUES''']
 
-        lgeneral_part = '''\n({0}, {1}, '{2}', {3}),'''
-        ldata_part = '''\n({0}, {1}, {2}, {3}),'''
-        lfailure_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
-        lfragility_part = '''\n({0}, '{1}', {2}),'''
+        lgeneral_part = '''\n({0}, {1}, '{2}', {3})'''
+        ldata_part = '''\n({0}, {1}, {2}, {3})'''
+        lfailure_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})'''
+        lfragility_part = '''\n({0}, '{1}', {2})'''
 
         self.clear_tables('levee_general', 'levee_data', 'levee_failure', 'levee_fragility')
         head, data = self.parser.parse_levee()
 
         if head[2] == 'NULL':
-            lgeneral_sql += lgeneral_part.replace("'", '').format(*head)
+            lgeneral_sql += [lgeneral_part.replace("'", '').format(*head)]
         else:
-            lgeneral_sql += lgeneral_part.format(*head)
+            lgeneral_sql += [lgeneral_part.format(*head)]
 
         for gid, directions in data['L']:
             for row in directions:
                 ldir, levcrest = row
                 geom = self.build_levee(gid, ldir, self.cell_size)
-                ldata_sql += ldata_part.format(geom, gid, ldir, levcrest)
+                ldata_sql += [ldata_part.format(geom, gid, ldir, levcrest)]
         for gid, directions in data['F']:
             for row in directions:
-                lfailure_sql += lfailure_part.format(gid, *row)
+                lfailure_sql += [lfailure_part.format(gid, *row)]
 
         for row in data['P']:
             if row[1] == 'NULL':
-                lfragility_sql += lfragility_part.replace("'", '').format(*row)
+                lfragility_sql += [lfragility_part.replace("'", '').format(*row)]
             else:
-                lfragility_sql += lfragility_part.format(*row)
+                lfragility_sql += [lfragility_part.format(*row)]
 
-        sql_list = [lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql]
-        self.batch_execute(sql_list, strip_char=',')
+        self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
     def import_fpxsec(self):
-        cont_sql = '''INSERT INTO cont (name, value) VALUES ('NXPRT', {0}),'''
-        fpxsec_sql = '''INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES'''
-        cells_sql = '''INSERT INTO fpxsec_cells (fpxsec_fid, grid_fid) VALUES'''
+        cont_sql = ['''INSERT INTO cont (name, value) VALUES''']
+        fpxsec_sql = ['''INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES''']
+        cells_sql = ['''INSERT INTO fpxsec_cells (fpxsec_fid, grid_fid) VALUES''']
 
-        fpxsec_part = '''\n({0}, {1}, {2}),'''
-        cells_part = '''\n({0}, {1}),'''
+        cont_part = '''\n('NXPRT', {0})'''
+        fpxsec_part = '''\n({0}, {1}, {2})'''
+        cells_part = '''\n({0}, {1})'''
 
         self.clear_tables('fpxsec', 'fpxsec_cells')
         head, data = self.parser.parse_fpxsec()
-        cont_sql = cont_sql.format(head)
+        cont_sql += [cont_part.format(head)]
         for i, xs in enumerate(data):
             params, gids = xs
             geom = self.build_linestring(gids)
-            fpxsec_sql += fpxsec_part.format(geom, *params)
+            fpxsec_sql += [fpxsec_part.format(geom, *params)]
             for gid in gids:
-                cells_sql += cells_part.format(i+1, gid)
-        sql_list = [cont_sql, fpxsec_sql, cells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+                cells_sql += [cells_part.format(i+1, gid)]
+
+        self.batch_execute(cont_sql, fpxsec_sql, cells_sql)
 
     def import_fpfroude(self):
-        fpfroude_sql = '''INSERT INTO fpfroude (geom, froudefp) VALUES'''
-        cells_sql = '''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES'''
+        fpfroude_sql = ['''INSERT INTO fpfroude (geom, froudefp) VALUES''']
+        cells_sql = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''']
 
-        fpfroude_part = '''\n({0}, {1}),'''
-        cells_part = '''\n({0}, {1}),'''
+        fpfroude_part = '''\n({0}, {1})'''
+        cells_part = '''\n({0}, {1})'''
 
         self.clear_tables('fpfroude', 'fpfroude_cells')
         data = self.parser.parse_fpfroude()
@@ -826,14 +818,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for i, row in enumerate(data):
             gid, froudefp = row
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            fpfroude_sql += fpfroude_part.format(geom, froudefp)
-            cells_sql += cells_part.format(i+1, gid)
-        sql_list = [fpfroude_sql, cells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            fpfroude_sql += [fpfroude_part.format(geom, froudefp)]
+            cells_sql += [cells_part.format(i+1, gid)]
+
+        self.batch_execute(fpfroude_sql, cells_sql)
 
     def import_swmmflo(self):
-        swmmflo_sql = '''INSERT INTO swmmflo (geom, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate) VALUES'''
-        swmmflo_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}),'''
+        swmmflo_sql = ['''INSERT INTO swmmflo (geom, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate) VALUES''']
+
+        swmmflo_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})'''
 
         self.clear_tables('swmmflo')
         data = self.parser.parse_swmmflo()
@@ -842,30 +835,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data:
             gid = row[0]
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            swmmflo_sql += swmmflo_part.format(geom, *row)
-        sql_list = [swmmflo_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            swmmflo_sql += [swmmflo_part.format(geom, *row)]
+
+        self.batch_execute(swmmflo_sql)
 
     def import_swmmflort(self):
-        swmmflort_sql = '''INSERT INTO swmmflort (grid_fid) VALUES'''
-        data_sql = '''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES'''
+        swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid) VALUES''']
+        data_sql = ['''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES''']
 
-        swmmflort_part = '''\n({0}),'''
-        data_part = '''\n({0}, {1}, {2}),'''
+        swmmflort_part = '''\n({0})'''
+        data_part = '''\n({0}, {1}, {2})'''
 
         self.clear_tables('swmmflort', 'swmmflort_data')
         data = self.parser.parse_swmmflort()
         for i, row in enumerate(data):
             gid, params = row
-            swmmflort_sql += swmmflort_part.format(gid)
+            swmmflort_sql += [swmmflort_part.format(gid)]
             for n in row:
-                data_sql += data_part.format(i+1, *n)
-        sql_list = [swmmflort_sql, data_sql]
-        self.batch_execute(sql_list, strip_char=',')
+                data_sql += [data_part.format(i+1, *n)]
+
+        self.batch_execute(swmmflort_sql, data_sql)
 
     def import_swmmoutf(self):
-        swmmoutf_sql = '''INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES'''
-        swmmoutf_part = '''\n({0}, '{1}', {2}, {3}),'''
+        swmmoutf_sql = ['''INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES''']
+        swmmoutf_part = '''\n({0}, '{1}', {2}, {3})'''
 
         self.clear_tables('swmmoutf')
         data = self.parser.parse_swmmoutf()
@@ -874,16 +867,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data:
             gid = row[1]
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            swmmoutf_sql += swmmoutf_part.format(geom, *row)
-        sql_list = [swmmoutf_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            swmmoutf_sql += [swmmoutf_part.format(geom, *row)]
+
+        self.batch_execute(swmmoutf_sql)
 
     def import_tolspatial(self):
-        tolspatial_sql = '''INSERT INTO tolspatial (geom, tol) VALUES'''
-        cells_sql = '''INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES'''
+        tolspatial_sql = ['''INSERT INTO tolspatial (geom, tol) VALUES''']
+        cells_sql = ['''INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES''']
 
-        tolspatial_part = '''\n({0}, {1}),'''
-        cells_part = '''\n({0}, {1}),'''
+        tolspatial_part = '''\n({0}, {1})'''
+        cells_part = '''\n({0}, {1})'''
 
         self.clear_tables('tolspatial', 'tolspatial_cells')
         data = self.parser.parse_tolspatial()
@@ -892,14 +885,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for i, row in enumerate(data):
             gid, tol = row
             geom = self.build_square(cells[gid], self.cell_size * 0.95)
-            tolspatial_sql += tolspatial_part.format(geom, tol)
-            cells_sql += cells_part.format(i+1, gid)
-        sql_list = [tolspatial_sql, cells_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            tolspatial_sql += [tolspatial_part.format(geom, tol)]
+            cells_sql += [cells_part.format(i+1, gid)]
+
+        self.batch_execute(tolspatial_sql, cells_sql)
 
     def import_wsurf(self):
-        wsurf_sql = '''INSERT INTO wsurf (geom, grid_fid, wselev) VALUES'''
-        wsurf_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}),'''
+        wsurf_sql = ['''INSERT INTO wsurf (geom, grid_fid, wselev) VALUES''']
+
+        wsurf_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2})'''
 
         self.clear_tables('wsurf')
         head, data = self.parser.parse_wsurf()
@@ -907,13 +901,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data:
             gid = row[0]
-            wsurf_sql += wsurf_part.format(cells[gid], *row)
-        sql_list = [wsurf_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            wsurf_sql += [wsurf_part.format(cells[gid], *row)]
+
+        self.batch_execute(wsurf_sql)
 
     def import_wstime(self):
-        wstime_sql = '''INSERT INTO wstime (geom, grid_fid, wselev, wstime) VALUES'''
-        wstime_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}, {3}),'''
+        wstime_sql = ['''INSERT INTO wstime (geom, grid_fid, wselev, wstime) VALUES''']
+
+        wstime_part = '''\n(AsGPB(ST_GeomFromText('{0}')), {1}, {2}, {3})'''
 
         self.clear_tables('wstime')
         head, data = self.parser.parse_wstime()
@@ -921,9 +916,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data:
             gid = row[0]
-            wstime_sql += wstime_part.format(cells[gid], *row)
-        sql_list = [wstime_sql]
-        self.batch_execute(sql_list, strip_char=',')
+            wstime_sql += [wstime_part.format(cells[gid], *row)]
+
+        self.batch_execute(wstime_sql)
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
