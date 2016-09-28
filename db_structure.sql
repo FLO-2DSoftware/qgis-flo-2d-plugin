@@ -1321,7 +1321,7 @@ CREATE TABLE "breach" (
     "ibreachdir" INTEGER, -- IBREACHDIR, direction of breach
     "zu" REAL, -- ZU, slope of the upstream face of the levee or dam
     "zd" REAL, -- ZD, slope of the downstream face of the levee or dam
-    "zc" REAL -- ZC, average slope of the upstream and downstream face of the levee or dam core material
+    "zc" REAL, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
     "crestwidth" REAL, -- CRESTWIDTH, crest width of the levee or dam
     "crestlength" REAL, -- CRESTLENGTH, length of the crest of the levee or dam
     "brbotwidmax" REAL, -- BRBOTWIDMAX, maximum allowable breach bottom width (ft or m) as constrained by the valley cross section
