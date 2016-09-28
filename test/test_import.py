@@ -9,8 +9,10 @@ import sys
 sys.path.append('..')
 from flo2d.flo2d_parser import ParseDAT
 
+
 def get_data_dir(dirname):
     return os.path.join(DATA_DIR, dirname, 'CONT.DAT')
+
 
 class TestFlo2dParser(unittest.TestCase):
 
