@@ -5,3 +5,4 @@ pylint.log
 *nosetests.log
 *nosetests.xml
 *nose_coverage.xml
+.coverage
