@@ -5,7 +5,6 @@ import os
 THIS_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(THIS_DIR, 'data')
 
-# Import our plugin
 import sys
 sys.path.append('..')
 from flo2d.flo2d_parser import ParseDAT
