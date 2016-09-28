@@ -1,3 +1,7 @@
 /nbproject
 /help/build/
 *.pyc
+pylint.log
+*nosetests.log
+*nosetests.xml
+*nose_coverage.xml
