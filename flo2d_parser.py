@@ -525,6 +525,3 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
-    x.scan_project_dir(r'D:\GIS_DATA\FLO-2D PRO Documentation\Example Projects\Breach Example\BREACH.DAT')
-    res = x.parse_breach()
-    print(res)

@@ -213,7 +213,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser = None
         self.cell_size = None
         self.buffer = None
-        self.shrinked = None
+        self.shrink = None
         self.chunksize = float('inf')
 
     def set_parser(self, fpath):
@@ -225,7 +225,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             pass
         self.buffer = self.cell_size * 0.4
-        self.shrinked = self.cell_size * 0.95
+        self.shrink = self.cell_size * 0.95
 
     def import_cont_toler(self):
         sql = ['''INSERT INTO cont (name, value) VALUES''']
@@ -235,8 +235,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         toler = self.parser.parse_toler()
         cont.update(toler)
         for option in cont:
-            sql += [sql_part.format(option, cont[option]).replace("'None'", 'NULL')]
+            sql += [sql_part.format(option, cont[option]).replace("'None'", "NULL")]
         sql += [sql_part.format('CELLSIZE', self.cell_size)]
+
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
@@ -446,11 +447,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if len(data[k]) > 0:
                 for i, row in enumerate(data[k], 1):
                     gid = row[0]
-                    geom = self.build_square(cells[gid], self.shrinked)
+                    geom = self.build_square(cells[gid], self.shrink)
                     sqls[k][0] += [sqls[k][1].format(geom, *row[1:])]
                     sqls[k][-1] += [cells_chan_part.format(i, gid)]
             else:
                 pass
+
         self.batch_execute(infil_sql, infil_seg_sql, infil_green_sql, infil_scs_sql, infil_horton_sql, infil_chan_sql,
                            cells_green_sql, cells_scs_sql, cells_horton_sql, chan_sql)
 
@@ -564,6 +566,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             nr, nodes = xsec
             for row in nodes:
                 xsec_sql += [xsec_part.format(nr, *row)]
+
         self.batch_execute(xsec_sql)
 
     def import_hystruc(self):
@@ -662,12 +665,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for i, row in enumerate(data['T'], 1):
             gid = row[0]
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             blocked_sql += [blocked_part.format(geom, *row)]
             bcells_sql += [cells_part.format(i, gid)]
         for i, row in enumerate(data['PB'], 1):
             gid = row[0]
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             pblocked_sql += [pblocked_part.format(geom, *row[1:])]
             pbcells_sql += [cells_part.format(i, gid)]
 
@@ -689,7 +692,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for i, row in enumerate(data, 1):
             gid = row[0]
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             mult_area_sql += [mult_area_part.format(geom, *row[1:])]
             cells_sql += [cells_part.format(i, gid)]
 
@@ -804,7 +807,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for i, row in enumerate(data, 1):
             gid, froudefp = row
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             fpfroude_sql += [fpfroude_part.format(geom, froudefp)]
             cells_sql += [cells_part.format(i, gid)]
 
@@ -821,7 +824,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data:
             gid = row[0]
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             swmmflo_sql += [swmmflo_part.format(geom, *row)]
 
         self.batch_execute(swmmflo_sql)
@@ -854,7 +857,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for row in data:
             gid = row[1]
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             swmmoutf_sql += [swmmoutf_part.format(geom, *row)]
 
         self.batch_execute(swmmoutf_sql)
@@ -872,7 +875,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.get_centroids(gids)
         for i, row in enumerate(data, 1):
             gid, tol = row
-            geom = self.build_square(cells[gid], self.shrinked)
+            geom = self.build_square(cells[gid], self.shrink)
             tolspatial_sql += [tolspatial_part.format(geom, tol)]
             cells_sql += [cells_part.format(i, gid)]
 
@@ -910,7 +913,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_cont(self, outdir):
         sql = '''SELECT name, value FROM cont;'''
-        options = {o: v for o, v in self.execute(sql).fetchall()}
+        options = {o: v if v is not None else '' for o, v in self.execute(sql).fetchall()}
         cont = os.path.join(outdir, 'CONT.DAT')
         toler = os.path.join(outdir, 'TOLER.DAT')
         rline = ' {0}'
@@ -921,7 +924,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     val = options[o]
                     lst += rline.format(val)
                 lst += '\n'
-                c.write(lst.replace('None', ''))
+                if lst.isspace() is False:
+                    c.write(lst)
+                else:
+                    pass
 
         with open(toler, 'w') as t:
             for row in self.parser.toler_rows:
@@ -930,7 +936,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     val = options[o]
                     lst += rline.format(val)
                 lst += '\n'
-                t.write(lst.replace('None', ''))
+                if lst.isspace() is False:
+                    t.write(lst)
+                else:
+                    pass
 
     def export_mannings_n_topo(self, outdir):
         sql = '''SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;'''
@@ -973,14 +982,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(inflow, 'w') as i:
             i.write(head_line.format(hourdaily, idplt[0]))
             for row in self.execute(inflow_sql):
+                row = [x if x is not None else '' for x in row]
                 fid, ts_fid, ident, inoutfc = row
                 gid = inf_cells[fid]
                 i.write(inf_line.format(ident, inoutfc, gid))
                 series = self.execute(ts_data_sql.format(ts_fid))
                 for tsd_row in series:
-                    i.write(tsd_line.format(*tsd_row).replace('None', '').rstrip())
+                    tsd_row = [x if x is not None else '' for x in tsd_row]
+                    i.write(tsd_line.format(*tsd_row).rstrip())
             for res in self.execute(reservoirs_sql):
-                i.write(res_line.format(*res).replace('None', '').rstrip())
+                res = [x if x is not None else '' for x in res]
+                i.write(res_line.format(*res).rstrip())
 
     def export_outflow(self, outdir):
         outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid FROM outflow ORDER BY fid;'''
@@ -1007,18 +1019,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         outflow = os.path.join(outdir, 'OUTFLOW.DAT')
         with open(outflow, 'w') as o:
             for row in outflow_rows:
+                row = [x if x is not None else '' for x in row]
                 fid, ts_fid, ident, nostacfp, qh_fid = row
                 gid = out_chan[fid] if ident == 'K' else out_cells[fid]
-                o.write(out_line.format(ident, gid, nostacfp).replace('None', ''))
-                if qh_fid is not None:
+                o.write(out_line.format(ident, gid, nostacfp))
+                if qh_fid:
                     qh_params = self.execute(qh_sql.format(qh_fid)).fetchone()
                     o.write(qh_line.format(*qh_params[0]))
                 else:
                     pass
-                if ts_fid is not None:
+                if ts_fid:
                     series = self.execute(ts_data_sql.format(ts_fid))
                     for tsd_row in series:
-                        o.write(tsd_line.format(*tsd_row).replace('None', ''))
+                        o.write(tsd_line.format(*tsd_row))
                 else:
                     pass
             for hyd in hydchar_rows:
@@ -1094,7 +1107,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
             for row in self.execute(infil_r_sql):
-                i.write(line4ab.format(*row).replace('None', ''))
+                row = [x if x is not None else '' for x in row]
+                i.write(line4ab.format(*row))
             if any(v5) is True:
                 i.write(line5.format(*v5))
             else:
@@ -1169,8 +1183,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(chan, 'w') as c, open(bank, 'w') as b:
             sqls = [chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql]
             for row in chan_rows:
+                row = [x if x is not None else '' for x in row]
                 fid = row[0]
-                c.write(segment.format(*row[1:]).replace('None', ''))
+                c.write(segment.format(*row[1:]))
 
                 cross_sections = []
                 for qry in sqls:
@@ -1461,11 +1476,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         pass
                 c += 1
             for row in local_rows:
-                row = list(row)
                 fid = row[0]
                 gid = self.execute(cells_sql.format(fid)).fetchone()[0]
-                row[0] = gid
                 row_slice = [str(x) if x is not None else '' for x in row[b2]]
+                row_slice[0] = str(gid)
                 b.write(bline.format(c, ' '.join(row_slice)))
                 for gslice, dslice, line in parts:
                     row_slice = [str(x) if x is not None else '' for x in row[dslice]]
