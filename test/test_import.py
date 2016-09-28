@@ -22,6 +22,9 @@ class TestFlo2dParser(unittest.TestCase):
         cell_size = p.calculate_cellsize()
         
         self.assertTrue(abs(cell_size - 1) < 0.1)
-            
+    
+    def test_2(self):
+        self.assertTrue(True)
+    
 if __name__ == '__main__':
   unittest.main()
