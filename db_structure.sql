@@ -1420,7 +1420,9 @@ CREATE TABLE "sed_groups" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "isedeqi" INTEGER, -- ISEDEQI, sediment transport equation used for sediment routing by size fraction
     "bedthick" REAL, -- BEDTHICK, sediment bed thickness for sediment routing by size fraction
-    "cvfi" REAL -- CVFI, fine sediment volumetric concentration for an individual channel segment(s)
+    "cvfi" REAL, -- CVFI, fine sediment volumetric concentration for an individual channel segment(s)
+    "name" TEXT, -- name of the sediment transport parameters group
+    "dist_fid" INTEGER -- fraction distribution number (from sed_group_frac_data table) for that group
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_groups', 'aspatial');
 
@@ -1433,13 +1435,13 @@ SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
 SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
 
-CREATE TABLE "sed_group_frac" (
+CREATE TABLE "sed_group_frac_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "group_fid" INTEGER, -- group fid for which the fraction data belongs to
+    "dist_fid" INTEGER, -- fraction distribution number, equal to dist_fid from sed_groups table
     "sediam" REAL, -- SEDIAM, representative sediment diameter (mm) for sediment routing by size fraction
     "sedpercent" REAL -- SEDPERCENT, sediment size distribution percentage
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_group_frac', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_group_frac_data', 'aspatial');
 
 CREATE TABLE "sed_group_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1467,7 +1469,9 @@ CREATE TABLE "sed_supply_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "isedcfp" INTEGER, -- ISEDCFP, switch, 0 for floodplain sediment supply rating curve, 1 for channel
     "ased" REAL, -- ASED, sediment rating curve coefficient
-    "bsed" REAL -- BSED, sediment rating curve exponent, Qs = ASED * Qw ^ BSED
+    "bsed" REAL, -- BSED, sediment rating curve exponent, Qs = ASED * Qw ^ BSED
+    "dist_fid" INTEGER, -- named sediment supply fraction distribution fid from sed_supply_frac table
+    "geom" POLYGON -- polygons with a sediment supply defined, on import: create polygons as shrunk grid elements with fid listed as ISEDGRID in sed_supply_cells
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_supply_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_supply_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1483,7 +1487,14 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_cells', 'a
 
 CREATE TABLE "sed_supply_frac" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac', 'aspatial');
+
+CREATE TABLE "sed_supply_frac_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "dist_fid" INTEGER -- nr of distribution the fraction belongs to, from sed_supply_frac table
     "ssediam" REAL, -- SSEDIAM, representative sediment supply diameter (mm) for sediment routing by size fraction
     "ssedpercent" REAL -- SSEDPERCENT, sediment supply size distribution percentage
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');

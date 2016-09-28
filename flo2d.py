@@ -453,27 +453,9 @@ class Flo2D(object):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-            ('infil_cells_green', {
-                'name': 'Cells Green Ampt',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_cells_scs', {
-                'name': 'Cells SCS',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_cells_horton', {
-                'name': 'Cells Horton',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('infil_chan_elems', {
-                'name': 'Channel elements',
-                'sgroup': "Infiltration Tables",
+            ('inflow_cells', {
+                'name': 'Inflow Cells',
+                'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
@@ -485,6 +467,30 @@ class Flo2D(object):
             }),
             ('outflow_chan_elems', {
                 'name': 'Outflow Channel Elements',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('outflow_hydrographs', {
+                'name': 'Outflow hydrographs',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('qh_params', {
+                'name': 'QH Curves',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('time_series', {
+                'name': 'Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('time_series_data', {
+                'name': 'Time Series Data',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
@@ -503,6 +509,12 @@ class Flo2D(object):
             }),
             ('xsec_n_data', {
                 'name': 'Natural xsecs data',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('noexchange_chan_elems', {
+                'name': 'No-exchange Channel Elements',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
@@ -534,6 +546,30 @@ class Flo2D(object):
             ('evapor_monthly', {
                 'name': 'Monthly data',
                 'sgroup': "Evaporation Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_green', {
+                'name': 'Cells Green Ampt',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_scs', {
+                'name': 'Cells SCS',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_cells_horton', {
+                'name': 'Cells Horton',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('infil_chan_elems', {
+                'name': 'Channel elements',
+                'sgroup': "Infiltration Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
             })
