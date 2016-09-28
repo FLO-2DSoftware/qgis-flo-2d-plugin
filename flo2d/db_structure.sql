@@ -17,6 +17,9 @@ VALUES (
     'read-write'
 );
 
+-- enable foreign keys
+
+PRAGMA foreign_keys = ON;
 
 -- FLO-2D tables definitions
 
@@ -114,8 +117,8 @@ SELECT gpkgAddSpatialIndex('outflow', 'geom');
 
 CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "outflow_fid" INTEGER NOT NULL,
-    "grid_fid" INTEGER NOT NULL,
+    "outflow_fid" INTEGER,
+    "grid_fid" INTEGER,
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
@@ -215,9 +218,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series', 'aspati
 
 CREATE TABLE "time_series_data" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "series_fid" INTEGER NOT NULL,
-    "time" REAL NOT NULL,
-    "value" REAL NOT NULL,
+    "series_fid" INTEGER,
+    "time" REAL,
+    "value" REAL,
     "value2" REAL,
     "value3" REAL
 );
@@ -230,7 +233,7 @@ CREATE TABLE "rain" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, -- name of rain
     "irainreal" INTEGER, -- IRAINREAL switch for real-time rainfall (NEXRAD)
-    "ireainbuilding" INTEGER, -- IRAINBUILDING, switch, if 1 rainfall on ARF portion of grid will be contributed to surface runoff
+    "irainbuilding" INTEGER, -- IRAINBUILDING, switch, if 1 rainfall on ARF portion of grid will be contributed to surface runoff
     "time_series_fid" INTEGER, -- id of time series used for rain cumulative distribution (in time)
     "tot_rainfall" REAL, -- RTT, total storm rainfall [inch or mm]
     "rainabs" REAL, -- RAINABS, rain interception or abstraction
@@ -1244,7 +1247,7 @@ SELECT gpkgAddSpatialIndex('tolspatial', 'geom');
 
 CREATE TABLE "tolspatial_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "area_fid" REAL, -- fid of a polygon from tolspatial table
+    "area_fid" INTEGER, -- fid of a polygon from tolspatial table
     "grid_fid" INTEGER -- IDUM, fid of grid cell contained in a fpxsection
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
@@ -1396,7 +1399,7 @@ SELECT gpkgAddSpatialIndex('mud_areas', 'geom');
 
 CREATE TABLE "mud_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" REAL, -- JDEBNOD, grid element fid with debris basin
+    "grid_fid" INTEGER, -- JDEBNOD, grid element fid with debris basin
     "area_fid" INTEGER -- fid of area from mud_areas table, where the cell belongs to
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud_cells', 'aspatial');
@@ -1422,7 +1425,7 @@ CREATE TABLE "sed_groups" (
     "bedthick" REAL, -- BEDTHICK, sediment bed thickness for sediment routing by size fraction
     "cvfi" REAL, -- CVFI, fine sediment volumetric concentration for an individual channel segment(s)
     "name" TEXT, -- name of the sediment transport parameters group
-    "dist_fid" INTEGER -- fraction distribution number (from sed_group_frac_data table) for that group
+    "dist_fid" INTEGER -- fraction distribution number (from sed_group_frac table) for that group
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_groups', 'aspatial');
 
@@ -1434,6 +1437,12 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_are
 SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
 SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
+
+CREATE TABLE "sed_group_frac" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT -- name of the fraction distribution
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_group_frac', 'aspatial');
 
 CREATE TABLE "sed_group_frac_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1461,7 +1470,7 @@ SELECT gpkgAddSpatialIndex('sed_rigid_areas', 'geom');
 CREATE TABLE "sed_rigid_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- ICRETIN, grid element fid for which the rigid bed is defined
-    "area_fid" INTEGER -- area fid with rigid bed defined (from sed_rigid_areas)
+    "area_fid" INTEGER-- area fid with rigid bed defined (from sed_rigid_areas)
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_rigid_cells', 'aspatial');
 
@@ -1470,8 +1479,7 @@ CREATE TABLE "sed_supply_areas" (
     "isedcfp" INTEGER, -- ISEDCFP, switch, 0 for floodplain sediment supply rating curve, 1 for channel
     "ased" REAL, -- ASED, sediment rating curve coefficient
     "bsed" REAL, -- BSED, sediment rating curve exponent, Qs = ASED * Qw ^ BSED
-    "dist_fid" INTEGER, -- named sediment supply fraction distribution fid from sed_supply_frac table
-    "geom" POLYGON -- polygons with a sediment supply defined, on import: create polygons as shrunk grid elements with fid listed as ISEDGRID in sed_supply_cells
+    "dist_fid" INTEGER -- named sediment supply fraction distribution fid from sed_supply_frac table
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_supply_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_supply_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1493,7 +1501,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac', 'as
 
 CREATE TABLE "sed_supply_frac_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "dist_fid" INTEGER -- nr of distribution the fraction belongs to, from sed_supply_frac table
+    "dist_fid" INTEGER, -- nr of distribution the fraction belongs to, from sed_supply_frac table
     "ssediam" REAL, -- SSEDIAM, representative sediment supply diameter (mm) for sediment routing by size fraction
     "ssedpercent" REAL -- SSEDPERCENT, sediment supply size distribution percentage
 );
