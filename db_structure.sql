@@ -1285,7 +1285,6 @@ CREATE TABLE "breach_global" (
     "gbratio" REAL, -- GBRATIO, global ratio of the initial breach width to breach depth
     "gweircoef" REAL, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
     "gbreachtime" REAL, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
-    --"gzu" REAL, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzu" REAL, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzd" REAL, -- GZD, global slope of the downstream face of the levee or dam
     "gzc" REAL, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material
@@ -1325,7 +1324,6 @@ CREATE TABLE "breach" (
     "zc" REAL -- ZC, average slope of the upstream and downstream face of the levee or dam core material
     "crestwidth" REAL, -- CRESTWIDTH, crest width of the levee or dam
     "crestlength" REAL, -- CRESTLENGTH, length of the crest of the levee or dam
-    --"zc" REAL, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
     "brbotwidmax" REAL, -- BRBOTWIDMAX, maximum allowable breach bottom width (ft or m) as constrained by the valley cross section
     "brtopwidmax" REAL, -- BRTOPWIDMAX, maximum allowable breach top width (ft or m) as constrained by the valley cross section
     "brbottomel" REAL, -- BRBOTTOMEL, initial breach or pipe bottom elevation (ft or m)
@@ -1372,3 +1370,120 @@ CREATE TABLE "breach_fragility_curves" (
     "prdepth" REAL -- PRDEPTH, point of failure on the levee as defined by the distance or height below the levee crest
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('breach_fragility_curves', 'aspatial');
+
+
+-- SED.DAT
+
+CREATE TABLE "mud" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "va" REAL, -- VA, coefficient in the viscosity versus sediment concentration by volume relationship
+    "vb" REAL, -- VB, exponent in the viscosity versus sediment concentration by volume relationship
+    "ysa" REAL, -- YSA, coefficient of the yield stress versus sediment concentration
+    "ysb" REAL, -- YSB, exponent of yield stress versus sediment concentration
+    "sgsm" REAL, -- SGSM, mudflow mixtures specific gravity
+    "xkx" REAL -- XKX, the laminar flow resistance parameter for overland flow
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud', 'aspatial');
+
+CREATE TABLE "mud_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "debrisv" REAL -- DEBRISV, volume of the debris basin
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mud_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('mud_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('mud_areas', 'geom');
+SELECT gpkgAddSpatialIndex('mud_areas', 'geom');
+
+CREATE TABLE "mud_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" REAL, -- JDEBNOD, grid element fid with debris basin
+    "area_fid" INTEGER -- fid of area from mud_areas table, where the cell belongs to
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud_cells', 'aspatial');
+
+CREATE TABLE "sed" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "isedeqg" INTEGER, -- ISEDEQG, transport equation number used in sediment routing for overland flow
+    "isedsizefrac" INTEGER, -- ISEDSIZEFRAC, switch, if 1 sediment routing will be performed by size fraction, 0 for sed routing not by size fraction
+    "dfifty" REAL, -- DFIFTY, sediment size (D50) in mm for sediment routing
+    "sgrad" REAL, -- SGRAD, sediment gradation coefficient (non-dimensional)
+    "sgst" REAL, -- SGST, sediment specific gravity
+    "dryspwt" REAL, -- DRYSPWT, dry specific weight of the sediment
+    "cvfg" REAL, -- CVFG, fine sediment volumetric concentration for overland, channel, and streets
+    "isedsupply" INTEGER, -- ISEDSUPPLY, if 1 sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area, otherwise 0
+    "isedisplay" INTEGER, -- ISEDISPLAY, grid element number for which the sediment transport capacity for all the sediment transport equations will be listed by output
+    "scourdep" REAL -- maximum allowable scour depth for all floodplain elements
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed', 'aspatial');
+
+CREATE TABLE "sed_groups" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "isedeqi" INTEGER, -- ISEDEQI, sediment transport equation used for sediment routing by size fraction
+    "bedthick" REAL, -- BEDTHICK, sediment bed thickness for sediment routing by size fraction
+    "cvfi" REAL -- CVFI, fine sediment volumetric concentration for an individual channel segment(s)
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_groups', 'aspatial');
+
+CREATE TABLE "sed_group_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "group_fid" INTEGER -- sediment group fid for area (from sed_groups table)
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
+SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
+
+CREATE TABLE "sed_group_frac" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "group_fid" INTEGER, -- group fid for which the fraction data belongs to
+    "sediam" REAL, -- SEDIAM, representative sediment diameter (mm) for sediment routing by size fraction
+    "sedpercent" REAL -- SEDPERCENT, sediment size distribution percentage
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_group_frac', 'aspatial');
+
+CREATE TABLE "sed_group_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- ISEDUM, grid element fid for which a sediment group is defined
+    "area_fid" INTEGER -- fid of area from sed_group_areas table, where the cell belongs to
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_group_cells', 'aspatial');
+
+CREATE TABLE "sed_rigid_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_rigid_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('sed_rigid_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('sed_rigid_areas', 'geom');
+SELECT gpkgAddSpatialIndex('sed_rigid_areas', 'geom');
+
+CREATE TABLE "sed_rigid_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- ICRETIN, grid element fid for which the rigid bed is defined
+    "area_fid" INTEGER -- area fid with rigid bed defined (from sed_rigid_areas)
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_rigid_cells', 'aspatial');
+
+CREATE TABLE "sed_supply_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "isedcfp" INTEGER, -- ISEDCFP, switch, 0 for floodplain sediment supply rating curve, 1 for channel
+    "ased" REAL, -- ASED, sediment rating curve coefficient
+    "bsed" REAL -- BSED, sediment rating curve exponent, Qs = ASED * Qw ^ BSED
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_supply_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('sed_supply_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('sed_supply_areas', 'geom');
+SELECT gpkgAddSpatialIndex('sed_supply_areas', 'geom');
+
+CREATE TABLE "sed_supply_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- ISEDGRID, grid element fid for which sediment supply is defined
+    "area_fid" INTEGER -- area fid with a sediment supply defined (from sed_supply_areas)
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_cells', 'aspatial');
+
+CREATE TABLE "sed_supply_frac" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "ssediam" REAL, -- SSEDIAM, representative sediment supply diameter (mm) for sediment routing by size fraction
+    "ssedpercent" REAL -- SSEDPERCENT, sediment supply size distribution percentage
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac', 'aspatial');
