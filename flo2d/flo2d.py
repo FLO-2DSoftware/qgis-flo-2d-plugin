@@ -65,7 +65,7 @@ class Flo2D(object):
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
         self.conn = None
-        self.lyrs  = Layers()
+        self.lyrs = Layers()
         self.gpkg = None
         self.prep_sql = None
 
@@ -259,6 +259,7 @@ class Flo2D(object):
             'import_street',
             'import_arf',
             'import_mult',
+            'import_sed',
             'import_levee',
             'import_fpxsec',
             'import_breach',
@@ -608,6 +609,7 @@ class Flo2D(object):
             'export_street',
             'export_arf',
             'export_mult',
+            'export_sed',
             'export_levee',
             'export_fpxsec',
             'export_breach',
