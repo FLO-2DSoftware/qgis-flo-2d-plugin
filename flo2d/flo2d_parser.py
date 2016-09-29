@@ -48,6 +48,7 @@ class ParseDAT(object):
             'STREET.DAT': None,
             'ARF.DAT': None,
             'MULT.DAT': None,
+            'SED.DAT': None,
             'LEVEE.DAT': None,
             'FPXSEC.DAT': None,
             'BREACH.DAT': None,
@@ -409,6 +410,26 @@ class ParseDAT(object):
             self.fix_row_size(row, 5)
             data.append(row)
         return head, data
+
+    def parse_sed(self):
+        sed = self.dat_files['SED.DAT']
+        par = self.single_parser(sed)
+        data = defaultdict(list)
+        vals = slice(1, None)
+        chars = {'M': 7, 'C': 10, 'Z': 4, 'P': 3, 'D': 3, 'E': 2, 'R': 2, 'S': 5, 'N': 3, 'G': 3}
+        for row in par:
+            char = row[0]
+            self.fix_row_size(row, chars[char])
+            if char == 'Z' or char == 'S':
+                row.append([])
+                data[char].append(row[vals])
+            elif char == 'P':
+                data['Z'][-1][-1].append(row[vals])
+            elif char == 'N':
+                data['S'][-1][-1].append(row[vals])
+            else:
+                data[char].append(row[vals])
+        return data
 
     def parse_levee(self):
         levee = self.dat_files['LEVEE.DAT']

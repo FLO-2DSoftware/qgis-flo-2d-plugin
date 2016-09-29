@@ -369,7 +369,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(ts_sql, qh_sql, outflow_sql, cells_sql, chan_sql, tsd_sql, hydchar_sql)
 
     def import_rain(self):
-        rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''']
+        rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''']
         ts_sql = ['''INSERT INTO time_series (fid) VALUES''']
         tsd_sql = ['''INSERT INTO time_series_data (series_fid, time, value) VALUES''']
         rain_arf_sql = ['''INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES''']
@@ -697,6 +697,88 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [cells_part.format(i, gid)]
 
         self.batch_execute(mult_sql, mult_area_sql, cells_sql)
+
+    def import_sed(self):
+        sed_m_sql = ['''INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES''']
+        sed_c_sql = ['''INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep) VALUES''']
+        sgf_sql = ['''INSERT INTO sed_group_frac (fid) VALUES''']
+        sed_z_sql = ['''INSERT INTO sed_groups (dist_fid, isedeqi, bedthick, cvfi) VALUES''']
+        sed_p_sql = ['''INSERT INTO sed_group_frac_data (dist_fid, sediam, sedpercent) VALUES''']
+        areas_d_sql = ['''INSERT INTO mud_areas (geom, debrisv) VALUES''']
+        cells_d_sql = ['''INSERT INTO mud_cells (area_fid, grid_fid) VALUES''']
+        areas_g_sql = ['''INSERT INTO sed_group_areas (geom, group_fid) VALUES''']
+        cells_g_sql = ['''INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES''']
+        areas_r_sql = ['''INSERT INTO sed_rigid_areas (geom) VALUES''']
+        cells_r_sql = ['''INSERT INTO sed_rigid_cells (area_fid, grid_fid) VALUES''']
+        areas_s_sql = ['''INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES''']
+        cells_s_sql = ['''INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES''']
+        sed_n_sql = ['''INSERT INTO sed_supply_frac (fid) VALUES''']
+        data_n_sql = ['''INSERT INTO sed_supply_frac_data (dist_fid, ssediam, ssedpercent) VALUES''']
+
+        sed_m_part = '\n(' + ','.join(['{} '] * 6) + ')'
+        sed_c_part = '\n(' + ','.join(['{} '] * 10) + ')'
+        sgf_part = '\n(' + ','.join(['{} '] * 1) + ')'
+        sed_z_part = '\n(' + ','.join(['{} '] * 4) + ')'
+        sed_p_part = '\n(' + ','.join(['{} '] * 3) + ')'
+        areas_d_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        cells_d_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        areas_g_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        cells_g_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        areas_r_part = '\n(' + ','.join(['{} '] * 1) + ')'
+        cells_r_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        areas_s_part = '\n(' + ','.join(['{} '] * 5) + ')'
+        cells_s_part = '\n(' + ','.join(['{} '] * 2) + ')'
+        sed_n_part = '\n(' + ','.join(['{} '] * 1) + ')'
+        data_n_part = '\n(' + ','.join(['{} '] * 3) + ')'
+
+        parts = [
+            ['D', areas_d_sql, areas_d_part, cells_d_sql, cells_d_part],
+            ['G', areas_g_sql, areas_g_part, cells_g_sql, cells_g_part],
+            ['R', areas_r_sql, areas_r_part, cells_r_sql, cells_r_part]
+        ]
+
+        self.clear_tables('mud', 'mud_areas', 'mud_cells', 'sed', 'sed_groups', 'sed_group_areas', 'sed_group_cells',
+                          'sed_group_frac_data', 'sed_rigid_areas', 'sed_rigid_cells', 'sed_supply_areas',
+                          'sed_supply_cells', 'sed_supply_frac', 'sed_supply_frac_data')
+
+        data = self.parser.parse_sed()
+        gids = (x[0] for x in chain(data['D'], data['G'], data['R'], data['S']))
+        cells = self.get_centroids(gids)
+        for row in data['M']:
+            sed_m_sql += [sed_m_part.format(*row)]
+        for row in data['C']:
+            erow = data['E'][0]
+            if erow:
+                row += erow
+            else:
+                row.append('NULL')
+            sed_c_sql += [sed_c_part.format(*row)]
+        for i, row in enumerate(data['Z'], 1):
+            sgf_sql += [sgf_part.format(i)]
+            sed_z_sql += [sed_z_part.format(i, *row[:-1])]
+            for prow in row[-1]:
+                sed_p_sql += [sed_p_part.format(i, *prow)]
+        for char, asql, csql, apart, cpart in parts:
+            for i, row in enumerate(data[char], 1):
+                gid = row[0]
+                vals = row[1:]
+                geom = self.build_square(cells[gid], self.shrink)
+                asql += [apart.format(geom, *vals)]
+                csql += [cpart.format(i, gid)]
+
+        for i, row in enumerate(data['S'], 1):
+            gid = row[0]
+            vals = row[1:-1]
+            nrows = row[-1]
+            geom = self.build_square(cells[gid], self.shrink)
+            areas_s_sql += [areas_s_part.format(geom, i, *vals)]
+            cells_s_sql += [cells_s_part.format(i, gid)]
+            for ii, nrow in enumerate(nrows, 1):
+                sed_n_sql += [sed_n_part.format(ii)]
+                data_n_sql += [data_n_part.format(i, *nrow)]
+
+        self.batch_execute(sed_m_sql, areas_d_sql, cells_d_sql, sed_c_sql, sgf_sql, sed_z_sql, areas_g_sql, cells_g_sql,
+                           sed_p_sql, areas_r_sql, cells_r_sql, areas_s_sql, cells_s_sql, sed_n_sql, data_n_sql)
 
     def import_levee(self):
         lgeneral_sql = ['''INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES''']
@@ -1038,7 +1120,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 o.write(hyd_line.format(*hyd))
 
     def export_rain(self, outdir):
-        rain_sql = '''SELECT time_series_fid, irainreal, ireainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
+        rain_sql = '''SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
         rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;'''
         ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
 
@@ -1367,6 +1449,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(mult_area_sql.format(aid)):
                     vals = [x if x is not None else '' for x in row]
                     m.write(line2.format(gid, *vals))
+
+    def export_sed(self, outdir):
+        sed_m_sql = '''SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;'''
+        sed_ce_sql = '''SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep FROM sed ORDER BY fid;'''
+        sed_z_sql = '''SELECT dist_fid, isedeqi, bedthick, cvfi FROM sed_groups ORDER BY dist_fid;'''
+        sed_p_sql = '''SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = {0} ORDER BY sedpercent;'''
+        areas_d_sql = '''SELECT fid, debrisv FROM mud_areas ORDER BY fid;'''
+        cells_d_sql = '''SELECT grid_fid FROM mud_cells WHERE area_fid = {0} ORDER BY grid_fid;'''
+        cells_r_sql = '''SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;'''
+        areas_s_sql = '''SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;'''
+        cells_s_sql = '''SELECT grid_fid FROM sed_supply_cells WHERE area_fid = {0};'''
+        data_n_sql = '''SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = {0} ORDER BY sedpercent;'''
+        areas_g_sql = '''SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;'''
+        cells_g_sql = '''SELECT grid_fid FROM sed_group_cells WHERE area_fid = {0} ORDER BY grid_fid;'''
+
+        line1 = 'M  {0}  {1}  {2}  {3}  {4}  {5}\n'
+        line2 = 'C  {0}  {1}  {2}  {3}  {4}  {5} {6}\n'
+        line3 = 'Z  {0}  {1}  {2}\n'
+        line4 = 'P  {0}  {1}\n'
+        line5 = 'D  {0}  {1}\n'
+        line6 = 'E  {0}\n'
+        line7 = 'R  {0}\n'
+        line8 = 'S  {0}  {1}  {2}  {3}\n'
+        line9 = 'N  {0}  {1}\n'
+        line10 = 'G  {0}  {1}\n'
+
+        m_data = self.execute(sed_m_sql).fetchone()
+        ce_data = self.execute(sed_ce_sql).fetchone()
+        if m_data is None and ce_data is None:
+            return
+        else:
+            pass
+        sed = os.path.join(outdir, 'SED.DAT')
+        with open(sed, 'w') as s:
+            if m_data is not None:
+                s.write(line1.format(*m_data))
+                e_data = None
+            else:
+                e_data = ce_data[-1]
+                s.write(line2.format(*ce_data[:-1]))
+            for row in self.execute(sed_z_sql):
+                dist_fid = row[0]
+                s.write(line3.format(*row[1:]))
+                for prow in self.execute(sed_p_sql.format(dist_fid)):
+                    s.write(line4.format(*prow))
+            for aid, debrisv in self.execute(areas_d_sql):
+                gid = self.execute(cells_d_sql.format(aid)).fetchone()[0]
+                s.write(line5.format(gid, debrisv))
+            if e_data is not None:
+                s.write(line6.format(e_data))
+            else:
+                pass
+            for row in self.execute(cells_r_sql):
+                s.write(line7.format(*row))
+            for row in self.execute(areas_s_sql):
+                aid = row[0]
+                gid = self.execute(cells_s_sql.format(aid)).fetchone()[0]
+                s.write(line8.format(gid, *row[1:]))
+                for nrow in self.execute(data_n_sql):
+                    s.write(line9.format(*nrow))
+            for aid, group_fid in self.execute(areas_g_sql):
+                gid = self.execute(cells_g_sql.format(aid)).fetchone()[0]
+                s.write(line10.format(gid, group_fid))
 
     def export_levee(self, outdir):
         levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
