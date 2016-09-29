@@ -189,10 +189,24 @@ CREATE TABLE "qh_params" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_params', 'aspatial');
 
+CREATE TABLE "qh_table" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_table', 'aspatial');
+
+CREATE TABLE "qh_table_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "table_fid" INTEGER, -- fid of QH table
+    "depth" REAL, -- CHDEPTH, depth above the thalweg
+    "q" REAL -- CQTABLE, discharge for the channel outflow
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_table_data', 'aspatial');
+
 CREATE TABLE "outflow_hydrographs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "hydro_fid" TEXT NOT NULL,
-    "grid_fid" INTEGER NOT NULL
+    "hydro_fid" TEXT, -- OUTCHAR(O) symbolic name for outflow hydrograph
+    "grid_fid" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_hydrographs', 'aspatial');
 
@@ -307,35 +321,38 @@ SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan', 'geom');
 SELECT gpkgAddSpatialIndex('chan', 'geom');
 
-CREATE TABLE "chan_r" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
+CREATE TABLE "chan_elems" (
+    "fid" INTEGER NOT NULL PRIMARY KEY, -- ICHANGRID, grid element number for left bank
     "seg_fid" INTEGER, -- fid of cross-section's segment
     "nr_in_seg" INTEGER, -- cross-section number in segment
-    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
-    "bankell" REAL, -- BANKELL, left bank elevation
-    "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
-    "fcw" REAL, -- FCW, channel width
-    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "type" TEXT, -- SHAPE, type of cross-section shape definition
     "notes" TEXT
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_r', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_r', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('chan_r', 'geom');
-SELECT gpkgAddSpatialIndex('chan_r', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
+SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('chan_elems', 'geom');
+SELECT gpkgAddSpatialIndex('chan_elems', 'geom');
+
+CREATE TABLE "chan_r" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "elem_fid" INTEGER, -- fid of cross-section's element
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_r', 'aspatial');
 
 CREATE TABLE "chan_v" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "seg_fid" INTEGER, -- fid of cross-section's segment
-    "nr_in_seg" INTEGER, -- cross-section number in segment
-    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "elem_fid" INTEGER, -- fid of cross-section's element
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
     "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "a1" REAL, -- A1,
     "a2" REAL, -- A2,
     "b1" REAL, -- B1,
@@ -348,53 +365,29 @@ CREATE TABLE "chan_v" (
     "b11" REAL, -- B11,
     "b22" REAL, -- B22,
     "c11" REAL, -- C11,
-    "c22" REAL, -- C22,
-    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
-    "notes" TEXT
+    "c22" REAL -- C22,
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_v', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_v', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('chan_v', 'geom');
-SELECT gpkgAddSpatialIndex('chan_v', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_v', 'aspatial');
 
 CREATE TABLE "chan_t" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "seg_fid" INTEGER, -- fid of cross-section's segment
-    "nr_in_seg" INTEGER, -- cross-section number in segment
-    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
+    "elem_fid" INTEGER, -- fid of cross-section's element
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
     "fcw" REAL, -- FCW, channel width
     "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "zl" REAL, -- ZL left side slope
-    "zr" REAL, --ZR right side slope
-    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
-    
-    "notes" TEXT
+    "zr" REAL --ZR right side slope
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_t', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_t', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('chan_t', 'geom');
-SELECT gpkgAddSpatialIndex('chan_t', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_t', 'aspatial');
 
 CREATE TABLE "chan_n" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "seg_fid" INTEGER, -- fid of cross-section's segment
-    "nr_in_seg" INTEGER, -- cross-section number in segment
-    "ichangrid" INTEGER, -- ICHANGRID, grid element number for left bank
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
-    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
-    "nxecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
-    "xsecname" TEXT, -- xsection name
-    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
-    "notes" TEXT
+    "elem_fid" INTEGER, -- fid of cross-section's element
+    "nxsecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "xsecname" TEXT -- xsection name
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_n', 'features', 4326);
-SELECT gpkgAddGeometryColumn('chan_n', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('chan_n', 'geom');
-SELECT gpkgAddSpatialIndex('chan_n', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 
 -- TODO: create triggers for geometry INSERT and UPDATE
 -- use notes column to flag features created by user!
