@@ -12,10 +12,10 @@ https://en.wikipedia.org/wiki/Scrum_(software_development)
 
 ## Roles 
 
-**Stakeholders:** Flo2d team
-**Product Owner:** Saber 
-**Scrum Master:** Peter
-**Dev Team:** Radek and Lukasz
+- **Stakeholders:** Flo2d team
+- **Product Owner:** Saber 
+- **Scrum Master:** Peter
+- **Dev Team:** Radek and Lukasz
 
 ## Workflow
 
@@ -39,7 +39,7 @@ https://en.wikipedia.org/wiki/Scrum_(software_development)
     - Do I see any impediment that prevents me or the Development Team from meeting the Sprint goal?
 
 ### Sprint Retrospective meeting
-* 1 hour, every other Thursday lunch-time
+* 1 hour, every other Wednesday evening
 * Attendees: scrum master, dev team (product owner) 
 * Agenda:
   - Reflects on the past Sprint
