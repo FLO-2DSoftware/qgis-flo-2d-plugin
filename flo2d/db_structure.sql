@@ -74,6 +74,36 @@ CREATE TABLE "inflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspatial');
 
+CREATE TABLE "reservoirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "grid_fid" INTEGER,
+    "wsel" REAL,
+    "note" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
+SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
+
+CREATE TABLE "time_series" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "type" TEXT,
+    "hourdaily" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series', 'aspatial');
+
+CREATE TABLE "time_series_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "series_fid" INTEGER,
+    "time" REAL,
+    "value" REAL,
+    "value2" REAL,
+    "value3" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_data', 'aspatial');
+
 --CREATE TRIGGER "find_inflow_cells_insert"
 --    AFTER INSERT ON "inflow"
 --    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
@@ -99,7 +129,8 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspat
 --        DELETE FROM "inflow_cells" WHERE inflow_fid = OLD."fid";
 --    END;
 
--- Outflows
+
+-- OUTFLOW.DAT
 
 CREATE TABLE "outflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -108,6 +139,7 @@ CREATE TABLE "outflow" (
     "nostacfp" INTEGER,
     "time_series_fid" INTEGER,
     "qh_params_fid" INTEGER,
+    "qh_table_fid" INTEGER,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
@@ -209,36 +241,6 @@ CREATE TABLE "outflow_hydrographs" (
     "grid_fid" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_hydrographs', 'aspatial');
-
-CREATE TABLE "reservoirs" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT,
-    "grid_fid" INTEGER,
-    "wsel" REAL,
-    "note" TEXT
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
-SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
-SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
-
-CREATE TABLE "time_series" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT,
-    "type" TEXT,
-    "hourdaily" INTEGER
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series', 'aspatial');
-
-CREATE TABLE "time_series_data" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "series_fid" INTEGER,
-    "time" REAL,
-    "value" REAL,
-    "value2" REAL,
-    "value3" REAL
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_data', 'aspatial');
 
 
 -- RAIN.DAT
@@ -342,7 +344,7 @@ CREATE TABLE "chan_r" (
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
     "fcw" REAL, -- FCW, channel width
-    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "fcd" REAL -- channel channel thalweg depth (deepest part measured from the lowest bank)
     
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_r', 'aspatial');
@@ -489,7 +491,6 @@ CREATE TABLE "chan_confluences" (
     "conf_fid" INTEGER, -- confluence fid
     "type" INTEGER, -- switch, tributary (0 if ICONFLO1) or main channel (1 if ICONFLO2) 
     "chan_elem_fid" INTEGER, -- ICONFLO1 or ICONFLO2, tributary or main channel element fid
-    "seg_fid" INTEGER, -- fid of channel segment 
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_confluences', 'features', 4326);
@@ -1265,7 +1266,7 @@ CREATE TABLE "wstime" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- IGRIDXSEC, fid of grid cell containing WSEL data
     "wselev" REAL, -- WSELEVTIME, water surface elevation for comparison
-    "wstime" REAL -- WSTIME, water surface elevation for comparison
+    "wstime" REAL -- WSTIME, time of known watersurface elevation
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wstime', 'features', 4326);
 SELECT gpkgAddGeometryColumn('wstime', 'geom', 'POINT', 0, 0, 0);
