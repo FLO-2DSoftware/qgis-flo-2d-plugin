@@ -525,7 +525,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'N': [chan_n_sql, chan_n_part, 2, 3]
         }
 
-        self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
+        self.clear_tables('chan', 'chan_elems', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
                           'chan_confluences', 'noexchange_chan_areas', 'noexchange_chan_elems', 'chan_wsel')
         segments, wsel, confluence, noexchange = self.parser.parse_chan()
         for i, seg in enumerate(segments, 1):

@@ -60,6 +60,8 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(float(hydrographs), 8)
         outflow = self.f2g.execute('''SELECT ident FROM outflow;''').fetchall()
         self.assertListEqual([('K',), ('K',), ('K',), ('N',)], outflow)
+        qh_params = self.f2g.execute('''SELECT coef FROM qh_params;''').fetchone()[0]
+        self.assertEqual(float(qh_params), 2.6)
 
     def test_import_rain(self):
         self.f2g.import_mannings_n_topo()
@@ -67,18 +69,39 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         tot = self.f2g.execute('''SELECT tot_rainfall FROM rain;''').fetchone()[0]
         self.assertEqual(float(tot), 3.10)
 
-    # def test_import_infil(self):
-    #     self.fail()
-    #
-    # def test_import_evapor(self):
-    #     self.fail()
-    #
-    # def test_import_chan(self):
-    #     self.fail()
-    #
-    # def test_import_xsec(self):
-    #     self.fail()
-    #
+    def test_import_infil(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_infil()
+        scsnall = self.f2g.execute('''SELECT scsnall FROM infil;''').fetchone()[0]
+        self.assertEqual(float(scsnall), 99)
+        areas = self.f2g.execute('''SELECT COUNT(fid) FROM infil_areas_green;''').fetchone()[0]
+        cells = self.f2g.execute('''SELECT COUNT(fid) FROM infil_cells_green;''').fetchone()[0]
+        self.assertEqual(int(areas), int(cells))
+
+    def test_import_evapor(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_evapor()
+        months = self.f2g.execute('''SELECT month FROM evapor_monthly;''').fetchall()
+        self.assertEqual(len(months), 12)
+        mon = self.f2g.execute('''SELECT month FROM evapor_monthly WHERE monthly_evap = 5.57;''').fetchone()[0]
+        self.assertEqual(mon, 'september')
+
+    def test_import_chan(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_chan()
+        nelem = self.f2g.execute('''SELECT fcn FROM chan_elems WHERE fid = 7667;''').fetchone()[0]
+        self.assertEqual(nelem, 0.055)
+        nxsec = self.f2g.execute('''SELECT nxsecnum FROM chan_n WHERE elem_fid = 7667;''').fetchone()[0]
+        self.assertEqual(nxsec, 107)
+
+    def test_import_xsec(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_chan()
+        self.f2g.import_xsec()
+        nxsec = self.f2g.execute('''SELECT COUNT(nxsecnum) FROM chan_n;''').fetchone()[0]
+        xsec = self.f2g.execute('''SELECT COUNT(DISTINCT chan_n_nxsecnum) FROM xsec_n_data;''').fetchone()[0]
+        self.assertEqual(nxsec, xsec)
+
     # def test_import_hystruc(self):
     #     self.fail()
     #
