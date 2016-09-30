@@ -29,10 +29,10 @@ from PyQt4 import uic
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.core import *
 from flo2d_dialog import Flo2DDialog
-from .user_communication import UserCommunication
+from user_communication import UserCommunication
 from flo2dgeopackage import Flo2dGeoPackage
-from .utils import *
-from .layers import Layers
+from utils import *
+from layers import Layers
 from collections import OrderedDict
 
 

@@ -24,7 +24,7 @@
 from PyQt4.QtCore import QObject, pyqtSignal
 from PyQt4.QtCore import Qt
 import os
-from .utils import *
+from utils import *
 
 from qgis.core import (
     QgsProject,

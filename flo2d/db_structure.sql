@@ -215,7 +215,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 
 
 CREATE TABLE "qh_params" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "max" REAL,
+    "hmax" REAL,
     "coef" REAL,
     "exponent" REAL
 );

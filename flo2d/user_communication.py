@@ -27,7 +27,7 @@ from qgis.gui import QgsMessageBar
 from qgis.core import QgsMessageLog
 
 
-class UserCommunication:
+class UserCommunication(object):
     """Class for communication with user"""
     
     def __init__(self, iface, context):
@@ -35,26 +35,47 @@ class UserCommunication:
         self.context = context
         
     def show_info(self, msg):
-        QMessageBox.information(self.iface.mainWindow(), self.context, msg)
+        if self.iface is not None:
+            QMessageBox.information(self.iface.mainWindow(), self.context, msg)
+        else:
+            print(msg)
 
     def show_warn(self, msg):
-        QMessageBox.warning(self.iface.mainWindow(), self.context, msg)
+        if self.iface is not None:
+            QMessageBox.warning(self.iface.mainWindow(), self.context, msg)
+        else:
+            print(msg)
 
     def log(self, msg, level):
-        QgsMessageLog.logMessage(msg, self.context, level)
+        if self.iface is not None:
+            QgsMessageLog.logMessage(msg, self.context, level)
+        else:
+            print(msg)
 
     def log_info(self, msg):
-        QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
+        if self.iface is not None:
+            QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
+        else:
+            print(msg)
 
     def bar_error(self, msg):
-        self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.CRITICAL)
+        if self.iface is not None:
+            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.CRITICAL)
+        else:
+            print(msg)
 
     def bar_info(self, msg, dur=5):
-        self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.INFO, duration=dur)
+        if self.iface is not None:
+            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.INFO, duration=dur)
+        else:
+            print(msg)
         
     def question(self, msg):
-        m = QMessageBox()
-        m.setText(msg)
-        m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-        m.setDefaultButton(QMessageBox.No)
-        return m.exec_()
+        if self.iface is not None:
+            m = QMessageBox()
+            m.setText(msg)
+            m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+            m.setDefaultButton(QMessageBox.No)
+            return m.exec_()
+        else:
+            print(msg)

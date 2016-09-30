@@ -192,31 +192,24 @@ class ParseDAT(object):
     def parse_outflow(self):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
-        koutflow = OrderedDict()
-        noutflow = OrderedDict()
-        ooutflow = OrderedDict()
-        gid = None
+        data = defaultdict(list)
         for row in par:
             char = row[0]
-            if char == 'K':
-                gid = row[-1]
-                koutflow[gid] = OrderedDict([('row', row), ('time_series', []), ('qh', [])])
+            if char == 'K' or char == 'N':
+                row.append(defaultdict(list))
+                data[char].append(row[1:])
             elif char == 'H':
                 self.fix_row_size(row, 4)
-                koutflow[gid]['qh'].append(row)
+                data['K'][-1][-1]['qh_params'] += row[1:]
             elif char == 'T':
-                koutflow[gid]['ts'].append(row)
-            elif char == 'N':
-                gid = row[1]
-                noutflow[gid] = OrderedDict([('row', row), ('time_series', [])])
+                data['K'][-1][-1]['qh_data'].append(row[1:])
             elif char == 'S':
-                noutflow[gid]['time_series'].append(row)
+                data['N'][-1][-1]['time_series'].append(row[1:])
             elif char.startswith('O'):
-                gid = row[-1]
-                ooutflow[gid] = OrderedDict([('row', row)])
+                data['O'].append(row)
             else:
                 pass
-        return koutflow, noutflow, ooutflow
+        return data
 
     def parse_rain(self):
         rain = self.dat_files['RAIN.DAT']

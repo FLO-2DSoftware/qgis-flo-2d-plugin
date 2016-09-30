@@ -26,9 +26,8 @@ import traceback
 import pyspatialite.dbapi2 as db
 from operator import itemgetter
 from itertools import chain, groupby, izip
-from .utils import *
 from flo2d_parser import ParseDAT
-from .user_communication import UserCommunication
+from user_communication import UserCommunication
 
 
 class GeoPackageUtils(object):
@@ -64,9 +63,19 @@ class GeoPackageUtils(object):
         try:
             self.conn = db.connect(self.path)
             return True
-        except:
-            self.msg = "Couldn't connect to GeoPackage"
+        except Exception as e:
+            self.msg = 'Couldn\'t connect to GeoPackage'
             return False
+
+    def database_disconnect(self):
+        """Disconnect from database"""
+        try:
+            if self.conn is not None:
+                self.conn.close()
+            else:
+                self.msg = 'There is no opened connection!'
+        except Exception as e:
+            raise
 
     def check_gpkg(self):
         """Check if file is GeoPackage """
@@ -230,7 +239,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_cont_toler(self):
         sql = ['''INSERT INTO cont (name, value) VALUES''']
         sql_part = '''\n('{0}', '{1}')'''
-        self.clear_tables('cont')
+        self.clear_tables('cont', 'time_series', 'time_series_data')
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()
         cont.update(toler)
@@ -285,19 +294,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
         tsd_part = '''\n({0}, {1}, {2}, {3})'''
         reservoirs_part = '''\n({0}, {1}, {2})'''
 
-        self.clear_tables('inflow', 'inflow_cells', 'time_series', 'time_series_data', 'reservoirs')
+        self.clear_tables('inflow', 'inflow_cells', 'reservoirs')
         head, inf, res = self.parser.parse_inflow()
         cont_sql += [cont_part.format(head['IHOURDAILY'])]
         gids = inf.keys() + res.keys()
         cells = self.get_centroids(gids)
+        ts_max = self.get_max('time_series')
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
-            inflow_sql += [inflow_part.format(i, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
+            inflow_sql += [inflow_part.format(i + ts_max, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
             cells_sql += [cells_part.format(i, gid)]
             ts_sql += [ts_part.format(head['IHOURDAILY'])]
             values = slice(1, None)
             for n in inf[gid]['time_series']:
-                tsd_sql += [tsd_part.format(i, *n[values])]
+                tsd_sql += [tsd_part.format(i + ts_max, *n[values])]
 
         for gid in res:
             row = res[gid]['row']
@@ -307,66 +317,74 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
 
     def import_outflow(self):
-        outflow_sql = ['''INSERT INTO outflow (time_series_fid, ident, nostacfp, qh_params_fid, geom) VALUES''']
+        outflow_sql = ['''INSERT INTO outflow (geom, time_series_fid, qh_params_fid, qh_table_fid, ident, nostacfp) VALUES''']
         cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''']
         chan_sql = ['''INSERT INTO outflow_chan_elems (outflow_fid, elem_fid) VALUES''']
-        qh_sql = ['''INSERT INTO qh_params (hmax, coef, expontent) VALUES''']
+        qh_sql = ['''INSERT INTO qh_params (hmax, coef, exponent) VALUES''']
+        qh_tab_sql = ['''INSERT INTO qh_table (fid) VALUES''']
+        qh_data_sql = ['''INSERT INTO qh_table_data (table_fid, depth, q) VALUES''']
         ts_sql = ['''INSERT INTO time_series (fid) VALUES''']
-        tsd_sql = ['''INSERT INTO time_series_data (series_fid, time, value, value2) VALUES''']
+        ts_data_sql = ['''INSERT INTO time_series_data (series_fid, time, value) VALUES''']
         hydchar_sql = ['''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES''']
 
-        outflow_part = '''\n({0}, '{1}', {2}, {3}, {4})'''
+        outflow_part = '''\n({0}, {1}, {2}, {3}, '{4}', {5})'''
         cells_chan_part = '''\n({0}, {1})'''
         qh_part = '''\n({0}, {1}, {2})'''
+        qh_tab_part = '''\n({0})'''
+        qh_data_part = '''\n({0}, {1}, {2})'''
         ts_part = '''\n({0})'''
-        tsd_part = '''\n({0}, {1}, {2}, {3})'''
+        ts_data_part = '''\n({0}, {1}, {2})'''
         hydchar_part_sql = '''\n('{0}', {1})'''
 
-        self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params')
-        koutflow, noutflow, ooutflow = self.parser.parse_outflow()
-        gids = koutflow.keys() + noutflow.keys() + ooutflow.keys()
+        self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params', 'qh_table', 'qh_table_data')
+        data = self.parser.parse_outflow()
+        gids = [row[0] if row[0].isdigit() else row[1] for row in chain(data['K'], data['N'], data['O'])]
         cells = self.get_centroids(gids)
 
-        fid = 1
-        fid_qh = 1
-        fid_ts = self.get_max('time_series') + 1
-        tsd_val = slice(1, None)
-        outflow = chain(koutflow.iteritems(), noutflow.iteritems())
+        qhfid = 0
+        qhtabfid = 0
+        ts_max = self.get_max('time_series')
 
-        for gid, val in outflow:
-            row, time_series, qh = val['row'], val['time_series'], val['qh']
-            if qh:
-                qhfid = fid_qh
-                fid_qh += 1
-                qh_sql += [qh_part.format(*qh[0])]
+        for i, row in enumerate(data['K'], 1):
+            gid = row[0]
+            series = row[-1]
+            geom = self.build_buffer(cells[gid], self.buffer)
+            qh_params = series['qh_params']
+            qh_data = series['qh_data']
+            if qh_params:
+                qhfid += 1
+                qh_sql += [qh_part.format(*qh_params)]
             else:
-                qhfid = 'NULL'
+                pass
+            if qh_data:
+                qhtabfid += 1
+                qh_tab_sql += [qh_tab_part.format(qhtabfid)]
+            else:
+                pass
+            outflow_sql += [outflow_part.format(geom, 'NULL', qhfid if qh_params else 'NULL', qhtabfid if qh_data else 'NULL', 'K', 'NULL')]
+            chan_sql += [cells_chan_part.format(i, gid)]
+            for trow in series['qh_data']:
+                qh_data_sql += [qh_data_part.format(qhtabfid, *trow)]
+
+        start = len(data['K']) + 1
+        for i, row in enumerate(data['N'], start):
+            gid, nostacfp, series = row
+            geom = self.build_buffer(cells[gid], self.buffer)
+            time_series = series['time_series']
             if time_series:
-                tsfid = fid_ts
-                fid_ts += 1
-                ts_sql += [ts_part.format(tsfid)]
+                ts_max += 1
+                ts_sql += [ts_part.format(ts_max)]
             else:
-                tsfid = 'NULL'
+                pass
+            outflow_sql += [outflow_part.format(geom, ts_max if time_series else 'NULL', 'NULL', 'NULL', 'N', nostacfp)]
+            cells_sql += [cells_chan_part.format(i, gid)]
+            for srow in time_series:
+                ts_data_sql += [ts_data_part.format(ts_max, *srow)]
 
-            ident = row[0]
-            if ident == 'N':
-                nostacfp = gid
-                cells_sql += [cells_chan_part.format(fid, nostacfp)]
-            else:
-                nostacfp = 'NULL'
-                chan_sql += [cells_chan_part.format(fid, gid)]
-
-            outflow_sql += [outflow_part.format(tsfid, ident, nostacfp, qhfid, self.build_buffer(cells[gid], self.buffer))]
-
-            for n in time_series:
-                tsd_sql += [tsd_part.format(fid_ts, *n[tsd_val])]
-            fid += 1
-
-        for gid, val in ooutflow.iteritems():
-            row = val['row']
+        for row in data['O']:
             hydchar_sql += [hydchar_part_sql.format(*row)]
 
-        self.batch_execute(ts_sql, qh_sql, outflow_sql, cells_sql, chan_sql, tsd_sql, hydchar_sql)
+        self.batch_execute(ts_sql, ts_data_sql, qh_sql, qh_tab_sql, qh_data_sql, outflow_sql, chan_sql, cells_sql, hydchar_sql)
 
     def import_rain(self):
         rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''']
@@ -479,30 +497,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_chan(self):
         chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''']
-        chan_r_sql = ['''INSERT INTO chan_r (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, rbankgrid) VALUES''']
-        chan_v_sql = ['''INSERT INTO chan_v (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcd, xlen, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22, rbankgrid) VALUES''']
-        chan_t_sql = ['''INSERT INTO chan_t (seg_fid, nr_in_seg, ichangrid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr, rbankgrid) VALUES''']
-        chan_n_sql = ['''INSERT INTO chan_n (seg_fid, nr_in_seg, ichangrid, fcn, xlen, nxecnum, xsecname, rbankgrid) VALUES''']
+        chan_elems_sql = ['''INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES''']
+        chan_r_sql = ['''INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES''']
+        chan_v_sql = ['''INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22) VALUES''']
+        chan_t_sql = ['''INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES''']
+        chan_n_sql = ['''INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES''']
         chan_wsel_sql = ['''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES''']
         chan_conf_sql = ['''INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES''']
         chan_e_sql = ['''INSERT INTO noexchange_chan_areas (geom) VALUES''']
         elems_e_sql = ['''INSERT INTO noexchange_chan_elems (noex_area_fid, chan_elem_fid) VALUES''']
 
         chan_part = '''\n({0}, {1}, {2}, {3}, {4})'''
+        chan_elems_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, '{7}')'''
         chan_r_part = '\n(' + ','.join(['{} '] * 10) + ')'
-        chan_v_part = '\n(' + ','.join(['{} '] * 22) + ')'
-        chan_t_part = '\n(' + ','.join(['{} '] * 12) + ')'
-        chan_n_part = '\n(' + ','.join(['{} '] * 8) + ')'
+        chan_v_part = '\n(' + ','.join(['{} '] * 17) + ')'
+        chan_t_part = '\n(' + ','.join(['{} '] * 7) + ')'
+        chan_n_part = '\n(' + ','.join(['{} '] * 3) + ')'
         chan_wsel_part = '\n(' + ','.join(['{} '] * 4) + ')'
         chan_conf_part = '\n(' + ','.join(['{} '] * 4) + ')'
         chan_e_part = '''\n({0})'''
         elems_part = '''\n({0}, {1})'''
 
         sqls = {
-            'R': [chan_r_sql, chan_r_part],
-            'V': [chan_v_sql, chan_v_part],
-            'T': [chan_t_sql, chan_t_part],
-            'N': [chan_n_sql, chan_n_part]
+            'R': [chan_r_sql, chan_r_part, 4, 7],
+            'V': [chan_v_sql, chan_v_part, 4, 6],
+            'T': [chan_t_sql, chan_t_part, 4, 7],
+            'N': [chan_n_sql, chan_n_part, 2, 3]
         }
 
         self.clear_tables('chan', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
@@ -514,9 +534,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for ii, row in enumerate(xs, 1):
                 char = row[0]
                 gid = row[1]
-                params = row[1:]
+                rbank = row[-1]
+                geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else 'NULL'
+                sql, sql_part, fcn_idx, xlen_idx = sqls[char]
+                xlen = row.pop(xlen_idx)
+                fcn = row.pop(fcn_idx)
+                params = row[1:-1]
                 gids.append(gid)
-                sqls[char][0] += [sqls[char][1].format(i, ii, *params)]
+                chan_elems_sql += [chan_elems_part.format(geom, gid, i, ii, rbank, fcn, xlen, char)]
+                sql += [sql_part.format(*params)]
             options = seg[:-1]
             geom = self.build_linestring(gids)
             chan_sql += [chan_part.format(geom, *options)]
@@ -537,25 +563,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_e_sql += [chan_e_part.format(self.build_buffer(geom, self.buffer))]
             elems_e_sql += [elems_part.format(i, gid)]
 
-        self.batch_execute(chan_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
+        self.batch_execute(chan_sql, chan_elems_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
                            chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql)
-        
-        # create geometry for the newly added cross-sections
-        for chtype in ['r', 'v', 't', 'n']:
-            sql = '''UPDATE chan_{0} SET notes='imported';'''
-            self.execute(sql.format(chtype))
-            sql = '''
-            UPDATE "chan_{0}"
-            SET geom = (
-                SELECT
-                    AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
-                    (ST_Centroid(CastAutomagic(g2.geom)))))
-                FROM grid AS g1, grid AS g2
-                WHERE g1.fid = ichangrid AND g2.fid = rbankgrid);
-            '''
-            self.execute(sql.format(chtype))
-            sql = 'UPDATE chan_{0} SET notes=NULL;'
-            self.execute(sql.format(chtype))
 
     def import_xsec(self):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''']
@@ -1077,17 +1086,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i.write(res_line.format(*res).rstrip())
 
     def export_outflow(self, outdir):
-        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid FROM outflow ORDER BY fid;'''
+        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid, qh_table_fid FROM outflow ORDER BY fid;'''
         outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid;'''
         outflow_chan_sql = '''SELECT outflow_fid, elem_fid FROM outflow_chan_elems ORDER BY fid;'''
-        qh_sql = '''SELECT hmax, coef, expotent FROM qh_params WHERE fid = {0};'''
-        ts_data_sql = '''SELECT time, value, value2 FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
+        qh_sql = '''SELECT hmax, coef, exponent FROM qh_params WHERE fid = {0};'''
+        qh_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = {0} ORDER BY fid;'''
+        ts_data_sql = '''SELECT time, value FROM time_series_data WHERE series_fid = {0} ORDER BY fid;'''
         hydchar_sql = '''SELECT hydro_fid, grid_fid FROM outflow_hydrographs ORDER BY fid;'''
 
-        out_line = '{0: <15} {1: <15} {2}\n'
-        qh_line = 'H {0: <15} {1: <15} {2}\n'
-        tsd_line = '{0: <15} {1: <15} {2}\n'
-        hyd_line = '{0: <15} {1}\n'
+        out_line = '{0}  {1}  {2}\n'
+        qh_line = 'H  {0}  {1}  {2}\n'
+        qh_data_line = 'T  {0}  {1}\n'
+        tsd_line = 'S  {0}  {1}\n'
+        hyd_line = '{0}  {1}\n'
 
         outflow_rows = self.execute(outflow_sql).fetchall()
         hydchar_rows = self.execute(hydchar_sql).fetchall()
@@ -1102,12 +1113,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(outflow, 'w') as o:
             for row in outflow_rows:
                 row = [x if x is not None else '' for x in row]
-                fid, ts_fid, ident, nostacfp, qh_fid = row
+                fid, ts_fid, ident, nostacfp, qh_fid, qh_tab_fid = row
                 gid = out_chan[fid] if ident == 'K' else out_cells[fid]
                 o.write(out_line.format(ident, gid, nostacfp))
                 if qh_fid:
                     qh_params = self.execute(qh_sql.format(qh_fid)).fetchone()
-                    o.write(qh_line.format(*qh_params[0]))
+                    o.write(qh_line.format(*qh_params))
+                else:
+                    pass
+                if qh_tab_fid:
+                    qh_data = self.execute(qh_data_sql.format(qh_tab_fid))
+                    for qh in qh_data:
+                        o.write(qh_data_line.format(*qh))
                 else:
                     pass
                 if ts_fid:
@@ -1201,15 +1218,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for gid, iid in self.execute(icell_scs_sql):
                 for row in self.execute(iarea_scs_sql.format(iid)):
                     i.write(line7.format(gid, *row))
-            for gid, iid in self.execute(icell_horton_sql):
-                for row in self.execute(iarea_horton_sql.format(iid)):
+            for gid, iid in self.execute(ielem_chan_sql):
+                for row in self.execute(iarea_chan_sql.format(iid)):
                     i.write(line8.format(gid, *row))
             if any(v9) is True:
                 i.write(line9.format(*v9))
             else:
                 pass
-            for gid, iid in self.execute(ielem_chan_sql):
-                for row in self.execute(iarea_chan_sql.format(iid)):
+            for gid, iid in self.execute(icell_horton_sql):
+                for row in self.execute(iarea_horton_sql.format(iid)):
                     i.write(line10.format(gid, *row))
 
     def export_evapor(self, outdir):
@@ -1237,22 +1254,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_chan(self, outdir):
         chan_sql = '''SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
+        chan_elems_sql = '''SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
 
-        chan_r_sql = '''SELECT * FROM chan_r WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
-        chan_v_sql = '''SELECT * FROM chan_v WHERE seg_fid = {0} ORDER BY nr_in_seg '''
-        chan_t_sql = '''SELECT * FROM chan_t WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
-        chan_n_sql = '''SELECT * FROM chan_n WHERE seg_fid = {0} ORDER BY nr_in_seg;'''
+        chan_r_sql = '''SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = {0};'''
+        chan_v_sql = '''SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = {0};'''
+        chan_t_sql = '''SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = {0};'''
+        chan_n_sql = '''SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = {0};'''
 
         chan_wsel_sql = '''SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;'''
         chan_conf_sql = '''SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;'''
         chan_e_sql = '''SELECT chan_elem_fid FROM noexchange_chan_elems ORDER BY fid;'''
 
         segment = '   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n'
-        xsec = '{} '
+        chan_r = 'R' + '  {}' * 7 + '\n'
+        chan_v = 'V' + '  {}' * 19 + '\n'
+        chan_t = 'T' + '  {}' * 9 + '\n'
+        chan_n = 'N' + '  {}' * 4 + '\n'
         chanbank = ' {0: <10} {1}\n'
         wsel = '{0} {1:.2f}\n'
         conf = ' C {0}  {1}\n'
         chan_e = ' E {0}\n'
+
+        sqls = {
+            'R': [chan_r_sql, chan_r, 3, 6],
+            'V': [chan_v_sql, chan_v, 3, 5],
+            'T': [chan_t_sql, chan_t, 3, 6],
+            'N': [chan_n_sql, chan_n, 1, 2]
+        }
 
         chan_rows = self.execute(chan_sql).fetchall()
         if not chan_rows:
@@ -1263,38 +1291,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         bank = os.path.join(outdir, 'CHANBANK.DAT')
 
         with open(chan, 'w') as c, open(bank, 'w') as b:
-            sqls = [chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql]
             for row in chan_rows:
                 row = [x if x is not None else '' for x in row]
                 fid = row[0]
                 c.write(segment.format(*row[1:]))
-
-                cross_sections = []
-                for qry in sqls:
-                    res = self.execute(qry.format(fid)).fetchall()
-                    if res:
-                        cross_sections.append(res)
-                    else:
-                        pass
-
-                cross_sections.sort(key=lambda i: i[0][0])
-                for xs in chain.from_iterable(cross_sections):
-                    row_len = len(xs)
-                    xsslice = slice(3, -3)
-                    if row_len == 12:
-                        char = 'R'
-                    elif row_len == 25:
-                        char = 'V'
-                    elif row_len == 15:
-                        char = 'T'
-                    else:
-                        char = 'N'
-                        xsslice = slice(3, -4)
-                    params = [x for x in xs[xsslice] if x is not None]
-                    params.insert(0, char)
-                    form = xsec * len(params) + '\n'
-                    c.write(form.format(*params))
-                    b.write(chanbank.format(xs[3], xs[-3]))
+                for elems in self.execute(chan_elems_sql.format(fid)):
+                    elems = [x if x is not None else '' for x in elems]
+                    eid, rbank, fcn, xlen, typ = elems
+                    sql, line, fcn_idx, xlen_idx = sqls[typ]
+                    res = [x if x is not None else '' for x in self.execute(sql.format(eid)).fetchone()]
+                    res.insert(fcn_idx, fcn)
+                    res.insert(xlen_idx, xlen)
+                    c.write(line.format(*res))
+                    b.write(chanbank.format(eid, rbank))
 
             for row in self.execute(chan_wsel_sql):
                 c.write(wsel.format(*row[:2]))
@@ -1314,7 +1323,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 c.write(chan_e.format(row[0]))
 
     def export_xsec(self, outdir):
-        chan_n_sql = '''SELECT nxecnum, xsecname FROM chan_n ORDER BY nxecnum;'''
+        chan_n_sql = '''SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;'''
         xsec_sql = '''SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = {0} ORDER BY fid;'''
 
         xsec_line = '''X     {0}  {1}\n'''
@@ -1465,7 +1474,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells_g_sql = '''SELECT grid_fid FROM sed_group_cells WHERE area_fid = {0} ORDER BY grid_fid;'''
 
         line1 = 'M  {0}  {1}  {2}  {3}  {4}  {5}\n'
-        line2 = 'C  {0}  {1}  {2}  {3}  {4}  {5} {6}\n'
+        line2 = 'C  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n'
         line3 = 'Z  {0}  {1}  {2}\n'
         line4 = 'P  {0}  {1}\n'
         line5 = 'D  {0}  {1}\n'
