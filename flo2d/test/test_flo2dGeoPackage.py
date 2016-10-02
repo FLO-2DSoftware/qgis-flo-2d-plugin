@@ -102,21 +102,44 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         xsec = self.f2g.execute('''SELECT COUNT(DISTINCT chan_n_nxsecnum) FROM xsec_n_data;''').fetchone()[0]
         self.assertEqual(nxsec, xsec)
 
-    # def test_import_hystruc(self):
-    #     self.fail()
-    #
-    # def test_import_street(self):
-    #     self.fail()
-    #
-    # def test_import_arf(self):
-    #     self.fail()
-    #
-    # def test_import_mult(self):
-    #     self.fail()
-    #
-    # def test_import_sed(self):
-    #     self.fail()
-    #
+    def test_import_hystruc(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_hystruc()
+        rrows = self.f2g.execute('''SELECT COUNT(fid) FROM repl_rat_curves;''').fetchone()[0]
+        self.assertEqual(rrows, 1)
+        frow = self.f2g.execute('''SELECT structname FROM struct WHERE type = 'F';''').fetchone()[0]
+        self.assertEqual(frow, 'CulvertA')
+
+    def test_import_street(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_street()
+        seg = self.f2g.execute('''SELECT DISTINCT str_fid FROM street_seg;''').fetchall()
+        streets = self.f2g.execute('''SELECT fid FROM streets;''').fetchall()
+        self.assertEqual(len(seg), len(streets))
+
+    def test_import_arf(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_arf()
+        bt = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas_tot;''').fetchone()[0]
+        b = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas;''').fetchone()[0]
+        self.assertEqual(bt + b, 15)
+
+    def test_import_mult(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_mult()
+        areas = self.f2g.execute('''SELECT COUNT(fid) FROM mult_areas;''').fetchone()[0]
+        self.assertEqual(areas, 17)
+        cells = self.f2g.execute('''SELECT COUNT(fid) FROM mult_cells;''').fetchone()[0]
+        self.assertEqual(areas, cells)
+
+    def test_import_sed(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_sed()
+        ndata = self.f2g.execute('''SELECT COUNT(fid) FROM sed_supply_frac_data;''').fetchone()[0]
+        self.assertEqual(ndata, 9)
+        nrow = self.f2g.execute('''SELECT COUNT(fid) FROM sed_supply_frac;''').fetchone()[0]
+        self.assertEqual(ndata, nrow)
+
     # def test_import_levee(self):
     #     self.fail()
     #

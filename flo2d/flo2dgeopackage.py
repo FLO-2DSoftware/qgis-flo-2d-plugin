@@ -610,10 +610,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             params = hs[:-1]
             elems = hs[-1]
             geom = self.build_linestring(params[nodes])
-            char = elems.keys()[0] if len(elems) == 1 else 'C'
-            hystruc_sql += [hystruc_part.format(geom, char, *params)]
-            for row in elems[char]:
-                sqls[char][0] += [sqls[char][1].format(i, *row)]
+            typ = elems.keys()[0] if len(elems) == 1 else 'C'
+            hystruc_sql += [hystruc_part.format(geom, typ, *params)]
+            for char in elems.keys():
+                for row in elems[char]:
+                    sqls[char][0] += [sqls[char][1].format(i, *row)]
 
         self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql)
 
@@ -747,8 +748,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ]
 
         self.clear_tables('mud', 'mud_areas', 'mud_cells', 'sed', 'sed_groups', 'sed_group_areas', 'sed_group_cells',
-                          'sed_group_frac_data', 'sed_rigid_areas', 'sed_rigid_cells', 'sed_supply_areas',
-                          'sed_supply_cells', 'sed_supply_frac', 'sed_supply_frac_data')
+                          'sed_group_frac', 'sed_group_frac_data', 'sed_rigid_areas', 'sed_rigid_cells',
+                          'sed_supply_areas', 'sed_supply_cells', 'sed_supply_frac', 'sed_supply_frac_data')
 
         data = self.parser.parse_sed()
         gids = (x[0] for x in chain(data['D'], data['G'], data['R'], data['S']))
@@ -767,7 +768,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sed_z_sql += [sed_z_part.format(i, *row[:-1])]
             for prow in row[-1]:
                 sed_p_sql += [sed_p_part.format(i, *prow)]
-        for char, asql, csql, apart, cpart in parts:
+        for char, asql, apart, csql, cpart in parts:
             for i, row in enumerate(data[char], 1):
                 gid = row[0]
                 vals = row[1:]
@@ -1003,13 +1004,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(wstime_sql)
 
     def export_cont(self, outdir):
+        parser = ParseDAT()
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v if v is not None else '' for o, v in self.execute(sql).fetchall()}
         cont = os.path.join(outdir, 'CONT.DAT')
         toler = os.path.join(outdir, 'TOLER.DAT')
         rline = ' {0}'
         with open(cont, 'w') as c:
-            for row in self.parser.cont_rows:
+            for row in parser.cont_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
@@ -1021,7 +1023,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     pass
 
         with open(toler, 'w') as t:
-            for row in self.parser.toler_rows:
+            for row in parser.toler_rows:
                 lst = ''
                 for o in row:
                     val = options[o]
@@ -1469,7 +1471,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells_r_sql = '''SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;'''
         areas_s_sql = '''SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;'''
         cells_s_sql = '''SELECT grid_fid FROM sed_supply_cells WHERE area_fid = {0};'''
-        data_n_sql = '''SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = {0} ORDER BY sedpercent;'''
+        data_n_sql = '''SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = {0} ORDER BY ssedpercent;'''
         areas_g_sql = '''SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;'''
         cells_g_sql = '''SELECT grid_fid FROM sed_group_cells WHERE area_fid = {0} ORDER BY grid_fid;'''
 
@@ -1514,9 +1516,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 s.write(line7.format(*row))
             for row in self.execute(areas_s_sql):
                 aid = row[0]
+                dist_fid = row[1]
                 gid = self.execute(cells_s_sql.format(aid)).fetchone()[0]
                 s.write(line8.format(gid, *row[1:]))
-                for nrow in self.execute(data_n_sql):
+                for nrow in self.execute(data_n_sql.format((dist_fid))):
                     s.write(line9.format(*nrow))
             for aid, group_fid in self.execute(areas_g_sql):
                 gid = self.execute(cells_g_sql.format(aid)).fetchone()[0]
