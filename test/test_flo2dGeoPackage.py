@@ -140,15 +140,34 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         nrow = self.f2g.execute('''SELECT COUNT(fid) FROM sed_supply_frac;''').fetchone()[0]
         self.assertEqual(ndata, nrow)
 
-    # def test_import_levee(self):
-    #     self.fail()
-    #
-    # def test_import_fpxsec(self):
-    #     self.fail()
-    #
-    # def test_import_breach(self):
-    #     self.fail()
-    #
+    def test_import_levee(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_levee()
+        sides = self.f2g.execute('''SELECT COUNT(fid) FROM levee_data;''').fetchone()[0]
+        self.assertEqual(sides, 12)
+        levfragprob = self.f2g.execute('''SELECT SUM(levfragprob) FROM levee_fragility;''').fetchone()[0]
+        self.assertEqual(round(levfragprob, 1), 4.9)
+        gfragchar = self.f2g.execute('''SELECT gfragchar FROM levee_general;''').fetchone()[0]
+        self.assertEqual(gfragchar, 'FS3')
+
+    def test_import_fpxsec(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_fpxsec()
+        fpxsec = self.f2g.execute('''SELECT COUNT(fid) FROM fpxsec;''').fetchone()[0]
+        self.assertEqual(fpxsec, 10)
+
+    def test_import_breach(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.import_breach()
+        brbottomel = self.f2g.execute('''SELECT brbottomel FROM breach;''').fetchone()[0]
+        self.assertEqual(brbottomel, 83.25)
+        frag = self.f2g.execute('''SELECT COUNT(fid) FROM breach_fragility_curves;''').fetchone()[0]
+        self.assertEqual(frag, 11)
+        bglob = self.f2g.execute('''SELECT * FROM breach_global;''').fetchone()
+        self.assertNotIn(None, bglob)
+        gid = self.f2g.execute('''SELECT grid_fid FROM breach_cells;''').fetchone()
+        self.assertTupleEqual(gid, (4015,))
+
     # def test_import_fpfroude(self):
     #     self.fail()
     #
