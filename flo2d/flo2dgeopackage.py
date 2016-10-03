@@ -930,7 +930,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for i, row in enumerate(data, 1):
             gid, params = row
             swmmflort_sql += [swmmflort_part.format(gid)]
-            for n in row:
+            for n in params:
                 data_sql += [data_part.format(i, *n)]
 
         self.batch_execute(swmmflort_sql, data_sql)
@@ -1658,7 +1658,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(fpfroude, 'w') as f:
             for fid, froudefp in fpfroude_rows:
                 gid = self.execute(cell_sql.format(fid)).fetchone()[0]
-                f.write(line1.format(froudefp, gid))
+                f.write(line1.format(gid, froudefp))
 
     def export_swmmflo(self, outdir):
         swmmflo_sql = '''SELECT swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate FROM swmmflo ORDER BY fid;'''
@@ -1741,7 +1741,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
         wsurf = os.path.join(outdir, 'WSURF.DAT')
         with open(wsurf, 'w') as w:
-            count = self.execute(count_sql).fetchone()[0] + 1
+            count = self.execute(count_sql).fetchone()[0]
             w.write(line1.format(count))
             for row in wsurf_rows:
                 w.write(line2.format(*row))
@@ -1760,7 +1760,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
         wstime = os.path.join(outdir, 'WSTIME.DAT')
         with open(wstime, 'w') as w:
-            count = self.execute(count_sql).fetchone()[0] + 1
+            count = self.execute(count_sql).fetchone()[0]
             w.write(line1.format(count))
             for row in wstime_rows:
                 w.write(line2.format(*row))

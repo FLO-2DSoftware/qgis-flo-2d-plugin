@@ -12,18 +12,25 @@ CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
 
 
 class TestFlo2dGeoPackage(unittest.TestCase):
-    f2g = Flo2dGeoPackage(GPKG_PATH, None)
-    f2g.database_create()
+
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(GPKG_PATH, None)
+        cls.f2g.database_create()
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_mannings_n_topo()
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(GPKG_PATH)
 
     def setUp(self):
-        self.f2g.set_parser(CONT)
         self.f2g.database_connect()
 
     def tearDown(self):
         self.f2g.database_disconnect()
 
     def test_set_parser(self):
-        self.f2g.set_parser(CONT)
         self.assertIsNotNone(self.f2g.parser.dat_files['CONT.DAT'])
         self.assertIsNotNone(self.f2g.parser.dat_files['TOLER.DAT'])
 
@@ -35,7 +42,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(len(controls), 44)
 
     def test_import_mannings_n_topo(self):
-        self.f2g.import_mannings_n_topo()
         cellsize = self.f2g.execute('''SELECT value FROM cont WHERE name = 'CELLSIZE';''').fetchone()[0]
         self.assertEqual(float(cellsize), 100)
         rows = self.f2g.execute('''SELECT COUNT(fid) FROM grid;''').fetchone()[0]
@@ -46,7 +52,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertIsNone(elevation)
 
     def test_import_inflow(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.clear_tables('inflow')
         self.f2g.import_inflow()
         rows = self.f2g.execute('''SELECT time_series_fid FROM inflow;''').fetchall()
@@ -54,7 +59,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertListEqual([(1,), (2,), (3,), (4,)], rows)
 
     def test_import_outflow(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_outflow()
         hydrographs = self.f2g.execute('''SELECT COUNT(fid) FROM outflow_hydrographs;''').fetchone()[0]
         self.assertEqual(float(hydrographs), 8)
@@ -64,13 +68,11 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(float(qh_params), 2.6)
 
     def test_import_rain(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_rain()
         tot = self.f2g.execute('''SELECT tot_rainfall FROM rain;''').fetchone()[0]
         self.assertEqual(float(tot), 3.10)
 
     def test_import_infil(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_infil()
         scsnall = self.f2g.execute('''SELECT scsnall FROM infil;''').fetchone()[0]
         self.assertEqual(float(scsnall), 99)
@@ -79,7 +81,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(int(areas), int(cells))
 
     def test_import_evapor(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_evapor()
         months = self.f2g.execute('''SELECT month FROM evapor_monthly;''').fetchall()
         self.assertEqual(len(months), 12)
@@ -87,7 +88,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(mon, 'september')
 
     def test_import_chan(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_chan()
         nelem = self.f2g.execute('''SELECT fcn FROM chan_elems WHERE fid = 7667;''').fetchone()[0]
         self.assertEqual(nelem, 0.055)
@@ -95,7 +95,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(nxsec, 107)
 
     def test_import_xsec(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_chan()
         self.f2g.import_xsec()
         nxsec = self.f2g.execute('''SELECT COUNT(nxsecnum) FROM chan_n;''').fetchone()[0]
@@ -103,7 +102,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(nxsec, xsec)
 
     def test_import_hystruc(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_hystruc()
         rrows = self.f2g.execute('''SELECT COUNT(fid) FROM repl_rat_curves;''').fetchone()[0]
         self.assertEqual(rrows, 1)
@@ -111,21 +109,18 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(frow, 'CulvertA')
 
     def test_import_street(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_street()
         seg = self.f2g.execute('''SELECT DISTINCT str_fid FROM street_seg;''').fetchall()
         streets = self.f2g.execute('''SELECT fid FROM streets;''').fetchall()
         self.assertEqual(len(seg), len(streets))
 
     def test_import_arf(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_arf()
         bt = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas;''').fetchone()[0]
         b = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_cells WHERE area_fid IS NULL;''').fetchone()[0]
         self.assertEqual(bt + b, 15)
 
     def test_import_mult(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_mult()
         areas = self.f2g.execute('''SELECT COUNT(fid) FROM mult_areas;''').fetchone()[0]
         self.assertEqual(areas, 17)
@@ -133,7 +128,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(areas, cells)
 
     def test_import_sed(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_sed()
         ndata = self.f2g.execute('''SELECT COUNT(fid) FROM sed_supply_frac_data;''').fetchone()[0]
         self.assertEqual(ndata, 9)
@@ -141,7 +135,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(ndata, nrow)
 
     def test_import_levee(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_levee()
         sides = self.f2g.execute('''SELECT COUNT(fid) FROM levee_data;''').fetchone()[0]
         self.assertEqual(sides, 12)
@@ -151,13 +144,11 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(gfragchar, 'FS3')
 
     def test_import_fpxsec(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_fpxsec()
         fpxsec = self.f2g.execute('''SELECT COUNT(fid) FROM fpxsec;''').fetchone()[0]
         self.assertEqual(fpxsec, 10)
 
     def test_import_breach(self):
-        self.f2g.import_mannings_n_topo()
         self.f2g.import_breach()
         brbottomel = self.f2g.execute('''SELECT brbottomel FROM breach;''').fetchone()[0]
         self.assertEqual(brbottomel, 83.25)
@@ -168,27 +159,51 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         gid = self.f2g.execute('''SELECT grid_fid FROM breach_cells;''').fetchone()
         self.assertTupleEqual(gid, (4015,))
 
-    # def test_import_fpfroude(self):
-    #     self.fail()
-    #
-    # def test_import_swmmflo(self):
-    #     self.fail()
-    #
-    # def test_import_swmmflort(self):
-    #     self.fail()
-    #
-    # def test_import_swmmoutf(self):
-    #     self.fail()
-    #
-    # def test_import_tolspatial(self):
-    #     self.fail()
-    #
-    # def test_import_wsurf(self):
-    #     self.fail()
-    #
-    # def test_import_wstime(self):
-    #     self.fail()
-    #
+    def test_import_fpfroude(self):
+        self.f2g.import_fpfroude()
+        count = self.f2g.execute('''SELECT COUNT(fid) FROM fpfroude;''').fetchone()[0]
+        self.assertEqual(count, 8)
+
+    def test_import_swmmflo(self):
+        self.f2g.import_swmmflo()
+        count = self.f2g.execute('''SELECT COUNT(fid) FROM swmmflo;''').fetchone()[0]
+        self.assertEqual(count, 6)
+        length = self.f2g.execute('''SELECT MAX(swmm_length) FROM swmmflo;''').fetchone()[0]
+        self.assertEqual(length, 20)
+
+    def test_import_swmmflort(self):
+        self.f2g.import_swmmflort()
+        fids = self.f2g.execute('''SELECT fid FROM swmmflort;''').fetchall()
+        dist_fids = self.f2g.execute('''SELECT DISTINCT swmm_rt_fid FROM swmmflort_data;''').fetchall()
+        self.assertListEqual(fids, dist_fids)
+
+    def test_import_swmmoutf(self):
+        self.f2g.import_swmmoutf()
+        expected = [(1492, 'OUTFALL1', 1)]
+        row = self.f2g.execute('''SELECT grid_fid, name, outf_flo FROM swmmoutf;''').fetchall()
+        self.assertListEqual(row, expected)
+
+    def test_import_tolspatial(self):
+        self.f2g.import_tolspatial()
+        count = self.f2g.execute('''SELECT COUNT(fid) FROM tolspatial;''').fetchone()[0]
+        self.assertEqual(count, 4)
+
+    def test_import_wsurf(self):
+        self.f2g.import_wsurf()
+        count = self.f2g.execute('''SELECT COUNT(fid) FROM wsurf;''').fetchone()[0]
+        self.assertEqual(count, 10)
+        with open(self.f2g.parser.dat_files['WSURF.DAT']) as w:
+            head = w.readline()
+            self.assertEqual(int(head), count)
+
+    def test_import_wstime(self):
+        self.f2g.import_wstime()
+        count = self.f2g.execute('''SELECT COUNT(fid) FROM wstime;''').fetchone()[0]
+        self.assertEqual(count, 10)
+        with open(self.f2g.parser.dat_files['WSTIME.DAT']) as w:
+            head = w.readline()
+            self.assertEqual(int(head), count)
+
     # def test_export_cont(self):
     #     self.fail()
     #
