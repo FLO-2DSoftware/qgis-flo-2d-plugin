@@ -658,33 +658,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_arf(self):
         cont_sql = ['''INSERT INTO cont (name, value) VALUES''']
-        blocked_sql = ['''INSERT INTO blocked_areas_tot (geom) VALUES''']
-        pblocked_sql = ['''INSERT INTO blocked_areas (geom, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''']
-        bcells_sql = ['''INSERT INTO blocked_cells_tot (area_fid, grid_fid) VALUES''']
-        pbcells_sql = ['''INSERT INTO blocked_cells (area_fid, grid_fid) VALUES''']
+        blocked_sql = ['''INSERT INTO blocked_areas (geom, arf) VALUES''']
+        cells_sql = ['''INSERT INTO blocked_cells (area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''']
 
         cont_part = '''\n('arfblockmod', {0})'''
-        blocked_part = '''\n({0})'''
-        pblocked_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9})'''
-        cells_part = '''\n({0}, {1})'''
+        blocked_part = '''\n({0}, 1)'''
+        cells_part = '''\n({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10})'''
 
-        self.clear_tables('blocked_areas_tot', 'blocked_areas', 'blocked_cells_tot', 'blocked_cells')
+        self.clear_tables('blocked_areas', 'blocked_cells')
         head, data = self.parser.parse_arf()
         cont_sql += [cont_part.format(*head)]
         gids = (x[0] for x in chain(data['T'], data['PB']))
         cells = self.get_centroids(gids)
+        tb_wrf = ['NULL'] * 8
+
         for i, row in enumerate(data['T'], 1):
             gid = row[0]
             geom = self.build_square(cells[gid], self.shrink)
-            blocked_sql += [blocked_part.format(geom, *row)]
-            bcells_sql += [cells_part.format(i, gid)]
-        for i, row in enumerate(data['PB'], 1):
-            gid = row[0]
-            geom = self.build_square(cells[gid], self.shrink)
-            pblocked_sql += [pblocked_part.format(geom, *row[1:])]
-            pbcells_sql += [cells_part.format(i, gid)]
+            blocked_sql += [blocked_part.format(geom)]
+            cells_sql += [cells_part.format(i, gid, 1, *tb_wrf)]
 
-        self.batch_execute(cont_sql, blocked_sql, pblocked_sql, bcells_sql, pbcells_sql)
+        for row in data['PB']:
+            cells_sql += [cells_part.format('NULL', *row)]
+
+        self.batch_execute(cont_sql, blocked_sql, cells_sql)
 
     def import_mult(self):
         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50) VALUES''']
@@ -1413,9 +1410,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        bct_sql = '''SELECT grid_fid FROM blocked_cells_tot ORDER BY grid_fid;'''
-        bac_sql = '''SELECT grid_fid, area_fid FROM blocked_cells ORDER BY grid_fid;'''
-        ba_sql = '''SELECT * FROM blocked_areas WHERE fid = {0};'''
+        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
+        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8 FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
@@ -1433,12 +1429,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 a.write(line1.format(head))
             else:
                 pass
-            for row in self.execute(bct_sql):
+            for row in self.execute(tbc_sql):
                 a.write(line2.format(*row))
-            for gid, aid in self.execute(bac_sql):
-                for row in self.execute(ba_sql.format(aid)):
-                    vals = [x if x is not None else '' for x in row[:-1]]
-                    a.write(line3.format(gid, *vals))
+            for row in self.execute(pbc_sql):
+                row = [x if x is not None else '' for x in row]
+                a.write(line3.format(*row))
 
     def export_mult(self, outdir):
         mult_sql = '''SELECT * FROM mult;'''

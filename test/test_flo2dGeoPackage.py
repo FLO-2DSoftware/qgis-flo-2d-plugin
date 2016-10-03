@@ -120,8 +120,8 @@ class TestFlo2dGeoPackage(unittest.TestCase):
     def test_import_arf(self):
         self.f2g.import_mannings_n_topo()
         self.f2g.import_arf()
-        bt = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas_tot;''').fetchone()[0]
-        b = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas;''').fetchone()[0]
+        bt = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas;''').fetchone()[0]
+        b = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_cells WHERE area_fid IS NULL;''').fetchone()[0]
         self.assertEqual(bt + b, 15)
 
     def test_import_mult(self):

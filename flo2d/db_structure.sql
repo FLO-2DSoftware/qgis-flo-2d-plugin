@@ -996,6 +996,7 @@ CREATE TABLE "blocked_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- equal to fid from grid table
     "area_fid" INTEGER, -- fid of area from blocked_areas table
+    "arf" REAL, -- ARF, area reduction factor for cells
     "wrf1" REAL, -- WRF(I,J), width reduction factor for the North direction
     "wrf2" REAL, -- WRF(I,J), width reduction factor for the East direction
     "wrf3" REAL, -- WRF(I,J), width reduction factor for the South direction
