@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-sys.path.append('..')
+sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.flo2dgeopackage import Flo2dGeoPackage
 
 THIS_DIR = os.path.dirname(__file__)

@@ -300,12 +300,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         gids = inf.keys() + res.keys()
         cells = self.get_centroids(gids)
         ts_max = self.get_max('time_series')
+        values = slice(1, None)
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
             inflow_sql += [inflow_part.format(i + ts_max, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
             cells_sql += [cells_part.format(i, gid)]
             ts_sql += [ts_part.format(head['IHOURDAILY'])]
-            values = slice(1, None)
             for n in inf[gid]['time_series']:
                 tsd_sql += [tsd_part.format(i + ts_max, *n[values])]
 
@@ -338,7 +338,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params', 'qh_table', 'qh_table_data')
         data = self.parser.parse_outflow()
-        gids = [row[0] if row[0].isdigit() else row[1] for row in chain(data['K'], data['N'], data['O'])]
+        gids = (row[0] if row[0].isdigit() else row[1] for row in chain(data['K'], data['N'], data['O']))
         cells = self.get_centroids(gids)
 
         qhfid = 0
