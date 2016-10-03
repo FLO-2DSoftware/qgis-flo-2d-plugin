@@ -421,6 +421,12 @@ class Flo2D(object):
                 'styles': ['arf.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': None,
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('rain_arf_areas', {
                 'name': 'Rain ARF Areas',
                 'sgroup': None,

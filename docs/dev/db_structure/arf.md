@@ -36,3 +36,6 @@ Data goes into the following GeoPackage tables:
 * "wrf6" REAL, -- WRF(I,J), width reduction factor for the Southeast direction
 * "wrf7" REAL, -- WRF(I,J), width reduction factor for the Southwest direction
 * "wrf8" REAL, -- WRF(I,J), width reduction factor for the Northwest direction
+
+
+![ARF tables graph in PNG](db_schema_graphs/arfwrf.png)
