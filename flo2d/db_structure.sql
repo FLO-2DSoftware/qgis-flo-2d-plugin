@@ -1008,6 +1008,15 @@ CREATE TABLE "blocked_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells', 'aspatial');
 
+CREATE VIEW wrf AS SELECT b.grid_fid, b.arf, b.wrf1, b.wrf2, b.wrf1, b.wrf3, b.wrf4, b.wrf5, b.wrf6, b.wrf7, b.wrf8, g.geom FROM blocked_cells as b, grid as g where b.arf <> 1 AND g.fid = b.grid_fid;
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wrf', 'features', 4326);
+INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('wrf', 'geom', 'POLYGON', 4326, 0, 0);
+
+
+CREATE VIEW arf AS SELECT b.grid_fid, b.arf, g.geom FROM blocked_cells as b, grid as g where g.fid = b.grid_fid;
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('arf', 'features', 4326);
+INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('arf', 'geom', 'POLYGON', 4326, 0, 0);
+
 --CREATE TRIGGER "find_cells_arf_insert"
 --    AFTER INSERT ON "blocked_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))

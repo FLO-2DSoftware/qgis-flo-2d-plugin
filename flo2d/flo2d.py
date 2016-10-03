@@ -322,30 +322,6 @@ class Flo2D(object):
                 'styles': ['street.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('chan_r', {
-                'name': 'Rectangular Xsec',
-                'sgroup': 'XSections',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('chan_v', {
-                'name': 'Variable Area Xsec',
-                'sgroup': 'XSections',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('chan_t', {
-                'name': 'Trapezoidal Xsec',
-                'sgroup': 'XSections',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('chan_n', {
-                'name': 'Natural Xsec',
-                'sgroup': 'XSections',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
             ('chan', {
                 'name': 'Channel segments (left bank)',
                 'sgroup': None,
@@ -353,11 +329,35 @@ class Flo2D(object):
                 'attrs_edit_widgets': {}
             }),
             ('chan_elems', {
-                'name': 'Channel elements (left bank)',
+                'name': 'Cross sections',
                 'sgroup': None,
                 'styles': ['chan_elems.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False
+                'visible': True
+            }),
+            ('chan_r', {
+                'name': 'Rectangular Xsec',
+                'sgroup': 'XSections Data',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('chan_v', {
+                'name': 'Variable Area Xsec',
+                'sgroup': 'XSections Data',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('chan_t', {
+                'name': 'Trapezoidal Xsec',
+                'sgroup': 'XSections Data',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('chan_n', {
+                'name': 'Natural Xsec',
+                'sgroup': 'XSections Data',
+                'styles': None,
+                'attrs_edit_widgets': {}
             }),
             ('fpxsec', {
                 'name': 'Flodplain cross-sections',
@@ -397,6 +397,18 @@ class Flo2D(object):
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('wrf', {
+                'name': 'WRF',
+                'sgroup': 'ARF_WRF',
+                'styles': ['wrf.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('arf', {
+                'name': 'ARF',
+                'sgroup': 'ARF_WRF',
+                'styles': ['arf.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('rain_arf_areas', {
                 'name': 'Rain ARF Areas',
                 'sgroup': None,
@@ -407,12 +419,6 @@ class Flo2D(object):
                 'name': 'Reservoirs',
                 'sgroup': None,
                 'styles': ['reservoirs.qml'],
-                'attrs_edit_widgets': {}
-            }),
-            ('blocked_areas', {
-                'name': 'Area and Width Reduction',
-                'sgroup': None,
-                'styles': ['blocked_areas.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('fpfroude', {
@@ -592,7 +598,7 @@ class Flo2D(object):
             except:
                 lyr_is_on = True
             lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
-            if lyr == 'blocked_areas':
+            if lyr == 'wrf':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
                 c = self.lyrs.get_layer_tree_item(lyr_id).layer().editFormConfig()
