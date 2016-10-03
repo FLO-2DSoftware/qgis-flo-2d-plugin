@@ -879,7 +879,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             local_sql += [local_part.format(geom, *row[1:])]
             cells_sql += [cells_part.format(i, gid)]
         for row in data['F']:
-            frag_sql += [frag_part.format(row)]
+            frag_sql += [frag_part.format(*row)]
 
         self.batch_execute(global_sql, local_sql, cells_sql, frag_sql)
 
@@ -1559,7 +1559,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
             for row in self.execute(levee_frag_sql):
-                l.write(line7.format(row))
+                l.write(line7.format(*row))
 
     def export_fpxsec(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'NXPRT';'''
@@ -1599,7 +1599,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         line_2 = '{0}2 {1}\n'
         line_3 = '{0}3 {1}\n'
         line_4 = '{0}4 {1}\n'
-        fline = '{0} {1} {2}\n'
+        fline = 'F {0} {1} {2}\n'
 
         parts = [
             [g1, d1, line_1],
