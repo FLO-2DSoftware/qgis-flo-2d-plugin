@@ -51,7 +51,7 @@ class Layers(QObject):
         self.root = QgsProject.instance().layerTreeRoot()
     
 
-    def load_layer(self, uri, group, name, subgroup=None, style=None, provider='ogr'):
+    def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
         if not vlayer.isValid():
             msg = 'Unable to load layer {}'.format(name)
@@ -66,9 +66,14 @@ class Layers(QObject):
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
             self.remove_layer(lyr_exists)
-        # add layer to the group
-        grp.addLayer(vlayer)
-
+        # add layer to the group of the tree
+        tree_lyr = grp.addLayer(vlayer)
+        # set visibility
+        if visible:
+            vis = Qt.Checked
+        else:
+            vis = Qt.Unchecked
+        tree_lyr.setVisible(vis)
         if style:
             style_path = get_file_path("styles", style)
             if os.path.isfile(style_path):

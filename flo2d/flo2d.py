@@ -325,25 +325,25 @@ class Flo2D(object):
             ('chan_r', {
                 'name': 'Rectangular Xsec',
                 'sgroup': 'XSections',
-                'styles': ['xsec.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('chan_v', {
                 'name': 'Variable Area Xsec',
                 'sgroup': 'XSections',
-                'styles': ['xsec.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('chan_t', {
                 'name': 'Trapezoidal Xsec',
                 'sgroup': 'XSections',
-                'styles': ['xsec.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('chan_n', {
                 'name': 'Natural Xsec',
                 'sgroup': 'XSections',
-                'styles': ['xsec.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('chan', {
@@ -351,6 +351,13 @@ class Flo2D(object):
                 'sgroup': None,
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {}
+            }),
+            ('chan_elems', {
+                'name': 'Channel elements (left bank)',
+                'sgroup': None,
+                'styles': ['chan_elems.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
             }),
             ('fpxsec', {
                 'name': 'Flodplain cross-sections',
@@ -408,12 +415,6 @@ class Flo2D(object):
                 'styles': ['blocked_areas.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('blocked_areas_tot', {
-                'name': 'Totally blocked cells',
-                'sgroup': None,
-                'styles': ['blocked_areas_tot.qml'],
-                'attrs_edit_widgets': {}
-            }),
             ('fpfroude', {
                 'name': 'Froude numbers for grid elems',
                 'sgroup': None,
@@ -424,26 +425,30 @@ class Flo2D(object):
                 'name': 'Areas Green Ampt',
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'visible': False
             }),
             ('infil_areas_scs', {
                 'name': 'Areas SCS',
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'visible': False
             }),
             ('infil_areas_horton', {
                 'name': 'Areas Horton',
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'visible': False
             })
             ,
             ('infil_areas_chan', {
                 'name': 'Areas for Channels',
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'visible': False
             }),
 
             # TABLES
@@ -582,7 +587,11 @@ class Flo2D(object):
             else:
                 lstyle = None
             uri = self.gpkg.path + '|layername={}'.format(lyr)
-            lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'])
+            try:
+                lyr_is_on = data['visible']
+            except:
+                lyr_is_on = True
+            lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
             if lyr == 'blocked_areas':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:

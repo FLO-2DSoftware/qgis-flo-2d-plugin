@@ -941,20 +941,20 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 
 -- ARF.DAT
 
-CREATE TABLE "blocked_areas_tot" (
-    "fid" INTEGER NOT NULL PRIMARY KEY
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas_tot', 'features', 4326);
-SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
-SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
-
-CREATE TABLE "blocked_cells_tot" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" INTEGER, -- equal to fid from grid table
-    "area_fid" INTEGER -- fid of area from blocked_areas_tot table
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells_tot', 'aspatial');
+-- CREATE TABLE "blocked_areas_tot" (
+--     "fid" INTEGER NOT NULL PRIMARY KEY
+-- );
+-- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas_tot', 'features', 4326);
+-- SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
+-- SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
+-- SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
+-- 
+-- CREATE TABLE "blocked_cells_tot" (
+--     "fid" INTEGER NOT NULL PRIMARY KEY,
+--     "grid_fid" INTEGER, -- equal to fid from grid table
+--     "area_fid" INTEGER -- fid of area from blocked_areas_tot table
+-- );
+-- INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells_tot', 'aspatial');
 
 --CREATE TRIGGER "find_cells_arf_tot_insert"
 --    AFTER INSERT ON "blocked_areas_tot"
@@ -984,15 +984,8 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells_tot', '
 
 CREATE TABLE "blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "arf" REAL, -- ARF, area reduction factor for the cell
-    "wrf1" REAL, -- WRF(I,J), width reduction factor for the North direction
-    "wrf2" REAL, -- WRF(I,J), width reduction factor for the East direction
-    "wrf3" REAL, -- WRF(I,J), width reduction factor for the South direction
-    "wrf4" REAL, -- WRF(I,J), width reduction factor for the West direction
-    "wrf5" REAL, -- WRF(I,J), width reduction factor for the Northeast direction
-    "wrf6" REAL, -- WRF(I,J), width reduction factor for the Southeast direction
-    "wrf7" REAL, -- WRF(I,J), width reduction factor for the Southwest direction
-    "wrf8" REAL  -- WRF(I,J), width reduction factor for the Northwest direction
+    "arf" REAL -- ARF, area reduction factor for cells
+
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1002,7 +995,15 @@ SELECT gpkgAddSpatialIndex('blocked_areas', 'geom');
 CREATE TABLE "blocked_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- equal to fid from grid table
-    "area_fid" INTEGER -- fid of area from blocked_areas table
+    "area_fid" INTEGER, -- fid of area from blocked_areas table
+    "wrf1" REAL, -- WRF(I,J), width reduction factor for the North direction
+    "wrf2" REAL, -- WRF(I,J), width reduction factor for the East direction
+    "wrf3" REAL, -- WRF(I,J), width reduction factor for the South direction
+    "wrf4" REAL, -- WRF(I,J), width reduction factor for the West direction
+    "wrf5" REAL, -- WRF(I,J), width reduction factor for the Northeast direction
+    "wrf6" REAL, -- WRF(I,J), width reduction factor for the Southeast direction
+    "wrf7" REAL, -- WRF(I,J), width reduction factor for the Southwest direction
+    "wrf8" REAL  -- WRF(I,J), width reduction factor for the Northwest direction
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells', 'aspatial');
 
