@@ -79,7 +79,11 @@ class GeoPackageUtils(object):
             except:
                 self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
                 return False
-        self.conn = self.database_connect()
+        
+        self.database_connect()
+        if self.conn == False:
+            return False
+        
         plugin_dir = os.path.dirname(__file__)
         script = os.path.join(plugin_dir, 'db_structure.sql')
         qry = open(script, 'r').read()
