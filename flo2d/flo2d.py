@@ -304,6 +304,12 @@ class Flo2D(object):
         
         # LAYERS
             
+            ('breach', {
+                'name': 'Breach Locations',
+                'sgroup': None,
+                'styles': ['breach.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('levee_data', {
                 'name': 'Levees',
                 'sgroup': None,
@@ -356,6 +362,12 @@ class Flo2D(object):
             ('chan_n', {
                 'name': 'Natural Xsec',
                 'sgroup': 'XSections Data',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('xsec_n_data', {
+                'name': 'Natural XSecs Data',
+                'sgroup': "XSections Data",
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
@@ -427,6 +439,69 @@ class Flo2D(object):
                 'styles': ['fpfroude.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('sed_supply_areas', {
+                'name': 'Supply Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_supply_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_group_areas', {
+                'name': 'Group Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_group_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_rigid_areas', {
+                'name': 'Rigid Bed Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_rigid_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('mud_areas', {
+                'name': 'Mud Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['mud_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_groups', {
+                'name': 'Sediment Groups',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_group_cells', {
+                'name': 'Group Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_supply_cells', {
+                'name': 'Supply Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('sed_rigid_cells', {
+                'name': 'Rigid Bed Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('mud_cells', {
+                'name': 'Mud Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
             ('infil_areas_green', {
                 'name': 'Areas Green Ampt',
                 'sgroup': 'Infiltration layers',
@@ -453,6 +528,59 @@ class Flo2D(object):
                 'name': 'Areas for Channels',
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('swmmflo', {
+                'name': 'SWMMFLO',
+                'sgroup': 'SWMM',
+                'styles': ['swmmflo.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('swmmoutf', {
+                'name': 'SWMMOUTF',
+                'sgroup': 'SWMM',
+                'styles': ['swmmoutf.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('swmmflort', {
+                'name': 'SWMMFLORT',
+                'sgroup': 'SWMM',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('swmmflort_data', {
+                'name': 'SWMMFLORT Data',
+                'sgroup': 'SWMM',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('tolspatial', {
+                'name': 'Tolerance Areas',
+                'sgroup': 'Tolerance',
+                'styles': ['tolspatial.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('tolspatial_cells', {
+                'name': 'Tolerance Cells',
+                'sgroup': 'Tolerance',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('wstime', {
+                'name': 'Water Surface in Time',
+                'sgroup': 'Calibration Data',
+                'styles': ['wstime.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('wsurf', {
+                'name': 'Water Surface',
+                'sgroup': 'Calibration Data',
+                'styles': ['wsurf.qml'],
                 'attrs_edit_widgets': {},
                 'visible': False
             }),
@@ -495,6 +623,18 @@ class Flo2D(object):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
+            ('qh_table', {
+                'name': 'QH Tables',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('qh_table_data', {
+                'name': 'QH Tables Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
             ('time_series', {
                 'name': 'Time Series',
                 'sgroup': 'Tables',
@@ -515,12 +655,6 @@ class Flo2D(object):
             }),
             ('rain_arf_cells', {
                 'name': 'Rain ARF Cells',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('xsec_n_data', {
-                'name': 'Natural xsecs data',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {}
