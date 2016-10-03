@@ -23,12 +23,43 @@
 """
 import os
 import traceback
-import pyspatialite.dbapi2 as db
 from operator import itemgetter
 from itertools import chain, groupby, izip
 from flo2d_parser import ParseDAT
 from user_communication import UserCommunication
 
+def spatialite_connect(*args, **kwargs):
+    # copied from https://github.com/qgis/QGIS/blob/master/python/utils.py#L587
+    try:
+        from pyspatialite import dbapi2
+    except ImportError:
+        import sqlite3
+        con = sqlite3.dbapi2.connect(*args, **kwargs)
+        con.enable_load_extension(True)
+        cur = con.cursor()
+        libs = [
+            # Spatialite >= 4.2 and Sqlite >= 3.7.17, should work on all platforms
+            ("mod_spatialite", "sqlite3_modspatialite_init"),
+            # Spatialite >= 4.2 and Sqlite < 3.7.17 (Travis)
+            ("mod_spatialite.so", "sqlite3_modspatialite_init"),
+            # Spatialite < 4.2 (linux)
+            ("libspatialite.so", "sqlite3_extension_init")
+        ]
+        found = False
+        for lib, entry_point in libs:
+            try:
+                cur.execute("select load_extension('{}', '{}')".format(lib, entry_point))
+            except sqlite3.OperationalError:
+                continue
+            else:
+                found = True
+                break
+        if not found:
+            raise RuntimeError("Cannot find any suitable spatialite module")
+        cur.close()
+        con.enable_load_extension(False)
+        return con
+    return dbapi2.connect(*args, **kwargs)
 
 class GeoPackageUtils(object):
     """GeoPackage utils for handling GPKG files"""
@@ -48,7 +79,7 @@ class GeoPackageUtils(object):
             except:
                 self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
                 return False
-        self.conn = db.connect(self.path)
+        self.conn = db.database_connect(self.path)
         plugin_dir = os.path.dirname(__file__)
         script = os.path.join(plugin_dir, 'db_structure.sql')
         qry = open(script, 'r').read()
@@ -61,7 +92,7 @@ class GeoPackageUtils(object):
     def database_connect(self):
         """Connect database with sqlite3"""
         try:
-            self.conn = db.connect(self.path)
+            self.conn = spatialite_connect(self.path)
             return True
         except Exception as e:
             self.msg = 'Couldn\'t connect to GeoPackage'
