@@ -40,11 +40,16 @@ https://en.wikipedia.org/wiki/Scrum_(software_development)
 
 ### Sprint Retrospective meeting
 * 1 hour, every other Wednesday evening
-* Attendees: scrum master, dev team (product owner) 
+* Attendees: scrum master, dev team, product owner
 * Agenda:
   - Reflects on the past Sprint
   - Identifies and agrees on continuous process improvement actions
   
+* Questions:
+  - What went well during the sprint cycle?
+  - What went wrong during the sprint cycle?
+  - What could we do differently to improve?
+
 ### Sprint Review meeting
 * 1 hour, every other Thursday evening
 * Attendees: (scrum master), (dev team), product owner, stakeholders 
