@@ -4,7 +4,7 @@ import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.flo2dgeopackage import Flo2dGeoPackage
 
-THIS_DIR = os.path.dirname(__file__)
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'export')
 GPKG_PATH = os.path.join(THIS_DIR, 'data', 'test.gpkg')
