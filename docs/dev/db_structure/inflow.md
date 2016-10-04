@@ -11,9 +11,7 @@ INFLOW.DAT information goes into the following GeoPackage tables:
 * reservoirs
 * cont
 
-![INFLOW tables graph](db_schema_graphs/inflow.svg)
-
-[INFLOW tables graph in PDF](db_schema_graphs/inflow.pdf)
+![INFLOW tables graph](db_schema_graphs/inflow.png)
 
 **gpkg table: inflow** (contains general info about each inflow)
 

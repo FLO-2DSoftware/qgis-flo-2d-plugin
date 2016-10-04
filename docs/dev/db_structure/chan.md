@@ -15,9 +15,7 @@ CHAN.DAT information goes into the following GeoPackage tables:
 * noexchange_chan_elems - channel elements that do not exchange flow with floodplain
 * chan_wsel - first and last channel elements that have water surface elevation specified
 
-![CHAN tables graph](db_schema_graphs/chan.svg)
-
-[CHAN tables graph](db_schema_graphs/chan.pdf)
+![CHAN tables graph](db_schema_graphs/chan.png)
 
 **gpkg table: chan** (channel segments table)
 

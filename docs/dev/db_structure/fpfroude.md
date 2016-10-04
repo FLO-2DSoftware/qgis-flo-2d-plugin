@@ -7,9 +7,7 @@ FPFROUDE.DAT information goes into the following GeoPackage tables:
 * fpfroude - polygon layer with individual Froude numbers for grid cells
 * fpfroude_cells - grid elements with individual Froude number
 
-![FPFROUDE tables graph](db_schema_graphs/fpfroude.svg)
-
-[FPFROUDE tables graph](db_schema_graphs/fpfroude.pdf)
+![FPFROUDE tables graph](db_schema_graphs/fpfroude.png)
 
 **gpkg table: fpfroude** (polygon layer with individual Froude #)
 

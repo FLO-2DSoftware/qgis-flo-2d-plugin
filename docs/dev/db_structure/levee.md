@@ -9,9 +9,7 @@ LEVEE.DAT information goes into the following GeoPackage tables:
 * levee_failure - grid cells with a failure potential
 * levee_fragility - individual levee grid element fragility curve table
 
-![LEVEE tables graph](db_schema_graphs/levee.svg)
-
-[LEVEE tables graph in PDF](db_schema_graphs/levee.pdf)
+![LEVEE tables graph](db_schema_graphs/levee.png)
 
 **gpkg table: levee_general** (general levee parameters)
 

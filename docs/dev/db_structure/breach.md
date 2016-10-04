@@ -9,9 +9,7 @@ BREACH.DAT information goes into the following GeoPackage tables:
 * breach_cells - grid elements with individual breach parameters
 * breach_fragility_curves - fragility curves data for a levee or a dam
 
-![BREACH tables graph](db_schema_graphs/breach.svg)
-
-[BREACH tables graph in PDF](db_schema_graphs/breach.pdf)
+![BREACH tables graph](db_schema_graphs/breach.png)
 
 **gpkg table: breach_global** 
 

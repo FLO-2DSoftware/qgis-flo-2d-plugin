@@ -8,10 +8,7 @@ EVAPOR.DAT information goes into the following GeoPackage tables:
 * evapor_monthly - monthly evaporation rate
 * evapor_hourly - hourly percentage of the daily total evaporation for each month
 
-![EVAPOR tables graph](db_schema_graphs/evapor.svg)
-
-[EVAPOR tables graph in PDF](db_schema_graphs/evapor.pdf)
-
+![EVAPOR tables graph](db_schema_graphs/evapor.png)
 
 **gpkg table: evapor** (contains general evaporation data)
 

@@ -8,9 +8,7 @@ Simulation tolerances. Information gets added to table [cont](#cont).
 <a name="tolspatial"></a>
 ## TOLSPATIAL.DAT 
 
-![TOLSPATIAL tables graph](db_schema_graphs/tolspatial.svg)
-
-[TOLSPATIAL tables graph in PDF](db_schema_graphs/tolspatial.pdf)
+![TOLSPATIAL tables graph](db_schema_graphs/tolspatial.png)
 
 TOLSPATIAL.DAT information goes into the following GeoPackage tables:
 
