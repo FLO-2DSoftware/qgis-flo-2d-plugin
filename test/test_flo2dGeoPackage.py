@@ -6,7 +6,7 @@ from flo2d.flo2dgeopackage import Flo2dGeoPackage
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
-EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'export')
+EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
 GPKG_PATH = os.path.join(THIS_DIR, 'data', 'test.gpkg')
 CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
 
@@ -39,10 +39,12 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(GPKG_PATH)
         for f in os.listdir(EXPORT_DATA_DIR):
             fpath = os.path.join(EXPORT_DATA_DIR, f)
-            os.remove(fpath)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                pass
 
     def setUp(self):
         self.f2g.database_connect()
