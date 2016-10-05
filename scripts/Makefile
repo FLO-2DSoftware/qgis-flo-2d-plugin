@@ -1,28 +1,3 @@
-#/***************************************************************************
-# Flo2D
-#
-# FLO-2D tools for QGIS
-#							 -------------------
-#		begin				: 2016-08-28
-#		git sha				: $Format:%H$
-#		copyright			: (C) 2016 by Lutra Consulting for FLO-2D
-#		email				: info@lutraconsulting.co.uk
-# ***************************************************************************/
-#
-#/***************************************************************************
-# *																		 *
-# *   This program is free software; you can redistribute it and/or modify  *
-# *   it under the terms of the GNU General Public License as published by  *
-# *   the Free Software Foundation; either version 2 of the License, or	 *
-# *   (at your option) any later version.								   *
-# *																		 *
-# ***************************************************************************/
-
-#################################################
-# Edit the following to match your sources lists
-#################################################
-
-
 #Add iso code for any locales you want to support here (space separated)
 # default is no locales
 # LOCALES = af
@@ -34,36 +9,57 @@ LOCALES =
 #LRELEASE = lrelease
 #LRELEASE = lrelease-qt4
 
+# dir
+THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+SOURCE_DIR=$(THIS_DIR)../flo2d
+USER_HELP_DIR=$(THIS_DIR)../docs/user
+DEV_HELP_DIR=$(THIS_DIR)../docs/dev 
+I18N_DIR=$(SOURCE_DIR)/i18n
 
 # translation
 SOURCES = \
-	__init__.py \
-	flo2d.py flo2d_dialog.py
+	$(SOURCE_DIR)/__init__.py \
+	$(SOURCE_DIR)/flo2d.py \
+	$(SOURCE_DIR)/flo2d_dialog.py \
+	$(SOURCE_DIR)/user_communication.py \
+	$(SOURCE_DIR)/utils.py \
+	$(SOURCE_DIR)/flo2dgeopackage.py \
+	$(SOURCE_DIR)/flo2d_parser.py \
+	$(SOURCE_DIR)/layers.py \
+	$(SOURCE_DIR)/errors.py
 
-PLUGINNAME = Flo2D
+PLUGINNAME = flo2d
 
 PY_FILES = \
-	__init__.py \
-	flo2d.py flo2d_dialog.py
+	$(SOURCE_DIR)/__init__.py \
+	$(SOURCE_DIR)/flo2d.py \
+	$(SOURCE_DIR)/flo2d_dialog.py \
+	$(SOURCE_DIR)/user_communication.py \
+	$(SOURCE_DIR)/utils.py \
+	$(SOURCE_DIR)/flo2dgeopackage.py \
+	$(SOURCE_DIR)/flo2d_parser.py \
+	$(SOURCE_DIR)/layers.py \
+	$(SOURCE_DIR)/errors.py
 
-UI_FILES = flo2d_dialog_base.ui
+UI_FILES = $(SOURCE_DIR)/flo2d_dialog_base.ui
 
-EXTRAS = metadata.txt icon.png
+EXTRAS = $(SOURCE_DIR)/metadata.txt \
+	 $(SOURCE_DIR)/db_structure.sql
 
-COMPILED_RESOURCE_FILES = resources.py
+COMPILED_RESOURCE_FILES = $(SOURCE_DIR)/resources.py
 
-PEP8EXCLUDE=pydev,resources.py,conf.py,third_party,ui
+PEP8EXCLUDE=$(SOURCE_DIR)/pydev,$(SOURCE_DIR)/resources.py,$(SOURCE_DIR)/conf.py,$(SOURCE_DIR)/third_party,$(SOURCE_DIR)/ui
 
 
 #################################################
 # Normally you would not need to edit below here
 #################################################
 
-HELP = help/build/html
+HELP = $(USER_HELP_DIR)/build/html
 
 PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
-RESOURCE_SRC=$(shell grep '^ *<file' resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
+RESOURCE_SRC=$(shell grep '^ *<file' $(SOURCE_DIR)/resources.qrc | sed 's@</file>@@g;s/.*>//g' | tr '\n' ' ')
 
 QGISDIR=.qgis2
 
@@ -76,24 +72,17 @@ compile: $(COMPILED_RESOURCE_FILES)
 
 %.qm : %.ts
 	$(LRELEASE) $<
-
+	
 test: compile transcompile
 	@echo
 	@echo "----------------------"
-	@echo "Regression Test Suite"
+	@echo "Test Suite            "
 	@echo "----------------------"
-
 	@# Preceding dash means that make will continue in case of errors
-	@-export PYTHONPATH=`pwd`:$(PYTHONPATH); \
+	@-export PYTHONPATH=$(THIS_DIR)/..:$(PYTHONPATH); \
 		export QGIS_DEBUG=0; \
 		export QGIS_LOG_FILE=/dev/null; \
-		nosetests -v --with-id --with-coverage --cover-package=. \
-		3>&1 1>&2 2>&3 3>&- || true
-	@echo "----------------------"
-	@echo "If you get a 'no module named qgis.core error, try sourcing"
-	@echo "the helper script we have provided first then run make test."
-	@echo "e.g. source run-env-linux.sh <path to qgis install>; make test"
-	@echo "----------------------"
+		nosetests -v test --cover-package=flo2d --with-coverage --cover-xml --cover-xml-file=nose_coverage.xml --with-xunit --xunit-file=nosetests.xml || true
 
 deploy: compile doc transcompile
 	@echo
@@ -108,7 +97,7 @@ deploy: compile doc transcompile
 	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(COMPILED_RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	cp -vfr $(I18N_DIR) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 
 # The dclean target removes compiled python files from plugin directory
@@ -165,23 +154,23 @@ transup:
 	@echo "------------------------------------------------"
 	@echo "Updating translation files with any new strings."
 	@echo "------------------------------------------------"
-	@chmod +x scripts/update-strings.sh
-	@scripts/update-strings.sh $(LOCALES)
+	@chmod +x $(THIS_DIR)update-strings.sh
+	@$(THIS_DIR)update-strings.sh $(LOCALES)
 
 transcompile:
 	@echo
 	@echo "----------------------------------------"
 	@echo "Compiled translation files to .qm files."
 	@echo "----------------------------------------"
-	@chmod +x scripts/compile-strings.sh
-	@scripts/compile-strings.sh $(LRELEASE) $(LOCALES)
+	@chmod +x $(THIS_DIR)compile-strings.sh
+	@$(THIS_DIR)compile-strings.sh $(LRELEASE) $(LOCALES)
 
 transclean:
 	@echo
 	@echo "------------------------------------"
 	@echo "Removing compiled translation files."
 	@echo "------------------------------------"
-	rm -f i18n/*.qm
+	rm -f $(I18N_DIR)/*.qm
 
 clean:
 	@echo
@@ -190,13 +179,37 @@ clean:
 	@echo "------------------------------------"
 	rm $(COMPILED_UI_FILES) $(COMPILED_RESOURCE_FILES)
 
+doc-all: doc docpdf devdoc devdocpdf
+
+	
 doc:
 	@echo
 	@echo "------------------------------------"
-	@echo "Building documentation using sphinx."
+	@echo "Building user documentation         "
 	@echo "------------------------------------"
-	cd help; make html
+	cd $(USER_HELP_DIR); make html
 
+docpdf:
+	@echo
+	@echo "------------------------------------"
+	@echo "Building user documentation         "
+	@echo "------------------------------------"
+	cd $(USER_HELP_DIR); make latexpdf
+	
+devdoc:
+	@echo
+	@echo "------------------------------------"
+	@echo "Building dev documentation         "
+	@echo "------------------------------------"
+	cd $(DEV_HELP_DIR); make html
+
+devdocpdf:
+	@echo
+	@echo "------------------------------------"
+	@echo "Building dev documentation         "
+	@echo "------------------------------------"
+	cd $(DEV_HELP_DIR); make latexpdf
+	
 pylint:
 	@echo
 	@echo "-----------------"
