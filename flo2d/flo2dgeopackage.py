@@ -28,6 +28,7 @@ from itertools import chain, groupby, izip
 from flo2d_parser import ParseDAT
 from user_communication import UserCommunication
 
+
 def spatialite_connect(*args, **kwargs):
     # copied from https://github.com/qgis/QGIS/blob/master/python/utils.py#L587
     try:
@@ -60,6 +61,7 @@ def spatialite_connect(*args, **kwargs):
         con.enable_load_extension(False)
         return con
     return dbapi2.connect(*args, **kwargs)
+
 
 class GeoPackageUtils(object):
     """GeoPackage utils for handling GPKG files"""
@@ -371,7 +373,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_data_part = '''\n({0}, {1}, {2})'''
         hydchar_part_sql = '''\n('{0}', {1})'''
 
-        self.clear_tables('outflow', 'outflow_hydrographs', 'qh_params', 'qh_table', 'qh_table_data')
+        self.clear_tables('outflow', 'outflow_cells', 'outflow_chan_elems', 'outflow_hydrographs', 'qh_params',
+                          'qh_table', 'qh_table_data')
         data = self.parser.parse_outflow()
         gids = (row[0] if row[0].isdigit() else row[1] for row in chain(data['K'], data['N'], data['O']))
         cells = self.get_centroids(gids)
@@ -727,7 +730,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mult_area_part = '''\n({0}, {1}, {2}, {3}, {4})'''
         cells_part = '''\n({0}, {1})'''
 
-        self.clear_tables('mult', 'mult_areas')
+        self.clear_tables('mult', 'mult_areas', 'mult_cells')
         head, data = self.parser.parse_mult()
         mult_sql += [mult_part.format(*head)]
         gids = (x[0] for x in data)
@@ -1035,7 +1038,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(wstime_sql)
 
-    def export_cont(self, outdir):
+    def export_cont_toler(self, outdir):
         parser = ParseDAT()
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v if v is not None else '' for o, v in self.execute(sql).fetchall()}

@@ -43,3 +43,7 @@ Files required for FLO-2D solver are given in bold.
 
 \* If FPLAIN and CADPTS exist TOPO and MANNINGS_N are created automatically. Conversely, when TOPO and MANNINGS_N exist FPLAIN and CADPTS are created by GDS.
 
+
+## Creating Database Schema Graphs
+
+TODO

@@ -19,9 +19,7 @@ SED.DAT information goes into the following GeoPackage tables:
 * sed_supply_frac - named sediment supply rating curve size fraction distributions
 * sed_supply_frac_data - sediment supply rating curve size fraction distribution data
 
-![SED tables graph](db_schema_graphs/sed.svg)
-
-[SED tables graph in PDF](db_schema_graphs/sed.pdf)
+![SED tables graph](db_schema_graphs/sed.png)
 
 **gpkg table: mud** (global mudflow parameters) - line M
 

@@ -15,9 +15,7 @@ INFIL.DAT information goes into the following GeoPackage tables:
 * infil_chan_elems - channel elements located inside infil_areas_chan polygons, having individual infiltration params
 * infil_chan_seg - infiltration parameters for segments/reaches (INFILCHAR=R, line 4, 4a)
 
-![INFIL tables graph](db_schema_graphs/infil.svg)
-
-[INFIL tables graph in PDF](db_schema_graphs/infil.pdf)
+![INFIL tables graph](db_schema_graphs/infil.png)
 
 **gpkg table: infil** (contains general info about infiltration)
 

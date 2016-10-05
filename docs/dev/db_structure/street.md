@@ -9,9 +9,7 @@ STREET.DAT information goes into the following GeoPackage tables:
 * street_seg - street segments table, street specific data and its geometry, STRCHAR=S
 * street_elems - street elements data table, STRCHAR=W
 
-![STREET tables graph](db_schema_graphs/street.svg)
-
-[STREET tables graph in PDF](db_schema_graphs/street.pdf)
+![STREET tables graph](db_schema_graphs/street.png)
 
 **gpkg table: street_general** (general streets parameters)
 

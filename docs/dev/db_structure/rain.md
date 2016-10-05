@@ -2,9 +2,7 @@
 <a name="rain"></a>
 ## RAIN.DAT 
 
-![RAIN tables graph](db_schema_graphs/rain.svg)
-
-[RAIN tables graph in PDF](db_schema_graphs/rain.pdf)
+![RAIN tables graph](db_schema_graphs/rain.png)
 
 RAIN.DAT information goes into the following GeoPackage tables: 
 

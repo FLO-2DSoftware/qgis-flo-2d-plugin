@@ -8,9 +8,7 @@ MULT.DAT information goes into the following GeoPackage tables:
 * mult_areas - polygon layer with individual multiple channels parameters, line 2
 * mult_cells - grid cells with individual multiple channel parameters, line 2
 
-![MULT tables graph](db_schema_graphs/mult.svg)
-
-[MULT tables graph in PDF](db_schema_graphs/mult.pdf)
+![MULT tables graph](db_schema_graphs/mult.png)
 
 **gpkg table: mult** (global multiple channels parameters for all the grid elements, line 1) 
 

@@ -9,9 +9,7 @@ Data goes into the following GeoPackage tables:
 * blocked_areas - polygon layer with individual ARF values 
 * blocked_cells - cells with individual ARF values
 
-![ARF tables graph](db_schema_graphs/arfwrf.svg)
-
-[ARF tables graph in PDF](db_schema_graphs/arfwrf.pdf)
+![ARF tables graph](db_schema_graphs/arfwrf.png)
 
 **gpkg table: cont** (global model parameters table)
 

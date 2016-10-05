@@ -4,11 +4,28 @@ import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.flo2dgeopackage import Flo2dGeoPackage
 
-THIS_DIR = os.path.dirname(__file__)
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
-EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'export')
+EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
 GPKG_PATH = os.path.join(THIS_DIR, 'data', 'test.gpkg')
 CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
+
+
+def file_len(fname):
+    i = 0
+    with open(fname) as f:
+        for i, l in enumerate(f, 1):
+            pass
+    return i
+
+
+def export_paths(*inpaths):
+    paths = [os.path.join(EXPORT_DATA_DIR, os.path.basename(inpath)) for inpath in inpaths]
+    if len(paths) == 1:
+        paths = paths[0]
+    else:
+        pass
+    return paths
 
 
 class TestFlo2dGeoPackage(unittest.TestCase):
@@ -22,7 +39,12 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(GPKG_PATH)
+        for f in os.listdir(EXPORT_DATA_DIR):
+            fpath = os.path.join(EXPORT_DATA_DIR, f)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                pass
 
     def setUp(self):
         self.f2g.database_connect()
@@ -204,77 +226,210 @@ class TestFlo2dGeoPackage(unittest.TestCase):
             head = w.readline()
             self.assertEqual(int(head), count)
 
-    # def test_export_cont(self):
-    #     self.fail()
-    #
-    # def test_export_mannings_n_topo(self):
-    #     self.fail()
-    #
-    # def test_export_inflow(self):
-    #     self.fail()
-    #
-    # def test_export_outflow(self):
-    #     self.fail()
-    #
-    # def test_export_rain(self):
-    #     self.fail()
-    #
-    # def test_export_infil(self):
-    #     self.fail()
-    #
-    # def test_export_evapor(self):
-    #     self.fail()
-    #
-    # def test_export_chan(self):
-    #     self.fail()
-    #
-    # def test_export_xsec(self):
-    #     self.fail()
-    #
-    # def test_export_hystruc(self):
-    #     self.fail()
-    #
-    # def test_export_street(self):
-    #     self.fail()
-    #
-    # def test_export_arf(self):
-    #     self.fail()
-    #
-    # def test_export_mult(self):
-    #     self.fail()
-    #
-    # def test_export_sed(self):
-    #     self.fail()
-    #
-    # def test_export_levee(self):
-    #     self.fail()
-    #
-    # def test_export_fpxsec(self):
-    #     self.fail()
-    #
-    # def test_export_breach(self):
-    #     self.fail()
-    #
-    # def test_export_fpfroude(self):
-    #     self.fail()
-    #
-    # def test_export_swmmflo(self):
-    #     self.fail()
-    #
-    # def test_export_swmmflort(self):
-    #     self.fail()
-    #
-    # def test_export_swmmoutf(self):
-    #     self.fail()
-    #
-    # def test_export_tolspatial(self):
-    #     self.fail()
-    #
-    # def test_export_wsurf(self):
-    #     self.fail()
-    #
-    # def test_export_wstime(self):
-    #     self.fail()
+    def test_export_cont(self):
+        self.f2g.import_cont_toler()
+        self.f2g.export_cont_toler(EXPORT_DATA_DIR)
+        infile1 = self.f2g.parser.dat_files['CONT.DAT']
+        infile2 = self.f2g.parser.dat_files['TOLER.DAT']
+        outfile1, outfile2 = export_paths(infile1, infile2)
+        self.assertEqual(file_len(infile1), file_len(outfile1))
+        self.assertEqual(file_len(infile2), file_len(outfile2))
+
+    def test_export_mannings_n_topo(self):
+        self.f2g.import_mannings_n_topo()
+        self.f2g.export_mannings_n_topo(EXPORT_DATA_DIR)
+        infile1 = self.f2g.parser.dat_files['MANNINGS_N.DAT']
+        infile2 = self.f2g.parser.dat_files['TOPO.DAT']
+        outfile1, outfile2 = export_paths(infile1, infile2)
+        iman = file_len(infile1)
+        itopo = file_len(infile2)
+        eman = file_len(outfile1)
+        etopo = file_len(outfile2)
+        self.assertEqual(iman, itopo)
+        self.assertEqual(iman, eman)
+        self.assertEqual(itopo, etopo)
+        self.assertEqual(eman, etopo)
+
+    def test_export_inflow(self):
+        self.f2g.import_inflow()
+        self.f2g.export_inflow(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['INFLOW.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_outflow(self):
+        self.f2g.import_outflow()
+        self.f2g.export_outflow(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['OUTFLOW.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_rain(self):
+        self.f2g.import_rain()
+        self.f2g.export_rain(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['RAIN.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_infil(self):
+        self.f2g.import_infil()
+        self.f2g.export_infil(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['INFIL.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_evapor(self):
+        self.f2g.import_evapor()
+        self.f2g.export_evapor(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['EVAPOR.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_chan(self):
+        self.f2g.import_chan()
+        self.f2g.export_chan(EXPORT_DATA_DIR)
+        infile1 = self.f2g.parser.dat_files['CHAN.DAT']
+        infile2 = self.f2g.parser.dat_files['CHANBANK.DAT']
+        outfile1, outfile2 = export_paths(infile1, infile2)
+        in1 = file_len(infile1)
+        in2 = file_len(infile2)
+        out1 = file_len(outfile1)
+        out2 = file_len(outfile2)
+        self.assertEqual(in1, out1)
+        self.assertEqual(in2, out2)
+
+    def test_export_xsec(self):
+        self.f2g.import_xsec()
+        self.f2g.export_xsec(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['XSEC.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_hystruc(self):
+        self.f2g.import_hystruc()
+        self.f2g.export_hystruc(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['HYSTRUC.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_street(self):
+        self.f2g.import_street()
+        self.f2g.export_street(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['STREET.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_arf(self):
+        self.f2g.import_arf()
+        self.f2g.export_arf(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['ARF.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_mult(self):
+        self.f2g.import_mult()
+        self.f2g.export_mult(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['MULT.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_sed(self):
+        self.f2g.import_sed()
+        self.f2g.export_sed(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['SED.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_levee(self):
+        self.f2g.import_levee()
+        self.f2g.export_levee(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['LEVEE.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_fpxsec(self):
+        self.f2g.import_fpxsec()
+        self.f2g.export_fpxsec(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['FPXSEC.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_breach(self):
+        self.f2g.import_breach()
+        self.f2g.export_breach(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['BREACH.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_fpfroude(self):
+        self.f2g.import_fpfroude()
+        self.f2g.export_fpfroude(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['FPFROUDE.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_swmmflo(self):
+        self.f2g.import_swmmflo()
+        self.f2g.export_swmmflo(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['SWMMFLO.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_swmmflort(self):
+        self.f2g.import_swmmflort()
+        self.f2g.export_swmmflort(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['SWMMFLORT.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_swmmoutf(self):
+        self.f2g.import_swmmoutf()
+        self.f2g.export_swmmoutf(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['SWMMOUTF.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_tolspatial(self):
+        self.f2g.import_tolspatial()
+        self.f2g.export_tolspatial(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['TOLSPATIAL.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_wsurf(self):
+        self.f2g.import_wsurf()
+        self.f2g.export_wsurf(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['WSURF.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
+
+    def test_export_wstime(self):
+        self.f2g.import_wstime()
+        self.f2g.export_wstime(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files['WSTIME.DAT']
+        outfile = export_paths(infile)
+        in_len, out_len = file_len(infile), file_len(outfile)
+        self.assertEqual(in_len, out_len)
 
 
 # Running tests:

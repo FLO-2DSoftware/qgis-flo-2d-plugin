@@ -6,9 +6,7 @@ SWMMFLO.DAT information goes into the following GeoPackage tables:
 
 * swmmflo - polygon layer of grid cells with SWMM drain inlets
 
-![SWMM tables graph](db_schema_graphs/swmm.svg)
-
-[SWMM tables graph in PDF](db_schema_graphs/swmm.pdf)
+![SWMM tables graph](db_schema_graphs/swmm.png)
 
 **gpkg table: swmmflo** 
 

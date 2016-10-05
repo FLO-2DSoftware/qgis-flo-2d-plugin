@@ -13,9 +13,7 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * time_series (the same we use for inflow data)
 * time_series_data (the same we use for inflow data)
 
-![OUTFLOW tables graph](db_schema_graphs/outflow.svg)
-
-[OUTFLOW tables graph in PDF](db_schema_graphs/outflow.pdf)
+![OUTFLOW tables graph](db_schema_graphs/outflow.png)
 
 **gpkg table: outflow** (contains general info about each outflow)
 

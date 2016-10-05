@@ -8,9 +8,7 @@ FPXSEC.DAT information goes into the following GeoPackage tables:
 * fpxsec - floodplain xsections
 * fpxsec_cells - grid cells of each floodplain xsection
 
-![fpxsec tables graph](db_schema_graphs/fpxsec.svg)
-
-[FPXSEC tables graph in PDF](db_schema_graphs/fpxsec.pdf)
+![fpxsec tables graph](db_schema_graphs/fpxsec.png)
 
 **gpkg table: cont** (model control table)
 

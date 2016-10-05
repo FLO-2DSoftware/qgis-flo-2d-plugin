@@ -15,6 +15,5 @@ FPLAIN.DAT information goes into grid table:
 - 'elevation' REAL, 
 - 'geom' POLYGON 
 
-![grid tables graph](db_schema_graphs/grid.svg)
+![grid tables graph](db_schema_graphs/grid.png)
 
-[GRID tables graph in PDF](db_schema_graphs/grid.pdf)

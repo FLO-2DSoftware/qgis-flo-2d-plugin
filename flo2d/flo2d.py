@@ -421,6 +421,12 @@ class Flo2D(object):
                 'styles': ['arf.qml'],
                 'attrs_edit_widgets': {}
             }),
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': None,
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('rain_arf_areas', {
                 'name': 'Rain ARF Areas',
                 'sgroup': None,
@@ -745,7 +751,7 @@ class Flo2D(object):
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
-            'export_cont',
+            'export_cont_toler',
             'export_mannings_n_topo',
             'export_inflow',
             'export_outflow',

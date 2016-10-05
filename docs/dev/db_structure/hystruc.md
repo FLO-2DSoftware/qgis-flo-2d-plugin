@@ -11,9 +11,7 @@ HYSTRUC.DAT information goes into the following GeoPackage tables:
 * culvert_equations - culvert equations data, STRUCHAR=F
 * storm_drains - storm drains data, STRUCHAR=D
 
-![HYSTRUC tables graph](db_schema_graphs/struct.svg)
-
-[HYSTRUC tables graph in PDF](db_schema_graphs/struct.pdf)
+![HYSTRUC tables graph](db_schema_graphs/struct.png)
 
 **gpkg table: struct** (general info about each structure, STRUCHAR=S)
 
