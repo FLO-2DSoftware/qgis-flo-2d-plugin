@@ -1,5 +1,6 @@
 /nbproject
-/help/build/
+/docs/*/build/
+/flo2d/help/build
 *.pyc
 pylint.log
 *nosetests.log
@@ -8,3 +9,4 @@ pylint.log
 .coverage
 *.gpkg
 *.gpkg-journal
+*flo2d.zip
