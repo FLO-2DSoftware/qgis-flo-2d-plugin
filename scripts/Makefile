@@ -10,7 +10,7 @@ LOCALES =
 #LRELEASE = lrelease-qt4
 
 # dir
-THIS_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+THIS_DIR=./
 SOURCE_DIR=$(THIS_DIR)../flo2d
 USER_HELP_DIR=$(THIS_DIR)../docs/user
 DEV_HELP_DIR=$(THIS_DIR)../docs/dev 
