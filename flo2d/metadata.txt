@@ -11,7 +11,7 @@ name=FLO-2D
 qgisMinimumVersion=2.14
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.2
+version=0.2.1
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
@@ -24,7 +24,8 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=0.2.1 New features:
+- Import/Export tools
 
 # Tags are comma separated with spaces allowed
 tags=flow, 2d, grid, preprocess, geopackage
