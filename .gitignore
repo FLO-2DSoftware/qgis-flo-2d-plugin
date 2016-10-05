@@ -1,5 +1,5 @@
 /nbproject
-/docs/*/build/
+/docs/*/build
 /flo2d/help/build
 *.pyc
 pylint.log
