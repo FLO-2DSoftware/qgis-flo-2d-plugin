@@ -55,7 +55,7 @@ PEP8EXCLUDE=$(SOURCE_DIR)/pydev,$(SOURCE_DIR)/resources.py,$(SOURCE_DIR)/conf.py
 # Normally you would not need to edit below here
 #################################################
 
-HELP = $(USER_HELP_DIR)/build/html
+HELP = $(USER_HELP_DIR)/build/html/
 
 PLUGIN_UPLOAD = $(c)/plugin_upload.py
 
@@ -84,7 +84,7 @@ test: compile transcompile
 		export QGIS_LOG_FILE=/dev/null; \
 		nosetests -v test --cover-package=flo2d --with-coverage --cover-xml --cover-xml-file=nose_coverage.xml --with-xunit --xunit-file=nosetests.xml || true
 
-deploy: compile doc transcompile
+deploy: derase compile doc transcompile
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
