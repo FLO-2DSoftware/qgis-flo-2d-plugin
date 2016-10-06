@@ -35,7 +35,7 @@ from utils import *
 from layers import Layers
 from collections import OrderedDict
 
-from .dlg.dlg_xsec_editor import XsecEditorDialog
+from .gui.dlg_xsec_editor import XsecEditorDialog
 
 
 class Flo2D(object):
@@ -139,7 +139,7 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/export_gds.svg'),
+            os.path.join(self.plugin_dir,'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
             parent=self.iface.mainWindow())
@@ -546,28 +546,28 @@ class Flo2D(object):
                 'visible': False
             }),
             ('swmmflo', {
-                'name': 'SWMMFLO',
-                'sgroup': 'SWMM',
+                'name': 'SD Inlets',
+                'sgroup': 'Storm Drain',
                 'styles': ['swmmflo.qml'],
                 'attrs_edit_widgets': {},
                 'visible': False
             }),
             ('swmmoutf', {
-                'name': 'SWMMOUTF',
-                'sgroup': 'SWMM',
+                'name': 'SD Outlets',
+                'sgroup': 'Storm Drain',
                 'styles': ['swmmoutf.qml'],
                 'attrs_edit_widgets': {},
                 'visible': False
             }),
             ('swmmflort', {
-                'name': 'SWMMFLORT',
-                'sgroup': 'SWMM',
+                'name': 'Rating tables',
+                'sgroup': 'Storm Drain',
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
             ('swmmflort_data', {
-                'name': 'SWMMFLORT Data',
-                'sgroup': 'SWMM',
+                'name': 'Rating Tables Data',
+                'sgroup': 'Storm Drain',
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),

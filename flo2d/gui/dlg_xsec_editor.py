@@ -26,8 +26,9 @@ from PyQt4.QtGui import *
 from qgis.core import *
 
 import os
-#import ..pyqtgraph as pg
 from .utils import load_ui
+
+from xsec_plot_widget import XsecPlotWidget
 
 uiDialog, qtBaseClass = load_ui('xsec_editor')
 
@@ -35,11 +36,20 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
 
     def __init__(self, iface, xsec_fid, parent=None):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.setupUi(self)
         self.setModal(True)
         self.iface = iface
         self.cur_xsec_fid = xsec_fid
+        self.setup_plot()
+
+        # connections
+        self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
+
+    def setup_plot(self):
+        self.plotWidget = XsecPlotWidget()
+        self.plotLayout.addWidget(self.plotWidget)
+        self.test_plot()
 
     def populate_seg_cbo(self, cur_xsec_fid=None):
         """Read chan table, populate the cbo and set active segment of the
@@ -62,17 +72,20 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
 
     def update_plot(self):
         """When xsection data for plot change, update the plot"""
-#        x,y = [1, 2, 3], [5, 6, 7]
-#        pg.plot(x, y)
-
 
     def cur_seg_changed(self):
         """User changed current segment. Update xsection list and populate xsection
         data fields and plot for the first xsection for that segment"""
+        print self.segCbo.currentIndex()
 
     def cur_xsec_changed(self):
         """User changed current xsection in the xsections list. Populate xsection
         data fields and update the plot"""
 
+    def test_plot(self):
+        x,y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 3, 2, 3, 7, 8]
+        self.plotWidget.add_new_bed_plot([x,y])
+        x,y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
+        self.plotWidget.add_org_bed_plot([x,y])
 
 
