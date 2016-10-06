@@ -35,6 +35,8 @@ from utils import *
 from layers import Layers
 from collections import OrderedDict
 
+from .dlg.dlg_xsec_editor import XsecEditorDialog
+
 
 class Flo2D(object):
 
@@ -87,7 +89,7 @@ class Flo2D(object):
             status_tip=None,
             whats_this=None,
             parent=None):
-           
+
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -117,23 +119,29 @@ class Flo2D(object):
             text=self.tr(u'Create FLO-2D Database'),
             callback=self.create_db,
             parent=self.iface.mainWindow())
-        
+
         self.add_action(
             os.path.join(self.plugin_dir,'img/connect.svg'),
             text=self.tr(u'Connect to FLO-2D Database'),
             callback=self.connect,
             parent=self.iface.mainWindow())
-            
+
         self.add_action(
             os.path.join(self.plugin_dir,'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
             callback=self.import_gds,
             parent=self.iface.mainWindow())
-            
+
         self.add_action(
             os.path.join(self.plugin_dir,'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
             callback=self.export_gds,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir,'img/export_gds.svg'),
+            text=self.tr(u'XSection Editor'),
+            callback=self.show_xsec_editor,
             parent=self.iface.mainWindow())
 
     def unload(self):
@@ -178,7 +186,7 @@ class Flo2D(object):
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
-        
+
         # check if the CRS exist in the db
         sql = 'SELECT srs_id FROM gpkg_spatial_ref_sys WHERE organization=? AND organization_coordsys_id=?;'
         rc = self.gpkg.execute(sql, (auth, crsid))
@@ -191,7 +199,7 @@ class Flo2D(object):
             srsid = crsid
         else:
             srsid = rt[0]
-        
+
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
         rc = self.gpkg.execute(sql, (srsid,))
@@ -301,9 +309,9 @@ class Flo2D(object):
 
     def load_layers(self):
         self.layers_data = OrderedDict([
-        
+
         # LAYERS
-            
+
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': None,
@@ -783,7 +791,16 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
-    
+
+    def show_xsec_editor(self):
+        """Show Cross-section editor"""
+        self.dlg_xsec_editor = XsecEditorDialog(self.iface, 0)
+        self.dlg_xsec_editor.show()
+#        result = self.dlg_xsec_editor.exec_()
+#        if result:
+#            self.dlg_xsec_editor.export_reports()
+
+
     def update_style_blocked(self, lyr_id):
         if not self.gpkg.cell_size:
             sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
@@ -800,7 +817,7 @@ class Flo2D(object):
             6: (s, -s/2.414, s/2.414, -s),
             7: (-s/2.414, -s, -s, -s/2.414),
             8: (-s, s/2.414, -s/2.414, s)
-        } 
+        }
         lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
         sym = lyr.rendererV2().symbol()
         for nr in range(sym.symbolLayerCount()):
