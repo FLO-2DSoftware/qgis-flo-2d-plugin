@@ -32,7 +32,7 @@ uiDialog, qtBaseClass = load_ui('xsec_editor')
 
 class XsecEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, parent=None, xsec_fid=1232, gpkg=r'D:\GIS_DATA\GPKG\alawai.gpkg'):
+    def __init__(self, iface, gpkg, xsec_fid=None, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.setupUi(self)
@@ -47,11 +47,14 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         """Read chan table, populate the cbo and set active segment of the
         current xsection"""
         self.gutils.database_connect()
-        cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = {0};'.format(xsec_fid)).fetchone()[0]
         all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
         self.comboBox.clear()
         for row in all_seg:
             self.comboBox.addItem(str(row[0]))
+        if xsec_fid is not None:
+            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = {0};'.format(xsec_fid)).fetchone()[0]
+        else:
+            cur_seg = str(self.comboBox.currentText())
         index = self.comboBox.findText(str(cur_seg), Qt.MatchFixedString)
         self.comboBox.setCurrentIndex(index)
         self.gutils.database_disconnect()

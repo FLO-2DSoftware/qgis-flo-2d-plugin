@@ -212,23 +212,23 @@ class Flo2D(object):
         self.gpkg_fname = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_fname = QFileDialog.getOpenFileName(None,
+        self.gpkg_fname = QFileDialog.getOpenFileName(None,
                          'Select GeoPackage to connect',
                          directory=last_gpkg_dir)
-        if gpkg_fname:
-            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
-            self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
+        if self.gpkg_fname:
+            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fname))
+            self.gpkg = Flo2dGeoPackage(self.gpkg_fname, self.iface)
             self.gpkg.database_connect()
-            self.uc.log_info("Connected to {}".format(gpkg_fname))
+            self.uc.log_info("Connected to {}".format(self.gpkg_fname))
             if self.gpkg.check_gpkg():
-                self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+                self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fname))
                 sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
                 rc = self.gpkg.execute(sql)
                 rt = rc.fetchone()[0]
                 self.srs_id = rt
                 self.load_layers()
             else:
-                self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
+                self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_fname))
         else:
             pass
 
@@ -794,7 +794,7 @@ class Flo2D(object):
 
     def show_xsec_editor(self):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, 0)
+        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.gpkg_fname)
         self.dlg_xsec_editor.show()
 #        result = self.dlg_xsec_editor.exec_()
 #        if result:
