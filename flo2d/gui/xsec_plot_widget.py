@@ -52,19 +52,15 @@ class XsecPlotWidget(QWidget):
         self.plot.clear()
 
     def add_org_bed_plot(self, data):
-        self.plot.getAxis('bottom').setLabel('Station')
-        self.plot.getAxis('left').setLabel('Elevation')
+#        self.plot.getAxis('bottom').setLabel('Station')
+#        self.plot.getAxis('left').setLabel('Elevation')
         s = QSettings()
-        plot_resolution = s.value('/flo2d/xsec_resolution', 1., type=float)
         x,y = data
         pen = pyqtgraph.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
         self.org_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Existing')
 
     def add_new_bed_plot(self, data):
-        self.plot.getAxis('bottom').setLabel('Station')
-        self.plot.getAxis('left').setLabel('Elevation')
         s = QSettings()
-        plot_resolution = s.value('/flo2d/xsec_resolution', 1., type=float)
         x,y = data
         pen = pyqtgraph.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
         self.new_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Changed')

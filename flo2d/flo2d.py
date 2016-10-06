@@ -794,11 +794,8 @@ class Flo2D(object):
 
     def show_xsec_editor(self):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, 0)
+        self.dlg_xsec_editor = XsecEditorDialog(self.iface, 484, r'C:\Users\Radek\Documents\wydra\proj\flo2d\example_data\ccc.gpkg')
         self.dlg_xsec_editor.show()
-#        result = self.dlg_xsec_editor.exec_()
-#        if result:
-#            self.dlg_xsec_editor.export_reports()
 
 
     def update_style_blocked(self, lyr_id):
