@@ -84,7 +84,7 @@ test: compile transcompile
 		export QGIS_LOG_FILE=/dev/null; \
 		nosetests -v test --cover-package=flo2d --with-coverage --cover-xml --cover-xml-file=nose_coverage.xml --with-xunit --xunit-file=nosetests.xml || true
 
-deploy: compile doc transcompile
+deploy: derase compile doc transcompile
 	@echo
 	@echo "------------------------------------------"
 	@echo "Deploying plugin to your .qgis2 directory."
