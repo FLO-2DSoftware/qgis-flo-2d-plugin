@@ -6,9 +6,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   scrum
-   db_structure
-   exam_proj
+   installation
+   database
+   workflow
+   import_gds
+   export_gds
 
 
 

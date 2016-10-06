@@ -62,9 +62,8 @@ INFLOW.DAT information goes into the following GeoPackage tables:
 * parameter name: "inflow_plt_fid",  value: IDEPLT (id of grid element whose hydrograph should be shown at runtime)
 
 
-
-<a name="inflowds"></a>
-## INFLOWx_DS.DAT
+INFLOWx_DS.DAT
+==============
 
 Undocumented...
 

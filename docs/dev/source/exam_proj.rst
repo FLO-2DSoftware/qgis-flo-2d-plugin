@@ -1,5 +1,5 @@
-
-### Projections for some FLO-2D example models
+Projections for some FLO-2D example models
+==========================================
 
 * Goat -  State Plane Arizona Central
 * Lesson 1 - State Plane Arizona Central

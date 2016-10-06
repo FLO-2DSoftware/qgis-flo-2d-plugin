@@ -45,8 +45,8 @@ RAIN.DAT information goes into the following GeoPackage tables:
 
 See #46 for time_series and time_series_data tables description.
 
-<a name="raincell"></a>
-## RAINCELL.DAT
+RAINCELL.DAT
+============
 
 TBD...
 

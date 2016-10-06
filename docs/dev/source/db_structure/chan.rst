@@ -83,7 +83,6 @@ CHAN.DAT information goes into the following GeoPackage tables:
 * "zl" REAL, -- ZL left side slope
 * "zr" REAL --ZR right side slope
 
-<a name="chan_n"></a>
 **gpkg table: chan_n** (natural cross-sections)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -118,8 +117,8 @@ CHAN.DAT information goes into the following GeoPackage tables:
 * "wselend" REAL -- WSELEND, last channel element starting WSEL
 
 
-<a name="chanbank"></a>
-## CHANBANK.DAT
+CHANBANK.DAT
+============
 
 CHANBANK.DAT information goes into the following GeoPackage tables:
 
@@ -132,8 +131,8 @@ Set
 where LEFTBANK = fid of chan_elems
 
 
-<a name="xsec"></a>
-## XSEC.DAT
+XSEC.DAT
+========
 
 XSEC.DAT information goes into the following GeoPackage tables:
 

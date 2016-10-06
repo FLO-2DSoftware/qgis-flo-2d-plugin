@@ -1,9 +1,14 @@
+Installation instructions
+=========================
+
 Document below provides details of installing QGIS and FLO-2D plugin from Lutra repo.
 
-# QGIS #
-To install QGIS, we recommend using [OSGeo4W installer](http://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe "OSGeo4W 64 bit installer").
+QGIS
+----
 
-During installation, select **Advanced Install** > **Install from Internet** > **All Users** > Path to download > **Direct Connection** > The default available download website 
+To install QGIS, we recommend using `OSGeo4W 64 bit installer <http://download.osgeo.org/osgeo4w/osgeo4w-setup-x86_64.exe>`_.
+
+During installation, select **Advanced Install** > **Install from Internet** > **All Users** > Path to download > **Direct Connection** > The default available download website
 
 A new window will appear to **Select Packages**. Select the following packages from the **Desktop** section:
 
@@ -13,15 +18,18 @@ A new window will appear to **Select Packages**. Select the following packages f
 
 (Keep clicking on **Skip** until the latest version appears).
 
-All the dependencies will be automatically selected. 
+All the dependencies will be automatically selected.
 
 For future update/upgrade, with a new release of QGIS, you can run the installer and the new packages will appear.
 
-# FLo-2D plugin installation #
+FLo-2D plugin installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 The plugin is hosted on our repository and accessible by using username and password. First you need to add the repository:
 
-## Adding repo ##
-In QGIS, from the main menu, select **Plugins** > **Manage and Install Plugins ** 
+Adding repo
+^^^^^^^^^^^
+
+In QGIS, from the main menu, select **Plugins** > **Manage and Install Plugins**
 
 A new window will appear. From the left panel, select **Settings**
 
@@ -61,9 +69,10 @@ Click **OK**
 FLO-2D repository should be added to your QGIS plugin repos.
 
 
-## Installing FLO-2D plugin ##
+Installing FLO-2D plugin
+------------------------
 
-In QGIS, from the main menu, select **Plugins** > **Manage and Install Plugins ** 
+In QGIS, from the main menu, select **Plugins** > **Manage and Install Plugins **
 
 From the left panel, select **All**
 
