@@ -102,16 +102,16 @@ class GeoPackageUtils(object):
             return True
         except Exception as e:
             self.msg = 'Couldn\'t connect to GeoPackage'
+            self.uc.log_info(traceback.format_exc())
             return False
 
     def database_disconnect(self):
         """Disconnect from database"""
         try:
-            if self.conn is not None:
-                self.conn.close()
-            else:
-                self.msg = 'There is no opened connection!'
+            self.conn.close()
         except Exception as e:
+            self.msg = 'There is no active connection!'
+            self.uc.log_info(traceback.format_exc())
             raise
 
     def check_gpkg(self):
@@ -249,6 +249,15 @@ class GeoPackageUtils(object):
         max_val = self.execute(sql).fetchone()[0]
         max_val = 0 if max_val is None else max_val
         return max_val
+
+    def table_info(self, table, only_columns=False):
+        qry = 'PRAGMA table_info({0})'.format(table)
+        info = self.execute(qry)
+        if only_columns is True:
+            info = (col[1] for col in info)
+        else:
+            pass
+        return info
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
