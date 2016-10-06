@@ -55,7 +55,7 @@ PEP8EXCLUDE=$(SOURCE_DIR)/pydev,$(SOURCE_DIR)/resources.py,$(SOURCE_DIR)/conf.py
 # Normally you would not need to edit below here
 #################################################
 
-HELP = $(USER_HELP_DIR)/build/html
+HELP = $(USER_HELP_DIR)/build/html/
 
 PLUGIN_UPLOAD = $(c)/plugin_upload.py
 

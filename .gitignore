@@ -1,6 +1,6 @@
 /nbproject
 /docs/*/build
-/flo2d/help/build
+/flo2d/help/build/
 *.pyc
 pylint.log
 *nosetests.log
