@@ -157,7 +157,7 @@ class Flo2D(object):
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
-        self.gpkg_fname = None
+        self.gpkg_fpath = None
         # CRS
         self.crs_widget.selectCrs()
         if self.crs_widget.crs().isValid():
@@ -170,22 +170,22 @@ class Flo2D(object):
             return
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_fname = QFileDialog.getSaveFileName(None,
+        self.gpkg_fpath = QFileDialog.getSaveFileName(None,
                          'Create GeoPackage As...',
                          directory=last_gpkg_dir, filter='*.gpkg')
-        if not gpkg_fname:
+        if not self.gpkg_fpath:
             return
-        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
+        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
 
-        self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
+        self.gpkg = Flo2dGeoPackage(self.gpkg_fpath, self.iface)
         if not self.gpkg.database_create():
-            self.uc.show_warn("Couldn't create new database {}\n{}".format(gpkg_fname, self.gpkg.msg))
+            self.uc.show_warn("Couldn't create new database {}\n{}".format(self.gpkg_fpath, self.gpkg.msg))
         else:
-            self.uc.log_info("Connected to {}".format(gpkg_fname))
+            self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
         if self.gpkg.check_gpkg():
-            self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+            self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
         else:
-            self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
+            self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_fpath))
 
         # check if the CRS exist in the db
         sql = 'SELECT srs_id FROM gpkg_spatial_ref_sys WHERE organization=? AND organization_coordsys_id=?;'
@@ -209,26 +209,26 @@ class Flo2D(object):
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
-        self.gpkg_fname = None
+        self.gpkg_fpath = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_fname = QFileDialog.getOpenFileName(None,
+        self.gpkg_fpath = QFileDialog.getOpenFileName(None,
                          'Select GeoPackage to connect',
                          directory=last_gpkg_dir)
-        if gpkg_fname:
-            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_fname))
-            self.gpkg = Flo2dGeoPackage(gpkg_fname, self.iface)
+        if self.gpkg_fpath:
+            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
+            self.gpkg = Flo2dGeoPackage(self.gpkg_fpath, self.iface)
             self.gpkg.database_connect()
-            self.uc.log_info("Connected to {}".format(gpkg_fname))
+            self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
             if self.gpkg.check_gpkg():
-                self.uc.bar_info("GeoPackage {} is OK".format(gpkg_fname))
+                self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
                 sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
                 rc = self.gpkg.execute(sql)
                 rt = rc.fetchone()[0]
                 self.srs_id = rt
                 self.load_layers()
             else:
-                self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_fname))
+                self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_fpath))
         else:
             pass
 
