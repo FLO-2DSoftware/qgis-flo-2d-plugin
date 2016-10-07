@@ -56,7 +56,6 @@ class XsecPlotWidget(QWidget):
     def add_org_bed_plot(self, data):
 #        self.plot.getAxis('bottom').setLabel('Station')
 #        self.plot.getAxis('left').setLabel('Elevation')
-        s = QSettings()
         x, y = data
         pen = pg.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
         self.org_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Existing')

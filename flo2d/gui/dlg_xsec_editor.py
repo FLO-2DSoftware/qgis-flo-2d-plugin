@@ -38,10 +38,10 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, gpkg, xsec_fid=None, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
+        self.iface = iface
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
-        self.iface = iface
         self.cur_xsec_fid = xsec_fid
         self.gpkg = gpkg
         self.gutils = GeoPackageUtils(gpkg, iface)
