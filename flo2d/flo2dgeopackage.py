@@ -342,7 +342,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('inflow', 'inflow_cells', 'reservoirs')
         head, inf, res = self.parser.parse_inflow()
-        cont_sql += [cont_part.format(head['IHOURDAILY'])]
+        cont_sql += [cont_part.format(head['IDEPLT'])]
         gids = inf.keys() + res.keys()
         cells = self.get_centroids(gids)
         ts_max = self.get_max('time_series')

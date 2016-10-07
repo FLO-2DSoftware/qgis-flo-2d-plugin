@@ -794,7 +794,7 @@ class Flo2D(object):
 
     def show_xsec_editor(self):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, 484, r'C:\Users\Radek\Documents\wydra\proj\flo2d\example_data\ccc.gpkg')
+        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.gpkg_fpath)
         self.dlg_xsec_editor.show()
 
 
