@@ -46,7 +46,7 @@ class CrossSection(GeoPackageUtils):
 
     def get_row(self):
         qry = 'SELECT * FROM chan_elems WHERE fid = {0};'
-        values = self.execute(qry.format(self.fid)).fetchone()
+        values = [x if x is not None else '' for x in self.execute(qry.format(self.fid)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
         self.type = self.row['type']
         return self.row
@@ -63,7 +63,7 @@ class CrossSection(GeoPackageUtils):
             columns = '*'
             args = self.table_info('chan', only_columns=True)
         qry = 'SELECT {0} FROM chan WHERE fid = {1};'.format(columns, seg_fid)
-        values = self.execute(qry).fetchone()
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
         self.chan = OrderedDict(zip(args, values))
         return self.chan
 
@@ -80,7 +80,7 @@ class CrossSection(GeoPackageUtils):
             columns = '*'
             args = self.table_info(tab, only_columns=True)
         qry = 'SELECT {0} FROM {1} WHERE elem_fid = {2};'.format(columns, tab, self.fid)
-        values = self.execute(qry).fetchone()
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
         self.chan_tab = OrderedDict(zip(args, values))
         return self.chan_tab
 

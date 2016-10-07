@@ -25,11 +25,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.utils import iface
-from .. import pyqtgraph
+from .. import pyqtgraph as pg
 
-pyqtgraph.setConfigOption('background', 'w')
-pyqtgraph.setConfigOption('foreground', 'k')
-pyqtgraph.setConfigOption('antialias', True)
+pg.setConfigOption('background', 'w')
+pg.setConfigOption('foreground', 'k')
+pg.setConfigOption('antialias', True)
 
 
 class XsecPlotWidget(QWidget):
@@ -37,7 +37,9 @@ class XsecPlotWidget(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.xsec = None
-        self.gw = pyqtgraph.GraphicsWindow()
+        self.org_bed_plot = None
+        self.new_bed_plot = None
+        self.gw = pg.GraphicsWindow()
         self.plot = self.gw.addPlot()
         self.plot.showGrid(x=True, y=True)
 
@@ -55,15 +57,12 @@ class XsecPlotWidget(QWidget):
 #        self.plot.getAxis('bottom').setLabel('Station')
 #        self.plot.getAxis('left').setLabel('Elevation')
         s = QSettings()
-        x,y = data
-        pen = pyqtgraph.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
+        x, y = data
+        pen = pg.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
         self.org_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Existing')
 
     def add_new_bed_plot(self, data):
         s = QSettings()
-        x,y = data
-        pen = pyqtgraph.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
+        x, y = data
+        pen = pg.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
         self.new_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Changed')
-
-
-
