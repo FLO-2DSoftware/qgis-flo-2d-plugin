@@ -47,7 +47,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "IRAIN": self.rainChBox,
             "ISED": self.sedChBox,
             "IWRFS": self.redFactChBox,
-            "LEVEE": self.leveeChBox,
+            "LEVEE": self.leveesChBox,
             # "MUD": self.???,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeEdit,
