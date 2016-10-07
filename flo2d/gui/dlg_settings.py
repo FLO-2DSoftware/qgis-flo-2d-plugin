@@ -37,4 +37,22 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.iface = iface
 
+        self.widget_map = {
+            "ICHANNEL": self.chanChBox,
+            "IEVAP": self.evapChBox,
+            "IHYDRSTRUCT": self.hystrucChBox,
+            "IMULTC": self.multChBox,
+            "IMODFLOW": self.modfloChBox,
+            "INFIL": self.infilChBox,
+            "IRAIN": self.rainChBox,
+            "ISED": self.sedChBox,
+            "IWRFS": self.redFactChBox,
+            "LEVEE": self.leveeChBox,
+            # "MUD": self.???,
+            "SWMM": self.swmmChBox,
+            "CELLSIZE": self.cellSizeEdit,
+            "MANNING": self.manningEdit,
+            "PROJ": self.projectionSelector
+        }
+
 

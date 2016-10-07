@@ -175,7 +175,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="lineEdit">
+         <widget class="QLineEdit" name="cellSizeEdit">
           <property name="maximumSize">
            <size>
             <width>80</width>
@@ -185,7 +185,7 @@
          </widget>
         </item>
         <item row="0" column="4">
-         <widget class="QLineEdit" name="lineEdit_2">
+         <widget class="QLineEdit" name="manningEdit">
           <property name="maximumSize">
            <size>
             <width>80</width>
@@ -247,10 +247,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_3"/>
+         <widget class="QLineEdit" name="gpkgPathEdit"/>
         </item>
         <item>
-         <widget class="QToolButton" name="toolButton">
+         <widget class="QToolButton" name="gpkgBrowseBtn">
           <property name="text">
            <string>...</string>
           </property>
@@ -280,7 +280,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QgsProjectionSelectionWidget" name="mQgsProjectionSelectionWidget"/>
+         <widget class="QgsProjectionSelectionWidget" name="projectionSelector"/>
         </item>
        </layout>
       </item>

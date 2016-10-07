@@ -164,8 +164,10 @@ class Flo2D(object):
 
     def show_settings(self):
         """Show Cross-section editor"""
+        cur_db = self.gpkg_fpath
         self.dlg_settings = SettingsDialog(self.iface, self.gpkg_fpath)
         self.dlg_settings.show()
+        
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
