@@ -36,6 +36,7 @@ from layers import Layers
 from collections import OrderedDict
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
+from .gui.dlg_settings import SettingsDialog
 
 
 class Flo2D(object):
@@ -69,6 +70,7 @@ class Flo2D(object):
         self.conn = None
         self.lyrs = Layers()
         self.gpkg = None
+        self.gpkg_fpath = None
         self.prep_sql = None
 
     # noinspection PyMethodMayBeStatic
@@ -115,6 +117,11 @@ class Flo2D(object):
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.add_action(
+            os.path.join(self.plugin_dir,'img/settings.svg'),
+            text=self.tr(u'Settings'),
+            callback=self.show_settings,
+            parent=self.iface.mainWindow())
+        self.add_action(
             os.path.join(self.plugin_dir,'img/new_db.svg'),
             text=self.tr(u'Create FLO-2D Database'),
             callback=self.create_db,
@@ -154,6 +161,11 @@ class Flo2D(object):
         # remove the toolbar
         del self.toolbar
         del self.conn, self.gpkg, self.lyrs
+
+    def show_settings(self):
+        """Show Cross-section editor"""
+        self.dlg_settings = SettingsDialog(self.iface, self.gpkg_fpath)
+        self.dlg_settings.show()
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
