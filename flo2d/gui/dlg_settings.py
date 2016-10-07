@@ -24,19 +24,22 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
-
 from .utils import load_ui
+from ..flo2dgeopackage import GeoPackageUtils, database_connect
 
 uiDialog, qtBaseClass = load_ui('settings')
 
+
 class SettingsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, gpkg=None, parent=None):
+    def __init__(self, iface, con, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
-        self.setupUi(self)
         self.iface = iface
-
+        self.setupUi(self)
+        self.con = con
+        self.gpkg = None
+        self.gutils = GeoPackageUtils(self.con, self.iface)
         self.widget_map = {
             "ICHANNEL": self.chanChBox,
             "IEVAP": self.evapChBox,
@@ -46,13 +49,51 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "INFIL": self.infilChBox,
             "IRAIN": self.rainChBox,
             "ISED": self.sedChBox,
-            "IWRFS": self.redFactChBox,
+            "IWRFS": self.redFacChBox,
             "LEVEE": self.leveesChBox,
             # "MUD": self.???,
+            # "PROJ": self.projectionSelector,
+            # "MANNING": self.manningEdit,
             "SWMM": self.swmmChBox,
-            "CELLSIZE": self.cellSizeEdit,
-            "MANNING": self.manningEdit,
-            "PROJ": self.projectionSelector
+            "CELLSIZE": self.cellSizeEdit
         }
+        self.setup()
 
+    def setup(self):
+        self.gpkg = self.gpkgPathEdit.text()
+        if not self.gpkg:
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+        else:
+            pass
+        self.read()
 
+    def read(self):
+        for name, wid in self.widget_map.iteritems():
+            qry = '''SELECT value FROM cont WHERE name = '{0}';'''.format(name)
+            self.gutils.uc.log_info(repr(name))
+            value = self.gutils.execute(qry).fetchone()[0]
+            if isinstance(wid, QLineEdit):
+                wid.setText(str(value))
+            elif isinstance(wid, QCheckBox):
+                wid.setChecked(int(value))
+            elif name == 'PROJ':
+                coord = QgsCoordinateReferenceSystem()
+                coord.createFromWkt(value)
+                wid.setCrs(coord)
+            else:
+                pass
+
+    def write(self):
+        for name, wid in self.widget_map.iteritems():
+            qry = '''INSERT value INTO cont WHERE name = '{0}';'''.format(name)
+            if isinstance(wid, QLineEdit):
+                value = wid.text()
+                self.gutils.execute(qry)
+            elif isinstance(wid, QCheckBox):
+                value = 1 if wid.isChecked() else 0
+
+            elif name == 'PROJ':
+                pass
+            else:
+                pass
+            self.gutils.execute(qry.format(value))

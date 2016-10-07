@@ -28,21 +28,14 @@ from flo2dgeopackage import GeoPackageUtils
 class CrossSection(GeoPackageUtils):
     columns = ['fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'geom']
 
-    def __init__(self, fid, path, iface):
-        super(CrossSection, self).__init__(path, iface)
+    def __init__(self, fid, con, iface):
+        super(CrossSection, self).__init__(con, iface)
         self.fid = fid
         self.row = None
         self.type = None
         self.chan = None
         self.chan_tab = None
         self.xsec = None
-
-    def __enter__(self):
-        self.database_connect()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.database_disconnect()
 
     def get_row(self):
         qry = 'SELECT * FROM chan_elems WHERE fid = {0};'
@@ -95,12 +88,15 @@ class CrossSection(GeoPackageUtils):
         return self.xsec
 
 if __name__ == '__main__':
+    from flo2dgeopackage import database_connect
     gpkg = r'D:\GIS_DATA\GPKG\alawai.gpkg'
-    with CrossSection(1232, gpkg, None) as xs:
-        row = xs.get_row()
-        chan = xs.chan_segment()
-        chan_tab = xs.chan_table()
-        data = xs.xsec_data()
+    con = database_connect(gpkg)
+    xs = CrossSection(1232, con, None)
+    row = xs.get_row()
+    chan = xs.chan_segment()
+    chan_tab = xs.chan_table()
+    data = xs.xsec_data()
+    con.close()
     print(row)
     print(chan)
     print(chan_tab)

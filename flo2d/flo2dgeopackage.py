@@ -63,76 +63,65 @@ def spatialite_connect(*args, **kwargs):
     return dbapi2.connect(*args, **kwargs)
 
 
+def database_create(path):
+    """Create geopackage with SpatiaLite functions"""
+    # delete db file if exists
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+        else:
+            pass
+    except Exception as e:
+        print('Couldn\'t write on the existing GeoPackage file. Check if it is not opened by another process.')
+        return False
+
+    con = database_connect(path)
+    plugin_dir = os.path.dirname(__file__)
+    script = os.path.join(plugin_dir, 'db_structure.sql')
+    qry = open(script, 'r').read()
+    c = con.cursor()
+    c.executescript(qry)
+    con.commit()
+    c.close()
+    return con
+
+
+def database_connect(path):
+    """Connect database with sqlite3"""
+    try:
+        con = spatialite_connect(path)
+        return con
+    except Exception as e:
+        print('Couldn\'t connect to GeoPackage')
+        print(traceback.format_exc())
+        return False
+
+
+def database_disconnect(con):
+    """Disconnect from database"""
+    try:
+        con.close()
+    except Exception as e:
+        print('There is no active connection!')
+        print(traceback.format_exc())
+
+
 class GeoPackageUtils(object):
     """GeoPackage utils for handling GPKG files"""
-    def __init__(self, path, iface):
-        self.path = path
+    def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
-        self.conn = None
-        self.msg = None
-
-    def database_create(self):
-        """Create geopackage with SpatiaLite functions"""
-        # delete db file if exists
-        if os.path.exists(self.path):
-            try:
-                os.remove(self.path)
-            except:
-                self.msg = "Couldn't write on the existing GeoPackage file. Check if it is not opened by another process."
-                return False
-        
-        self.database_connect()
-        if self.conn == False:
-            return False
-        
-        plugin_dir = os.path.dirname(__file__)
-        script = os.path.join(plugin_dir, 'db_structure.sql')
-        qry = open(script, 'r').read()
-        c = self.conn.cursor()
-        c.executescript(qry)
-        self.conn.commit()
-        c.close()
-        return True
-
-    def database_connect(self):
-        """Connect database with sqlite3"""
-        try:
-            self.conn = spatialite_connect(self.path)
-            return True
-        except Exception as e:
-            self.msg = 'Couldn\'t connect to GeoPackage'
-            self.uc.log_info(traceback.format_exc())
-            return False
-
-    def database_disconnect(self):
-        """Disconnect from database"""
-        try:
-            self.conn.close()
-        except Exception as e:
-            self.msg = 'There is no active connection!'
-            self.uc.log_info(traceback.format_exc())
-            raise
-
-    def check_gpkg(self):
-        """Check if file is GeoPackage """
-        try:
-            c = self.conn.cursor()
-            c.execute('SELECT * FROM gpkg_contents;')
-            c.fetchone()
-            return True
-        except:
-            return False
+        self.con = con
 
     def execute(self, statement, inputs=None):
         """Execute a prepared SQL statement on this geopackage database."""
-        with self.conn as db_con:
-            cursor = db_con.cursor()
-            if inputs is not None:
-                result_cursor = cursor.execute(statement, inputs)
-            else:
-                result_cursor = cursor.execute(statement)
-            return result_cursor
+        cursor = self.con.cursor()
+        if inputs is not None:
+            result_cursor = cursor.execute(statement, inputs)
+        else:
+            result_cursor = cursor.execute(statement)
+        self.con.commit()
+        return result_cursor
 
     def batch_execute(self, *sqls):
         for sql in sqls:
@@ -149,6 +138,16 @@ class GeoPackageUtils(object):
             except Exception as e:
                 self.uc.log_info(qry)
                 self.uc.log_info(traceback.format_exc())
+
+    def check_gpkg(self):
+        """Check if file is GeoPackage """
+        try:
+            c = self.con.cursor()
+            c.execute('SELECT * FROM gpkg_contents;')
+            c.fetchone()
+            return True
+        except Exception as e:
+            return False
 
     def is_table_empty(self, table):
         r = self.execute('''SELECT rowid FROM {0};'''.format(table))
@@ -262,9 +261,8 @@ class GeoPackageUtils(object):
 
 class Flo2dGeoPackage(GeoPackageUtils):
     """GeoPackage object class for storing FLO-2D model data"""
-    def __init__(self, path, iface):
-        super(Flo2dGeoPackage, self).__init__(path, iface)
-        self.group = 'FLO-2D_{}'.format(os.path.basename(path).replace('.gpkg', ''))
+    def __init__(self, con, iface):
+        super(Flo2dGeoPackage, self).__init__(con, iface)
         self.parser = None
         self.cell_size = None
         self.buffer = None
