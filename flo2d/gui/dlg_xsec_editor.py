@@ -175,9 +175,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         data fields and update the plot"""
 
     def test_plot(self):
-        x,y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 3, 2, 3, 7, 8]
-        self.plotWidget.add_new_bed_plot([x,y])
-        x,y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
-        self.plotWidget.add_org_bed_plot([x,y])
-
-
+        x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 3, 2, 3, 7, 8]
+        self.plotWidget.add_new_bed_plot([x, y])
+        x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
+        self.plotWidget.add_org_bed_plot([x, y])
