@@ -166,7 +166,7 @@ class Flo2D(object):
     def show_settings(self):
         """Show Cross-section editor"""
         cur_db = self.gpkg_fpath
-        self.dlg_settings = SettingsDialog(self.iface, self.con)
+        self.dlg_settings = SettingsDialog(self.con, self.iface)
         self.dlg_settings.show()
 
     def create_db(self):
@@ -811,7 +811,7 @@ class Flo2D(object):
 
     def show_xsec_editor(self):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.con)
+        self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface)
         self.dlg_xsec_editor.show()
 
     def update_style_blocked(self, lyr_id):
@@ -838,7 +838,7 @@ class Flo2D(object):
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
 
     def settings(self):
-        self.dlg_settings = SettingsDialog(self.iface, self.con)
+        self.dlg_settings = SettingsDialog(self.con, self.iface)
         self.dlg_settings.show()
         result = self.dlg_settings.exec_()
         if result:

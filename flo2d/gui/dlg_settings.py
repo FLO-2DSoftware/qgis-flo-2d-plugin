@@ -32,7 +32,7 @@ uiDialog, qtBaseClass = load_ui('settings')
 
 class SettingsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, con, parent=None):
+    def __init__(self, con, iface, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
@@ -70,7 +70,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
     def read(self):
         for name, wid in self.widget_map.iteritems():
             qry = '''SELECT value FROM cont WHERE name = '{0}';'''.format(name)
-            self.gutils.uc.log_info(repr(name))
             value = self.gutils.execute(qry).fetchone()[0]
             if isinstance(wid, QLineEdit):
                 wid.setText(str(value))
@@ -91,7 +90,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 self.gutils.execute(qry)
             elif isinstance(wid, QCheckBox):
                 value = 1 if wid.isChecked() else 0
-
             elif name == 'PROJ':
                 pass
             else:

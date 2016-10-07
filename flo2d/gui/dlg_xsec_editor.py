@@ -34,7 +34,7 @@ uiDialog, qtBaseClass = load_ui('xsec_editor')
 
 class XsecEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, con, xsec_fid=None, parent=None):
+    def __init__(self, con, iface, xsec_fid=None, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
