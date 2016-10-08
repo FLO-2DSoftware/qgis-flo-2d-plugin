@@ -62,7 +62,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         for row in all_seg:
             self.segCbo.addItem(str(row[0]))
         if xsec_fid is not None:
-            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = {0};'.format(xsec_fid)).fetchone()[0]
+            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = ?;', (xsec_fid,)).fetchone()[0]
         else:
             cur_seg = str(self.segCbo.currentText())
         index = self.segCbo.findText(str(cur_seg), Qt.MatchFixedString)
@@ -75,8 +75,8 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         """Get chan_elems records of the current segment (chan) and populate
         the xsection list"""
         cur_seg = str(self.segCbo.currentText())
-        qry = 'SELECT fid FROM chan_elems WHERE seg_fid = {0} ORDER BY nr_in_seg;'.format(cur_seg)
-        rows = self.gutils.execute(qry)
+        qry = 'SELECT fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
+        rows = self.gutils.execute(qry, (cur_seg,))
         position = 0
         model = QStandardItemModel()
         for i, f in enumerate(rows):

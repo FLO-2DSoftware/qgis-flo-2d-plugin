@@ -38,8 +38,8 @@ class CrossSection(GeoPackageUtils):
         self.xsec = None
 
     def get_row(self):
-        qry = 'SELECT * FROM chan_elems WHERE fid = {0};'
-        values = [x if x is not None else '' for x in self.execute(qry.format(self.fid)).fetchone()]
+        qry = 'SELECT * FROM chan_elems WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
         self.type = self.row['type']
         return self.row
@@ -55,8 +55,8 @@ class CrossSection(GeoPackageUtils):
         else:
             columns = '*'
             args = self.table_info('chan', only_columns=True)
-        qry = 'SELECT {0} FROM chan WHERE fid = {1};'.format(columns, seg_fid)
-        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        qry = 'SELECT {0} FROM chan WHERE fid = ?;'.format(columns)
+        values = [x if x is not None else '' for x in self.execute(qry, (seg_fid,)).fetchone()]
         self.chan = OrderedDict(zip(args, values))
         return self.chan
 
@@ -72,8 +72,8 @@ class CrossSection(GeoPackageUtils):
         else:
             columns = '*'
             args = self.table_info(tab, only_columns=True)
-        qry = 'SELECT {0} FROM {1} WHERE elem_fid = {2};'.format(columns, tab, self.fid)
-        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        qry = 'SELECT {0} FROM {1} WHERE elem_fid = ?;'.format(columns, tab)
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.chan_tab = OrderedDict(zip(args, values))
         return self.chan_tab
 
@@ -83,8 +83,8 @@ class CrossSection(GeoPackageUtils):
         else:
             return None
         nxsecnum = self.chan_tab['nxsecnum']
-        qry = 'SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = {0} ORDER BY fid;'.format(nxsecnum)
-        self.xsec = self.execute(qry).fetchall()
+        qry = 'SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'
+        self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
         return self.xsec
 
 if __name__ == '__main__':

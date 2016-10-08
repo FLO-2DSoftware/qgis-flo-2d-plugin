@@ -208,7 +208,7 @@ class Flo2D(object):
         rt = rc.fetchone()
         if not rt:
             sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
-            data = (self.crs.description(), crsid, auth, crsid, proj, '',)
+            data = (self.crs.description(), crsid, auth, crsid, proj, '')
             rc = self.gpkg.execute(sql, data)
             del rc
             srsid = crsid

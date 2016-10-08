@@ -69,8 +69,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
-            qry = '''SELECT value FROM cont WHERE name = '{0}';'''.format(name)
-            value = self.gutils.execute(qry).fetchone()[0]
+            qry = '''SELECT value FROM cont WHERE name = ?;'''
+            value = self.gutils.execute(qry, (name,)).fetchone()[0]
             if isinstance(wid, QLineEdit):
                 wid.setText(str(value))
             elif isinstance(wid, QCheckBox):
@@ -84,14 +84,14 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def write(self):
         for name, wid in self.widget_map.iteritems():
-            qry = '''INSERT value INTO cont WHERE name = '{0}';'''.format(name)
+            qry = '''INSERT INTO cont (value) WHERE name = ? VALUES (?);'''
+            value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
-                self.gutils.execute(qry)
             elif isinstance(wid, QCheckBox):
                 value = 1 if wid.isChecked() else 0
             elif name == 'PROJ':
                 pass
             else:
                 pass
-            self.gutils.execute(qry.format(value))
+            self.gutils.execute(qry, (name, value))

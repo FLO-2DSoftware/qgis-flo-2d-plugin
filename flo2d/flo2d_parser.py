@@ -127,7 +127,7 @@ class ParseDAT(object):
                 yield row
 
     @staticmethod
-    def fix_row_size(row, fix_size, default='NULL'):
+    def fix_row_size(row, fix_size, default=None):
         loops = fix_size - len(row)
         for l in range(loops):
             row.append(default)
@@ -231,8 +231,8 @@ class ParseDAT(object):
             else:
                 rain_arf.append(row)
             if 'RAINSPEED' not in data:
-                data['RAINSPEED'] = 'NULL'
-                data['IRAINDIR'] = 'NULL'
+                data['RAINSPEED'] = None
+                data['IRAINDIR'] = None
             else:
                 pass
         return data, time_series, rain_arf
@@ -255,7 +255,7 @@ class ParseDAT(object):
                 pass
         else:
             pass
-        chars = {'R': 5, 'F': 8, 'S': 3, 'C': 3, 'H': 5}
+        chars = {'R': 4, 'F': 8, 'S': 3, 'C': 3, 'H': 5}
         for char in chars:
             data[char] = []
         for row in par:
@@ -295,7 +295,7 @@ class ParseDAT(object):
         if xsec is not None:
             parxs = (["'{0}'".format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
         else:
-            parxs = repeat(['NULL'])
+            parxs = repeat([None])
         start = True
         segments = []
         wsel = []
