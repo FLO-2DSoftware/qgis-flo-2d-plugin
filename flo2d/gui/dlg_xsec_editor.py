@@ -151,7 +151,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         """When xsection data for plot change, update the plot"""
         self.plotWidget.clear_plot()
         dm = self.xs_data_model
-        print dm.rowCount()
+        print(dm.rowCount())
         x = []
         y = []
         for i in range(dm.rowCount()):

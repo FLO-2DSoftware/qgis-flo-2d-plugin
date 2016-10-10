@@ -36,6 +36,7 @@ from layers import Layers
 from collections import OrderedDict
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
+from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from info_tool import InfoTool
 
@@ -679,18 +680,6 @@ class Flo2D(object):
             }),
             ('qh_table_data', {
                 'name': 'QH Tables Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('time_series', {
-                'name': 'Time Series',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('time_series_data', {
-                'name': 'Time Series Data',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
