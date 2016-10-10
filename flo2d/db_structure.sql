@@ -104,6 +104,51 @@ CREATE TABLE "time_series_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_data', 'aspatial');
 
+CREATE TABLE "time_series_inflow" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "hourdaily" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_inflow', 'aspatial');
+
+CREATE TABLE "time_series_inflow_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "series_fid" INTEGER,
+    "time" REAL,
+    "value" REAL,
+    "value2" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_inflow_data', 'aspatial');
+
+CREATE TABLE "time_series_outflow" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_outflow', 'aspatial');
+
+CREATE TABLE "time_series_outflow_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "series_fid" INTEGER,
+    "time" REAL,
+    "value" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_outflow_data', 'aspatial');
+
+CREATE TABLE "time_series_rain" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_rain', 'aspatial');
+
+CREATE TABLE "time_series_rain_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "series_fid" INTEGER,
+    "time" REAL,
+    "value" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('time_series_rain_data', 'aspatial');
+
+
 --CREATE TRIGGER "find_inflow_cells_insert"
 --    AFTER INSERT ON "inflow"
 --    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
