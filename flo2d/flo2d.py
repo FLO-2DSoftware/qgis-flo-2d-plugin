@@ -695,6 +695,42 @@ class Flo2D(object):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
+            ('inflow_time_series', {
+                'name': 'Inflow Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('inflow_time_series_data', {
+                'name': 'Inflow Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('outflow_time_series', {
+                'name': 'Outflow Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('outflow_time_series_data', {
+                'name': 'Outflow Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('rain_time_series', {
+                'name': 'Rain Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('rain_time_series_data', {
+                'name': 'Rain Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
             ('rain', {
                 'name': 'Rain',
                 'sgroup': 'Tables',
@@ -835,6 +871,14 @@ class Flo2D(object):
         self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, fid)
         self.dlg_xsec_editor.show()
 
+    def show_inflow_editor(self, fid=None):
+        """Show inflows editor"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
+        self.dlg_inflow_editor.show()
+
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas)
@@ -856,7 +900,8 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
-            'chan_elems': self.show_xsec_editor
+            'chan_elems': self.show_xsec_editor,
+            'inflow': self.show_inflow_editor
         }
 
     def update_style_blocked(self, lyr_id):
