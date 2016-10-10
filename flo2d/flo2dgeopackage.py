@@ -135,8 +135,7 @@ class GeoPackageUtils(object):
                 qry_part = ' (' + ','.join(['?'] * row_len) + ')'
                 qry_all = qry + qry_part
                 cur = self.con.cursor()
-                for row in sql:
-                    cur.execute(qry_all, row)
+                cur.executemany(qry_all, sql)
                 self.con.commit()
                 del sql[:]
                 sql += [qry, row_len]
@@ -171,11 +170,11 @@ class GeoPackageUtils(object):
 
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
-        for g in set(gids):
-            if buffers is False:
-                sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
-            else:
-                sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        if buffers is False:
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        else:
+            sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        for g in gids:
             geom = self.execute(sql.format(table, field), (g,)).fetchone()[0]
             cells[g] = geom
         return cells

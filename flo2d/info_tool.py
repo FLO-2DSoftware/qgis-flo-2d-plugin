@@ -39,16 +39,20 @@ class InfoTool(QgsMapToolIdentify):
         pass
 
     def canvasReleaseEvent(self, e):
-        pt = self.toMapCoordinates(e.pos())
-        feat = self.identify(e.x(), e.y(), QgsMapToolIdentify.LayerSelection)[0]
-        lyr_name = feat.mLayer.name()
-        lyr_id = feat.mLayer.id()
-        table = feat.mLayer.dataProvider().dataSourceUri().split('=')[-1]
-        fid = feat.mFeature.id()
-        self.pass_res(table, fid)
+        try:
+            pt = self.toMapCoordinates(e.pos())
+            feat = self.identify(e.x(), e.y(), QgsMapToolIdentify.LayerSelection)[0]
+            lyr_name = feat.mLayer.name()
+            lyr_id = feat.mLayer.id()
+            table = feat.mLayer.dataProvider().dataSourceUri().split('=')[-1]
+            fid = feat.mFeature.id()
+            self.pass_res(table, fid)
+        except IndexError as e:
+            print('Point outside layers extent.')
+            return
 
     def pass_res(self, table, fid):
-        print "Picked: {} {}".format(table, fid)
+        print('Picked: {} {}'.format(table, fid))
         self.feature_picked.emit(table, fid)
 
     def activate(self):
@@ -65,6 +69,3 @@ class InfoTool(QgsMapToolIdentify):
 
     def isEditTool(self):
         return False
-
-
-
