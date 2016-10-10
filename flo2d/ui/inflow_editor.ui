@@ -71,7 +71,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="nameEdit"/>
+           <widget class="QComboBox" name="inflowNameCbo"/>
           </item>
          </layout>
         </item>
