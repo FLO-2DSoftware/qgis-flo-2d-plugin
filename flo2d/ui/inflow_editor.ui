@@ -47,6 +47,66 @@
          <number>20</number>
         </property>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>80</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Inflow name</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="nameEdit"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Inflow defined for</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="ifcFloodplainRadio">
+            <property name="text">
+             <string>Floodplain</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="ifcChannelRadio">
+            <property name="text">
+             <string>Channel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QLabel" name="label_3">
@@ -56,14 +116,20 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
-              <width>99999</width>
+              <width>80</width>
               <height>16777215</height>
              </size>
             </property>
             <property name="text">
-             <string>Inflow type</string>
+             <string>Type</string>
             </property>
            </widget>
           </item>
@@ -83,22 +149,20 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>200</width>
+              <width>9999</width>
               <height>16777215</height>
              </size>
             </property>
             <item>
              <property name="text">
-              <string>Hydrograph</string>
+              <string>Inflow hydrograph</string>
              </property>
             </item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="mudChBox">
-            <property name="text">
-             <string>Mud</string>
-            </property>
+            <item>
+             <property name="text">
+              <string>Channel outflow or diversion</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -135,7 +199,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QComboBox" name="timeSeriesCbo">
+         <widget class="QComboBox" name="tseriesCbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -157,7 +221,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="toolButton">
+           <widget class="QToolButton" name="importTseriesBtn">
             <property name="text">
              <string>Import</string>
             </property>
