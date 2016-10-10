@@ -26,7 +26,7 @@ import traceback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4 import uic
-from qgis.gui import QgsProjectionSelectionWidget
+from qgis.gui import QgsProjectionSelectionWidget, QgsMapToolIdentify
 from qgis.core import *
 from flo2d_dialog import Flo2DDialog
 from user_communication import UserCommunication
@@ -37,6 +37,7 @@ from collections import OrderedDict
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
 from .gui.dlg_settings import SettingsDialog
+from info_tool import InfoTool
 
 
 class Flo2D(object):
@@ -62,6 +63,8 @@ class Flo2D(object):
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
+        self.create_map_tools()
+
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Flo2D')
@@ -72,6 +75,10 @@ class Flo2D(object):
         self.gpkg = None
         self.gpkg_fpath = None
         self.prep_sql = None
+        self.set_editors_map()
+
+        # connections
+        self.info_tool.feature_picked.connect(self.get_feature_info)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -121,6 +128,7 @@ class Flo2D(object):
             text=self.tr(u'Settings'),
             callback=self.show_settings,
             parent=self.iface.mainWindow())
+
         self.add_action(
             os.path.join(self.plugin_dir,'img/new_db.svg'),
             text=self.tr(u'Create FLO-2D Database'),
@@ -146,6 +154,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir,'img/info_tool.svg'),
+            text=self.tr(u'Info Tool'),
+            callback=self.identify,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir,'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
@@ -167,7 +181,10 @@ class Flo2D(object):
         cur_db = self.gpkg_fpath
         self.dlg_settings = SettingsDialog(self.iface, self.gpkg_fpath)
         self.dlg_settings.show()
-        
+#        result = self.dlg_settings.exec_()
+#        if result:
+#            self.dlg_settings.save_settings()
+
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
@@ -806,11 +823,37 @@ class Flo2D(object):
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
 
-    def show_xsec_editor(self):
+    def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.gpkg_fpath)
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.gpkg_fpath, fid)
         self.dlg_xsec_editor.show()
 
+    def create_map_tools(self):
+        self.canvas = self.iface.mapCanvas()
+        self.info_tool = InfoTool(self.canvas)
+
+    def identify(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.canvas.setMapTool(self.info_tool)
+
+    def get_feature_info(self, table, fid):
+        # what is the proper dialog for this kind of feature?
+        try:
+            show_editor = self.editors_map[table]
+        except KeyError:
+            self.uc.bar_info("Not implemented.....")
+            return
+        show_editor(fid)
+
+    def set_editors_map(self):
+        self.editors_map = {
+            'chan_elems': self.show_xsec_editor
+        }
 
     def update_style_blocked(self, lyr_id):
         if not self.gpkg.cell_size:
@@ -834,13 +877,6 @@ class Flo2D(object):
         for nr in range(sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
-
-    def settings(self):
-        self.dlg_settings = SettingsDialog(self)
-        self.dlg_settings.show()
-        result = self.dlg_settings.exec_()
-        if result:
-            self.dlg_settings.save_settings()
 
     def restore_settings(self):
         pass

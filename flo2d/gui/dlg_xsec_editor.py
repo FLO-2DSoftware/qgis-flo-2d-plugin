@@ -47,6 +47,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(gpkg, iface)
         self.xs_data_model = None
         self.populate_seg_cbo(xsec_fid)
+        self.xsecDataTView.horizontalHeader().setStretchLastSection(True)
 
         # connections
         self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
@@ -63,7 +64,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
         for row in all_seg:
             self.segCbo.addItem(str(row[0]))
-        if xsec_fid is not None:
+        if xsec_fid is not None and not xsec_fid == False:
             cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = {0};'.format(xsec_fid)).fetchone()[0]
         else:
             cur_seg = str(self.segCbo.currentText())
@@ -127,6 +128,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
                 for i in range(len(chan)):
                     self.xsecDataTView.setRowHeight(i, 18)
             else:
+                self.xsecNameEdit.setText(str(chan['xsecname']))
                 model.setHorizontalHeaderLabels(['x', 'y'])
                 for i, pt in enumerate(xy):
                     x, y = pt

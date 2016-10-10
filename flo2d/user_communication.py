@@ -29,11 +29,11 @@ from qgis.core import QgsMessageLog
 
 class UserCommunication(object):
     """Class for communication with user"""
-    
+
     def __init__(self, iface, context):
         self.iface = iface
         self.context = context
-        
+
     def show_info(self, msg):
         if self.iface is not None:
             QMessageBox.information(self.iface.mainWindow(), self.context, msg)
@@ -64,12 +64,18 @@ class UserCommunication(object):
         else:
             print(msg)
 
+    def bar_warn(self, msg, dur=5):
+        if self.iface is not None:
+            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.WARNING, duration=dur)
+        else:
+            print(msg)
+
     def bar_info(self, msg, dur=5):
         if self.iface is not None:
             self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.INFO, duration=dur)
         else:
             print(msg)
-        
+
     def question(self, msg):
         if self.iface is not None:
             m = QMessageBox()
