@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
-from flo2d.flo2dgeopackage import Flo2dGeoPackage
+from flo2d.flo2dgeopackage import *
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
@@ -32,10 +32,11 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.f2g = Flo2dGeoPackage(GPKG_PATH, None)
-        cls.f2g.database_create()
+        con = database_create(GPKG_PATH)
+        cls.f2g = Flo2dGeoPackage(con, None)
         cls.f2g.set_parser(CONT)
         cls.f2g.import_mannings_n_topo()
+        con.close()
 
     @classmethod
     def tearDownClass(cls):
@@ -47,10 +48,10 @@ class TestFlo2dGeoPackage(unittest.TestCase):
                 pass
 
     def setUp(self):
-        self.f2g.database_connect()
+        self.f2g.con = database_connect(GPKG_PATH)
 
     def tearDown(self):
-        self.f2g.database_disconnect()
+        database_disconnect(self.f2g.con)
 
     def test_set_parser(self):
         self.assertIsNotNone(self.f2g.parser.dat_files['CONT.DAT'])
@@ -440,3 +441,4 @@ if __name__ == '__main__':
         tests = unittest.TestLoader().loadTestsFromTestCase(t)
         suite.addTest(tests)
     unittest.TextTestRunner(verbosity=2).run(suite)
+

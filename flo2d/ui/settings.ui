@@ -247,12 +247,23 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="gpkgPathEdit"/>
+         <widget class="QLineEdit" name="gpkgPathEdit">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="gpkgBrowseBtn">
+         <widget class="QToolButton" name="gpkgCreateBtn">
           <property name="text">
-           <string>...</string>
+           <string>Create</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="gpkgOpenBtn">
+          <property name="text">
+           <string>Open</string>
           </property>
          </widget>
         </item>

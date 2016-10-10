@@ -30,7 +30,7 @@ from qgis.gui import QgsProjectionSelectionWidget, QgsMapToolIdentify
 from qgis.core import *
 from flo2d_dialog import Flo2DDialog
 from user_communication import UserCommunication
-from flo2dgeopackage import Flo2dGeoPackage
+from flo2dgeopackage import *
 from utils import *
 from layers import Layers
 from collections import OrderedDict
@@ -70,7 +70,7 @@ class Flo2D(object):
         self.menu = self.tr(u'&Flo2D')
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
-        self.conn = None
+        self.con = None
         self.lyrs = Layers()
         self.gpkg = None
         self.gpkg_fpath = None
@@ -124,31 +124,31 @@ class Flo2D(object):
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.add_action(
-            os.path.join(self.plugin_dir,'img/settings.svg'),
+            os.path.join(self.plugin_dir, 'img/settings.svg'),
             text=self.tr(u'Settings'),
             callback=self.show_settings,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/new_db.svg'),
+            os.path.join(self.plugin_dir, 'img/new_db.svg'),
             text=self.tr(u'Create FLO-2D Database'),
             callback=self.create_db,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/connect.svg'),
+            os.path.join(self.plugin_dir, 'img/connect.svg'),
             text=self.tr(u'Connect to FLO-2D Database'),
             callback=self.connect,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/import_gds.svg'),
+            os.path.join(self.plugin_dir, 'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
             callback=self.import_gds,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/export_gds.svg'),
+            os.path.join(self.plugin_dir, 'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
             callback=self.export_gds,
             parent=self.iface.mainWindow())
@@ -167,6 +167,7 @@ class Flo2D(object):
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        database_disconnect(self.con)
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&Flo2D'),
@@ -174,20 +175,21 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-        del self.conn, self.gpkg, self.lyrs
+        del self.con, self.gpkg, self.lyrs
 
     def show_settings(self):
-        """Show Cross-section editor"""
-        cur_db = self.gpkg_fpath
-        self.dlg_settings = SettingsDialog(self.iface, self.gpkg_fpath)
+        self.dlg_settings = SettingsDialog(self.con, self.iface, self.gpkg_fpath)
         self.dlg_settings.show()
-#        result = self.dlg_settings.exec_()
-#        if result:
-#            self.dlg_settings.save_settings()
-
+        result = self.dlg_settings.exec_()
+        if result:
+            self.dlg_settings.write()
+            self.con = self.dlg_settings.gpkg
+            self.gpkg_fpath = self.dlg_settings.gpkg_fpath
+            self.gpkg = self.dlg_settings.con
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
+        database_disconnect(self.con)
         self.gpkg_fpath = None
         # CRS
         self.crs_widget.selectCrs()
@@ -207,12 +209,12 @@ class Flo2D(object):
         if not self.gpkg_fpath:
             return
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
-
-        self.gpkg = Flo2dGeoPackage(self.gpkg_fpath, self.iface)
-        if not self.gpkg.database_create():
-            self.uc.show_warn("Couldn't create new database {}\n{}".format(self.gpkg_fpath, self.gpkg.msg))
+        self.con = database_create(self.gpkg_fpath)
+        if not self.con:
+            self.uc.show_warn("Couldn't create new database {}".format(self.gpkg_fpath))
         else:
             self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
+        self.gpkg = Flo2dGeoPackage(self.con, self.iface)
         if self.gpkg.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
         else:
@@ -224,7 +226,7 @@ class Flo2D(object):
         rt = rc.fetchone()
         if not rt:
             sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
-            data = (self.crs.description(), crsid, auth, crsid, proj, '',)
+            data = (self.crs.description(), crsid, auth, crsid, proj, '')
             rc = self.gpkg.execute(sql, data)
             del rc
             srsid = crsid
@@ -240,6 +242,7 @@ class Flo2D(object):
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
+        database_disconnect(self.con)
         self.gpkg_fpath = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
@@ -248,9 +251,9 @@ class Flo2D(object):
                          directory=last_gpkg_dir)
         if self.gpkg_fpath:
             s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
-            self.gpkg = Flo2dGeoPackage(self.gpkg_fpath, self.iface)
-            self.gpkg.database_connect()
+            self.con = database_connect(self.gpkg_fpath)
             self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
+            self.gpkg = Flo2dGeoPackage(self.con, self.iface)
             if self.gpkg.check_gpkg():
                 self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
                 sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
@@ -771,12 +774,13 @@ class Flo2D(object):
                 lstyle = data['styles'][0]
             else:
                 lstyle = None
-            uri = self.gpkg.path + '|layername={}'.format(lyr)
+            uri = self.gpkg_fpath + '|layername={}'.format(lyr)
             try:
                 lyr_is_on = data['visible']
             except:
                 lyr_is_on = True
-            lyr_id = self.lyrs.load_layer(uri, self.gpkg.group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
+            group = 'FLO-2D_{}'.format(os.path.basename(self.gpkg_fpath).replace('.gpkg', ''))
+            lyr_id = self.lyrs.load_layer(uri, group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
             if lyr == 'wrf':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
@@ -828,7 +832,7 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_xsec_editor = XsecEditorDialog(self.iface, self.gpkg_fpath, fid)
+        self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, fid)
         self.dlg_xsec_editor.show()
 
     def create_map_tools(self):

@@ -24,7 +24,6 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
-
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
 from ..flo2dobjects import CrossSection
@@ -35,16 +34,16 @@ uiDialog, qtBaseClass = load_ui('xsec_editor')
 
 class XsecEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, gpkg, xsec_fid=None, parent=None):
+    def __init__(self, con, iface, xsec_fid=None, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
+        self.con = con
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
         self.cur_xsec_fid = xsec_fid
-        self.gpkg = gpkg
-        self.gutils = GeoPackageUtils(gpkg, iface)
+        self.gutils = GeoPackageUtils(con, iface)
         self.xs_data_model = None
         self.populate_seg_cbo(xsec_fid)
         self.xsecDataTView.horizontalHeader().setStretchLastSection(True)
@@ -59,18 +58,16 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
     def populate_seg_cbo(self, xsec_fid=None):
         """Read chan table, populate the cbo and set active segment of the
         current xsection"""
-        self.gutils.database_connect()
         self.segCbo.clear()
         all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
         for row in all_seg:
             self.segCbo.addItem(str(row[0]))
-        if xsec_fid is not None and not xsec_fid == False:
-            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = {0};'.format(xsec_fid)).fetchone()[0]
+        if xsec_fid is not None:
+            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = ?;', (xsec_fid,)).fetchone()[0]
         else:
             cur_seg = str(self.segCbo.currentText())
         index = self.segCbo.findText(str(cur_seg), Qt.MatchFixedString)
         self.segCbo.setCurrentIndex(index)
-        self.gutils.database_disconnect()
         self.populate_xsec_list()
         self.segCbo.currentIndexChanged.connect(self.populate_xsec_list)
         self.xsecList.selectionModel().selectionChanged.connect(self.populate_xsec_data)
@@ -79,9 +76,8 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         """Get chan_elems records of the current segment (chan) and populate
         the xsection list"""
         cur_seg = str(self.segCbo.currentText())
-        self.gutils.database_connect()
-        qry = 'SELECT fid FROM chan_elems WHERE seg_fid = {0} ORDER BY nr_in_seg;'.format(cur_seg)
-        rows = self.gutils.execute(qry)
+        qry = 'SELECT fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
+        rows = self.gutils.execute(qry, (cur_seg,))
         position = 0
         model = QStandardItemModel()
         for i, f in enumerate(rows):
@@ -95,7 +91,6 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.xsecList.setModel(model)
         index = self.xsecList.model().index(position, 0, QModelIndex())
         self.xsecList.selectionModel().select(index, self.xsecList.selectionModel().Select)
-        self.gutils.database_disconnect()
         self.xsecList.selectionModel().selectionChanged.connect(self.populate_xsec_data)
         self.populate_xsec_data()
 
@@ -108,38 +103,37 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.xsecTypeCbo.clear()
         for val in xs_types.values():
             self.xsecTypeCbo.addItem(val)
-        with CrossSection(cur_xsec, self.gpkg, self.iface) as xs:
-            row = xs.get_row()
-            index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
-            self.xsecTypeCbo.setCurrentIndex(index)
-            self.chanLenEdit.setText(str(row['xlen']))
-            self.mannEdit.setText(str(row['fcn']))
-            self.notesEdit.setText(str(row['notes']))
-            chan = xs.chan_table()
-            xy = xs.xsec_data()
+        xs = CrossSection(cur_xsec, self.con, self.iface)
+        row = xs.get_row()
+        index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
+        self.xsecTypeCbo.setCurrentIndex(index)
+        self.chanLenEdit.setText(str(row['xlen']))
+        self.mannEdit.setText(str(row['fcn']))
+        self.notesEdit.setText(str(row['notes']))
+        chan = xs.chan_table()
+        xy = xs.xsec_data()
 
-            model = QStandardItemModel()
-            if not xy:
-                model.setHorizontalHeaderLabels([''])
-                for val in chan.itervalues():
-                    item = QStandardItem(str(val))
-                    model.appendRow(item)
-                model.setVerticalHeaderLabels(chan.keys())
-                for i in range(len(chan)):
-                    self.xsecDataTView.setRowHeight(i, 18)
-            else:
-                self.xsecNameEdit.setText(str(chan['xsecname']))
-                model.setHorizontalHeaderLabels(['x', 'y'])
-                for i, pt in enumerate(xy):
-                    x, y = pt
-                    xi = QStandardItem(str(x))
-                    yi = QStandardItem(str(y))
-                    model.appendRow([xi, yi])
-                for i in range(len(xy)):
-                    self.xsecDataTView.setRowHeight(i, 18)
-            self.xsecDataTView.setModel(model)
-            self.xsecDataTView.resizeColumnsToContents()
-            self.xs_data_model = model
+        model = QStandardItemModel()
+        if not xy:
+            model.setHorizontalHeaderLabels([''])
+            for val in chan.itervalues():
+                item = QStandardItem(str(val))
+                model.appendRow(item)
+            model.setVerticalHeaderLabels(chan.keys())
+            for i in range(len(chan)):
+                self.xsecDataTView.setRowHeight(i, 18)
+        else:
+            model.setHorizontalHeaderLabels(['x', 'y'])
+            for i, pt in enumerate(xy):
+                x, y = pt
+                xi = QStandardItem(str(x))
+                yi = QStandardItem(str(y))
+                model.appendRow([xi, yi])
+            for i in range(len(xy)):
+                self.xsecDataTView.setRowHeight(i, 18)
+        self.xsecDataTView.setModel(model)
+        self.xsecDataTView.resizeColumnsToContents()
+        self.xs_data_model = model
 
         if self.xsecTypeCbo.currentText() == 'Natural':
             self.update_plot()
@@ -165,7 +159,6 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
             y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
         self.plotWidget.add_new_bed_plot([x, y])
         self.plotWidget.add_org_bed_plot([x, y])
-
 
     def cur_seg_changed(self):
         """User changed current segment. Update xsection list and populate xsection
