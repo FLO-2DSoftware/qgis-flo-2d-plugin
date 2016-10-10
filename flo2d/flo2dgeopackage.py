@@ -175,13 +175,13 @@ class GeoPackageUtils(object):
             if buffers is False:
                 sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
             else:
-                sql = '''SELECT AsGPB(ST_GeomFromText(ST_AsText(ST_Centroid(GeomFromGPB(geom))))) FROM "{0}" WHERE "{1}" = ?;'''
+                sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
             geom = self.execute(sql.format(table, field), (g,)).fetchone()[0]
             cells[g] = geom
         return cells
 
     def build_linestring(self, gids, table='grid', field='fid'):
-        gpb = ''' SELECT AsGPB(ST_GeomFromText('LINESTRING('''
+        gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING('''
         points = []
         for g in gids:
             qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''.format(table, field)
@@ -202,7 +202,7 @@ class GeoPackageUtils(object):
             '7': (lambda x, y, shift: (x - shift, y - shift)),
             '8': (lambda x, y, shift: (x - shift, y + shift))
         }
-        gpb = ''' SELECT AsGPB(ST_GeomFromText('MULTILINESTRING('''
+        gpb = '''SELECT AsGPB(ST_GeomFromText('MULTILINESTRING('''
         gpb_part = '''({0} {1}, {2} {3})'''
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''.format(table, field)
         wkt_geom = self.execute(qry, (gid,)).fetchone()[0]
@@ -1343,8 +1343,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
-        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8 FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;'''
+        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE wrf1 IS NULL ORDER BY grid_fid;'''
+        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8 FROM blocked_cells WHERE wrf1 IS NOT NULL ORDER BY grid_fid;'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
