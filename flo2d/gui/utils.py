@@ -29,3 +29,6 @@ def load_ui(name):
                            '..', 'ui',
                            name + '.ui')
     return uic.loadUiType(ui_file)
+
+month_names = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"]
