@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
-from ..flo2dobjects import CrossSection
+from ..flo2dobjects import Inflow
 from inflow_plot_widget import InflowPlotWidget
 
 uiDialog, qtBaseClass = load_ui('inflow_editor')
@@ -43,32 +43,67 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.setup_plot()
         self.setModal(False)
         self.cur_inflow_fid = inflow_fid
+        self.inflow = None
         self.gutils = GeoPackageUtils(con, iface)
         self.inflow_data_model = None
-        self.populate_tseries_cbo()
+        self.populate_inflows(inflow_fid)
         self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
-        self.test_plot()
 
         # connections
-        self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
+        self.inflowNameCbo.currentIndexChanged.connect(self.populate_tseries)
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
 
     def setup_plot(self):
         self.plotWidget = InflowPlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def populate_tseries_cbo(self, inflow_fid=None):
+    def populate_inflows(self, inflow_fid=None):
+        """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
+        self.inflowNameCbo.clear()
+        all_tseries = self.gutils.execute('SELECT fid FROM inflow ORDER BY fid;').fetchall()
+        for row in all_tseries:
+            self.inflowNameCbo.addItem(str(row[0]))
+        if inflow_fid is None:
+            inflow_fid = all_tseries[0][0]
+        else:
+            pass
+        index = self.inflowNameCbo.findText(str(inflow_fid), Qt.MatchFixedString)
+        self.inflowNameCbo.setCurrentIndex(index)
+        self.populate_tseries()
+
+    def populate_tseries(self):
         """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
         self.tseriesCbo.clear()
-        all_tseries = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
-        for row in all_tseries:
-            self.tseriesCbo.addItem(str(row[0]))
-        if inflow_fid is not None:
-            cur_tseries = self.gutils.execute('SELECT time_series_fid FROM inflow WHERE fid = ?;', (inflow_fid,)).fetchone()[0]
+        cur_inf = str(self.inflowNameCbo.currentText())
+        self.inflow = Inflow(cur_inf, self.con, self.iface)
+        row = self.inflow.get_row()
+        series_fid = row['time_series_fid']
+        ident = row['ident']
+        if ident == 'F':
+            self.ifcFloodplainRadio.setChecked(1)
+            self.ifcChannelRadio.setChecked(0)
         else:
-            cur_tseries = str(self.tseriesCbo.currentText())
-        index = self.tseriesCbo.findText(str(cur_tseries), Qt.MatchFixedString)
+            self.ifcFloodplainRadio.setChecked(0)
+            self.ifcChannelRadio.setChecked(1)
+        series = self.inflow.time_series_table()
+        for row in series:
+            self.tseriesCbo.addItem(str(row[0]))
+        index = self.tseriesCbo.findText(str(series_fid), Qt.MatchFixedString)
         self.tseriesCbo.setCurrentIndex(index)
+        self.populate_tseries_data()
+
+    def populate_tseries_data(self):
+        """Get current time series data, populate data table and create plot"""
+        self.inflow.series_fid = str(self.tseriesCbo.currentText())
+        series_data = self.inflow.time_series_data_table()
+        model = QStandardItemModel()
+        for row in series_data:
+            items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
+            model.appendRow(items)
+        self.tseriesDataTView.setModel(model)
+        self.tseriesDataTView.resizeColumnsToContents()
+        self.inflow_data_model = model
+        self.update_plot()
 
     def save_tseries_data(self):
         """Get xsection data and save them in gpkg"""
@@ -80,7 +115,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
     def update_plot(self):
         """When time series data for plot change, update the plot"""
         self.plotWidget.clear_plot()
-        dm = self.xs_data_model
+        dm = self.inflow_data_model
         print dm.rowCount()
         x = []
         y = []
@@ -99,53 +134,3 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.plotWidget.add_new_plot([x, y])
         x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
         self.plotWidget.add_org_plot([x, y])
-
-    # TODO: all below this line is to be changed
-
-    def populate_tseries_data(self):
-        """Get current time series data, populate data table and create plot"""
-        # TODO
-#        cur_index = self.xsecList.selectionModel().selectedIndexes()[0]
-#        cur_xsec = self.xsecList.model().itemFromIndex(cur_index).text()
-#        xs_types = {'R': 'Rectangular', 'V': 'Variable Area', 'T': 'Trapezoidal', 'N': 'Natural'}
-#        self.xsecTypeCbo.clear()
-#        for val in xs_types.values():
-#            self.xsecTypeCbo.addItem(val)
-#        xs = CrossSection(cur_xsec, self.con, self.iface)
-#        row = xs.get_row()
-#        index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
-#        self.xsecTypeCbo.setCurrentIndex(index)
-#        self.chanLenEdit.setText(str(row['xlen']))
-#        self.mannEdit.setText(str(row['fcn']))
-#        self.notesEdit.setText(str(row['notes']))
-#        chan = xs.chan_table()
-#        xy = xs.xsec_data()
-#
-#        model = QStandardItemModel()
-#        if not xy:
-#            model.setHorizontalHeaderLabels([''])
-#            for val in chan.itervalues():
-#                item = QStandardItem(str(val))
-#                model.appendRow(item)
-#            model.setVerticalHeaderLabels(chan.keys())
-#            for i in range(len(chan)):
-#                self.xsecDataTView.setRowHeight(i, 18)
-#        else:
-#            model.setHorizontalHeaderLabels(['x', 'y'])
-#            for i, pt in enumerate(xy):
-#                x, y = pt
-#                xi = QStandardItem(str(x))
-#                yi = QStandardItem(str(y))
-#                model.appendRow([xi, yi])
-#            for i in range(len(xy)):
-#                self.xsecDataTView.setRowHeight(i, 18)
-#        self.xsecDataTView.setModel(model)
-#        self.xsecDataTView.resizeColumnsToContents()
-#        self.xs_data_model = model
-#
-#        if self.xsecTypeCbo.currentText() == 'Natural':
-#            self.update_plot()
-#        else:
-#            pass
-
-

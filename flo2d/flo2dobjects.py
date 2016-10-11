@@ -87,6 +87,36 @@ class CrossSection(GeoPackageUtils):
         self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
         return self.xsec
 
+
+class Inflow(GeoPackageUtils):
+    columns = ['fid', 'name', 'time_series_fid', 'ident', 'inoutfc', 'note', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(Inflow, self).__init__(con, iface)
+        self.fid = fid
+        self.series_fid = None
+        self.row = None
+        self.time_series = None
+        self.time_series_data = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM inflow WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.series_fid = self.row['time_series_fid']
+        return self.row
+
+    def time_series_table(self):
+        qry = 'SELECT fid, name FROM inflow_time_series WHERE fid = ? ORDER BY fid;'
+        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series
+
+    def time_series_data_table(self):
+        qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
+        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series_data
+
+
 if __name__ == '__main__':
     from flo2dgeopackage import database_connect
     gpkg = r'D:\GIS_DATA\GPKG\alawai.gpkg'
