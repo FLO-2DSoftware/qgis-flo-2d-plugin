@@ -66,7 +66,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         for row in all_inflows:
             row = [x if x is not None else '' for x in row]
             fid, name, ts_fid = row
-            inflow_name = fid_name.format(fid, name)
+            inflow_name = fid_name.format(fid, name).strip()
             self.inflowNameCbo.addItem(inflow_name)
             if fid == inflow_fid:
                 initial = row
@@ -82,8 +82,8 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
                 initial.append(name)
             else:
                 pass
-        initial_inflow = fid_name.format(*initial[:2])
-        initial_series = fid_name.format(*initial[2:])
+        initial_inflow = fid_name.format(*initial[:2]).strip()
+        initial_series = fid_name.format(*initial[2:]).strip()
         index = self.inflowNameCbo.findText(initial_inflow, Qt.MatchFixedString)
         self.inflowNameCbo.setCurrentIndex(index)
         index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
@@ -111,8 +111,10 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
-        fid = self.tseriesCbo.currentText()
-        fid = fid if isinstance(fid, list) is False else fid.split()[0]
+        try:
+            fid = self.tseriesCbo.currentText().split()[0]
+        except IndexError as e:
+            fid = self.tseriesCbo.currentText()
         self.inflow.series_fid = fid
         series_data = self.inflow.get_time_series_data()
         model = QStandardItemModel()

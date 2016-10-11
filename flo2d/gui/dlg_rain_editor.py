@@ -26,15 +26,15 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
-from ..flo2dobjects import Inflow
-from rain_plot_widget import RainPlotWidget
+from ..flo2dobjects import Rain
+from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('rain_editor')
 
 
 class RainEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, fid=None, parent=None):
+    def __init__(self, con, iface, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
@@ -42,37 +42,43 @@ class RainEditorDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
-#        self.cur_fid = fid
-#        self.gutils = GeoPackageUtils(con, iface)
-#        self.rain_data_model = None
-#        self.populate_tseries_cbo(fid)
-#        self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
+        self.rain = Rain(con, iface)
+        self.gutils = GeoPackageUtils(con, iface)
+        self.rain_data_model = None
+        self.rain_properties()
+        self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
 
         # connections
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
 
     def setup_plot(self):
-        self.plotWidget = RainPlotWidget()
+        self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def populate_tseries_cbo(self, inflow_fid=None):
-        """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
-#        self.inflowNameCbo.clear()
-#        all_tseries = self.gutils.execute('SELECT fid FROM inflow ORDER BY fid;').fetchall()
-#        for row in all_tseries:
-#            self.inflowNameCbo.addItem(str(row[0]))
-#        if inflow_fid is None:
-#            inflow_fid = all_tseries[0][0]
-#        else:
-#            pass
-#        index = self.inflowNameCbo.findText(str(inflow_fid), Qt.MatchFixedString)
-#        self.inflowNameCbo.setCurrentIndex(index)
-#        self.populate_tseries_data()
+    def rain_properties(self):
+        row = self.rain.get_row()
+
+        self.realTimeChBox.setChecked(row['irainreal'])
+        self.buildingChBox.setChecked(row['irainbuilding'])
+        self.movingStormChBox.setChecked(row['movingstrom'])
+        self.totalRainfallEdit.setText(str(row['tot_rainfall']))
+        self.rainfallAbstcEdit.setText(str(row['rainabs']))
+        fid_name = '{} {}'
+        for row in self.rain.get_time_series():
+            row = [x if x is not None else '' for x in row]
+            ts_fid, name = row
+            series_name = fid_name.format(ts_fid, name).strip()
+            self.tseriesCbo.addItem(series_name)
+        self.tseriesCbo.setCurrentIndex(0)
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
-        self.inflow.series_fid = str(self.tseriesCbo.currentText())
-        series_data = self.inflow.time_series_data_table()
+        try:
+            fid = self.tseriesCbo.currentText().split()[0]
+        except IndexError as e:
+            fid = self.tseriesCbo.currentText()
+        self.rain.series_fid = fid
+        series_data = self.rain.get_time_series_data()
         model = QStandardItemModel()
         for row in series_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]

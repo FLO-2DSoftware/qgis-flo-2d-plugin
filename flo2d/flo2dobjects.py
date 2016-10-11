@@ -120,10 +120,8 @@ class Outflow(GeoPackageUtils):
         self.series_fid = None
         self.row = None
         self.typ = None
-        self.time_series = None
         self.time_series_data = None
         self.qh_params = None
-        self.qh_table = None
         self.qh_table_data = None
 
     def get_row(self):
@@ -160,6 +158,34 @@ class Outflow(GeoPackageUtils):
         qry = 'SELECT depth, q FROM qh_table_data WHERE fid = ?;'
         self.qh_table_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.qh_table_data
+
+
+class Rain(GeoPackageUtils):
+    columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall', 'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
+
+    def __init__(self, con, iface):
+        super(Rain, self).__init__(con, iface)
+        self.row = None
+        self.series_fid = None
+        self.time_series = None
+        self.time_series_data = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM rain;'
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+
+        return self.row
+
+    def get_time_series(self):
+        qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
+        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series
+
+    def get_time_series_data(self):
+        qry = 'SELECT time, value FROM rain_time_series_data WHERE series_fid = ?;'
+        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series_data
 
 
 if __name__ == '__main__':

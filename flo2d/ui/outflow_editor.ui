@@ -136,17 +136,7 @@
             </item>
             <item>
              <property name="text">
-              <string>Diversion channel element (for inflows)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
               <string>Outflow with time-stage relationship</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Outflow with time-stage and free floodplain and channel</string>
              </property>
             </item>
             <item>

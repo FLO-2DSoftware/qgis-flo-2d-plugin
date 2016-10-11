@@ -133,13 +133,13 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         for row in series:
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
-            series_name = fid_name.format(ts_fid, name)
+            series_name = fid_name.format(ts_fid, name).strip()
             self.tseriesCbo.addItem(series_name)
             if ts_fid in initial:
                 initial = row
             else:
                 pass
-        initial_series = fid_name.format(*initial)
+        initial_series = fid_name.format(*initial).strip()
         index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
         self.tseriesCbo.setCurrentIndex(index)
 
@@ -152,19 +152,23 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         for row in all_outflows:
             row = [x if x is not None else '' for x in row]
             fid, name = row
-            outflow_name = fid_name.format(fid, name)
+            outflow_name = fid_name.format(fid, name).strip()
             self.outflowNameCbo.addItem(outflow_name)
             if fid == outflow_fid:
                 initial = row
             else:
                 pass
-        initial_outflow = fid_name.format(*initial)
+        initial_outflow = fid_name.format(*initial).strip()
         index = self.outflowNameCbo.findText(initial_outflow, Qt.MatchFixedString)
         self.outflowNameCbo.setCurrentIndex(index)
         self.outflow_type()
 
     def outflow_type(self):
-        cur_out = self.outflowNameCbo.currentText().split()[0]
+        try:
+            cur_out = self.outflowNameCbo.currentText().split()[0]
+        except IndexError as e:
+            cur_out = self.outflowNameCbo.currentText()
+        self.gutils.uc.log_info(repr(cur_out))
         self.mode1()
         self.outflow = Outflow(cur_out, self.con, self.iface)
 
@@ -195,8 +199,10 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
 
     def populate_series_data(self):
         """Get current time series data, populate data table and create plot"""
-        fid = self.tseriesCbo.currentText()
-        fid = fid if isinstance(fid, list) is False else fid.split()[0]
+        try:
+            fid = self.tseriesCbo.currentText().split()[0]
+        except IndexError as e:
+            fid = self.tseriesCbo.currentText()
         self.outflow.series_fid = fid
         typ = self.outflow.typ
         head = None
