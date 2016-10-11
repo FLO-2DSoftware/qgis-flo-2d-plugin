@@ -27,7 +27,7 @@ from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
 from ..flo2dobjects import Inflow
-from inflow_plot_widget import InflowPlotWidget
+from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('inflow_editor')
 
@@ -54,49 +54,64 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
 
     def setup_plot(self):
-        self.plotWidget = InflowPlotWidget()
+        self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
     def populate_inflows(self, inflow_fid=None):
         """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
         self.inflowNameCbo.clear()
-        all_tseries = self.gutils.execute('SELECT fid FROM inflow ORDER BY fid;').fetchall()
+        fid_name = '{} {}'
+        all_inflows = self.gutils.execute('SELECT fid, name, time_series_fid FROM inflow ORDER BY fid;').fetchall()
+        initial = all_inflows[0]
+        for row in all_inflows:
+            row = [x if x is not None else '' for x in row]
+            fid, name, ts_fid = row
+            inflow_name = fid_name.format(fid, name)
+            self.inflowNameCbo.addItem(inflow_name)
+            if fid == inflow_fid:
+                initial = row
+            else:
+                pass
+        all_tseries = self.gutils.execute('SELECT fid, name FROM inflow_time_series ORDER BY fid;').fetchall()
         for row in all_tseries:
-            self.inflowNameCbo.addItem(str(row[0]))
-        if inflow_fid is None:
-            inflow_fid = all_tseries[0][0]
-        else:
-            pass
-        index = self.inflowNameCbo.findText(str(inflow_fid), Qt.MatchFixedString)
+            row = [x if x is not None else '' for x in row]
+            ts_fid, name = row
+            tseries_name = fid_name.format(ts_fid, name)
+            self.tseriesCbo.addItem(tseries_name)
+            if ts_fid in initial:
+                initial.append(name)
+            else:
+                pass
+        initial_inflow = fid_name.format(*initial[:2])
+        initial_series = fid_name.format(*initial[2:])
+        index = self.inflowNameCbo.findText(initial_inflow, Qt.MatchFixedString)
         self.inflowNameCbo.setCurrentIndex(index)
+        index = self.inflowNameCbo.findText(initial_series, Qt.MatchFixedString)
+        self.tseriesCbo.setCurrentIndex(index)
         self.populate_tseries()
 
     def populate_tseries(self):
         """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
-        self.tseriesCbo.clear()
-        cur_inf = str(self.inflowNameCbo.currentText())
+        cur_inf = self.inflowNameCbo.currentText().split()[0]
         self.inflow = Inflow(cur_inf, self.con, self.iface)
         row = self.inflow.get_row()
-        series_fid = row['time_series_fid']
         ident = row['ident']
+        inoutfc = row['inoutfc']
         if ident == 'F':
             self.ifcFloodplainRadio.setChecked(1)
             self.ifcChannelRadio.setChecked(0)
         else:
             self.ifcFloodplainRadio.setChecked(0)
             self.ifcChannelRadio.setChecked(1)
-        series = self.inflow.time_series_table()
-        for row in series:
-            self.tseriesCbo.addItem(str(row[0]))
-        index = self.tseriesCbo.findText(str(series_fid), Qt.MatchFixedString)
-        self.tseriesCbo.setCurrentIndex(index)
+        self.inflowTypeCbo.setCurrentIndex(inoutfc)
         self.populate_tseries_data()
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
-        self.inflow.series_fid = str(self.tseriesCbo.currentText())
-        series_data = self.inflow.time_series_data_table()
+        self.inflow.series_fid = self.tseriesCbo.currentText().split()[0]
+        series_data = self.inflow.get_time_series_data()
         model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
         for row in series_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
             model.appendRow(items)

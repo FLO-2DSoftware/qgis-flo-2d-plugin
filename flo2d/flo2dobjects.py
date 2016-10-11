@@ -44,7 +44,7 @@ class CrossSection(GeoPackageUtils):
         self.type = self.row['type']
         return self.row
 
-    def chan_segment(self, *args):
+    def get_chan_segment(self, *args):
         if self.row is not None:
             pass
         else:
@@ -60,7 +60,7 @@ class CrossSection(GeoPackageUtils):
         self.chan = OrderedDict(zip(args, values))
         return self.chan
 
-    def chan_table(self, *args):
+    def get_chan_table(self, *args):
         if self.row is not None:
             pass
         else:
@@ -77,7 +77,7 @@ class CrossSection(GeoPackageUtils):
         self.chan_tab = OrderedDict(zip(args, values))
         return self.chan_tab
 
-    def xsec_data(self):
+    def get_xsec_data(self):
         if self.row is not None and self.type == 'N':
             pass
         else:
@@ -96,7 +96,6 @@ class Inflow(GeoPackageUtils):
         self.fid = fid
         self.series_fid = None
         self.row = None
-        self.time_series = None
         self.time_series_data = None
 
     def get_row(self):
@@ -106,15 +105,51 @@ class Inflow(GeoPackageUtils):
         self.series_fid = self.row['time_series_fid']
         return self.row
 
-    def time_series_table(self):
-        qry = 'SELECT fid, name FROM inflow_time_series WHERE fid = ? ORDER BY fid;'
-        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
-        return self.time_series
-
-    def time_series_data_table(self):
+    def get_time_series_data(self):
         qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.time_series_data
+
+
+class Outflow(GeoPackageUtils):
+    columns = ['fid', 'name', 'ident', 'nostacfp', 'time_series_fid', 'qh_params_fid', 'qh_table_fid', 'note', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(Outflow, self).__init__(con, iface)
+        self.fid = fid
+        self.series_fid = None
+        self.qh_params_fid = None
+        self.qh_table_fid = None
+        self.row = None
+        self.time_series = None
+        self.time_series_data = None
+        self.qh_params = None
+        self.qh_table = None
+        self.qh_table_data = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM outflow WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.series_fid = self.row['time_series_fid']
+        self.qh_params_fid = self.row['qh_params_fid']
+        self.qh_table_fid = self.row['qh_table_fid']
+        return self.row
+
+    def get_time_series_data(self):
+        qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ?;'
+        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series_data
+
+    def get_qh_params(self):
+        qry = 'SELECT * FROM qh_params WHERE fid = ?;'
+        self.qh_params = self.execute(qry, (self.qh_params_fid,)).fetchall()
+        return self.qh_params
+
+    def qh_table_data(self):
+        qry = 'SELECT * FROM qh_table_data WHERE fid = ?;'
+        self.qh_table_data = self.execute(qry, (self.qh_table_fid,)).fetchall()
+        return self.qh_table_data
 
 
 if __name__ == '__main__':
@@ -123,9 +158,9 @@ if __name__ == '__main__':
     con = database_connect(gpkg)
     xs = CrossSection(1232, con, None)
     row = xs.get_row()
-    chan = xs.chan_segment()
-    chan_tab = xs.chan_table()
-    data = xs.xsec_data()
+    chan = xs.get_chan_segment()
+    chan_tab = xs.get_chan_table()
+    data = xs.get_xsec_data()
     con.close()
     print(row)
     print(chan)
