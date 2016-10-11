@@ -43,14 +43,15 @@ class RainEditorDialog(qtBaseClass, uiDialog):
         self.setModal(False)
         self.populate_time_cbos()
         self.gutils = GeoPackageUtils(con, iface)
-        self.rain_data_model = None
+        self.monthly_evap_model = None
+        self.hourly_evap_model = None
         self.populate_time_cbos(fid)
-        self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
+        self.monthlyEvapDataTView.horizontalHeader().setStretchLastSection(True)
+        self.hourlyEvapDataTView.horizontalHeader().setStretchLastSection(True)
 
         # connections
-        self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.monthlyEvapTView.clicked.connect(self.update_hourly_data)
-        self.daily_evap_model.dataChanged.connect(self.evaluate_daily_sum)
+        self.hourly_evap_model.dataChanged.connect(self.evaluate_hourly_sum)
 
     def populate_time_cbos(self):
         """Populate month, day and time combos"""
@@ -68,36 +69,18 @@ class RainEditorDialog(qtBaseClass, uiDialog):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def evaluate_daily_sum(self, index1, index2):
+    def evaluate_hourly_sum(self, index1, index2):
         """Evaluate sum of hourly percentage evaporation data and show it"""
 
     def update_hourly_data(self, index):
         """Current month has changed - update hourly data for it"""
 
+    def save_evap_data(self):
+        """Save evap data changes in gpkg"""
 
-    def populate_tseries_data(self):
-        """Get current time series data, populate data table and create plot"""
-        self.inflow.series_fid = str(self.tseriesCbo.currentText())
-        series_data = self.inflow.time_series_data_table()
-        model = QStandardItemModel()
-        for row in series_data:
-            items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
-            model.appendRow(items)
-        self.tseriesDataTView.setModel(model)
-        self.tseriesDataTView.resizeColumnsToContents()
-        self.inflow_data_model = model
-        for i in range(len(series_data)):
-            self.tseriesDataTView.setRowHeight(i, 18)
-        for i in range(3):
-            self.tseriesDataTView.setColumnWidth(i, 80)
-        self.update_plot()
-
-    def save_tseries_data(self):
-        """Get xsection data and save them in gpkg"""
-
-    def revert_tseries_data_changes(self):
-        """Revert any time series data changes made by users (load original
-        tseries data from tables)"""
+    def revert_evap_data_changes(self):
+        """Revert any data changes made by users (load original
+        evap data from tables)"""
 
     def update_plot(self):
         """When time series data for plot change, update the plot"""
