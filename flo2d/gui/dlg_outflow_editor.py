@@ -168,7 +168,6 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
             cur_out = self.outflowNameCbo.currentText().split()[0]
         except IndexError as e:
             cur_out = self.outflowNameCbo.currentText()
-        self.gutils.uc.log_info(repr(cur_out))
         self.mode1()
         self.outflow = Outflow(cur_out, self.con, self.iface)
 

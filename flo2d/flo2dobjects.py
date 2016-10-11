@@ -188,6 +188,33 @@ class Rain(GeoPackageUtils):
         return self.time_series_data
 
 
+class Evaporation(GeoPackageUtils):
+    columns = ['fid', 'ievapmonth', 'iday', 'clocktime']
+
+    def __init__(self, con, iface):
+        super(Evaporation, self).__init__(con, iface)
+        self.row = None
+        self.month = 'january'
+        self.hourly = None
+        self.monthly = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM evapor;'
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        return self.row
+
+    def get_monthly(self):
+        qry = 'SELECT month, monthly_evap FROM evapor_monthly;'
+        self.monthly = self.execute(qry).fetchall()
+        return self.monthly
+
+    def get_hourly(self):
+        qry = 'SELECT hour, hourly_evap FROM evapor_hourly WHERE month = ? ORDER BY fid;'
+        self.time_series = self.execute(qry, (self.month,)).fetchall()
+        return self.time_series
+
+
 if __name__ == '__main__':
     from flo2dgeopackage import database_connect
     gpkg = r'D:\GIS_DATA\GPKG\alawai.gpkg'
