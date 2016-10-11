@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>626</width>
-    <height>270</height>
+    <width>587</width>
+    <height>317</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,31 +43,37 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="label_4">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>9999</width>
-              <height>16777215</height>
-             </size>
-            </property>
+           <widget class="QCheckBox" name="realTimeChBox">
             <property name="text">
-             <string>Inflow name</string>
+             <string>Real-Time Rainfall</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="inflowNameCbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <widget class="QCheckBox" name="buildingChBox">
+            <property name="text">
+             <string>Building Rain</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="movingStormChBox">
+            <property name="text">
+             <string>Moving Strom</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="arfChBox">
+            <property name="text">
+             <string>Depth-Area Reduction Values</string>
             </property>
            </widget>
           </item>
@@ -75,93 +81,68 @@
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <property name="spacing">
+           <number>15</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
           <property name="bottomMargin">
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Inflow defined for</string>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>0</number>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ifcFloodplainRadio">
-            <property name="text">
-             <string>Floodplain</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ifcChannelRadio">
-            <property name="text">
-             <string>Channel</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>80</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Type</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="inflowTypeCbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>9999</width>
-              <height>16777215</height>
-             </size>
+            <property name="rightMargin">
+             <number>0</number>
             </property>
             <item>
-             <property name="text">
-              <string>Inflow hydrograph</string>
-             </property>
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Total Storm Rainfall</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>Channel outflow or diversion</string>
-             </property>
+             <widget class="QLineEdit" name="totalRainfallEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
             </item>
-           </widget>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>Rainfall Abstraction</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="rainfallAbstcEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -207,17 +188,17 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Rain Time and Distribution</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Hydrograph data</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QToolButton" name="importTseriesBtn">
             <property name="text">
@@ -245,13 +226,13 @@
          <widget class="QTableView" name="tseriesDataTView">
           <property name="minimumSize">
            <size>
-            <width>300</width>
+            <width>200</width>
             <height>0</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>250</width>
+            <width>280</width>
             <height>16777215</height>
            </size>
           </property>
@@ -271,7 +252,7 @@
        <property name="minimumSize">
         <size>
          <width>300</width>
-         <height>250</height>
+         <height>0</height>
         </size>
        </property>
        <property name="frameShape">
@@ -287,7 +268,7 @@
         <property name="spacing">
          <number>0</number>
         </property>
-        <item row="0" column="1">
+        <item row="0" column="0">
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
            <layout class="QHBoxLayout" name="plotLayout">

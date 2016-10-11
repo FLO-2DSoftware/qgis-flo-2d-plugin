@@ -37,6 +37,7 @@ from collections import OrderedDict
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
 from .gui.dlg_inflow_editor import InflowEditorDialog
+from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from info_tool import InfoTool
 
@@ -164,6 +165,18 @@ class Flo2D(object):
             os.path.join(self.plugin_dir,'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir,'img/rain_editor.svg'),
+            text=self.tr(u'Rain Editor'),
+            callback=self.show_rain_editor,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir,'img/evaporation_editor.svg'),
+            text=self.tr(u'Evaporation Editor'),
+            callback=self.show_evap_editor,
             parent=self.iface.mainWindow())
 
     def unload(self):
@@ -867,6 +880,22 @@ class Flo2D(object):
             return
         self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
         self.dlg_inflow_editor.show()
+
+    def show_rain_editor(self, fid=None):
+        """Show rain editor"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.dlg_rain_editor = RainEditorDialog(self.con, self.iface, fid)
+        self.dlg_rain_editor.show()
+
+    def show_evap_editor(self, fid=None):
+        """Show evaporation editor"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+#        self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
+#        self.dlg_inflow_editor.show()
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()

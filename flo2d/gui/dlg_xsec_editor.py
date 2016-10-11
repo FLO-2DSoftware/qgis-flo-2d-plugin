@@ -120,21 +120,20 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
                 item = QStandardItem(str(val))
                 model.appendRow(item)
             model.setVerticalHeaderLabels(chan.keys())
-            for i in range(len(chan)):
-                self.xsecDataTView.setRowHeight(i, 18)
+            data_len = len(chan)
         else:
-            model.setHorizontalHeaderLabels(['x', 'y'])
+            model.setHorizontalHeaderLabels(['Station', 'Elevation'])
             for i, pt in enumerate(xy):
                 x, y = pt
                 xi = QStandardItem(str(x))
                 yi = QStandardItem(str(y))
                 model.appendRow([xi, yi])
-            for i in range(len(xy)):
-                self.xsecDataTView.setRowHeight(i, 18)
+            data_len = len(xy)
         self.xsecDataTView.setModel(model)
-        self.xsecDataTView.resizeColumnsToContents()
         self.xs_data_model = model
-
+        for i in range(data_len):
+            self.xsecDataTView.setRowHeight(i, 18)
+        self.xsecDataTView.resizeColumnsToContents()
         if self.xsecTypeCbo.currentText() == 'Natural':
             self.update_plot()
         else:
