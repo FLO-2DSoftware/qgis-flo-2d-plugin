@@ -26,15 +26,15 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
-from ..flo2dobjects import CrossSection
-from inflow_plot_widget import InflowPlotWidget
+from ..flo2dobjects import Outflow
+from plot_widget import PlotWidget
 
-uiDialog, qtBaseClass = load_ui('inflow_editor')
+uiDialog, qtBaseClass = load_ui('outflow_editor')
 
 
-class InflowEditorDialog(qtBaseClass, uiDialog):
+class OutflowEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, inflow_fid=None, parent=None):
+    def __init__(self, con, iface, outflow_fid=None, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
@@ -42,112 +42,185 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
-        self.cur_inflow_fid = inflow_fid
+        self.outflow_fid = outflow_fid
+        self.nostacfp = None
+        self.outflow = None
         self.gutils = GeoPackageUtils(con, iface)
-        self.inflow_data_model = None
-        self.populate_tseries_cbo()
+        self.outflow_data_model = QStandardItemModel()
+        self.populate_outflows(outflow_fid)
         self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
-        self.test_plot()
-
         # connections
-        self.outflowTypeCbo.currentIndexChanged.connect(self.set_active_widgets)
-        self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
+        self.outflowNameCbo.currentIndexChanged.connect(self.outflow_type)
+        self.tseriesCbo.currentIndexChanged.connect(self.populate_series_data)
 
-    def set_active_widgets(self):
+    def setup_plot(self):
+        self.plotWidget = PlotWidget()
+        self.plotLayout.addWidget(self.plotWidget)
+
+    def reset_gui(self):
         self.identFloodplainRadio.setDisabled(True)
         self.identChannelRadio.setDisabled(True)
         self.identBothRadio.setDisabled(True)
-        self.identFloodplainRadio.setCheckekd(False)
-        self.identChannelRadio.setCheckekd(False)
-        self.identBothRadio.setCheckekd(False)
-        wid_map = {
-            "Outflow element (no hydrograph)": {
-                "def_for": {"f": 2, "c": 1, "b": 1},
-                "tableLabel": None,
-                "table": None,
-                "dataLabel": None,
-                "plot": None
-            },
-            "Diversion channel element (for inflows)": {
-                "def_for": {"f": 0, "c": 2, "b": 0},
-                "tableLabel": "Time Series",
-                "table": "outflow_time_series",
-                "dataLabel": "Time-Discharge Data",
-                "dataTable": "outflow_time_series_data",
-                "plot": {
-                    "xa": "Time", "ya": "Discharge"
-                }
-            },
-            "Outflow with time-stage relationship": {
-                "def_for": {"f": 2, "c": 1, "b": 0},
-                "tableLabel": "Time-Stage Relationship",
-                "table": "outflow_time_series",
-                "dataLabel": "Time-Stage Data",
-                "dataTable": "outflow_time_series_data",
-                "plot": {
-                    "xa": "Time", "ya": "Stage"
-                }
-            },
-            "Outflow with time-stage and free floodplain and channel": {
-                "def_for": {"f": 2, "c": 1, "b": 0},
-                "tableLabel": "Time Series",
-                "table": "outflow_time_series",
-                "dataLabel": "Time-Stage Data",
-                "dataTable": "outflow_time_series_data",
-                "plot": {
-                    "xa": "Time", "ya": "Stage"
-                }
-            },
-            "Channel outflow with stage-discharge": {
-                "def_for": {"f": 0, "c": 2, "b": 0},
-                "tableLabel": "Stage-Discharge Relationship",
-                "table": "qh_params",
-                "dataLabel": "Stage-Discharge Data",
-                "plot": {
-                    "xa": "Discharge", "ya": "Stage"
-                }
-            },
-            "Channel outflow with depth-discharge": {
-                "def_for": {"f": 0, "c": 2, "b": 0},
-                "tableLabel": "Depth-Discharge Relationship",
-                "dataLabel": "Depth-Discharge Data",
-                "plot": {
-                    "xa": "Discharge", "ya": "Depth"
-                }
-            }
-        }
-        cur_type = self.outflowTypeCbo.currentText()
-
-        # defined for radio buttons
-        dff = wid_map[cur_type]["def_for"]["f"]
-        self.identFloodplainRadio.setEnabled(dff)
-        self.identFloodplainRadio.setChecked(dff == 2)
-        dfc = wid_map[cur_type]["def_for"]["c"]
-        self.identChannelRadio.setEnabled(dfc)
-        self.identChannelRadio.setChecked(dfc == 2)
-        dfb = wid_map[cur_type]["def_for"]["b"]
-        self.identBothRadio.setEnabled(dfb)
-        self.identBothRadio.setChecked(dfb == 2)
-
-        self.tableLabel.setText((wid_map[cur_type]["tableLabel"]))
-        self.dataTableLabel.setText((wid_map[cur_type]["dataTableLabel"]))
-
-    def setup_plot(self):
-        self.plotWidget = InflowPlotWidget()
-        self.plotLayout.addWidget(self.plotWidget)
-
-    def populate_tseries_cbo(self, inflow_fid=None):
-        """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
+        self.identFloodplainRadio.setChecked(False)
+        self.identChannelRadio.setChecked(False)
+        self.identBothRadio.setChecked(False)
+        self.tseriesCbo.setDisabled(True)
         self.tseriesCbo.clear()
-        all_tseries = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
-        for row in all_tseries:
-            self.tseriesCbo.addItem(str(row[0]))
-        if inflow_fid is not None:
-            cur_tseries = self.gutils.execute('SELECT time_series_fid FROM inflow WHERE fid = ?;', (inflow_fid,)).fetchone()[0]
-        else:
-            cur_tseries = str(self.tseriesCbo.currentText())
-        index = self.tseriesCbo.findText(str(cur_tseries), Qt.MatchFixedString)
+        self.outflow_data_model.clear()
+
+    def mode1(self):
+        self.reset_gui()
+        self.outflowTypeCbo.setCurrentIndex(0)
+
+        self.identFloodplainRadio.setEnabled(True)
+        self.identChannelRadio.setEnabled(True)
+        self.identBothRadio.setEnabled(True)
+        self.identFloodplainRadio.setChecked(True)
+
+        self.tableLabel.setText('')
+        self.dataTableLabel.setText('')
+
+    def mode2(self):
+        self.reset_gui()
+        self.outflowTypeCbo.setCurrentIndex(1)
+
+        self.identFloodplainRadio.setEnabled(True)
+        self.identChannelRadio.setEnabled(True)
+        self.identBothRadio.setDisabled(True)
+        self.identFloodplainRadio.setChecked(True)
+
+        self.tableLabel.setText("Time-Stage Relationship")
+        self.tableLabel.setEnabled(True)
+
+        self.tseriesCbo.setEnabled(True)
+
+        self.dataTableLabel.setText("Time-Stage Data")
+        self.dataTableLabel.setEnabled(True)
+
+    def mode3(self):
+        self.reset_gui()
+        self.outflowTypeCbo.setCurrentIndex(3)
+
+        self.identChannelRadio.setEnabled(True)
+        self.identChannelRadio.setChecked(True)
+
+        self.tableLabel.setText("Channel outflow with stage-discharge")
+        self.tableLabel.setEnabled(True)
+
+        self.tseriesCbo.setEnabled(True)
+
+        self.dataTableLabel.setText("Stage-Discharge Relationship")
+        self.dataTableLabel.setEnabled(True)
+
+    def mode4(self):
+        self.reset_gui()
+        self.outflowTypeCbo.setCurrentIndex(4)
+
+        self.identChannelRadio.setEnabled(True)
+        self.identFloodplainRadio.setChecked(True)
+
+        self.tableLabel.setText("Channel outflow with depth-discharge")
+        self.tableLabel.setEnabled(True)
+
+        self.tseriesCbo.setEnabled(True)
+
+        self.dataTableLabel.setText("Depth-Discharge Relationship")
+        self.dataTableLabel.setEnabled(True)
+
+    def add_series(self, series):
+        fid_name = '{} {}'
+        initial = series[0]
+        for row in series:
+            row = [x if x is not None else '' for x in row]
+            ts_fid, name = row
+            series_name = fid_name.format(ts_fid, name)
+            self.tseriesCbo.addItem(series_name)
+            if ts_fid in initial:
+                initial = row
+            else:
+                pass
+        initial_series = fid_name.format(*initial)
+        index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
         self.tseriesCbo.setCurrentIndex(index)
+
+    def populate_outflows(self, outflow_fid=None):
+        """Read outflow table, populate the cbo and set apropriate outflow"""
+        self.outflowNameCbo.clear()
+        fid_name = '{} {}'
+        all_outflows = self.gutils.execute('SELECT fid, name FROM outflow ORDER BY fid;').fetchall()
+        initial = all_outflows[0]
+        for row in all_outflows:
+            row = [x if x is not None else '' for x in row]
+            fid, name = row
+            outflow_name = fid_name.format(fid, name)
+            self.outflowNameCbo.addItem(outflow_name)
+            if fid == outflow_fid:
+                initial = row
+            else:
+                pass
+        initial_outflow = fid_name.format(*initial)
+        index = self.outflowNameCbo.findText(initial_outflow, Qt.MatchFixedString)
+        self.outflowNameCbo.setCurrentIndex(index)
+        self.outflow_type()
+
+    def outflow_type(self):
+        cur_out = self.outflowNameCbo.currentText().split()[0]
+        self.mode1()
+        self.outflow = Outflow(cur_out, self.con, self.iface)
+
+        row = self.outflow.get_row()
+        ident = row['ident']
+        self.nostacfp = row['nostacfp']
+        series = None
+        if ident == 'K':
+            if self.outflow.typ == 'qh_params':
+                series = self.gutils.execute('SELECT fid, NULL FROM qh_params ORDER BY fid;').fetchall()  #name column should be added
+                self.mode3()
+            elif self.outflow.typ == 'qh_table':
+                series = self.gutils.execute('SELECT fid, name FROM qh_table ORDER BY fid;').fetchall()
+                self.mode4()
+            else:
+                pass
+        elif ident == 'N':
+            if self.outflow.typ is not None:
+                series = self.gutils.execute('SELECT fid, name FROM outflow_time_series ORDER BY fid;').fetchall()
+                self.mode2()
+            else:
+                pass
+        if self.outflow.series_fid:
+            self.add_series(series)
+            self.populate_series_data()
+        else:
+            pass
+
+    def populate_series_data(self):
+        """Get current time series data, populate data table and create plot"""
+        fid = self.tseriesCbo.currentText()
+        fid = fid if isinstance(fid, list) is False else fid.split()[0]
+        self.outflow.series_fid = fid
+        typ = self.outflow.typ
+        head = None
+        series_data = []
+        if typ == "outflow_time_series":
+            head = ["Time", "Stage"]
+            series_data = self.outflow.get_time_series_data()
+        elif typ == "qh_params":
+            head = ["Hmax", "Coef", "Exponent"]
+            series_data = self.outflow.get_qh_params()
+        elif typ == "qh_table":
+            head = ["Depth", "Discharge"]
+            series_data = self.outflow.get_qh_table_data()
+        else:
+            pass
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(head)
+        for row in series_data:
+            items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
+            model.appendRow(items)
+        self.tseriesDataTView.setModel(model)
+        self.tseriesDataTView.resizeColumnsToContents()
+        self.outflow_data_model = model
+        self.update_plot()
 
     def save_tseries_data(self):
         """Get xsection data and save them in gpkg"""
@@ -159,7 +232,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
     def update_plot(self):
         """When time series data for plot change, update the plot"""
         self.plotWidget.clear_plot()
-        dm = self.xs_data_model
+        dm = self.outflow_data_model
         print dm.rowCount()
         x = []
         y = []
@@ -178,53 +251,3 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.plotWidget.add_new_plot([x, y])
         x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
         self.plotWidget.add_org_plot([x, y])
-
-    # TODO: all below this line is to be changed
-
-    def populate_tseries_data(self):
-        """Get current time series data, populate data table and create plot"""
-        # TODO
-#        cur_index = self.xsecList.selectionModel().selectedIndexes()[0]
-#        cur_xsec = self.xsecList.model().itemFromIndex(cur_index).text()
-#        xs_types = {'R': 'Rectangular', 'V': 'Variable Area', 'T': 'Trapezoidal', 'N': 'Natural'}
-#        self.xsecTypeCbo.clear()
-#        for val in xs_types.values():
-#            self.xsecTypeCbo.addItem(val)
-#        xs = CrossSection(cur_xsec, self.con, self.iface)
-#        row = xs.get_row()
-#        index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
-#        self.xsecTypeCbo.setCurrentIndex(index)
-#        self.chanLenEdit.setText(str(row['xlen']))
-#        self.mannEdit.setText(str(row['fcn']))
-#        self.notesEdit.setText(str(row['notes']))
-#        chan = xs.chan_table()
-#        xy = xs.xsec_data()
-#
-#        model = QStandardItemModel()
-#        if not xy:
-#            model.setHorizontalHeaderLabels([''])
-#            for val in chan.itervalues():
-#                item = QStandardItem(str(val))
-#                model.appendRow(item)
-#            model.setVerticalHeaderLabels(chan.keys())
-#            for i in range(len(chan)):
-#                self.xsecDataTView.setRowHeight(i, 18)
-#        else:
-#            model.setHorizontalHeaderLabels(['x', 'y'])
-#            for i, pt in enumerate(xy):
-#                x, y = pt
-#                xi = QStandardItem(str(x))
-#                yi = QStandardItem(str(y))
-#                model.appendRow([xi, yi])
-#            for i in range(len(xy)):
-#                self.xsecDataTView.setRowHeight(i, 18)
-#        self.xsecDataTView.setModel(model)
-#        self.xsecDataTView.resizeColumnsToContents()
-#        self.xs_data_model = model
-#
-#        if self.xsecTypeCbo.currentText() == 'Natural':
-#            self.update_plot()
-#        else:
-#            pass
-
-

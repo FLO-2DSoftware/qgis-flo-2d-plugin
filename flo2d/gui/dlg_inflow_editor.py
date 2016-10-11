@@ -50,7 +50,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
 
         # connections
-        self.inflowNameCbo.currentIndexChanged.connect(self.populate_tseries)
+        self.inflowNameCbo.currentIndexChanged.connect(self.populate_inflow_properties)
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
 
     def setup_plot(self):
@@ -58,7 +58,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.plotLayout.addWidget(self.plotWidget)
 
     def populate_inflows(self, inflow_fid=None):
-        """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
+        """Read inflow and inflow_time_series tables, populate proper combo boxes"""
         self.inflowNameCbo.clear()
         fid_name = '{} {}'
         all_inflows = self.gutils.execute('SELECT fid, name, time_series_fid FROM inflow ORDER BY fid;').fetchall()
@@ -76,7 +76,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         for row in all_tseries:
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
-            tseries_name = fid_name.format(ts_fid, name)
+            tseries_name = fid_name.format(ts_fid, name).strip()
             self.tseriesCbo.addItem(tseries_name)
             if ts_fid in initial:
                 initial.append(name)
@@ -86,29 +86,34 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         initial_series = fid_name.format(*initial[2:])
         index = self.inflowNameCbo.findText(initial_inflow, Qt.MatchFixedString)
         self.inflowNameCbo.setCurrentIndex(index)
-        index = self.inflowNameCbo.findText(initial_series, Qt.MatchFixedString)
+        index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
         self.tseriesCbo.setCurrentIndex(index)
-        self.populate_tseries()
+        self.populate_inflow_properties()
 
-    def populate_tseries(self):
-        """Read inflow_time_series table, populate the cbo and set apropriate tseries"""
+    def populate_inflow_properties(self):
+        """Read and set inflow properties"""
         cur_inf = self.inflowNameCbo.currentText().split()[0]
         self.inflow = Inflow(cur_inf, self.con, self.iface)
         row = self.inflow.get_row()
         ident = row['ident']
         inoutfc = row['inoutfc']
+        series_fid = str(row['time_series_fid'])
         if ident == 'F':
             self.ifcFloodplainRadio.setChecked(1)
             self.ifcChannelRadio.setChecked(0)
         else:
             self.ifcFloodplainRadio.setChecked(0)
             self.ifcChannelRadio.setChecked(1)
+        index = self.tseriesCbo.findText(series_fid, Qt.MatchFixedString)
+        self.tseriesCbo.setCurrentIndex(index)
         self.inflowTypeCbo.setCurrentIndex(inoutfc)
         self.populate_tseries_data()
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
-        self.inflow.series_fid = self.tseriesCbo.currentText().split()[0]
+        fid = self.tseriesCbo.currentText()
+        fid = fid if isinstance(fid, list) is False else fid.split()[0]
+        self.inflow.series_fid = fid
         series_data = self.inflow.get_time_series_data()
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
@@ -143,10 +148,6 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
             y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
         self.plotWidget.add_new_plot([x, y])
         self.plotWidget.add_org_plot([x, y])
-
-    def cur_tseries_changed(self):
-        """User changed current time series. Populate time series
-        data fields and plot"""
 
     def test_plot(self):
         x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 3, 2, 3, 7, 8]

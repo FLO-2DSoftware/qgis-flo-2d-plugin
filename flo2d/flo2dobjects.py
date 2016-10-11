@@ -118,9 +118,8 @@ class Outflow(GeoPackageUtils):
         super(Outflow, self).__init__(con, iface)
         self.fid = fid
         self.series_fid = None
-        self.qh_params_fid = None
-        self.qh_table_fid = None
         self.row = None
+        self.typ = None
         self.time_series = None
         self.time_series_data = None
         self.qh_params = None
@@ -131,9 +130,20 @@ class Outflow(GeoPackageUtils):
         qry = 'SELECT * FROM outflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
-        self.series_fid = self.row['time_series_fid']
-        self.qh_params_fid = self.row['qh_params_fid']
-        self.qh_table_fid = self.row['qh_table_fid']
+        time_series_fid = self.row['time_series_fid']
+        qh_params_fid = self.row['qh_params_fid']
+        qh_table_fid = self.row['qh_table_fid']
+        if time_series_fid:
+            self.series_fid = time_series_fid
+            self.typ = 'outflow_time_series'
+        elif qh_params_fid:
+            self.series_fid = qh_params_fid
+            self.typ = 'qh_params'
+        elif qh_table_fid:
+            self.series_fid = qh_table_fid
+            self.typ = 'qh_table'
+        else:
+            pass
         return self.row
 
     def get_time_series_data(self):
@@ -142,13 +152,13 @@ class Outflow(GeoPackageUtils):
         return self.time_series_data
 
     def get_qh_params(self):
-        qry = 'SELECT * FROM qh_params WHERE fid = ?;'
-        self.qh_params = self.execute(qry, (self.qh_params_fid,)).fetchall()
+        qry = 'SELECT hmax, coef, exponent FROM qh_params WHERE fid = ?;'
+        self.qh_params = self.execute(qry, (self.series_fid,)).fetchall()
         return self.qh_params
 
-    def qh_table_data(self):
-        qry = 'SELECT * FROM qh_table_data WHERE fid = ?;'
-        self.qh_table_data = self.execute(qry, (self.qh_table_fid,)).fetchall()
+    def get_qh_table_data(self):
+        qry = 'SELECT depth, q FROM qh_table_data WHERE fid = ?;'
+        self.qh_table_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.qh_table_data
 
 
