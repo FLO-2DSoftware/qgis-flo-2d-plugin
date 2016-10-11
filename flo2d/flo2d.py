@@ -38,6 +38,7 @@ from collections import OrderedDict
 from .gui.dlg_xsec_editor import XsecEditorDialog
 from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_rain_editor import RainEditorDialog
+from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from info_tool import InfoTool
 
@@ -881,6 +882,14 @@ class Flo2D(object):
         self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
         self.dlg_inflow_editor.show()
 
+    def show_outflow_editor(self, fid=None):
+        """Show outflows editor"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, fid)
+        self.dlg_outflow_editor.show()
+
     def show_rain_editor(self, fid=None):
         """Show rain editor"""
         if not self.gpkg:
@@ -919,7 +928,8 @@ class Flo2D(object):
     def set_editors_map(self):
         self.editors_map = {
             'chan_elems': self.show_xsec_editor,
-            'inflow': self.show_inflow_editor
+            'inflow': self.show_inflow_editor,
+            'outflow': self.show_outflow_editor
         }
 
     def update_style_blocked(self, lyr_id):
