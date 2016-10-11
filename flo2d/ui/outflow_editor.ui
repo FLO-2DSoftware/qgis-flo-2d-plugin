@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>551</width>
-    <height>312</height>
+    <width>618</width>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <property name="rightMargin">
-      <number>20</number>
+      <number>0</number>
      </property>
      <item>
       <widget class="QFrame" name="frame">
@@ -34,17 +34,8 @@
         <enum>QFrame::Plain</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <property name="leftMargin">
+        <property name="margin">
          <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>20</number>
         </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -53,6 +44,12 @@
           </property>
           <item>
            <widget class="QLabel" name="label_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -66,12 +63,12 @@
              </size>
             </property>
             <property name="text">
-             <string>Inflow name</string>
+             <string>Outflow name</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="inflowNameCbo">
+           <widget class="QComboBox" name="outflowNameCbo">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -83,38 +80,10 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Inflow defined for</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ifcFloodplainRadio">
-            <property name="text">
-             <string>Floodplain</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="ifcChannelRadio">
-            <property name="text">
-             <string>Channel</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <widget class="QLabel" name="label_3">
             <property name="sizePolicy">
@@ -136,12 +105,12 @@
              </size>
             </property>
             <property name="text">
-             <string>Type</string>
+             <string>Outflow type</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="inflowTypeCbo">
+           <widget class="QComboBox" name="outflowTypeCbo">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -162,12 +131,32 @@
             </property>
             <item>
              <property name="text">
-              <string>Inflow hydrograph</string>
+              <string>Outflow element (no hydrograph)</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>Channel outflow or diversion</string>
+              <string>Diversion channel element (for inflows)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Outflow with time-stage relationship</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Outflow with time-stage and free floodplain and channel</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Channel outflow with stage-discharge</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Channel outflow with depth-discharge</string>
              </property>
             </item>
            </widget>
@@ -175,9 +164,47 @@
          </layout>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Outflow defined for</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="identFloodplainRadio">
+            <property name="text">
+             <string>Floodplain</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="identChannelRadio">
+            <property name="text">
+             <string>Channel</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="identBothRadio">
+            <property name="text">
+             <string>Both</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="tableLabel">
             <property name="maximumSize">
              <size>
               <width>99999</width>
@@ -221,7 +248,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="dataTableLabel">
             <property name="text">
              <string>Hydrograph data</string>
             </property>
@@ -251,6 +278,74 @@
          </layout>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="bottomMargin">
+           <number>20</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Output hydrograph</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="outHydrographCbo">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O2</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O3</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O4</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O5</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O6</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O7</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O8</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>O9</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QTableView" name="tseriesDataTView">
           <property name="minimumSize">
            <size>
@@ -270,7 +365,21 @@
       </widget>
      </item>
      <item>
-      <layout class="QGridLayout" name="plotLayout"/>
+      <widget class="QFrame" name="frame">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>250</height>
+        </size>
+       </property>
+       <layout class="QGridLayout" name="plotLayout"/>
+      </widget>
      </item>
     </layout>
    </item>
