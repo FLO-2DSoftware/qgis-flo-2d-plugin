@@ -27,7 +27,7 @@ from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
 from ..flo2dobjects import CrossSection
-from xsec_plot_widget import XsecPlotWidget
+from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('xsec_editor')
 
@@ -52,7 +52,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
 
     def setup_plot(self):
-        self.plotWidget = XsecPlotWidget()
+        self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
     def populate_seg_cbo(self, xsec_fid=None):
@@ -110,8 +110,8 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.chanLenEdit.setText(str(row['xlen']))
         self.mannEdit.setText(str(row['fcn']))
         self.notesEdit.setText(str(row['notes']))
-        chan = xs.chan_table()
-        xy = xs.xsec_data()
+        chan = xs.get_chan_table()
+        xy = xs.get_xsec_data()
 
         model = QStandardItemModel()
         if not xy:
