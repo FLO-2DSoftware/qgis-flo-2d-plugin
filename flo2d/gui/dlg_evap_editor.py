@@ -49,11 +49,13 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.hourly_evap_model = QStandardItemModel()
         self.populate_time_cbos()
         self.monthlyEvapTView.horizontalHeader().setStretchLastSection(True)
+        self.monthlyEvapTView.verticalHeader().setVisible(False)
         self.hourlyEvapTView.horizontalHeader().setStretchLastSection(True)
+        self.hourlyEvapTView.verticalHeader().setVisible(False)
 
         # connections
         self.monthlyEvapTView.clicked.connect(self.update_hourly_data)
-        #self.hourly_evap_model.dataChanged.connect(self.evaluate_hourly_sum)
+        self.hourly_evap_model.dataChanged.connect(self.evaluate_hourly_sum)
 
     def populate_time_cbos(self):
         """Populate month, day and time combos"""
@@ -76,7 +78,7 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
     def populate_monthly(self):
         monthly = self.evap.get_monthly()
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Month', 'Monthly evaporation'])
+        model.setHorizontalHeaderLabels(['Month', 'Rate'])
         for month, mevap in monthly:
             item = [QStandardItem(month), QStandardItem(str(mevap))]
             model.appendRow(item)
@@ -94,7 +96,7 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.evap.month = cur_month
         hourly = self.evap.get_hourly()
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Hour', 'Hourly evaporation'])
+        model.setHorizontalHeaderLabels(['Hour', 'Percentage'])
         for row in hourly:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
             model.appendRow(items)
@@ -109,6 +111,13 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
 
     def evaluate_hourly_sum(self, index1, index2):
         """Evaluate sum of hourly percentage evaporation data and show it"""
+        sum = 0
+        self.dailySumEdit.setStyleSheet("color: rgb(255, 255, 255);")
+        for i in range(24):
+            sum += float(self.hourly_evap_model.item(i, 1).text())
+        self.dailySumEdit.setText(str(sum))
+        if not sum == 1:
+            self.dailySumEdit.setStyleSheet("color: rgb(100, 0, 0);")
 
     def update_hourly_data(self, index):
         """Current month has changed - update hourly data for it"""

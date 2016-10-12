@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>578</width>
-    <height>259</height>
+    <width>846</width>
+    <height>423</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,6 +21,12 @@
      </property>
      <item>
       <widget class="QFrame" name="frame">
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
          <width>300</width>
@@ -41,7 +47,7 @@
          <widget class="QGroupBox" name="startGroup">
           <property name="minimumSize">
            <size>
-            <width>200</width>
+            <width>0</width>
             <height>0</height>
            </size>
           </property>
@@ -120,12 +126,22 @@
             </layout>
            </item>
           </layout>
-          <zorder>horizontalLayoutWidget</zorder>
-          <zorder>horizontalLayoutWidget</zorder>
          </widget>
         </item>
         <item>
          <widget class="QGroupBox" name="evapGroup">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="title">
            <string>Evaporation Data</string>
           </property>
@@ -144,7 +160,7 @@
              <item>
               <widget class="QLabel" name="label_9">
                <property name="text">
-                <string> </string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -157,15 +173,21 @@
              </item>
              <item>
               <widget class="QTableView" name="monthlyEvapTView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>140</width>
                  <height>0</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>280</width>
+                 <width>140</width>
                  <height>16777215</height>
                 </size>
                </property>
