@@ -1537,3 +1537,15 @@ CREATE TABLE "sed_supply_frac_data" (
     "ssedpercent" REAL -- SSEDPERCENT, sediment supply size distribution percentage
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
+
+
+-- USERS Layers
+
+CREATE TABLE "user_model_boundary" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "cell_size" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_model_boundary', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
+SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');

@@ -168,6 +168,16 @@ class GeoPackageUtils(object):
             else:
                 pass
 
+    def get_cont_par(self, name):
+        """Get a parameter value from cont table"""
+        try:
+            sql = '''SELECT value FROM cont WHERE name = ?;'''
+            r = self.execute(sql, (name,)).fetchone()[0]
+            if r:
+                return r
+        except:
+            return None
+
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:

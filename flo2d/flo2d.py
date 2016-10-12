@@ -162,6 +162,18 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir,'img/create_model_boundary.svg'),
+            text=self.tr(u'Create Modeling Boundary'),
+            callback=self.create_model_boundary,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir,'img/create_grid.svg'),
+            text=self.tr(u'Create Grid'),
+            callback=self.create_grid,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir,'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
@@ -400,6 +412,40 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
+
+    def create_model_boundary(self):
+        """Create model boundary and get grid cell size from user"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.get_cell_size()
+        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        self.iface.setActiveLayer(bl)
+        bl.startEditing()
+        # start addFeature tool
+
+    def get_cell_size(self):
+        """Ask for cell size if not defined in cont table"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        # is cell size defined?
+        if not self.gpkg.get_cont_par("CELLSIZE"):
+            r, ok = QInputDialog.getInt(None, "Grid Cell Size", "Enter grid element cell size", min=1, max=99999)
+            if ok:
+                cell_size = r
+            else:
+                return
+            # save cell size to table cont
+            sql = '''UPDATE cont SET value = ? WHERE name='CELLSIZE';'''
+            rc = self.gpkg.execute(sql, (cell_size, ))
+            del rc
+
+    def create_grid(self):
+        """TODO"""
+        self.get_cell_size()
+        print self.gpkg.get_cont_par("CELLSIZE")
+
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

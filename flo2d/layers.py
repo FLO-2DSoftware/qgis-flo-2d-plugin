@@ -181,6 +181,12 @@ class Layers(QObject):
 
         # LAYERS
 
+            ('user_model_boundary', {
+                'name': 'Model Boundary',
+                'sgroup': 'User Layers',
+                'styles': ['model_boundary.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': None,
@@ -627,6 +633,8 @@ class Layers(QObject):
                 'attrs_edit_widgets': {}
             })
         ])
+        group = 'FLO-2D_{}'.format(os.path.basename(self.gpkg.path).replace('.gpkg', ''))
+        self.group = group
         for lyr in self.layers_data:
             data = self.layers_data[lyr]
             if data['styles']:
@@ -638,7 +646,6 @@ class Layers(QObject):
                 lyr_is_on = data['visible']
             except:
                 lyr_is_on = True
-            group = 'FLO-2D_{}'.format(os.path.basename(self.gpkg.path).replace('.gpkg', ''))
             lyr_id = self.load_layer(uri, group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
             if lyr == 'wrf':
                 self.update_style_blocked(lyr_id)
@@ -652,8 +659,13 @@ class Layers(QObject):
 
     def update_style_blocked(self, lyr_id):
         if not self.gpkg.cell_size:
-            sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
-            self.gpkg.cell_size = float(self.gpkg.execute(sql).fetchone()[0])
+            try:
+                sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
+                self.gpkg.cell_size = float(self.gpkg.execute(sql).fetchone()[0])
+            except:
+                # no cell size saved in the db - postpone updating the style
+                # until the size is known
+                return
         else:
             pass
         s = self.gpkg.cell_size * 0.44

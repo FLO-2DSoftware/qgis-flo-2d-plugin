@@ -131,6 +131,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         rc = self.gpkg.execute(sql, (srsid,))
         self.srs_id = srsid
         self.gutils = GeoPackageUtils(self.con, self.iface)
+        self.lyrs.load_all_layers(self.gpkg)
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
@@ -188,7 +189,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 value = 1 if wid.isChecked() else 0
             elif name == 'PROJ':
                 value = self.crs.toProj4()
-                print value
             else:
                 pass
             self.gutils.execute(qry, (name, value))
