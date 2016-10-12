@@ -191,12 +191,6 @@ class Flo2D(object):
             callback=self.show_evap_editor,
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
-            text=self.tr(u'grid'),
-            callback=self.grid,
-            parent=self.iface.mainWindow())
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         database_disconnect(self.con)
@@ -448,10 +442,12 @@ class Flo2D(object):
             del rc
 
     def create_grid(self):
-        """TODO"""
         self.get_cell_size()
-        print self.gpkg.get_cont_par("CELLSIZE")
-
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.gpkg = GeoPackageUtils(self.con, self.iface)
+        self.gpkg.create_grid()
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
@@ -492,14 +488,6 @@ class Flo2D(object):
             return
         self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
         self.dlg_evap_editor.show()
-
-    def grid(self):
-        """Show evaporation editor"""
-        if not self.gpkg:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-        self.gpkg = GeoPackageUtils(self.con, self.iface)
-        self.gpkg.create_grid()
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()

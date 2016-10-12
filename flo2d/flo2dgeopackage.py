@@ -177,10 +177,19 @@ class GeoPackageUtils(object):
                 return r
         except:
             return None
-    def create_grid(self, wkt_geom=None, cellsize=None):
-        qry = '''SELECT ST_AsText(ST_SquareGrid(GeomFromGPB(geom), 250)) FROM tolspatial;'''
-        grid = self.execute(qry).fetchall()
-        self.uc.log_info(repr(grid))
+
+    def create_grid(self):
+        drop_qry = 'DROP TABLE IF EXISTS grid_tmp;'
+        grid_qry = '''CREATE TABLE grid_tmp AS SELECT ST_SquareGrid(GeomFromGPB(geom), cell_size) AS g FROM user_model_boundary;'''
+        count_qry = '''SELECT ST_NumGeometries(g) FROM grid_tmp;'''
+        part_qry = '''INSERT INTO grid (geom) SELECT AsGPB(ST_GeometryN(g, ?)) FROM grid_tmp;'''
+        self.execute(drop_qry)
+        self.execute(grid_qry)
+        gcount = self.execute(count_qry).fetchone()[0]
+        cur = self.con.cursor()
+        for n in range(1, int(gcount) + 1):
+            cur.execute(part_qry, (n,))
+        self.con.commit()
 
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
