@@ -195,8 +195,9 @@ class Evaporation(GeoPackageUtils):
         super(Evaporation, self).__init__(con, iface)
         self.row = None
         self.month = 'january'
-        self.hourly = None
         self.monthly = None
+        self.hourly = None
+        self.hourly_sum = 0
 
     def get_row(self):
         qry = 'SELECT * FROM evapor;'
@@ -211,9 +212,13 @@ class Evaporation(GeoPackageUtils):
 
     def get_hourly(self):
         qry = 'SELECT hour, hourly_evap FROM evapor_hourly WHERE month = ? ORDER BY fid;'
-        self.time_series = self.execute(qry, (self.month,)).fetchall()
-        return self.time_series
+        self.hourly = self.execute(qry, (self.month,)).fetchall()
+        return self.hourly
 
+    def get_hourly_sum(self):
+        qry = 'SELECT ROUND(SUM(hourly_evap), 3) FROM evapor_hourly WHERE month = ? ORDER BY fid;'
+        self.hourly_sum = self.execute(qry, (self.month,)).fetchone()[0]
+        return self.hourly_sum
 
 if __name__ == '__main__':
     from flo2dgeopackage import database_connect

@@ -105,8 +105,10 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
             self.xsecTypeCbo.addItem(val)
         xs = CrossSection(cur_xsec, self.con, self.iface)
         row = xs.get_row()
+        name = xs.get_chan_table()['xsecname']
         index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
         self.xsecTypeCbo.setCurrentIndex(index)
+        self.xsecNameEdit.setText(name)
         self.chanLenEdit.setText(str(row['xlen']))
         self.mannEdit.setText(str(row['fcn']))
         self.notesEdit.setText(str(row['notes']))

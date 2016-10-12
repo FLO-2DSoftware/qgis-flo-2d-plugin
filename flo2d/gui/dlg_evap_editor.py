@@ -103,21 +103,21 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.hourlyEvapTView.setModel(model)
         self.hourlyEvapTView.resizeColumnsToContents()
         self.hourly_evap_model = model
+        self.evaluate_hourly_sum()
         self.update_plot()
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def evaluate_hourly_sum(self, index1, index2):
+    def evaluate_hourly_sum(self):
         """Evaluate sum of hourly percentage evaporation data and show it"""
-        sum = 0
-        self.dailySumEdit.setStyleSheet("color: rgb(255, 255, 255);")
-        for i in range(24):
-            sum += float(self.hourly_evap_model.item(i, 1).text())
-        self.dailySumEdit.setText(str(sum))
+        sum = self.evap.get_hourly_sum()
         if not sum == 1:
             self.dailySumEdit.setStyleSheet("color: rgb(100, 0, 0);")
+        else:
+            self.dailySumEdit.setStyleSheet("color: rgb(0, 0, 0);")
+        self.dailySumEdit.setText(str(sum))
 
     def update_hourly_data(self, index):
         """Current month has changed - update hourly data for it"""
