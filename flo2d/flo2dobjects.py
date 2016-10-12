@@ -220,6 +220,7 @@ class Evaporation(GeoPackageUtils):
         self.hourly_sum = self.execute(qry, (self.month,)).fetchone()[0]
         return self.hourly_sum
 
+
 if __name__ == '__main__':
     from flo2dgeopackage import database_connect
     gpkg = r'D:\GIS_DATA\GPKG\alawai.gpkg'

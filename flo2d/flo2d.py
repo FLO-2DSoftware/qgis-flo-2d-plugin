@@ -156,7 +156,7 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/info_tool.svg'),
+            os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
             parent=self.iface.mainWindow())
@@ -180,15 +180,21 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/rain_editor.svg'),
+            os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
             text=self.tr(u'Rain Editor'),
             callback=self.show_rain_editor,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/evaporation_editor.svg'),
+            os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=self.show_evap_editor,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
+            text=self.tr(u'grid'),
+            callback=self.grid,
             parent=self.iface.mainWindow())
 
     def unload(self):
@@ -471,21 +477,29 @@ class Flo2D(object):
         self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, fid)
         self.dlg_outflow_editor.show()
 
-    def show_rain_editor(self, fid=None):
+    def show_rain_editor(self):
         """Show rain editor"""
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_rain_editor = RainEditorDialog(self.con, self.iface, fid)
+        self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
         self.dlg_rain_editor.show()
 
-    def show_evap_editor(self, fid=None):
+    def show_evap_editor(self):
         """Show evaporation editor"""
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface, fid)
+        self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
         self.dlg_evap_editor.show()
+
+    def grid(self):
+        """Show evaporation editor"""
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        self.gpkg = GeoPackageUtils(self.con, self.iface)
+        self.gpkg.create_grid()
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
