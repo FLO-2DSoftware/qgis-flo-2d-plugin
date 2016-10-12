@@ -55,11 +55,11 @@ class InfoTool(QgsMapToolIdentify):
         print('Picked: {} {}'.format(table, fid))
         self.feature_picked.emit(table, fid)
 
-    def activate(self):
-        pass
-
-    def deactivate(self):
-        pass
+#    def activate(self):
+#        pass
+#
+#    def deactivate(self):
+#        pass
 
     def isZoomTool(self):
         return False
