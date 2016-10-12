@@ -181,6 +181,30 @@ class Layers(QObject):
 
         # LAYERS
 
+            ('user_channel_seg', {
+                'name': 'Channel Segments',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('user_xsections', {
+                'name': 'Cross-sections',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('user_levees', {
+                'name': 'Levees',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('user_streets', {
+                'name': 'Streets',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('user_model_boundary', {
                 'name': 'Model Boundary',
                 'sgroup': 'User Layers',
