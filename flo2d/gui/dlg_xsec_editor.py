@@ -62,7 +62,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
         for row in all_seg:
             self.segCbo.addItem(str(row[0]))
-        if xsec_fid is not None:
+        if xsec_fid:
             cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = ?;', (xsec_fid,)).fetchone()[0]
         else:
             cur_seg = str(self.segCbo.currentText())
@@ -105,8 +105,9 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
             self.xsecTypeCbo.addItem(val)
         xs = CrossSection(cur_xsec, self.con, self.iface)
         row = xs.get_row()
-        name = xs.get_chan_table()['xsecname']
-        index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
+        typ = row['type']
+        name = xs.get_chan_table()['xsecname'] if typ == 'N' else ''
+        index = self.xsecTypeCbo.findText(xs_types[typ], Qt.MatchFixedString)
         self.xsecTypeCbo.setCurrentIndex(index)
         self.xsecNameEdit.setText(name)
         self.chanLenEdit.setText(str(row['xlen']))

@@ -168,6 +168,11 @@ class GeoPackageUtils(object):
             else:
                 pass
 
+    def create_grid(self, wkt_geom=None, cellsize=None):
+        qry = '''SELECT ST_AsText(ST_SquareGrid(GeomFromGPB(geom), 250)) FROM tolspatial;'''
+        grid = self.execute(qry).fetchall()
+        self.uc.log_info(repr(grid))
+
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:
