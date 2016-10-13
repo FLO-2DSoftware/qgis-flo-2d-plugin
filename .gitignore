@@ -1,3 +1,4 @@
+*.idea
 /nbproject
 /docs/*/build
 /flo2d/help/build/
