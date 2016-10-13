@@ -27,7 +27,7 @@ from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
 from ..flo2dobjects import CrossSection
-from xsec_plot_widget import XsecPlotWidget
+from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('xsec_editor')
 
@@ -52,7 +52,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
 
     def setup_plot(self):
-        self.plotWidget = XsecPlotWidget()
+        self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
     def populate_seg_cbo(self, xsec_fid=None):
@@ -62,7 +62,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
         for row in all_seg:
             self.segCbo.addItem(str(row[0]))
-        if xsec_fid is not None:
+        if xsec_fid:
             cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = ?;', (xsec_fid,)).fetchone()[0]
         else:
             cur_seg = str(self.segCbo.currentText())
@@ -105,13 +105,16 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
             self.xsecTypeCbo.addItem(val)
         xs = CrossSection(cur_xsec, self.con, self.iface)
         row = xs.get_row()
-        index = self.xsecTypeCbo.findText(xs_types[row['type']], Qt.MatchFixedString)
+        typ = row['type']
+        name = xs.get_chan_table()['xsecname'] if typ == 'N' else ''
+        index = self.xsecTypeCbo.findText(xs_types[typ], Qt.MatchFixedString)
         self.xsecTypeCbo.setCurrentIndex(index)
+        self.xsecNameEdit.setText(name)
         self.chanLenEdit.setText(str(row['xlen']))
         self.mannEdit.setText(str(row['fcn']))
         self.notesEdit.setText(str(row['notes']))
-        chan = xs.chan_table()
-        xy = xs.xsec_data()
+        chan = xs.get_chan_table()
+        xy = xs.get_xsec_data()
 
         model = QStandardItemModel()
         if not xy:
@@ -120,21 +123,20 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
                 item = QStandardItem(str(val))
                 model.appendRow(item)
             model.setVerticalHeaderLabels(chan.keys())
-            for i in range(len(chan)):
-                self.xsecDataTView.setRowHeight(i, 18)
+            data_len = len(chan)
         else:
-            model.setHorizontalHeaderLabels(['x', 'y'])
+            model.setHorizontalHeaderLabels(['Station', 'Elevation'])
             for i, pt in enumerate(xy):
                 x, y = pt
                 xi = QStandardItem(str(x))
                 yi = QStandardItem(str(y))
                 model.appendRow([xi, yi])
-            for i in range(len(xy)):
-                self.xsecDataTView.setRowHeight(i, 18)
+            data_len = len(xy)
         self.xsecDataTView.setModel(model)
-        self.xsecDataTView.resizeColumnsToContents()
         self.xs_data_model = model
-
+        for i in range(data_len):
+            self.xsecDataTView.setRowHeight(i, 18)
+        self.xsecDataTView.resizeColumnsToContents()
         if self.xsecTypeCbo.currentText() == 'Natural':
             self.update_plot()
         else:

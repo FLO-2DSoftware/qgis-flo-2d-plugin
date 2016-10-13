@@ -168,6 +168,44 @@ class GeoPackageUtils(object):
             else:
                 pass
 
+    def get_cont_par(self, name):
+        """Get a parameter value from cont table"""
+        try:
+            sql = '''SELECT value FROM cont WHERE name = ?;'''
+            r = self.execute(sql, (name,)).fetchone()[0]
+            if r:
+                return r
+        except:
+            return None
+
+    def get_gpkg_path(self):
+        """Return database attached to the current connection"""
+        try:
+            sql = '''PRAGMA database_list;'''
+            r = self.execute(sql).fetchone()[2]
+            return r
+        except:
+            return None
+
+    def create_grid(self):
+#        drop_qry = 'DROP TABLE IF EXISTS grid_tmp;'
+        del_qry = 'DELETE FROM grid_tmp;'
+        updt_qry = 'UPDATE user_model_boundary SET cell_size = (SELECT value FROM cont WHERE name = "CELLSIZE");'
+        grid_qry = '''CREATE TABLE grid_tmp AS SELECT ST_SquareGrid(GeomFromGPB(geom), cell_size) AS g FROM user_model_boundary;'''
+        ins_qry = '''INSERT INTO grid_tmp (g) SELECT ST_SquareGrid(GeomFromGPB(geom), cell_size) AS g FROM user_model_boundary;'''
+        count_qry = '''SELECT ST_NumGeometries(g) FROM grid_tmp;'''
+        part_qry = '''INSERT INTO grid (geom) SELECT AsGPB(ST_GeometryN(g, ?)) FROM grid_tmp;'''
+#        self.execute(drop_qry)
+        self.execute(del_qry)
+        self.execute(updt_qry)
+#        self.execute(grid_qry)
+        self.execute(ins_qry)
+        gcount = self.execute(count_qry).fetchone()[0]
+        cur = self.con.cursor()
+        for n in range(1, int(gcount) + 1):
+            cur.execute(part_qry, (n,))
+        self.con.commit()
+
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:

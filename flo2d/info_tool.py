@@ -24,6 +24,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import QgsMapToolIdentify
+from collections import OrderedDict
 import functools
 
 
@@ -38,28 +39,55 @@ class InfoTool(QgsMapToolIdentify):
     def canvasPressEvent(self, e):
         pass
 
+#    def canvasReleaseEvent(self, e):
+#        try:
+#            pt = self.toMapCoordinates(e.pos())
+#            feat = self.identify(e.x(), e.y(), QgsMapToolIdentify.LayerSelection)[0]
+#            lyr_name = feat.mLayer.name()
+#            lyr_id = feat.mLayer.id()
+#            table = feat.mLayer.dataProvider().dataSourceUri().split('=')[-1]
+#            fid = feat.mFeature.id()
+#            self.pass_res(table, fid)
+#        except IndexError as e:
+#            print('Point outside layers extent.')
+#            return
+
     def canvasReleaseEvent(self, e):
-        try:
-            pt = self.toMapCoordinates(e.pos())
-            feat = self.identify(e.x(), e.y(), QgsMapToolIdentify.LayerSelection)[0]
-            lyr_name = feat.mLayer.name()
-            lyr_id = feat.mLayer.id()
-            table = feat.mLayer.dataProvider().dataSourceUri().split('=')[-1]
-            fid = feat.mFeature.id()
-            self.pass_res(table, fid)
-        except IndexError as e:
-            print('Point outside layers extent.')
-            return
+        pt = self.toMapCoordinates(e.pos())
+        print pt.x(), pt.y()
+        res = self.identify(e.x(), e.y(), QgsMapToolIdentify.TopDownAll)
+        print "Found: {}".format(len(res))
+        popup = QMenu()
+#        popup.focusOutEvent().connect(self.clear_rubber)
+        actions = {}
+        lyrs_found = OrderedDict()
+        for i, item in enumerate(res):
+            lyr_name = item.mLayer.name()
+            if not lyr_name in lyrs_found:
+                lyrs_found.append(lyr_name)
+            lyr_id = item.mLayer.id()
+            table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]
+            fid = item.mFeature.id()
+            a_text = "{} {}".format(lyr_name, fid)
+            print a_text
+            actions[i] = QAction(a_text, None)
+            actions[i].hovered.connect(functools.partial(self.show_rubber, lyr_id, fid))
+            actions[i].triggered.connect(functools.partial(self.pass_res, table, fid))
+            popup.addAction(actions[i])
+        popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x()+30, e.pos().y()-30)))
 
     def pass_res(self, table, fid):
         print('Picked: {} {}'.format(table, fid))
         self.feature_picked.emit(table, fid)
 
-    def activate(self):
+    def show_rubber(self, lyr_id, fid):
         pass
 
-    def deactivate(self):
-        pass
+#    def activate(self):
+#        pass
+#
+#    def deactivate(self):
+#        pass
 
     def isZoomTool(self):
         return False

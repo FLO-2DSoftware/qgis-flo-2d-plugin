@@ -26,15 +26,15 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from .utils import load_ui
 from ..flo2dgeopackage import GeoPackageUtils
-from ..flo2dobjects import Inflow
+from ..flo2dobjects import Rain
 from plot_widget import PlotWidget
 
-uiDialog, qtBaseClass = load_ui('inflow_editor')
+uiDialog, qtBaseClass = load_ui('rain_editor')
 
 
-class InflowEditorDialog(qtBaseClass, uiDialog):
+class RainEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, inflow_fid=None, parent=None):
+    def __init__(self, con, iface, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.iface = iface
@@ -42,72 +42,34 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
-        self.cur_inflow_fid = inflow_fid
-        self.inflow = None
+        self.rain = Rain(con, iface)
         self.gutils = GeoPackageUtils(con, iface)
-        self.inflow_data_model = None
-        self.populate_inflows(inflow_fid)
+        self.rain_data_model = None
+        self.rain_properties()
         self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
 
         # connections
-        self.inflowNameCbo.currentIndexChanged.connect(self.populate_inflow_properties)
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def populate_inflows(self, inflow_fid=None):
-        """Read inflow and inflow_time_series tables, populate proper combo boxes"""
-        self.inflowNameCbo.clear()
+    def rain_properties(self):
+        row = self.rain.get_row()
+
+        self.realTimeChBox.setChecked(row['irainreal'])
+        self.buildingChBox.setChecked(row['irainbuilding'])
+        self.movingStormChBox.setChecked(row['movingstrom'])
+        self.totalRainfallEdit.setText(str(row['tot_rainfall']))
+        self.rainfallAbstcEdit.setText(str(row['rainabs']))
         fid_name = '{} {}'
-        all_inflows = self.gutils.execute('SELECT fid, name, time_series_fid FROM inflow ORDER BY fid;').fetchall()
-        initial = all_inflows[0]
-        for row in all_inflows:
-            row = [x if x is not None else '' for x in row]
-            fid, name, ts_fid = row
-            inflow_name = fid_name.format(fid, name).strip()
-            self.inflowNameCbo.addItem(inflow_name)
-            if fid == inflow_fid:
-                initial = row
-            else:
-                pass
-        all_tseries = self.gutils.execute('SELECT fid, name FROM inflow_time_series ORDER BY fid;').fetchall()
-        for row in all_tseries:
+        for row in self.rain.get_time_series():
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
-            tseries_name = fid_name.format(ts_fid, name).strip()
-            self.tseriesCbo.addItem(tseries_name)
-            if ts_fid in initial:
-                initial.append(name)
-            else:
-                pass
-        initial_inflow = fid_name.format(*initial[:2]).strip()
-        initial_series = fid_name.format(*initial[2:]).strip()
-        index = self.inflowNameCbo.findText(initial_inflow, Qt.MatchFixedString)
-        self.inflowNameCbo.setCurrentIndex(index)
-        index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
-        self.tseriesCbo.setCurrentIndex(index)
-        self.populate_inflow_properties()
-
-    def populate_inflow_properties(self):
-        """Read and set inflow properties"""
-        cur_inf = self.inflowNameCbo.currentText().split()[0]
-        self.inflow = Inflow(cur_inf, self.con, self.iface)
-        row = self.inflow.get_row()
-        ident = row['ident']
-        inoutfc = row['inoutfc']
-        series_fid = str(row['time_series_fid'])
-        if ident == 'F':
-            self.ifcFloodplainRadio.setChecked(1)
-            self.ifcChannelRadio.setChecked(0)
-        else:
-            self.ifcFloodplainRadio.setChecked(0)
-            self.ifcChannelRadio.setChecked(1)
-        index = self.tseriesCbo.findText(series_fid, Qt.MatchFixedString)
-        self.tseriesCbo.setCurrentIndex(index)
-        self.inflowTypeCbo.setCurrentIndex(inoutfc)
-        self.populate_tseries_data()
+            series_name = fid_name.format(ts_fid, name).strip()
+            self.tseriesCbo.addItem(series_name)
+        self.tseriesCbo.setCurrentIndex(0)
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
@@ -115,10 +77,9 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
             fid = self.tseriesCbo.currentText().split()[0]
         except IndexError as e:
             fid = self.tseriesCbo.currentText()
-        self.inflow.series_fid = fid
-        series_data = self.inflow.get_time_series_data()
+        self.rain.series_fid = fid
+        series_data = self.rain.get_time_series_data()
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
         for row in series_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
             model.appendRow(items)
@@ -141,7 +102,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
     def update_plot(self):
         """When time series data for plot change, update the plot"""
         self.plotWidget.clear_plot()
-        dm = self.inflow_data_model
+        dm = self.rain_data_model
         print dm.rowCount()
         x = []
         y = []

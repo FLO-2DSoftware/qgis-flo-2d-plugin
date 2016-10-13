@@ -1537,3 +1537,60 @@ CREATE TABLE "sed_supply_frac_data" (
     "ssedpercent" REAL -- SSEDPERCENT, sediment supply size distribution percentage
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
+
+
+-- TEMPORARY TABLES
+
+CREATE TABLE grid_tmp (
+    "fid" INTEGER PRIMARY KEY NOT NULL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid_tmp', 'features', 4326);
+SELECT gpkgAddGeometryColumn('grid_tmp', 'g', 'MULTIPOLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('grid_tmp', 'g');
+SELECT gpkgAddSpatialIndex('grid_tmp', 'g');
+
+-- USERS Layers
+
+CREATE TABLE "user_model_boundary" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "cell_size" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_model_boundary', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
+SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
+
+CREATE TABLE "user_channel_seg" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_channel_seg', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_channel_seg', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_channel_seg', 'geom');
+SELECT gpkgAddSpatialIndex('user_channel_seg', 'geom');
+
+CREATE TABLE "user_xsections" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsections', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
+SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TABLE "user_levees" (
+    "fid" INTEGER PRIMARY KEY NOT NULL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levees', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_levees', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_levees', 'geom');
+SELECT gpkgAddSpatialIndex('user_levees', 'geom');
+
+CREATE TABLE "user_streets" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_streets', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_streets', 'geom');
+SELECT gpkgAddSpatialIndex('user_streets', 'geom');

@@ -44,7 +44,7 @@ class CrossSection(GeoPackageUtils):
         self.type = self.row['type']
         return self.row
 
-    def chan_segment(self, *args):
+    def get_chan_segment(self, *args):
         if self.row is not None:
             pass
         else:
@@ -60,7 +60,7 @@ class CrossSection(GeoPackageUtils):
         self.chan = OrderedDict(zip(args, values))
         return self.chan
 
-    def chan_table(self, *args):
+    def get_chan_table(self, *args):
         if self.row is not None:
             pass
         else:
@@ -77,7 +77,7 @@ class CrossSection(GeoPackageUtils):
         self.chan_tab = OrderedDict(zip(args, values))
         return self.chan_tab
 
-    def xsec_data(self):
+    def get_xsec_data(self):
         if self.row is not None and self.type == 'N':
             pass
         else:
@@ -96,7 +96,6 @@ class Inflow(GeoPackageUtils):
         self.fid = fid
         self.series_fid = None
         self.row = None
-        self.time_series = None
         self.time_series_data = None
 
     def get_row(self):
@@ -106,15 +105,120 @@ class Inflow(GeoPackageUtils):
         self.series_fid = self.row['time_series_fid']
         return self.row
 
-    def time_series_table(self):
-        qry = 'SELECT fid, name FROM inflow_time_series WHERE fid = ? ORDER BY fid;'
-        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
-        return self.time_series
-
-    def time_series_data_table(self):
+    def get_time_series_data(self):
         qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.time_series_data
+
+
+class Outflow(GeoPackageUtils):
+    columns = ['fid', 'name', 'ident', 'nostacfp', 'time_series_fid', 'qh_params_fid', 'qh_table_fid', 'note', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(Outflow, self).__init__(con, iface)
+        self.fid = fid
+        self.series_fid = None
+        self.row = None
+        self.typ = None
+        self.time_series_data = None
+        self.qh_params = None
+        self.qh_table_data = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM outflow WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        time_series_fid = self.row['time_series_fid']
+        qh_params_fid = self.row['qh_params_fid']
+        qh_table_fid = self.row['qh_table_fid']
+        if time_series_fid:
+            self.series_fid = time_series_fid
+            self.typ = 'outflow_time_series'
+        elif qh_params_fid:
+            self.series_fid = qh_params_fid
+            self.typ = 'qh_params'
+        elif qh_table_fid:
+            self.series_fid = qh_table_fid
+            self.typ = 'qh_table'
+        else:
+            pass
+        return self.row
+
+    def get_time_series_data(self):
+        qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ?;'
+        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series_data
+
+    def get_qh_params(self):
+        qry = 'SELECT hmax, coef, exponent FROM qh_params WHERE fid = ?;'
+        self.qh_params = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.qh_params
+
+    def get_qh_table_data(self):
+        qry = 'SELECT depth, q FROM qh_table_data WHERE fid = ?;'
+        self.qh_table_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.qh_table_data
+
+
+class Rain(GeoPackageUtils):
+    columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall', 'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
+
+    def __init__(self, con, iface):
+        super(Rain, self).__init__(con, iface)
+        self.row = None
+        self.series_fid = None
+        self.time_series = None
+        self.time_series_data = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM rain;'
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+
+        return self.row
+
+    def get_time_series(self):
+        qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
+        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series
+
+    def get_time_series_data(self):
+        qry = 'SELECT time, value FROM rain_time_series_data WHERE series_fid = ?;'
+        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        return self.time_series_data
+
+
+class Evaporation(GeoPackageUtils):
+    columns = ['fid', 'ievapmonth', 'iday', 'clocktime']
+
+    def __init__(self, con, iface):
+        super(Evaporation, self).__init__(con, iface)
+        self.row = None
+        self.month = 'january'
+        self.monthly = None
+        self.hourly = None
+        self.hourly_sum = 0
+
+    def get_row(self):
+        qry = 'SELECT * FROM evapor;'
+        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        return self.row
+
+    def get_monthly(self):
+        qry = 'SELECT month, monthly_evap FROM evapor_monthly;'
+        self.monthly = self.execute(qry).fetchall()
+        return self.monthly
+
+    def get_hourly(self):
+        qry = 'SELECT hour, hourly_evap FROM evapor_hourly WHERE month = ? ORDER BY fid;'
+        self.hourly = self.execute(qry, (self.month,)).fetchall()
+        return self.hourly
+
+    def get_hourly_sum(self):
+        qry = 'SELECT ROUND(SUM(hourly_evap), 3) FROM evapor_hourly WHERE month = ? ORDER BY fid;'
+        self.hourly_sum = self.execute(qry, (self.month,)).fetchone()[0]
+        return self.hourly_sum
 
 
 if __name__ == '__main__':
@@ -123,9 +227,9 @@ if __name__ == '__main__':
     con = database_connect(gpkg)
     xs = CrossSection(1232, con, None)
     row = xs.get_row()
-    chan = xs.chan_segment()
-    chan_tab = xs.chan_table()
-    data = xs.xsec_data()
+    chan = xs.get_chan_segment()
+    chan_tab = xs.get_chan_table()
+    data = xs.get_xsec_data()
     con.close()
     print(row)
     print(chan)
