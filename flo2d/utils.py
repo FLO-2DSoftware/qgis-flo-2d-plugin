@@ -26,3 +26,9 @@ def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(temp_dir, *paths)
     return path
+
+def add_egg(name):
+    import sys
+    dep = get_file_path('deps', name)
+    sys.path.append(dep)
+

@@ -21,7 +21,7 @@
  ***************************************************************************/
 """
 from PyQt4.QtGui import *
-from .. import pyqtgraph as pg
+from ..deps import safe_pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
