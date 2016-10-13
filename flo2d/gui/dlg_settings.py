@@ -33,9 +33,9 @@ uiDialog, qtBaseClass = load_ui('settings')
 
 class SettingsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, gpkg, parent=None):
+    def __init__(self, con, iface, lyrs, gpkg):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
@@ -67,6 +67,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def setup(self):
         if self.gpkg:
+            self.gpkg.path = self.gpkg.get_gpkg_path()
             self.gpkgPathEdit.setText(self.gpkg.path)
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.read()
@@ -90,6 +91,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             msg = 'Choose a valid CRS!'
             self.uc.show_warn(msg)
             return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         self.gpkg_path = QFileDialog.getSaveFileName(None,
@@ -132,10 +134,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.srs_id = srsid
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.lyrs.load_all_layers(self.gpkg)
+        QApplication.restoreOverrideCursor()
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
         database_disconnect(self.con)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gpkg_path = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
@@ -162,6 +166,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.gpkgPathEdit.setText(self.gpkg.path)
         self.read()
+        QApplication.restoreOverrideCursor()
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
@@ -181,7 +186,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def write(self):
         for name, wid in self.widget_map.iteritems():
-            qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
+            ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
+            updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
@@ -191,5 +197,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 value = self.crs.toProj4()
             else:
                 pass
-            self.gutils.execute(qry, (name, value))
+            self.gutils.execute(ins_qry, (name, value))
+            # in case the name exists in the table, update its value
+            self.gutils.execute(updt_qry, (value, name))
 

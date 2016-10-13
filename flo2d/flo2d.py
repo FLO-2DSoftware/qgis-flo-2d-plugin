@@ -204,14 +204,15 @@ class Flo2D(object):
         del self.con, self.gpkg, self.lyrs
 
     def show_settings(self):
-        self.dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gpkg)
-        self.dlg_settings.show()
-        result = self.dlg_settings.exec_()
+        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gpkg)
+        dlg_settings.show()
+        result = dlg_settings.exec_()
         if result:
-            self.dlg_settings.write()
-            self.con = self.dlg_settings.con
-            self.gpkg = self.dlg_settings.gpkg
-            self.crs = self.dlg_settings.crs
+            dlg_settings.write()
+            self.con = dlg_settings.con
+            self.gpkg = dlg_settings.gpkg
+            self.crs = dlg_settings.crs
+
 
 #    def create_db(self):
 #        """Create FLO-2D model database (GeoPackage)"""
@@ -344,6 +345,7 @@ class Flo2D(object):
         fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if fname:
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             bname = os.path.basename(fname)
             self.gpkg.set_parser(fname)
             if bname in self.gpkg.parser.dat_files:
@@ -371,6 +373,7 @@ class Flo2D(object):
                 self.uc.bar_info('Flo2D model imported', dur=3)
             else:
                 pass
+            QApplication.restoreOverrideCursor()
         else:
             pass
 
@@ -409,9 +412,11 @@ class Flo2D(object):
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         outdir = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
         if outdir:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue('FLO-2D/lastGdsDir', outdir)
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
+            QApplication.restoreOverrideCursor()
 
     def create_model_boundary(self):
         """Create model boundary and get grid cell size from user"""
@@ -422,7 +427,7 @@ class Flo2D(object):
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         self.iface.setActiveLayer(bl)
         bl.startEditing()
-        # start addFeature tool
+        self.iface.actionAddFeature().trigger()
 
     def get_cell_size(self):
         """Ask for cell size if not defined in cont table"""
@@ -447,7 +452,14 @@ class Flo2D(object):
             self.uc.bar_warn("Define a database connections first!")
             return
         self.gpkg = GeoPackageUtils(self.con, self.iface)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gpkg.create_grid()
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        if grid_lyr:
+            grid_lyr.triggerRepaint()
+#            grid_lyr.updateExtents()
+#        self.iface.mapCanvas().refresh()
+        QApplication.restoreOverrideCursor()
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

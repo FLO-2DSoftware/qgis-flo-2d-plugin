@@ -1539,6 +1539,16 @@ CREATE TABLE "sed_supply_frac_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
 
+-- TEMPORARY TABLES
+
+CREATE TABLE grid_tmp (
+    "fid" INTEGER PRIMARY KEY NOT NULL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid_tmp', 'features', 4326);
+SELECT gpkgAddGeometryColumn('grid_tmp', 'g', 'MULTIPOLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('grid_tmp', 'g');
+SELECT gpkgAddSpatialIndex('grid_tmp', 'g');
+
 -- USERS Layers
 
 CREATE TABLE "user_model_boundary" (
