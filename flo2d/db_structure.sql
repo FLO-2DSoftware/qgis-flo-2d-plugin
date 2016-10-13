@@ -161,11 +161,13 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_time_series_data
 CREATE TABLE "outflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "ident" TEXT,
-    "nostacfp" INTEGER,
-    "time_series_fid" INTEGER,
-    "qh_params_fid" INTEGER,
-    "qh_table_fid" INTEGER,
+    "chan_out" INTEGER,
+    "fp_out" INTEGER, 
+    "chan_tser_fid" INTEGER,
+    "chan_qhpar_fid" INTEGER,
+    "chan_qhtab_fid" INTEGER,
+    "fp_tser_fid" INTEGER,
+    "out_hydro_fid" INTEGER,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
@@ -268,12 +270,19 @@ CREATE TABLE "qh_table_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_table_data', 'aspatial');
 
-CREATE TABLE "outflow_hydrographs" (
+CREATE TABLE "out_hydrographs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "hydro_fid" TEXT, -- OUTCHAR(O) symbolic name for outflow hydrograph
+    "hydro_sym" TEXT, -- O1-O9
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs', 'aspatial');
+
+CREATE TABLE "out_hydrographs_cells" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "hydro_fid" INTEGER, -- fid of outflow hydrograph form out_hydrographs table
     "grid_fid" INTEGER
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_hydrographs', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs_cells', 'aspatial');
 
 
 -- RAIN.DAT

@@ -6,12 +6,14 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * outflow
 * outflow_cells
 * outflow_chan_elems
+* outflow_time_series
+* outflow_time_series_data
 * qh_params
+* qh_params_data
 * qh_table
 * qh_table_data
-* outflow_hydrographs
-* time_series (the same we use for inflow data)
-* time_series_data (the same we use for inflow data)
+* out_hydrographs
+* out_hydrographs_cells
 
 .. figure:: img/outflow.png
    :align: center
@@ -20,15 +22,17 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 
 **gpkg table: outflow** (contains general info about each outflow)
 
-* "fid" INTEGER NOT NULL PRIMARY KEY,
-* "name" TEXT, -- name of outflow
-* "time_series_fid" INTEGER REFERENCES time_series(fid), -- id of time series used for outflow
-* "ident" TEXT, -- OUTCHAR, identifier of inflow element type **K** for channel, **O** for floodplain, **KO** for both, channel and floodplain (Outflow hydrographs **Ox** for floodplain elements go to separate table outflow_hydrographs)
-* "nostacfp" INTEGER, -- NOSTACFP, outflow element type **0** for floodplain, **1** for channel
-* "qh_params_fid" INTEGER, -- if OUTCHAR = **H** take stage-discharge relation parameters from table qh_params
-* "qh_table_fid" INTEGER, -- if OUTCHAR = **T** take stage-discharge relation from qh_table
-* "geom" POLYGON, -- area of outflow. In case of translating from DAT: it could be a part of the grid cell interior where the outflow is located in or a part of channel (grid_fid = NOSTA when ident = K and elem_id = KOUT when ident = K). When users modify the geometry automatic geoprocessing triggers will find grid cells or channel elements affected -> table outflow_cells or outflow_chan_elems.
+* "fid" INTEGER PRIMARY KEY NOT NULL,
+* "name" TEXT,-- name of outflow
+* "chan_out" INTEGER, -- = 1  if there is a K line for that outflow, NULL otherwise
+* "fp_out" INTEGER, -- = 1 if there is a O line for that outflow, NULL otherwise
+* "chan_tser_fid" INTEGER REFERENCES outflow_time_series(fid), -- time series fid for CHANNEL, if there is any (OUTCHAR N with NOSTACFP = 1)
+* "chan_qhpar_fid" INTEGER REFERENCES qh_params(fid), -- qh_params fid for CHANNEL, if there is any (OUTCHAR H after K)
+* "chan_qhtab_fid" INTEGER REFERENCES qh_table(fid), -- qh_table fid for CHANNEL, if there is any (OUTCHAR T after K)
+* "fp_tser_fid" INTEGER REFERENCES outflow_time_series(fid), -- time series fid for FLOODPLAIN, if there is any (OUTCHAR N with NOSTACFP = 0)
+* "out_hydro_fid" INTEGER REFERENCES out_hydrographs(fid),
 * "note" TEXT
+* "geom" POLYGON, -- area of outflow. In case of translating from DAT: it could be a part of the grid cell interior where the outflow is located in or a part of channel (grid_fid = NOSTA when ident = K and elem_id = KOUT when ident = K). When users modify the geometry automatic geoprocessing triggers will find grid cells or channel elements affected -> table outflow_cells or outflow_chan_elems.
 
 **gpkg table: outflow_cells** (cells being affected by an outflow)
 
@@ -41,6 +45,18 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "fid" INTEGER NOT NULL PRIMARY KEY,
 * "outflow_fid" INTEGER NOT NULL REFERENCES outflow(fid), -- outflow id
 * "elem_fid" INTEGER NOT NULL REFERENCES grid(fid) -- KOUT - grid element id affected by an outflow
+
+**gpkg table: outflow_time_series** (named time series)
+
+* "fid" INTEGER NOT NULL PRIMARY KEY,
+* "name" TEXT, -- name of time series
+
+**gpkg table: outflow_time_series_data** (time series data)
+
+* "fid" INTEGER NOT NULL PRIMARY KEY,
+* "series_fid" INTEGER NOT NULL REFERENCES time_series(fid), -- fid of time series the data pair belongs to
+* "time" REAL NOT NULL, -- time
+* "value" REAL NOT NULL -- value
 
 **gpkg table: qh_params** (stage-discharge reletionship parameter groups)
 
@@ -67,26 +83,17 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "depth" REAL, -- CHDEPTH, depth above the thalweg
 * "q" REAL -- CQTABLE, discharge for the channel outflow
 
-**gpkg table: outflow_hydrographs** (cells that should produce outflow hydrographs)
+**gpkg table: out_hydrographs** (named outflow hydrographs, O1-O9)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
 * "hydro_fid" INTEGER NOT NULL, -- OUTCHAR, Ox (where x = 1-9) - number of outflow hydrograph to be created
-* "grid_fid" INTEGER NOT NULL REFERENCES grid(fid) -- grid element id being a part of an outflow hydro_id
+* "name" TEXT -- optional name of outflow hydrograph
 
-**gpkg table: time_series** (named time series)
-
-* "fid" INTEGER NOT NULL PRIMARY KEY,
-* "name" TEXT, -- name of time series
-* "type" TEXT, -- type of data
-* "hourdaily" INTEGER  -- IHOURDAILY - is time given in hours (0) or days (1)
-
-**gpkg table: time_series_data** (time series data)
+**gpkg table: out_hydrographs_cells** (grid cells for outflow hydrographs)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
-* "series_fid" INTEGER NOT NULL REFERENCES time_series(fid), -- fid of time series the data pair belongs to
-* "time" REAL NOT NULL, -- time
-* "value" REAL NOT NULL -- value1
-* "value2" REAL -- value2
-* "value3" REAL -- value3
+* "hydro_fid" INTEGER REFERENCES out_hydrographs(fid),
+* "grid_fid" INTEGER
+
 
 
