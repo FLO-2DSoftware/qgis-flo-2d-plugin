@@ -31,6 +31,7 @@ from qgis.core import *
 from flo2d_dialog import Flo2DDialog
 from user_communication import UserCommunication
 from flo2dgeopackage import *
+from grid_tools import square_grid
 from utils import *
 from layers import Layers
 
@@ -453,7 +454,8 @@ class Flo2D(object):
             return
         self.gpkg = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.gpkg.create_grid()
+        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        square_grid(self.gpkg, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         if grid_lyr:
             grid_lyr.triggerRepaint()
