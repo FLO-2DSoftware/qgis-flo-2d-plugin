@@ -241,11 +241,18 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 
 
 CREATE TABLE "qh_params" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_params', 'aspatial');
+
+CREATE TABLE "qh_params_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "params_fid" INTEGER, -- fid of params group from qh_params table
     "hmax" REAL,
     "coef" REAL,
     "exponent" REAL
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_params', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_params_data', 'aspatial');
 
 CREATE TABLE "qh_table" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

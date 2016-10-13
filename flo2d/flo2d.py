@@ -66,18 +66,18 @@ class Flo2D(object):
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
-        self.create_map_tools()
-
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&Flo2D')
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
         self.con = None
-        self.lyrs = Layers()
+        self.lyrs = Layers(iface)
         self.gpkg = None
         self.prep_sql = None
         self.set_editors_map()
+
+        self.create_map_tools()
 
         # connections
         self.info_tool.feature_picked.connect(self.get_feature_info)
@@ -466,7 +466,8 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, fid)
+        self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
+        self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_xsec_editor.show()
 
     def show_inflow_editor(self, fid=None):
@@ -503,7 +504,7 @@ class Flo2D(object):
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
-        self.info_tool = InfoTool(self.canvas)
+        self.info_tool = InfoTool(self.canvas, self.lyrs)
 
     def identify(self):
         if not self.gpkg:

@@ -34,11 +34,13 @@ uiDialog, qtBaseClass = load_ui('xsec_editor')
 
 class XsecEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, xsec_fid=None, parent=None):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+    def __init__(self, con, iface, lyrs, xsec_fid=None):
+        qtBaseClass.__init__(self, None, Qt.WindowStaysOnTopHint)
+        uiDialog.__init__(self)
         self.iface = iface
         self.con = con
+        self.lyrs = lyrs
+        self.xsec_lyr_id = self.lyrs.get_layer_by_name('Cross sections', lyrs.group).layer().id()
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
@@ -91,6 +93,7 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         self.xsecList.setModel(model)
         index = self.xsecList.model().index(position, 0, QModelIndex())
         self.xsecList.selectionModel().select(index, self.xsecList.selectionModel().Select)
+        self.xsecList.scrollTo(index)
         self.xsecList.selectionModel().selectionChanged.connect(self.populate_xsec_data)
         self.populate_xsec_data()
 
@@ -99,6 +102,8 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         dialog and create xsection plot"""
         cur_index = self.xsecList.selectionModel().selectedIndexes()[0]
         cur_xsec = self.xsecList.model().itemFromIndex(cur_index).text()
+        # rubberband
+        self.lyrs.show_feat_rubber(self.xsec_lyr_id, int(cur_xsec))
         xs_types = {'R': 'Rectangular', 'V': 'Variable Area', 'T': 'Trapezoidal', 'N': 'Natural'}
         self.xsecTypeCbo.clear()
         for val in xs_types.values():

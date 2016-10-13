@@ -23,6 +23,7 @@
 
 from PyQt4.QtCore import QObject, pyqtSignal
 from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QColor
 import os
 from utils import *
 from collections import OrderedDict
@@ -34,8 +35,10 @@ from qgis.core import (
     QgsFeatureRequest,
     QgsVectorLayer,
     QgsGeometry,
-    QgsLayerTreeLayer
+    QgsLayerTreeLayer,
+    QgsMapLayer
 )
+from qgis.gui import QgsRubberBand
 from qgis.utils import iface
 
 import utils
@@ -47,9 +50,11 @@ class Layers(QObject):
     Class for managing project layers: load, add to layers tree
     '''
 
-    def __init__(self):
+    def __init__(self, iface):
         super(Layers, self).__init__()
+        self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
+        self.rb = None
 
 
     def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
@@ -113,6 +118,15 @@ class Layers(QObject):
                 return layeritem
         else:
             raise Flo2dLayerNotFound('Layer name not specified')
+
+    def list_group_vlayers(self, group):
+        grp = self.get_group(group)
+        l = []
+        for lyr in grp.findLayers():
+            if lyr.layer().type() == QgsMapLayer.VectorLayer and \
+                lyr.layer().geometryType() < 3:
+                l.append(lyr.layer())
+        return l
 
     def new_group(self, name):
         if isinstance(name, (str, unicode)):
@@ -708,3 +722,20 @@ class Layers(QObject):
         for nr in range(sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
+
+    def show_feat_rubber(self, lyr_id, fid):
+        lyr = self.get_layer_tree_item(lyr_id).layer()
+        gt = lyr.geometryType()
+        self.clear_rubber()
+        self.rb = QgsRubberBand(self.canvas, gt)
+        self.rb.setColor(QColor(255, 0, 0))
+        if gt == 2:
+            self.rb.setFillColor(QColor(255, 0, 0, 100))
+        self.rb.setWidth(2)
+        feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+        self.rb.setToGeometry(feat.geometry(), lyr)
+
+    def clear_rubber(self):
+        if self.rb:
+            for i in range(3):
+                self.rb.reset(i)

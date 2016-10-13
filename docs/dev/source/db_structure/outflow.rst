@@ -23,7 +23,7 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "fid" INTEGER NOT NULL PRIMARY KEY,
 * "name" TEXT, -- name of outflow
 * "time_series_fid" INTEGER REFERENCES time_series(fid), -- id of time series used for outflow
-* "ident" TEXT, -- OUTCHAR, identifier of inflow element type **K** for channel, **N** for floodplain (Outflow hydrographs **O** for floodplain elements go to separate table outflow_hydrographs)
+* "ident" TEXT, -- OUTCHAR, identifier of inflow element type **K** for channel, **O** for floodplain, **KO** for both, channel and floodplain (Outflow hydrographs **Ox** for floodplain elements go to separate table outflow_hydrographs)
 * "nostacfp" INTEGER, -- NOSTACFP, outflow element type **0** for floodplain, **1** for channel
 * "qh_params_fid" INTEGER, -- if OUTCHAR = **H** take stage-discharge relation parameters from table qh_params
 * "qh_table_fid" INTEGER, -- if OUTCHAR = **T** take stage-discharge relation from qh_table
@@ -42,10 +42,15 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "outflow_fid" INTEGER NOT NULL REFERENCES outflow(fid), -- outflow id
 * "elem_fid" INTEGER NOT NULL REFERENCES grid(fid) -- KOUT - grid element id affected by an outflow
 
-
-**gpkg table: qh_params** (stage-discharge reletionship parameters)
+**gpkg table: qh_params** (stage-discharge reletionship parameter groups)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
+* "name" TEXT
+
+**gpkg table: qh_params_data** (stage-discharge reletionship parameters data)
+
+* "fid" INTEGER NOT NULL PRIMARY KEY,
+* "params_fid" INTEGER, -- parameters group fid from qh_params table
 * "hmax" REAL, -- HOUT(J,1)
 * "coef" REAL, -- HOUT(J,2)
 * "exponent" REAL, -- HOUT(J,3)
@@ -65,7 +70,7 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 **gpkg table: outflow_hydrographs** (cells that should produce outflow hydrographs)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
-* "hydro_fid" INTEGER NOT NULL, -- OUTCHAR, O-O9 - number of outflow hydrograph to be created
+* "hydro_fid" INTEGER NOT NULL, -- OUTCHAR, Ox (where x = 1-9) - number of outflow hydrograph to be created
 * "grid_fid" INTEGER NOT NULL REFERENCES grid(fid) -- grid element id being a part of an outflow hydro_id
 
 **gpkg table: time_series** (named time series)
