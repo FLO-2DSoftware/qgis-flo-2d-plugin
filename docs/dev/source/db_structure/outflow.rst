@@ -5,7 +5,6 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 
 * outflow
 * outflow_cells
-* outflow_chan_elems
 * outflow_time_series
 * outflow_time_series_data
 * qh_params
@@ -26,25 +25,18 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "name" TEXT,-- name of outflow
 * "chan_out" INTEGER, -- = 1  if there is a K line for that outflow, NULL otherwise
 * "fp_out" INTEGER, -- = 1 if there is a O line for that outflow, NULL otherwise
-* "chan_tser_fid" INTEGER REFERENCES outflow_time_series(fid), -- time series fid for CHANNEL, if there is any (OUTCHAR N with NOSTACFP = 1)
-* "chan_qhpar_fid" INTEGER REFERENCES qh_params(fid), -- qh_params fid for CHANNEL, if there is any (OUTCHAR H after K)
-* "chan_qhtab_fid" INTEGER REFERENCES qh_table(fid), -- qh_table fid for CHANNEL, if there is any (OUTCHAR T after K)
-* "fp_tser_fid" INTEGER REFERENCES outflow_time_series(fid), -- time series fid for FLOODPLAIN, if there is any (OUTCHAR N with NOSTACFP = 0)
-* "out_hydro_fid" INTEGER REFERENCES out_hydrographs(fid),
+* "chan_tser_fid" INTEGER, -- time series fid for CHANNEL, if there is any (OUTCHAR N with NOSTACFP = 1)
+* "chan_qhpar_fid" INTEGER, -- qh_params fid for CHANNEL, if there is any (OUTCHAR H after K)
+* "chan_qhtab_fid" INTEGER, -- qh_table fid for CHANNEL, if there is any (OUTCHAR T after K)
+* "fp_tser_fid" INTEGER, -- time series fid for FLOODPLAIN, if there is any (OUTCHAR N with NOSTACFP = 0)
 * "note" TEXT
-* "geom" POLYGON, -- area of outflow. In case of translating from DAT: it could be a part of the grid cell interior where the outflow is located in or a part of channel (grid_fid = NOSTA when ident = K and elem_id = KOUT when ident = K). When users modify the geometry automatic geoprocessing triggers will find grid cells or channel elements affected -> table outflow_cells or outflow_chan_elems.
+* "geom" POLYGON -- area of outflow. In case of translating from DAT: it could be a part of the grid cell interior where the outflow is located in or a part of channel (grid_fid = NOSTA when ident = K and elem_id = KOUT when ident = K). When users modify the geometry automatic geoprocessing triggers will find grid cells or channel elements affected -> table outflow_cells.
 
 **gpkg table: outflow_cells** (cells being affected by an outflow)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
 * "outflow_fid" INTEGER NOT NULL REFERENCES outflow(fid), -- outflow id
 * "grid_fid" INTEGER NOT NULL REFERENCES grid(fid) -- NOSTA - grid element id affected by an outflow
-
-**gpkg table: outflow_chan_elems** (channel elements being affected by an outflow)
-
-* "fid" INTEGER NOT NULL PRIMARY KEY,
-* "outflow_fid" INTEGER NOT NULL REFERENCES outflow(fid), -- outflow id
-* "elem_fid" INTEGER NOT NULL REFERENCES grid(fid) -- KOUT - grid element id affected by an outflow
 
 **gpkg table: outflow_time_series** (named time series)
 
@@ -88,6 +80,7 @@ OUTFLOW.DAT information goes into the following GeoPackage tables:
 * "fid" INTEGER NOT NULL PRIMARY KEY,
 * "hydro_fid" INTEGER NOT NULL, -- OUTCHAR, Ox (where x = 1-9) - number of outflow hydrograph to be created
 * "name" TEXT -- optional name of outflow hydrograph
+* "geom" POLYGON -- area of outflow. On import it could be a part of the grid cell interior where the outflow is located in or a part of channel. When users modify the geometry automatic geoprocessing triggers will find grid cells or channel elements affected -> table outflow_cells.
 
 **gpkg table: out_hydrographs_cells** (grid cells for outflow hydrographs)
 

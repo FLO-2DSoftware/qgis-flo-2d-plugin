@@ -190,6 +190,34 @@ CREATE TABLE "outflow_chan_elems" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 'aspatial');
 
+CREATE VIEW outflow_chan_elems (
+    elem_fid,
+    outflow_id
+) AS
+SELECT
+    c.grid_fid, o.fid
+FROM
+    outflow AS o,
+    outflow_cells AS c
+WHERE
+    o.fid = c.outflow_fid AND
+    o.chan_out > 0 OR
+    o.chan_tser_fid > 0 OR
+    o.chan_qhpar_fid > 0 OR
+    o.chan_qhtab_fid > 0;
+
+-- CREATE VIEW "chan_elems_in_segment" (
+--     chan_elem_fid,
+--     seg_fid
+-- ) AS
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_r
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_v
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_t
+-- UNION ALL
+-- SELECT DISTINCT ichangrid, seg_fid FROM chan_n;
+
 --CREATE TRIGGER "find_outflow_cells_insert"
 --    AFTER INSERT ON "outflow"
 --    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom") AND NEW."ident" = 'N')

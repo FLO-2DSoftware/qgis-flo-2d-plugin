@@ -529,12 +529,6 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-#            ('outflow_chan_elems', {
-#                'name': 'Outflow Channel Elements',
-#                'sgroup': 'Tables',
-#                'styles': None,
-#                'attrs_edit_widgets': {}
-#            }),
             ('out_hydrographs', {
                 'name': 'Outflow hydrographs',
                 'sgroup': 'Tables',
