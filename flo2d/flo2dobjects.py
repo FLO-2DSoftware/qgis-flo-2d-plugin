@@ -150,7 +150,7 @@ class Outflow(GeoPackageUtils):
         elif self.fp_tser_fid == 1:
             self.time_series_data = self.execute(qry, (self.fp_tser_fid,)).fetchall()
         else:
-            pass
+            self.time_series_data = []
         return self.time_series_data
 
     def get_qh_params_data(self):
@@ -178,7 +178,6 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
-
         return self.row
 
     def get_time_series(self):
