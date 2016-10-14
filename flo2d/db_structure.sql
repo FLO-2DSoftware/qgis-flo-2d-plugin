@@ -194,10 +194,26 @@ FROM
     outflow_cells AS c
 WHERE
     o.fid = c.outflow_fid AND
-    o.chan_out > 0 OR
+    (o.chan_out > 0 OR
     o.chan_tser_fid > 0 OR
     o.chan_qhpar_fid > 0 OR
-    o.chan_qhtab_fid > 0;
+    o.chan_qhtab_fid > 0);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 'aspatial');
+
+CREATE VIEW outflow_fp_elems (
+    elem_fid,
+    outflow_fid
+) AS
+SELECT
+    c.grid_fid, o.fid
+FROM
+    outflow AS o,
+    outflow_cells AS c
+WHERE
+    o.fid = c.outflow_fid AND
+    (o.fp_out > 0 OR
+    o.fp_tser_fid > 0);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_fp_elems', 'aspatial');
 
 -- CREATE VIEW "chan_elems_in_segment" (
 --     chan_elem_fid,
@@ -296,7 +312,10 @@ CREATE TABLE "out_hydrographs" (
     "hydro_sym" TEXT, -- O1-O9
     "name" TEXT
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('out_hydrographs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('out_hydrographs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('out_hydrographs', 'geom');
+SELECT gpkgAddSpatialIndex('out_hydrographs', 'geom');
 
 CREATE TABLE "out_hydrographs_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
