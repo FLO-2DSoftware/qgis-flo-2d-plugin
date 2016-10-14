@@ -162,12 +162,12 @@ CREATE TABLE "outflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "chan_out" INTEGER,
-    "fp_out" INTEGER, 
+    "fp_out" INTEGER,
+    "hydro_out" INTEGER,
     "chan_tser_fid" INTEGER,
     "chan_qhpar_fid" INTEGER,
     "chan_qhtab_fid" INTEGER,
     "fp_tser_fid" INTEGER,
-    "hydro_out" INTEGER,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);

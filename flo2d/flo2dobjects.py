@@ -112,51 +112,55 @@ class Inflow(GeoPackageUtils):
 
 
 class Outflow(GeoPackageUtils):
-    columns = ['fid', 'name', 'ident', 'nostacfp', 'time_series_fid', 'qh_params_fid', 'qh_table_fid', 'note', 'geom']
+    columns = ['fid', 'name', 'chan_out', 'fp_out', 'hydro_out', 'chan_tser_fid', 'chan_qhpar_fid', 'chan_qhtab_fid',
+               'fp_tser_fid', 'note', 'geom']
 
     def __init__(self, fid, con, iface):
         super(Outflow, self).__init__(con, iface)
         self.fid = fid
-        self.series_fid = None
         self.row = None
-        self.typ = None
+        self.chan_out = None
+        self.fp_out = None
+        self.hydro_out = None
+        self.chan_tser_fid = None
+        self.chan_qhpar_fid = None
+        self.chan_qhtab_fid = None
+        self.fp_tser_fid = None
         self.time_series_data = None
-        self.qh_params = None
+        self.qh_params_data = None
         self.qh_table_data = None
 
     def get_row(self):
         qry = 'SELECT * FROM outflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
-        time_series_fid = self.row['time_series_fid']
-        qh_params_fid = self.row['qh_params_fid']
-        qh_table_fid = self.row['qh_table_fid']
-        if time_series_fid:
-            self.series_fid = time_series_fid
-            self.typ = 'outflow_time_series'
-        elif qh_params_fid:
-            self.series_fid = qh_params_fid
-            self.typ = 'qh_params'
-        elif qh_table_fid:
-            self.series_fid = qh_table_fid
-            self.typ = 'qh_table'
-        else:
-            pass
+        self.chan_out = self.row['chan_out']
+        self.fp_out = self.row['fp_out']
+        self.hydro_out = self.row['hydro_out']
+        self.chan_tser_fid = self.row['chan_tser_fid']
+        self.chan_qhpar_fid = self.row['chan_qhpar_fid']
+        self.chan_qhtab_fid = self.row['chan_qhtab_fid']
+        self.fp_tser_fid = self.row['fp_tser_fid']
         return self.row
 
     def get_time_series_data(self):
         qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ?;'
-        self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        if self.chan_tser_fid == 1:
+            self.time_series_data = self.execute(qry, (self.chan_tser_fid,)).fetchall()
+        elif self.fp_tser_fid == 1:
+            self.time_series_data = self.execute(qry, (self.fp_tser_fid,)).fetchall()
+        else:
+            pass
         return self.time_series_data
 
-    def get_qh_params(self):
-        qry = 'SELECT hmax, coef, exponent FROM qh_params WHERE fid = ?;'
-        self.qh_params = self.execute(qry, (self.series_fid,)).fetchall()
-        return self.qh_params
+    def get_qh_params_data(self):
+        qry = 'SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'
+        self.qh_params_data = self.execute(qry, (self.chan_qhpar_fid,)).fetchall()
+        return self.qh_params_data
 
     def get_qh_table_data(self):
-        qry = 'SELECT depth, q FROM qh_table_data WHERE fid = ?;'
-        self.qh_table_data = self.execute(qry, (self.series_fid,)).fetchall()
+        qry = 'SELECT depth, q FROM qh_table_data WHERE table_fid = ?;'
+        self.qh_table_data = self.execute(qry, (self.chan_qhtab_fid,)).fetchall()
         return self.qh_table_data
 
 
