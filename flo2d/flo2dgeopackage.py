@@ -1070,9 +1070,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gid = out_cells[fid]
                 if chan_out == 1:
                     o.write(k_line.format(gid))
-                    for values in self.execute(qh_params_data_sql, (fid,)):
+                    for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
                         o.write(qh_params_line.format(*values))
-                    for values in self.execute(qh_table_data_sql, (fid,)):
+                    for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
                         o.write(qh_table_line.format(*values))
                 else:
                     pass
@@ -1084,12 +1084,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         o.write(ts_line.format(*values))
                 else:
                     pass
-            for row in outflow_rows:
-                fid, fp_out = row[0:2]
-                if fp_out == 1:
-                    o.write(o_line.format(out_cells[fid]))
-                else:
-                    pass
+            floodplains = {out_cells[row[0]]: row[0] for row in outflow_rows if row[1] == 1 and row[0] in out_cells}
+            for gid in sorted(floodplains.iterkeys()):
+                o.write(o_line.format(gid))
             for fid, hydro_sym in self.execute(hydro_sql):
                 gid = self.execute(hydro_cells_sql, (fid,)).fetchone()[0]
                 o.write(hydro_line.format(hydro_sym, gid))

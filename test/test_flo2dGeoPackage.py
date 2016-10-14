@@ -86,15 +86,14 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(len(rows), 4)
         self.assertListEqual([(1,), (2,), (3,), (4,)], rows)
 
-    @unittest.skip('Skip outflow')
     def test_import_outflow(self):
         self.f2g.import_outflow()
-        hydrographs = self.f2g.execute('''SELECT COUNT(fid) FROM outflow_hydrographs;''').fetchone()[0]
-        self.assertEqual(float(hydrographs), 8)
-        outflow = self.f2g.execute('''SELECT ident FROM outflow;''').fetchall()
-        self.assertListEqual([('K',), ('K',), ('K',), ('N',)], outflow)
-        qh_params = self.f2g.execute('''SELECT coef FROM qh_params;''').fetchone()[0]
+        outflows = self.f2g.execute('''SELECT COUNT(fid) FROM outflow;''').fetchone()[0]
+        self.assertEqual(float(outflows), 9)
+        qh_params = self.f2g.execute('''SELECT coef FROM qh_params_data;''').fetchone()[0]
         self.assertEqual(float(qh_params), 2.6)
+        hydchars = self.f2g.execute('''SELECT hydro_sym FROM out_hydrographs;''').fetchall()
+        self.assertListEqual(hydchars, [('O1',), ('O1',), ('O1',)])
 
     def test_import_rain(self):
         self.f2g.import_rain()
@@ -265,7 +264,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip('Skip outflow')
     def test_export_outflow(self):
         self.f2g.import_outflow()
         self.f2g.export_outflow(EXPORT_DATA_DIR)
