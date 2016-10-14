@@ -319,10 +319,7 @@ class Layers(QObject):
                 'name': 'Outflow',
                 'sgroup': None,
                 'styles': ['outflow.qml'],
-                'attrs_edit_widgets': {
-                    1: {'name': 'ValueMap', 'config': {u'Grid element': u'N', u'Channel element': u'K'}},
-                    2: {'name': 'ValueMap', 'config': {u'Channel': 0, u'Floodplain': 1}}
-                }
+                'attrs_edit_widgets': {}
             }),
             ('grid', {
                 'name': 'Grid',
@@ -532,20 +529,32 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-            ('outflow_chan_elems', {
-                'name': 'Outflow Channel Elements',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('outflow_hydrographs', {
+#            ('outflow_chan_elems', {
+#                'name': 'Outflow Channel Elements',
+#                'sgroup': 'Tables',
+#                'styles': None,
+#                'attrs_edit_widgets': {}
+#            }),
+            ('out_hydrographs', {
                 'name': 'Outflow hydrographs',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
+            ('out_hydrographs_cells', {
+                'name': 'Outflow hydrographs cells',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
             ('qh_params', {
-                'name': 'QH Curves',
+                'name': 'QH Parameters',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {}
+            }),
+            ('qh_params_data', {
+                'name': 'QH Parameters Data',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
