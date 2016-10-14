@@ -193,7 +193,7 @@ class ParseDAT(object):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
         data = OrderedDict()
-        hydchars = OrderedDict()
+        hydchars = []
         cur_gid = None
         for row in par:
             char = row[0]
@@ -217,11 +217,7 @@ class ParseDAT(object):
             elif char == 'S':
                 data[cur_gid]['time_series'].append(row[1:])
             elif char.startswith('O') is True:
-                gid = row[-1]
-                if char not in hydchars:
-                    hydchars[char] = [gid]
-                else:
-                    hydchars[char].append(gid)
+                hydchars.append(row)
             else:
                 pass
         return data, hydchars
@@ -558,5 +554,5 @@ if __name__ == '__main__':
     data, hydchars = x.parse_outflow()
     for row in data.items():
         print(row)
-    for row in hydchars.items():
+    for row in hydchars:
         print(row)

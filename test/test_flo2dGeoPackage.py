@@ -2,10 +2,15 @@ import os
 import sys
 import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
+from qgis.core import *
+from utilities import get_qgis_app
 from flo2d.flo2dgeopackage import *
+from flo2d.grid_tools import build_grid
 
+QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
+VECTOR_PATH = os.path.join(THIS_DIR, 'data', 'vector', 'boundary.shp')
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
 GPKG_PATH = os.path.join(THIS_DIR, 'data', 'test.gpkg')
 CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
@@ -435,9 +440,19 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(in_len, out_len)
 
 
+class TestGridTools(unittest.TestCase):
+
+    def test_build_grid(self):
+        boundary = os.path.join(VECTOR_PATH)
+        vlayer = QgsVectorLayer(boundary, 'bl', 'ogr')
+        self.assertIsInstance(vlayer, QgsVectorLayer)
+        polygons = list(build_grid(vlayer, 500))
+        self.assertEqual(len(polygons), 494)
+
+
 # Running tests:
 if __name__ == '__main__':
-    cases = [TestFlo2dGeoPackage]
+    cases = [TestFlo2dGeoPackage, TestGridTools]
     suite = unittest.TestSuite()
     for t in cases:
         tests = unittest.TestLoader().loadTestsFromTestCase(t)

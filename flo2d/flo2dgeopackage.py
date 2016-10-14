@@ -375,7 +375,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
 
     def import_outflow(self):
-        outflow_sql = ['''INSERT INTO outflow (geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid) VALUES''', 8]
+        outflow_sql = ['''INSERT INTO outflow (geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid) VALUES''', 7]
         cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''', 2]
         qh_params_sql = ['''INSERT INTO qh_params (fid) VALUES''', 1]
         qh_params_data_sql = ['''INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES''', 4]
@@ -383,13 +383,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_tab_data_sql = ['''INSERT INTO qh_table_data (table_fid, depth, q) VALUES''', 3]
         ts_sql = ['''INSERT INTO outflow_time_series (fid) VALUES''', 1]
         ts_data_sql = ['''INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES''', 3]
-        hydchar_sql = ['''INSERT INTO out_hydrographs (hydro_fid, grid_fid) VALUES''', 2]
-        hydchar_cells = ['''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES''', 2]
+        hydchar_sql = ['''INSERT INTO out_hydrographs (geom, hydro_sym) VALUES''', 2]
+        hydchar_cells = ['''INSERT INTO out_hydrographs_cells (hydro_fid, grid_fid) VALUES''', 2]
 
         self.clear_tables('outflow', 'outflow_cells', 'qh_params', 'qh_params_data', 'qh_table', 'qh_table_data',
                           'outflow_time_series', 'outflow_time_series_data', 'out_hydrographs', 'out_hydrographs_cells')
         data, hydchars = self.parser.parse_outflow()
-        gids = (data.keys())
+        gids = (data.keys() + [x[-1] for x in hydchars])
         cells = self.get_centroids(gids)
 
         qh_params_fid = 0
@@ -399,7 +399,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for gid, values in data.iteritems():
             chan_out = values['K']
             fp_out = values['O']
-            chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid = [0] * 5
+            chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
             geom = self.build_buffer(cells[gid], self.buffer)
             if values['qh_params']:
                 qh_params_fid += 1
@@ -430,9 +430,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ts_data_sql += [(ts_fid,) + tuple(row)]
             else:
                 pass
-            outflow_sql += [(geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid)]
+            outflow_sql += [(geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)]
             cells_sql += [(fid, gid)]
             fid += 1
+        for i, row in enumerate(hydchars, 1):
+            hydro_sym, gid = row
+            geom = self.build_buffer(cells[gid], self.buffer)
+            hydchar_sql += [(geom, hydro_sym)]
+            hydchar_cells += [(i, gid)]
 
         self.batch_execute(qh_params_sql, qh_params_data_sql, qh_tab_sql, qh_tab_data_sql, ts_sql, ts_data_sql,
                            outflow_sql, cells_sql, hydchar_sql, hydchar_cells)
@@ -1040,6 +1045,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_params_data_sql = '''SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'''
         qh_table_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
         ts_data_sql = '''SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
+        hydro_sql = '''SELECT fid, hydro_sym FROM out_hydrographs ORDER BY fid;'''
+        hydro_cells_sql = '''SELECT grid_fid FROM out_hydrographs_cells WHERE hydro_fid = ?;'''
 
         k_line = 'K  {0}\n'
         qh_params_line = 'H  {0}  {1}  {2}\n'
@@ -1047,6 +1054,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         n_line = 'N     {0}  {1}\n'
         ts_line = 'S  {0}  {1}\n'
         o_line = 'O  {0}\n'
+        hydro_line = '{0}  {1}\n'
 
         outflow_rows = self.execute(outflow_sql).fetchall()
         if not outflow_rows:
@@ -1082,6 +1090,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     o.write(o_line.format(out_cells[fid]))
                 else:
                     pass
+            for fid, hydro_sym in self.execute(hydro_sql):
+                gid = self.execute(hydro_cells_sql, (fid,)).fetchone()[0]
+                o.write(hydro_line.format(hydro_sym, gid))
 
     def export_rain(self, outdir):
         rain_sql = '''SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
