@@ -307,6 +307,24 @@ CREATE TABLE "qh_table_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('qh_table_data', 'aspatial');
 
+CREATE TABLE "out_hydrographs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "hydro_sym" TEXT, -- O1-O9
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('out_hydrographs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('out_hydrographs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('out_hydrographs', 'geom');
+SELECT gpkgAddSpatialIndex('out_hydrographs', 'geom');
+
+CREATE TABLE "out_hydrographs_cells" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "hydro_fid" INTEGER, -- fid of outflow hydrograph form out_hydrographs table
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs_cells', 'aspatial');
+
+
 -- RAIN.DAT
 
 CREATE TABLE "rain" (
