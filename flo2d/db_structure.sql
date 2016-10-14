@@ -183,16 +183,9 @@ CREATE TABLE "outflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
 
-CREATE TABLE "outflow_chan_elems" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "outflow_fid" INTEGER NOT NULL,
-    "elem_fid" INTEGER NOT NULL
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_chan_elems', 'aspatial');
-
 CREATE VIEW outflow_chan_elems (
     elem_fid,
-    outflow_id
+    outflow_fid
 ) AS
 SELECT
     c.grid_fid, o.fid
