@@ -192,24 +192,39 @@ class ParseDAT(object):
     def parse_outflow(self):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
-        data = defaultdict(list)
+        data = OrderedDict()
+        hydchars = OrderedDict()
+        cur_gid = None
         for row in par:
             char = row[0]
-            if char == 'K' or char == 'N':
-                row.append(defaultdict(list))
-                data[char].append(row[1:])
+            if char == 'K' or char == 'N' or char == 'O':
+                gid = row[1]
+                cur_gid = gid
+                if gid not in data:
+                    data[gid] = {'K': 0, 'N': 0, 'O': 0, 'qh_params': [], 'qh_data': [], 'time_series': []}
+                else:
+                    pass
+                if char == 'N':
+                    nostacfp = int(row[-1])
+                    data[gid][char] = nostacfp + 1 if nostacfp == 1 else nostacfp
+                else:
+                    data[gid][char] = 1
             elif char == 'H':
                 self.fix_row_size(row, 4)
-                data['K'][-1][-1]['qh_params'] += row[1:]
+                data[cur_gid]['qh_params'].append(row[1:])
             elif char == 'T':
-                data['K'][-1][-1]['qh_data'].append(row[1:])
+                data[cur_gid]['qh_data'].append(row[1:])
             elif char == 'S':
-                data['N'][-1][-1]['time_series'].append(row[1:])
-            elif char.startswith('O'):
-                data['O'].append(row)
+                data[cur_gid]['time_series'].append(row[1:])
+            elif char.startswith('O') is True:
+                gid = row[-1]
+                if char not in hydchars:
+                    hydchars[char] = [gid]
+                else:
+                    hydchars[char].append(gid)
             else:
                 pass
-        return data
+        return data, hydchars
 
     def parse_rain(self):
         rain = self.dat_files['RAIN.DAT']
@@ -539,3 +554,9 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
+    x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
+    data, hydchars = x.parse_outflow()
+    for row in data.items():
+        print(row)
+    for row in hydchars.items():
+        print(row)

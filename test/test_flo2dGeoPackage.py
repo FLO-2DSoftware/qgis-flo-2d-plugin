@@ -81,6 +81,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(len(rows), 4)
         self.assertListEqual([(1,), (2,), (3,), (4,)], rows)
 
+    @unittest.skip('Skip outflow')
     def test_import_outflow(self):
         self.f2g.import_outflow()
         hydrographs = self.f2g.execute('''SELECT COUNT(fid) FROM outflow_hydrographs;''').fetchone()[0]
@@ -259,6 +260,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
+    @unittest.skip('Skip outflow')
     def test_export_outflow(self):
         self.f2g.import_outflow()
         self.f2g.export_outflow(EXPORT_DATA_DIR)

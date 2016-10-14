@@ -375,66 +375,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
 
     def import_outflow(self):
-        outflow_sql = ['''INSERT INTO outflow (geom, time_series_fid, qh_params_fid, qh_table_fid, ident, nostacfp) VALUES''', 6]
+        outflow_sql = ['''INSERT INTO outflow (geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid) VALUES''', 8]
         cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''', 2]
-        chan_sql = ['''INSERT INTO outflow_chan_elems (outflow_fid, elem_fid) VALUES''', 2]
-        qh_sql = ['''INSERT INTO qh_params (hmax, coef, exponent) VALUES''', 3]
+        qh_params_sql = ['''INSERT INTO qh_params (fid) VALUES''', 1]
+        qh_params_data_sql = ['''INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES''', 4]
         qh_tab_sql = ['''INSERT INTO qh_table (fid) VALUES''', 1]
-        qh_data_sql = ['''INSERT INTO qh_table_data (table_fid, depth, q) VALUES''', 3]
+        qh_tab_data_sql = ['''INSERT INTO qh_table_data (table_fid, depth, q) VALUES''', 3]
         ts_sql = ['''INSERT INTO outflow_time_series (fid) VALUES''', 1]
         ts_data_sql = ['''INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES''', 3]
-        hydchar_sql = ['''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES''', 2]
+        hydchar_sql = ['''INSERT INTO out_hydrographs (hydro_fid, grid_fid) VALUES''', 2]
+        hydchar_cells = ['''INSERT INTO outflow_hydrographs (hydro_fid, grid_fid) VALUES''', 2]
 
-        self.clear_tables('outflow', 'outflow_cells', 'outflow_chan_elems', 'outflow_hydrographs', 'qh_params',
-                          'qh_table', 'qh_table_data', 'outflow_time_series', 'outflow_time_series_data')
-        data = self.parser.parse_outflow()
-        gids = (row[0] if row[0].isdigit() else row[1] for row in chain(data['K'], data['N'], data['O']))
+        self.clear_tables('outflow', 'outflow_cells', 'qh_params', 'qh_params_data', 'qh_table', 'qh_table_data',
+                          'outflow_time_series', 'outflow_time_series_data', 'out_hydrographs', 'out_hydrographs_cells')
+        data, hydchars = self.parser.parse_outflow()
+        gids = (data.keys())
         cells = self.get_centroids(gids)
 
-        qhfid = 0
-        qhtabfid = 0
+        qh_params_fid = 0
+        qh_tab_fid = 0
         ts_fid = 0
-
-        for i, row in enumerate(data['K'], 1):
-            gid = row[0]
-            series = row[-1]
+        fid = 1
+        for gid, values in data.iteritems():
+            chan_out = values['K']
+            fp_out = values['O']
+            chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid = [0] * 5
             geom = self.build_buffer(cells[gid], self.buffer)
-            qh_params = series['qh_params']
-            qh_data = series['qh_data']
-            if qh_params:
-                qhfid += 1
-                qh_sql += [tuple(qh_params)]
+            if values['qh_params']:
+                qh_params_fid += 1
+                chan_qhpar_fid = qh_params_fid
+                qh_params_sql += [(qh_params_fid,)]
+                for row in values['qh_params']:
+                    qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
             else:
                 pass
-            if qh_data:
-                qhtabfid += 1
-                qh_tab_sql += [(qhtabfid,)]
+            if values['qh_data']:
+                qh_tab_fid += 1
+                chan_qhtab_fid = qh_tab_fid
+                qh_tab_sql += [(qh_tab_fid,)]
+                for row in values['qh_data']:
+                    qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
             else:
                 pass
-            outflow_sql += [(geom, None, qhfid if qh_params else None, qhtabfid if qh_data else None, 'K', None)]
-            chan_sql += [(i, gid)]
-            for trow in series['qh_data']:
-                qh_data_sql += [(qhtabfid,) + tuple(trow)]
-
-        start = len(data['K']) + 1
-        for i, row in enumerate(data['N'], start):
-            gid, nostacfp, series = row
-            geom = self.build_buffer(cells[gid], self.buffer)
-            time_series = series['time_series']
-            if time_series:
+            if values['time_series']:
                 ts_fid += 1
+                if values['N'] == 1:
+                    chan_tser_fid = ts_fid
+                elif values['N'] == 2:
+                    fp_tser_fid = ts_fid
+                else:
+                    pass
                 ts_sql += [(ts_fid,)]
+                for row in values['time_series']:
+                    ts_data_sql += [(ts_fid,) + tuple(row)]
             else:
                 pass
-            outflow_sql += [(geom, ts_fid if time_series else None, None, None, 'N', nostacfp)]
-            cells_sql += [(i, gid)]
-            for srow in time_series:
-                ts_data_sql += [(ts_fid,) + tuple(srow)]
+            outflow_sql += [(geom, chan_out, fp_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid)]
+            cells_sql += [(fid, gid)]
+            fid += 1
 
-        for row in data['O']:
-            hydchar_sql += [tuple(row)]
-
-        self.batch_execute(ts_sql, ts_data_sql, qh_sql, qh_tab_sql, qh_data_sql, outflow_sql, chan_sql, cells_sql, hydchar_sql)
+        self.batch_execute(qh_params_sql, qh_params_data_sql, qh_tab_sql, qh_tab_data_sql, ts_sql, ts_data_sql,
+                           outflow_sql, cells_sql, hydchar_sql, hydchar_cells)
 
     def import_rain(self):
         rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''', 9]
@@ -1034,55 +1035,53 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i.write(res_line.format(*res).rstrip())
 
     def export_outflow(self, outdir):
-        outflow_sql = '''SELECT fid, time_series_fid, ident, nostacfp, qh_params_fid, qh_table_fid FROM outflow ORDER BY fid;'''
-        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid;'''
-        outflow_chan_sql = '''SELECT outflow_fid, elem_fid FROM outflow_chan_elems ORDER BY fid;'''
-        qh_sql = '''SELECT hmax, coef, exponent FROM qh_params WHERE fid = ?;'''
-        qh_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
+        outflow_sql = '''SELECT fid, fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid FROM outflow ORDER BY fid;'''
+        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells;'''
+        qh_params_data_sql = '''SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'''
+        qh_table_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
         ts_data_sql = '''SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
-        hydchar_sql = '''SELECT hydro_fid, grid_fid FROM outflow_hydrographs ORDER BY fid;'''
 
-        out_line = '{0}  {1}  {2}\n'
-        qh_line = 'H  {0}  {1}  {2}\n'
-        qh_data_line = 'T  {0}  {1}\n'
-        tsd_line = 'S  {0}  {1}\n'
-        hyd_line = '{0}  {1}\n'
+        k_line = 'K  {0}\n'
+        qh_params_line = 'H  {0}  {1}  {2}\n'
+        qh_table_line = 'T  {0}  {1}\n'
+        n_line = 'N     {0}  {1}\n'
+        ts_line = 'S  {0}  {1}\n'
+        o_line = 'O  {0}\n'
 
         outflow_rows = self.execute(outflow_sql).fetchall()
-        hydchar_rows = self.execute(hydchar_sql).fetchall()
-        if not outflow_rows and not hydchar_rows:
+        if not outflow_rows:
             return
         else:
             pass
         out_cells = dict(self.execute(outflow_cells_sql).fetchall())
-        out_chan = dict(self.execute(outflow_chan_sql).fetchall())
-
         outflow = os.path.join(outdir, 'OUTFLOW.DAT')
         with open(outflow, 'w') as o:
             for row in outflow_rows:
                 row = [x if x is not None else '' for x in row]
-                fid, ts_fid, ident, nostacfp, qh_fid, qh_tab_fid = row
-                gid = out_chan[fid] if ident == 'K' else out_cells[fid]
-                o.write(out_line.format(ident, gid, nostacfp))
-                if qh_fid:
-                    qh_params = self.execute(qh_sql, (qh_fid,)).fetchone()
-                    o.write(qh_line.format(*qh_params))
+                fid, fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, out_hydro_fid = row
+                gid = out_cells[fid]
+                if chan_out == 1:
+                    o.write(k_line.format(gid))
+                    for values in self.execute(qh_params_data_sql, (fid,)):
+                        o.write(qh_params_line.format(*values))
+                    for values in self.execute(qh_table_data_sql, (fid,)):
+                        o.write(qh_table_line.format(*values))
                 else:
                     pass
-                if qh_tab_fid:
-                    qh_data = self.execute(qh_data_sql, (qh_tab_fid,))
-                    for qh in qh_data:
-                        o.write(qh_data_line.format(*qh))
+                if chan_tser_fid > 0 or fp_tser_fid > 0:
+                    nostacfp = 0 if chan_tser_fid > 0 else 1
+                    o.write(n_line.format(gid, nostacfp))
+                    series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                    for values in self.execute(ts_data_sql, (series_fid,)):
+                        o.write(ts_line.format(*values))
                 else:
                     pass
-                if ts_fid:
-                    series = self.execute(ts_data_sql, (ts_fid,))
-                    for tsd_row in series:
-                        o.write(tsd_line.format(*tsd_row))
+            for row in outflow_rows:
+                fid, fp_out = row[0:2]
+                if fp_out == 1:
+                    o.write(o_line.format(out_cells[fid]))
                 else:
                     pass
-            for hyd in hydchar_rows:
-                o.write(hyd_line.format(*hyd))
 
     def export_rain(self, outdir):
         rain_sql = '''SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir FROM rain;'''
