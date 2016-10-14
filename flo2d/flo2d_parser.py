@@ -193,22 +193,25 @@ class ParseDAT(object):
         outflow = self.dat_files['OUTFLOW.DAT']
         par = self.single_parser(outflow)
         data = OrderedDict()
-        hydchars = []
         cur_gid = None
         for row in par:
             char = row[0]
-            if char == 'K' or char == 'N' or char == 'O':
+            if char == 'K' or char == 'N' or char.startswith('O'):
                 gid = row[1]
                 cur_gid = gid
                 if gid not in data:
-                    data[gid] = {'K': 0, 'N': 0, 'O': 0, 'qh_params': [], 'qh_data': [], 'time_series': []}
+                    data[gid] = {'K': 0, 'N': 0, 'O': 0, 'hydro_out': 0, 'qh_params': [], 'qh_data': [], 'time_series': []}
                 else:
                     pass
                 if char == 'N':
                     nostacfp = int(row[-1])
                     data[gid][char] = nostacfp + 1 if nostacfp == 1 else nostacfp
                 else:
-                    data[gid][char] = 1
+                    data[gid][char[0]] = 1
+                if char[-1].isdigit():
+                    data[gid]['hydro_out'] = char[-1]
+                else:
+                    pass
             elif char == 'H':
                 self.fix_row_size(row, 4)
                 data[cur_gid]['qh_params'].append(row[1:])
@@ -216,11 +219,9 @@ class ParseDAT(object):
                 data[cur_gid]['qh_data'].append(row[1:])
             elif char == 'S':
                 data[cur_gid]['time_series'].append(row[1:])
-            elif char.startswith('O') is True:
-                hydchars.append(row)
             else:
                 pass
-        return data, hydchars
+        return data
 
     def parse_rain(self):
         rain = self.dat_files['RAIN.DAT']
@@ -551,8 +552,6 @@ class ParseDAT(object):
 if __name__ == '__main__':
     x = ParseDAT()
     x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
-    data, hydchars = x.parse_outflow()
+    data = x.parse_outflow()
     for row in data.items():
-        print(row)
-    for row in hydchars:
         print(row)

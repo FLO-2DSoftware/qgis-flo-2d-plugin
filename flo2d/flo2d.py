@@ -32,7 +32,7 @@ from flo2d_dialog import Flo2DDialog
 from layers import Layers
 from user_communication import UserCommunication
 from flo2dgeopackage import *
-from grid_tools import square_grid
+from grid_tools import square_grid, roughness2grid
 from info_tool import InfoTool
 from utils import *
 
@@ -132,18 +132,6 @@ class Flo2D(object):
             callback=self.show_settings,
             parent=self.iface.mainWindow())
 
-#        self.add_action(
-#            os.path.join(self.plugin_dir, 'img/new_db.svg'),
-#            text=self.tr(u'Create FLO-2D Database'),
-#            callback=self.create_db,
-#            parent=self.iface.mainWindow())
-#
-#        self.add_action(
-#            os.path.join(self.plugin_dir, 'img/connect.svg'),
-#            text=self.tr(u'Connect to FLO-2D Database'),
-#            callback=self.connect,
-#            parent=self.iface.mainWindow())
-
         self.add_action(
             os.path.join(self.plugin_dir, 'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
@@ -163,19 +151,25 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/create_model_boundary.svg'),
+            os.path.join(self.plugin_dir, 'img/create_model_boundary.svg'),
             text=self.tr(u'Create Modeling Boundary'),
             callback=self.create_model_boundary,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/create_grid.svg'),
+            os.path.join(self.plugin_dir, 'img/create_grid.svg'),
             text=self.tr(u'Create Grid'),
             callback=self.create_grid,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir,'img/xsec_editor.svg'),
+            os.path.join(self.plugin_dir, 'img/create_model_boundary.svg'),
+            text=self.tr(u'Roughness probing'),
+            callback=self.get_roughness,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
             parent=self.iface.mainWindow())
@@ -213,86 +207,6 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gpkg = dlg_settings.gpkg
             self.crs = dlg_settings.crs
-
-
-#    def create_db(self):
-#        """Create FLO-2D model database (GeoPackage)"""
-#        database_disconnect(self.con)
-#        self.gpkg_fpath = None
-#        # CRS
-#        self.crs_widget.selectCrs()
-#        if self.crs_widget.crs().isValid():
-#            self.crs = self.crs_widget.crs()
-#            auth, crsid = self.crs.authid().split(':')
-#            proj = 'PROJCS["{}"]'.format(self.crs.toProj4())
-#        else:
-#            msg = 'Choose a valid CRS!'
-#            self.uc.show_warn(msg)
-#            return
-#        s = QSettings()
-#        last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-#        self.gpkg_fpath = QFileDialog.getSaveFileName(None,
-#                         'Create GeoPackage As...',
-#                         directory=last_gpkg_dir, filter='*.gpkg')
-#        if not self.gpkg_fpath:
-#            return
-#        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
-#        self.con = database_create(self.gpkg_fpath)
-#        if not self.con:
-#            self.uc.show_warn("Couldn't create new database {}".format(self.gpkg_fpath))
-#        else:
-#            self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
-#        self.gpkg = Flo2dGeoPackage(self.con, self.iface)
-#        if self.gpkg.check_gpkg():
-#            self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
-#        else:
-#            self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_fpath))
-#
-#        # check if the CRS exist in the db
-#        sql = 'SELECT srs_id FROM gpkg_spatial_ref_sys WHERE organization=? AND organization_coordsys_id=?;'
-#        rc = self.gpkg.execute(sql, (auth, crsid))
-#        rt = rc.fetchone()
-#        if not rt:
-#            sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
-#            data = (self.crs.description(), crsid, auth, crsid, proj, '')
-#            rc = self.gpkg.execute(sql, data)
-#            del rc
-#            srsid = crsid
-#        else:
-#            srsid = rt[0]
-#
-#        # assign the CRS to all geometry columns
-#        sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
-#        rc = self.gpkg.execute(sql, (srsid,))
-#        sql = "UPDATE gpkg_contents SET srs_id = ?"
-#        rc = self.gpkg.execute(sql, (srsid,))
-#        self.srs_id = srsid
-#
-#    def connect(self):
-#        """Connect to FLO-2D model database (GeoPackage)"""
-#        database_disconnect(self.con)
-#        self.gpkg_fpath = None
-#        s = QSettings()
-#        last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-#        self.gpkg_fpath = QFileDialog.getOpenFileName(None,
-#                         'Select GeoPackage to connect',
-#                         directory=last_gpkg_dir)
-#        if self.gpkg_fpath:
-#            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_fpath))
-#            self.con = database_connect(self.gpkg_fpath)
-#            self.uc.log_info("Connected to {}".format(self.gpkg_fpath))
-#            self.gpkg = Flo2dGeoPackage(self.con, self.iface)
-#            if self.gpkg.check_gpkg():
-#                self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_fpath))
-#                sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
-#                rc = self.gpkg.execute(sql)
-#                rt = rc.fetchone()[0]
-#                self.srs_id = rt
-#                self.load_layers()
-#            else:
-#                self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_fpath))
-#        else:
-#            pass
 
     def call_methods(self, calls, debug, *args):
         for call in calls:
@@ -459,8 +373,15 @@ class Flo2D(object):
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         if grid_lyr:
             grid_lyr.triggerRepaint()
-#            grid_lyr.updateExtents()
-#        self.iface.mapCanvas().refresh()
+        QApplication.restoreOverrideCursor()
+
+    def get_roughness(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
+        roughness2grid(grid_lyr, rough_lyr, 'man')
+        if grid_lyr:
+            grid_lyr.triggerRepaint()
         QApplication.restoreOverrideCursor()
 
     def show_xsec_editor(self, fid=None):

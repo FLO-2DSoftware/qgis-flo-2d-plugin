@@ -68,3 +68,22 @@ def square_grid(gutils, boundary):
     for poly in polygons:
         cur.execute(insert_qry.format(*poly))
     gutils.con.commit()
+
+
+def roughness2grid(grid, roughness, column_name):
+    roughness_polys = roughness.selectedFeatures() if roughness.selectedFeatureCount() > 0 else roughness.getFeatures()
+    allfeatures = {feature.id(): feature for feature in roughness_polys}
+    index = QgsSpatialIndex()
+    map(index.insertFeature, allfeatures.values())
+    with edit(grid):
+        for feat in grid.getFeatures():
+            geom = feat.geometry()
+            centroid = geom.centroid()
+            fids = index.intersects(centroid.boundingBox())
+            for fid in fids:
+                f = allfeatures[fid]
+                isin = f.geometry().contains(centroid)
+                if isin is True:
+                    grid.changeAttributeValue(feat.id(), 4, f.attribute(column_name))
+                else:
+                    pass

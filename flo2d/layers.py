@@ -56,7 +56,6 @@ class Layers(QObject):
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
 
-
     def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
         if not vlayer.isValid():
@@ -92,7 +91,6 @@ class Layers(QObject):
 
         return vlayer.id()
 
-
     def get_layer_tree_item(self, layer_id):
         if layer_id:
             layeritem = self.root.findLayer(layer_id)
@@ -123,8 +121,7 @@ class Layers(QObject):
         grp = self.get_group(group)
         l = []
         for lyr in grp.findLayers():
-            if lyr.layer().type() == QgsMapLayer.VectorLayer and \
-                lyr.layer().geometryType() < 3:
+            if lyr.layer().type() == QgsMapLayer.VectorLayer and lyr.layer().geometryType() < 3:
                 l.append(lyr.layer())
         return l
 
@@ -134,17 +131,14 @@ class Layers(QObject):
         else:
             raise Flo2dNotString('{} is not a string or unicode'.format(repr(name)))
 
-
     def new_subgroup(self, group, subgroup):
         grp = self.root.findGroup(group)
         grp.addGroup(subgroup)
-
 
     def remove_group_by_name(self, name):
         grp = self.root.findGroup(name)
         if grp:
             self.root.removeChildNode(grp)
-
 
     def get_group(self, name):
         grp = self.root.findGroup(name)
@@ -152,14 +146,12 @@ class Layers(QObject):
             grp = self.root.addGroup(name)
         return grp
 
-
     def get_subgroup(self, group, subgroup):
         grp = self.get_group(group)
         subgrp = grp.findGroup(subgroup)
         if not subgrp:
             subgrp = grp.addGroup(subgroup)
         return subgrp
-
 
     def layer_exists_in_group(self, uri, group):
         grp = self.root.findGroup(group)
@@ -169,17 +161,14 @@ class Layers(QObject):
                     return lyr.layer().id()
         return None
 
-
     def remove_layer_by_name(self, name):
         layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
         for layer in layers:
             QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
 
-
     def remove_layer(self, layer_id):
         # do nothing if layer id does not exists
         QgsMapLayerRegistry.instance().removeMapLayer(layer_id)
-
 
     def is_str(self, name):
         if isinstance(name, (str, unicode)):
@@ -187,7 +176,6 @@ class Layers(QObject):
         else:
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
             raise Flo2dNotString(msg)
-
 
     def load_all_layers(self, gpkg):
         self.gpkg = gpkg
