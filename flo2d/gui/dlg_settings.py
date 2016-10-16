@@ -74,7 +74,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             pass
 
-
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
         if self.con:
