@@ -417,7 +417,10 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
+        try:
+            self.dlg_outflow_editor.outflow_clicked(fid)
+        except AttributeError:
+            self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
         self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_outflow_editor.show()
 

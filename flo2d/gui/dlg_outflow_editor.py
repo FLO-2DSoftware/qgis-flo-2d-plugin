@@ -208,6 +208,15 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
+    def outflow_clicked(self, fid):
+        typ = self.gutils.execute('SELECT type FROM outflow WHERE fid={};'.format(fid)).fetchone()[0]
+        print typ
+        idx = self.outflowNameCbo.findData([fid, typ])
+        if not idx == -1:
+            self.outflowNameCbo.setCurrentIndex(idx)
+        else:
+            self.uc.bar_warn('Couldn\'t find outflow fid={} and type={}'.format(fid, typ))
+
     def populate_hydrograph_cbo(self):
         nbase = 'O{}'
         self.hydroCbo.addItem('', 0)
@@ -286,7 +295,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         for col in range(cols):
             self.dataTView.setColumnWidth(col, int(210/cols))
         self.dataTView.horizontalHeader().setStretchLastSection(True)
-        for r in range(len(series_data)):
+        for i in range(len(series_data)):
             self.dataTView.setRowHeight(i, 18)
         self.outflow_data_model = model
         if self.plotFrame.isEnabled():
