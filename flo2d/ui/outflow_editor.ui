@@ -6,24 +6,157 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>676</width>
-    <height>320</height>
+    <width>916</width>
+    <height>383</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Outflow Editor</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>80</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>9999</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Outflow name</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="outflowNameCbo">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="centerChBox">
+         <property name="text">
+          <string>Center</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>180</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="minimumSize">
+          <size>
+           <width>80</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Outflow type</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="outTypeCbo">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Hydrograph</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="hydroCbo"/>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <property name="rightMargin">
       <number>0</number>
      </property>
      <item>
-      <widget class="QFrame" name="frame">
+      <widget class="QFrame" name="dataFrame">
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
-         <width>350</width>
+         <width>300</width>
          <height>16777215</height>
         </size>
        </property>
@@ -38,163 +171,9 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_5">
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_4">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>9999</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Outflow name</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="outflowNameCbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>80</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Outflow type</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="outflowTypeCbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>9999</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <item>
-             <property name="text">
-              <string>Outflow element (no hydrograph)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Outflow with time-stage relationship</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channel outflow with stage-discharge</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channel outflow with depth-discharge</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Outflow defined for</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="identFloodplainRadio">
-            <property name="text">
-             <string>Floodplain</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="identChannelRadio">
-            <property name="text">
-             <string>Channel</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QRadioButton" name="identBothRadio">
-            <property name="text">
-             <string>Both</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QLabel" name="tableLabel">
+           <widget class="QLabel" name="dataLabel">
             <property name="maximumSize">
              <size>
               <width>99999</width>
@@ -202,28 +181,14 @@
              </size>
             </property>
             <property name="text">
-             <string>Time series</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="addTimeSeriesBtn">
-            <property name="text">
-             <string>Add</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="removeTimeSeriesBtn">
-            <property name="text">
-             <string>Remove</string>
+             <string>Data for outflow</string>
             </property>
            </widget>
           </item>
          </layout>
         </item>
         <item>
-         <widget class="QComboBox" name="tseriesCbo">
+         <widget class="QComboBox" name="dataCbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -233,121 +198,155 @@
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
           <property name="bottomMargin">
            <number>0</number>
           </property>
           <item>
-           <widget class="QLabel" name="dataTableLabel">
-            <property name="text">
-             <string>Hydrograph data</string>
+           <widget class="QTableView" name="dataTView">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>210</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>240</width>
+              <height>16777215</height>
+             </size>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="importTseriesBtn">
-            <property name="text">
-             <string>Import</string>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="rightMargin">
+             <number>0</number>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="revertChangesBtn">
-            <property name="text">
-             <string>Revert</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="saveTimeSeriesBtn">
-            <property name="text">
-             <string>Apply Changes</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QTableView" name="tseriesDataTView">
-          <property name="minimumSize">
-           <size>
-            <width>350</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>350</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Output hydrograph</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="outHydrographCbo">
             <item>
-             <property name="text">
-              <string>None</string>
-             </property>
+             <widget class="QToolButton" name="addOutDataBtn">
+              <property name="minimumSize">
+               <size>
+                <width>55</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Add</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>O1</string>
-             </property>
+             <widget class="QToolButton" name="removeOutDataBtn">
+              <property name="minimumSize">
+               <size>
+                <width>55</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Remove</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>O2</string>
-             </property>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
-             <property name="text">
-              <string>O3</string>
-             </property>
+             <widget class="QToolButton" name="revertChangesBtn">
+              <property name="minimumSize">
+               <size>
+                <width>55</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Revert</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>O4</string>
-             </property>
+             <widget class="QToolButton" name="importDataBtn">
+              <property name="minimumSize">
+               <size>
+                <width>55</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Import</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>O5</string>
-             </property>
+             <widget class="QToolButton" name="saveOutDataBtn">
+              <property name="minimumSize">
+               <size>
+                <width>55</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Save</string>
+              </property>
+             </widget>
             </item>
             <item>
-             <property name="text">
-              <string>O6</string>
-             </property>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
-             <property name="text">
-              <string>O7</string>
-             </property>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
             <item>
-             <property name="text">
-              <string>O8</string>
-             </property>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
-            <item>
-             <property name="text">
-              <string>O9</string>
-             </property>
-            </item>
-           </widget>
+           </layout>
           </item>
          </layout>
         </item>
@@ -355,7 +354,13 @@
       </widget>
      </item>
      <item>
-      <widget class="QFrame" name="frame_2">
+      <widget class="QFrame" name="plotFrame">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>300</width>
@@ -376,20 +381,10 @@
          <number>0</number>
         </property>
         <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <layout class="QHBoxLayout" name="plotLayout"/>
-          </item>
-          <item>
-           <widget class="QDialogButtonBox" name="buttonBox">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="standardButtons">
-             <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-            </property>
-           </widget>
-          </item>
+         <layout class="QHBoxLayout" name="plotLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
          </layout>
         </item>
        </layout>
@@ -408,8 +403,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>675</x>
+     <y>365</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -424,8 +419,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>724</x>
+     <y>365</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>

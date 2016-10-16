@@ -163,8 +163,8 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/create_model_boundary.svg'),
-            text=self.tr(u'Roughness probing'),
+            os.path.join(self.plugin_dir, 'img/interp_manning.svg'),
+            text=self.tr(u'Interpolate Manning\'s n'),
             callback=self.get_roughness,
             parent=self.iface.mainWindow())
 
@@ -406,7 +406,8 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, fid)
+        self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
+        self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_outflow_editor.show()
 
     def show_rain_editor(self):

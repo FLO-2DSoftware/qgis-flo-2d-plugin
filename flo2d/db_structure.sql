@@ -168,7 +168,7 @@ CREATE TABLE "outflow" (
     "chan_qhpar_fid" INTEGER,
     "chan_qhtab_fid" INTEGER,
     "fp_tser_fid" INTEGER,
-    "note" TEXT
+    "type" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
 SELECT gpkgAddGeometryColumn('outflow', 'geom', 'POLYGON', 0, 0, 0);

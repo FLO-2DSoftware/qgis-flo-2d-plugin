@@ -113,7 +113,7 @@ class Inflow(GeoPackageUtils):
 
 class Outflow(GeoPackageUtils):
     columns = ['fid', 'name', 'chan_out', 'fp_out', 'hydro_out', 'chan_tser_fid', 'chan_qhpar_fid', 'chan_qhtab_fid',
-               'fp_tser_fid', 'note', 'geom']
+               'fp_tser_fid', 'type', 'geom']
 
     def __init__(self, fid, con, iface):
         super(Outflow, self).__init__(con, iface)
@@ -141,13 +141,55 @@ class Outflow(GeoPackageUtils):
         self.chan_qhpar_fid = self.row['chan_qhpar_fid']
         self.chan_qhtab_fid = self.row['chan_qhtab_fid']
         self.fp_tser_fid = self.row['fp_tser_fid']
+        self.typ = self.row['type']
         return self.row
+
+    def get_time_series(self):
+        ts = self.execute('SELECT fid, name FROM outflow_time_series ORDER BY fid;').fetchall()
+        return ts
+
+    def get_qh_params(self):
+        p = self.execute('SELECT fid, name FROM qh_params ORDER BY fid;').fetchall()
+        return p
+
+    def get_qh_tables(self):
+        t = self.execute('SELECT fid, name FROM qh_table ORDER BY fid;').fetchall()
+        return t
+
+    def get_data_fid_name(self):
+        if self.typ in [5, 6, 7, 8]:
+            return self.get_time_series()
+        elif self.typ in [9, 10]:
+            return self.get_qh_params()
+        elif self.typ == 11:
+            return self.get_qh_tables()
+        else:
+            pass
+
+    def clear_data_fids(self):
+        self.chan_tser_fid = 0
+        self.fp_tser_fid = 0
+        self.chan_qhpar_fid = 0
+        self.chan_qhtab_fid = 0
+
+    def set_new_data_fid(self, fid):
+        self.clear_data_fids()
+        if self.typ in [5, 7]:
+            self.fp_tser_fid = fid
+        elif self.typ in [6, 8]:
+            self.chan_tser_fid = fid
+        elif self.typ in [9, 10]:
+            self.chan_qhpar_fid = fid
+        elif self.typ == 11:
+            self.chan_qhtab_fid = fid
+        else:
+            pass
 
     def get_time_series_data(self):
         qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ?;'
-        if self.chan_tser_fid == 1:
+        if self.chan_tser_fid:
             self.time_series_data = self.execute(qry, (self.chan_tser_fid,)).fetchall()
-        elif self.fp_tser_fid == 1:
+        elif self.fp_tser_fid:
             self.time_series_data = self.execute(qry, (self.fp_tser_fid,)).fetchall()
         else:
             pass
@@ -162,6 +204,16 @@ class Outflow(GeoPackageUtils):
         qry = 'SELECT depth, q FROM qh_table_data WHERE table_fid = ?;'
         self.qh_table_data = self.execute(qry, (self.chan_qhtab_fid,)).fetchall()
         return self.qh_table_data
+
+    def get_data(self):
+        if self.typ in [5, 6, 7, 8]:
+            return self.get_time_series_data()
+        elif self.typ in [9, 10]:
+            return self.get_qh_params_data()
+        elif self.typ == 11:
+            return self.get_qh_tables_data()
+        else:
+            pass
 
 
 class Rain(GeoPackageUtils):

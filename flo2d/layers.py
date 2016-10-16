@@ -726,14 +726,16 @@ class Layers(QObject):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
 
-    def show_feat_rubber(self, lyr_id, fid):
+    def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0)):
         lyr = self.get_layer_tree_item(lyr_id).layer()
         gt = lyr.geometryType()
         self.clear_rubber()
         self.rb = QgsRubberBand(self.canvas, gt)
-        self.rb.setColor(QColor(255, 0, 0))
+        self.rb.setColor(color)
         if gt == 2:
-            self.rb.setFillColor(QColor(255, 0, 0, 100))
+            fill_color = color
+            fill_color.setAlpha(100)
+            self.rb.setFillColor(fill_color)
         self.rb.setWidth(2)
         feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
         self.rb.setToGeometry(feat.geometry(), lyr)

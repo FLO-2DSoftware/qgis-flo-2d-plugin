@@ -145,7 +145,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         self.gpkg_path = QFileDialog.getOpenFileName(None,
                          'Select GeoPackage to connect',
-                         directory=last_gpkg_dir)
+                         directory=last_gpkg_dir, filter='*.gpkg')
         if self.gpkg_path:
             s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
             self.con = database_connect(self.gpkg_path)

@@ -22,6 +22,7 @@
 """
 import os
 from PyQt4 import uic
+from qgis.core import QgsRectangle
 
 
 def load_ui(name):
@@ -32,3 +33,17 @@ def load_ui(name):
 
 month_names = ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"]
+
+def center_canvas(iface, x, y):
+    mc = iface.mapCanvas()
+    cur_ext = mc.extent()
+    center = cur_ext.center()
+    dx = x - center.x()
+    dy = y - center.y()
+    x_min = cur_ext.xMinimum() + dx
+    x_max = cur_ext.xMaximum() + dx
+    y_min = cur_ext.yMinimum() + dy
+    y_max = cur_ext.yMaximum() + dy
+    rect = QgsRectangle(x_min,y_min,x_max,y_max)
+    mc.setExtent(rect)
+    mc.refresh()

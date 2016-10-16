@@ -435,6 +435,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(qh_params_sql, qh_params_data_sql, qh_tab_sql, qh_tab_data_sql, ts_sql, ts_data_sql,
                            outflow_sql, cells_sql)
+        self.update_outflow_type()
+
+    def update_outflow_type(self):
+        qry = '''UPDATE outflow SET type = (CASE
+            WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
+            WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0) THEN 2
+            WHEN (fp_out > 0 AND chan_out > 0) THEN 3
+            WHEN (hydro_out > 0) THEN 4
+            WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
+            WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
+            WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
+            WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
+            -- WHEN (chan_qhpar_fid > 0) THEN 9 -- stage-disscharge qhpar
+            WHEN (chan_qhpar_fid > 0) THEN 10 -- depth-discharge qhpar
+            WHEN (chan_qhtab_fid > 0) THEN 11
+            ELSE 0
+        END);'''
+        self.execute(qry)
 
     def import_rain(self):
         rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''', 9]
