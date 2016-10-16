@@ -1076,8 +1076,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
             floodplains = {out_cells[row[0]]: row[3] for row in outflow_rows if row[1] == 1 and row[0] in out_cells}
-            for gid in sorted(floodplains.iterkeys()):
-                hydro_out = floodplains[gid]
+            for gid, hydro_out in sorted(floodplains.iteritems(), key=lambda items: (items[1], items[0])):
                 ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                 o.write(o_line.format(ident, gid))
 

@@ -205,7 +205,7 @@ class ParseDAT(object):
                     pass
                 if char == 'N':
                     nostacfp = int(row[-1])
-                    data[gid][char] = nostacfp + 1 if nostacfp == 1 else nostacfp
+                    data[gid][char] = nostacfp + 1 if nostacfp == 1 else 1
                 else:
                     data[gid][char[0]] = 1
                 if char[-1].isdigit():
