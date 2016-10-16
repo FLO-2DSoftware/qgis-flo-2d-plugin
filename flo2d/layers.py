@@ -529,18 +529,6 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-            ('out_hydrographs', {
-                'name': 'Outflow hydrographs',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('out_hydrographs_cells', {
-                'name': 'Outflow hydrographs cells',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
             ('qh_params', {
                 'name': 'QH Parameters',
                 'sgroup': 'Tables',

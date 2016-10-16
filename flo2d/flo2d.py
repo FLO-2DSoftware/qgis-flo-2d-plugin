@@ -42,6 +42,7 @@ from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_roughness import RoughnessDialog
 
 
 class Flo2D(object):
@@ -369,20 +370,30 @@ class Flo2D(object):
         self.gpkg = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        square_grid(self.gpkg, bl)
+        result = square_grid(self.gpkg, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         if grid_lyr:
             grid_lyr.triggerRepaint()
         QApplication.restoreOverrideCursor()
+        if result > 0:
+            self.uc.show_info("Grid created!")
+        else:
+            self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
 
     def get_roughness(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
-        roughness2grid(grid_lyr, rough_lyr, 'man')
-        if grid_lyr:
-            grid_lyr.triggerRepaint()
-        QApplication.restoreOverrideCursor()
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        dlg_roughness = RoughnessDialog(self.con, self.iface, self.lyrs)
+        result = dlg_roughness.exec_()
+        if result:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
+            field = dlg_roughness.rfield_cbo.currentText()
+            roughness2grid(grid_lyr, rough_lyr, field)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning roughness finished!")
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

@@ -65,9 +65,12 @@ def square_grid(gutils, boundary):
     cellsize = float(cellsize)
     polygons = build_grid(boundary, cellsize)
     cur = gutils.con.cursor()
+    c = 0
     for poly in polygons:
         cur.execute(insert_qry.format(*poly))
+        c += 1
     gutils.con.commit()
+    return c
 
 
 def roughness2grid(grid, roughness, column_name):
