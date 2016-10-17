@@ -90,9 +90,9 @@ class TestFlo2dGeoPackage(unittest.TestCase):
     def test_import_outflow(self):
         self.f2g.import_outflow()
         outflows = self.f2g.execute('''SELECT COUNT(fid) FROM outflow;''').fetchone()[0]
-        self.assertEqual(float(outflows), 11)
-        qh_params = self.f2g.execute('''SELECT coef FROM qh_params_data;''').fetchone()[0]
-        self.assertEqual(float(qh_params), 2.6)
+        self.assertEqual(float(outflows), 244)
+        qh_params = self.f2g.execute('''SELECT COUNT(fid) FROM qh_params_data;''').fetchone()[0]
+        self.assertEqual(int(qh_params), 3)
 
     def test_import_rain(self):
         self.f2g.import_rain()
