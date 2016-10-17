@@ -206,12 +206,10 @@ class ParseDAT(object):
                 if char == 'N':
                     nostacfp = int(row[-1])
                     data[gid][char] = nostacfp + 1 if nostacfp == 1 else 1
-                else:
-                    data[gid][char[0]] = 1
-                if char[-1].isdigit():
+                elif char[-1].isdigit():
                     data[gid]['hydro_out'] = char[-1]
                 else:
-                    pass
+                    data[gid][char[0]] = 1
             elif char == 'H':
                 self.fix_row_size(row, 4)
                 data[cur_gid]['qh_params'].append(row[1:])

@@ -230,7 +230,6 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
-
         return self.row
 
     def get_time_series(self):
