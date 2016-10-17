@@ -302,6 +302,7 @@ class Flo2D(object):
 
     def load_layers(self):
         self.lyrs.load_all_layers(self.gpkg)
+        self.lyrs.zoom_to_all()
 
 
     def export_gds(self):

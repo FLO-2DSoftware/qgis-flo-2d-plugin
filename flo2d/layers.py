@@ -36,7 +36,8 @@ from qgis.core import (
     QgsVectorLayer,
     QgsGeometry,
     QgsLayerTreeLayer,
-    QgsMapLayer
+    QgsMapLayer,
+    QgsRectangle
 )
 from qgis.gui import QgsRubberBand
 from qgis.utils import iface
@@ -52,6 +53,7 @@ class Layers(QObject):
 
     def __init__(self, iface):
         super(Layers, self).__init__()
+        self.iface = iface
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
@@ -106,14 +108,19 @@ class Layers(QObject):
             gr = self.get_group(group)
         else:
             gr = self.root
+        print gr.name()
         if name:
             layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
             for layer in layers:
+                print layer.name()
                 layeritem = gr.findLayer(layer.id())
                 if not layeritem:
-                    msg = 'Layer {} doesn\'t exist in the layers tree.'.format(name)
-                    raise Flo2dLayerNotFound(msg)
-                return layeritem
+                    continue
+                else:
+                    return layeritem
+            if not layeritem:
+                msg = 'Layer {} doesn\'t exist in the layers tree.'.format(name)
+                raise Flo2dLayerNotFound(msg)
         else:
             raise Flo2dLayerNotFound('Layer name not specified')
 
@@ -754,3 +761,15 @@ class Layers(QObject):
         if self.rb:
             for i in range(3):
                 self.rb.reset(i)
+
+    def zoom_to_all(self):
+        grid = self.get_layer_by_name('Grid', self.group)
+        extent = grid.layer().extent()
+#        pg = self.get_group(self.group)
+#        for child in pg.children():
+#            if isinstance(child, QgsLayerTreeLayer):
+#                print "{} - {}".format(pg.name(), child.layer().name())
+#                extent.combineExtentWith(child.layer().extent())
+        self.iface.mapCanvas().setExtent(extent)
+        self.iface.mapCanvas().refresh()
+
