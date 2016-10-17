@@ -129,6 +129,7 @@ class Outflow(GeoPackageUtils):
         self.time_series_data = None
         self.qh_params_data = None
         self.qh_table_data = None
+        self.typ = None
 
     def get_row(self):
         qry = 'SELECT * FROM outflow WHERE fid = ?;'
@@ -211,7 +212,7 @@ class Outflow(GeoPackageUtils):
         elif self.typ in [9, 10]:
             return self.get_qh_params_data()
         elif self.typ == 11:
-            return self.get_qh_tables_data()
+            return self.get_qh_table_data()
         else:
             pass
 
