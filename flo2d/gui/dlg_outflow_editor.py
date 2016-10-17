@@ -183,7 +183,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         self.outflowNameCbo.setCurrentIndex(cur_idx)
         self.out_fid, self.type_fid = self.outflowNameCbo.itemData(cur_idx)
         self.outflow = Outflow(self.out_fid, self.con, self.iface)
-        row = self.outflow.get_row()
+        self.outflow.get_row()
         self.define_out_types()
         self.populate_type_cbo()
 
@@ -200,7 +200,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         self.out_fid, self.type_fid = self.outflowNameCbo.itemData(out_idx)
         self.show_outflow_rb()
         self.outflow = Outflow(self.out_fid, self.con, self.iface)
-        row = self.outflow.get_row()
+        self.outflow.get_row()
         self.outTypeCbo.setCurrentIndex(self.type_fid)
         self.out_type_changed(self.type_fid)
         if self.centerChBox.isChecked():
@@ -219,14 +219,11 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
 
     def populate_hydrograph_cbo(self):
         nbase = 'O{}'
+        self.hydroCbo.clear()
         self.hydroCbo.addItem('', 0)
         for i in range(1, 10):
             h_name = nbase.format(i)
             self.hydroCbo.addItem(h_name, i)
-        self.hydroCbo.currentIndexChanged.connect(self.hydro_cbo_changed)
-
-    def hydro_cbo_changed(self, idx):
-        self.outflow.hydro_out = idx
 
     def populate_type_cbo(self):
         """Populate outflow types cbo and set current type"""
@@ -243,6 +240,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         self.outflow.typ = typ_idx
         self.series = None
         if typ_idx == 4:
+            self.populate_hydrograph_cbo()
             self.hydroCbo.setCurrentIndex(self.outflow.hydro_out)
         elif typ_idx > 4:
             self.series = self.outflow.get_data_fid_name()
@@ -280,7 +278,6 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
     def populate_data_table(self):
         """Populate table and create plot"""
         self.dataTView.setEnabled(True)
-        typ = self.outflow.typ
         head = self.tab_head
         series_data = self.outflow.get_data()
         if not series_data:

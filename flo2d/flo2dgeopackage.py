@@ -427,9 +427,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if values['time_series']:
                 ts_fid += 1
                 if values['N'] == 1:
-                    chan_tser_fid = ts_fid
-                elif values['N'] == 2:
                     fp_tser_fid = ts_fid
+                elif values['N'] == 2:
+                    chan_tser_fid = ts_fid
                 else:
                     pass
                 ts_sql += [(ts_fid,)]
@@ -445,7 +445,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                            outflow_sql, cells_sql)
         type_qry = '''UPDATE outflow SET type = (CASE
                     WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
-                    WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0) THEN 2
+                    WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
                     WHEN (fp_out > 0 AND chan_out > 0) THEN 3
                     WHEN (hydro_out > 0) THEN 4
                     WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
