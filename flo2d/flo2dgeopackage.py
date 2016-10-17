@@ -195,6 +195,13 @@ class GeoPackageUtils(object):
         except:
             return None
 
+    def get_views_list(self):
+        qry = "SELECT name FROM sqlite_master WHERE type='view';"
+        res = self.gpkg.execute(qry).fetchall()
+        vl = [n for n in self.execute(sql).fetchall()]
+        return vl
+
+
     def get_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:

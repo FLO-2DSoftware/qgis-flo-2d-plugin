@@ -83,6 +83,7 @@ class Flo2D(object):
 
         # connections
         self.info_tool.feature_picked.connect(self.get_feature_info)
+        self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -302,6 +303,7 @@ class Flo2D(object):
     def load_layers(self):
         self.lyrs.load_all_layers(self.gpkg)
 
+
     def export_gds(self):
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
@@ -472,6 +474,7 @@ class Flo2D(object):
             self.uc.bar_warn("Define a database connections first!")
             return
         self.canvas.setMapTool(self.info_tool)
+        self.info_tool.update_lyrs_list()
 
     def get_feature_info(self, table, fid):
         # what is the proper dialog for this kind of feature?

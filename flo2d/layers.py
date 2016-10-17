@@ -117,15 +117,23 @@ class Layers(QObject):
         else:
             raise Flo2dLayerNotFound('Layer name not specified')
 
-    def list_group_vlayers(self, group=None):
+    def list_group_vlayers(self, group=None, only_visible=True, skip_views=False):
         if not group:
             grp = self.root
         else:
             grp = self.get_group(group)
+        views_list = ['WRF', 'ARF']
+
         l = []
         for lyr in grp.findLayers():
             if lyr.layer().type() == QgsMapLayer.VectorLayer and lyr.layer().geometryType() < 3:
-                l.append(lyr.layer())
+                if skip_views and lyr.layer().name() in views_list:
+                    continue
+                else:
+                    if only_visible and not lyr.isVisible():
+                        continue
+                    else:
+                        l.append(lyr.layer())
         return l
 
     def list_group_rlayers(self, group=None):

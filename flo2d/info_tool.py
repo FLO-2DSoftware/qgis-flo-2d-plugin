@@ -38,26 +38,16 @@ class InfoTool(QgsMapToolIdentify):
         self.rb = None
         QgsMapToolIdentify.__init__(self, self.canvas)
 
+    def update_lyrs_list(self):
+        self.lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
+
     def canvasPressEvent(self, e):
         self.clear_rubber()
 
-#    def canvasReleaseEvent(self, e):
-#        try:
-#            pt = self.toMapCoordinates(e.pos())
-#            feat = self.identify(e.x(), e.y(), QgsMapToolIdentify.LayerSelection)[0]
-#            lyr_name = feat.mLayer.name()
-#            lyr_id = feat.mLayer.id()
-#            table = feat.mLayer.dataProvider().dataSourceUri().split('=')[-1]
-#            fid = feat.mFeature.id()
-#            self.pass_res(table, fid)
-#        except IndexError as e:
-#            print('Point outside layers extent.')
-#            return
-
     def canvasReleaseEvent(self, e):
         pt = self.toMapCoordinates(e.pos())
-        ll = self.lyrs.list_group_vlayers(self.lyrs.group)
-        res = self.identify(e.x(), e.y(), ll, QgsMapToolIdentify.TopDownAll)
+
+        res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
 #        print "Found: {}".format(len(res))
         lyrs_found = OrderedDict()
         for i, item in enumerate(res):

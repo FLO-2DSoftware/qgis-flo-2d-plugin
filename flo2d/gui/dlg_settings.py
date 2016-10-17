@@ -39,6 +39,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
+        self.setModal(True)
         self.con = con
         self.lyrs = lyrs
         self.gpkg = gpkg
