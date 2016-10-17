@@ -23,6 +23,7 @@
 """
 import math
 from qgis.core import *
+from osgeo import gdal
 
 
 def build_grid(boundary, cellsize):
@@ -58,6 +59,7 @@ def build_grid(boundary, cellsize):
 
 
 def square_grid(gutils, boundary):
+    del_qry = 'DELETE FROM grid;'
     cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
     insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
@@ -65,6 +67,7 @@ def square_grid(gutils, boundary):
     cellsize = float(cellsize)
     polygons = build_grid(boundary, cellsize)
     cur = gutils.con.cursor()
+    cur.execute(del_qry)
     c = 0
     for poly in polygons:
         cur.execute(insert_qry.format(*poly))

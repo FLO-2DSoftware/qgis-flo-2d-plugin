@@ -122,6 +122,14 @@ class GeoPackageUtils(object):
         self.con.commit()
         return result_cursor
 
+    def execute_many(self, sql, data):
+        cursor = self.con.cursor()
+        if sql is not None:
+            result_cursor = cursor.executemany(sql, data)
+        else:
+            return
+        self.con.commit()
+
     def batch_execute(self, *sqls):
         for sql in sqls:
             qry = None

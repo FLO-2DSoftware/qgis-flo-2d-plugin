@@ -117,11 +117,25 @@ class Layers(QObject):
         else:
             raise Flo2dLayerNotFound('Layer name not specified')
 
-    def list_group_vlayers(self, group):
-        grp = self.get_group(group)
+    def list_group_vlayers(self, group=None):
+        if not group:
+            grp = self.root
+        else:
+            grp = self.get_group(group)
         l = []
         for lyr in grp.findLayers():
             if lyr.layer().type() == QgsMapLayer.VectorLayer and lyr.layer().geometryType() < 3:
+                l.append(lyr.layer())
+        return l
+
+    def list_group_rlayers(self, group=None):
+        if not group:
+            grp = self.root
+        else:
+            grp = self.get_group(group)
+        l = []
+        for lyr in grp.findLayers():
+            if lyr.layer().type() == QgsMapLayer.RasterLayer:
                 l.append(lyr.layer())
         return l
 
@@ -517,18 +531,18 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-            ('outflow_chan_elems', {
-                'name': 'Outflow Channel Elements (v)',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
-            ('outflow_fp_elems', {
-                'name': 'Outflow Floodplain Elements (v)',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {}
-            }),
+#            ('outflow_chan_elems', {
+#                'name': 'Outflow Channel Elements (v)',
+#                'sgroup': 'Tables',
+#                'styles': None,
+#                'attrs_edit_widgets': {}
+#            }),
+#            ('outflow_fp_elems', {
+#                'name': 'Outflow Floodplain Elements (v)',
+#                'sgroup': 'Tables',
+#                'styles': None,
+#                'attrs_edit_widgets': {}
+#            }),
             ('qh_params', {
                 'name': 'QH Parameters',
                 'sgroup': 'Tables',

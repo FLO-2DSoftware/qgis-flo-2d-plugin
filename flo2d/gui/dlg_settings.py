@@ -90,7 +90,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             msg = 'Choose a valid CRS!'
             self.uc.show_warn(msg)
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         self.gpkg_path = QFileDialog.getSaveFileName(None,
@@ -98,6 +97,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                          directory=last_gpkg_dir, filter='*.gpkg')
         if not self.gpkg_path:
             return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
         self.con = database_create(self.gpkg_path)
         if not self.con:

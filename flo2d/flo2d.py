@@ -43,7 +43,7 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_roughness import RoughnessDialog
-
+from .gui.dlg_interp_elev import InterpElevDialog
 
 class Flo2D(object):
 
@@ -161,6 +161,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/create_grid.svg'),
             text=self.tr(u'Create Grid'),
             callback=self.create_grid,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/interp_elev.svg'),
+            text=self.tr(u'Interpolate Grid Elevation'),
+            callback=self.interp_elev,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -339,7 +345,7 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.get_cell_size()
+        cs = self.get_cell_size()
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         self.iface.setActiveLayer(bl)
         bl.startEditing()
@@ -351,19 +357,23 @@ class Flo2D(object):
             self.uc.bar_warn("Define a database connections first!")
             return
         # is cell size defined?
-        if not self.gpkg.get_cont_par("CELLSIZE"):
+        cs = self.gpkg.get_cont_par("CELLSIZE")
+        if cs:
+            return cs
+        else:
             r, ok = QInputDialog.getInt(None, "Grid Cell Size", "Enter grid element cell size", min=1, max=99999)
             if ok:
-                cell_size = r
+                cs = r
             else:
                 return
             # save cell size to table cont
             sql = '''UPDATE cont SET value = ? WHERE name='CELLSIZE';'''
-            rc = self.gpkg.execute(sql, (cell_size, ))
+            rc = self.gpkg.execute(sql, (cs, ))
             del rc
+            return cs
 
     def create_grid(self):
-        self.get_cell_size()
+        cs = self.get_cell_size()
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
@@ -394,6 +404,19 @@ class Flo2D(object):
             roughness2grid(grid_lyr, rough_lyr, field)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning roughness finished!")
+
+    def interp_elev(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        cell_size = self.get_cell_size()
+        dlg = InterpElevDialog(self.con, self.iface, self.lyrs, self.gpkg, cell_size)
+        ok = dlg.exec_()
+        if ok:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg.interpolate()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Interpolation done.")
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

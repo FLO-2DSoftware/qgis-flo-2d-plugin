@@ -23,5 +23,5 @@
 """
 import math
 from qgis.core import *
-from osgeo import gdal
+
 
