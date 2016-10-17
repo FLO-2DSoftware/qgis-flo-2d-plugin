@@ -127,10 +127,14 @@ class ParseDAT(object):
                 yield row
 
     @staticmethod
-    def fix_row_size(row, fix_size, default=None):
+    def fix_row_size(row, fix_size, default=None, index=None):
         loops = fix_size - len(row)
-        for l in range(loops):
-            row.append(default)
+        if index is None:
+            for l in range(loops):
+                row.append(default)
+        else:
+            for l in range(loops):
+                row.insert(index, default)
 
     def parse_cont(self):
         results = {}
@@ -320,7 +324,8 @@ class ParseDAT(object):
                 segments.append(row)
                 segments[-1].append([])
             elif char in shape:
-                self.fix_row_size(row, shape[char])
+                fix_index = 2 if char == 'T' else None
+                self.fix_row_size(row, shape[char], index=fix_index)
                 rbank = next(parbank)[1:]
                 xsec = next(parxs)[0:1] if char == 'N' else []
                 segments[-1][-1].append(row + xsec + rbank)

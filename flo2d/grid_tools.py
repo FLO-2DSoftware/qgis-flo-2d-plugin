@@ -23,7 +23,6 @@
 """
 import math
 from qgis.core import *
-from osgeo import gdal
 
 
 def build_grid(boundary, cellsize):
@@ -80,7 +79,7 @@ def roughness2grid(grid, roughness, column_name):
     roughness_polys = roughness.selectedFeatures() if roughness.selectedFeatureCount() > 0 else roughness.getFeatures()
     allfeatures = {feature.id(): feature for feature in roughness_polys}
     index = QgsSpatialIndex()
-    map(index.insertFeature, allfeatures.values())
+    map(index.insertFeature, allfeatures.itervalues())
     with edit(grid):
         for feat in grid.getFeatures():
             geom = feat.geometry()
@@ -93,3 +92,26 @@ def roughness2grid(grid, roughness, column_name):
                     grid.changeAttributeValue(feat.id(), 4, f.attribute(column_name))
                 else:
                     pass
+
+
+def calculate_arf(grid, areas):
+    area_polys = areas.selectedFeatures() if areas.selectedFeatureCount() > 0 else areas.getFeatures()
+    allfeatures = {feature.id(): feature for feature in area_polys}
+    index = QgsSpatialIndex()
+    map(index.insertFeature, allfeatures.itervalues())
+    features = grid.getFeatures()
+    first = next(features)
+    grid_area = first.geometry().area()
+    for feat in grid.getFeatures():
+        geom = feat.geometry()
+        fids = index.intersects(geom.boundingBox())
+        for fid in fids:
+            f = allfeatures[fid]
+            fgeom = f.geometry()
+            inter = fgeom.intersects(geom)
+            if inter is True:
+                intersection = fgeom.intersection(geom)
+                arf = intersection.area() / grid_area
+                yield arf
+            else:
+                pass

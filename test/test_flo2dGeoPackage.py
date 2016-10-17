@@ -6,7 +6,7 @@ from shutil import copyfile
 from qgis.core import *
 from utilities import get_qgis_app
 from flo2d.flo2dgeopackage import *
-from flo2d.grid_tools import build_grid, roughness2grid
+from flo2d.grid_tools import build_grid, roughness2grid, calculate_arf
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -476,6 +476,13 @@ class TestGridTools(unittest.TestCase):
         expected = {0.5, 0.3, 0.1}
         self.assertSetEqual(set(man_values), expected)
 
+    # def test_calculate_arf(self):
+    #     grid = os.path.join(VECTOR_PATH, 'grid.geojson')
+    #     roughness = os.path.join(VECTOR_PATH, 'roughness.geojson')
+    #     glayer = QgsVectorLayer(grid, 'grid', 'ogr')
+    #     rlayer = QgsVectorLayer(roughness, 'roughness', 'ogr')
+    #     for arf in calculate_arf(glayer, rlayer):
+    #         print(arf)
 
 # Running tests:
 if __name__ == '__main__':

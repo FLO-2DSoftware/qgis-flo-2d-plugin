@@ -455,16 +455,22 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
-        self.dlg_rain_editor.show()
+        try:
+            self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
+            self.dlg_rain_editor.show()
+        except TypeError as e:
+            self.uc.show_warn('There is no any rain data to display!')
 
     def show_evap_editor(self):
         """Show evaporation editor"""
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
-        self.dlg_evap_editor.show()
+        try:
+            self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
+            self.dlg_evap_editor.show()
+        except TypeError as e:
+            self.uc.show_warn('There is no any evaporation data to display!')
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()

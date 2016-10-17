@@ -42,7 +42,7 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.gpkg = gpkg
         self.gpkg_path = gpkg.get_gpkg_path()
-        self.cell_size = int(cell_size)
+        self.cell_size = float(cell_size)
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.populate_raster_cbo()
@@ -87,52 +87,52 @@ class InterpElevDialog(qtBaseClass, uiDialog):
             "q1": "q1 - First quartile value of all non-NODATA",
             "q3": "q1 - Third quartile value of all non-NODATA"
         }
-        cur_idx = 0
         for m in sorted(met.iterkeys()):
             self.algCbo.addItem(met[m], m)
             self.algCbo.setCurrentIndex(0)
 
     def get_worp_options(self):
         self.get_worp_opts_data()
-        self.wo  =  gdal.WarpOptions(options = [],
-            format = 'GTiff',
-            outputBounds = self.output_bounds,
-            outputBoundsSRS = self.srs,
-            xRes = self.cell_size,
-            yRes = self.cell_size,
-            targetAlignedPixels = False,
-            width = 0,
-            height = 0,
-            srcSRS = self.srs,
-            dstSRS = self.srs,
-            srcAlpha = False,
-            dstAlpha = False,
-            warpOptions = None,
-            errorThreshold = None,
-            warpMemoryLimit = None,
-            creationOptions = None,
-            outputType = self.raster_type,
-            workingType = self.raster_type,
-            resampleAlg = self.algCbo.itemData(self.algCbo.currentIndex()),
-            srcNodata = self.src_nodata,
-            dstNodata = self.src_nodata,
-            multithread = self.multiThreadChBox.isChecked(),
-            tps = False,
-            rpc = False,
-            geoloc = False,
-            polynomialOrder = None,
-            transformerOptions = None,
-            cutlineDSName = self.gpkg_path,
-            cutlineLayer = None,
-            cutlineWhere = None,
-            cutlineSQL = "SELECT * FROM user_model_boundary",
-            cutlineBlend = None,
-            cropToCutline = False,
-            copyMetadata = True,
-            metadataConflictValue = None,
-            setColorInterpretation = False,
-            callback = None,
-            callback_data = None
+        self.wo = gdal.WarpOptions(
+            options=[],
+            format='GTiff',
+            outputBounds=self.output_bounds,
+            outputBoundsSRS=self.srs,
+            xRes=self.cell_size,
+            yRes=self.cell_size,
+            targetAlignedPixels=False,
+            width=0,
+            height=0,
+            srcSRS=self.srs,
+            dstSRS=self.srs,
+            srcAlpha=False,
+            dstAlpha=False,
+            warpOptions=None,
+            errorThreshold=None,
+            warpMemoryLimit=None,
+            creationOptions=None,
+            outputType=self.raster_type,
+            workingType=self.raster_type,
+            resampleAlg=self.algCbo.itemData(self.algCbo.currentIndex()),
+            srcNodata=self.src_nodata,
+            dstNodata=self.src_nodata,
+            multithread=self.multiThreadChBox.isChecked(),
+            tps=False,
+            rpc=False,
+            geoloc=False,
+            polynomialOrder=None,
+            transformerOptions=None,
+            cutlineDSName=self.gpkg_path,
+            cutlineLayer=None,
+            cutlineWhere=None,
+            cutlineSQL="SELECT * FROM user_model_boundary",
+            cutlineBlend=None,
+            cropToCutline=False,
+            copyMetadata=True,
+            metadataConflictValue=None,
+            setColorInterpretation=False,
+            callback=None,
+            callback_data=None
         )
 
     def get_worp_opts_data(self):
@@ -154,7 +154,6 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         if und:
             self.src_nodata = int(und)
 
-
     def interpolate(self):
         """Interpolate raster aligned with the grid"""
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
@@ -169,7 +168,6 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.probe_raster = QgsRasterLayer(self.out_raster)
         self.update_grid_elev()
         del self.probe_raster
-
 
     def update_grid_elev(self):
         """Probe interpolated raster in each grid element"""
