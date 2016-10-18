@@ -57,15 +57,37 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "LEVEE": self.leveesChBox,
             # "MUD": self.???,
              "PROJ": self.projectionSelector,
-            # "MANNING": self.manningEdit,
+            # "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
-            "CELLSIZE": self.cellSizeEdit
+            "CELLSIZE": self.cellSizeDSpinBox
         }
         self.setup()
 
         # connection
         self.gpkgCreateBtn.clicked.connect(self.create_db)
         self.gpkgOpenBtn.clicked.connect(self.connect)
+        self.modSelectAllBtn.clicked.connect(self.select_all_modules)
+        self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
+
+    def read(self):
+        for name, wid in self.widget_map.iteritems():
+            qry = '''SELECT value FROM cont WHERE name = ?;'''
+            value = self.gutils.execute(qry, (name,)).fetchone()[0]
+            if isinstance(wid, QLineEdit):
+                wid.setText(str(value))
+            elif isinstance(wid, QCheckBox):
+                wid.setChecked(int(value))
+            elif isinstance(wid, QSpinBox):
+                wid.setValue(int(value))
+            elif isinstance(wid, QDoubleSpinBox):
+                wid.setValue(float(value))
+            elif name == 'PROJ':
+                cs = QgsCoordinateReferenceSystem()
+                cs.createFromProj4(value)
+                wid.setCrs(cs)
+                self.crs = cs
+            else:
+                pass
 
     def setup(self):
         if self.gpkg:
@@ -197,22 +219,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.read()
         QApplication.restoreOverrideCursor()
 
-    def read(self):
-        for name, wid in self.widget_map.iteritems():
-            qry = '''SELECT value FROM cont WHERE name = ?;'''
-            value = self.gutils.execute(qry, (name,)).fetchone()[0]
-            if isinstance(wid, QLineEdit):
-                wid.setText(str(value))
-            elif isinstance(wid, QCheckBox):
-                wid.setChecked(int(value))
-            elif name == 'PROJ':
-                cs = QgsCoordinateReferenceSystem()
-                cs.createFromProj4(value)
-                wid.setCrs(cs)
-                self.crs = cs
-            else:
-                pass
-
     def write(self):
         for name, wid in self.widget_map.iteritems():
             ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
@@ -230,3 +236,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             # in case the name exists in the table, update its value
             self.gutils.execute(updt_qry, (value, name))
 
+    def select_all_modules(self):
+        for cbx in self.modulesGrp.findChildren(QCheckBox):
+            cbx.setChecked(True)
+
+    def deselect_all_modules(self):
+        for cbx in self.modulesGrp.findChildren(QCheckBox):
+            cbx.setChecked(False)
