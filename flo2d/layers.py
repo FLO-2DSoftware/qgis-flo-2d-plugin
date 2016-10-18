@@ -133,7 +133,7 @@ class Layers(QObject):
 
         l = []
         for lyr in grp.findLayers():
-            if lyr.layer().type() == QgsMapLayer.VectorLayer and lyr.layer().geometryType() < 3:
+            if lyr.layer().type() == 0 and lyr.layer().geometryType() < 3:
                 if skip_views and lyr.layer().name() in views_list:
                     continue
                 else:
@@ -150,7 +150,7 @@ class Layers(QObject):
             grp = self.get_group(group)
         l = []
         for lyr in grp.findLayers():
-            if lyr.layer().type() == QgsMapLayer.RasterLayer:
+            if lyr.layer().type() == 1:
                 l.append(lyr.layer())
         return l
 
@@ -344,18 +344,18 @@ class Layers(QObject):
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('wrf', {
-                'name': 'WRF',
-                'sgroup': 'ARF_WRF',
-                'styles': ['wrf.qml'],
-                'attrs_edit_widgets': {}
-            }),
-            ('arf', {
-                'name': 'ARF',
-                'sgroup': 'ARF_WRF',
-                'styles': ['arf.qml'],
-                'attrs_edit_widgets': {}
-            }),
+#            ('wrf', {
+#                'name': 'WRF',
+#                'sgroup': 'ARF_WRF',
+#                'styles': ['wrf.qml'],
+#                'attrs_edit_widgets': {}
+#            }),
+#            ('arf', {
+#                'name': 'ARF',
+#                'sgroup': 'ARF_WRF',
+#                'styles': ['arf.qml'],
+#                'attrs_edit_widgets': {}
+#            }),
             ('mult_areas', {
                 'name': 'Multiple Channel Areas',
                 'sgroup': None,

@@ -40,6 +40,8 @@ class InfoTool(QgsMapToolIdentify):
 
     def update_lyrs_list(self):
         self.lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
+#        for l in self.lyrs_list:
+#            print l.name()
 
     def canvasPressEvent(self, e):
         self.clear_rubber()

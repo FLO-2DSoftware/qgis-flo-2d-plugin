@@ -44,6 +44,7 @@ from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_roughness import RoughnessDialog
 from .gui.dlg_interp_elev import InterpElevDialog
+from .gui.dlg_eval_arfwrf import EvalArfWrfDialog
 
 class Flo2D(object):
 
@@ -83,7 +84,7 @@ class Flo2D(object):
 
         # connections
         self.info_tool.feature_picked.connect(self.get_feature_info)
-        self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -177,6 +178,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/eval_arfwrf.svg'),
+            text=self.tr(u'Evaluate Reduction Factors (ARF and WRF)'),
+            callback=self.eval_arfwrf,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
@@ -215,6 +222,10 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gpkg = dlg_settings.gpkg
             self.crs = dlg_settings.crs
+            if self.lyrs.group:
+                self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
+            else:
+                self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
 
     def call_methods(self, calls, debug, *args):
         for call in calls:
@@ -236,6 +247,9 @@ class Flo2D(object):
                     raise
 
     def import_gds(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         import_calls = [
             'import_cont_toler',
@@ -304,8 +318,10 @@ class Flo2D(object):
         self.lyrs.load_all_layers(self.gpkg)
         self.lyrs.zoom_to_all()
 
-
     def export_gds(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
             'export_cont_toler',
@@ -420,6 +436,19 @@ class Flo2D(object):
             dlg.interpolate()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Interpolation done.")
+
+    def eval_arfwrf(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        cell_size = self.get_cell_size()
+        dlg_eval_arfwrf = EvalArfWrfDialog(self.con, self.iface, self.lyrs, self.gpkg, cell_size)
+        result = dlg_eval_arfwrf.exec_()
+        if result:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg_eval_arfwrf.evaluate()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Reduction factors evaluated")
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

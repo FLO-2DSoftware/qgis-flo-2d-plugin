@@ -61,7 +61,7 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         """Users pick a source raster not loaded into project"""
         s = QSettings()
         last_elev_raster_dir = s.value('FLO-2D/lastElevRasterDir', '')
-        src = QFileDialog.getOpenFileName(None,
+        self.src = QFileDialog.getOpenFileName(None,
                          'Choose elevation raster...',
                          directory=last_elev_raster_dir)
         if not self.src:
