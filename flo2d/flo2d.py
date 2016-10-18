@@ -32,7 +32,7 @@ from flo2d_dialog import Flo2DDialog
 from layers import Layers
 from user_communication import UserCommunication
 from flo2dgeopackage import *
-from grid_tools import square_grid, roughness2grid
+from grid_tools import square_grid, roughness2grid, evaluate_arfwrf
 from info_tool import InfoTool
 from utils import *
 
@@ -445,12 +445,13 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        cell_size = self.get_cell_size()
-        dlg_eval_arfwrf = EvalArfWrfDialog(self.con, self.iface, self.lyrs, self.gpkg, cell_size)
+        dlg_eval_arfwrf = EvalArfWrfDialog(self.iface, self.lyrs)
         result = dlg_eval_arfwrf.exec_()
         if result:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg_eval_arfwrf.evaluate()
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            areas_lyr = dlg_eval_arfwrf.rlayer_cbo.itemData(dlg_eval_arfwrf.rlayer_cbo.currentIndex())
+            evaluate_arfwrf(self.gpkg, grid_lyr, areas_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Reduction factors evaluated")
 
