@@ -24,56 +24,26 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
-from osgeo import gdal
 from .utils import load_ui
-from ..flo2dgeopackage import GeoPackageUtils
-import os
 
 uiDialog, qtBaseClass = load_ui('eval_arfwrf')
 
 
 class EvalArfWrfDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, gpkg, cell_size):
+    def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
-        self.con = con
         self.iface = iface
         self.lyrs = lyrs
-        self.gpkg = gpkg
-        self.gpkg_path = gpkg.get_gpkg_path()
-        self.cell_size = float(cell_size)
         self.setupUi(self)
-        self.gutils = GeoPackageUtils(con, iface)
-        self.populate_src_cbo()
+        self.populate_layers()
 
-        # connections
-        self.browseSrcBtn.clicked.connect(self.browse_src_layer)
-
-    def populate_src_cbo(self):
-        """Get loaded polygon layers into combobox"""
-        poly_lyrs = self.lyrs.list_group_vlayers()
-        for l in poly_lyrs:
-            if l.geometryType() == QGis.Polygon:
-                self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
-
-    def browse_src_layer(self):
-        """Users pick a source raster not loaded into project"""
-        s = QSettings()
-        last_block_lyr_dir = s.value('FLO-2D/lastBlockLyrDir', '')
-        self.src = QFileDialog.getOpenFileName(None,
-                         'Choose layer with blocked polygons...',
-                         directory=last_block_lyr_dir)
-        if not self.src:
-            return
-        s.setValue('FLO-2D/lastBlockLyrDir', os.path.dirname(self.src))
-        if not self.srcLayerCbo.findData(self.src):
-            bname = os.path.basename(self.src)
-            self.srcLayerCbo.addItem(bname, self.src)
-            self.srcLayerCbo.setCurrentInsex(len(self.srcLayerCbo)-1)
-
-    def evaluate(self):
-        """Evaluate ARF and WRF factors and save them to blocked_cells table"""
-        # shall we rename the table?
-
-
+    def populate_layers(self):
+        self.rlayer_cbo.clear()
+        lyrs = [lyr.layer() for lyr in self.lyrs.root.findLayers()]
+        for lyr in lyrs:
+            if lyr.isValid() and lyr.type() == QgsMapLayer.VectorLayer and lyr.geometryType() == QGis.Polygon:
+                self.rlayer_cbo.addItem(lyr.name(), lyr)
+            else:
+                pass

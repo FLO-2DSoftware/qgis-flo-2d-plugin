@@ -6,7 +6,7 @@ from shutil import copyfile
 from qgis.core import *
 from utilities import get_qgis_app
 from flo2d.flo2dgeopackage import *
-from flo2d.grid_tools import build_grid, roughness2grid, calculate_arf
+from flo2d.grid_tools import build_grid, roughness2grid, calculate_arfwrf
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -476,13 +476,25 @@ class TestGridTools(unittest.TestCase):
         expected = {0.5, 0.3, 0.1}
         self.assertSetEqual(set(man_values), expected)
 
-    # def test_calculate_arf(self):
-    #     grid = os.path.join(VECTOR_PATH, 'grid.geojson')
-    #     roughness = os.path.join(VECTOR_PATH, 'roughness.geojson')
-    #     glayer = QgsVectorLayer(grid, 'grid', 'ogr')
-    #     rlayer = QgsVectorLayer(roughness, 'roughness', 'ogr')
-    #     for arf in calculate_arf(glayer, rlayer):
-    #         print(arf)
+    def test_calculate_arfwrf(self):
+        grid = os.path.join(VECTOR_PATH, 'grid.geojson')
+        blockers = os.path.join(VECTOR_PATH, 'blockers.geojson')
+        glayer = QgsVectorLayer(grid, 'grid', 'ogr')
+        blayer = QgsVectorLayer(blockers, 'blockers', 'ogr')
+        geom = 0
+        nogeom = 0
+        row = tuple()
+        for row in calculate_arfwrf(glayer, blayer):
+            awrf = [True if i <= 1 else False for i in row[-9:]]
+            self.assertTrue(all(awrf))
+            if row[0] is None:
+                nogeom += 1
+            else:
+                geom += 1
+        self.assertTupleEqual(row, (None, 153L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
+        self.assertEqual(nogeom, 33)
+        self.assertEqual(geom, 4)
+
 
 # Running tests:
 if __name__ == '__main__':

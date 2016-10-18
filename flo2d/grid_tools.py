@@ -94,7 +94,17 @@ def roughness2grid(grid, roughness, column_name):
                     pass
 
 
-def calculate_arf(grid, areas):
+def calculate_arfwrf(grid, areas):
+    sides = (
+        (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
+        (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
+        (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
+        (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
+        (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
+        (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
+        (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
+        (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
+    )
     area_polys = areas.selectedFeatures() if areas.selectedFeatureCount() > 0 else areas.getFeatures()
     allfeatures = {feature.id(): feature for feature in area_polys}
     index = QgsSpatialIndex()
@@ -102,6 +112,10 @@ def calculate_arf(grid, areas):
     features = grid.getFeatures()
     first = next(features)
     grid_area = first.geometry().area()
+    grid_side = math.sqrt(grid_area)
+    octagon_side = grid_side / 2.414
+    half_square = grid_side * 0.5
+    half_octagon = octagon_side * 0.5
     for feat in grid.getFeatures():
         geom = feat.geometry()
         fids = index.intersects(geom.boundingBox())
@@ -110,8 +124,36 @@ def calculate_arf(grid, areas):
             fgeom = f.geometry()
             inter = fgeom.intersects(geom)
             if inter is True:
-                intersection = fgeom.intersection(geom)
-                arf = intersection.area() / grid_area
-                yield arf
+                areas_intersection = fgeom.intersection(geom)
+                arf = round(areas_intersection.area() / grid_area, 2)
+                arf = arf if arf <= 0.95 else 1
+                grid_center = geom.centroid().asPoint()
+                wrf_sides = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
+                wrf_geoms = (QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)]) for x1, y1, x2, y2 in wrf_sides)
+                wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
+                yield (geom.exportToWkt() if arf == 1 else None, feat.id(), arf if arf <= 0.95 else 1) + tuple(wrf)
             else:
                 pass
+
+
+def evaluate_arfwrf(gutils, grid, areas):
+    del_areas = 'DELETE FROM blocked_areas;'
+    del_cells = 'DELETE FROM blocked_cells;'
+    qry_areas = '''INSERT INTO blocked_areas (geom, arf) VALUES (AsGPB(ST_GeomFromText('{0}')), 1);'''
+    qry_cells = '''INSERT INTO blocked_cells (grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (?,?,?,?,?,?,?,?,?,?,?);'''
+    gutils.execute(del_areas)
+    gutils.execute(del_cells)
+    aid = 0
+    cur_areas = gutils.con.cursor()
+    cur_cells = gutils.con.cursor()
+    for row in calculate_arfwrf(grid, areas):
+        geom, gid, arf = row[:3]
+        if geom is not None:
+            cur_areas.execute(qry_areas.format(geom))
+            wrf = (None,) * 8
+            aid += 1
+        else:
+            wrf = row[-8:]
+        cell = (gid, None if geom is None else aid, arf) + wrf
+        cur_cells.execute(qry_cells, cell)
+    gutils.con.commit()
