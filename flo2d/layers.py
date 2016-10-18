@@ -108,11 +108,9 @@ class Layers(QObject):
             gr = self.get_group(group)
         else:
             gr = self.root
-        print gr.name()
         if name:
             layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
             for layer in layers:
-                print layer.name()
                 layeritem = gr.findLayer(layer.id())
                 if not layeritem:
                     continue

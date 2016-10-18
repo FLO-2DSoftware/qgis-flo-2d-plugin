@@ -27,6 +27,7 @@ from qgis.core import QgsCoordinateReferenceSystem
 from .utils import load_ui
 from ..flo2dgeopackage import *
 from ..user_communication import UserCommunication
+import os
 
 uiDialog, qtBaseClass = load_ui('settings')
 
@@ -77,55 +78,77 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
-        if self.con:
-            database_disconnect(self.con)
-        self.gpkg_path = None
+
+        gpkg_path = None
+
+        s = QSettings()
+        last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
+        gpkg_path = QFileDialog.getSaveFileName(None,
+                         'Create GeoPackage As...',
+                         directory=last_gpkg_dir, filter='*.gpkg')
+        if not gpkg_path:
+            return
+        else:
+            pass
+        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
+
+        con = database_create(gpkg_path)
+        if not con:
+            self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
+            return
+        else:
+            self.uc.log_info("Connected to {}".format(gpkg_path))
+        gpkg = Flo2dGeoPackage(con, self.iface)
+        if gpkg.check_gpkg():
+            self.uc.bar_info("GeoPackage {} is OK".format(gpkg_path))
+            gpkg.path = gpkg_path
+            self.gpkgPathEdit.setText(gpkg.path)
+        else:
+            self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
+
         # CRS
         self.projectionSelector.selectCrs()
         if self.projectionSelector.crs().isValid():
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
-            proj = self.crs.toProj4()
+            proj4 = self.crs.toProj4()
+
+            # check if the CRS exist in the db
+            sql = 'SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;'
+            rc = gpkg.execute(sql, (crsid,))
+            rt = rc.fetchone()
+            if not rt:
+                sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
+                data = (self.crs.description(), crsid, auth, crsid, proj4, '')
+                rc = gpkg.execute(sql, data)
+                del rc
+                srsid = crsid
+            else:
+                txt = 'There is a coordinate system defined in the GeoPackage.\n'
+                txt += 'Would you like to use it?\n\nDetails:\n'
+                txt += 'Name: {}\n'.format(rt[0])
+                txt += 'SRS id: {}\n'.format(rt[1])
+                txt += 'Organization: {}\n'.format(rt[2])
+                txt += 'Organization id: {}\n'.format(rt[3])
+                txt += 'Definition: {}'.format(rt[4])
+                reply = QMessageBox.question(self, 'Use existing SRS?',
+                    txt,
+                    QMessageBox.No | QMessageBox.Yes)
+                if reply == QMessageBox.Yes:
+                    srsid = rt[1]
+                else:
+                    return
         else:
             msg = 'Choose a valid CRS!'
             self.uc.show_warn(msg)
             return
-        s = QSettings()
-        last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        self.gpkg_path = QFileDialog.getSaveFileName(None,
-                         'Create GeoPackage As...',
-                         directory=last_gpkg_dir, filter='*.gpkg')
-        if not self.gpkg_path:
-            return
-        else:
-            pass
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
-        self.con = database_create(self.gpkg_path)
-        if not self.con:
-            self.uc.show_warn("Couldn't create new database {}".format(self.gpkg_path))
-        else:
-            self.uc.log_info("Connected to {}".format(self.gpkg_path))
-        self.gpkg = Flo2dGeoPackage(self.con, self.iface)
-        if self.gpkg.check_gpkg():
-            self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg_path))
-            self.gpkg.path = self.gpkg_path
-            self.gpkgPathEdit.setText(self.gpkg.path)
-        else:
-            self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg_path))
+        if self.con:
+            database_disconnect(self.con)
+        self.gpkg_path = gpkg_path
+        self.con = con
+        self.gpkg = gpkg
 
-        # check if the CRS exist in the db
-        sql = 'SELECT srs_id FROM gpkg_spatial_ref_sys WHERE organization=? AND organization_coordsys_id=?;'
-        rc = self.gpkg.execute(sql, (auth, crsid))
-        rt = rc.fetchone()
-        if not rt:
-            sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
-            data = (self.crs.description(), crsid, auth, crsid, proj, '')
-            rc = self.gpkg.execute(sql, data)
-            del rc
-            srsid = crsid
-        else:
-            srsid = rt[0]
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
@@ -135,27 +158,28 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.srs_id = srsid
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.lyrs.load_all_layers(self.gpkg)
-#        self.lyrs.zoom_to_all()
+
         QApplication.restoreOverrideCursor()
 
     def connect(self):
         """Connect to FLO-2D model database (GeoPackage)"""
-        database_disconnect(self.con)
-        self.gpkg_path = None
+        gpkg_path = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        self.gpkg_path = QFileDialog.getOpenFileName(None,
+        gpkg_path = QFileDialog.getOpenFileName(None,
                          'Select GeoPackage to connect',
                          directory=last_gpkg_dir, filter='*.gpkg')
-        print "path is: '{}'".format(self.gpkg_path)
-        if not self.gpkg_path:
+        if not gpkg_path:
             return
         else:
             pass
-#        QApplication.setOverrideCursor(Qt.WaitCursor)
+        if self.con:
+            database_disconnect(self.con)
+        self.gpkg_path = gpkg_path
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
         self.con = database_connect(self.gpkg_path)
         self.uc.log_info("Connected to {}".format(self.gpkg_path))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gpkg = Flo2dGeoPackage(self.con, self.iface)
         if self.gpkg.check_gpkg():
             self.gpkg.path = self.gpkg_path
@@ -171,7 +195,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.gpkgPathEdit.setText(self.gpkg.path)
         self.read()
-#        QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
 
     def read(self):
         for name, wid in self.widget_map.iteritems():

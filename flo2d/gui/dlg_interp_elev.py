@@ -97,20 +97,20 @@ class InterpElevDialog(qtBaseClass, uiDialog):
             options=[],
             format='GTiff',
             outputBounds=self.output_bounds,
-            outputBoundsSRS=self.srs,
+            outputBoundsSRS=self.out_srs,
             xRes=self.cell_size,
             yRes=self.cell_size,
             targetAlignedPixels=False,
             width=0,
             height=0,
-            srcSRS=self.srs,
-            dstSRS=self.srs,
+            srcSRS=self.src_srs,
+            dstSRS=self.out_srs,
             srcAlpha=False,
             dstAlpha=False,
             warpOptions=None,
             errorThreshold=None,
             warpMemoryLimit=None,
-            creationOptions=None,
+            creationOptions=['COMPRESS=LZW'],
             outputType=self.raster_type,
             workingType=self.raster_type,
             resampleAlg=self.algCbo.itemData(self.algCbo.currentIndex()),
@@ -145,10 +145,11 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         ymax = grid_ext.yMaximum()
         self.output_bounds = (xmin, xmax, ymin, ymax)
         # CRS
-        self.srs = self.grid.dataProvider().crs().authid()
+        self.out_srs = self.grid.dataProvider().crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(0)
+        self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:
