@@ -63,6 +63,7 @@ def square_grid(gutils, boundary):
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
     insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
     gutils.execute(update_cellsize, (cellsize,))
+    
     cellsize = float(cellsize)
     polygons = build_grid(boundary, cellsize)
     cur = gutils.con.cursor()

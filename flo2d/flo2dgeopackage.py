@@ -186,6 +186,21 @@ class GeoPackageUtils(object):
         except:
             return None
 
+    def set_cont_par(self, name, value):
+        """Set a parameter value in cont table"""
+        try:
+            sql = '''SELECT fid FROM cont WHERE name = ?;'''
+            r = self.execute(sql, (name,)).fetchone()[0]
+            if r:
+                sql = '''UPDATE cont SET value = ? WHERE name = ?;'''
+                self.execute(sql, (value, name,))
+            else:
+                sql = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
+                self.execute(sql, (name, value,))
+            return True
+        except:
+            return None
+
     def get_gpkg_path(self):
         """Return database attached to the current connection"""
         try:

@@ -32,3 +32,9 @@ def add_egg(name):
     dep = get_file_path('deps', name)
     sys.path.append(dep)
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

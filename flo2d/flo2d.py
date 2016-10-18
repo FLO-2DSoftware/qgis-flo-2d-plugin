@@ -364,42 +364,47 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        cs = self.get_cell_size()
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         self.iface.setActiveLayer(bl)
         bl.startEditing()
         self.iface.actionAddFeature().trigger()
 
     def get_cell_size(self):
-        """Ask for cell size if not defined in cont table"""
-        if not self.gpkg:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-        # is cell size defined?
-        cs = self.gpkg.get_cont_par("CELLSIZE")
+        """Get cell size from:
+            - model boundary attr table (if defined, will be written to cont table)
+            - cont table
+            - ask user
+        """
+        cs = 0
+        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bfeat = bl.getFeatures().next()
+        if bfeat['cell_size']:
+            cs = bfeat['cell_size']
+        else:
+            cs = self.gpkg.get_cont_par("CELLSIZE")
+            if cs == '':
+                cs = None
+            else:
+                pass
         if cs:
             return cs
         else:
-            r, ok = QInputDialog.getInt(None, "Grid Cell Size", "Enter grid element cell size", min=1, max=99999)
+            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999)
             if ok:
                 cs = r
+                self.gpkg.set_cont_par('CELLSIZE', cs)
             else:
-                return
-            # save cell size to table cont
-            sql = '''UPDATE cont SET value = ? WHERE name='CELLSIZE';'''
-            rc = self.gpkg.execute(sql, (cs, ))
-            del rc
-            return cs
+                return None
 
     def create_grid(self):
+        if not self.gpkg:
+            self.uc.bar_warn("Define a database connections first!")
+            return
         # finish editing mode of model boundary
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         if bl.isEditable():
             bl.commitChanges()
-        cs = self.get_cell_size()
-        if not self.gpkg:
-            self.uc.bar_warn("Define a database connections first!")
-            return
+        self.get_cell_size()
         self.gpkg = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()

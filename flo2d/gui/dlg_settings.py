@@ -25,6 +25,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import QgsCoordinateReferenceSystem
 from .utils import load_ui
+from ..utils import is_number
 from ..flo2dgeopackage import *
 from ..user_communication import UserCommunication
 import os
@@ -78,9 +79,15 @@ class SettingsDialog(qtBaseClass, uiDialog):
             elif isinstance(wid, QCheckBox):
                 wid.setChecked(int(value))
             elif isinstance(wid, QSpinBox):
-                wid.setValue(int(value))
+                if value and is_number(value):
+                    wid.setValue(int(value))
+                else:
+                    pass
             elif isinstance(wid, QDoubleSpinBox):
-                wid.setValue(float(value))
+                if value and is_number(value):
+                    wid.setValue(float(value))
+                else:
+                    pass
             elif name == 'PROJ':
                 cs = QgsCoordinateReferenceSystem()
                 cs.createFromProj4(value)
@@ -226,6 +233,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
+            elif isinstance(wid, QSpinBox):
+                value = wid.value()
+            elif isinstance(wid, QDoubleSpinBox):
+                value = wid.value()
             elif isinstance(wid, QCheckBox):
                 value = 1 if wid.isChecked() else 0
             elif name == 'PROJ':
