@@ -392,6 +392,10 @@ class Flo2D(object):
             return cs
 
     def create_grid(self):
+        # finish editing mode of model boundary
+        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        if bl.isEditable():
+            bl.commitChanges()
         cs = self.get_cell_size()
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
