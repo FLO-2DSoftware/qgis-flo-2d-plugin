@@ -342,18 +342,18 @@ class Layers(QObject):
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
-#            ('wrf', {
-#                'name': 'WRF',
-#                'sgroup': 'ARF_WRF',
-#                'styles': ['wrf.qml'],
-#                'attrs_edit_widgets': {}
-#            }),
-#            ('arf', {
-#                'name': 'ARF',
-#                'sgroup': 'ARF_WRF',
-#                'styles': ['arf.qml'],
-#                'attrs_edit_widgets': {}
-#            }),
+            ('wrf', {
+                'name': 'WRF',
+                'sgroup': 'ARF_WRF',
+                'styles': ['wrf.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('arf', {
+                'name': 'ARF',
+                'sgroup': 'ARF_WRF',
+                'styles': ['arf.qml'],
+                'attrs_edit_widgets': {}
+            }),
             ('mult_areas', {
                 'name': 'Multiple Channel Areas',
                 'sgroup': None,
