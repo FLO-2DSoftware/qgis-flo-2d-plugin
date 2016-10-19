@@ -19,7 +19,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
- This script initializes the plugin, making it known to QGIS.
+ FLO-2D Preprocessor tools for QGIS.
 """
 from collections import OrderedDict
 from flo2dgeopackage import GeoPackageUtils

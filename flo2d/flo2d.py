@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,19 +19,16 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
-import os
 import time
-import traceback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4 import uic
-from qgis.gui import QgsProjectionSelectionWidget, QgsMapToolIdentify
+from qgis.gui import QgsProjectionSelectionWidget
 from qgis.core import *
-from flo2d_dialog import Flo2DDialog
 from layers import Layers
-from user_communication import UserCommunication
-from flo2dgeopackage import *
+from geopackage_utils import *
+from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, roughness2grid, evaluate_arfwrf
 from info_tool import InfoTool
 from utils import *
@@ -76,7 +73,8 @@ class Flo2D(object):
         self.toolbar.setObjectName(u'Flo2D')
         self.con = None
         self.lyrs = Layers(iface)
-        self.gpkg = None
+        self.gutils = None
+        self.f2g = None
         self.prep_sql = None
         self.set_editors_map()
 
@@ -211,16 +209,16 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         del self.toolbar
-        del self.con, self.gpkg, self.lyrs
+        del self.con, self.gutils, self.lyrs
 
     def show_settings(self):
-        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gpkg)
+        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
         if result:
             dlg_settings.write()
             self.con = dlg_settings.con
-            self.gpkg = dlg_settings.gpkg
+            self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
             if self.lyrs.group:
                 self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
@@ -230,14 +228,14 @@ class Flo2D(object):
     def call_methods(self, calls, debug, *args):
         for call in calls:
             dat = call.split('_')[-1].upper() + '.DAT'
-            if call.startswith('import') and self.gpkg.parser.dat_files[dat] is None:
+            if call.startswith('import') and self.f2g.parser.dat_files[dat] is None:
                 self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                 continue
             else:
                 pass
             try:
                 start_time = time.time()
-                method = getattr(self.gpkg, call)
+                method = getattr(self.f2g, call)
                 method(*args)
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
             except Exception as e:
@@ -247,9 +245,11 @@ class Flo2D(object):
                     raise
 
     def import_gds(self):
-        if not self.gpkg:
+        if not self.con:
             self.uc.bar_warn("Define a database connections first!")
             return
+
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         import_calls = [
             'import_cont_toler',
@@ -284,9 +284,9 @@ class Flo2D(object):
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bname = os.path.basename(fname)
-            self.gpkg.set_parser(fname)
-            if bname in self.gpkg.parser.dat_files:
-                empty = self.gpkg.is_table_empty('grid')
+            self.f2g.set_parser(fname)
+            if bname in self.f2g.parser.dat_files:
+                empty = self.f2g.is_table_empty('grid')
                 # check if a grid exists in the grid table
                 if not empty:
                     r = self.uc.question('There is a grid already defined in GeoPackage. Overwrite it?')
@@ -302,7 +302,7 @@ class Flo2D(object):
                 # save CRS to table cont
                 sql = '''INSERT INTO cont (name, value) VALUES ('PROJ', ?);'''
                 data = (self.crs.toProj4(), )
-                rc = self.gpkg.execute(sql, data)
+                rc = self.gutils.execute(sql, data)
                 del rc
 
                 # load layers and tables
@@ -314,14 +314,12 @@ class Flo2D(object):
         else:
             pass
 
-    def load_layers(self):
-        self.lyrs.load_all_layers(self.gpkg)
-        self.lyrs.zoom_to_all()
-
     def export_gds(self):
-        if not self.gpkg:
+        if not self.con:
             self.uc.bar_warn("Define a database connections first!")
             return
+
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
             'export_cont_toler',
@@ -359,9 +357,13 @@ class Flo2D(object):
             self.uc.bar_info('Flo2D model exported', dur=3)
             QApplication.restoreOverrideCursor()
 
+    def load_layers(self):
+        self.lyrs.load_all_layers(self.gutils)
+        self.lyrs.zoom_to_all()
+
     def create_model_boundary(self):
         """Create model boundary and get grid cell size from user"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
@@ -380,7 +382,7 @@ class Flo2D(object):
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
         else:
-            cs = self.gpkg.get_cont_par("CELLSIZE")
+            cs = self.gutils.get_cont_par("CELLSIZE")
             if cs == '':
                 cs = None
             else:
@@ -391,12 +393,12 @@ class Flo2D(object):
             r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999)
             if ok:
                 cs = r
-                self.gpkg.set_cont_par('CELLSIZE', cs)
+                self.gutils.set_cont_par('CELLSIZE', cs)
             else:
                 return None
 
     def create_grid(self):
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         # finish editing mode of model boundary
@@ -404,10 +406,10 @@ class Flo2D(object):
         if bl.isEditable():
             bl.commitChanges()
         self.get_cell_size()
-        self.gpkg = GeoPackageUtils(self.con, self.iface)
+        self.gutils = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        result = square_grid(self.gpkg, bl)
+        result = square_grid(self.gutils, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         if grid_lyr:
             grid_lyr.triggerRepaint()
@@ -418,26 +420,31 @@ class Flo2D(object):
             self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
 
     def get_roughness(self):
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         dlg_roughness = RoughnessDialog(self.con, self.iface, self.lyrs)
         result = dlg_roughness.exec_()
         if result:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
-            field = dlg_roughness.rfield_cbo.currentText()
-            roughness2grid(grid_lyr, rough_lyr, field)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning roughness finished!")
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+                rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
+                field = dlg_roughness.rfield_cbo.currentText()
+                roughness2grid(grid_lyr, rough_lyr, field)
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("Assigning roughness finished!")
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.log_info(traceback.format_exc())
+                self.uc.bar_warn("Assigning roughness aborted! Please check roughness layer.")
 
     def interp_elev(self):
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         cell_size = self.get_cell_size()
-        dlg = InterpElevDialog(self.con, self.iface, self.lyrs, self.gpkg, cell_size)
+        dlg = InterpElevDialog(self.con, self.iface, self.lyrs, self.gutils, cell_size)
         ok = dlg.exec_()
         if ok:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -446,24 +453,25 @@ class Flo2D(object):
             self.uc.show_info("Interpolation done.")
 
     def eval_arfwrf(self):
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
-        self.gpkg = GeoPackageUtils(self.con, self.iface)
+        self.gutils = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
         try:
-            evaluate_arfwrf(self.gpkg, grid_lyr, arf_lyr)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+            evaluate_arfwrf(self.gutils, grid_lyr, arf_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ARF and WRF values calculated!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
@@ -472,7 +480,7 @@ class Flo2D(object):
 
     def show_inflow_editor(self, fid=None):
         """Show inflows editor"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
@@ -480,7 +488,7 @@ class Flo2D(object):
 
     def show_outflow_editor(self, fid=None):
         """Show outflows editor"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         try:
@@ -492,7 +500,7 @@ class Flo2D(object):
 
     def show_rain_editor(self):
         """Show rain editor"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         try:
@@ -503,7 +511,7 @@ class Flo2D(object):
 
     def show_evap_editor(self):
         """Show evaporation editor"""
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         try:
@@ -517,7 +525,7 @@ class Flo2D(object):
         self.info_tool = InfoTool(self.canvas, self.lyrs)
 
     def identify(self):
-        if not self.gpkg:
+        if not self.gutils:
             self.uc.bar_warn("Define a database connections first!")
             return
         self.canvas.setMapTool(self.info_tool)

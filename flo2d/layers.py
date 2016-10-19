@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,9 +19,9 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
-
-from PyQt4.QtCore import QObject, pyqtSignal
+from PyQt4.QtCore import QObject
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor
 import os
@@ -31,18 +31,10 @@ from collections import OrderedDict
 from qgis.core import (
     QgsProject,
     QgsMapLayerRegistry,
-    QgsExpression,
     QgsFeatureRequest,
-    QgsVectorLayer,
-    QgsGeometry,
-    QgsLayerTreeLayer,
-    QgsMapLayer,
-    QgsRectangle
+    QgsVectorLayer
 )
 from qgis.gui import QgsRubberBand
-from qgis.utils import iface
-
-import utils
 from errors import *
 
 
@@ -57,6 +49,7 @@ class Layers(QObject):
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
+        self.gutils = None
 
     def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
@@ -211,8 +204,8 @@ class Layers(QObject):
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
             raise Flo2dNotString(msg)
 
-    def load_all_layers(self, gpkg):
-        self.gpkg = gpkg
+    def load_all_layers(self, gutils):
+        self.gutils = gutils
         self.layers_data = OrderedDict([
 
         # LAYERS
@@ -546,18 +539,6 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-#            ('outflow_chan_elems', {
-#                'name': 'Outflow Channel Elements (v)',
-#                'sgroup': 'Tables',
-#                'styles': None,
-#                'attrs_edit_widgets': {}
-#            }),
-#            ('outflow_fp_elems', {
-#                'name': 'Outflow Floodplain Elements (v)',
-#                'sgroup': 'Tables',
-#                'styles': None,
-#                'attrs_edit_widgets': {}
-#            }),
             ('qh_params', {
                 'name': 'QH Parameters',
                 'sgroup': 'Tables',
@@ -691,7 +672,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {}
             })
         ])
-        group = 'FLO-2D_{}'.format(os.path.basename(self.gpkg.path).replace('.gpkg', ''))
+        group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.group = group
         for lyr in self.layers_data:
             data = self.layers_data[lyr]
@@ -699,7 +680,7 @@ class Layers(QObject):
                 lstyle = data['styles'][0]
             else:
                 lstyle = None
-            uri = self.gpkg.path + '|layername={}'.format(lyr)
+            uri = self.gutils.path + '|layername={}'.format(lyr)
             try:
                 lyr_is_on = data['visible']
             except:
@@ -716,7 +697,7 @@ class Layers(QObject):
                 pass # no attributes edit widgets config
 
     def update_style_blocked(self, lyr_id):
-        cst = self.gpkg.get_cont_par('CELLSIZE')
+        cst = self.gutils.get_cont_par('CELLSIZE')
         if is_number(cst) and not cst == '':
             cs = float(cst)
         else:
@@ -771,4 +752,3 @@ class Layers(QObject):
 #                extent.combineExtentWith(child.layer().extent())
         self.iface.mapCanvas().setExtent(extent)
         self.iface.mapCanvas().refresh()
-
