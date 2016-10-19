@@ -143,9 +143,8 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     def test_import_arf(self):
         self.f2g.import_arf()
-        bt = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_areas;''').fetchone()[0]
-        b = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_cells WHERE area_fid IS NULL;''').fetchone()[0]
-        self.assertEqual(bt + b, 15)
+        c = self.f2g.execute('''SELECT COUNT(fid) FROM blocked_cells;''').fetchone()[0]
+        self.assertEqual(c, 15)
 
     def test_import_mult(self):
         self.f2g.import_mult()
@@ -481,19 +480,11 @@ class TestGridTools(unittest.TestCase):
         blockers = os.path.join(VECTOR_PATH, 'blockers.geojson')
         glayer = QgsVectorLayer(grid, 'grid', 'ogr')
         blayer = QgsVectorLayer(blockers, 'blockers', 'ogr')
-        geom = 0
-        nogeom = 0
         row = tuple()
         for row in calculate_arfwrf(glayer, blayer):
             awrf = [True if i <= 1 else False for i in row[-9:]]
             self.assertTrue(all(awrf))
-            if row[0] is None:
-                nogeom += 1
-            else:
-                geom += 1
-        self.assertTupleEqual(row, (None, 153L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
-        self.assertEqual(nogeom, 33)
-        self.assertEqual(geom, 4)
+        self.assertTupleEqual(row[1:], (153L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
 
 
 # Running tests:
