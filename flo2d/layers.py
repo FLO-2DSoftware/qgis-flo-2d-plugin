@@ -49,6 +49,7 @@ class Layers(QObject):
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
+        self.gutils = None
 
     def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
@@ -196,8 +197,8 @@ class Layers(QObject):
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
             raise Flo2dNotString(msg)
 
-    def load_all_layers(self, gpkg):
-        self.gpkg = gpkg
+    def load_all_layers(self, gutils):
+        self.gutils = gutils
         self.layers_data = OrderedDict([
 
         # LAYERS
@@ -536,18 +537,6 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-#            ('outflow_chan_elems', {
-#                'name': 'Outflow Channel Elements (v)',
-#                'sgroup': 'Tables',
-#                'styles': None,
-#                'attrs_edit_widgets': {}
-#            }),
-#            ('outflow_fp_elems', {
-#                'name': 'Outflow Floodplain Elements (v)',
-#                'sgroup': 'Tables',
-#                'styles': None,
-#                'attrs_edit_widgets': {}
-#            }),
             ('qh_params', {
                 'name': 'QH Parameters',
                 'sgroup': 'Tables',
@@ -681,7 +670,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {}
             })
         ])
-        group = 'FLO-2D_{}'.format(os.path.basename(self.gpkg.path).replace('.gpkg', ''))
+        group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.group = group
         for lyr in self.layers_data:
             data = self.layers_data[lyr]
@@ -689,7 +678,7 @@ class Layers(QObject):
                 lstyle = data['styles'][0]
             else:
                 lstyle = None
-            uri = self.gpkg.path + '|layername={}'.format(lyr)
+            uri = self.gutils.path + '|layername={}'.format(lyr)
             try:
                 lyr_is_on = data['visible']
             except:
@@ -706,17 +695,13 @@ class Layers(QObject):
                 pass # no attributes edit widgets config
 
     def update_style_blocked(self, lyr_id):
-        if not self.gpkg.cell_size:
-            try:
-                sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
-                self.gpkg.cell_size = float(self.gpkg.execute(sql).fetchone()[0])
-            except:
-                # no cell size saved in the db - postpone updating the style
-                # until the size is known
-                return
-        else:
-            pass
-        s = self.gpkg.cell_size * 0.44
+        try:
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+        except Exception as e:
+            # no cell size saved in the db - postpone updating the style
+            # until the size is known
+            return
+        s = cell_size * 0.44
         dir_lines = {
             1: (-s/2.414, s, s/2.414, s),
             2: (s, s/2.414, s, -s/2.414),
@@ -762,4 +747,3 @@ class Layers(QObject):
 #                extent.combineExtentWith(child.layer().extent())
         self.iface.mapCanvas().setExtent(extent)
         self.iface.mapCanvas().refresh()
-

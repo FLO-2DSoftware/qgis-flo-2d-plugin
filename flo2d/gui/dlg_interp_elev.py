@@ -27,7 +27,7 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from osgeo import gdal
 from .utils import load_ui
-from ..flo2dgeopackage import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('interp_elev')
 

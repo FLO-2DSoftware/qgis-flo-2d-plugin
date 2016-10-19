@@ -24,7 +24,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from .utils import load_ui
-from ..flo2dgeopackage import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow
 from plot_widget import PlotWidget
 

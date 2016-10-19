@@ -25,7 +25,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
 from .utils import *
-from ..flo2dgeopackage import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Outflow
 from ..user_communication import UserCommunication
 from plot_widget import PlotWidget
@@ -53,7 +53,6 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.outflow_data_model = QStandardItemModel()
         self.populate_outflows_cbo(outflow_fid)
-
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()

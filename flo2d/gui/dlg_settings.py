@@ -26,7 +26,7 @@ from PyQt4.QtGui import *
 from qgis.core import QgsCoordinateReferenceSystem
 from .utils import load_ui
 from ..utils import is_number
-from ..flo2dgeopackage import *
+from ..geopackage_utils import *
 from ..user_communication import UserCommunication
 import os
 
@@ -35,7 +35,7 @@ uiDialog, qtBaseClass = load_ui('settings')
 
 class SettingsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, gpkg):
+    def __init__(self, con, iface, lyrs, gutils):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -44,7 +44,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.setModal(True)
         self.con = con
         self.lyrs = lyrs
-        self.gpkg = gpkg
+        self.gutils = gutils
         self.widget_map = {
             "ICHANNEL": self.chanChBox,
             "IEVAP": self.evapChBox,
@@ -97,9 +97,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
 
     def setup(self):
-        if self.gpkg:
-            self.gpkg.path = self.gpkg.get_gpkg_path()
-            self.gpkgPathEdit.setText(self.gpkg.path)
+        if self.gutils:
+            self.gutils.path = self.gutils.get_gpkg_path()
+            self.gpkgPathEdit.setText(self.gutils.path)
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.read()
         else:
@@ -107,7 +107,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
-
         gpkg_path = None
 
         s = QSettings()
@@ -127,11 +126,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
-        gpkg = Flo2dGeoPackage(con, self.iface)
-        if gpkg.check_gpkg():
+        gutils = GeoPackageUtils(con, self.iface)
+        if gutils.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_path))
-            gpkg.path = gpkg_path
-            self.gpkgPathEdit.setText(gpkg.path)
+            gutils.path = gpkg_path
+            self.gpkgPathEdit.setText(gutils.path)
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
 
@@ -144,12 +143,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
             # check if the CRS exist in the db
             sql = 'SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;'
-            rc = gpkg.execute(sql, (crsid,))
+            rc = gutils.execute(sql, (crsid,))
             rt = rc.fetchone()
             if not rt:
                 sql = '''INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)'''
                 data = (self.crs.description(), crsid, auth, crsid, proj4, '')
-                rc = gpkg.execute(sql, data)
+                rc = gutils.execute(sql, data)
                 del rc
                 srsid = crsid
             else:
@@ -175,18 +174,17 @@ class SettingsDialog(qtBaseClass, uiDialog):
             database_disconnect(self.con)
         self.gpkg_path = gpkg_path
         self.con = con
-        self.gpkg = gpkg
+        self.gutils = gutils
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
-        rc = self.gpkg.execute(sql, (srsid,))
+        self.gutils.execute(sql, (srsid,))
         sql = "UPDATE gpkg_contents SET srs_id = ?"
-        rc = self.gpkg.execute(sql, (srsid,))
+        self.gutils.execute(sql, (srsid,))
         self.srs_id = srsid
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        self.lyrs.load_all_layers(self.gpkg)
+        self.lyrs.load_all_layers(self.gutils)
 
         QApplication.restoreOverrideCursor()
 
@@ -209,20 +207,19 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.con = database_connect(self.gpkg_path)
         self.uc.log_info("Connected to {}".format(self.gpkg_path))
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.gpkg = Flo2dGeoPackage(self.con, self.iface)
-        if self.gpkg.check_gpkg():
-            self.gpkg.path = self.gpkg_path
-            self.uc.bar_info("GeoPackage {} is OK".format(self.gpkg.path))
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+        if self.gutils.check_gpkg():
+            self.gutils.path = self.gpkg_path
+            self.uc.bar_info("GeoPackage {} is OK".format(self.gutils.path))
             sql = '''SELECT srs_id FROM gpkg_contents WHERE table_name='grid';'''
-            rc = self.gpkg.execute(sql)
+            rc = self.gutils.execute(sql)
             rt = rc.fetchone()[0]
             self.srs_id = rt
-            self.lyrs.load_all_layers(self.gpkg)
+            self.lyrs.load_all_layers(self.gutils)
             self.lyrs.zoom_to_all()
         else:
-            self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gpkg.path))
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        self.gpkgPathEdit.setText(self.gpkg.path)
+            self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gutils.path))
+        self.gpkgPathEdit.setText(self.gutils.path)
         self.read()
         QApplication.restoreOverrideCursor()
 
