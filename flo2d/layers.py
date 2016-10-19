@@ -67,14 +67,20 @@ class Layers(QObject):
         QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
         if subgroup:
             grp = self.get_subgroup(group, subgroup)
+            if not subgroup == 'User Layers':
+                grp.setExpanded(False)
+            else:
+                pass
         else:
             grp = self.get_group(group)
-        # if a layer exists with the same uri, remove it
+        # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
-            self.remove_layer(lyr_exists)
-        # add layer to the group of the tree
-        tree_lyr = grp.addLayer(vlayer)
+            self.get_layer_tree_item(lyr_exists).layer().reload()
+            tree_lyr = self.get_layer_tree_item(lyr_exists)
+        else:
+            # add layer to the group of the tree
+            tree_lyr = grp.addLayer(vlayer)
         # set visibility
         if visible:
             vis = Qt.Checked
@@ -91,7 +97,8 @@ class Layers(QObject):
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
 
-        return vlayer.id()
+#        return vlayer.id()
+        return tree_lyr.layer().id()
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:
@@ -127,7 +134,7 @@ class Layers(QObject):
             grp = self.root
         else:
             grp = self.get_group(group)
-        views_list = ['WRF', 'ARF']
+        views_list = []
 
         l = []
         for lyr in grp.findLayers():
@@ -238,12 +245,12 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'module': ['streets']
             }),
-            ('blocked_areas', {
-                'name': 'Blocked areas',
+            ('user_model_boundary', {
+                'name': 'Model Boundary',
                 'sgroup': 'User Layers',
-                'styles': ['blocked_areas.qml'],
+                'styles': ['model_boundary.qml'],
                 'attrs_edit_widgets': {},
-                'module': ['redfac']
+                'module': ['all']
             }),
             ('user_roughness', {
                 'name': 'Roughness',
@@ -252,13 +259,54 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'module': ['all']
             }),
-            ('user_model_boundary', {
-                'name': 'Model Boundary',
+            ('inflow', {
+                'name': 'Inflow',
                 'sgroup': 'User Layers',
-                'styles': ['model_boundary.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all']
+                'styles': ['inflow.qml'],
+                'attrs_edit_widgets': {
+                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
+                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
+                }
             }),
+            ('outflow', {
+                'name': 'Outflow',
+                'sgroup': 'User Layers',
+                'styles': ['outflow.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('blocked_areas', {
+                'name': 'Blocked areas',
+                'sgroup': 'User Layers',
+                'styles': ['blocked_areas.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['redfac']
+            }),
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': 'User Layers',
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': 'User Layers',
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {}
+            }),
+            ('tolspatial', {
+                'name': 'Tolerance Areas',
+                'sgroup': 'User Layers',
+                'styles': ['tolspatial.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False
+            }),
+            ('fpfroude', {
+                'name': 'Froude numbers for grid elems',
+                'sgroup': 'User Layers',
+                'styles': ['fpfroude.qml'],
+                'attrs_edit_widgets': {}
+            }),
+
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': None,
@@ -289,52 +337,17 @@ class Layers(QObject):
             }),
             ('chan', {
                 'name': 'Channel segments (left bank)',
-                'sgroup': "Channels",
+                'sgroup': None,
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan']
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
-                'sgroup': "Channels",
+                'sgroup': None,
                 'styles': ['chan_elems.qml'],
                 'attrs_edit_widgets': {},
                 'visible': True,
-                'module': ['chan']
-            }),
-            ('chan_r', {
-                'name': 'Rectangular Xsec',
-                'sgroup': 'Channels',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'module': ['chan']
-            }),
-            ('chan_v', {
-                'name': 'Variable Area Xsec',
-                'sgroup': 'Channels',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'module': ['chan']
-            }),
-            ('chan_t', {
-                'name': 'Trapezoidal Xsec',
-                'sgroup': 'Channels',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'module': ['chan']
-            }),
-            ('chan_n', {
-                'name': 'Natural Xsec',
-                'sgroup': 'Channels',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'module': ['chan']
-            }),
-            ('xsec_n_data', {
-                'name': 'Natural XSecs Data',
-                'sgroup': "Channels",
-                'styles': None,
-                'attrs_edit_widgets': {},
                 'module': ['chan']
             }),
             ('fpxsec', {
@@ -351,69 +364,28 @@ class Layers(QObject):
                     1: {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
                 }
             }),
-            ('inflow', {
-                'name': 'Inflow',
-                'sgroup': None,
-                'styles': ['inflow.qml'],
-                'attrs_edit_widgets': {
-                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
-                }
-            }),
-            ('outflow', {
-                'name': 'Outflow',
-                'sgroup': None,
-                'styles': ['outflow.qml'],
-                'attrs_edit_widgets': {}
-            }),
+
             ('grid', {
                 'name': 'Grid',
                 'sgroup': None,
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('arfwrf', {
-                'name': 'ARF WRF',
-                'sgroup': 'ARF_WRF',
+            ('blocked_cells', {
+                'name': 'ARF_WRF',
+                'sgroup': None,
                 'styles': ['arfwrf.qml'],
                 'attrs_edit_widgets': {}
             }),
-#            ('wrf', {
-#                'name': 'WRF',
-#                'sgroup': 'ARF_WRF',
-#                'styles': ['wrf.qml'],
-#                'attrs_edit_widgets': {}
-#            }),
-#            ('arf', {
-#                'name': 'ARF',
-#                'sgroup': 'ARF_WRF',
-#                'styles': ['arf.qml'],
-#                'attrs_edit_widgets': {}
-#            }),
-            ('mult_areas', {
-                'name': 'Multiple Channel Areas',
-                'sgroup': None,
-                'styles': ['mult_areas.qml'],
-                'attrs_edit_widgets': {}
-            }),
-            ('rain_arf_areas', {
-                'name': 'Rain ARF Areas',
-                'sgroup': None,
-                'styles': ['rain_arf_areas.qml'],
-                'attrs_edit_widgets': {}
-            }),
+
             ('reservoirs', {
                 'name': 'Reservoirs',
                 'sgroup': None,
                 'styles': ['reservoirs.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('fpfroude', {
-                'name': 'Froude numbers for grid elems',
-                'sgroup': None,
-                'styles': ['fpfroude.qml'],
-                'attrs_edit_widgets': {}
-            }),
+
+
             ('sed_supply_areas', {
                 'name': 'Supply Areas',
                 'sgroup': 'Sediment Transport',
@@ -532,16 +504,10 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
-            ('tolspatial', {
-                'name': 'Tolerance Areas',
-                'sgroup': 'Tolerance',
-                'styles': ['tolspatial.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False
-            }),
+
             ('tolspatial_cells', {
                 'name': 'Tolerance Cells',
-                'sgroup': 'Tolerance',
+                'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {}
             }),
@@ -739,7 +705,7 @@ class Layers(QObject):
             except:
                 lyr_is_on = True
             lyr_id = self.load_layer(uri, group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
-            if lyr == 'arfwrf':
+            if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
                 c = self.get_layer_tree_item(lyr_id).layer().editFormConfig()
@@ -750,17 +716,13 @@ class Layers(QObject):
                 pass # no attributes edit widgets config
 
     def update_style_blocked(self, lyr_id):
-        if not self.gpkg.cell_size:
-            try:
-                sql = '''SELECT value FROM cont WHERE name='CELLSIZE';'''
-                self.gpkg.cell_size = float(self.gpkg.execute(sql).fetchone()[0])
-            except:
-                # no cell size saved in the db - postpone updating the style
-                # until the size is known
-                return
+        cst = self.gpkg.get_cont_par('CELLSIZE')
+        if is_number(cst) and not cst == '':
+            cs = float(cst)
         else:
-            pass
-        s = self.gpkg.cell_size * 0.44
+            return
+        # update geometry gen definitions for WRFs
+        s = cs * 0.35
         dir_lines = {
             1: (-s/2.414, s, s/2.414, s),
             2: (s, s/2.414, s, -s/2.414),
@@ -776,6 +738,9 @@ class Layers(QObject):
         for nr in range(1, sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr]))
+        # ARF
+        exp_arf = '''make_polygon( make_line(translate( $geometry , -{0}, {0}), translate($geometry, {0}, {0}), translate($geometry, {0}, -{0}), translate($geometry, -{0}, -{0}), translate($geometry, -{0}, {0})))'''.format(cs * 0.5)
+        sym.symbolLayer(0).setGeometryExpression(exp_arf)
 
     def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0)):
         lyr = self.get_layer_tree_item(lyr_id).layer()

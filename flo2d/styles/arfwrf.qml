@@ -1,28 +1,19 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.14.7-Essen" minimumScale="100000" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
+<qgis version="2.14.7-Essen" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
   <edittypes>
-    <edittype widgetv2type="TextEdit" name="id">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="fid">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="arf">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
     <edittype widgetv2type="TextEdit" name="grid_fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="arf:1">
+    <edittype widgetv2type="TextEdit" name="area_fid">
+      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="arf">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="wrf1">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="wrf2">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf1:1">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="wrf3">
@@ -46,15 +37,16 @@
   </edittypes>
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
     <symbols>
-
-
-      <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
-
+      <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
+        <layer pass="0" class="GeometryGenerator" locked="0">
+          <prop k="SymbolType" v="Fill"/>
+          <prop k="geometryModifier" v=" make_polygon( make_line(translate( $geometry , -200, 200), translate($geometry, 200, 200), translate($geometry, 200, -200), translate($geometry, -200, -200), translate($geometry, -200, 200)))"/>
+          <symbol alpha="1" clip_to_extent="1" type="fill" name="@0@0">
             <layer pass="0" class="SimpleFill" locked="0">
               <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
               <prop k="color" v="255,208,13,255"/>
               <prop k="color_dd_active" v="1"/>
-              <prop k="color_dd_expression" v="set_color_part( @symbol_color , 'alpha',  &quot;arf&quot; *255)"/>
+              <prop k="color_dd_expression" v="set_color_part( @symbol_color , 'alpha',  &quot;arf&quot;*200)"/>
               <prop k="color_dd_field" v=""/>
               <prop k="color_dd_useexpr" v="1"/>
               <prop k="joinstyle" v="bevel"/>
@@ -63,15 +55,15 @@
               <prop k="offset_unit" v="MM"/>
               <prop k="outline_color" v="0,0,0,255"/>
               <prop k="outline_style" v="no"/>
-              <prop k="outline_width" v="0.26"/>
+              <prop k="outline_width" v="0"/>
               <prop k="outline_width_unit" v="MM"/>
               <prop k="style" v="solid"/>
             </layer>
-
-
+          </symbol>
+        </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , -80, 200), translate( centroid( $geometry) , 80, 200))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@1">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -98,7 +90,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , 200, 80), translate( centroid( $geometry) , 200, -80))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@2">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -125,7 +117,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , 80, -200), translate( centroid( $geometry) , -80, -200))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@3">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -152,7 +144,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , -200, -80), translate( centroid( $geometry) , -200, 80))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@4">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -179,7 +171,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid( $geometry) , 80, 200), translate( centroid( $geometry) , 200, 80))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@5">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -206,7 +198,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid($geometry), 200, -80), translate(centroid($geometry), 80, -200))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@6">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -233,7 +225,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid($geometry), -80, -200), translate(centroid($geometry), -200, -80))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@7">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -260,7 +252,7 @@
         </layer>
         <layer pass="0" class="GeometryGenerator" locked="0">
           <prop k="SymbolType" v="Line"/>
-          <prop k="geometryModifier" v="make_line(translate(centroid($geometry), -200, 80), translate(centroid($geometry), -80, 200))"/>
+          <prop k="geometryModifier" v="make_line(translate( $geometry , -80, 200), translate($geometry, 80, 200))"/>
           <symbol alpha="1" clip_to_extent="1" type="line" name="@0@8">
             <layer pass="0" class="SimpleLine" locked="0">
               <prop k="capstyle" v="square"/>
@@ -283,13 +275,8 @@
               <prop k="use_custom_dash" v="0"/>
               <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
             </layer>
-
-
           </symbol>
         </layer>
-
-
-
       </symbol>
     </symbols>
     <rotation/>
@@ -358,7 +345,7 @@
     <property key="labeling/obstacleType" value="0"/>
     <property key="labeling/offsetType" value="0"/>
     <property key="labeling/placeDirectionSymbol" value="0"/>
-    <property key="labeling/placement" value="1"/>
+    <property key="labeling/placement" value="0"/>
     <property key="labeling/placementFlags" value="10"/>
     <property key="labeling/plussign" value="false"/>
     <property key="labeling/predefinedPositionOrder" value="TR,TL,BR,BL,R,L,TSR,BSR"/>
@@ -439,7 +426,7 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield>fid</displayfield>
+  <displayfield>grid_fid</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -462,7 +449,7 @@
     <selectedonly on=""/>
   </labelattributes>
   <SingleCategoryDiagramRenderer diagramType="Pie">
-    <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" sizeType="MM" minScaleDenominator="100000">
+    <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" sizeType="MM" minScaleDenominator="-4.65661e-10">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
     </DiagramCategory>
   </SingleCategoryDiagramRenderer>
@@ -486,7 +473,7 @@ Enter the name of the function in the "Python Init function"
 field.
 An example follows:
 """
-from qgis.PyQt.QtWidgets import QWidget
+from PyQt4.QtGui import QWidget
 
 def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
@@ -499,5 +486,5 @@ def my_form_open(dialog, layer, feature):
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <layerGeometryType>2</layerGeometryType>
+  <layerGeometryType>0</layerGeometryType>
 </qgis>

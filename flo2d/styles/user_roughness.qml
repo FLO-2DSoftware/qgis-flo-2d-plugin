@@ -1,34 +1,10 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
 <qgis version="2.14.7-Essen" minimumScale="100000" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
   <edittypes>
-    <edittype widgetv2type="TextEdit" name="grid_fid">
+    <edittype widgetv2type="TextEdit" name="n">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="arf">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf1">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf2">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf3">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf4">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf5">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf6">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf7">
-      <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="wrf8">
+    <edittype widgetv2type="TextEdit" name="code">
       <widgetv2config IsMultiline="0" fieldEditable="1" UseHtml="0" labelOnTop="0"/>
     </edittype>
   </edittypes>
@@ -37,12 +13,12 @@
       <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
         <layer pass="0" class="SimpleFill" locked="0">
           <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="0,164,0,39"/>
+          <prop k="color" v="246,190,0,39"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="offset" v="0,0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="outline_color" v="0,164,0,255"/>
+          <prop k="outline_color" v="246,190,0,255"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0.3"/>
           <prop k="outline_width_unit" v="MM"/>
@@ -222,6 +198,7 @@
   <SingleCategoryDiagramRenderer diagramType="Pie">
     <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" sizeType="MM" minScaleDenominator="100000">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
+      <attribute field="" color="#000000" label=""/>
     </DiagramCategory>
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>

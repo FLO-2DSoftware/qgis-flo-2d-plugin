@@ -38,3 +38,6 @@ def is_number(s):
         return True
     except ValueError:
         return False
+    except TypeError:
+        return False
+
