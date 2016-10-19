@@ -56,8 +56,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "ISED": self.sedChBox,
             "IWRFS": self.redFactChBox,
             "LEVEE": self.leveesChBox,
-            # "MUD": self.???,
-             "PROJ": self.projectionSelector,
+            "PROJ": self.projectionSelector,
             # "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
@@ -71,23 +70,26 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
 
     def get_modules_from_data(self):
-        self.widget_map = {
-            "ICHANNEL": self.chanChBox,
-            "IEVAP": self.evapChBox,
-            "IHYDRSTRUCT": self.hystrucChBox,
-            "IMULTC": self.multChBox,
-            "IMODFLOW": self.modfloChBox,
-            "INFIL": self.infilChBox,
-            "IRAIN": self.rainChBox,
-            "ISED": self.sedChBox,
-            "IWRFS": self.redFactChBox,
-            "LEVEE": self.leveesChBox,
-            # "MUD": self.???,
-             "PROJ": self.projectionSelector,
-            # "MANNING": self.manningDSpinBox,
-            "SWMM": self.swmmChBox,
-            "CELLSIZE": self.cellSizeDSpinBox
-        }
+        """Check which tables contain any data and turn on/off appropriate
+        model modules"""
+#        self.modules = {
+#            "chan": self.chanChBox,
+#            "evap": self.evapChBox,
+#            "hystruc": self.hystrucChBox,
+#            "mult": self.multChBox,
+#            "modflo": self.modfloChBox,
+#            "infil": self.infilChBox,
+#            "rain": self.rainChBox,
+#            "sed": self.sedChBox,
+#            "redfac": self.redFactChBox,
+#            "levee": self.leveesChBox,
+#            "swmm": self.swmmChBox,
+#            "fpxsec",
+#            "breach",
+#            "outflow",
+#            "inflow",
+#            "street"
+#        }
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
@@ -204,6 +206,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gutils.execute(sql, (srsid,))
         self.srs_id = srsid
         self.lyrs.load_all_layers(self.gutils)
+        self.lyrs.zoom_to_all()
 
         QApplication.restoreOverrideCursor()
 

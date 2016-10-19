@@ -60,7 +60,7 @@ class Layers(QObject):
         QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
         if subgroup:
             grp = self.get_subgroup(group, subgroup)
-            if not subgroup == 'User Layers':
+            if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
                 grp.setExpanded(False)
             else:
                 pass
@@ -69,8 +69,11 @@ class Layers(QObject):
         # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
-            self.get_layer_tree_item(lyr_exists).layer().reload()
-            tree_lyr = self.get_layer_tree_item(lyr_exists)
+            p = self.get_layer_tree_item(lyr_exists).parent()
+            self.remove_layer(lyr_exists)
+            tree_lyr = p.addLayer(vlayer)
+#            self.get_layer_tree_item(lyr_exists).layer().updateExtents()
+#            tree_lyr = self.get_layer_tree_item(lyr_exists)
         else:
             # add layer to the group of the tree
             tree_lyr = grp.addLayer(vlayer)
@@ -302,42 +305,42 @@ class Layers(QObject):
 
             ('breach', {
                 'name': 'Breach Locations',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['breach.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['breach']
             }),
             ('levee_data', {
                 'name': 'Levees',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['levee.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['levees']
             }),
             ('struct', {
                 'name': 'Structures',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['struc.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['struct']
             }),
             ('street_seg', {
                 'name': 'Streets',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['street.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['struct']
             }),
             ('chan', {
                 'name': 'Channel segments (left bank)',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan']
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['chan_elems.qml'],
                 'attrs_edit_widgets': {},
                 'visible': True,
@@ -345,13 +348,13 @@ class Layers(QObject):
             }),
             ('fpxsec', {
                 'name': 'Flodplain cross-sections',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['fpxsec.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('chan_confluences', {
                 'name': 'Channel confluences',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['chan_confluences.qml'],
                 'attrs_edit_widgets': {
                     1: {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
@@ -360,20 +363,20 @@ class Layers(QObject):
 
             ('grid', {
                 'name': 'Grid',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
             ('blocked_cells', {
                 'name': 'ARF_WRF',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['arfwrf.qml'],
                 'attrs_edit_widgets': {}
             }),
 
             ('reservoirs', {
                 'name': 'Reservoirs',
-                'sgroup': None,
+                'sgroup': 'Schematic Layers',
                 'styles': ['reservoirs.qml'],
                 'attrs_edit_widgets': {}
             }),
