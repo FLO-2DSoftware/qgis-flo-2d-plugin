@@ -44,7 +44,7 @@ from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_roughness import RoughnessDialog
 from .gui.dlg_interp_elev import InterpElevDialog
-from .gui.dlg_eval_arfwrf import EvalArfWrfDialog
+
 
 class Flo2D(object):
 
@@ -375,7 +375,6 @@ class Flo2D(object):
             - cont table
             - ask user
         """
-        cs = 0
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
@@ -450,15 +449,17 @@ class Flo2D(object):
         if not self.gpkg:
             self.uc.bar_warn("Define a database connections first!")
             return
-        dlg_eval_arfwrf = EvalArfWrfDialog(self.iface, self.lyrs)
-        result = dlg_eval_arfwrf.exec_()
-        if result:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            areas_lyr = dlg_eval_arfwrf.rlayer_cbo.itemData(dlg_eval_arfwrf.rlayer_cbo.currentIndex())
-            evaluate_arfwrf(self.gpkg, grid_lyr, areas_lyr)
+        self.gpkg = GeoPackageUtils(self.con, self.iface)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+        try:
+            evaluate_arfwrf(self.gpkg, grid_lyr, arf_lyr)
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Reduction factors evaluated")
+            self.uc.show_info("ARF and WRF values calculated!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""

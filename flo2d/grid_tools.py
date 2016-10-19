@@ -63,7 +63,6 @@ def square_grid(gutils, boundary):
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
     insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
     gutils.execute(update_cellsize, (cellsize,))
-    
     cellsize = float(cellsize)
     polygons = build_grid(boundary, cellsize)
     cur = gutils.con.cursor()
@@ -117,6 +116,7 @@ def calculate_arfwrf(grid, areas):
     octagon_side = grid_side / 2.414
     half_square = grid_side * 0.5
     half_octagon = octagon_side * 0.5
+    empty_wrf = (None,) * 8
     for feat in grid.getFeatures():
         geom = feat.geometry()
         fids = index.intersects(geom.boundingBox())
@@ -127,34 +127,29 @@ def calculate_arfwrf(grid, areas):
             if inter is True:
                 areas_intersection = fgeom.intersection(geom)
                 arf = round(areas_intersection.area() / grid_area, 2)
-                arf = arf if arf <= 0.95 else 1
-                grid_center = geom.centroid().asPoint()
+                centroid = geom.centroid()
+                centroid_wkt = centroid.exportToWkt()
+                if arf > 0.95:
+                    yield (centroid_wkt, feat.id(), 1) + empty_wrf
+                    continue
+                else:
+                    pass
+                grid_center = centroid.asPoint()
                 wrf_sides = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
                 wrf_geoms = (QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)]) for x1, y1, x2, y2 in wrf_sides)
                 wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
-                yield (geom.exportToWkt() if arf == 1 else None, feat.id(), arf if arf <= 0.95 else 1) + tuple(wrf)
+                yield (centroid_wkt, feat.id(), arf) + tuple(wrf)
             else:
                 pass
 
 
 def evaluate_arfwrf(gutils, grid, areas):
-    del_areas = 'DELETE FROM blocked_areas;'
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_areas = '''INSERT INTO blocked_areas (geom, arf) VALUES (AsGPB(ST_GeomFromText('{0}')), 1);'''
-    qry_cells = '''INSERT INTO blocked_cells (grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (?,?,?,?,?,?,?,?,?,?,?);'''
-    gutils.execute(del_areas)
+    qry_cells = '''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
-    aid = 0
-    cur_areas = gutils.con.cursor()
-    cur_cells = gutils.con.cursor()
-    for row in calculate_arfwrf(grid, areas):
-        geom, gid, arf = row[:3]
-        if geom is not None:
-            cur_areas.execute(qry_areas.format(geom))
-            wrf = (None,) * 8
-            aid += 1
-        else:
-            wrf = row[-8:]
-        cell = (gid, None if geom is None else aid, arf) + wrf
-        cur_cells.execute(qry_cells, cell)
+    cur = gutils.con.cursor()
+    for i, row in enumerate(calculate_arfwrf(grid, areas), 1):
+        point = row[0]
+        gpb_qry = qry_cells.format(point)
+        cur.execute(gpb_qry, (i,) + row[1:])
     gutils.con.commit()

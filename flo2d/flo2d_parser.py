@@ -395,13 +395,14 @@ class ParseDAT(object):
         par = self.single_parser(arf)
         head = []
         data = defaultdict(list)
+        arf_row = [1]
+        arf_row += [None] * 8
         for row in par:
             char = row[0]
-            size = 2 if char in 'ST' else 10
-            self.fix_row_size(row, size)
             if char == 'S':
                 head.append(row[-1])
             elif char == 'T':
+                row += arf_row
                 data[char].append(row[1:])
             else:
                 data['PB'].append(row)
@@ -554,7 +555,8 @@ class ParseDAT(object):
 
 if __name__ == '__main__':
     x = ParseDAT()
+    # x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
+    # data = x.parse_outflow()
+    # for row in data.items():
+    #     print(row)
     x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
-    data = x.parse_outflow()
-    for row in data.items():
-        print(row)

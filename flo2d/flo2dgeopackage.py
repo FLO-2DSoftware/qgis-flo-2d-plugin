@@ -215,7 +215,7 @@ class GeoPackageUtils(object):
         res = self.execute(qry).fetchall()
         return res
 
-    def get_centroids(self, gids, table='grid', field='fid', buffers=False):
+    def grid_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:
             sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
@@ -225,6 +225,11 @@ class GeoPackageUtils(object):
             geom = self.execute(sql.format(table, field), (g,)).fetchone()[0]
             cells[g] = geom
         return cells
+
+    def single_centroid(self, gid, table='grid', field='fid'):
+        sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        gpb_buff = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
+        return gpb_buff
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING('''
@@ -277,7 +282,7 @@ class GeoPackageUtils(object):
         wkt_geom = self.execute(qry, (gid,)).fetchone()[0]
         xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
         x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.48)
-        gpb = ''' SELECT AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
+        gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
@@ -386,7 +391,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head, inf, res = self.parser.parse_inflow()
         cont_sql += [('IDEPLT', head['IDEPLT']), ('IHOURDAILY', head['IHOURDAILY'])]
         gids = inf.keys() + res.keys()
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
             inflow_sql += [(i, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
@@ -416,7 +421,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                           'outflow_time_series', 'outflow_time_series_data')
         data = self.parser.parse_outflow()
         gids = (data.keys())
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
 
         qh_params_fid = 0
         qh_tab_fid = 0
@@ -489,7 +494,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('rain', 'rain_arf_areas', 'rain_arf_cells', 'rain_time_series', 'rain_time_series_data')
         options, time_series, rain_arf = self.parser.parse_rain()
         gids = (x[0] for x in rain_arf)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
 
         fid = 1
         fid_ts = 1
@@ -536,7 +541,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         infil_sql += [tuple([data[k.upper()] if k.upper() in data else None for k in infil_params])]
         gids = (x[0] for x in chain(data['F'], data['S'], data['C'], data['H']))
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
 
         for i, row in enumerate(data['R'], 1):
             infil_seg_sql += [(i,) + tuple(row)]
@@ -617,7 +622,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         for i, row in enumerate(confluence, 1):
             gid1, gid2 = row[1], row[2]
-            cells = self.get_centroids([gid1, gid2], buffers=True)
+            cells = self.grid_centroids([gid1, gid2], buffers=True)
 
             geom1, geom2 = cells[gid1], cells[gid2]
             chan_conf_sql += [(geom1, i, 0, gid1)]
@@ -625,7 +630,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         for i, row in enumerate(noexchange, 1):
             gid = row[-1]
-            geom = self.get_centroids([gid])[0]
+            geom = self.grid_centroids([gid])[0]
             chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
             elems_e_sql += [(i, gid)]
 
@@ -711,26 +716,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_arf(self):
         cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
-        blocked_sql = ['''INSERT INTO blocked_areas (geom, arf) VALUES''', 2]
-        cells_sql = ['''INSERT INTO blocked_cells (area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 11]
+        cells_sql = ['''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
 
-        self.clear_tables('blocked_areas', 'blocked_cells')
+        self.clear_tables('blocked_cells')
         head, data = self.parser.parse_arf()
         cont_sql += [('arfblockmod',) + tuple(head)]
         gids = (x[0] for x in chain(data['T'], data['PB']))
-        cells = self.get_centroids(gids)
-        tb_wrf = [None] * 8
+        cells = self.grid_centroids(gids, buffers=True)
 
-        for i, row in enumerate(data['T'], 1):
+        for i, row in enumerate(chain(data['T'], data['PB']), 1):
             gid = row[0]
-            geom = self.build_square(cells[gid], self.shrink)
-            blocked_sql += [(geom, 1)]
-            cells_sql += [(i, gid, 1) + tuple(tb_wrf)]
+            centroid = cells[gid]
+            cells_sql += [(centroid, i) + tuple(row)]
 
-        for row in data['PB']:
-            cells_sql += [(None,) + tuple(row)]
-
-        self.batch_execute(cont_sql, blocked_sql, cells_sql)
+        self.batch_execute(cont_sql, cells_sql)
 
     def import_mult(self):
         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50) VALUES''', 8]
@@ -741,7 +740,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head, data = self.parser.parse_mult()
         mult_sql += [tuple(head)]
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for i, row in enumerate(data, 1):
             gid = row[0]
             geom = self.build_square(cells[gid], self.shrink)
@@ -779,7 +778,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         data = self.parser.parse_sed()
         gids = (x[0] for x in chain(data['D'], data['G'], data['R'], data['S']))
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for row in data['M']:
             sed_m_sql += [tuple(row)]
         for row in data['C']:
@@ -878,7 +877,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('breach_global', 'breach', 'breach_cells', 'breach_fragility_curves')
         data = self.parser.parse_breach()
         gids = (x[0] for x in data['D'])
-        cells = self.get_centroids(gids, buffers=True)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data['G']:
             global_sql += [tuple(row)]
         for i, row in enumerate(data['D'], 1):
@@ -898,7 +897,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('fpfroude', 'fpfroude_cells')
         data = self.parser.parse_fpfroude()
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for i, row in enumerate(data, 1):
             gid, froudefp = row
             geom = self.build_square(cells[gid], self.shrink)
@@ -913,7 +912,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('swmmflo')
         data = self.parser.parse_swmmflo()
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for row in data:
             gid = row[0]
             geom = self.build_square(cells[gid], self.shrink)
@@ -941,7 +940,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('swmmoutf')
         data = self.parser.parse_swmmoutf()
         gids = (x[1] for x in data)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for row in data:
             gid = row[1]
             geom = self.build_square(cells[gid], self.shrink)
@@ -956,7 +955,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('tolspatial', 'tolspatial_cells')
         data = self.parser.parse_tolspatial()
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids)
+        cells = self.grid_centroids(gids)
         for i, row in enumerate(data, 1):
             gid, tol = row
             geom = self.build_square(cells[gid], self.shrink)
@@ -971,7 +970,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('wsurf')
         head, data = self.parser.parse_wsurf()
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids, buffers=True)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[0]
             geom = cells[gid]
@@ -985,7 +984,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('wstime')
         head, data = self.parser.parse_wstime()
         gids = (x[0] for x in data)
-        cells = self.get_centroids(gids, buffers=True)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[0]
             geom = cells[gid]
@@ -1398,8 +1397,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf(self, outdir):
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE wrf1 IS NULL ORDER BY grid_fid;'''
-        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8 FROM blocked_cells WHERE wrf1 IS NOT NULL ORDER BY grid_fid;'''
+        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
+        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8 FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
