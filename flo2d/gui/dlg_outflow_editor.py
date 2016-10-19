@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,8 +19,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
@@ -320,9 +320,3 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
     def revert_tseries_data_changes(self):
         """Revert any time series data changes made by users (load original
         tseries data from tables)"""
-
-    def test_plot(self):
-        x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 3, 2, 3, 7, 8]
-        self.plotWidget.add_new_plot([x, y])
-        x, y = [1, 2, 3, 4, 5, 6, 7, 8], [5, 6, 5, 2, 1, 2, 7, 8]
-        self.plotWidget.add_org_plot([x, y])

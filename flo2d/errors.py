@@ -20,6 +20,8 @@
  *                                                                         *
  ***************************************************************************/
 """
+
+
 class Flo2dError(Exception):
     """General class for the plugin errors"""
     pass

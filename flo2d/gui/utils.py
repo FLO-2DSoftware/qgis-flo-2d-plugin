@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,10 +19,14 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
 import os
 from PyQt4 import uic
 from qgis.core import QgsRectangle
+
+month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+               "November", "December"]
 
 
 def load_ui(name):
@@ -31,8 +35,6 @@ def load_ui(name):
                            name + '.ui')
     return uic.loadUiType(ui_file)
 
-month_names = ["January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"]
 
 def center_canvas(iface, x, y):
     mc = iface.mapCanvas()

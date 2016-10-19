@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,18 +19,15 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
-import os
 import time
 import traceback
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4 import uic
-from qgis.gui import QgsProjectionSelectionWidget, QgsMapToolIdentify
+from qgis.gui import QgsProjectionSelectionWidget
 from qgis.core import *
-from flo2d_dialog import Flo2DDialog
 from layers import Layers
-from user_communication import UserCommunication
 from flo2dgeopackage import *
 from grid_tools import square_grid, roughness2grid, evaluate_arfwrf
 from info_tool import InfoTool
@@ -424,13 +421,18 @@ class Flo2D(object):
         dlg_roughness = RoughnessDialog(self.con, self.iface, self.lyrs)
         result = dlg_roughness.exec_()
         if result:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
-            field = dlg_roughness.rfield_cbo.currentText()
-            roughness2grid(grid_lyr, rough_lyr, field)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning roughness finished!")
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+                rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
+                field = dlg_roughness.rfield_cbo.currentText()
+                roughness2grid(grid_lyr, rough_lyr, field)
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("Assigning roughness finished!")
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.log_info(traceback.format_exc())
+                self.uc.bar_warn("Assigning roughness aborted! Please check roughness layer.")
 
     def interp_elev(self):
         if not self.gpkg:
@@ -451,14 +453,15 @@ class Flo2D(object):
             return
         self.gpkg = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
         try:
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
             evaluate_arfwrf(self.gpkg, grid_lyr, arf_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ARF and WRF values calculated!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     def show_xsec_editor(self, fid=None):

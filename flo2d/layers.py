@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,9 +19,9 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
-
-from PyQt4.QtCore import QObject, pyqtSignal
+from PyQt4.QtCore import QObject
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor
 import os
@@ -31,18 +31,10 @@ from collections import OrderedDict
 from qgis.core import (
     QgsProject,
     QgsMapLayerRegistry,
-    QgsExpression,
     QgsFeatureRequest,
-    QgsVectorLayer,
-    QgsGeometry,
-    QgsLayerTreeLayer,
-    QgsMapLayer,
-    QgsRectangle
+    QgsVectorLayer
 )
 from qgis.gui import QgsRubberBand
-from qgis.utils import iface
-
-import utils
 from errors import *
 
 

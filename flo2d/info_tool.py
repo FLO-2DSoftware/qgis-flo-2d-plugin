@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,6 +19,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -68,7 +69,7 @@ class InfoTool(QgsMapToolIdentify):
             sm[i] = QMenu(ln)
             actions[i] = {}
             if len(lyrs_found[ln]['fids']) == 1:
-                fid =  lyrs_found[ln]['fids'][0]
+                fid = lyrs_found[ln]['fids'][0]
                 a_text = "{} ({})".format(ln, fid)
                 actions[i][0] = QAction(a_text, None)
                 actions[i][0].hovered.connect(functools.partial(self.show_rubber, lid, fid))
@@ -104,9 +105,6 @@ class InfoTool(QgsMapToolIdentify):
             for i in range(3):
                 self.rb.reset(i)
 
-#    def activate(self):
-#        pass
-#
     def deactivate(self):
         self.clear_rubber()
 

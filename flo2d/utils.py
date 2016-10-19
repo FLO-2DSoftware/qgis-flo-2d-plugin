@@ -4,11 +4,11 @@
  Flo2D
                                  A QGIS plugin
  FLO-2D tools for QGIS
-                              -------------------
+                             -------------------
         begin                : 2016-08-28
-        git sha              : $Format:%H$
         copyright            : (C) 2016 by Lutra Consulting for FLO-2D
         email                : info@lutraconsulting.co.uk
+        git sha              : $Format:%H$
  ***************************************************************************/
 
 /***************************************************************************
@@ -19,18 +19,22 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ FLO-2D Preprocessor tools for QGIS.
 """
 import os.path
+
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(temp_dir, *paths)
     return path
 
+
 def add_egg(name):
     import sys
     dep = get_file_path('deps', name)
     sys.path.append(dep)
+
 
 def is_number(s):
     try:
