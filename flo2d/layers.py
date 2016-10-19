@@ -214,98 +214,128 @@ class Layers(QObject):
                 'name': 'Channel Segments',
                 'sgroup': 'User Layers',
                 'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('user_xsections', {
                 'name': 'Cross-sections',
                 'sgroup': 'User Layers',
                 'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('user_levees', {
                 'name': 'Levees',
                 'sgroup': 'User Layers',
                 'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['levees']
             }),
             ('user_streets', {
                 'name': 'Streets',
                 'sgroup': 'User Layers',
                 'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['streets']
+            }),
+            ('blocked_areas', {
+                'name': 'Blocked areas',
+                'sgroup': 'User Layers',
+                'styles': ['blocked_areas.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['redfac']
+            }),
+            ('user_roughness', {
+                'name': 'Roughness',
+                'sgroup': 'User Layers',
+                'styles': ['user_roughness.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all']
             }),
             ('user_model_boundary', {
                 'name': 'Model Boundary',
                 'sgroup': 'User Layers',
                 'styles': ['model_boundary.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['all']
             }),
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': None,
                 'styles': ['breach.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['breach']
             }),
             ('levee_data', {
                 'name': 'Levees',
                 'sgroup': None,
                 'styles': ['levee.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['levees']
             }),
             ('struct', {
                 'name': 'Structures',
                 'sgroup': None,
                 'styles': ['struc.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['struct']
             }),
             ('street_seg', {
                 'name': 'Streets',
                 'sgroup': None,
                 'styles': ['street.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['struct']
             }),
             ('chan', {
                 'name': 'Channel segments (left bank)',
-                'sgroup': None,
+                'sgroup': "Channels",
                 'styles': ['chan.qml'],
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
-                'sgroup': None,
+                'sgroup': "Channels",
                 'styles': ['chan_elems.qml'],
                 'attrs_edit_widgets': {},
-                'visible': True
+                'visible': True,
+                'module': ['chan']
             }),
             ('chan_r', {
                 'name': 'Rectangular Xsec',
-                'sgroup': 'XSections Data',
+                'sgroup': 'Channels',
                 'styles': None,
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('chan_v', {
                 'name': 'Variable Area Xsec',
-                'sgroup': 'XSections Data',
+                'sgroup': 'Channels',
                 'styles': None,
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('chan_t', {
                 'name': 'Trapezoidal Xsec',
-                'sgroup': 'XSections Data',
+                'sgroup': 'Channels',
                 'styles': None,
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('chan_n', {
                 'name': 'Natural Xsec',
-                'sgroup': 'XSections Data',
+                'sgroup': 'Channels',
                 'styles': None,
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('xsec_n_data', {
                 'name': 'Natural XSecs Data',
-                'sgroup': "XSections Data",
+                'sgroup': "Channels",
                 'styles': None,
-                'attrs_edit_widgets': {}
+                'attrs_edit_widgets': {},
+                'module': ['chan']
             }),
             ('fpxsec', {
                 'name': 'Flodplain cross-sections',
@@ -342,18 +372,24 @@ class Layers(QObject):
                 'styles': ['grid.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('wrf', {
-                'name': 'WRF',
+            ('arfwrf', {
+                'name': 'ARF WRF',
                 'sgroup': 'ARF_WRF',
-                'styles': ['wrf.qml'],
+                'styles': ['arfwrf.qml'],
                 'attrs_edit_widgets': {}
             }),
-            ('arf', {
-                'name': 'ARF',
-                'sgroup': 'ARF_WRF',
-                'styles': ['arf.qml'],
-                'attrs_edit_widgets': {}
-            }),
+#            ('wrf', {
+#                'name': 'WRF',
+#                'sgroup': 'ARF_WRF',
+#                'styles': ['wrf.qml'],
+#                'attrs_edit_widgets': {}
+#            }),
+#            ('arf', {
+#                'name': 'ARF',
+#                'sgroup': 'ARF_WRF',
+#                'styles': ['arf.qml'],
+#                'attrs_edit_widgets': {}
+#            }),
             ('mult_areas', {
                 'name': 'Multiple Channel Areas',
                 'sgroup': None,
@@ -703,7 +739,7 @@ class Layers(QObject):
             except:
                 lyr_is_on = True
             lyr_id = self.load_layer(uri, group, data['name'], style=lstyle, subgroup=data['sgroup'], visible=lyr_is_on)
-            if lyr == 'wrf':
+            if lyr == 'arfwrf':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
                 c = self.get_layer_tree_item(lyr_id).layer().editFormConfig()
@@ -737,9 +773,9 @@ class Layers(QObject):
         }
         lyr = self.get_layer_tree_item(lyr_id).layer()
         sym = lyr.rendererV2().symbol()
-        for nr in range(sym.symbolLayerCount()):
+        for nr in range(1, sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
-            sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr+1]))
+            sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr]))
 
     def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0)):
         lyr = self.get_layer_tree_item(lyr_id).layer()

@@ -70,6 +70,25 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.modSelectAllBtn.clicked.connect(self.select_all_modules)
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
 
+    def get_modules_from_data(self):
+        self.widget_map = {
+            "ICHANNEL": self.chanChBox,
+            "IEVAP": self.evapChBox,
+            "IHYDRSTRUCT": self.hystrucChBox,
+            "IMULTC": self.multChBox,
+            "IMODFLOW": self.modfloChBox,
+            "INFIL": self.infilChBox,
+            "IRAIN": self.rainChBox,
+            "ISED": self.sedChBox,
+            "IWRFS": self.redFactChBox,
+            "LEVEE": self.leveesChBox,
+            # "MUD": self.???,
+             "PROJ": self.projectionSelector,
+            # "MANNING": self.manningDSpinBox,
+            "SWMM": self.swmmChBox,
+            "CELLSIZE": self.cellSizeDSpinBox
+        }
+
     def read(self):
         for name, wid in self.widget_map.iteritems():
             qry = '''SELECT value FROM cont WHERE name = ?;'''

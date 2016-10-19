@@ -53,6 +53,7 @@ SELECT gpkgAddGeometryTriggers('grid', 'geom');
 SELECT gpkgAddSpatialIndex('grid', 'geom');
 
 
+
 -- Inflow - INFLOW.DAT
 
 CREATE TABLE "inflow" (
@@ -1068,7 +1069,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 
 CREATE TABLE "blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "arf" REAL -- ARF, area reduction factor for cells
+    "collapse" INTEGER -- collapse option for blocking object
 
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
@@ -1095,7 +1096,11 @@ SELECT gpkgAddGeometryColumn('blocked_cells', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('blocked_cells', 'geom');
 SELECT gpkgAddSpatialIndex('blocked_cells', 'geom');
 
-CREATE VIEW wrf AS SELECT b.fid, b.grid_fid, b.arf, b.wrf1, b.wrf2, b.wrf1, b.wrf3, b.wrf4, b.wrf5, b.wrf6, b.wrf7, b.wrf8, g.geom FROM blocked_cells as b, grid as g where b.arf <> 1 AND g.fid = b.grid_fid;
+CREATE VIEW arfwrf AS SELECT b.fid, b.grid_fid, b.arf, b.wrf1, b.wrf2, b.wrf3, b.wrf4, b.wrf5, b.wrf6, b.wrf7, b.wrf8, g.geom FROM blocked_cells as b, grid as g where g.fid = b.grid_fid;
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('arfwrf', 'features', 4326);
+INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('arfwrf', 'geom', 'POLYGON', 4326, 0, 0);
+
+CREATE VIEW wrf AS SELECT b.fid, b.grid_fid, b.arf, b.wrf1, b.wrf2, b.wrf3, b.wrf4, b.wrf5, b.wrf6, b.wrf7, b.wrf8, g.geom FROM blocked_cells as b, grid as g where b.arf <> 1 AND g.fid = b.grid_fid;
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wrf', 'features', 4326);
 INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('wrf', 'geom', 'POLYGON', 4326, 0, 0);
 
@@ -1655,3 +1660,13 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets'
 SELECT gpkgAddGeometryColumn('user_streets', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_streets', 'geom');
 SELECT gpkgAddSpatialIndex('user_streets', 'geom');
+
+CREATE TABLE "user_roughness" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "n" REAL,
+    "code" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughness', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
+SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
