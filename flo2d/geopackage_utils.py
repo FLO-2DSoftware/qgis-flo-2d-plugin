@@ -26,6 +26,19 @@ import traceback
 from user_communication import UserCommunication
 
 
+def connection_required(method):
+    """
+    Checking for active connection object.
+    """
+    def wrapper(self):
+        if not self.con:
+            self.uc.bar_warn("Define a database connections first!")
+            return
+        else:
+            return method(self)
+    return wrapper
+
+
 def spatialite_connect(*args, **kwargs):
     # copied from https://github.com/qgis/QGIS/blob/master/python/utils.py#L587
     try:

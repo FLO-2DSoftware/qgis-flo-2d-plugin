@@ -39,8 +39,7 @@ from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
-from .gui.dlg_roughness import RoughnessDialog
-from .gui.dlg_interp_elev import InterpElevDialog
+from .gui.dlg_sampling_elev import SamplingElevDialog
 
 
 class Flo2D(object):
@@ -158,14 +157,14 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/interp_elev.svg'),
-            text=self.tr(u'Interpolate Grid Elevation'),
-            callback=self.interp_elev,
+            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
+            text=self.tr(u'Sampling Grid Elevation'),
+            callback=self.get_elevation,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/interp_manning.svg'),
-            text=self.tr(u'Interpolate Manning\'s n'),
+            os.path.join(self.plugin_dir, 'img/sample_manning.svg'),
+            text=self.tr(u'Sampling Manning\'s n'),
             callback=self.get_roughness,
             parent=self.iface.mainWindow())
 
@@ -238,11 +237,8 @@ class Flo2D(object):
                 else:
                     raise
 
+    @connection_required
     def import_gds(self):
-        if not self.con:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
         import_calls = [
@@ -308,11 +304,8 @@ class Flo2D(object):
         else:
             pass
 
+    @connection_required
     def export_gds(self):
-        if not self.con:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
         export_calls = [
@@ -356,11 +349,9 @@ class Flo2D(object):
         self.lyrs.repaint_layers()
         self.lyrs.zoom_to_all()
 
+    @connection_required
     def create_model_boundary(self):
         """Create model boundary and get grid cell size from user"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         self.iface.setActiveLayer(bl)
         bl.startEditing()
@@ -373,7 +364,10 @@ class Flo2D(object):
             - ask user
         """
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        bfeat = bl.getFeatures().next()
+        try:
+            bfeat = bl.getFeatures().next()
+        except StopIteration as e:
+            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
         else:
@@ -392,11 +386,8 @@ class Flo2D(object):
             else:
                 return None
 
+    @connection_required
     def create_grid(self):
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-        # finish editing mode of model boundary
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         if bl.isEditable():
             # ask user for saving changes
@@ -420,43 +411,39 @@ class Flo2D(object):
         else:
             self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
 
+    @connection_required
     def get_roughness(self):
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-        dlg_roughness = RoughnessDialog(self.con, self.iface, self.lyrs)
-        result = dlg_roughness.exec_()
-        if result:
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
+            update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning roughness finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
+
+    @connection_required
+    def get_elevation(self):
+        cell_size = self.get_cell_size()
+        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, self.gutils, cell_size)
+        ok = dlg.exec_()
+        if ok:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-                rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
-                field = dlg_roughness.rfield_cbo.currentText()
-                update_roughness(self.gutils, grid_lyr, rough_lyr, field)
+                dlg.resample()
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info("Assigning roughness finished!")
+                self.uc.show_info("Sampling done.")
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
-                self.uc.bar_warn("Assigning roughness aborted! Please check roughness layer.")
+                self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
+                raise
 
-    def interp_elev(self):
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
-        cell_size = self.get_cell_size()
-        dlg = InterpElevDialog(self.con, self.iface, self.lyrs, self.gutils, cell_size)
-        ok = dlg.exec_()
-        if ok:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg.interpolate()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Interpolation done.")
-
+    @connection_required
     def eval_arfwrf(self):
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         self.gutils = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
@@ -470,28 +457,22 @@ class Flo2D(object):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
         self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_xsec_editor.show()
 
+    @connection_required
     def show_inflow_editor(self, fid=None):
         """Show inflows editor"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
         self.dlg_inflow_editor.show()
 
+    @connection_required
     def show_outflow_editor(self, fid=None):
         """Show outflows editor"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         try:
             self.dlg_outflow_editor.outflow_clicked(fid)
         except AttributeError:
@@ -499,22 +480,18 @@ class Flo2D(object):
         self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_outflow_editor.show()
 
+    @connection_required
     def show_rain_editor(self):
         """Show rain editor"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         try:
             self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
             self.dlg_rain_editor.show()
         except TypeError as e:
             self.uc.show_warn('There is no any rain data to display!')
 
+    @connection_required
     def show_evap_editor(self):
         """Show evaporation editor"""
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
@@ -525,10 +502,8 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
 
+    @connection_required
     def identify(self):
-        if not self.gutils:
-            self.uc.bar_warn("Define a database connections first!")
-            return
         self.canvas.setMapTool(self.info_tool)
         self.info_tool.update_lyrs_list()
 

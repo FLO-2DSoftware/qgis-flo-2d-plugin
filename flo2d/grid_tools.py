@@ -23,6 +23,7 @@
 """
 import math
 from qgis.core import *
+from osgeo import gdal
 
 
 def build_grid(boundary, cellsize):
@@ -57,24 +58,6 @@ def build_grid(boundary, cellsize):
         x += cellsize
 
 
-def square_grid(gutils, boundary):
-    del_qry = 'DELETE FROM grid;'
-    cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
-    update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
-    insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
-    gutils.execute(update_cellsize, (cellsize,))
-    cellsize = float(cellsize)
-    polygons = build_grid(boundary, cellsize)
-    cur = gutils.con.cursor()
-    cur.execute(del_qry)
-    c = 0
-    for poly in polygons:
-        cur.execute(insert_qry.format(*poly))
-        c += 1
-    gutils.con.commit()
-    return c
-
-
 def roughness2grid(grid, roughness, column_name):
     roughness_polys = roughness.selectedFeatures() if roughness.selectedFeatureCount() > 0 else roughness.getFeatures()
     allfeatures = {feature.id(): feature for feature in roughness_polys}
@@ -91,12 +74,6 @@ def roughness2grid(grid, roughness, column_name):
                 yield (f.attribute(column_name), feat.id())
             else:
                 pass
-
-
-def update_roughness(gutils, grid, roughness, column_name):
-    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, roughness2grid(grid, roughness, column_name))
-    gutils.con.commit()
 
 
 def calculate_arfwrf(grid, areas):
@@ -146,6 +123,30 @@ def calculate_arfwrf(grid, areas):
                 yield (centroid_wkt, feat.id(), arf) + tuple(wrf)
             else:
                 pass
+
+
+def square_grid(gutils, boundary):
+    del_qry = 'DELETE FROM grid;'
+    cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
+    update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
+    insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
+    gutils.execute(update_cellsize, (cellsize,))
+    cellsize = float(cellsize)
+    polygons = build_grid(boundary, cellsize)
+    cur = gutils.con.cursor()
+    cur.execute(del_qry)
+    c = 0
+    for poly in polygons:
+        cur.execute(insert_qry.format(*poly))
+        c += 1
+    gutils.con.commit()
+    return c
+
+
+def update_roughness(gutils, grid, roughness, column_name):
+    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+    gutils.con.executemany(qry, roughness2grid(grid, roughness, column_name))
+    gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):
