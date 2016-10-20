@@ -29,7 +29,7 @@ from qgis.core import *
 from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, roughness2grid, evaluate_arfwrf
+from grid_tools import square_grid, update_roughness, evaluate_arfwrf
 from info_tool import InfoTool
 from utils import *
 
@@ -432,7 +432,7 @@ class Flo2D(object):
                 grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
                 rough_lyr = dlg_roughness.rlayer_cbo.itemData(dlg_roughness.rlayer_cbo.currentIndex())
                 field = dlg_roughness.rfield_cbo.currentText()
-                roughness2grid(grid_lyr, rough_lyr, field)
+                update_roughness(self.gutils, grid_lyr, rough_lyr, field)
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("Assigning roughness finished!")
             except Exception as e:

@@ -80,18 +80,23 @@ def roughness2grid(grid, roughness, column_name):
     allfeatures = {feature.id(): feature for feature in roughness_polys}
     index = QgsSpatialIndex()
     map(index.insertFeature, allfeatures.itervalues())
-    with edit(grid):
-        for feat in grid.getFeatures():
-            geom = feat.geometry()
-            centroid = geom.centroid()
-            fids = index.intersects(centroid.boundingBox())
-            for fid in fids:
-                f = allfeatures[fid]
-                isin = f.geometry().contains(centroid)
-                if isin is True:
-                    grid.changeAttributeValue(feat.id(), 4, f.attribute(column_name))
-                else:
-                    pass
+    for feat in grid.getFeatures():
+        geom = feat.geometry()
+        centroid = geom.centroid()
+        fids = index.intersects(centroid.boundingBox())
+        for fid in fids:
+            f = allfeatures[fid]
+            isin = f.geometry().contains(centroid)
+            if isin is True:
+                yield (f.attribute(column_name), feat.id())
+            else:
+                pass
+
+
+def update_roughness(gutils, grid, roughness, column_name):
+    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+    gutils.con.executemany(qry, roughness2grid(grid, roughness, column_name))
+    gutils.con.commit()
 
 
 def calculate_arfwrf(grid, areas):
