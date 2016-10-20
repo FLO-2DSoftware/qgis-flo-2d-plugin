@@ -152,12 +152,6 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/create_model_boundary.svg'),
-            text=self.tr(u'Create Modeling Boundary'),
-            callback=self.create_model_boundary,
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/create_grid.svg'),
             text=self.tr(u'Create Grid'),
             callback=self.create_grid,
@@ -359,6 +353,7 @@ class Flo2D(object):
 
     def load_layers(self):
         self.lyrs.load_all_layers(self.gutils)
+        self.lyrs.repaint_layers()
         self.lyrs.zoom_to_all()
 
     def create_model_boundary(self):
@@ -404,7 +399,13 @@ class Flo2D(object):
         # finish editing mode of model boundary
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         if bl.isEditable():
-            bl.commitChanges()
+            # ask user for saving changes
+            r = self.uc.question('Model boundary layer is in edit mode. Save changes and create the grid?')
+            if r == QMessageBox.Yes:
+                bl.commitChanges()
+            else:
+                self.uc.bar_info('Creating grid cancelled', dur=3)
+                return
         self.get_cell_size()
         self.gutils = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -415,7 +416,7 @@ class Flo2D(object):
             grid_lyr.triggerRepaint()
         QApplication.restoreOverrideCursor()
         if result > 0:
-            self.uc.show_info("Grid created!")
+            self.uc.bar_info("Grid created!")
         else:
             self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
 

@@ -50,6 +50,7 @@ class Layers(QObject):
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
         self.gutils = None
+        self.lyrs_to_repaint = []
 
     def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, provider='ogr'):
         vlayer = QgsVectorLayer(uri, name, provider)
@@ -69,11 +70,15 @@ class Layers(QObject):
         # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
+            # Leaving the layer intact if it exists doesn't work - users can't
+            # zoom to the layer for example.
+#            self.lyrs_to_repaint.append(self.get_layer_tree_item(lyr_exists).layer())
+#            tree_lyr = self.get_layer_by_name(name, group)
+#            return tree_lyr.layer().id()
+            # get the parent tree node and reload the layer completely
             p = self.get_layer_tree_item(lyr_exists).parent()
             self.remove_layer(lyr_exists)
             tree_lyr = p.addLayer(vlayer)
-#            self.get_layer_tree_item(lyr_exists).layer().updateExtents()
-#            tree_lyr = self.get_layer_tree_item(lyr_exists)
         else:
             # add layer to the group of the tree
             tree_lyr = grp.addLayer(vlayer)
@@ -154,6 +159,11 @@ class Layers(QObject):
             if lyr.layer().type() == 1:
                 l.append(lyr.layer())
         return l
+
+    def repaint_layers(self):
+        for lyr in self.lyrs_to_repaint:
+            lyr.triggerRepaint()
+        self.lyrs_to_repaint = []
 
     def new_group(self, name):
         if isinstance(name, (str, unicode)):
