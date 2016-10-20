@@ -82,8 +82,6 @@ class Flo2D(object):
         # connections
         self.info_tool.feature_picked.connect(self.get_feature_info)
 
-
-    # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
         """
@@ -336,7 +334,9 @@ class Flo2D(object):
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        outdir = QFileDialog.getExistingDirectory(None, 'Select directory where FLO-2D model will be exported', directory=last_dir)
+        outdir = QFileDialog.getExistingDirectory(None,
+                                                  'Select directory where FLO-2D model will be exported',
+                                                  directory=last_dir)
         if outdir:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue('FLO-2D/lastGdsDir', outdir)
@@ -363,28 +363,33 @@ class Flo2D(object):
             - cont table
             - ask user
         """
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         try:
+            bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
             bfeat = bl.getFeatures().next()
+            if bfeat['cell_size']:
+                cs = bfeat['cell_size']
+            else:
+                cs = self.gutils.get_cont_par("CELLSIZE")
+                if cs == '':
+                    cs = None
+                else:
+                    pass
+            if cs:
+                return cs
+            else:
+                r, ok = QInputDialog.getDouble(None,
+                                               "Grid Cell Size",
+                                               "Enter grid element cell size",
+                                               value=100,
+                                               min=0.1,
+                                               max=99999)
+                if ok:
+                    cs = r
+                    self.gutils.set_cont_par('CELLSIZE', cs)
+                else:
+                    return None
         except StopIteration as e:
             self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
-        if bfeat['cell_size']:
-            cs = bfeat['cell_size']
-        else:
-            cs = self.gutils.get_cont_par("CELLSIZE")
-            if cs == '':
-                cs = None
-            else:
-                pass
-        if cs:
-            return cs
-        else:
-            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999)
-            if ok:
-                cs = r
-                self.gutils.set_cont_par('CELLSIZE', cs)
-            else:
-                return None
 
     @connection_required
     def create_grid(self):

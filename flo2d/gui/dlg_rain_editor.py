@@ -69,6 +69,7 @@ class RainEditorDialog(qtBaseClass, uiDialog):
             series_name = fid_name.format(ts_fid, name).strip()
             self.tseriesCbo.addItem(series_name)
         self.tseriesCbo.setCurrentIndex(0)
+        self.populate_tseries_data()
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
@@ -84,7 +85,7 @@ class RainEditorDialog(qtBaseClass, uiDialog):
             model.appendRow(items)
         self.tseriesDataTView.setModel(model)
         self.tseriesDataTView.resizeColumnsToContents()
-        self.inflow_data_model = model
+        self.rain_data_model = model
         for i in range(len(series_data)):
             self.tseriesDataTView.setRowHeight(i, 18)
         for i in range(3):
@@ -102,7 +103,6 @@ class RainEditorDialog(qtBaseClass, uiDialog):
         """When time series data for plot change, update the plot"""
         self.plotWidget.clear_plot()
         dm = self.rain_data_model
-        print dm.rowCount()
         x = []
         y = []
         for i in range(dm.rowCount()):

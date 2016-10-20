@@ -39,9 +39,9 @@ from errors import *
 
 
 class Layers(QObject):
-    '''
+    """
     Class for managing project layers: load, add to layers tree
-    '''
+    """
 
     def __init__(self, iface):
         super(Layers, self).__init__()
@@ -70,11 +70,6 @@ class Layers(QObject):
         # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
-            # Leaving the layer intact if it exists doesn't work - users can't
-            # zoom to the layer for example.
-#            self.lyrs_to_repaint.append(self.get_layer_tree_item(lyr_exists).layer())
-#            tree_lyr = self.get_layer_by_name(name, group)
-#            return tree_lyr.layer().id()
             # get the parent tree node and reload the layer completely
             p = self.get_layer_tree_item(lyr_exists).parent()
             self.remove_layer(lyr_exists)
@@ -97,8 +92,6 @@ class Layers(QObject):
                     raise Flo2dError(msg)
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
-
-#        return vlayer.id()
         return tree_lyr.layer().id()
 
     def get_layer_tree_item(self, layer_id):
@@ -118,6 +111,7 @@ class Layers(QObject):
             gr = self.root
         if name:
             layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+            layeritem = None
             for layer in layers:
                 layeritem = gr.findLayer(layer.id())
                 if not layeritem:
@@ -201,16 +195,19 @@ class Layers(QObject):
                     return lyr.layer().id()
         return None
 
-    def remove_layer_by_name(self, name):
+    @staticmethod
+    def remove_layer_by_name(name):
         layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
         for layer in layers:
             QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
 
-    def remove_layer(self, layer_id):
+    @staticmethod
+    def remove_layer(layer_id):
         # do nothing if layer id does not exists
         QgsMapLayerRegistry.instance().removeMapLayer(layer_id)
 
-    def is_str(self, name):
+    @staticmethod
+    def is_str(name):
         if isinstance(name, (str, unicode)):
             return True
         else:
@@ -220,9 +217,6 @@ class Layers(QObject):
     def load_all_layers(self, gutils):
         self.gutils = gutils
         self.layers_data = OrderedDict([
-
-        # LAYERS
-
             ('user_channel_seg', {
                 'name': 'Channel Segments',
                 'sgroup': 'User Layers',
@@ -531,9 +525,6 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False
             }),
-
-            # TABLES
-
             ('cont', {
                 'name': 'Control',
                 'sgroup': "Tables",
@@ -758,10 +749,5 @@ class Layers(QObject):
     def zoom_to_all(self):
         grid = self.get_layer_by_name('Grid', self.group)
         extent = grid.layer().extent()
-#        pg = self.get_group(self.group)
-#        for child in pg.children():
-#            if isinstance(child, QgsLayerTreeLayer):
-#                print "{} - {}".format(pg.name(), child.layer().name())
-#                extent.combineExtentWith(child.layer().extent())
         self.iface.mapCanvas().setExtent(extent)
         self.iface.mapCanvas().refresh()
