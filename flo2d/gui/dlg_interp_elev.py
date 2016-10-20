@@ -179,5 +179,5 @@ class InterpElevDialog(qtBaseClass, uiDialog):
             c = f.geometry().centroid().asPoint()
             ident = self.probe_raster.dataProvider().identify(c, QgsRaster.IdentifyFormatValue)
             if ident.isValid():
-                qry_data.append((round(ident.results()[1],3), f.id()))
+                qry_data.append((round(ident.results()[1], 3), f.id()))
         self.gpkg.execute_many(qry, qry_data)
