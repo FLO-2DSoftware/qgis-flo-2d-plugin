@@ -4,18 +4,30 @@ import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.geopackage_utils import *
 from flo2d.flo2dobjects import *
+from flo2d.flo2dgeopackage import Flo2dGeoPackage
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-GPKG_PATH = os.path.join(THIS_DIR, 'data', 'db', 'test.gpkg')
+IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
+CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
 
 
 class TestCrossSection(unittest.TestCase):
-    def setUp(self):
-        self.con = database_connect(GPKG_PATH)
-        self.cross_section = CrossSection(374, self.con, None)
+    con = database_create(":memory:")
 
-    def tearDown(self):
-        database_disconnect(self.con)
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_mannings_n_topo()
+        cls.f2g.import_chan()
+        cls.f2g.import_xsec()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+
+    def setUp(self):
+        self.cross_section = CrossSection(374, self.con, None)
 
     def test_get_row(self):
         row = self.cross_section.get_row()
@@ -41,12 +53,21 @@ class TestCrossSection(unittest.TestCase):
 
 
 class TestInflow(unittest.TestCase):
-    def setUp(self):
-        self.con = database_connect(GPKG_PATH)
-        self.inflow = Inflow(1, self.con, None)
+    con = database_create(":memory:")
 
-    def tearDown(self):
-        database_disconnect(self.con)
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_mannings_n_topo()
+        cls.f2g.import_inflow()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+
+    def setUp(self):
+        self.inflow = Inflow(1, self.con, None)
 
     def test_get_row(self):
         row = self.inflow.get_row()
@@ -59,12 +80,21 @@ class TestInflow(unittest.TestCase):
 
 
 class TestOutflow(unittest.TestCase):
-    def setUp(self):
-        self.con = database_connect(GPKG_PATH)
-        self.outflow = Outflow(3, self.con, None)
+    con = database_create(":memory:")
 
-    def tearDown(self):
-        database_disconnect(self.con)
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_mannings_n_topo()
+        cls.f2g.import_outflow()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+
+    def setUp(self):
+        self.outflow = Outflow(3, self.con, None)
 
     def test_get_row(self):
         row = self.outflow.get_row()
@@ -133,12 +163,21 @@ class TestOutflow(unittest.TestCase):
 
 
 class TestRain(unittest.TestCase):
-    def setUp(self):
-        self.con = database_connect(GPKG_PATH)
-        self.rain = Rain(self.con, None)
+    con = database_create(":memory:")
 
-    def tearDown(self):
-        database_disconnect(self.con)
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_mannings_n_topo()
+        cls.f2g.import_rain()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+
+    def setUp(self):
+        self.rain = Rain(self.con, None)
 
     def test_get_row(self):
         row = self.rain.get_row()
@@ -156,12 +195,20 @@ class TestRain(unittest.TestCase):
 
 
 class TestEvaporation(unittest.TestCase):
-    def setUp(self):
-        self.con = database_connect(GPKG_PATH)
-        self.evaporation = Evaporation(self.con, None)
+    con = database_create(":memory:")
 
-    def tearDown(self):
-        database_disconnect(self.con)
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.set_parser(CONT)
+        cls.f2g.import_evapor()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+
+    def setUp(self):
+        self.evaporation = Evaporation(self.con, None)
 
     def test_get_row(self):
         row = self.evaporation.get_row()

@@ -8,5 +8,6 @@ pylint.log
 *nosetests.xml
 *nose_coverage.xml
 .coverage
+*.gpkg
 *.gpkg-journal
 *flo2d.zip
