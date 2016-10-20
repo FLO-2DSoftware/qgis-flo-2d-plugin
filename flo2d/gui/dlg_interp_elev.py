@@ -138,6 +138,8 @@ class InterpElevDialog(qtBaseClass, uiDialog):
     def get_worp_opts_data(self):
         # grid extents
         self.grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        self.grid.reload()
+        self.grid.updateExtents()
         grid_ext = self.grid.extent()
         xmin = grid_ext.xMinimum()
         xmax = grid_ext.xMaximum()
@@ -148,7 +150,7 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.out_srs = self.grid.dataProvider().crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
-        self.raster_type = src_raster_lyr.dataProvider().dataType(0)
+        self.raster_type = src_raster_lyr.dataProvider().dataType()
         self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
         # NODATA
         und = self.srcNoDataEdit.text()

@@ -69,16 +69,20 @@ class Layers(QObject):
             grp = self.get_group(group)
         # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
+        print "Lyr {} exists? {}".format(name, lyr_exists)
         if lyr_exists:
             # Leaving the layer intact if it exists doesn't work - users can't
             # zoom to the layer for example.
-#            self.lyrs_to_repaint.append(self.get_layer_tree_item(lyr_exists).layer())
-#            tree_lyr = self.get_layer_by_name(name, group)
-#            return tree_lyr.layer().id()
-            # get the parent tree node and reload the layer completely
+            # Get the parent tree node, remove the layer and load it again
             p = self.get_layer_tree_item(lyr_exists).parent()
             self.remove_layer(lyr_exists)
             tree_lyr = p.addLayer(vlayer)
+
+#            # try this - sometimes works....:
+#            tree_lyr = self.get_layer_by_name(name, group)
+#            tree_lyr.layer().reload()
+#            tree_lyr.layer().updateExtents()
+#            return tree_lyr.layer().id()
         else:
             # add layer to the group of the tree
             tree_lyr = grp.addLayer(vlayer)
@@ -100,6 +104,7 @@ class Layers(QObject):
 
 #        return vlayer.id()
         return tree_lyr.layer().id()
+
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:

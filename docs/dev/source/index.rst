@@ -8,4 +8,5 @@ Contents:
 
    scrum
    db_structure
+   schematization
    exam_proj
