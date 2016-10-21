@@ -22,6 +22,7 @@
  FLO-2D Preprocessor tools for QGIS.
 """
 import math
+from osgeo import gdal
 from qgis.core import *
 
 
@@ -158,3 +159,15 @@ def evaluate_arfwrf(gutils, grid, areas):
         gpb_qry = qry_cells.format(point)
         cur.execute(gpb_qry, (i,) + row[1:])
     gutils.con.commit()
+
+
+def raster2grid(grid, out_raster, src_raster, options):
+    new = gdal.Warp(out_raster, src_raster, options=options)
+    del new
+    probe_raster = QgsRasterLayer(out_raster).dataProvider()
+    for feat in grid.getFeatures():
+        center = feat.geometry().centroid().asPoint()
+        ident = probe_raster.identify(center, QgsRaster.IdentifyFormatValue)
+        if ident.isValid():
+            yield (round(ident.results()[1], 3), feat.id())
+    del probe_raster

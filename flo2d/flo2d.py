@@ -102,6 +102,7 @@ class Flo2D(object):
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
+        # INFO: action.triggered pass False to callback if it is decorated!
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
 
@@ -133,13 +134,13 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
-            callback=self.import_gds,
+            callback=lambda: self.import_gds(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
-            callback=self.export_gds,
+            callback=lambda: self.export_gds(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -151,49 +152,49 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/create_grid.svg'),
             text=self.tr(u'Create Grid'),
-            callback=self.create_grid,
+            callback=lambda: self.create_grid(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
             text=self.tr(u'Sampling Grid Elevation'),
-            callback=self.get_elevation,
+            callback=lambda: self.get_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/sample_manning.svg'),
             text=self.tr(u'Sampling Manning\'s n'),
-            callback=self.get_roughness,
+            callback=lambda: self.get_roughness(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/eval_arfwrf.svg'),
             text=self.tr(u'Evaluate Reduction Factors (ARF and WRF)'),
-            callback=self.eval_arfwrf,
+            callback=lambda: self.eval_arfwrf(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
             text=self.tr(u'Grid Info Tool'),
-            callback=self.activate_grid_info_tool,
+            callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
-            callback=self.show_xsec_editor,
+            callback=lambda: self.show_xsec_editor(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
             text=self.tr(u'Rain Editor'),
-            callback=self.show_rain_editor,
+            callback=lambda: self.show_rain_editor(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
-            callback=self.show_evap_editor,
+            callback=lambda: self.show_evap_editor(),
             parent=self.iface.mainWindow())
 
     def create_grid_info_dock(self):
@@ -254,8 +255,8 @@ class Flo2D(object):
 
     @connection_required
     def import_gds(self):
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             'import_cont_toler',
             'import_mannings_n_topo',
@@ -321,8 +322,8 @@ class Flo2D(object):
 
     @connection_required
     def export_gds(self):
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         """Export traditional GDS files into FLO-2D database (GeoPackage)"""
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         export_calls = [
             'export_cont_toler',
             'export_mannings_n_topo',
@@ -442,12 +443,12 @@ class Flo2D(object):
     @connection_required
     def get_elevation(self):
         cell_size = self.get_cell_size()
-        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, self.gutils, cell_size)
+        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
         ok = dlg.exec_()
         if ok:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg.resample()
+                dlg.resample_and_probe()
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("Sampling done.")
             except Exception as e:
@@ -473,10 +474,10 @@ class Flo2D(object):
 
     @connection_required
     def activate_grid_info_tool(self):
-        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group)
         if grid:
-            self.grid_info_tool.grid = grid
-            self.grid_info_dock.set_info_layer(grid)
+            self.grid_info_tool.grid = grid.layer()
+            self.grid_info_dock.set_info_layer(grid.layer())
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')
@@ -528,15 +529,6 @@ class Flo2D(object):
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
         self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
-
-    def activate_grid_info_tool(self):
-        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group)
-        if grid:
-            self.grid_info_tool.grid = grid.layer()
-            self.grid_info_dock.set_info_layer(grid.layer())
-            self.canvas.setMapTool(self.grid_info_tool)
-        else:
-            self.uc.bar_warn('There is no grid layer to identify.')
 
     def identify(self):
 
