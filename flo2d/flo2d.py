@@ -1,26 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-/***************************************************************************
- Flo2D
-                                 A QGIS plugin
- FLO-2D tools for QGIS
-                             -------------------
-        begin                : 2016-08-28
-        copyright            : (C) 2016 by Lutra Consulting for FLO-2D
-        email                : info@lutraconsulting.co.uk
-        git sha              : $Format:%H$
- ***************************************************************************/
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
- FLO-2D Preprocessor tools for QGIS.
-"""
+# FLO-2D Preprocessor tools for QGIS
+# Copyright © 2016 Lutra Consulting for FLO-2D
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version
+
 import time
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -83,8 +70,7 @@ class Flo2D(object):
         self.create_map_tools()
 
     def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-        """
+        """Get the translation for a string using Qt translation API."""
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
 
@@ -228,10 +214,6 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
-#            if self.lyrs.group:
-#                self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
-#            else:
-#                self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
         self.grid_info_dock.setVisible(True)
 
     def call_methods(self, calls, debug, *args):
@@ -422,7 +404,7 @@ class Flo2D(object):
             grid_lyr.triggerRepaint()
         QApplication.restoreOverrideCursor()
         if result > 0:
-            self.uc.bar_info("Grid created!")
+            self.uc.show_info("Grid created!")
         else:
             self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
 
@@ -536,7 +518,6 @@ class Flo2D(object):
         self.info_tool.update_lyrs_list()
 
     def get_feature_info(self, table, fid):
-        # what is the proper dialog for this kind of feature?
         try:
             show_editor = self.editors_map[table]
         except KeyError:
