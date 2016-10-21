@@ -105,8 +105,13 @@ class InfoTool(QgsMapToolIdentify):
             for i in range(3):
                 self.rb.reset(i)
 
+    def activate(self):
+        self.update_lyrs_list()
+        self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
+
     def deactivate(self):
         self.clear_rubber()
+        self.lyrs.root.visibilityChanged.disconnect(self.update_lyrs_list)
 
     def isZoomTool(self):
         return False

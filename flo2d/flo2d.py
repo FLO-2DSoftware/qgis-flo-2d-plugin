@@ -233,10 +233,10 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
-            if self.lyrs.group:
-                self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
-            else:
-                self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
+#            if self.lyrs.group:
+#                self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
+#            else:
+#                self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
         self.grid_info_dock.setVisible(True)
 
     def call_methods(self, calls, debug, *args):
@@ -534,15 +534,16 @@ class Flo2D(object):
         self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
 
     def activate_grid_info_tool(self):
-        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group)
         if grid:
-            self.grid_info_tool.grid = grid
-            self.grid_info_dock.set_info_layer(grid)
+            self.grid_info_tool.grid = grid.layer()
+            self.grid_info_dock.set_info_layer(grid.layer())
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')
 
     def identify(self):
+
         self.canvas.setMapTool(self.info_tool)
         self.info_tool.update_lyrs_list()
 

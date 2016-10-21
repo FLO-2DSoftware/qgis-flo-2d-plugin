@@ -113,52 +113,57 @@ class Layers(QObject):
 
     def get_layer_by_name(self, name, group=None):
         if group:
-            gr = self.get_group(group)
+            gr = self.get_group(group, create=False)
         else:
             gr = self.root
-        if name:
+        layeritem = None
+        if gr and name:
             layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
-            layeritem = None
+
             for layer in layers:
                 layeritem = gr.findLayer(layer.id())
                 if not layeritem:
                     continue
                 else:
                     return layeritem
-            if not layeritem:
-                msg = 'Layer {} doesn\'t exist in the layers tree.'.format(name)
-                raise Flo2dLayerNotFound(msg)
         else:
-            raise Flo2dLayerNotFound('Layer name not specified')
+            pass
+        return layeritem
+
 
     def list_group_vlayers(self, group=None, only_visible=True, skip_views=False):
         if not group:
             grp = self.root
         else:
-            grp = self.get_group(group)
+            grp = self.get_group(group, create=False)
         views_list = []
-
         l = []
-        for lyr in grp.findLayers():
-            if lyr.layer().type() == 0 and lyr.layer().geometryType() < 3:
-                if skip_views and lyr.layer().name() in views_list:
-                    continue
-                else:
-                    if only_visible and not lyr.isVisible():
+        if grp:
+            for lyr in grp.findLayers():
+                if lyr.layer().type() == 0 and lyr.layer().geometryType() < 3:
+                    if skip_views and lyr.layer().name() in views_list:
                         continue
                     else:
-                        l.append(lyr.layer())
+                        if only_visible and not lyr.isVisible():
+                            continue
+                        else:
+                            l.append(lyr.layer())
+        else:
+            pass
         return l
 
     def list_group_rlayers(self, group=None):
         if not group:
             grp = self.root
         else:
-            grp = self.get_group(group)
+            grp = self.get_group(group, create=False)
         l = []
-        for lyr in grp.findLayers():
-            if lyr.layer().type() == 1:
-                l.append(lyr.layer())
+        if grp:
+            for lyr in grp.findLayers():
+                if lyr.layer().type() == 1:
+                    l.append(lyr.layer())
+        else:
+            pass
         return l
 
     def repaint_layers(self):
@@ -181,16 +186,16 @@ class Layers(QObject):
         if grp:
             self.root.removeChildNode(grp)
 
-    def get_group(self, name):
+    def get_group(self, name, create=True):
         grp = self.root.findGroup(name)
-        if not grp:
+        if not grp and create:
             grp = self.root.addGroup(name)
         return grp
 
-    def get_subgroup(self, group, subgroup):
-        grp = self.get_group(group)
+    def get_subgroup(self, group, subgroup, create=True):
+        grp = self.get_group(group, create=create)
         subgrp = grp.findGroup(subgroup)
-        if not subgrp:
+        if not subgrp and create:
             subgrp = grp.addGroup(subgroup)
         return subgrp
 
