@@ -44,35 +44,27 @@ class CrossSection(GeoPackageUtils):
         self.type = self.row['type']
         return self.row
 
-    def get_chan_segment(self, *args):
+    def get_chan_segment(self):
         if self.row is not None:
             pass
         else:
             return
         seg_fid = self.row['seg_fid']
-        if args:
-            columns = ','.join(args)
-        else:
-            columns = '*'
-            args = self.table_info('chan', only_columns=True)
-        qry = 'SELECT {0} FROM chan WHERE fid = ?;'.format(columns)
+        args = self.table_info('chan', only_columns=True)
+        qry = 'SELECT * FROM chan WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (seg_fid,)).fetchone()]
         self.chan = OrderedDict(zip(args, values))
         return self.chan
 
-    def get_chan_table(self, *args):
+    def get_chan_table(self):
         if self.row is not None:
             pass
         else:
             return
         tables = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
         tab = tables[self.type]
-        if args:
-            columns = ','.join(args)
-        else:
-            columns = '*'
-            args = self.table_info(tab, only_columns=True)
-        qry = 'SELECT {0} FROM {1} WHERE elem_fid = ?;'.format(columns, tab)
+        args = self.table_info(tab, only_columns=True)
+        qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.chan_tab = OrderedDict(zip(args, values))
         return self.chan_tab
@@ -231,6 +223,7 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
+        self.series_fid = self.row['time_series_fid']
         return self.row
 
     def get_time_series(self):
@@ -275,19 +268,3 @@ class Evaporation(GeoPackageUtils):
         qry = 'SELECT ROUND(SUM(hourly_evap), 3) FROM evapor_hourly WHERE month = ? ORDER BY fid;'
         self.hourly_sum = self.execute(qry, (self.month,)).fetchone()[0]
         return self.hourly_sum
-
-
-if __name__ == '__main__':
-    from flo2dgeopackage import database_connect
-    gpkg = r'D:\GIS_DATA\GPKG\alawai.gpkg'
-    con = database_connect(gpkg)
-    xs = CrossSection(1232, con, None)
-    row = xs.get_row()
-    chan = xs.get_chan_segment()
-    chan_tab = xs.get_chan_table()
-    data = xs.get_xsec_data()
-    con.close()
-    print(row)
-    print(chan)
-    print(chan_tab)
-    print(data)

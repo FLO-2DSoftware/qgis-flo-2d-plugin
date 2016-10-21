@@ -69,28 +69,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.modSelectAllBtn.clicked.connect(self.select_all_modules)
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
 
-    def get_modules_from_data(self):
-        """Check which tables contain any data and turn on/off appropriate
-        model modules"""
-#        self.modules = {
-#            "chan": self.chanChBox,
-#            "evap": self.evapChBox,
-#            "hystruc": self.hystrucChBox,
-#            "mult": self.multChBox,
-#            "modflo": self.modfloChBox,
-#            "infil": self.infilChBox,
-#            "rain": self.rainChBox,
-#            "sed": self.sedChBox,
-#            "redfac": self.redFactChBox,
-#            "levee": self.leveesChBox,
-#            "swmm": self.swmmChBox,
-#            "fpxsec",
-#            "breach",
-#            "outflow",
-#            "inflow",
-#            "street"
-#        }
-
     def read(self):
         for name, wid in self.widget_map.iteritems():
             qry = '''SELECT value FROM cont WHERE name = ?;'''
@@ -128,13 +106,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
-        gpkg_path = None
-
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_path = QFileDialog.getSaveFileName(None,
-                         'Create GeoPackage As...',
-                         directory=last_gpkg_dir, filter='*.gpkg')
+                                                'Create GeoPackage As...',
+                                                directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
             return
         else:
@@ -216,8 +192,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_path = QFileDialog.getOpenFileName(None,
-                         'Select GeoPackage to connect',
-                         directory=last_gpkg_dir, filter='*.gpkg')
+                                                'Select GeoPackage to connect',
+                                                directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
             return
         else:

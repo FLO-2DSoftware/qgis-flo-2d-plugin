@@ -9,7 +9,6 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
 VECTOR_PATH = os.path.join(THIS_DIR, 'data', 'vector')
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
-GPKG_PATH = os.path.join(THIS_DIR, 'data', 'test.gpkg')
 CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
 
 
@@ -31,29 +30,23 @@ def export_paths(*inpaths):
 
 
 class TestFlo2dGeoPackage(unittest.TestCase):
+    con = database_create(":memory:")
 
     @classmethod
     def setUpClass(cls):
-        con = database_create(GPKG_PATH)
-        cls.f2g = Flo2dGeoPackage(con, None)
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
         cls.f2g.set_parser(CONT)
         cls.f2g.import_mannings_n_topo()
-        con.close()
 
     @classmethod
     def tearDownClass(cls):
+        cls.con.close()
         for f in os.listdir(EXPORT_DATA_DIR):
             fpath = os.path.join(EXPORT_DATA_DIR, f)
             if os.path.isfile(fpath):
                 os.remove(fpath)
             else:
                 pass
-
-    def setUp(self):
-        self.f2g.con = database_connect(GPKG_PATH)
-
-    def tearDown(self):
-        database_disconnect(self.f2g.con)
 
     def test_set_parser(self):
         self.assertIsNotNone(self.f2g.parser.dat_files['CONT.DAT'])

@@ -307,7 +307,7 @@ class ParseDAT(object):
         par = self.single_parser(chan)
         parbank = self.single_parser(bank)
         if xsec is not None:
-            parxs = (["'{0}'".format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
+            parxs = (['{0}'.format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
         else:
             parxs = repeat([None])
         start = True

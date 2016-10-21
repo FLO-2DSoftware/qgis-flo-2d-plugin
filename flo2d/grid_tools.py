@@ -23,7 +23,6 @@
 """
 import math
 from qgis.core import *
-from osgeo import gdal
 
 
 def build_grid(boundary, cellsize):
