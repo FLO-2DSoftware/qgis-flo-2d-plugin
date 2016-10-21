@@ -73,6 +73,11 @@ class TestInflow(unittest.TestCase):
         row = self.inflow.get_row()
         self.assertEqual(row['ident'], 'C')
 
+    def test_get_time_series(self):
+        self.inflow.get_row()
+        ts = self.inflow.get_time_series()
+        self.assertEqual(len(ts), 4)
+
     def test_get_time_series_data(self):
         self.inflow.get_row()
         tsd = self.inflow.get_time_series_data()

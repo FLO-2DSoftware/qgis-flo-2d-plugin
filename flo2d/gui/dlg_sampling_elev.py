@@ -28,27 +28,29 @@ from qgis.core import *
 from osgeo import gdal
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
+from ..grid_tools import raster2grid
+
 
 uiDialog, qtBaseClass = load_ui('sampling_elev')
 
 
 class SamplingElevDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, gpkg, cell_size, parent=None):
+    def __init__(self, con, iface, lyrs, cell_size, parent=None):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self, parent)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
-        self.gpkg = gpkg
-        self.gpkg_path = gpkg.get_gpkg_path()
         self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
+        self.gpkg_path = self.gutils.get_gpkg_path()
         self.populate_raster_cbo()
         self.populate_alg_cbo()
         self.src_nodata = -9999
+        self.probe_raster = None
         # connections
         self.browseSrcBtn.clicked.connect(self.browse_src_raster)
 
@@ -156,7 +158,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         if und:
             self.src_nodata = int(und)
 
-    def resample(self):
+    def resample_and_probe(self):
         """Resampling raster aligned with the grid"""
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
         self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4])
@@ -165,20 +167,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         except:
             pass
         self.get_worp_options()
-        new = gdal.Warp(self.out_raster, self.src_raster, options=self.wo)
-        del new
-        probe_raster = QgsRasterLayer(self.out_raster)
-        self.update_grid_elev()
-        del probe_raster
-
-    def update_grid_elev(self):
-        """Probe resampled raster in each grid element"""
+        sampler = raster2grid(self.grid, self.out_raster, self.src_raster, self.wo)
         qry = 'UPDATE grid SET elevation=? WHERE fid=?;'
-        qry_data = []
-        feats = self.grid.getFeatures()
-        for f in feats:
-            c = f.geometry().centroid().asPoint()
-            ident = self.probe_raster.dataProvider().identify(c, QgsRaster.IdentifyFormatValue)
-            if ident.isValid():
-                qry_data.append((round(ident.results()[1], 3), f.id()))
-        self.gpkg.execute_many(qry, qry_data)
+        self.con.executemany(qry, sampler)
+        self.con.commit()
