@@ -68,6 +68,7 @@ class Flo2D(object):
                 QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
+        self.project = QgsProject.instance()
         self.actions = []
         self.menu = self.tr(u'&Flo2D')
         self.toolbar = self.iface.addToolBar(u'Flo2D')
@@ -218,20 +219,31 @@ class Flo2D(object):
         # remove maptools
         del self.info_tool, self.grid_info_tool
 
+    def write_proj_entry(self, key, val):
+        return self.project.writeEntry('FLO-2D', key, val)
+
+    def read_proj_entry(self, key, val):
+        r = self.project.readEntry('FLO-2D', key)
+        if r[0] and r[1]:
+            return r[0]
+        else:
+            return None
+
     def show_settings(self):
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
-        if result:
+        if result and dlg_settings.con:
             dlg_settings.write()
             self.con = dlg_settings.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
-#            if self.lyrs.group:
-#                self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
-#            else:
-#                self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
+            dlg_settings.write_proj_entry('gpkg', self.gutils.get_gpkg_path())
         self.grid_info_dock.setVisible(True)
+
+    def load_gpkg_from_proj(self):
+        """If QGIS project has a gpkg path saved ask user if it should be loaded"""
+        
 
     def call_methods(self, calls, debug, *args):
         for call in calls:
