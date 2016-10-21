@@ -29,11 +29,38 @@ from collections import OrderedDict
 import functools
 
 
-class GridValuesTool(QgsMapToolIdentify):
+class GridInfoTool(QgsMapToolIdentify):
+
+    grid_elem_picked = pyqtSignal(int)
 
     def __init__(self, canvas, lyrs):
         self.canvas = canvas
         self.lyrs = lyrs
+        self.grid = None
 
         QgsMapToolIdentify.__init__(self, self.canvas)
+
+    def canvasPressEvent(self, e):
+        pass
+
+    def canvasReleaseEvent(self, e):
+        if self.grid:
+            res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
+            if res:
+                self.grid_elem_picked.emit(res[0].mFeature.id())
+            else:
+                self.grid_elem_picked.emit(-1)
+
+
+    def deactivate(self):
+        pass
+
+    def isZoomTool(self):
+        return False
+
+    def isTransient(self):
+        return False
+
+    def isEditTool(self):
+        return False
 

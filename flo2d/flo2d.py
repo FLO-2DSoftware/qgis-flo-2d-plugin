@@ -31,7 +31,7 @@ from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, evaluate_arfwrf
 from info_tool import InfoTool
-from grid_values_tool import GridValuesTool
+from grid_info_tool import GridInfoTool
 from utils import *
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
@@ -41,7 +41,7 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
-from .gui.dlg_info_dock import InfoDock
+from .gui.dlg_grid_info_dock import GridInfoDock
 
 
 class Flo2D(object):
@@ -72,20 +72,21 @@ class Flo2D(object):
         self.menu = self.tr(u'&Flo2D')
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
-        self.info_dock = None
         self.con = None
         self.lyrs = Layers(iface)
+        self.lyrs.group = None
         self.gutils = None
         self.f2g = None
         self.prep_sql = None
+        self.create_grid_info_dock()
         self.set_editors_map()
         self.create_map_tools()
-        self.create_info_dock()
+
 
 
 
         # connections
-        self.info_tool.feature_picked.connect(self.get_feature_info)
+
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -178,6 +179,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
+            text=self.tr(u'Grid Info Tool'),
+            callback=self.activate_grid_info_tool,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
             text=self.tr(u'XSection Editor'),
             callback=self.show_xsec_editor,
@@ -195,10 +202,9 @@ class Flo2D(object):
             callback=self.show_evap_editor,
             parent=self.iface.mainWindow())
 
-    def create_info_dock(self):
-        self.info_dock = InfoDock(self.iface, self.lyrs, self.grid_values_tool)
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.info_dock)
-        self.info_dock.activeChBox.toggled.connect(self.toggle_grid_values_tool)
+    def create_grid_info_dock(self):
+        self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -208,15 +214,15 @@ class Flo2D(object):
                 self.tr(u'&Flo2D'),
                 action)
             self.iface.removeToolBarIcon(action)
-        if self.info_dock is not None:
-            self.info_dock.close()
-            self.iface.removeDockWidget(self.info_dock)
+        if self.grid_info_dock is not None:
+            self.grid_info_dock.close()
+            self.iface.removeDockWidget(self.grid_info_dock)
 
         # remove the toolbar
         del self.toolbar
         del self.con, self.gutils, self.lyrs
         # remove maptools
-        del self.info_tool, self.grid_values_tool
+        del self.info_tool, self.grid_info_tool
 
     def show_settings(self):
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
@@ -231,7 +237,7 @@ class Flo2D(object):
                 self.lyrs.root.visibilityChanged.connect(self.info_tool.update_lyrs_list)
             else:
                 self.lyrs.root.visibilityChanged.disconnect(self.info_tool.update_lyrs_list)
-        self.info_dock.setVisible(True)
+        self.grid_info_dock.setVisible(True)
 
     def call_methods(self, calls, debug, *args):
         for call in calls:
@@ -509,7 +515,7 @@ class Flo2D(object):
             self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
             self.dlg_rain_editor.show()
         except TypeError as e:
-            self.uc.show_warn('There is no any rain data to display!')
+            self.uc.show_warn('There is no rain data to display!')
 
     @connection_required
     def show_evap_editor(self):
@@ -518,21 +524,23 @@ class Flo2D(object):
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
         except TypeError as e:
-            self.uc.show_warn('There is no any evaporation data to display!')
+            self.uc.show_warn('There is no evaporation data to display!')
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
-        self.grid_values_tool = GridValuesTool(self.canvas, self.lyrs)
+        self.info_tool.feature_picked.connect(self.get_feature_info)
+        self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
+        self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
 
-    def toggle_grid_values_tool(self):
-        on = self.info_dock.activeChBox.isChecked()
-        self.info_dock.toggle_active(on)
-        if on:
-            grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
-            self.info_dock.lyrs_list = [grid]
+    def activate_grid_info_tool(self):
+        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        if grid:
+            self.grid_info_tool.grid = grid
+            self.grid_info_dock.set_info_layer(grid)
+            self.canvas.setMapTool(self.grid_info_tool)
         else:
-            pass
+            self.uc.bar_warn('There is no grid layer to identify.')
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)

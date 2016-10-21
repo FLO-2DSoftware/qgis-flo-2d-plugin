@@ -25,41 +25,33 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from .utils import load_ui
 from qgis.gui import QgsMapToolIdentify
-import time
+from qgis.core import QgsFeatureRequest
 
-uiDialog, qtBaseClass = load_ui('info_dock')
+uiDialog, qtBaseClass = load_ui('grid_info_dock')
 
 
-class InfoDock(qtBaseClass, uiDialog):
+class GridInfoDock(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, lyrs, tool):
+    def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.lyrs = lyrs
-        self.tool = tool
         self.setupUi(self)
-        self.timer = QTimer()
-        self.timer.start(500)
-        self.activeChBox.toggled.connect(self.toggle_active)
         self.setEnabled(True)
 
-    def toggle_active(self, on):
-        print on
-        if on:
-#            QObject.connect(self.canvas, SIGNAL("xyCoordinates(const QgsPoint &)"), self.set_value)
-            self.timer.timeout.connect(self.set_value)
-        else:
-#            QObject.disconnect(self.canvas, SIGNAL("xyCoordinates(const QgsPoint &)"), self.set_value)
-            self.timer.timeout.disconnect(self.set_value)
+    def set_info_layer(self, lyr):
+        self.grid = lyr
 
-    def set_value(self):
-        e = self.canvas.mouseLastXY()
-        res = self.tool.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.ActiveLayer)
-        if res:
-            self.elevEdit.setText(str(res[0].mFeature["elevation"]))
-            self.mannEdit.setText(str(res[0].mFeature['n_value']))
+    def update_fields(self, fid):
+        if not fid == -1:
+            feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
+            self.elevEdit.setText(str(feat["elevation"]))
+            self.mannEdit.setText(str(feat['n_value']))
+        else:
+            self.elevEdit.setText('')
+            self.mannEdit.setText('')
 
 
 
