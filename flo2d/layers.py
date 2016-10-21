@@ -69,7 +69,6 @@ class Layers(QObject):
             grp = self.get_group(group)
         # if a layer exists with the same uri, reload it
         lyr_exists = self.layer_exists_in_group(uri, group)
-        print "Lyr {} exists? {}".format(name, lyr_exists)
         if lyr_exists:
             # Leaving the layer intact if it exists doesn't work - users can't
             # zoom to the layer for example.

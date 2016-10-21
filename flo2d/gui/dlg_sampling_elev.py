@@ -29,10 +29,10 @@ from osgeo import gdal
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 
-uiDialog, qtBaseClass = load_ui('interp_elev')
+uiDialog, qtBaseClass = load_ui('sampling_elev')
 
 
-class InterpElevDialog(qtBaseClass, uiDialog):
+class SamplingElevDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs, gpkg, cell_size, parent=None):
         qtBaseClass.__init__(self)
@@ -42,6 +42,7 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.gpkg = gpkg
         self.gpkg_path = gpkg.get_gpkg_path()
+        self.grid = None
         self.cell_size = float(cell_size)
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
@@ -138,8 +139,6 @@ class InterpElevDialog(qtBaseClass, uiDialog):
     def get_worp_opts_data(self):
         # grid extents
         self.grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
-        self.grid.reload()
-        self.grid.updateExtents()
         grid_ext = self.grid.extent()
         xmin = grid_ext.xMinimum()
         xmax = grid_ext.xMaximum()
@@ -150,15 +149,15 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.out_srs = self.grid.dataProvider().crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
-        self.raster_type = src_raster_lyr.dataProvider().dataType()
+        self.raster_type = src_raster_lyr.dataProvider().dataType(0)
         self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:
             self.src_nodata = int(und)
 
-    def interpolate(self):
-        """Interpolate raster aligned with the grid"""
+    def resample(self):
+        """Resampling raster aligned with the grid"""
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
         self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4])
         try:
@@ -168,12 +167,12 @@ class InterpElevDialog(qtBaseClass, uiDialog):
         self.get_worp_options()
         new = gdal.Warp(self.out_raster, self.src_raster, options=self.wo)
         del new
-        self.probe_raster = QgsRasterLayer(self.out_raster)
+        probe_raster = QgsRasterLayer(self.out_raster)
         self.update_grid_elev()
-        del self.probe_raster
+        del probe_raster
 
     def update_grid_elev(self):
-        """Probe interpolated raster in each grid element"""
+        """Probe resampled raster in each grid element"""
         qry = 'UPDATE grid SET elevation=? WHERE fid=?;'
         qry_data = []
         feats = self.grid.getFeatures()

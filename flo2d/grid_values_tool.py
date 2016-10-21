@@ -21,41 +21,19 @@
  ***************************************************************************/
  FLO-2D Preprocessor tools for QGIS.
 """
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 from qgis.core import *
-from ..user_communication import UserCommunication
-from .utils import load_ui
+from qgis.gui import QgsMapToolIdentify
+from collections import OrderedDict
+import functools
 
-uiDialog, qtBaseClass = load_ui('roughness')
 
+class GridValuesTool(QgsMapToolIdentify):
 
-class RoughnessDialog(qtBaseClass, uiDialog):
-
-    def __init__(self, con, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
-        self.iface = iface
-        self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
-        self.con = con
+    def __init__(self, canvas, lyrs):
+        self.canvas = canvas
         self.lyrs = lyrs
 
-        # connections
-        self.rlayer_cbo.currentIndexChanged.connect(self.populate_fields)
-        self.populate_layers()
+        QgsMapToolIdentify.__init__(self, self.canvas)
 
-    def populate_layers(self):
-        self.rlayer_cbo.clear()
-        lyrs = [lyr.layer() for lyr in self.lyrs.root.findLayers()]
-        for lyr in lyrs:
-            if lyr.isValid() and lyr.type() == QgsMapLayer.VectorLayer and lyr.geometryType() == QGis.Polygon:
-                self.rlayer_cbo.addItem(lyr.name(), lyr)
-            else:
-                pass
-        self.populate_fields()
-
-    def populate_fields(self):
-        self.rfield_cbo.clear()
-        cur_lyr = self.rlayer_cbo.itemData(self.rlayer_cbo.currentIndex())
-        field_names = [field.name() for field in cur_lyr.pendingFields()]
-        for fld in field_names:
-            self.rfield_cbo.addItem(fld)
