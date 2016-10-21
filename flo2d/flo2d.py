@@ -83,6 +83,9 @@ class Flo2D(object):
         self.set_editors_map()
         self.create_map_tools()
 
+        # connections
+        self.project.readProject.connect(self.load_gpkg_from_proj)
+
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
         """
@@ -223,7 +226,7 @@ class Flo2D(object):
     def write_proj_entry(self, key, val):
         return self.project.writeEntry('FLO-2D', key, val)
 
-    def read_proj_entry(self, key, val):
+    def read_proj_entry(self, key):
         r = self.project.readEntry('FLO-2D', key)
         if r[0] and r[1]:
             return r[0]
@@ -239,12 +242,27 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
-            dlg_settings.write_proj_entry('gpkg', self.gutils.get_gpkg_path())
+            self.write_proj_entry('gpkg', self.gutils.path.replace('\\', '/'))
         self.grid_info_dock.setVisible(True)
 
-    def load_gpkg_from_proj(self):
+    def load_gpkg_from_proj(self, file):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
-        
+        old_gpkg = self.read_proj_entry('gpkg')
+        if old_gpkg:
+            msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
+            msg += 'the following database file:\n'
+            msg += '{}\n\n Load the model?'.format(old_gpkg)
+            r = self.uc.question(msg)
+            if r == QMessageBox.Yes:
+                dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                dlg_settings.connect(old_gpkg)
+                self.con = dlg_settings.con
+                self.gutils = dlg_settings.gutils
+                self.crs = dlg_settings.crs
+            else:
+                self.uc.bar_info('Loading last model cancelled', dur=3)
+                return
+
 
     def call_methods(self, calls, debug, *args):
         for call in calls:

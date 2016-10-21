@@ -186,14 +186,14 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
-    def connect(self):
+    def connect(self, gpkg_path=None):
         """Connect to FLO-2D model database (GeoPackage)"""
-        gpkg_path = None
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_path = QFileDialog.getOpenFileName(None,
-                                                'Select GeoPackage to connect',
-                                                directory=last_gpkg_dir, filter='*.gpkg')
+        if not gpkg_path:
+            gpkg_path = QFileDialog.getOpenFileName(None,
+                                                    'Select GeoPackage to connect',
+                                                    directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
             return
         else:
