@@ -65,6 +65,7 @@ class UserCommunication(object):
     def question(self, msg):
         if self.iface is not None:
             m = QMessageBox()
+            m.setWindowTitle(self.context)
             m.setText(msg)
             m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
             m.setDefaultButton(QMessageBox.No)

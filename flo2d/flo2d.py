@@ -228,7 +228,7 @@ class Flo2D(object):
             self.con = dlg_settings.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
-            self.write_proj_entry('gpkg', self.gutils.path.replace('\\', '/'))
+            self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
         self.grid_info_dock.setVisible(True)
 
     def load_gpkg_from_proj(self, file):
@@ -444,10 +444,18 @@ class Flo2D(object):
 
     @connection_required
     def get_roughness(self):
+        rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
+        if rough_lyr.isEditable():
+            # ask user for saving changes
+            r = self.uc.question('Roughness layer is in edit mode. Save changes and sample values on the grid?')
+            if r == QMessageBox.Yes:
+                rough_lyr.commitChanges()
+            else:
+                self.uc.bar_info('Sampling cancelled', dur=3)
+                return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
             update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning roughness finished!")
@@ -494,6 +502,7 @@ class Flo2D(object):
         if grid:
             self.grid_info_tool.grid = grid.layer()
             self.grid_info_dock.set_info_layer(grid.layer())
+            self.grid_info_dock.mann_default = self.gutils.get_cont_par('MANNING')
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')

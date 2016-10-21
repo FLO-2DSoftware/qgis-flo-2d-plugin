@@ -25,6 +25,7 @@ class GridInfoDock(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setEnabled(True)
         self.grid = None
+        self.mann_default = None
 
     def set_info_layer(self, lyr):
         self.grid = lyr
@@ -32,8 +33,15 @@ class GridInfoDock(qtBaseClass, uiDialog):
     def update_fields(self, fid):
         if not fid == -1:
             feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
-            self.elevEdit.setText(str(feat['elevation']))
-            self.mannEdit.setText(str(feat['n_value']))
+            elev = str(feat['elevation'])
+            n = feat['n_value']
+            if not n:
+                n = '{} (default)'.format(self.mann_default)
+            else:
+                pass
+            self.elevEdit.setText(elev)
+            self.mannEdit.setText(str(n))
+            print elev, n, type(elev), type(n)
         else:
             self.elevEdit.setText('')
             self.mannEdit.setText('')

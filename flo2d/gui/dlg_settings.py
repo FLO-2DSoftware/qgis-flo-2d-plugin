@@ -44,7 +44,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "IWRFS": self.redFactChBox,
             "LEVEE": self.leveesChBox,
             "PROJ": self.projectionSelector,
-            # "MANNING": self.manningDSpinBox,
+            "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
         }
