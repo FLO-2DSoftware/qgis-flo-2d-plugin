@@ -164,10 +164,11 @@ def evaluate_arfwrf(gutils, grid, areas):
 def raster2grid(grid, out_raster, src_raster, options):
     new = gdal.Warp(out_raster, src_raster, options=options)
     del new
-    probe_raster = QgsRasterLayer(out_raster).dataProvider()
+    probe_raster = QgsRasterLayer(out_raster)
+
     for feat in grid.getFeatures():
         center = feat.geometry().centroid().asPoint()
-        ident = probe_raster.identify(center, QgsRaster.IdentifyFormatValue)
+        ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
         if ident.isValid():
             yield (round(ident.results()[1], 3), feat.id())
     del probe_raster

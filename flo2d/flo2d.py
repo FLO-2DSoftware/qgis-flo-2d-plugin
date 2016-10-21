@@ -398,7 +398,7 @@ class Flo2D(object):
                     self.gutils.set_cont_par('CELLSIZE', cs)
                 else:
                     return None
-        except StopIteration as e:
+        except StopIteration:
             self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
 
     @connection_required
@@ -448,7 +448,7 @@ class Flo2D(object):
         if ok:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg.resample_and_probe()
+                dlg.probe_elevation()
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("Sampling done.")
             except Exception as e:
@@ -511,7 +511,7 @@ class Flo2D(object):
         try:
             self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
             self.dlg_rain_editor.show()
-        except TypeError as e:
+        except TypeError:
             self.uc.show_warn('There is no rain data to display!')
 
     @connection_required
@@ -520,7 +520,7 @@ class Flo2D(object):
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
-        except TypeError as e:
+        except TypeError:
             self.uc.show_warn('There is no evaporation data to display!')
 
     def create_map_tools(self):
