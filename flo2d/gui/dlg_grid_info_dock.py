@@ -21,10 +21,7 @@
  ***************************************************************************/
  FLO-2D Preprocessor tools for QGIS.
 """
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 from .utils import load_ui
-from qgis.gui import QgsMapToolIdentify
 from qgis.core import QgsFeatureRequest
 
 uiDialog, qtBaseClass = load_ui('grid_info_dock')
@@ -40,6 +37,7 @@ class GridInfoDock(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.setupUi(self)
         self.setEnabled(True)
+        self.grid = None
 
     def set_info_layer(self, lyr):
         self.grid = lyr
@@ -47,11 +45,8 @@ class GridInfoDock(qtBaseClass, uiDialog):
     def update_fields(self, fid):
         if not fid == -1:
             feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
-            self.elevEdit.setText(str(feat["elevation"]))
+            self.elevEdit.setText(str(feat['elevation']))
             self.mannEdit.setText(str(feat['n_value']))
         else:
             self.elevEdit.setText('')
             self.mannEdit.setText('')
-
-
-

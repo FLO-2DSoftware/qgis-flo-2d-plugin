@@ -82,12 +82,6 @@ class Flo2D(object):
         self.set_editors_map()
         self.create_map_tools()
 
-
-
-
-        # connections
-
-
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
         """
@@ -372,14 +366,6 @@ class Flo2D(object):
         self.lyrs.repaint_layers()
         self.lyrs.zoom_to_all()
 
-    @connection_required
-    def create_model_boundary(self):
-        """Create model boundary and get grid cell size from user"""
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        self.iface.setActiveLayer(bl)
-        bl.startEditing()
-        self.iface.actionAddFeature().trigger()
-
     def get_cell_size(self):
         """Get cell size from:
             - model boundary attr table (if defined, will be written to cont table)
@@ -484,6 +470,16 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
+
+    @connection_required
+    def activate_grid_info_tool(self):
+        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        if grid:
+            self.grid_info_tool.grid = grid
+            self.grid_info_dock.set_info_layer(grid)
+            self.canvas.setMapTool(self.grid_info_tool)
+        else:
+            self.uc.bar_warn('There is no grid layer to identify.')
 
     @connection_required
     def show_xsec_editor(self, fid=None):

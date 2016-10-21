@@ -37,6 +37,10 @@ def connection_required(fn):
             self.uc.bar_warn("Define a database connections first!")
             return
         else:
+            if not all(args):
+                args = []
+            else:
+                pass
             return fn(self, *args, **kwargs)
     return wrapper
 
