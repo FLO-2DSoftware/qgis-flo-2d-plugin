@@ -29,7 +29,7 @@
 import qgis.PyQt
 # END DO NOT REMOVE 
 
-# noinspection PyPep8Naming
+
 def classFactory(iface):  # pylint: disable=invalid-name
     """Load Flo2D class from file Flo2D.
 
