@@ -82,12 +82,6 @@ class Flo2D(object):
         self.set_editors_map()
         self.create_map_tools()
 
-
-
-
-        # connections
-
-
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
         """
@@ -372,14 +366,6 @@ class Flo2D(object):
         self.lyrs.repaint_layers()
         self.lyrs.zoom_to_all()
 
-    @connection_required
-    def create_model_boundary(self):
-        """Create model boundary and get grid cell size from user"""
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        self.iface.setActiveLayer(bl)
-        bl.startEditing()
-        self.iface.actionAddFeature().trigger()
-
     def get_cell_size(self):
         """Get cell size from:
             - model boundary attr table (if defined, will be written to cont table)
@@ -486,6 +472,16 @@ class Flo2D(object):
             self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     @connection_required
+    def activate_grid_info_tool(self):
+        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        if grid:
+            self.grid_info_tool.grid = grid
+            self.grid_info_dock.set_info_layer(grid)
+            self.canvas.setMapTool(self.grid_info_tool)
+        else:
+            self.uc.bar_warn('There is no grid layer to identify.')
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
         self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
@@ -532,15 +528,6 @@ class Flo2D(object):
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
         self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
-
-    def activate_grid_info_tool(self):
-        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
-        if grid:
-            self.grid_info_tool.grid = grid
-            self.grid_info_dock.set_info_layer(grid)
-            self.canvas.setMapTool(self.grid_info_tool)
-        else:
-            self.uc.bar_warn('There is no grid layer to identify.')
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
