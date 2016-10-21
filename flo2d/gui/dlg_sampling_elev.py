@@ -158,13 +158,13 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         if und:
             self.src_nodata = int(und)
 
-    def resample_and_probe(self):
+    def probe_elevation(self):
         """Resampling raster aligned with the grid"""
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
         self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4])
         try:
             os.remove(self.out_raster)
-        except:
+        except OSError:
             pass
         self.get_worp_options()
         sampler = raster2grid(self.grid, self.out_raster, self.src_raster, self.wo)
