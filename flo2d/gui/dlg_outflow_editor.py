@@ -167,7 +167,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
         fid_name = '{} {}'
         all_outflows = self.gutils.execute('SELECT fid, name, type FROM outflow ORDER BY fid;').fetchall()
         if not all_outflows:
-            self.uc.bar_info('There is no outflow defined in the outflow GeoPackage table...')
+            self.uc.bar_info('There is no outflow defined in the database...')
             return
         cur_idx = 0
         for i, row in enumerate(all_outflows):

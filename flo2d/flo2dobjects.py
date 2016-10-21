@@ -97,6 +97,11 @@ class Inflow(GeoPackageUtils):
         self.series_fid = self.row['time_series_fid']
         return self.row
 
+    def get_time_series(self):
+        qry = 'SELECT fid, name FROM inflow_time_series ORDER BY fid;'
+        self.time_series = self.execute(qry).fetchall()
+        return self.time_series
+
     def get_time_series_data(self):
         qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()

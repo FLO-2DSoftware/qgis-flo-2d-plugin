@@ -61,32 +61,35 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.inflowNameCbo.clear()
         fid_name = '{} {}'
         all_inflows = self.gutils.execute('SELECT fid, name, time_series_fid FROM inflow ORDER BY fid;').fetchall()
-        initial = all_inflows[0]
-        for row in all_inflows:
+        if not all_inflows:
+            self.uc.bar_info('There is no inflow defined in the database...')
+            return
+        cur_idx = 0
+        for i, row in enumerate(all_inflows):
             row = [x if x is not None else '' for x in row]
             fid, name, ts_fid = row
             inflow_name = fid_name.format(fid, name).strip()
-            self.inflowNameCbo.addItem(inflow_name)
+            self.inflowNameCbo.addItem(inflow_name, [fid, ts_fid])
             if fid == inflow_fid:
-                initial = row
+                cur_idx = i
             else:
                 pass
-        all_tseries = self.gutils.execute('SELECT fid, name FROM inflow_time_series ORDER BY fid;').fetchall()
-        for row in all_tseries:
+        self.inflowNameCbo.setCurrentIndex(cur_idx)
+        self.in_fid, self.ts_fid = self.inflowNameCbo.itemData(cur_idx)
+        self.inflow = Inflow(self.in_fid, self.con, self.iface)
+        self.inflow.get_row()
+        self.inflow.get_time_series()
+        cur_ts_idx = 0
+        for i, row in enumerate(self.inflow.time_series):
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
             tseries_name = fid_name.format(ts_fid, name).strip()
-            self.tseriesCbo.addItem(tseries_name)
-            if ts_fid in initial:
-                initial.append(name)
+            self.tseriesCbo.addItem(tseries_name, ts_fid)
+            if ts_fid == self.ts_fid:
+                cur_ts_idx = i
             else:
                 pass
-        initial_inflow = fid_name.format(*initial[:2]).strip()
-        initial_series = fid_name.format(*initial[2:]).strip()
-        index = self.inflowNameCbo.findText(initial_inflow, Qt.MatchFixedString)
-        self.inflowNameCbo.setCurrentIndex(index)
-        index = self.tseriesCbo.findText(initial_series, Qt.MatchFixedString)
-        self.tseriesCbo.setCurrentIndex(index)
+        self.tseriesCbo.setCurrentIndex(cur_ts_idx)
         self.populate_inflow_properties()
 
     def populate_inflow_properties(self):
