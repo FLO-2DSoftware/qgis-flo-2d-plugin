@@ -525,7 +525,6 @@ class Flo2D(object):
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_values_tool = GridValuesTool(self.canvas, self.lyrs)
 
-    @connection_required
     def toggle_grid_values_tool(self):
         on = self.info_dock.activeChBox.isChecked()
         self.info_dock.toggle_active(on)
@@ -535,7 +534,6 @@ class Flo2D(object):
         else:
             pass
 
-    @connection_required
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
         self.info_tool.update_lyrs_list()

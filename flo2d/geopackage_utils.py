@@ -23,19 +23,21 @@
 """
 import os
 import traceback
+from functools import wraps
 from user_communication import UserCommunication
 
 
-def connection_required(method):
+def connection_required(fn):
     """
     Checking for active connection object.
     """
-    def wrapper(self):
+    @wraps(fn)
+    def wrapper(self, *args, **kwargs):
         if not self.con:
             self.uc.bar_warn("Define a database connections first!")
             return
         else:
-            return method(self)
+            return fn(self, *args, **kwargs)
     return wrapper
 
 
