@@ -15,6 +15,7 @@ from .utils import load_ui
 from ..utils import is_number
 from ..geopackage_utils import *
 from ..user_communication import UserCommunication
+from ..errors import Flo2dQueryResultNull
 import os
 
 uiDialog, qtBaseClass = load_ui('settings')
@@ -60,6 +61,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         for name, wid in self.widget_map.iteritems():
             qry = '''SELECT value FROM cont WHERE name = ?;'''
             value = self.gutils.execute(qry, (name,)).fetchone()[0]
+            if not value:
+                msg = 'Database query for param {} from cont table return null. Check your DB.'.format(name)
+                raise Flo2dQueryResultNull(msg)
             if isinstance(wid, QLineEdit):
                 wid.setText(str(value))
             elif isinstance(wid, QCheckBox):

@@ -27,3 +27,8 @@ class Flo2dNotString(Flo2dError):
 class Flo2dLayerInvalid(Flo2dError):
     """Raise when a layer is invalid"""
     pass
+
+
+class Flo2dQueryResultNull(Flo2dError):
+    """Raise when db query return None while a value(s) were expected"""
+    pass
