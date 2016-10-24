@@ -112,7 +112,6 @@ class Layers(QObject):
             pass
         return layeritem
 
-
     def list_group_vlayers(self, group=None, only_visible=True, skip_views=False):
         if not group:
             grp = self.root
@@ -777,7 +776,7 @@ class Layers(QObject):
         self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
-        '''If the layer is in editmode, ask users for saving changes and proceeding.'''
+        """If the layer is in editmode, ask users for saving changes and proceeding."""
         l = self.get_layer_by_name(layer_name, group=self.group).layer()
         if l.isEditable():
             # ask user for saving changes
