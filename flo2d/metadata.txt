@@ -1,17 +1,12 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
+# This file contains metadata for your plugin. 
 
-# This file should be included when you package your plugin.# Mandatory items:
-
+# Mandatory items:
 [general]
 name=FLO-2D
 qgisMinimumVersion=2.14
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.2.1
+version=0.2.2
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
