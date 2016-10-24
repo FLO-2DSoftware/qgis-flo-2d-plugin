@@ -6,6 +6,7 @@ In the example below, it is assumed that user is generating a hydraulic model fr
 Creating a new database
 -------------------
 To create a new database:
+
 * In QGIS, from the main menu **Plugins > Flo2D > Settings**
 * A new window will appear:
 
@@ -16,6 +17,36 @@ To create a new database:
 
 * Click **OK**
 
+There should be new groups, subgroups and layers added to your QGIS layer tree.
+
+The main sub-groups we will be interested in during the model build are:
+
+* User Layers
+* Schematic Layers
+
+**User Layers** group consists of FLO-2D building blocks. Users can digitise, add and edit GIS and tabular data through these layers and tables. Once the data are prepared, there will be a function to assign or modify the underlying grid cells based on the inputs.
+
+**Schematic Layers** are the processed information from the User Layers expressed in grid format and ready to be used in a FLO-2D simulation.
+
+In the following sections, we will add various model elements and assign appropriate values.
+
+Creating a new domain
+-------------------
+
+To create a new domain, you need to digitize a new polygon within the **Model Boundary** under **User Layers** group.
+
+Digitizing and editing functions are carried out using the QGIS digitizing tools. For more information, how to use QGIS digitizing tools, `see <https://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/editing_geometry_attributes.html>`_
+
+To add a Model Boundary:
+
+* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select https://docs.qgis.org/2.2/en/_images/mActionToggleEditing.png **Toggle Editing**
+* From the Digitizing toolbar, click on https://docs.qgis.org/2.2/en/_images/mActionCapturePolygon.png
+* Digitize the extent of the boundary and right-click to finish the polygon
+* Once finished with the digitizing, the attribute table will appear:
+
+	* Under **cell_size** type the appropriate cell size
+	
+.. image:: images/BoundarLayerAttrib.png
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
