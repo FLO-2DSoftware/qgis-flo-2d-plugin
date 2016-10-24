@@ -67,7 +67,7 @@ To create the grid for the domain, we need to:
 
 The above function should automatically build a grid based on the geometry and attribute value (for cell size) you have defined in the previous step.
 
-.. |CreateGrid| image:: ../../../flo2d/img/create_grid.svg
+.. |CreateGrid| image:: img/create_grid.png
 
 .. figure:: img/CreateGrid.png
 	:align: center
@@ -94,7 +94,7 @@ To interpolate elevation and assing them to the grid:
 The above process should populate elevation values within the ZZZ column of your schematized grid.
 
 
-.. |SampleElev| image:: img/sample_elev.svg
+.. |SampleElev| image:: img/sample_elev.png
 
 
 Assigning roughness values
@@ -108,7 +108,7 @@ Assigning roughness to grids
 -------------------
 As default, all roughness values within the grid are set to the default value. To overwrite the default values with the ones from **Roughness** layer (see the previous setp), you can use  |SampleManning| tool.
 
-.. |SampleElev| image:: img/sample_manning.svg
+.. |SampleManning| image:: img/sample_manning.png
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
