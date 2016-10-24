@@ -248,7 +248,6 @@ class Flo2D(object):
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
 
-
     def call_methods(self, calls, debug, *args):
         for call in calls:
             dat = call.split('_')[-1].upper() + '.DAT'
@@ -501,9 +500,12 @@ class Flo2D(object):
     @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
-        self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
-        self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
-        self.dlg_xsec_editor.show()
+        try:
+            self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
+            self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
+            self.dlg_xsec_editor.show()
+        except IndexError:
+            self.uc.show_warn('There is no cross-section data to display!')
 
     @connection_required
     def show_inflow_editor(self, fid=None):
