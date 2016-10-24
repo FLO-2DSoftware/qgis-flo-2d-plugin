@@ -39,8 +39,8 @@ Digitizing and editing functions are carried out using the QGIS digitizing tools
 
 To add a Model Boundary:
 
-* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select **|Toggle Editing|**
-* From the Digitizing toolbar, click on |AddFeature|
+* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select |ToggleEditing| **Toggle Editing**
+* From the Digitizing toolbar, click on |AddFeature| **Add Feature**
 * Digitize the extent of the boundary and right-click to finish the polygon
 * Once finished with the digitizing, the attribute table will appear:
 
@@ -48,17 +48,50 @@ To add a Model Boundary:
 
 * Save the edits and toggle editting back
 
-.. |Toggle Editing| image:: images/mActionToggleEditing.png 
-.. |AddFeature| image:: images/mActionCapturePolygon.png
+.. |ToggleEditing| image:: img/mActionToggleEditing.png 
+.. |AddFeature| image:: img/mActionCapturePolygon.png
 	
-.. image:: images/BoundarLayerAttrib.png
+.. figure:: img/BoundarLayerGeom.png
 	:align: center
+	:caption: Domain extent
+	
+.. figure:: img/BoundarLayerAttrib.png
+	:align: center
+	:caption: Attribute table for the domain extent
 
 
+To create the grid for the domain, we need to:
 
-To create a domain, we need to:
+* In QGIS from the main menu, **Plugins > Flo2D > |CreateGrid| Create grid **
 
-* In QGIS from the main menu, **Plugins > Flo2D >  **
+The above function should automatically build a grid based on the geometry and attribute value (for cell size) you have defined in the previous step.
+
+.. |CreateGrid| image:: ../../../flo2d/img/create_grid.svg
+
+.. figure:: img/CreateGrid.png
+	:align: center
+	:caption: Generated grid based on the model bounday layer
+	
+Assigning elevation to grids
+-------------------
+
+To assign, elevation to a grid, you can load your terrain model in QGIS first. The plugin will use various GDAL methods for interpolating elevation values and assign them to the grid. `See this page <http://gdal.org/gdalwarp.html>`_ for more details of interpolation methods.
+
+The **Grid elevation sampling** tool supports rasters from a different projection (CRS).
+
+To interpolate elevation and assing them to the grid:
+
+* In QGIS from the main menu, **Plugins > Flo2D > |SampleElev| Sampling grid elevation **
+* A new window will appear
+	
+	* Select your elevation raster from the loaded layers in QGIS or click on **Browse** to point to a raster
+	* Define the NODATA
+	* Select the interpolation method for sampling
+	* To speed up your process, select **Multithread**
+* Click **OK**
+	
+The above process should populate elevation values within the ZZZ column of your schematized grid.
+.. |SampleElev| image:: ../../../flo2d/img/sample_elev.svg
 
 
 Import GDS ASCII Files (Optional)
