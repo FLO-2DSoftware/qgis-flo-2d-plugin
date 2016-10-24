@@ -8,7 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QMessageBox
+from PyQt4.QtGui import QMessageBox, QProgressBar
+from PyQt4.QtCore import Qt
 from qgis.gui import QgsMessageBar
 from qgis.core import QgsMessageLog
 
@@ -72,3 +73,17 @@ class UserCommunication(object):
             return True if m.exec_() == QMessageBox.Yes else False
         else:
             print(msg)
+
+    def progress_bar(self, msg, minimum=0, maximum=0, init_value=0):
+        pmb = self.iface.messageBar().createMessage(msg)
+        pb = QProgressBar()
+        pb.setMinimum(minimum)
+        pb.setMaximum(maximum)
+        pb.setValue(init_value)
+        pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        pmb.layout().addWidget(pb)
+        self.iface.messageBar().pushWidget(pmb, self.iface.messageBar().INFO)
+        return pb
+
+    def clear_bar_messages(self):
+        self.iface.messageBar().clearWidgets()

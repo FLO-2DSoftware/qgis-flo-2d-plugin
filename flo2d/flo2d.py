@@ -424,14 +424,14 @@ class Flo2D(object):
             self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
             return
         self.get_cell_size()
+        self.uc.progress_bar('Creating grid...')
         self.gutils = GeoPackageUtils(self.con, self.iface)
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         result = square_grid(self.gutils, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         if grid_lyr:
             grid_lyr.triggerRepaint()
-        QApplication.restoreOverrideCursor()
+        self.uc.clear_bar_messages()
         if result > 0:
             self.uc.show_info("Grid created!")
         else:
