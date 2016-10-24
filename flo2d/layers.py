@@ -11,7 +11,7 @@
 import os
 from PyQt4.QtCore import QObject
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QMessageBox
+from PyQt4.QtGui import QColor
 from utils import *
 from collections import OrderedDict
 
@@ -81,7 +81,6 @@ class Layers(QObject):
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
         return tree_lyr.layer().id()
-
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:
@@ -789,3 +788,5 @@ class Layers(QObject):
             else:
                 self.uc.bar_info('Action cancelled', dur=3)
                 return False
+        else:
+            return True

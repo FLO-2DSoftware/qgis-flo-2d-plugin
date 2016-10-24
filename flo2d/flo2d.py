@@ -421,6 +421,7 @@ class Flo2D(object):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
         if not self.lyrs.save_edits_and_proceed("Model Boundary"):
+            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
             return
         self.get_cell_size()
         self.gutils = GeoPackageUtils(self.con, self.iface)
@@ -439,6 +440,7 @@ class Flo2D(object):
     @connection_required
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
+            self.uc.bar_warn("There is no any roughness polygons! Please digitize them before running tool.")
             return
         rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
         try:
@@ -478,6 +480,7 @@ class Flo2D(object):
             if not self.uc.question(q):
                 return
         if not self.lyrs.save_edits_and_proceed("Blocked areas"):
+            self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
@@ -514,7 +517,7 @@ class Flo2D(object):
             self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
             self.dlg_xsec_editor.show()
         except IndexError:
-            self.uc.show_warn('There is no cross-section data to display!')
+            self.uc.bar_warn('There is no cross-section data to display!')
 
     @connection_required
     def show_inflow_editor(self, fid=None):
@@ -539,7 +542,7 @@ class Flo2D(object):
             self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
             self.dlg_rain_editor.show()
         except TypeError:
-            self.uc.show_warn('There is no rain data to display!')
+            self.uc.bar_warn('There is no rain data to display!')
 
     @connection_required
     def show_evap_editor(self):
@@ -548,7 +551,7 @@ class Flo2D(object):
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
         except TypeError:
-            self.uc.show_warn('There is no evaporation data to display!')
+            self.uc.bar_warn('There is no evaporation data to display!')
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
