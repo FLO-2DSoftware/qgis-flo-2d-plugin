@@ -35,12 +35,12 @@ Creating a new domain
 
 To create a new domain, you need to digitize a new polygon within the **Model Boundary** under **User Layers** group.
 
-Digitizing and editing functions are carried out using the QGIS digitizing tools. For more information, how to use QGIS digitizing tools, `see <https://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/editing_geometry_attributes.html>`_
+Digitizing and editing functions are carried out using the QGIS digitizing tools. For more information, how to use QGIS digitizing tools, `see QGIS manual <https://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/editing_geometry_attributes.html>`_
 
 To add a Model Boundary:
 
-* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select https://docs.qgis.org/2.2/en/_images/mActionToggleEditing.png **Toggle Editing**
-* From the Digitizing toolbar, click on https://docs.qgis.org/2.2/en/_images/mActionCapturePolygon.png
+* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select .. image:: https://docs.qgis.org/2.2/en/_images/mActionToggleEditing.png **Toggle Editing**
+* From the Digitizing toolbar, click on .. image:: https://docs.qgis.org/2.2/en/_images/mActionCapturePolygon.png
 * Digitize the extent of the boundary and right-click to finish the polygon
 * Once finished with the digitizing, the attribute table will appear:
 
