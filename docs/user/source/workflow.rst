@@ -7,7 +7,7 @@ Creating a new database
 -------------------
 To create a new database:
 
-* In QGIS, from the main menu **Plugins > Flo2D > Settings**
+* In QGIS, from the main menu **Plugins** > **Flo2D** > **Settings**
 * A new window will appear:
 
 	* Click on **Create**
@@ -52,13 +52,13 @@ To add a Model Boundary:
 
 .. |AddFeature| image:: img/mActionCapturePolygon.png
 	
-.. figure:: img/BoundarLayerGeom.png
+.. image:: img/BoundarLayerGeom.png
 	:align: center
-	:caption: Domain extent
+	:alt: Domain extent
 	
-.. figure:: img/BoundarLayerAttrib.png
+.. image:: img/BoundarLayerAttrib.png
 	:align: center
-	:caption: Attribute table for the domain extent
+	:alt: Attribute table for the domain extent
 
 
 To create the grid for the domain, we need to:
@@ -69,7 +69,7 @@ The above function should automatically build a grid based on the geometry and a
 
 .. |CreateGrid| image:: img/create_grid.png
 
-.. figure:: img/CreateGrid.png
+.. image:: img/CreateGrid.png
 	:align: center
 	:caption: Generated grid based on the model bounday layer
 	
@@ -82,7 +82,7 @@ The **Grid elevation sampling** tool supports rasters from a different projectio
 
 To interpolate elevation and assing them to the grid:
 
-* In QGIS from the main menu, **Plugins > Flo2D > |SampleElev| Sampling grid elevation **
+* In QGIS from the main menu, **Plugins** > **Flo2D**  > |SampleElev| **Sampling grid elevation **
 * A new window will appear
 	
 	* Select your elevation raster from the loaded layers in QGIS or click on **Browse** to point to a raster
