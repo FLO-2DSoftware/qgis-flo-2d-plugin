@@ -52,7 +52,7 @@ To add a Model Boundary:
 
 .. |AddFeature| image:: img/mActionCapturePolygon.png
 	
-.. image:: img/BoundarLayerGeom.png
+.. image:: img/BoundaryLayerGeom.png
 	:align: center
 	:alt: Domain extent
 	
@@ -63,7 +63,7 @@ To add a Model Boundary:
 
 To create the grid for the domain, we need to:
 
-* In QGIS from the main menu, **Plugins > **Flo2D** > |CreateGrid| **Create grid**
+* In QGIS from the main menu, **Plugins** > **Flo2D** > |CreateGrid| **Create grid**
 
 The above function should automatically build a grid based on the geometry and attribute value (for cell size) you have defined in the previous step.
 
