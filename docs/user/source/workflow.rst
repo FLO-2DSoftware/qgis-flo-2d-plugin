@@ -39,14 +39,22 @@ Digitizing and editing functions are carried out using the QGIS digitizing tools
 
 To add a Model Boundary:
 
-* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select .. image:: https://docs.qgis.org/2.2/en/_images/mActionToggleEditing.png **Toggle Editing**
-* From the Digitizing toolbar, click on .. image:: https://docs.qgis.org/2.2/en/_images/mActionCapturePolygon.png
+* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select .. image:: images/mActionToggleEditing.png **Toggle Editing**
+* From the Digitizing toolbar, click on .. image:: images/mActionCapturePolygon.png
 * Digitize the extent of the boundary and right-click to finish the polygon
 * Once finished with the digitizing, the attribute table will appear:
 
-	* Under **cell_size** type the appropriate cell size
+	* Under **cell_size** type the appropriate cell size and click **OK**
 	
 .. image:: images/BoundarLayerAttrib.png
+	:align: center
+
+* Save the edits and toggle editting back
+
+To create a domain, we need to:
+
+* In QGIS from the main menu, **Plugins > Flo2D >  **
+
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
