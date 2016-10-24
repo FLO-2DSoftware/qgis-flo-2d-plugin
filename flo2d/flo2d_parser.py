@@ -383,8 +383,7 @@ class ParseDAT(object):
         par = self.single_parser(arf)
         head = []
         data = defaultdict(list)
-        arf_row = [1]
-        arf_row += [None] * 8
+        arf_row = [1] * 9
         for row in par:
             char = row[0]
             if char == 'S':

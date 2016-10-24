@@ -85,7 +85,7 @@ def calculate_arfwrf(grid, areas):
     octagon_side = grid_side / 2.414
     half_square = grid_side * 0.5
     half_octagon = octagon_side * 0.5
-    empty_wrf = (None,) * 8
+    full_wrf = (1,) * 8
     for feat in grid.getFeatures():
         geom = feat.geometry()
         fids = index.intersects(geom.boundingBox())
@@ -99,7 +99,7 @@ def calculate_arfwrf(grid, areas):
                 centroid = geom.centroid()
                 centroid_wkt = centroid.exportToWkt()
                 if arf > 0.95:
-                    yield (centroid_wkt, feat.id(), 1) + empty_wrf
+                    yield (centroid_wkt, feat.id(), 1) + full_wrf
                     continue
                 else:
                     pass

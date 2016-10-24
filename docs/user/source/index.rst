@@ -8,7 +8,8 @@ Contents:
 
    installation
    database
-   workflow
+   creating_new_model
+   utilities
    import_export_gds
    
 
