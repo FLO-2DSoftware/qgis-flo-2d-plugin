@@ -414,7 +414,7 @@ class Flo2D(object):
                 else:
                     return None
         except StopIteration:
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no model boundary! Please digitize it before running the tool.")
 
     @connection_required
     def create_grid(self):
@@ -473,6 +473,11 @@ class Flo2D(object):
     @connection_required
     def eval_arfwrf(self):
         self.gutils = GeoPackageUtils(self.con, self.iface)
+        if not self.gutils.is_table_empty('arfwrf'):
+            q = 'There are some ARFs and WRFs already defined in the database. Overwrite it?\n\n'
+            q += 'Please, note that the new reduction factors will be evaluated for existing blocked ares ONLY.'
+            if not self.uc.question(q):
+                return
         if not self.lyrs.save_edits_and_proceed("Blocked areas"):
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -480,6 +485,10 @@ class Flo2D(object):
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
             evaluate_arfwrf(self.gutils, grid_lyr, arf_lyr)
+            arf_lyr.reload()
+            self.lyrs.update_layer_extents(arf_lyr)
+            self.iface.mapCanvas().clearCache()
+            arf_lyr.triggerRepaint()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ARF and WRF values calculated!")
         except Exception as e:

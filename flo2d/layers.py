@@ -288,8 +288,8 @@ class Layers(QObject):
                 'sgroup': 'User Layers',
                 'styles': ['inflow.qml'],
                 'attrs_edit_widgets': {
-                    2: {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    3: {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
+                    'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
+                    'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
                 }
             }),
             ('outflow', {
@@ -385,7 +385,7 @@ class Layers(QObject):
                 'sgroup': 'Schematic Layers',
                 'styles': ['chan_confluences.qml'],
                 'attrs_edit_widgets': {
-                    1: {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
+                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
                 }
             }),
 
@@ -717,10 +717,12 @@ class Layers(QObject):
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                c = self.get_layer_tree_item(lyr_id).layer().editFormConfig()
+                lyr = self.get_layer_tree_item(lyr_id).layer()
+                c = lyr.editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].iteritems():
-                    c.setWidgetType(attr, widget_data['name'])
-                    c.setWidgetConfig(attr, widget_data['config'])
+                    attr_idx = lyr.fieldNameIndex(attr)
+                    c.setWidgetType(attr_idx, widget_data['name'])
+                    c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
                 pass # no attributes edit widgets config
 

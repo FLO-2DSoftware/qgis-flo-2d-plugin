@@ -60,10 +60,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
     def read(self):
         for name, wid in self.widget_map.iteritems():
             qry = '''SELECT value FROM cont WHERE name = ?;'''
-            value = self.gutils.execute(qry, (name,)).fetchone()[0]
-            if not value:
+            row = self.gutils.execute(qry, (name,)).fetchone()
+            if not row:
                 msg = 'Database query for param {} from cont table return null. Check your DB.'.format(name)
                 raise Flo2dQueryResultNull(msg)
+            value = row[0]
             if isinstance(wid, QLineEdit):
                 wid.setText(str(value))
             elif isinstance(wid, QCheckBox):
@@ -214,12 +215,13 @@ class SettingsDialog(qtBaseClass, uiDialog):
             ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
             updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
+            print name
             if isinstance(wid, QLineEdit):
                 value = wid.text()
             elif isinstance(wid, QSpinBox):
                 value = wid.value()
             elif isinstance(wid, QDoubleSpinBox):
-                value = wid.value()
+                value = str(wid.value())
             elif isinstance(wid, QCheckBox):
                 value = 1 if wid.isChecked() else 0
             elif name == 'PROJ':

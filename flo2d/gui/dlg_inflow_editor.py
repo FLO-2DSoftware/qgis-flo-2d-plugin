@@ -14,6 +14,7 @@ from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow
 from plot_widget import PlotWidget
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('inflow_editor')
 
@@ -28,6 +29,7 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.cur_inflow_fid = inflow_fid
         self.inflow = None
         self.gutils = GeoPackageUtils(con, iface)
