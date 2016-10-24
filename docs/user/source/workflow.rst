@@ -3,9 +3,19 @@ Working With the Plugin
 
 In the example below, it is assumed that user is generating a hydraulic model from scratch. First step to build a model, is to create fresh database, where all the model files will reside.
 
-Database Connection
+Creating a new database
 -------------------
-Either create new GeoPackage or connect to existing one.
+To create a new database:
+* In QGIS, from the main menu **Plugins > Flo2D > Settings**
+* A new window will appear:
+
+	* Click on **Create**
+	* In the new window, type in your database name and hit **OK**
+	* Select the projection in the next window
+	* Set the default **Grid cell size** and the **Manning's n**
+
+* Click **OK**
+
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
