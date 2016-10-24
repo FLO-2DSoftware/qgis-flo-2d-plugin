@@ -33,14 +33,12 @@ Planning meeting
 -  First half (1 hours):
 
    -  Select stories that might be achievable in that Sprint
-   -  Discuss exact requirements/specification for stories and write it
-      down
+   -  Discuss exact requirements/specification for stories and write it down
 
 -  Second half (1 hours):
 
    -  Decompose stories to issues
-   -  Disscuss technical concept to achieve goals (sometimes senior
-      developer may be needed)
+   -  Disscuss technical concept to achieve goals (sometimes senior developer may be needed)
 
 Daily Scrum (Stand-up)
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -62,13 +60,15 @@ Sprint Retrospective meeting
 -  1 hour, every other Wednesday evening
 -  Attendees: scrum master, dev team, product owner
 -  Agenda:
--  Reflects on the past Sprint
--  Identifies and agrees on continuous process improvement actions
+
+   -  Reflects on the past Sprint
+   -  Identifies and agrees on continuous process improvement actions
 
 -  Questions:
--  What went well during the sprint cycle?
--  What went wrong during the sprint cycle?
--  What could we do differently to improve?
+
+   -  What went well during the sprint cycle?
+   -  What went wrong during the sprint cycle?
+   -  What could we do differently to improve?
 
 Sprint Review meeting
 ~~~~~~~~~~~~~~~~~~~~~
@@ -76,6 +76,6 @@ Sprint Review meeting
 -  1 hour, every other Thursday evening
 -  Attendees: (scrum master), (dev team), product owner, stakeholders
 -  Agenda:
--  Reviews the work that was completed and the planned work that was not
-   completed
--  Presents the completed work to the stakeholders (a.k.a. the demo)
+
+   -  Reviews the work that was completed and the planned work that was not completed
+   -  Presents the completed work to the stakeholders (a.k.a. the demo)
