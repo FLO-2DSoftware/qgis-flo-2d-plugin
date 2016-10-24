@@ -387,33 +387,23 @@ class Flo2D(object):
             - cont table
             - ask user
         """
-        try:
-            bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-            bfeat = bl.getFeatures().next()
-            if bfeat['cell_size']:
-                cs = bfeat['cell_size']
+        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bfeat = bl.getFeatures().next()
+        if bfeat['cell_size']:
+            cs = bfeat['cell_size']
+            self.gutils.set_cont_par('CELLSIZE', cs)
+        else:
+            cs = self.gutils.get_cont_par('CELLSIZE')
+            cs = None if cs == '' else cs
+        if cs:
+            return cs
+        else:
+            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999)
+            if ok:
+                cs = r
+                self.gutils.set_cont_par('CELLSIZE', cs)
             else:
-                cs = self.gutils.get_cont_par("CELLSIZE")
-                if cs == '':
-                    cs = None
-                else:
-                    pass
-            if cs:
-                return cs
-            else:
-                r, ok = QInputDialog.getDouble(None,
-                                               "Grid Cell Size",
-                                               "Enter grid element cell size",
-                                               value=100,
-                                               min=0.1,
-                                               max=99999)
-                if ok:
-                    cs = r
-                    self.gutils.set_cont_par('CELLSIZE', cs)
-                else:
-                    return None
-        except StopIteration:
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running the tool.")
+                return None
 
     @connection_required
     def create_grid(self):
@@ -421,6 +411,8 @@ class Flo2D(object):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
         if not self.lyrs.save_edits_and_proceed("Model Boundary"):
+            return
+        if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
             return
         self.get_cell_size()
@@ -440,6 +432,8 @@ class Flo2D(object):
     @connection_required
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
+            return
+        if self.gutils.is_table_empty('user_roughness'):
             self.uc.bar_warn("There is no any roughness polygons! Please digitize them before running tool.")
             return
         rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
@@ -456,6 +450,9 @@ class Flo2D(object):
 
     @connection_required
     def get_elevation(self):
+        if self.gutils.is_table_empty('user_model_boundary'):
+            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
         ok = dlg.exec_()
@@ -473,13 +470,14 @@ class Flo2D(object):
 
     @connection_required
     def eval_arfwrf(self):
-        self.gutils = GeoPackageUtils(self.con, self.iface)
         if not self.gutils.is_table_empty('arfwrf'):
             q = 'There are some ARFs and WRFs already defined in the database. Overwrite it?\n\n'
             q += 'Please, note that the new reduction factors will be evaluated for existing blocked ares ONLY.'
             if not self.uc.question(q):
                 return
         if not self.lyrs.save_edits_and_proceed("Blocked areas"):
+            return
+        if self.gutils.is_table_empty('blocked_areas'):
             self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
