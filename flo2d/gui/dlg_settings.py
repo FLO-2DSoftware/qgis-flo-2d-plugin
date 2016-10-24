@@ -140,17 +140,14 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 del rc
                 srsid = crsid
             else:
-                txt = 'There is a coordinate system defined in the GeoPackage.\n'
-                txt += 'Would you like to use it?\n\nDetails:\n'
-                txt += 'Name: {}\n'.format(rt[0])
-                txt += 'SRS id: {}\n'.format(rt[1])
-                txt += 'Organization: {}\n'.format(rt[2])
-                txt += 'Organization id: {}\n'.format(rt[3])
-                txt += 'Definition: {}'.format(rt[4])
-                reply = QMessageBox.question(self, 'Use existing SRS?',
-                    txt,
-                    QMessageBox.No | QMessageBox.Yes)
-                if reply == QMessageBox.Yes:
+                q = 'There is a coordinate system defined in the GeoPackage.\n'
+                q += 'Would you like to use it?\n\nDetails:\n'
+                q += 'Name: {}\n'.format(rt[0])
+                q += 'SRS id: {}\n'.format(rt[1])
+                q += 'Organization: {}\n'.format(rt[2])
+                q += 'Organization id: {}\n'.format(rt[3])
+                q += 'Definition: {}'.format(rt[4])
+                if self.uc.question(q):
                     srsid = rt[1]
                 else:
                     return

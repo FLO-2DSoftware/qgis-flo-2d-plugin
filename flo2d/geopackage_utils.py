@@ -318,3 +318,12 @@ class GeoPackageUtils(object):
         else:
             pass
         return info
+
+    def update_layer_extents(self, table_name):
+        sql = '''UPDATE gpkg_contents SET
+            min_x = (SELECT MIN(MbrMinX(GeomFromGPB(geom))) FROM "{0}"),
+            min_y = (SELECT MIN(MbrMinY(GeomFromGPB(geom))) FROM "{0}"),
+            max_x = (SELECT MAX(MbrMaxX(GeomFromGPB(geom))) FROM "{0}"),
+            max_y = (SELECT MAX(MbrMaxY(GeomFromGPB(geom))) FROM "{0}")
+            WHERE table_name='{0}';'''.format(table_name)
+        self.execute(sql)

@@ -11,7 +11,7 @@
 import os
 from PyQt4.QtCore import QObject
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor
+from PyQt4.QtGui import QColor, QMessageBox
 from utils import *
 from collections import OrderedDict
 
@@ -19,10 +19,12 @@ from qgis.core import (
     QgsProject,
     QgsMapLayerRegistry,
     QgsFeatureRequest,
-    QgsVectorLayer
+    QgsVectorLayer,
+    QgsRectangle
 )
 from qgis.gui import QgsRubberBand
 from errors import *
+from user_communication import UserCommunication
 
 
 class Layers(QObject):
@@ -36,6 +38,7 @@ class Layers(QObject):
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = None
         self.lyrs_to_repaint = []
 
@@ -54,19 +57,11 @@ class Layers(QObject):
                 pass
         else:
             grp = self.get_group(group)
-        # if a layer exists with the same uri, reload it
+        # if a layer exists with the same uri, update its extents
         lyr_exists = self.layer_exists_in_group(uri, group)
         if lyr_exists:
-            # get the parent tree node and reload the layer completely
-            p = self.get_layer_tree_item(lyr_exists).parent()
-            self.remove_layer(lyr_exists)
-            tree_lyr = p.addLayer(vlayer)
-
-#            # try this - sometimes works....:
-#            tree_lyr = self.get_layer_by_name(name, group)
-#            tree_lyr.layer().reload()
-#            tree_lyr.layer().updateExtents()
-#            return tree_lyr.layer().id()
+            tree_lyr = self.get_layer_tree_item(lyr_exists)
+            self.update_layer_extents(tree_lyr.layer())
         else:
             # add layer to the group of the tree
             tree_lyr = grp.addLayer(vlayer)
@@ -193,6 +188,36 @@ class Layers(QObject):
                 if lyr.layer().dataProvider().dataSourceUri() == uri:
                     return lyr.layer().id()
         return None
+
+    def get_layer_table_name(self, layer):
+        t = layer.dataProvider().dataSourceUri().split('=')[1]
+        if t:
+            return t
+        else:
+            return None
+
+    def update_layer_extents(self, layer):
+        # check if it is a spatial table
+        t = self.get_layer_table_name(layer)
+        sql = '''SELECT table_name FROM gpkg_contents WHERE table_name=? AND data_type = 'features'; '''
+        try:
+            is_spatial = self.gutils.execute(sql, (t,)).fetchone()[0]
+        except:
+            return
+        if is_spatial:
+            self.gutils.update_layer_extents(t)
+            # why, oh why this is not working.... ?
+            # layer.reload()
+            # layer.updateExtents()
+            sql= '''SELECT min_x, min_y, max_x, max_y FROM gpkg_contents WHERE table_name=?;'''
+            min_x, min_y, max_x, max_y = self.gutils.execute(sql, (t,)).fetchone()
+            try:
+                # works if min & max not null
+                layer.setExtent(QgsRectangle(min_x, min_y, max_x, max_y))
+            except:
+                return
+        else:
+            pass
 
     @staticmethod
     def remove_layer_by_name(name):
@@ -750,3 +775,16 @@ class Layers(QObject):
         extent = grid.layer().extent()
         self.iface.mapCanvas().setExtent(extent)
         self.iface.mapCanvas().refresh()
+
+    def save_edits_and_proceed(self, layer_name):
+        '''If the layer is in editmode, ask users for saving changes and proceeding.'''
+        l = self.get_layer_by_name(layer_name, group=self.group).layer()
+        if l.isEditable():
+            # ask user for saving changes
+            q = '{} layer is in edit mode. Save changes and proceed?'.format(layer_name)
+            if self.uc.question(q):
+                l.commitChanges()
+                return True
+            else:
+                self.uc.bar_info('Action cancelled', dur=3)
+                return False

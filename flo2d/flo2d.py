@@ -238,8 +238,7 @@ class Flo2D(object):
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n'
             msg += '{}\n\n Load the model?'.format(old_gpkg)
-            r = self.uc.question(msg)
-            if r == QMessageBox.Yes:
+            if self.uc.question(msg):
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 dlg_settings.connect(old_gpkg)
                 self.con = dlg_settings.con
@@ -311,8 +310,8 @@ class Flo2D(object):
                 empty = self.f2g.is_table_empty('grid')
                 # check if a grid exists in the grid table
                 if not empty:
-                    r = self.uc.question('There is a grid already defined in GeoPackage. Overwrite it?')
-                    if r == QMessageBox.Yes:
+                    q = 'There is a grid already defined in GeoPackage. Overwrite it?'
+                    if self.uc.question(q):
                         pass
                     else:
                         self.uc.bar_info('Import cancelled', dur=3)
@@ -419,15 +418,11 @@ class Flo2D(object):
 
     @connection_required
     def create_grid(self):
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
-        if bl.isEditable():
-            # ask user for saving changes
-            r = self.uc.question('Model boundary layer is in edit mode. Save changes and create the grid?')
-            if r == QMessageBox.Yes:
-                bl.commitChanges()
-            else:
-                self.uc.bar_info('Creating grid cancelled', dur=3)
+        if not self.gutils.is_table_empty('grid'):
+            if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
+        if not self.lyrs.save_edits_and_proceed("Model Boundary"):
+            return
         self.get_cell_size()
         self.gutils = GeoPackageUtils(self.con, self.iface)
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -444,15 +439,9 @@ class Flo2D(object):
 
     @connection_required
     def get_roughness(self):
+        if not self.lyrs.save_edits_and_proceed("Roughness"):
+            return
         rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
-        if rough_lyr.isEditable():
-            # ask user for saving changes
-            r = self.uc.question('Roughness layer is in edit mode. Save changes and sample values on the grid?')
-            if r == QMessageBox.Yes:
-                rough_lyr.commitChanges()
-            else:
-                self.uc.bar_info('Sampling cancelled', dur=3)
-                return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
@@ -484,6 +473,8 @@ class Flo2D(object):
     @connection_required
     def eval_arfwrf(self):
         self.gutils = GeoPackageUtils(self.con, self.iface)
+        if not self.lyrs.save_edits_and_proceed("Blocked areas"):
+            return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()

@@ -69,6 +69,6 @@ class UserCommunication(object):
             m.setText(msg)
             m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
             m.setDefaultButton(QMessageBox.No)
-            return m.exec_()
+            return True if m.exec_() == QMessageBox.Yes else False
         else:
             print(msg)
