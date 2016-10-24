@@ -60,6 +60,7 @@ Sprint Retrospective meeting
 -  1 hour, every other Wednesday evening
 -  Attendees: scrum master, dev team, product owner
 -  Agenda:
+
    -  Reflects on the past Sprint
    -  Identifies and agrees on continuous process improvement actions
 
