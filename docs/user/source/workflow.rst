@@ -94,7 +94,7 @@ To interpolate elevation and assing them to the grid:
 The above process should populate elevation values within the ZZZ column of your schematized grid.
 
 
-.. |SampleElev| image:: ../../../flo2d/img/sample_elev.svg
+.. |SampleElev| image:: img/sample_elev.svg
 
 
 Assigning roughness values
@@ -108,7 +108,7 @@ Assigning roughness to grids
 -------------------
 As default, all roughness values within the grid are set to the default value. To overwrite the default values with the ones from **Roughness** layer (see the previous setp), you can use  |SampleManning| tool.
 
-.. |SampleElev| image:: ../../../flo2d/img/sample_manning.svg
+.. |SampleElev| image:: img/sample_manning.svg
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
