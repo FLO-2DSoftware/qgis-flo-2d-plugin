@@ -1,10 +1,10 @@
 Creating a new model
-=======================
+====================
 
 In the example below, it is assumed that user is generating a hydraulic model from scratch. First step to build a model, is to create fresh database, where all the model files will reside.
 
 Creating a new database
--------------------
+-----------------------
 To create a new database:
 
 * In QGIS, from the main menu **Plugins** > **Flo2D** > **Settings**
@@ -31,7 +31,7 @@ The main sub-groups we will be interested in during the model build are:
 In the following sections, we will add various model elements and assign appropriate values.
 
 Creating a new domain
--------------------
+---------------------
 
 To create a new domain, you need to digitize a new polygon within the **Model Boundary** under **User Layers** group.
 
@@ -63,7 +63,7 @@ To add a Model Boundary:
 
 To create the grid for the domain, we need to:
 
-* In QGIS from the main menu, **Plugins > **Flo2D** > |CreateGrid| **Create grid **
+* In QGIS from the main menu, **Plugins > **Flo2D** > |CreateGrid| **Create grid**
 
 The above function should automatically build a grid based on the geometry and attribute value (for cell size) you have defined in the previous step.
 
@@ -74,7 +74,7 @@ The above function should automatically build a grid based on the geometry and a
 	:alt: Generated grid based on the model bounday layer
 	
 Assigning elevation to grids
--------------------
+----------------------------
 
 To assign, elevation to a grid, you can load your terrain model in QGIS first. The plugin will use various GDAL methods for interpolating elevation values and assign them to the grid. `See this page <http://gdal.org/gdalwarp.html>`_ for more details of interpolation methods.
 
@@ -82,7 +82,7 @@ The **Grid elevation sampling** tool supports rasters from a different projectio
 
 To interpolate elevation and assing them to the grid:
 
-* In QGIS from the main menu, **Plugins** > **Flo2D**  > |SampleElev| **Sampling grid elevation **
+* In QGIS from the main menu, **Plugins** > **Flo2D**  > |SampleElev| **Sampling grid elevation**
 * A new window will appear
 	
 	* Select your elevation raster from the loaded layers in QGIS or click on **Browse** to point to a raster
@@ -98,7 +98,8 @@ The above process should populate elevation values within the **elevation** colu
 
 
 Editing roughness layer
--------------------
+-----------------------
+
 To assign roughness values, you need to edit the **Roughness** layer under **User Layers**.
 
 Similar to the **Boundary Layer**, you can digitize a polygon and assign the Manning's n value to the relevant attribute table. You can digitize multiple layers to represent various roughness values.
@@ -108,7 +109,8 @@ Similar to the **Boundary Layer**, you can digitize a polygon and assign the Man
 	:alt: Generated grid based on the model bounday layer
 
 Assigning roughness to grids
--------------------
+----------------------------
+
 As default, all roughness values within the grid are set to the default value. To overwrite the default values with the ones from **Roughness** layer (see the previous setp), you can use  |SampleManning| tool.
 
 .. |SampleManning| image:: img/sample_manning.png
@@ -118,7 +120,9 @@ As default, all roughness values within the grid are set to the default value. T
 	:alt: Generated grid based on the model bounday layer
 
 Defining area and width reduction factor layers
--------------------
-User can digitize polygons for ARF and WRF under **Blocked areas" layer. No attribute layer is needed for the ARF and WRF. 
+-----------------------------------------------
+User can digitize polygons for ARF and WRF under **Blocked areas** layer. No attribute layer is needed for the ARF and WRF. 
 
 To generate the factors and apply them to the grid, you can use |awfarf| **Evaluate Reduction Factors** tool.
+
+.. |awfarf| image:: img/eval_arfwrf.png

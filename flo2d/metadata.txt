@@ -24,7 +24,15 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.2.1 Import/Export tools
+changelog=0.2.2 New features:
+ - Model generation tools 
+ - Added User Layers for boundary, roughness, blocked areas
+ - Added plot tools for time series and cross section
+ - Added info tool for model elements
+ - Added algorithms to probe elevation data
+ - Added roughness probing function
+ - Database restructuring
+ <p> 0.2.1 Import/Export tools
 
 # Tags are comma separated with spaces allowed
 tags=flow, 2d, grid, preprocess, geopackage
