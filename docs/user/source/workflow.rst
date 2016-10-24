@@ -1,6 +1,8 @@
 Working With the Plugin
 =======================
 
+In the example below, it is assumed that user is generating a hydraulic model from scratch. First step to build a model, is to create fresh database, where all the model files will reside.
+
 Database Connection
 -------------------
 Either create new GeoPackage or connect to existing one.

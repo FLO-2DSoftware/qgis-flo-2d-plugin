@@ -9,8 +9,8 @@ Contents:
    installation
    database
    workflow
-   import_gds
-   export_gds
+   import_export_gds
+   
 
 
 
