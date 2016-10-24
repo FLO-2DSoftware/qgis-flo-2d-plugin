@@ -49,6 +49,7 @@ To add a Model Boundary:
 * Save the edits and toggle editting back
 
 .. |ToggleEditing| image:: img/mActionToggleEditing.png 
+
 .. |AddFeature| image:: img/mActionCapturePolygon.png
 	
 .. figure:: img/BoundarLayerGeom.png
@@ -91,8 +92,23 @@ To interpolate elevation and assing them to the grid:
 * Click **OK**
 	
 The above process should populate elevation values within the ZZZ column of your schematized grid.
+
+
 .. |SampleElev| image:: ../../../flo2d/img/sample_elev.svg
 
+
+Assigning roughness values
+-------------------
+To assign roughness values, you need to edit the **Roughness** layer under **User Layers**.
+
+Similar to the **Boundary Layer**, you can digitize a polygon and assign the Manning's n value to the relevant attribute table. You can digitize multiple layers to represent various roughness values.
+
+
+Assigning roughness to grids
+-------------------
+As default, all roughness values within the grid are set to the default value. To overwrite the default values with the ones from **Roughness** layer (see the previous setp), you can use  |SampleManning| tool.
+
+.. |SampleElev| image:: ../../../flo2d/img/sample_manning.svg
 
 Import GDS ASCII Files (Optional)
 ---------------------------------
