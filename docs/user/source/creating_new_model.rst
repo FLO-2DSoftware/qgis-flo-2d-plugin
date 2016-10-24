@@ -1,4 +1,4 @@
-Working With the Plugin
+Creating a new model
 =======================
 
 In the example below, it is assumed that user is generating a hydraulic model from scratch. First step to build a model, is to create fresh database, where all the model files will reside.
@@ -63,15 +63,15 @@ To add a Model Boundary:
 
 To create the grid for the domain, we need to:
 
-* In QGIS from the main menu, **Plugins > Flo2D > |CreateGrid| Create grid **
+* In QGIS from the main menu, **Plugins > **Flo2D** > |CreateGrid| **Create grid **
 
 The above function should automatically build a grid based on the geometry and attribute value (for cell size) you have defined in the previous step.
 
 .. |CreateGrid| image:: img/create_grid.png
 
-.. image:: img/CreateGrid.png
+.. image:: img/BoundaryLayerGrid.png
 	:align: center
-	:caption: Generated grid based on the model bounday layer
+	:alt: Generated grid based on the model bounday layer
 	
 Assigning elevation to grids
 -------------------
@@ -91,18 +91,21 @@ To interpolate elevation and assing them to the grid:
 	* To speed up your process, select **Multithread**
 * Click **OK**
 	
-The above process should populate elevation values within the ZZZ column of your schematized grid.
+The above process should populate elevation values within the **elevation** column of your schematized grid.
 
 
 .. |SampleElev| image:: img/sample_elev.png
 
 
-Assigning roughness values
+Editing roughness layer
 -------------------
 To assign roughness values, you need to edit the **Roughness** layer under **User Layers**.
 
 Similar to the **Boundary Layer**, you can digitize a polygon and assign the Manning's n value to the relevant attribute table. You can digitize multiple layers to represent various roughness values.
 
+.. image:: img/RoughnessGeom.png
+	:align: center
+	:alt: Generated grid based on the model bounday layer
 
 Assigning roughness to grids
 -------------------
@@ -110,18 +113,12 @@ As default, all roughness values within the grid are set to the default value. T
 
 .. |SampleManning| image:: img/sample_manning.png
 
-Import GDS ASCII Files (Optional)
----------------------------------
+.. image:: img/BoundaryGridAttrib.png
+	:align: center
+	:alt: Generated grid based on the model bounday layer
 
-Users can import model data created in GDS.
+Defining area and width reduction factor layers
+-------------------
+User can digitize polygons for ARF and WRF under **Blocked areas" layer. No attribute layer is needed for the ARF and WRF. 
 
-Create or Modify Model Data
----------------------------
-
-Create new model from scratch using plugin tools and/or modify existing model data.
-Various tools help to view/inspect model data.
-
-Export GDS ASCII Files
-----------------------
-
-Once the model data is defined, users can export it to ASCII files read by the solver or GDS.
+To generate the factors and apply them to the grid, you can use |awfarf| **Evaluate Reduction Factors** tool.
