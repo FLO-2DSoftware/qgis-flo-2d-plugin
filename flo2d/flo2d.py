@@ -407,14 +407,14 @@ class Flo2D(object):
 
     @connection_required
     def create_grid(self):
-        if not self.gutils.is_table_empty('grid'):
-            if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
-                return
         if not self.lyrs.save_edits_and_proceed("Model Boundary"):
             return
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
             return
+        if not self.gutils.is_table_empty('grid'):
+            if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
+                return
         self.get_cell_size()
         self.uc.progress_bar('Creating grid...')
         self.gutils = GeoPackageUtils(self.con, self.iface)
