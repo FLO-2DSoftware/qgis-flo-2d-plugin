@@ -215,7 +215,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
             updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
-            print name
             if isinstance(wid, QLineEdit):
                 value = wid.text()
             elif isinstance(wid, QSpinBox):

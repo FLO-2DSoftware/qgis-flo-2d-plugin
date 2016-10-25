@@ -481,20 +481,23 @@ class Flo2D(object):
             self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
-            evaluate_arfwrf(self.gutils, grid_lyr, arf_lyr)
-            arf_lyr.reload()
-            self.lyrs.update_layer_extents(arf_lyr)
-            self.iface.mapCanvas().clearCache()
-            arf_lyr.triggerRepaint()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("ARF and WRF values calculated!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
+        # try:
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+        evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
+        arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
+        arf_lyr.reload()
+        self.lyrs.update_layer_extents(arf_lyr)
+
+        self.lyrs.update_style_blocked(arf_lyr.id())
+        self.iface.mapCanvas().clearCache()
+        user_arf_lyr.triggerRepaint()
+        QApplication.restoreOverrideCursor()
+        self.uc.show_info("ARF and WRF values calculated!")
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     @connection_required
     def activate_grid_info_tool(self):
