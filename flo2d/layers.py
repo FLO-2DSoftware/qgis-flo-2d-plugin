@@ -253,10 +253,24 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'module': ['chan']
             }),
-            ('user_levees', {
-                'name': 'Levees',
+            ('user_levee_points', {
+                'name': 'Levee Points',
                 'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
+                'styles': ['user_levee_points.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees']
+            }),
+            ('user_levee_lines', {
+                'name': 'Levee Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_lines.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees']
+            }),
+            ('user_levee_polygons', {
+                'name': 'Levee Polygons',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_polygons.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['levees']
             }),
