@@ -41,6 +41,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mann = self.get_cont_par('MANNING')
         if not mann:
             mann = '0.05'
+        else:
+            pass
         self.clear_tables('cont')
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()

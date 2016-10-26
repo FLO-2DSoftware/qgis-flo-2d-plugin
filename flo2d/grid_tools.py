@@ -10,7 +10,7 @@
 
 import math
 from osgeo import gdal
-from qgis.core import *
+from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
 
 
 def build_grid(boundary, cellsize):
@@ -58,7 +58,7 @@ def roughness2grid(grid, roughness, column_name):
             f = allfeatures[fid]
             isin = f.geometry().contains(centroid)
             if isin is True:
-                yield (f.attribute(column_name), feat.id())
+                yield (f[column_name], feat.id())
             else:
                 pass
 

@@ -3,7 +3,7 @@
 # Mandatory items:
 [general]
 name=FLO-2D
-qgisMinimumVersion=2.14
+qgisMinimumVersion=2.18
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
 version=0.2.2
