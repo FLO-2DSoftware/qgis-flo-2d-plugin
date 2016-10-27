@@ -40,13 +40,13 @@ class TestGridTools(unittest.TestCase):
         polygons = list(build_grid(vlayer, 500))
         self.assertEqual(len(polygons), 494)
 
-    def test_roughness2grid(self):
+    def test_poly2grid(self):
         grid = os.path.join(VECTOR_PATH, 'grid.geojson')
         roughness = os.path.join(VECTOR_PATH, 'roughness.geojson')
         glayer = QgsVectorLayer(grid, 'grid', 'ogr')
         rlayer = QgsVectorLayer(roughness, 'roughness', 'ogr')
         n_values = []
-        for n, gid in roughness2grid(glayer, rlayer, 'manning'):
+        for n, gid in poly2grid(glayer, rlayer, 'manning'):
             n_values.append(float(n))
         man_sum = sum(n_values)
         self.assertEqual(round(man_sum, 1), 16.5)

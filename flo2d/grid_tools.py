@@ -45,9 +45,9 @@ def build_grid(boundary, cellsize):
         x += cellsize
 
 
-def roughness2grid(grid, roughness, column_name):
-    roughness_polys = roughness.selectedFeatures() if roughness.selectedFeatureCount() > 0 else roughness.getFeatures()
-    allfeatures = {feature.id(): feature for feature in roughness_polys}
+def poly2grid(grid, polygons, value_column):
+    polys = polygons.selectedFeatures() if polygons.selectedFeatureCount() > 0 else polygons.getFeatures()
+    allfeatures = {feature.id(): feature for feature in polys}
     index = QgsSpatialIndex()
     map(index.insertFeature, allfeatures.itervalues())
     for feat in grid.getFeatures():
@@ -58,7 +58,7 @@ def roughness2grid(grid, roughness, column_name):
             f = allfeatures[fid]
             isin = f.geometry().contains(centroid)
             if isin is True:
-                yield (f[column_name], feat.id())
+                yield (f[value_column], feat.id())
             else:
                 pass
 
@@ -132,7 +132,7 @@ def square_grid(gutils, boundary):
 
 def update_roughness(gutils, grid, roughness, column_name):
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, roughness2grid(grid, roughness, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, column_name))
     gutils.con.commit()
 
 
