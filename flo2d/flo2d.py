@@ -189,8 +189,8 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
-            text=self.tr(u'Levee Elevation Tool'),
+            os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
+            text=self.tr(u'Levees Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
@@ -464,15 +464,18 @@ class Flo2D(object):
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
         ok = dlg.exec_()
         if ok:
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg.probe_elevation()
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info("Sampling done.")
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
+            pass
+        else:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg.probe_elevation()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Sampling done.")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
 
     @connection_required
     def eval_arfwrf(self):
@@ -561,7 +564,11 @@ class Flo2D(object):
         """Show levee elevation tool"""
         dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
         dlg_levee_elev.show()
-        dlg_levee_elev.exec_()
+        ok = dlg_levee_elev.exec_()
+        if ok:
+            pass
+        else:
+            return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg_levee_elev.method()

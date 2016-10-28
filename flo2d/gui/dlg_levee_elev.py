@@ -54,7 +54,12 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
         levee_points = self.lyrs.get_layer_by_name('Levee Points', self.lyrs.group).layer()
         levee_schematic = self.lyrs.get_layer_by_name('Levees', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
+        if self.assign_type.currentText() == 'Add':
+            qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
+        elif self.assign_type.currentText() == 'Substract':
+            qry = 'UPDATE levee_data SET levcrest = levcrest - ? WHERE fid = ?;'
+        else:
+            qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
         cur = self.con.cursor()
         buf = self.buffer_size.value()
         for feat in levee_lines.getFeatures():
@@ -66,7 +71,12 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def elev_from_lines(self):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
+        if self.assign_type.currentText() == 'Add':
+            qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
+        elif self.assign_type.currentText() == 'Substract':
+            qry = 'UPDATE levee_data SET levcrest = levcrest - ? WHERE user_line_fid = ?;'
+        else:
+            qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
         cur = self.con.cursor()
         for feat in levee_lines.getFeatures():
             elev = feat['elev']
@@ -78,7 +88,12 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
         levee_polys = self.lyrs.get_layer_by_name('Levee Polygons', self.lyrs.group).layer()
         levee_schematic = self.lyrs.get_layer_by_name('Levees', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
+        if self.assign_type.currentText() == 'Add':
+            qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
+        elif self.assign_type.currentText() == 'Substract':
+            qry = 'UPDATE levee_data SET levcrest = levcrest - ? WHERE fid = ?;'
+        else:
+            qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
         cur = self.con.cursor()
         for feat in levee_lines.getFeatures():
             poly_values = polys2levees(feat, levee_polys, levee_schematic, 'elev')
