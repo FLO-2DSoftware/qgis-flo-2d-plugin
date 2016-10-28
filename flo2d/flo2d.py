@@ -29,6 +29,7 @@ from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_grid_info_dock import GridInfoDock
+from .gui.dlg_levee_elev import LeveesToolDialog
 
 
 class Flo2D(object):
@@ -185,6 +186,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
+            text=self.tr(u'Levee Elevation Tool'),
+            callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
     def create_grid_info_dock(self):
@@ -466,7 +473,6 @@ class Flo2D(object):
                 QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
                 self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
-                raise
 
     @connection_required
     def eval_arfwrf(self):
@@ -494,10 +500,6 @@ class Flo2D(object):
         user_arf_lyr.triggerRepaint()
         QApplication.restoreOverrideCursor()
         self.uc.show_info("ARF and WRF values calculated!")
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.log_info(traceback.format_exc())
-        #     self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -554,6 +556,22 @@ class Flo2D(object):
         except TypeError:
             self.uc.bar_warn('There is no evaporation data to display!')
 
+    @connection_required
+    def show_levee_elev_tool(self):
+        """Show levee elevation tool"""
+        dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
+        dlg_levee_elev.show()
+        dlg_levee_elev.exec_()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg_levee_elev.method()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Values assigned!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
@@ -562,7 +580,6 @@ class Flo2D(object):
         self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
 
     def identify(self):
-
         self.canvas.setMapTool(self.info_tool)
         self.info_tool.update_lyrs_list()
 

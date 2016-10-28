@@ -1212,7 +1212,8 @@ CREATE TABLE "levee_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- LGRIDNO, grid element fid with a levee
     "ldir" INTEGER, -- LDIR, flow direction that will be cutoff (1-8)
-    "levcrest" REAL -- LEVCREST, the elevation of the levee crest
+    "levcrest" REAL, -- LEVCREST, the elevation of the levee crest,
+    "user_line_fid" INTEGER -- FID of parent user levee line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('levee_data', 'features', 4326);
 SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'LINESTRING', 0, 0, 0);
