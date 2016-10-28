@@ -4,7 +4,7 @@ FLO-2D interprets topography to grids, based on the cell size user has defined. 
 
 A set of tools will allow users to manipulate the base grid using a various vector type. 
 
-.. image:: img/WhyBreakline.png.png
+.. image:: img/WhyBreakline.png
 	:align: center
 	:alt: Effects of fixed grid size
 
