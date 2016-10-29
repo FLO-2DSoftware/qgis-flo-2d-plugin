@@ -106,3 +106,105 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', jo
                 break
             else:
                 pass
+
+
+def bresenham_line(x1, y1, x2, y2):
+    """Bresenham's Line Algorithm.
+    Returns a list of [x,y] tuples. Works with integer coordinates.
+
+    Based on impl from http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
+    """
+
+    # Determine how steep the line is
+    is_steep = abs(y2 - y1) > abs(x2 - x1)
+
+    # Rotate line
+    if is_steep:
+        x1, y1 = y1, x1
+        x2, y2 = y2, x2
+
+    # Swap start and end points if necessary and store swap state
+    swapped = False
+    if x1 > x2:
+        x1, x2 = x2, x1
+        y1, y2 = y2, y1
+        swapped = True
+
+    # Calculate differentials
+    dx = x2 - x1
+    dy = y2 - y1
+
+    # Calculate error
+    error = int(dx / 2.0)
+    ystep = 1 if y1 < y2 else -1
+
+    # Iterate over bounding box generating points between start and end
+    y = y1
+    points = []
+    for x in range(x1, x2 + 1):
+        coord = (y, x) if is_steep else (x, y)
+        points.append(coord)
+        error -= abs(dy)
+        if error < 0:
+            y += ystep
+            error += dx
+
+    # Reverse the list if the coordinates were swapped
+    if swapped:
+        points.reverse()
+    return points
+
+
+def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
+    """
+    Take line from (x1,y1) to (x2,y2) and generate list of cell coordinates
+    covered by the line within the given grid.
+    """
+
+    def float_to_int_coords(x, y):
+        xt = int(round(x / float(cell_size)))
+        yt = int(round(y / float(cell_size)))
+        return xt, yt
+
+    def int_to_float_coords(xt, yt):
+        x = xt * cell_size - offset_x
+        y = yt * cell_size - offset_y
+        return x, y
+
+    xt1, yt1 = float_to_int_coords(x1, y1)
+    xt2, yt2 = float_to_int_coords(x2, y2)
+
+    points = bresenham_line(xt1, yt1, xt2, yt2)
+
+    return [int_to_float_coords(x, y) for x, y in points]
+
+
+def schematize_lines(line_layer, cell_size, offset_x, offset_y):
+    lines = line_layer.getFeatures()
+    for line in lines:
+        segment = []
+        try:
+            vertices = line.geometry().asPolyline()
+            iver = iter(vertices)
+            x1, y1 = next(iver)
+            x2, y2 = next(iver)
+            while True:
+                segment += snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)
+                x1, y1 = x2, y2
+                x2, y2 = next(iver)
+        except StopIteration:
+            yield segment
+
+
+def write_schematized(gutils, line_layer, cell_size):
+    geom = gutils.single_centroid('1').strip('POINT()').split()
+    x, y = float(geom[0]), float(geom[1])
+    x_offset = round(x / cell_size) * cell_size - x
+    y_offset = round(y / cell_size) * cell_size - y
+    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
+    qry = '''INSERT INTO chan (geom) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')))'''
+    cursor = gutils.con.cursor()
+    for line in segments:
+        vertices = ','.join('{0} {1}'.format(x, y) for x, y in line)
+        cursor.execute(qry.format(vertices))
+    gutils.con.commit()

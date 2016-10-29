@@ -17,6 +17,7 @@ from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, evaluate_arfwrf
+from schematic_tools import write_schematized
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from utils import *
@@ -194,6 +195,12 @@ class Flo2D(object):
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/create_grid.svg'),
+            text=self.tr(u'Schematize lines'),
+            callback=lambda: self.get_schematized_lines(),
+            parent=self.iface.mainWindow())
+
     def create_grid_info_dock(self):
         self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
@@ -238,7 +245,7 @@ class Flo2D(object):
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
         self.grid_info_dock.setVisible(True)
 
-    def load_gpkg_from_proj(self, file):
+    def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
         old_gpkg = self.read_proj_entry('gpkg')
         if old_gpkg:
@@ -578,6 +585,15 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+
+    @connection_required
+    def get_schematized_lines(self):
+        segments = self.lyrs.get_layer_by_name("Channel Segments", group=self.lyrs.group).layer()
+        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        try:
+            write_schematized(self.gutils, segments, cell_size)
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
