@@ -19,7 +19,7 @@ from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, evaluate_arfwrf
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
-from schematic_tools import generate_schematic_levees
+from schematic_tools import write_schematized, generate_schematic_levees
 from utils import *
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
@@ -193,6 +193,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
+            text=self.tr(u'Schematize lines'),
+            callback=lambda: self.get_schematized_lines(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -578,6 +584,15 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+
+    @connection_required
+    def get_schematized_lines(self):
+        segments = self.lyrs.get_layer_by_name("Channel Segments", group=self.lyrs.group).layer()
+        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        try:
+            write_schematized(self.gutils, segments, cell_size)
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
 
     @connection_required
     def schematize_levees(self):
