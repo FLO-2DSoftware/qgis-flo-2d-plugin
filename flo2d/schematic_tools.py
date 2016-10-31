@@ -8,17 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QgsPoint, QgsSpatialIndex, QgsFeatureRequest, QgsVector
+from qgis.core import QgsSpatialIndex, QgsFeatureRequest, QgsVector
 from operator import itemgetter
+from collections import defaultdict
 from grid_tools import get_intersecting_grid_elems
 from math import pi
 
 # octagon nodes to sides map
-octagon_levee_dirs = {0:1, 1:5, 2:2, 3:6, 4:3, 5:7, 6:4, 7:8}
-
-# octagon sides normal vectors
-nvec = {0: QgsVector(0,1), 1: QgsVector(1,1), 2: QgsVector(1,0), 3: QgsVector(1,-1),
-        4: QgsVector(0,-1), 5: QgsVector(-1,-1), 6: QgsVector(-1,0), 7: QgsVector(-1,1)}
+octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
 
 levee_dir_pts = {
         1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
@@ -33,6 +30,10 @@ levee_dir_pts = {
 
 
 def get_intervals(line_feature, point_layer, col_name, buffer_size):
+    """
+    Function which calculates intervals and assigning values based on intersection between line and snapped points.
+    Points are selected by line buffer and filtered by the distance from the line feature.
+    """
     points = point_layer.getFeatures()
     lgeom = line_feature.geometry()
     tot_len = lgeom.length()
@@ -69,6 +70,10 @@ def get_intervals(line_feature, point_layer, col_name, buffer_size):
 
 
 def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid', join_col='user_line_fid'):
+    """
+    Generator for interpolating values of sampling features centroids snapped to interpolation line.
+    Line intervals list needs to be calculated first and derived as a generator parameter.
+    """
     start, end = intervals[0], intervals[-1]
     lgeom = line_feature.geometry()
     lid = line_feature[id_col]
@@ -104,6 +109,10 @@ def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid'
 
 
 def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', join_col='user_line_fid'):
+    """
+    Generator for assigning elevation values from polygons to levees.
+    Levee sides centroids are snapped to the user levee line feature and next tested for intersecting with polygons.
+    """
     lgeom = line_feature.geometry()
     lid = line_feature[id_col]
     polys = poly_lyr.getFeatures()
@@ -129,9 +138,9 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', jo
 
 
 def bresenham_line(x1, y1, x2, y2):
-    """Bresenham's Line Algorithm.
+    """
+    Bresenham's Line Algorithm.
     Returns a list of [x,y] tuples. Works with integer coordinates.
-
     Based on impl from http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
     """
 
@@ -182,8 +191,8 @@ def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
     """
 
     def float_to_int_coords(x, y):
-        xt = int(round(x / float(cell_size)))
-        yt = int(round(y / float(cell_size)))
+        xt = int(round((x + offset_x) / float(cell_size)))
+        yt = int(round((y + offset_y) / float(cell_size)))
         return xt, yt
 
     def int_to_float_coords(xt, yt):
@@ -200,6 +209,10 @@ def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
 
 
 def schematize_lines(line_layer, cell_size, offset_x, offset_y):
+    """
+    Generator for finding grid centroids coordinates for each schematized line segment.
+    Calculations are done using Bresenham's Line Algorithm.
+    """
     lines = line_layer.getFeatures()
     for line in lines:
         segment = []
@@ -208,25 +221,114 @@ def schematize_lines(line_layer, cell_size, offset_x, offset_y):
             iver = iter(vertices)
             x1, y1 = next(iver)
             x2, y2 = next(iver)
+            segment += snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)
             while True:
-                segment += snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)
                 x1, y1 = x2, y2
                 x2, y2 = next(iver)
+                segment += snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)[1:]
         except StopIteration:
             yield segment
 
 
-def write_schematized(gutils, line_layer, cell_size):
+def populate_directions(coords, grids):
+    """
+    Function for populating streets directions inside each grid cell.
+    """
+    try:
+        start, end = (0, 0)
+        igrids = iter(grids)
+        x1, y1 = next(igrids)
+        x2, y2 = next(igrids)
+        while True:
+            if x1 == x2 and y1 < y2:
+                start = 1
+                end = 3
+            elif x1 < x2 and y1 == y2:
+                start = 2
+                end = 4
+            elif x1 == x2 and y1 > y2:
+                start = 3
+                end = 1
+            elif x1 > x2 and y1 == y2:
+                start = 4
+                end = 2
+            elif x1 < x2 and y1 < y2:
+                start = 5
+                end = 7
+            elif x1 < x2 and y1 > y2:
+                start = 6
+                end = 8
+            elif x1 > x2 and y1 > y2:
+                start = 7
+                end = 5
+            elif x1 > x2 and y1 < y2:
+                start = 8
+                end = 6
+            else:
+                pass
+            coords[(x1, y1)].add(start)
+            coords[(x2, y2)].add(end)
+            x1, y1 = x2, y2
+            x2, y2 = next(igrids)
+    except StopIteration:
+        return
+
+
+def calculate_offset(gutils, cell_size):
+    """
+    Finding offset of grid squares centers which is formed after switching from float to integers.
+    Rounding to integers is needed for Bresenham's Line Algorithm.
+    """
     geom = gutils.single_centroid('1').strip('POINT()').split()
     x, y = float(geom[0]), float(geom[1])
     x_offset = round(x / cell_size) * cell_size - x
     y_offset = round(y / cell_size) * cell_size - y
+    return x_offset, y_offset
+
+
+def schematize_channels(gutils, line_layer, cell_size):
+    """
+    Calculating and writing schematized channels into the 'chan' table.
+    """
+    x_offset, y_offset = calculate_offset(gutils, cell_size)
     segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
     qry = '''INSERT INTO chan (geom) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')))'''
     cursor = gutils.con.cursor()
     for line in segments:
         vertices = ','.join('{0} {1}'.format(x, y) for x, y in line)
         cursor.execute(qry.format(vertices))
+    gutils.con.commit()
+
+
+def schematize_streets(gutils, line_layer, cell_size):
+    """
+    Calculating and writing schematized streets into the 'street_seg' table.
+    """
+    x_offset, y_offset = calculate_offset(gutils, cell_size)
+    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
+    coords = defaultdict(set)
+    for grids in segments:
+        populate_directions(coords, grids)
+    functions = {
+        1: (lambda x, y, shift: (x, y + shift)),
+        2: (lambda x, y, shift: (x + shift, y)),
+        3: (lambda x, y, shift: (x, y - shift)),
+        4: (lambda x, y, shift: (x - shift, y)),
+        5: (lambda x, y, shift: (x + shift, y + shift)),
+        6: (lambda x, y, shift: (x + shift, y - shift)),
+        7: (lambda x, y, shift: (x - shift, y - shift)),
+        8: (lambda x, y, shift: (x - shift, y + shift))
+    }
+    gpb = '''INSERT INTO street_seg (geom) VALUES (AsGPB(ST_GeomFromText('MULTILINESTRING({0})')))'''
+    gpb_part = '''({0} {1}, {2} {3})'''
+    half_cell = cell_size * 0.5
+    cursor = gutils.con.cursor()
+    for xy, directions in coords.iteritems():
+        x1, y1 = xy
+        xy_dir = [functions[d](x1, y1, half_cell) for d in directions]
+        multiline = ','.join((gpb_part.format(x1, y1, x2, y2) for x2, y2 in xy_dir))
+        gpb_insert = gpb.format(multiline)
+        cursor.execute(gpb_insert)
     gutils.con.commit()
 
 
@@ -246,9 +348,9 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
         p2 = lg_isect.asPolyline()[-1]
         pts.append((p1, p2))
     if with_centroid:
-        return (pts, grid_centroid)
+        return pts, grid_centroid
     else:
-        return (pts)
+        return pts, None
 
 
 def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
@@ -263,7 +365,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     # for each line crossing a grid element
     for lid, gid in lg:
         pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
-        if not gid in gids:
+        if gid not in gids:
             schem_lines[gid] = {}
             schem_lines[gid]['lines'] = {}
             schem_lines[gid]['centroid'] = c
@@ -289,10 +391,8 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
             n2 = int(c_p2_a / (pi / 4)) % 8
             # if entry and leaving octagon node are identical, skip the pair (no levee seg)
             if n1 == n2:
-                # print '{}: ({:.2f}, {:.2f}), n1 = n2 = {}, skipping'.format(gid, c_p1.angle(nv)*180/pi, c_p2.angle(nv)*180/pi, n1)
                 continue
             else:
-                # print "{}: {:.2f}->{}, {:.2f}->{}".format( gid, c_p1.angle(nv)*180/pi, n1, c_p2.angle(nv)*180/pi, n2)
                 pass
             # starting and ending octagon side for current pts pair
             s1 = (n1 + 1 if cw else n1) % 8
@@ -333,7 +433,11 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
 
 
 def perp2side(vec, side, tol):
-    '''Check, with the given tol [deg], if the vector is perpendicular to the given octagon side'''
+    # octagon sides normal vectors
+    nvec = {
+        0: QgsVector(0, 1), 1: QgsVector(1, 1), 2: QgsVector(1, 0), 3: QgsVector(1, -1),
+        4: QgsVector(0, -1), 5: QgsVector(-1, -1), 6: QgsVector(-1, 0), 7: QgsVector(-1, 1)
+    }
     tol = tol * pi / 180
     if abs(nvec[side].angle(vec)) <= tol or abs(nvec[side].rotateBy(pi).angle(vec)) <= tol:
         return True

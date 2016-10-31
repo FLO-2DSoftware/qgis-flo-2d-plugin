@@ -13,8 +13,11 @@ from osgeo import gdal
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
 
 
-def build_grid(boundary, cellsize):
-    half_size = cellsize * 0.5
+def build_grid(boundary, cell_size):
+    """
+    Generator which creates grid with given cell size and inside given boundary layer.
+    """
+    half_size = cell_size * 0.5
     biter = boundary.getFeatures()
     feature = next(biter)
     fgeom = feature.geometry()
@@ -23,8 +26,8 @@ def build_grid(boundary, cellsize):
     xmax = math.ceil(bbox.xMaximum())
     ymax = math.ceil(bbox.yMaximum())
     ymin = math.floor(bbox.yMinimum())
-    cols = int(math.ceil(abs(xmax - xmin) / cellsize))
-    rows = int(math.ceil(abs(ymax - ymin) / cellsize))
+    cols = int(math.ceil(abs(xmax - xmin) / cell_size))
+    rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
     y = ymax - half_size
     for col in xrange(cols):
@@ -41,11 +44,14 @@ def build_grid(boundary, cellsize):
                 yield poly
             else:
                 pass
-            y_tmp -= cellsize
-        x += cellsize
+            y_tmp -= cell_size
+        x += cell_size
 
 
 def poly2grid(grid, polygons, value_column):
+    """
+    Generator for assigning values from any polygon layer to target grid layer.
+    """
     polys = polygons.selectedFeatures() if polygons.selectedFeatureCount() > 0 else polygons.getFeatures()
     allfeatures = {feature.id(): feature for feature in polys}
     index = QgsSpatialIndex()
@@ -64,6 +70,9 @@ def poly2grid(grid, polygons, value_column):
 
 
 def calculate_arfwrf(grid, areas):
+    """
+    Generator which calculates ARF and WRF values based on polygons representing blocked areas.
+    """
     sides = (
         (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
         (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
@@ -113,6 +122,9 @@ def calculate_arfwrf(grid, areas):
 
 
 def square_grid(gutils, boundary):
+    """
+    Function for calculating and writing square grid into 'grid' table.
+    """
     del_qry = 'DELETE FROM grid;'
     cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
@@ -131,12 +143,18 @@ def square_grid(gutils, boundary):
 
 
 def update_roughness(gutils, grid, roughness, column_name):
+    """
+    Updating roughness values inside 'grid' table
+    """
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
     gutils.con.executemany(qry, poly2grid(grid, roughness, column_name))
     gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):
+    """
+    Calculating and inserting ARF and WRF values into 'blocked_cells' table
+    """
     del_cells = 'DELETE FROM blocked_cells;'
     qry_cells = '''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
@@ -149,6 +167,9 @@ def evaluate_arfwrf(gutils, grid, areas):
 
 
 def raster2grid(grid, out_raster, src_raster, options):
+    """
+    Generator for resampling and probing raster data within 'grid' features
+    """
     new = gdal.Warp(out_raster, src_raster, options=options)
     del new
     probe_raster = QgsRasterLayer(out_raster)
@@ -162,10 +183,14 @@ def raster2grid(grid, out_raster, src_raster, options):
 
 
 def get_intersecting_grid_elems(gutils, table_name, table_fids=None):
-    '''Get a list of grid elements fids that intersect the given table's features.
-    Optionally, users can specify a list of table_fids to be checked.'''
-    qry = '''SELECT l.fid, g.fid FROM grid AS g, {} AS l
-    WHERE ST_Intersects(GeomFromGPB(l.geom), GeomFromGPB(g.geom)) '''.format(table_name)
+    """
+    Get a list of grid elements fids that intersect the given tables features.
+    Optionally, users can specify a list of table_fids to be checked.
+    """
+    qry = '''
+        SELECT l.fid, g.fid FROM grid AS g, {} AS l
+        WHERE ST_Intersects(GeomFromGPB(l.geom), GeomFromGPB(g.geom))
+        '''.format(table_name)
     if table_fids:
         qry += 'AND l.fid IN ({}) '.format(', '.join(str(f) for f in table_fids))
     qry += '''ORDER BY l.fid, g.fid;'''
