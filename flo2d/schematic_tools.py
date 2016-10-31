@@ -8,8 +8,28 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QgsSpatialIndex
+from qgis.core import QgsPoint, QgsSpatialIndex, QgsFeatureRequest, QgsVector
 from operator import itemgetter
+from grid_tools import get_intersecting_grid_elems
+from math import pi
+
+# octagon nodes to sides map
+octagon_levee_dirs = {0:1, 1:5, 2:2, 3:6, 4:3, 5:7, 6:4, 7:8}
+
+# octagon sides normal vectors
+nvec = {0: QgsVector(0,1), 1: QgsVector(1,1), 2: QgsVector(1,0), 3: QgsVector(1,-1),
+        4: QgsVector(0,-1), 5: QgsVector(-1,-1), 6: QgsVector(-1,0), 7: QgsVector(-1,1)}
+
+levee_dir_pts = {
+        1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
+        2: (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
+        3: (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
+        4: (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
+        5: (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
+        6: (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
+        7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
+        8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
+}
 
 
 def get_intervals(line_feature, point_layer, col_name, buffer_size):
@@ -106,3 +126,114 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', jo
                 break
             else:
                 pass
+
+
+def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid=True):
+    lfeat = levee_lyr.getFeatures(QgsFeatureRequest(levee_fid)).next()
+    gfeat = grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)).next()
+    grid_centroid = gfeat.geometry().centroid().asPoint()
+    lg_isect = gfeat.geometry().intersection(lfeat.geometry())
+    pts = []
+    if lg_isect.isMultipart():
+        for part in lg_isect.asMultiPolyline():
+            p1 = part[0]
+            p2 = part[-1]
+            pts.append((p1, p2))
+    else:
+        p1 = lg_isect.asPolyline()[0]
+        p2 = lg_isect.asPolyline()[-1]
+        pts.append((p1, p2))
+    if with_centroid:
+        return (pts, grid_centroid)
+    else:
+        return (pts)
+
+
+def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
+    lg = get_intersecting_grid_elems(gutils, 'user_levee_lines')
+    cell_size = float(gutils.get_cont_par('CELLSIZE'))
+    schem_lines = {}
+    gids = []
+    nv = QgsVector(0, 1)
+    scale = 0.9
+    sh = cell_size * 0.5 * scale
+    oh = sh / 2.414
+    # for each line crossing a grid element
+    for lid, gid in lg:
+        pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
+        if not gid in gids:
+            schem_lines[gid] = {}
+            schem_lines[gid]['lines'] = {}
+            schem_lines[gid]['centroid'] = c
+            gids.append(gid)
+        else:
+            pass
+        sides = []
+        # for each entry and leaving point pair
+        for pts_pair in pts:
+            p1, p2 = pts_pair
+            c_p1 = p1 - c
+            c_p2 = p2 - c
+            a = c_p1.angle(c_p2)
+            a = 2 * pi + a if a < 0 else a
+            # drawing direction (is it clockwise?)
+            cw = a >= pi
+            c_p1_a = c_p1.angle(nv)
+            c_p1_a = 2 * pi + c_p1_a if c_p1_a < 0 else c_p1_a
+            c_p2_a = c_p2.angle(nv)
+            c_p2_a = 2 * pi + c_p2_a if c_p2_a < 0 else c_p2_a
+            # nearest octagon nodes
+            n1 = int(c_p1_a / (pi / 4)) % 8
+            n2 = int(c_p2_a / (pi / 4)) % 8
+            # if entry and leaving octagon node are identical, skip the pair (no levee seg)
+            if n1 == n2:
+                # print '{}: ({:.2f}, {:.2f}), n1 = n2 = {}, skipping'.format(gid, c_p1.angle(nv)*180/pi, c_p2.angle(nv)*180/pi, n1)
+                continue
+            else:
+                # print "{}: {:.2f}->{}, {:.2f}->{}".format( gid, c_p1.angle(nv)*180/pi, n1, c_p2.angle(nv)*180/pi, n2)
+                pass
+            # starting and ending octagon side for current pts pair
+            s1 = (n1 + 1 if cw else n1) % 8
+            s2 = (n2 if cw else n2 + 1) % 8
+            # add sides from s1 to s2 for creating the segments
+            sides.append(s2)
+            while s1 != s2:
+                sides.insert(0, s1)
+                s1 = (s1 + 1 if cw else s1 - 1) % 8
+        sides = set(sides)
+        schem_lines[gid]['lines'][lid] = sides
+
+    del_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
+    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, user_line_fid, geom) VALUES (?,?,?, AsGPB(ST_GeomFromText(?)));'''
+
+    # create levee segments for distinct levee directions in each grid element
+    grid_levee_seg = {}
+    data = []
+    for gid, gdata in schem_lines.iteritems():
+        grid_levee_seg[gid] = {}
+        grid_levee_seg[gid]['sides'] = {}
+        grid_levee_seg[gid]['centroid'] = gdata['centroid']
+        for lid, sides in gdata['lines'].iteritems():
+            for side in sides:
+                if not side in grid_levee_seg[gid]['sides'].keys():
+                    grid_levee_seg[gid]['sides'][side] = lid
+                    ldir = octagon_levee_dirs[side]
+                    c = gdata['centroid']
+                    data.append((
+                        gid,
+                        ldir,
+                        lid,
+                        'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
+                    ))
+    gutils.con.execute(del_sql)
+    gutils.con.executemany(ins_sql, data)
+    gutils.con.commit()
+
+
+def perp2side(vec, side, tol):
+    '''Check, with the given tol [deg], if the vector is perpendicular to the given octagon side'''
+    tol = tol * pi / 180
+    if abs(nvec[side].angle(vec)) <= tol or abs(nvec[side].rotateBy(pi).angle(vec)) <= tol:
+        return True
+    else:
+        return False

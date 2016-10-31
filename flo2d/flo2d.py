@@ -19,6 +19,7 @@ from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, evaluate_arfwrf
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
+from schematic_tools import generate_schematic_levees
 from utils import *
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
@@ -189,9 +190,15 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
+            os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematize_levees.svg'),
+            text=self.tr(u'Generate Schematic Levees'),
+            callback=lambda: self.schematize_levees(),
             parent=self.iface.mainWindow())
 
     def create_grid_info_dock(self):
@@ -571,6 +578,17 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+
+    @connection_required
+    def schematize_levees(self):
+        """Generate schematic lines for user defined levee lines"""
+        levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
+        grid_lyr  = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
+        levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
+        if levee_schem:
+            levee_schem.triggerRepaint()
+
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()

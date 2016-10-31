@@ -159,3 +159,18 @@ def raster2grid(grid, out_raster, src_raster, options):
         if ident.isValid():
             yield (round(ident.results()[1], 3), feat.id())
     del probe_raster
+
+
+def get_intersecting_grid_elems(gutils, table_name, table_fids=None):
+    '''Get a list of grid elements fids that intersect the given table's features.
+    Optionally, users can specify a list of table_fids to be checked.'''
+    qry = '''SELECT l.fid, g.fid FROM grid AS g, {} AS l
+    WHERE ST_Intersects(GeomFromGPB(l.geom), GeomFromGPB(g.geom)) '''.format(table_name)
+    if table_fids:
+        qry += 'AND l.fid IN ({}) '.format(', '.join(str(f) for f in table_fids))
+    qry += '''ORDER BY l.fid, g.fid;'''
+    res = gutils.execute(qry).fetchall()
+    grid_elems = []
+    for row in res:
+        grid_elems.append((row[0], row[1]))
+    return grid_elems
