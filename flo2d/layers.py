@@ -309,7 +309,7 @@ class Layers(QObject):
                 'module': ['levees']
             }),
             ('user_streets', {
-                'name': 'Streets',
+                'name': 'Street Lines',
                 'sgroup': 'User Layers',
                 'styles': ['user_line.qml'],
                 'attrs_edit_widgets': {},

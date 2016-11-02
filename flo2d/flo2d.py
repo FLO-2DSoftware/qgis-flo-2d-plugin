@@ -605,15 +605,21 @@ class Flo2D(object):
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
             schematize_channels(self.gutils, segments, cell_size)
+            chan_schem = self.lyrs.get_layer_by_name("Channel segments (left bank)", group=self.lyrs.group).layer()
+            if chan_schem:
+                chan_schem.triggerRepaint()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
 
     @connection_required
     def schematize_streets(self):
-        segments = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
+        segments = self.lyrs.get_layer_by_name("Street Lines", group=self.lyrs.group).layer()
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
             schematize_streets(self.gutils, segments, cell_size)
+            streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
+            if streets_schem:
+                streets_schem.triggerRepaint()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
 
