@@ -105,7 +105,7 @@ def database_disconnect(con):
 
 
 class GeoPackageUtils(object):
-    """GeoPackage utils for handling GPKG files"""
+    """GeoPackage utils for handling data inside GeoPackage"""
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')

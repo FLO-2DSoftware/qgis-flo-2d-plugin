@@ -13,6 +13,7 @@ from flo2dgeopackage import GeoPackageUtils
 
 
 class CrossSection(GeoPackageUtils):
+    """Cross section object representation."""
     columns = ['fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -68,6 +69,7 @@ class CrossSection(GeoPackageUtils):
 
 
 class Inflow(GeoPackageUtils):
+    """Inflow object representation."""
     columns = ['fid', 'name', 'time_series_fid', 'ident', 'inoutfc', 'note', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -96,6 +98,7 @@ class Inflow(GeoPackageUtils):
 
 
 class Outflow(GeoPackageUtils):
+    """Outflow object representation."""
     columns = ['fid', 'name', 'chan_out', 'fp_out', 'hydro_out', 'chan_tser_fid', 'chan_qhpar_fid', 'chan_qhtab_fid',
                'fp_tser_fid', 'type', 'geom']
 
@@ -202,6 +205,7 @@ class Outflow(GeoPackageUtils):
 
 
 class Rain(GeoPackageUtils):
+    """Rain data representation."""
     columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall', 'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
 
     def __init__(self, con, iface):
@@ -230,6 +234,7 @@ class Rain(GeoPackageUtils):
 
 
 class Evaporation(GeoPackageUtils):
+    """Evaporation data representation."""
     columns = ['fid', 'ievapmonth', 'iday', 'clocktime']
 
     def __init__(self, con, iface):

@@ -14,6 +14,9 @@ from itertools import izip, izip_longest, chain, repeat
 
 
 class ParseDAT(object):
+    """
+    Parser object for handling FLO-2D "DAT" files.
+    """
     def __init__(self):
         self.project_dir = None
         self.dat_files = {
@@ -538,12 +541,3 @@ class ParseDAT(object):
         for row in par:
             data.append(row)
         return head, data
-
-
-if __name__ == '__main__':
-    x = ParseDAT()
-    # x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
-    # data = x.parse_outflow()
-    # for row in data.items():
-    #     print(row)
-    x.dat_files['OUTFLOW.DAT'] = r'D:\GIS_DATA\OUTFLOW.DAT'
