@@ -49,6 +49,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
         }
+        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
         self.setup()
 
         # connection
