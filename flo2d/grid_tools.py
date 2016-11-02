@@ -11,6 +11,7 @@
 import math
 from osgeo import gdal
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
+from utils import is_number
 
 
 def build_grid(boundary, cell_size):
@@ -173,12 +174,21 @@ def raster2grid(grid, out_raster, src_raster, options):
     new = gdal.Warp(out_raster, src_raster, options=options)
     del new
     probe_raster = QgsRasterLayer(out_raster)
+    if probe_raster.dataProvider().srcHasNoDataValue(1):
+        nodata = probe_raster.dataProvider().srcNoDataValue(1)
+    else:
+        nodata = -9999.
 
     for feat in grid.getFeatures():
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
         if ident.isValid():
-            yield (round(ident.results()[1], 3), feat.id())
+            val = ident.results()[1]
+            if not is_number(val):
+                val = nodata
+            else:
+                pass
+            yield (round(val, 3), feat.id())
     del probe_raster
 
 
