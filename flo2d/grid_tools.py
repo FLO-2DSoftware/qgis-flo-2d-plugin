@@ -202,20 +202,23 @@ def grid_has_empty_elev(gutils):
         return False
 
 
-def get_intersecting_grid_elems(gutils, table_name, table_fids=None):
+def get_intersecting_grid_elems(gutils, table_name, table_fids=None, use_center=False, switch=False):
     """
     Get a list of grid elements fids that intersect the given tables features.
     Optionally, users can specify a list of table_fids to be checked.
     """
+    grid_geom = 'ST_Centroid(GeomFromGPB(g.geom))' if use_center is True else 'GeomFromGPB(g.geom)'
     qry = '''
         SELECT l.fid, g.fid FROM grid AS g, {} AS l
-        WHERE ST_Intersects(GeomFromGPB(l.geom), GeomFromGPB(g.geom))
-        '''.format(table_name)
+        WHERE ST_Intersects(GeomFromGPB(l.geom), {})
+        '''.format(table_name, grid_geom)
     if table_fids:
         qry += 'AND l.fid IN ({}) '.format(', '.join(str(f) for f in table_fids))
     qry += '''ORDER BY l.fid, g.fid;'''
     res = gutils.execute(qry).fetchall()
-    grid_elems = []
-    for row in res:
-        grid_elems.append((row[0], row[1]))
+    if switch is True:
+        first, second = 1, 0
+    else:
+        first, second = 0, 1
+    grid_elems = [(row[first], row[second]) for row in res]
     return grid_elems

@@ -401,7 +401,8 @@ CREATE TABLE "chan" (
     "froudc" REAL, -- FROUDC, max Froude channel number
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
-    "notes" TEXT
+    "notes" TEXT,
+    "user_line_fid" INTEGER -- FID of parent user channel line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
