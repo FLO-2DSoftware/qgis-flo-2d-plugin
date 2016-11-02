@@ -174,10 +174,10 @@ def raster2grid(grid, out_raster, src_raster, options):
     new = gdal.Warp(out_raster, src_raster, options=options)
     del new
     probe_raster = QgsRasterLayer(out_raster)
-    if probe_raster.dataProvider().srcHasNoDataValue(1):
-        nodata = probe_raster.dataProvider().srcNoDataValue(1)
-    else:
-        nodata = -9999.
+    # if probe_raster.dataProvider().srcHasNoDataValue(1):
+    #     nodata = probe_raster.dataProvider().srcNoDataValue(1)
+    # else:
+    nodata = -9999.
 
     for feat in grid.getFeatures():
         center = feat.geometry().centroid().asPoint()
@@ -190,6 +190,16 @@ def raster2grid(grid, out_raster, src_raster, options):
                 pass
             yield (round(val, 3), feat.id())
     del probe_raster
+
+
+def grid_has_empty_elev(gutils):
+    qry = '''SELECT fid FROM grid WHERE elevation = -9999;'''
+    res = gutils.execute(qry)
+    try:
+        id = res.next()
+        return True
+    except StopIteration:
+        return False
 
 
 def get_intersecting_grid_elems(gutils, table_name, table_fids=None):

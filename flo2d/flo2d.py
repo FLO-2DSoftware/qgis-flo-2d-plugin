@@ -447,6 +447,7 @@ class Flo2D(object):
         bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
         result = square_grid(self.gutils, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        self.lyrs.update_layer_extents(grid_lyr)
         if grid_lyr:
             grid_lyr.triggerRepaint()
         self.uc.clear_bar_messages()
@@ -490,7 +491,7 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg.probe_elevation()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Sampling done.")
+            dlg.show_probing_result_info()
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())

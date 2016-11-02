@@ -15,7 +15,8 @@ from qgis.core import *
 from osgeo import gdal
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
-from ..grid_tools import raster2grid
+from ..user_communication import UserCommunication
+from ..grid_tools import raster2grid, grid_has_empty_elev
 
 
 uiDialog, qtBaseClass = load_ui('sampling_elev')
@@ -34,6 +35,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.populate_raster_cbo()
         self.populate_alg_cbo()
         self.src_nodata = -9999
@@ -128,6 +130,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
     def get_worp_opts_data(self):
         # grid extents
         self.grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
+        self.lyrs.update_layer_extents(self.grid)
         grid_ext = self.grid.extent()
         xmin = grid_ext.xMinimum()
         xmax = grid_ext.xMaximum()
@@ -158,3 +161,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         qry = 'UPDATE grid SET elevation=? WHERE fid=?;'
         self.con.executemany(qry, sampler)
         self.con.commit()
+
+    def show_probing_result_info(self):
+        if grid_has_empty_elev(self.gutils):
+            self.uc.show_info('Sampling done.\nWarning: There are grid elements that have no elevation value.\nCheck grid elements with -9999 value!')
+        else:
+            self.uc.show_info("Sampling done.")

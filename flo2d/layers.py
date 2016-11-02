@@ -179,6 +179,40 @@ class Layers(QObject):
             subgrp = grp.addGroup(subgroup)
         return subgrp
 
+    def get_flo2d_groups(self):
+        all_groups = self.iface.legendInterface().groups()
+        f2d_groups = []
+        for g in all_groups:
+            if g.startswith('FLO-2D_'):
+                tg = self.get_group(g, create=False)
+                f2d_groups.append(tg)
+        return f2d_groups
+
+    def expand_all_flo2d_groups(self):
+        f2d_groups = self.get_flo2d_groups()
+        for gr in f2d_groups:
+            gr.setExpanded(True)
+
+    def collapse_all_flo2d_groups(self):
+        f2d_groups = self.get_flo2d_groups()
+        for gr in f2d_groups:
+            gr.setExpanded(False)
+
+    def expand_flo2d_group(self, group_name):
+        group = self.get_group(group_name, create=False)
+        if group:
+            group.setExpanded(True)
+            first_lyr = self.get_layer_by_name('Channel Segments', group=group_name).layer()
+            if first_lyr:
+                self.iface.legendInterface().setCurrentLayer(first_lyr)
+        else:
+            pass
+
+    def clear_legend_selection(self):
+        sel_lyrs = self.iface.legendInterface().selectedLayers()
+        if sel_lyrs:
+            self.iface.legendInterface().setCurrentLayer(sel_lyrs[0])
+
     def layer_exists_in_group(self, uri, group):
         grp = self.root.findGroup(group)
         if grp:
@@ -712,7 +746,9 @@ class Layers(QObject):
                 'attrs_edit_widgets': {}
             })
         ])
+        self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
+        self.collapse_all_flo2d_groups()
         self.group = group
         for lyr in self.layers_data:
             data = self.layers_data[lyr]
@@ -737,6 +773,7 @@ class Layers(QObject):
                     c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
                 pass # no attributes edit widgets config
+        self.expand_flo2d_group(group)
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par('CELLSIZE')
@@ -785,10 +822,14 @@ class Layers(QObject):
                 self.rb.reset(i)
 
     def zoom_to_all(self):
-        grid = self.get_layer_by_name('Grid', self.group)
-        extent = grid.layer().extent()
-        self.iface.mapCanvas().setExtent(extent)
-        self.iface.mapCanvas().refresh()
+        if self.gutils.is_table_empty('grid'):
+            return
+        else:
+            self.gutils.update_layer_extents('grid')
+            grid = self.get_layer_by_name('Grid', self.group)
+            extent = grid.layer().extent()
+            self.iface.mapCanvas().setExtent(extent)
+            self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
         """If the layer is in editmode, ask users for saving changes and proceeding."""
