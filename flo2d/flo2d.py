@@ -191,7 +191,7 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
             text=self.tr(u'Assign Elevation from polygons'),
             callback=lambda: self.single_elevation(),
             parent=self.iface.mainWindow())

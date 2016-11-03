@@ -273,13 +273,6 @@ class Layers(QObject):
     def load_all_layers(self, gutils):
         self.gutils = gutils
         self.layers_data = OrderedDict([
-            ('user_elevation_polygons', {
-                'name': 'Grid Elevation',
-                'sgroup': 'User Layers',
-                'styles': ['user_elevation_polygons.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all']
-            }),
             ('user_channel_seg', {
                 'name': 'Channel Segments',
                 'sgroup': 'User Layers',
@@ -333,6 +326,13 @@ class Layers(QObject):
                 'name': 'Roughness',
                 'sgroup': 'User Layers',
                 'styles': ['user_roughness.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all']
+            }),
+            ('user_elevation_polygons', {
+                'name': 'Grid Elevation',
+                'sgroup': 'User Layers',
+                'styles': ['user_elevation_polygons.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['all']
             }),

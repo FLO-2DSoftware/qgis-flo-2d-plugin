@@ -176,7 +176,7 @@ def evaluate_arfwrf(gutils, grid, areas):
     gutils.con.commit()
 
 
-def raster2grid(grid, out_raster): #, src_raster, options):
+def raster2grid(grid, out_raster):
     """
     Generator for resampling and probing raster data within 'grid' features
     """
