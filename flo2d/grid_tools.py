@@ -152,6 +152,15 @@ def update_roughness(gutils, grid, roughness, column_name):
     gutils.con.commit()
 
 
+def update_elevation(gutils, grid, elev, column_name):
+    """
+    Updating elevation values inside 'grid' table
+    """
+    qry = 'UPDATE grid SET elevation=? WHERE fid=?;'
+    gutils.con.executemany(qry, poly2grid(grid, elev, column_name))
+    gutils.con.commit()
+
+
 def evaluate_arfwrf(gutils, grid, areas):
     """
     Calculating and inserting ARF and WRF values into 'blocked_cells' table
@@ -196,29 +205,39 @@ def grid_has_empty_elev(gutils):
     qry = '''SELECT fid FROM grid WHERE elevation = -9999;'''
     res = gutils.execute(qry)
     try:
-        id = res.next()
+        fid = res.next()
         return True
     except StopIteration:
         return False
 
 
-def get_intersecting_grid_elems(gutils, table_name, table_fids=None, use_center=False, switch=False):
+def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False):
     """
     Get a list of grid elements fids that intersect the given tables features.
     Optionally, users can specify a list of table_fids to be checked.
     """
-    grid_geom = 'ST_Centroid(GeomFromGPB(g.geom))' if use_center is True else 'GeomFromGPB(g.geom)'
+    grid_geom = 'ST_Centroid(GeomFromGPB(g1.geom))' if grid_center is True else 'GeomFromGPB(g1.geom)'
     qry = '''
-        SELECT l.fid, g.fid FROM grid AS g, {} AS l
-        WHERE ST_Intersects(GeomFromGPB(l.geom), {})
-        '''.format(table_name, grid_geom)
+    SELECT
+        g2.fid, g1.fid
+    FROM
+        grid AS g1, {0} AS g2
+    WHERE g1.ROWID IN (
+            SELECT id FROM rtree_grid_geom
+            WHERE
+                ST_MinX(GeomFromGPB(g2.geom)) <= maxx AND
+                ST_MaxX(GeomFromGPB(g2.geom)) >= minx AND
+                ST_MinY(GeomFromGPB(g2.geom)) <= maxy AND
+                ST_MaxY(GeomFromGPB(g2.geom)) >= miny)
+    AND
+        ST_Intersects({1}, GeomFromGPB(g2.geom))
+    '''
+    qry = qry.format(table_name, grid_geom)
     if table_fids:
-        qry += 'AND l.fid IN ({}) '.format(', '.join(str(f) for f in table_fids))
-    qry += '''ORDER BY l.fid, g.fid;'''
-    res = gutils.execute(qry).fetchall()
-    if switch is True:
-        first, second = 1, 0
+        qry += 'AND g2.fid IN ({}) '.format(', '.join(f for f in table_fids))
     else:
-        first, second = 0, 1
-    grid_elems = [(row[first], row[second]) for row in res]
+        pass
+    qry += '''ORDER BY g2.fid, g1.fid;'''
+    first, second = (1, 0) if switch is True else (0, 1)
+    grid_elems = ((row[first], row[second]) for row in gutils.execute(qry))
     return grid_elems

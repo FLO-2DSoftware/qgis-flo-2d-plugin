@@ -16,7 +16,7 @@ from qgis.core import *
 from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, evaluate_arfwrf
+from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf
 from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -187,6 +187,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
+            text=self.tr(u'Assign Elevation from polygons'),
+            callback=lambda: self.single_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -474,6 +480,25 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
+
+    @connection_required
+    def single_elevation(self):
+        if not self.lyrs.save_edits_and_proceed("Grid Elevation"):
+            return
+        if self.gutils.is_table_empty('user_elevation_polygons'):
+            self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
+            return
+        elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            update_elevation(self.gutils, grid_lyr, elev_lyr, 'elev')
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning grid elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
 
     @connection_required
     def get_elevation(self):

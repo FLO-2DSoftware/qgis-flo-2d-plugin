@@ -11,7 +11,7 @@
 from qgis.core import QgsSpatialIndex, QgsFeatureRequest, QgsVector
 from operator import itemgetter
 from collections import defaultdict
-from grid_tools import get_intersecting_grid_elems
+from grid_tools import fid_from_grid
 from math import pi
 
 
@@ -326,7 +326,7 @@ def schematize_streets(gutils, line_layer, cell_size):
         gpb_insert = insert_sql.format(multiline)
         cursor.execute(gpb_insert)
     gutils.con.commit()
-    fid_grid = get_intersecting_grid_elems(gutils, 'street_seg', use_center=True, switch=True)
+    fid_grid = fid_from_grid(gutils, 'street_seg', grid_center=True, switch=True)
     grid_sql = '''UPDATE street_seg SET igridn = ? WHERE fid = ?;'''
     gutils.execute_many(grid_sql, fid_grid)
 
@@ -414,7 +414,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     }
-    line_grid = get_intersecting_grid_elems(gutils, 'user_levee_lines')
+    line_grid = fid_from_grid(gutils, 'user_levee_lines')
     cell_size = float(gutils.get_cont_par('CELLSIZE'))
     scale = 0.9
     # square half

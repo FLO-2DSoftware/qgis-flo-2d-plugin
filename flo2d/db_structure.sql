@@ -1680,3 +1680,12 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughnes
 SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
 SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
+
+CREATE TABLE "user_elevation_polygons" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "elev" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_elevation_polygons', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_elevation_polygons', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
+SELECT gpkgAddSpatialIndex('user_elevation_polygons', 'geom');
