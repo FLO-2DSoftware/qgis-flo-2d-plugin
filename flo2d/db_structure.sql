@@ -401,7 +401,8 @@ CREATE TABLE "chan" (
     "froudc" REAL, -- FROUDC, max Froude channel number
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
-    "notes" TEXT
+    "notes" TEXT,
+    "user_line_fid" INTEGER -- FID of parent user channel line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1605,17 +1606,6 @@ CREATE TABLE "sed_supply_frac_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
-
--- TEMPORARY TABLES
-
-CREATE TABLE grid_tmp (
-    "fid" INTEGER PRIMARY KEY NOT NULL
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid_tmp', 'features', 4326);
-SELECT gpkgAddGeometryColumn('grid_tmp', 'g', 'MULTIPOLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('grid_tmp', 'g');
-SELECT gpkgAddSpatialIndex('grid_tmp', 'g');
-
 -- USERS Layers
 
 CREATE TABLE "user_model_boundary" (
@@ -1690,3 +1680,12 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughnes
 SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
 SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
+
+CREATE TABLE "user_elevation_polygons" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "elev" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_elevation_polygons', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_elevation_polygons', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
+SELECT gpkgAddSpatialIndex('user_elevation_polygons', 'geom');

@@ -81,6 +81,33 @@ class TestSchematicTools(unittest.TestCase):
             for row in poly_values:
                 self.assertIn(row[0], vals)
 
+    def test_schematize_lines(self):
+        user_lines = os.path.join(VECTOR_PATH, 'channels_streets.geojson')
+        cell_size = 500
+        offset_x, offset_y = (2.5, -8.94999999999709)
+        line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
+        segments = tuple(schematize_lines(line_layer, cell_size, offset_x, offset_y))
+        all_grids = 0
+        unique_grids = 0
+        for seg in segments:
+            all_grids += len(seg)
+            unique_grids += len(set(seg))
+        self.assertEqual(all_grids - unique_grids, 5)
+
+    def test_schematize_streets(self):
+        user_lines = os.path.join(VECTOR_PATH, 'channels_streets.geojson')
+        cell_size = 500
+        offset_x, offset_y = (2.5, -8.94999999999709)
+        line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
+        segments = schematize_lines(line_layer, cell_size, offset_x, offset_y)
+        coords = defaultdict(set)
+        for grids in segments:
+            populate_directions(coords, grids)
+        self.assertSetEqual(coords[(557497.5, 47508.95)], {1, 2, 3, 4})
+        for s in coords.itervalues():
+            directions = (True if 0 < d < 9 else False for d in s)
+            self.assertTrue(all(directions))
+
 
 # Running tests:
 if __name__ == '__main__':
