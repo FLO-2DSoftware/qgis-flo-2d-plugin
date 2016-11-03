@@ -1620,7 +1620,7 @@ SELECT gpkgAddSpatialIndex('grid_tmp', 'g');
 
 CREATE TABLE "user_model_boundary" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "cell_size" INTEGER
+    "cell_size" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_model_boundary', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);

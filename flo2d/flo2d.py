@@ -29,6 +29,7 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
+from .gui.dlg_sampling_mann import SamplingManningDialog
 from .gui.dlg_grid_info_dock import GridInfoDock
 from .gui.dlg_levee_elev import LeveesToolDialog
 
@@ -461,19 +462,30 @@ class Flo2D(object):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
             return
         if self.gutils.is_table_empty('user_roughness'):
-            self.uc.bar_warn("There is no any roughness polygons! Please digitize them before running tool.")
+            self.uc.bar_warn("There is no roughness polygon! Please digitize them before running tool.")
             return
         rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning roughness finished!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
+        cell_size = self.get_cell_size()
+        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs, cell_size)
+        ok = self.mann_dlg.exec_()
+        if ok:
+            if self.mann_dlg.allGridElemsRadio.isChecked():
+                # do stuff for all grid elems
+                pass
+            else:
+                # update only user polygons
+                try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+                    update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("Assigning roughness finished!")
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.log_info(traceback.format_exc())
+                    self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
+        else:
+            pass
 
     @connection_required
     def get_elevation(self):
@@ -487,15 +499,9 @@ class Flo2D(object):
             pass
         else:
             return
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg.probe_elevation()
-            QApplication.restoreOverrideCursor()
+        res = dlg.probe_elevation()
+        if res:
             dlg.show_probing_result_info()
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
 
     @connection_required
     def eval_arfwrf(self):

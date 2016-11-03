@@ -167,39 +167,35 @@ def evaluate_arfwrf(gutils, grid, areas):
     gutils.con.commit()
 
 
-def raster2grid(grid, out_raster, src_raster, options):
+def raster2grid(grid, out_raster): #, src_raster, options):
     """
     Generator for resampling and probing raster data within 'grid' features
     """
-    new = gdal.Warp(out_raster, src_raster, options=options)
-    del new
     probe_raster = QgsRasterLayer(out_raster)
-    # if probe_raster.dataProvider().srcHasNoDataValue(1):
-    #     nodata = probe_raster.dataProvider().srcNoDataValue(1)
-    # else:
-    nodata = -9999.
+    if not probe_raster.isValid():
+        return
 
     for feat in grid.getFeatures():
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
         if ident.isValid():
-            val = ident.results()[1]
-            if not is_number(val):
-                val = nodata
+            if is_number(ident.results()[1]):
+                val = round(ident.results()[1], 3)
             else:
-                pass
-            yield (round(val, 3), feat.id())
+                val = None
+            yield (val, feat.id())
     del probe_raster
 
 
 def grid_has_empty_elev(gutils):
-    qry = '''SELECT fid FROM grid WHERE elevation = -9999;'''
+    '''Return number of grid elements that have no elevation defined'''
+    qry = '''SELECT count(*) FROM grid WHERE elevation IS NULL;'''
     res = gutils.execute(qry)
     try:
-        id = res.next()
-        return True
+        n = res.next()
+        return n[0]
     except StopIteration:
-        return False
+        return None
 
 
 def get_intersecting_grid_elems(gutils, table_name, table_fids=None):
