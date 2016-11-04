@@ -467,9 +467,6 @@ class Flo2D(object):
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
             return
-        if self.gutils.is_table_empty('user_roughness'):
-            self.uc.bar_warn("There is no roughness polygon! Please digitize them before running tool.")
-            return
         self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = self.mann_dlg.exec_()
         if ok:
@@ -484,6 +481,11 @@ class Flo2D(object):
             rough_name = "Roughness"
             nfield = 'n'
             flag = False
+            if self.gutils.is_table_empty('user_roughness'):
+                self.uc.show_warn("There is no roughness polygons! Please digitize them before running tool.")
+                return
+            else:
+                pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
