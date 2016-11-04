@@ -26,30 +26,37 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.con = con
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)
-        self.method = None
-        self.radio_points_clicked()
+        self.methods = {}
 
         # connections
-        self.radio_points.toggled.connect(self.radio_points_clicked)
-        self.radio_lines.toggled.connect(self.radio_lines_clicked)
-        self.radio_polys.toggled.connect(self.radio_polys_clicked)
+        self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
+        self.elev_points_chbox.stateChanged.connect(self.points_checked)
+        self.elev_lines_chbox.stateChanged.connect(self.lines_checked)
 
-    def radio_points_clicked(self):
-        self.buffer_size.setEnabled(True)
-        if self.buffer_size.value() == 0:
-            val = float(self.gutils.get_cont_par('CELLSIZE'))
-            self.buffer_size.setValue(val)
+    def points_checked(self):
+        if self.elev_points_chbox.isChecked():
+            self.buffer_size.setEnabled(True)
+            if self.buffer_size.value() == 0:
+                val = float(self.gutils.get_cont_par('CELLSIZE'))
+                self.buffer_size.setValue(val)
+            else:
+                pass
+            self.methods[2] = self.elev_from_points
         else:
-            pass
-        self.method = self.elev_from_points
+            self.buffer_size.setDisabled(True)
+            self.methods.pop(2)
 
-    def radio_lines_clicked(self):
-        self.buffer_size.setDisabled(True)
-        self.method = self.elev_from_lines
+    def lines_checked(self):
+        if self.elev_lines_chbox.isChecked():
+            self.methods[1] = self.elev_from_lines
+        else:
+            self.methods.pop(1)
 
-    def radio_polys_clicked(self):
-        self.buffer_size.setDisabled(True)
-        self.method = self.elev_from_polys
+    def polygons_checked(self):
+        if self.elev_polygons_chbox.isChecked():
+            self.methods[3] = self.elev_from_polys
+        else:
+            self.methods.pop(3)
 
     def elev_from_points(self):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
@@ -59,7 +66,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         cur = self.con.cursor()
         buf = self.buffer_size.value()
         for feat in levee_lines.getFeatures():
-            intervals = get_intervals(feat, levee_points, 'elev', 'correction', buf)
+            intervals = get_intervals(feat, levee_points, 'elev', buf)
             interpolated = interpolate_along_line(feat, levee_schematic, intervals)
             for row in interpolated:
                 cur.execute(qry, row)
@@ -67,13 +74,21 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def elev_from_lines(self):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
         cur = self.con.cursor()
         for feat in levee_lines.getFeatures():
             fid = feat['fid']
             elev = feat['elev']
             cor = feat['correction']
-            val = elev + cor if not isinstance(cor, QPyNullVariant) else elev
+            qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
+            if not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                val = elev + cor
+            elif not isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+                val = elev
+            elif isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
+                val = cor
+            else:
+                continue
             cur.execute(qry, (val, fid))
         self.con.commit()
 

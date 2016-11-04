@@ -16,7 +16,7 @@ from grid_tools import fid_from_grid
 from math import pi
 
 
-def get_intervals(line_feature, point_layer, col_value, col_corect, buffer_size):
+def get_intervals(line_feature, point_layer, col_value, buffer_size):
     """
     Function which calculates intervals and assigning values based on intersection between line and snapped points.
     Points are selected by line buffer and filtered by the distance from the line feature.
@@ -33,8 +33,7 @@ def get_intervals(line_feature, point_layer, col_value, col_corect, buffer_size)
         else:
             continue
         pos = lgeom.lineLocatePoint(pnt) / tot_len
-        abs_val, cor = feat[col_value], feat[col_corect]
-        val = abs_val + cor if not isinstance(cor, QPyNullVariant) else abs_val
+        val = feat[col_value]
         closest = lgeom.distance(pnt)
         if pos not in positions or closest < positions[pos][-1]:
             positions.values()
@@ -114,13 +113,21 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_
             pass
         else:
             continue
+        levcrest = feat['levcrest']
         center = feat.geometry().centroid()
         pos = lgeom.lineLocatePoint(center)
         pnt = lgeom.interpolate(pos)
         for poly in sel_polys:
             if poly.geometry().contains(pnt):
                 abs_val, cor = poly[value_col], poly[correct_val]
-                poly_val = abs_val + cor if not isinstance(cor, QPyNullVariant) else abs_val
+                if not isinstance(abs_val, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                    poly_val = abs_val + cor
+                elif not isinstance(abs_val, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+                    poly_val = abs_val
+                elif isinstance(abs_val, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                    poly_val = cor + levcrest
+                else:
+                    continue
                 yield (poly_val, feat[id_col])
                 break
             else:
@@ -356,17 +363,18 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
         return pts, None
 
 
-def levee_schematic(line_grid, levee_lyr, grid_lyr):
+def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
     schem_lines = {}
     gids = []
     nv = QgsVector(0, 1)
     # for each line crossing a grid element
-    for lid, gid in line_grid:
+    for lid, gid, elev in lid_gid_elev:
         pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
         if gid not in gids:
             schem_lines[gid] = {}
             schem_lines[gid]['lines'] = {}
             schem_lines[gid]['centroid'] = c
+            schem_lines[gid]['elev'] = elev
             gids.append(gid)
         else:
             pass
@@ -418,22 +426,23 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     }
-    line_grid = fid_from_grid(gutils, 'user_levee_lines')
+    lid_gid_elev = fid_from_grid(gutils, 'user_levee_lines', None, False, False, 'elevation')
     cell_size = float(gutils.get_cont_par('CELLSIZE'))
     scale = 0.9
     # square half
     sh = cell_size * 0.5 * scale
     # octagon half
     oh = sh / 2.414
-    schem_lines = levee_schematic(line_grid, levee_lyr, grid_lyr)
+    schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
 
     del_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
-    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, user_line_fid, geom) VALUES (?,?,?, AsGPB(ST_GeomFromText(?)));'''
+    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom) VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
 
     # create levee segments for distinct levee directions in each grid element
     grid_levee_seg = {}
     data = []
     for gid, gdata in schem_lines.iteritems():
+        elev = gdata['elev']
         grid_levee_seg[gid] = {}
         grid_levee_seg[gid]['sides'] = {}
         grid_levee_seg[gid]['centroid'] = gdata['centroid']
@@ -446,6 +455,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                     data.append((
                         gid,
                         ldir,
+                        elev,
                         lid,
                         'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
                     ))

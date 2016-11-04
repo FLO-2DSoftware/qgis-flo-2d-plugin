@@ -213,17 +213,18 @@ def grid_has_empty_elev(gutils):
         return None
 
 
-def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False):
+def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False, *extra_fields):
     """
     Get a list of grid elements fids that intersect the given tables features.
     Optionally, users can specify a list of table_fids to be checked.
     """
     grid_geom = 'ST_Centroid(GeomFromGPB(g1.geom))' if grid_center is True else 'GeomFromGPB(g1.geom)'
+    grid_data = 'g1.fid, ' + ', '.join(('g1.{}'.format(fld) for fld in extra_fields)) if extra_fields else 'g1.fid'
     qry = '''
     SELECT
-        g2.fid, g1.fid
+        g2.fid, {0}
     FROM
-        grid AS g1, {0} AS g2
+        grid AS g1, {1} AS g2
     WHERE g1.ROWID IN (
             SELECT id FROM rtree_grid_geom
             WHERE
@@ -232,14 +233,14 @@ def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch
                 ST_MinY(GeomFromGPB(g2.geom)) <= maxy AND
                 ST_MaxY(GeomFromGPB(g2.geom)) >= miny)
     AND
-        ST_Intersects({1}, GeomFromGPB(g2.geom))
+        ST_Intersects({2}, GeomFromGPB(g2.geom))
     '''
-    qry = qry.format(table_name, grid_geom)
+    qry = qry.format(grid_data, table_name, grid_geom)
     if table_fids:
         qry += 'AND g2.fid IN ({}) '.format(', '.join(f for f in table_fids))
     else:
         pass
-    qry += '''ORDER BY g2.fid, g1.fid;'''
     first, second = (1, 0) if switch is True else (0, 1)
-    grid_elems = ((row[first], row[second]) for row in gutils.execute(qry))
+    qry += '''ORDER BY g2.fid, g1.fid;'''
+    grid_elems = ((row[first], row[second]) + tuple(row[2:]) for row in gutils.execute(qry))
     return grid_elems

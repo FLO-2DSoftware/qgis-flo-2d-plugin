@@ -214,12 +214,6 @@ class Flo2D(object):
             callback=lambda: self.schematize_streets(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_levees.svg'),
-            text=self.tr(u'Generate Schematic Levees'),
-            callback=lambda: self.schematize_levees(),
-            parent=self.iface.mainWindow())
-
     def create_grid_info_dock(self):
         self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
@@ -622,12 +616,17 @@ class Flo2D(object):
         dlg_levee_elev.show()
         ok = dlg_levee_elev.exec_()
         if ok:
-            pass
+            if dlg_levee_elev.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one crest elevation source!")
         else:
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg_levee_elev.method()
+            self.schematize_levees()
+            for no in sorted(dlg_levee_elev.methods):
+                dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Values assigned!")
         except Exception as e:
@@ -659,7 +658,6 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
 
-    @connection_required
     def schematize_levees(self):
         """Generate schematic lines for user defined levee lines"""
         levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
