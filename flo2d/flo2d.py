@@ -16,7 +16,7 @@ from qgis.core import *
 from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf
+from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
 from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -410,11 +410,11 @@ class Flo2D(object):
 
     def get_cell_size(self):
         """Get cell size from:
-            - model boundary attr table (if defined, will be written to cont table)
+            - Computational Domain attr table (if defined, will be written to cont table)
             - cont table
             - ask user
         """
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
@@ -434,10 +434,10 @@ class Flo2D(object):
 
     @connection_required
     def create_grid(self):
-        if not self.lyrs.save_edits_and_proceed("Model Boundary"):
+        if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
             return
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
@@ -445,7 +445,7 @@ class Flo2D(object):
         self.get_cell_size()
         self.uc.progress_bar('Creating grid...')
         self.gutils = GeoPackageUtils(self.con, self.iface)
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
         result = square_grid(self.gutils, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         self.lyrs.update_layer_extents(grid_lyr)
@@ -455,7 +455,7 @@ class Flo2D(object):
         if result > 0:
             self.uc.show_info("Grid created!")
         else:
-            self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
+            self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
 
     @connection_required
     def get_roughness(self):
@@ -514,7 +514,7 @@ class Flo2D(object):
     @connection_required
     def get_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -612,6 +612,20 @@ class Flo2D(object):
     @connection_required
     def show_levee_elev_tool(self):
         """Show levee elevation tool"""
+        # check for grid elements with null elevation
+        null_elev_nr = grid_has_empty_elev(self.gutils)
+        if null_elev_nr:
+            msg = 'The grid has {} elements with null elevation.\nLevee elevation tool requires that all grid elements have elevation defined.'
+            self.uc.show_warn(msg.format(null_elev_nr))
+            return
+        else:
+            pass
+        # check if user levee layers are in edit mode
+        levee_lyrs = ['Levee Points', 'Levee Lines', 'Levee Polygons']
+        for lyr in levee_lyrs:
+            if not self.lyrs.save_edits_and_proceed(lyr):
+                return
+        # show the dialog
         dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
         dlg_levee_elev.show()
         ok = dlg_levee_elev.exec_()
