@@ -20,7 +20,8 @@ from qgis.core import (
     QgsMapLayerRegistry,
     QgsFeatureRequest,
     QgsVectorLayer,
-    QgsRectangle
+    QgsRectangle,
+    QgsLayerTreeGroup
 )
 from qgis.gui import QgsRubberBand
 from errors import *
@@ -71,6 +72,7 @@ class Layers(QObject):
         else:
             vis = Qt.Unchecked
         tree_lyr.setVisible(vis)
+        tree_lyr.setExpanded(False)
         if style:
             style_path = get_file_path("styles", style)
             if os.path.isfile(style_path):
@@ -200,6 +202,14 @@ class Layers(QObject):
                 f2d_groups.append(tg)
         return f2d_groups
 
+    def get_group_subgroups(self, group_name):
+        children = self.get_group(group_name, create=False).children()
+        sgroups = []
+        for ch in children:
+            if type(ch) == QgsLayerTreeGroup:
+                sgroups.append(ch)
+        return sgroups
+
     def expand_all_flo2d_groups(self):
         f2d_groups = self.get_flo2d_groups()
         for gr in f2d_groups:
@@ -219,6 +229,23 @@ class Layers(QObject):
                 self.iface.legendInterface().setCurrentLayer(first_lyr)
         else:
             pass
+
+    def collapse_all_flo2d_subgroups(self, group):
+        for sgr in self.get_group_subgroups(group):
+            sgr.setExpanded(False)
+
+    def collapse_flo2d_subgroup(self, group_name, subgroup_name):
+        sg = self.get_subgroup(group_name, subgroup_name, create=False)
+        if sg:
+            sg.setExpanded(False)
+
+    def expand_flo2d_subgroup(self, group_name, subgroup_name):
+        sg = self.get_subgroup(group_name, subgroup_name, create=False)
+        if sg:
+            sg.setExpanded(True)
+
+    def collapse_group_layers(self, group_name):
+        group = self.get_group(group_name, create=False)
 
     def clear_legend_selection(self):
         sel_lyrs = self.iface.legendInterface().selectedLayers()
@@ -285,6 +312,14 @@ class Layers(QObject):
     def load_all_layers(self, gutils):
         self.gutils = gutils
         self.layers_data = OrderedDict([
+            ('user_levee_points', {
+                'name': 'Levee Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_points.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees'],
+                'readonly': False
+            }),
             ('user_channel_seg', {
                 'name': 'Channel Segments',
                 'sgroup': 'User Layers',
@@ -301,12 +336,12 @@ class Layers(QObject):
                 'module': ['chan'],
                 'readonly': False
             }),
-            ('user_levee_points', {
-                'name': 'Levee Points',
+            ('user_streets', {
+                'name': 'Street Lines',
                 'sgroup': 'User Layers',
-                'styles': ['user_levee_points.qml'],
+                'styles': ['user_line.qml'],
                 'attrs_edit_widgets': {},
-                'module': ['levees'],
+                'module': ['streets'],
                 'readonly': False
             }),
             ('user_levee_lines', {
@@ -325,16 +360,8 @@ class Layers(QObject):
                 'module': ['levees'],
                 'readonly': False
             }),
-            ('user_streets', {
-                'name': 'Street Lines',
-                'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['streets'],
-                'readonly': False
-            }),
             ('user_model_boundary', {
-                'name': 'Model Boundary',
+                'name': 'Computational Domain',
                 'sgroup': 'User Layers',
                 'styles': ['model_boundary.qml'],
                 'attrs_edit_widgets': {},
@@ -402,13 +429,6 @@ class Layers(QObject):
                 'styles': ['tolspatial.qml'],
                 'attrs_edit_widgets': {},
                 'visible': False,
-                'readonly': False
-            }),
-            ('fpfroude', {
-                'name': 'Froude numbers for grid elems',
-                'sgroup': 'User Layers',
-                'styles': ['fpfroude.qml'],
-                'attrs_edit_widgets': {},
                 'readonly': False
             }),
 
@@ -497,6 +517,13 @@ class Layers(QObject):
                 'name': 'Reservoirs',
                 'sgroup': 'Schematic Layers',
                 'styles': ['reservoirs.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('fpfroude', {
+                'name': 'Froude numbers for grid elems',
+                'sgroup': 'User Layers',
+                'styles': ['fpfroude.qml'],
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
@@ -873,6 +900,8 @@ class Layers(QObject):
             else:
                 pass # no attributes edit widgets config
         self.expand_flo2d_group(group)
+        self.collapse_all_flo2d_subgroups(group)
+        self.expand_flo2d_subgroup(group, 'User Layers')
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par('CELLSIZE')
