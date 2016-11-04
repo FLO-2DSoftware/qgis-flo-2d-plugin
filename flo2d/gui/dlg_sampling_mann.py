@@ -8,29 +8,22 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import QGis, QgsVectorLayer
+from qgis.core import QGis
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-
-
 
 uiDialog, qtBaseClass = load_ui('sampling_manning')
 
 
 class SamplingManningDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, cell_size):
+    def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
-        self.grid = None
-        self.cell_size = float(cell_size)
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()

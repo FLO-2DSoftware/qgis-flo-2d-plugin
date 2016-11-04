@@ -470,28 +470,31 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_roughness'):
             self.uc.bar_warn("There is no roughness polygon! Please digitize them before running tool.")
             return
-        rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
-        cell_size = self.get_cell_size()
-        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs, cell_size)
+        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = self.mann_dlg.exec_()
         if ok:
-            if self.mann_dlg.allGridElemsRadio.isChecked():
-                # do stuff for all grid elems
-                pass
-            else:
-                # update only user polygons
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-                    update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("Assigning roughness finished!")
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.log_info(traceback.format_exc())
-                    self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
-        else:
             pass
+        else:
+            return
+        if self.mann_dlg.allGridElemsRadio.isChecked():
+            rough_name = self.mann_dlg.srcLayerCbo.currentText()
+            nfield = self.mann_dlg.srcFieldCbo.currentText()
+            flag = True
+        else:
+            rough_name = "Roughness"
+            nfield = 'n'
+            flag = False
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning roughness finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
 
     @connection_required
     def single_elevation(self):
