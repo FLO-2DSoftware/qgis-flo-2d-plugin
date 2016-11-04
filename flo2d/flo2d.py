@@ -620,6 +620,7 @@ class Flo2D(object):
                 pass
             else:
                 self.uc.show_warn("Please choose at least one crest elevation source!")
+                return
         else:
             return
         try:
