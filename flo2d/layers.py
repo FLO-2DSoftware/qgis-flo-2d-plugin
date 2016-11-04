@@ -428,7 +428,7 @@ class Layers(QObject):
                 'module': ['chan']
             }),
             ('fpxsec', {
-                'name': 'Flodplain cross-sections',
+                'name': 'Floodplain cross-sections',
                 'sgroup': 'Schematic Layers',
                 'styles': ['fpxsec.qml'],
                 'attrs_edit_widgets': {}
