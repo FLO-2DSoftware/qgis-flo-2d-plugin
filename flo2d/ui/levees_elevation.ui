@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>408</width>
-    <height>247</height>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,6 +63,9 @@
        </item>
        <item>
         <widget class="QDoubleSpinBox" name="buffer_size">
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
          <property name="maximum">
           <double>999999999.000000000000000</double>
          </property>
@@ -85,32 +88,6 @@
        <property name="text">
         <string>Levee user polygons</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_assign_type">
-       <property name="text">
-        <string>Elevation assigning method:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="assign_type">
-       <item>
-        <property name="text">
-         <string>set Equal</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Add</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Substract</string>
-        </property>
-       </item>
       </widget>
      </item>
     </layout>
