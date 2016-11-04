@@ -9,7 +9,6 @@
 # of the License, or (at your option) any later version
 
 import math
-from osgeo import gdal
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
 from utils import is_number
 
@@ -143,10 +142,15 @@ def square_grid(gutils, boundary):
     return c
 
 
-def update_roughness(gutils, grid, roughness, column_name):
+def update_roughness(gutils, grid, roughness, column_name, reset=False):
     """
     Updating roughness values inside 'grid' table
     """
+    if reset is True:
+        default = gutils.get_cont_par('MANNING')
+        gutils.execute('UPDATE grid SET n_value=?;', (default,))
+    else:
+        pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
     gutils.con.executemany(qry, poly2grid(grid, roughness, column_name))
     gutils.con.commit()
@@ -197,7 +201,9 @@ def raster2grid(grid, out_raster):
 
 
 def grid_has_empty_elev(gutils):
-    '''Return number of grid elements that have no elevation defined'''
+    """
+    Return number of grid elements that have no elevation defined
+    """
     qry = '''SELECT count(*) FROM grid WHERE elevation IS NULL;'''
     res = gutils.execute(qry)
     try:

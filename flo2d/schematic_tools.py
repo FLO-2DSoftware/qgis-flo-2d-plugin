@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QgsSpatialIndex, QgsFeatureRequest, QgsVector
 from operator import itemgetter
 from collections import defaultdict
@@ -15,7 +16,7 @@ from grid_tools import fid_from_grid
 from math import pi
 
 
-def get_intervals(line_feature, point_layer, col_name, buffer_size):
+def get_intervals(line_feature, point_layer, col_value, col_corect, buffer_size):
     """
     Function which calculates intervals and assigning values based on intersection between line and snapped points.
     Points are selected by line buffer and filtered by the distance from the line feature.
@@ -32,7 +33,8 @@ def get_intervals(line_feature, point_layer, col_name, buffer_size):
         else:
             continue
         pos = lgeom.lineLocatePoint(pnt) / tot_len
-        val = feat[col_name]
+        abs_val, cor = feat[col_value], feat[col_corect]
+        val = abs_val + cor if not isinstance(cor, QPyNullVariant) else abs_val
         closest = lgeom.distance(pnt)
         if pos not in positions or closest < positions[pos][-1]:
             positions.values()
@@ -80,7 +82,7 @@ def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid'
                 yield (value, fid)
             elif position == start_distance:
                 yield (start_value, fid)
-            elif position == end_value:
+            elif position == end_distance:
                 yield (end_value, fid)
             elif position < start[0]:
                 yield (start[3], fid)
@@ -94,7 +96,7 @@ def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid'
         return
 
 
-def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', join_col='user_line_fid'):
+def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_col='fid', join_col='user_line_fid'):
     """
     Generator for assigning elevation values from polygons to levees.
     Levee sides centroids are snapped to the user levee line feature and next tested for intersecting with polygons.
@@ -117,7 +119,9 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, id_col='fid', jo
         pnt = lgeom.interpolate(pos)
         for poly in sel_polys:
             if poly.geometry().contains(pnt):
-                yield (poly[value_col], feat[id_col])
+                abs_val, cor = poly[value_col], poly[correct_val]
+                poly_val = abs_val + cor if not isinstance(cor, QPyNullVariant) else abs_val
+                yield (poly_val, feat[id_col])
                 break
             else:
                 pass

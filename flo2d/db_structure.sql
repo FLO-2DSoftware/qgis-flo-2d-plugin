@@ -1649,8 +1649,7 @@ SELECT gpkgAddSpatialIndex('user_levee_points', 'geom');
 CREATE TABLE "user_levee_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "start_elev" REAL,
-    "end_elev" REAL,
+    "elev" REAL,
     "correction" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);

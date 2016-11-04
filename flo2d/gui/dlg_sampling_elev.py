@@ -67,7 +67,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.srcRasterCbo.setCurrentIndex(len(self.srcRasterCbo)-1)
 
     def populate_alg_cbo(self):
-        '''Populate resample algorithm combobox'''
+        """Populate resample algorithm combobox"""
         met = {
             "near": "Nearest neighbour",
             "bilinear": "Bilinear",
@@ -87,7 +87,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.algCbo.setCurrentIndex(0)
 
     def get_worp_opts_data(self):
-        '''Get all data needed for GDAL Warp'''
+        """Get all data needed for GDAL Warp"""
         # grid extents
         self.grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
         self.lyrs.update_layer_extents(self.grid)
@@ -107,7 +107,6 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         und = self.srcNoDataEdit.text()
         if und:
             self.src_nodata = int(und)
-
 
     def probe_elevation(self):
         """Resample raster to be aligned with the grid, then probe values and update elements elevation attr"""

@@ -41,7 +41,7 @@ class TestSchematicTools(unittest.TestCase):
         point_layer = QgsVectorLayer(user_points, 'points', 'ogr')
         inter_lens = [10, 7]
         for feat in line_layer.getFeatures():
-            intervals = get_intervals(feat, point_layer, 'elev', 500)
+            intervals = get_intervals(feat, point_layer, 'elev', 'correction', 500)
             self.assertIn(len(intervals), inter_lens)
 
     @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
@@ -56,7 +56,7 @@ class TestSchematicTools(unittest.TestCase):
 
         total_sum = 0
         for feat in line_layer.getFeatures():
-            intervals = get_intervals(feat, point_layer, 'elev', 500)
+            intervals = get_intervals(feat, point_layer, 'elev', 'correction', 500)
             interpolated = interpolate_along_line(feat, levees_layer, intervals)
             for row in interpolated:
                 val = row[0]
