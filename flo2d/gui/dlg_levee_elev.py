@@ -33,6 +33,10 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.elev_points_chbox.stateChanged.connect(self.points_checked)
         self.elev_lines_chbox.stateChanged.connect(self.lines_checked)
 
+        self.elev_polygons_chbox.setChecked(True)
+        self.elev_points_chbox.setChecked(True)
+        self.elev_lines_chbox.setChecked(True)
+
     def points_checked(self):
         if self.elev_points_chbox.isChecked():
             self.buffer_size.setEnabled(True)
