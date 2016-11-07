@@ -405,7 +405,10 @@ class Layers(QObject):
                 'name': 'Blocked areas',
                 'sgroup': 'User Layers',
                 'styles': ['blocked_areas.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'calc_arf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
+                    'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
+                },
                 'module': ['redfac'],
                 'readonly': False
             }),
