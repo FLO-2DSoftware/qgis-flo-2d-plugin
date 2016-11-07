@@ -111,7 +111,7 @@ def calculate_arfwrf(grid, areas):
                 centroid = geom.centroid()
                 centroid_wkt = centroid.exportToWkt()
                 if arf > 0.95:
-                    yield (centroid_wkt, feat.id(), f.id(), 1) + full_wrf
+                    yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf)
                     continue
                 else:
                     pass
