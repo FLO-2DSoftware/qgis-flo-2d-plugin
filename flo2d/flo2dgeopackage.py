@@ -16,7 +16,7 @@ from geopackage_utils import GeoPackageUtils
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
-    """GeoPackage object class for storing FLO-2D model data"""
+    """Class for proper import and export FLO-2D data"""
     def __init__(self, con, iface):
         super(Flo2dGeoPackage, self).__init__(con, iface)
         self.parser = None
@@ -41,6 +41,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mann = self.get_cont_par('MANNING')
         if not mann:
             mann = '0.05'
+        else:
+            pass
         self.clear_tables('cont')
         cont = self.parser.parse_cont()
         toler = self.parser.parse_toler()

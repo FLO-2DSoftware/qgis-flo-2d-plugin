@@ -10,6 +10,7 @@ Contents:
    database
    creating_new_model
    utilities
+   topo_tools
    import_export_gds
    
 

@@ -33,13 +33,13 @@ In the following sections, we will add various model elements and assign appropr
 Creating a new domain
 ---------------------
 
-To create a new domain, you need to digitize a new polygon within the **Model Boundary** under **User Layers** group.
+To create a new domain, you need to digitize a new polygon within the **Computational Domain** under **User Layers** group.
 
 Digitizing and editing functions are carried out using the QGIS digitizing tools. For more information, how to use QGIS digitizing tools, `see QGIS manual <https://docs.qgis.org/2.14/en/docs/user_manual/working_with_vector/editing_geometry_attributes.html>`_
 
-To add a Model Boundary:
+To add a Computational Domain:
 
-* Right-click on the **Model Boundary** under **User Layers** in the layer tree and select |ToggleEditing| **Toggle Editing**
+* Right-click on the **Computational Domain** under **User Layers** in the layer tree and select |ToggleEditing| **Toggle Editing**
 * From the Digitizing toolbar, click on |AddFeature| **Add Feature**
 * Digitize the extent of the boundary and right-click to finish the polygon
 * Once finished with the digitizing, the attribute table will appear:

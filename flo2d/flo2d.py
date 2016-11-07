@@ -16,7 +16,8 @@ from qgis.core import *
 from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, evaluate_arfwrf
+from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
+from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from utils import *
@@ -28,7 +29,9 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
+from .gui.dlg_sampling_mann import SamplingManningDialog
 from .gui.dlg_grid_info_dock import GridInfoDock
+from .gui.dlg_levee_elev import LeveesToolDialog
 
 
 class Flo2D(object):
@@ -187,6 +190,30 @@ class Flo2D(object):
             callback=lambda: self.show_evap_editor(),
             parent=self.iface.mainWindow())
 
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
+            text=self.tr(u'Assign Elevation from polygons'),
+            callback=lambda: self.single_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
+            text=self.tr(u'Levee Elevation Tool'),
+            callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
+            text=self.tr(u'Schematize channels'),
+            callback=lambda: self.schematize_channels(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematize_streets.svg'),
+            text=self.tr(u'Schematize streets'),
+            callback=lambda: self.schematize_streets(),
+            parent=self.iface.mainWindow())
+
     def create_grid_info_dock(self):
         self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
@@ -231,7 +258,7 @@ class Flo2D(object):
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
         self.grid_info_dock.setVisible(True)
 
-    def load_gpkg_from_proj(self, file):
+    def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
         old_gpkg = self.read_proj_entry('gpkg')
         if old_gpkg:
@@ -383,11 +410,11 @@ class Flo2D(object):
 
     def get_cell_size(self):
         """Get cell size from:
-            - model boundary attr table (if defined, will be written to cont table)
+            - Computational Domain attr table (if defined, will be written to cont table)
             - cont table
             - ask user
         """
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
@@ -407,40 +434,57 @@ class Flo2D(object):
 
     @connection_required
     def create_grid(self):
-        if not self.lyrs.save_edits_and_proceed("Model Boundary"):
+        if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
             return
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
         self.get_cell_size()
+        self.uc.progress_bar('Creating grid...')
         self.gutils = GeoPackageUtils(self.con, self.iface)
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        bl = self.lyrs.get_layer_by_name("Model Boundary", group=self.lyrs.group).layer()
+        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
         result = square_grid(self.gutils, bl)
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        self.lyrs.update_layer_extents(grid_lyr)
         if grid_lyr:
             grid_lyr.triggerRepaint()
-        QApplication.restoreOverrideCursor()
+        self.uc.clear_bar_messages()
         if result > 0:
             self.uc.show_info("Grid created!")
         else:
-            self.uc.show_warn("Creating grid aborted! Please check model boundary layer.")
+            self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
 
     @connection_required
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
             return
-        if self.gutils.is_table_empty('user_roughness'):
-            self.uc.bar_warn("There is no any roughness polygons! Please digitize them before running tool.")
+        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
+        ok = self.mann_dlg.exec_()
+        if ok:
+            pass
+        else:
             return
-        rough_lyr = self.lyrs.get_layer_by_name("Roughness", group=self.lyrs.group).layer()
+        if self.mann_dlg.allGridElemsRadio.isChecked():
+            rough_name = self.mann_dlg.srcLayerCbo.currentText()
+            nfield = self.mann_dlg.srcFieldCbo.currentText()
+            flag = True
+        else:
+            rough_name = "Roughness"
+            nfield = 'n'
+            flag = False
+            if self.gutils.is_table_empty('user_roughness'):
+                self.uc.show_warn("There is no roughness polygons! Please digitize them before running tool.")
+                return
+            else:
+                pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_roughness(self.gutils, grid_lyr, rough_lyr, 'n')
+            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning roughness finished!")
         except Exception as e:
@@ -449,24 +493,39 @@ class Flo2D(object):
             self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
 
     @connection_required
+    def single_elevation(self):
+        if not self.lyrs.save_edits_and_proceed("Grid Elevation"):
+            return
+        if self.gutils.is_table_empty('user_elevation_polygons'):
+            self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
+            return
+        elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            update_elevation(self.gutils, grid_lyr, elev_lyr, 'elev')
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning grid elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
+
+    @connection_required
     def get_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no model boundary! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
         ok = dlg.exec_()
         if ok:
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg.probe_elevation()
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info("Sampling done.")
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn("Sampling aborted! Please check your input raster and model boundary.")
-                raise
+            pass
+        else:
+            return
+        res = dlg.probe_elevation()
+        if res:
+            dlg.show_probing_result_info()
 
     @connection_required
     def eval_arfwrf(self):
@@ -481,20 +540,19 @@ class Flo2D(object):
             self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
-            evaluate_arfwrf(self.gutils, grid_lyr, arf_lyr)
-            arf_lyr.reload()
-            self.lyrs.update_layer_extents(arf_lyr)
-            self.iface.mapCanvas().clearCache()
-            arf_lyr.triggerRepaint()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("ARF and WRF values calculated!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Calculating ARF and WRF values aborted! Please check your blocked areas layer.")
+        # try:
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+        evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
+        arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
+        arf_lyr.reload()
+        self.lyrs.update_layer_extents(arf_lyr)
+
+        self.lyrs.update_style_blocked(arf_lyr.id())
+        self.iface.mapCanvas().clearCache()
+        user_arf_lyr.triggerRepaint()
+        QApplication.restoreOverrideCursor()
+        self.uc.show_info("ARF and WRF values calculated!")
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -551,6 +609,79 @@ class Flo2D(object):
         except TypeError:
             self.uc.bar_warn('There is no evaporation data to display!')
 
+    @connection_required
+    def show_levee_elev_tool(self):
+        """Show levee elevation tool"""
+        # check for grid elements with null elevation
+        null_elev_nr = grid_has_empty_elev(self.gutils)
+        if null_elev_nr:
+            msg = 'The grid has {} elements with null elevation.\nLevee elevation tool requires that all grid elements have elevation defined.'
+            self.uc.show_warn(msg.format(null_elev_nr))
+            return
+        else:
+            pass
+        # check if user levee layers are in edit mode
+        levee_lyrs = ['Levee Points', 'Levee Lines', 'Levee Polygons']
+        for lyr in levee_lyrs:
+            if not self.lyrs.save_edits_and_proceed(lyr):
+                return
+        # show the dialog
+        dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
+        dlg_levee_elev.show()
+        ok = dlg_levee_elev.exec_()
+        if ok:
+            if dlg_levee_elev.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one crest elevation source!")
+                return
+        else:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.schematize_levees()
+            for no in sorted(dlg_levee_elev.methods):
+                dlg_levee_elev.methods[no]()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Values assigned!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+
+    @connection_required
+    def schematize_channels(self):
+        segments = self.lyrs.get_layer_by_name("Channel Segments", group=self.lyrs.group).layer()
+        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        try:
+            schematize_channels(self.gutils, segments, cell_size)
+            chan_schem = self.lyrs.get_layer_by_name("Channel segments (left bank)", group=self.lyrs.group).layer()
+            if chan_schem:
+                chan_schem.triggerRepaint()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+
+    @connection_required
+    def schematize_streets(self):
+        segments = self.lyrs.get_layer_by_name("Street Lines", group=self.lyrs.group).layer()
+        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        try:
+            schematize_streets(self.gutils, segments, cell_size)
+            streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
+            if streets_schem:
+                streets_schem.triggerRepaint()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+
+    def schematize_levees(self):
+        """Generate schematic lines for user defined levee lines"""
+        levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
+        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
+        levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
+        if levee_schem:
+            levee_schem.triggerRepaint()
+
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
@@ -559,7 +690,6 @@ class Flo2D(object):
         self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
 
     def identify(self):
-
         self.canvas.setMapTool(self.info_tool)
         self.info_tool.update_lyrs_list()
 

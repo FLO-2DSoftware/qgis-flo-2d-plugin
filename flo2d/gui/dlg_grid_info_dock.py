@@ -41,7 +41,6 @@ class GridInfoDock(qtBaseClass, uiDialog):
                 pass
             self.elevEdit.setText(elev)
             self.mannEdit.setText(str(n))
-            print elev, n, type(elev), type(n)
         else:
             self.elevEdit.setText('')
             self.mannEdit.setText('')

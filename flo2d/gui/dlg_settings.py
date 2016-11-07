@@ -49,6 +49,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
         }
+        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
         self.setup()
 
         # connection
@@ -215,7 +216,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
             updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
-            print name
             if isinstance(wid, QLineEdit):
                 value = wid.text()
             elif isinstance(wid, QSpinBox):

@@ -401,7 +401,8 @@ CREATE TABLE "chan" (
     "froudc" REAL, -- FROUDC, max Froude channel number
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
-    "notes" TEXT
+    "notes" TEXT,
+    "user_line_fid" INTEGER -- FID of parent user channel line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1069,8 +1070,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 
 CREATE TABLE "blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "collapse" INTEGER -- collapse option for blocking object
-
+    "collapse" INTEGER, -- collapse option for blocking object
+    "calc_arf" INTEGER, -- flag for calculating ARFs
+    "calc_wrf" INTEGER -- flag for calculating WRFs
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1212,7 +1214,8 @@ CREATE TABLE "levee_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- LGRIDNO, grid element fid with a levee
     "ldir" INTEGER, -- LDIR, flow direction that will be cutoff (1-8)
-    "levcrest" REAL -- LEVCREST, the elevation of the levee crest
+    "levcrest" REAL, -- LEVCREST, the elevation of the levee crest,
+    "user_line_fid" INTEGER -- FID of parent user levee line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('levee_data', 'features', 4326);
 SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1604,22 +1607,11 @@ CREATE TABLE "sed_supply_frac_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
-
--- TEMPORARY TABLES
-
-CREATE TABLE grid_tmp (
-    "fid" INTEGER PRIMARY KEY NOT NULL
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid_tmp', 'features', 4326);
-SELECT gpkgAddGeometryColumn('grid_tmp', 'g', 'MULTIPOLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('grid_tmp', 'g');
-SELECT gpkgAddSpatialIndex('grid_tmp', 'g');
-
 -- USERS Layers
 
 CREATE TABLE "user_model_boundary" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "cell_size" INTEGER
+    "cell_size" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_model_boundary', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);
@@ -1644,13 +1636,38 @@ SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
 
-CREATE TABLE "user_levees" (
-    "fid" INTEGER PRIMARY KEY NOT NULL
+CREATE TABLE "user_levee_points" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "elev" REAL,
+    "correction" REAL
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levees', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_levees', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_levees', 'geom');
-SELECT gpkgAddSpatialIndex('user_levees', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_points', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_levee_points', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_levee_points', 'geom');
+SELECT gpkgAddSpatialIndex('user_levee_points', 'geom');
+
+CREATE TABLE "user_levee_lines" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "elev" REAL,
+    "correction" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_levee_lines', 'geom');
+SELECT gpkgAddSpatialIndex('user_levee_lines', 'geom');
+
+CREATE TABLE "user_levee_polygons" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "elev" REAL,
+    "correction" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_polygons', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_levee_polygons', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_levee_polygons', 'geom');
+SELECT gpkgAddSpatialIndex('user_levee_polygons', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1670,3 +1687,12 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughnes
 SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
 SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
+
+CREATE TABLE "user_elevation_polygons" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "elev" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_elevation_polygons', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_elevation_polygons', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
+SELECT gpkgAddSpatialIndex('user_elevation_polygons', 'geom');

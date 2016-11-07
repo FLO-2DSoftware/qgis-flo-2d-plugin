@@ -9,7 +9,9 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 from qgis.gui import QgsMapToolIdentify
+import os
 
 
 class GridInfoTool(QgsMapToolIdentify):
@@ -33,6 +35,10 @@ class GridInfoTool(QgsMapToolIdentify):
                 self.grid_elem_picked.emit(res[0].mFeature.id())
             else:
                 self.grid_elem_picked.emit(-1)
+
+    def activate(self):
+        self.canvas.setCursor(QCursor(QPixmap(os.path.join(
+            os.path.dirname(__file__), 'img/info_tool_icon.svg'))))
 
     def deactivate(self):
         pass

@@ -14,6 +14,7 @@ from qgis.core import *
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 from collections import OrderedDict
 import functools
+import os
 
 
 class InfoTool(QgsMapToolIdentify):
@@ -25,6 +26,7 @@ class InfoTool(QgsMapToolIdentify):
         self.lyrs = lyrs
         self.rb = None
         QgsMapToolIdentify.__init__(self, self.canvas)
+
 
     def update_lyrs_list(self):
         self.lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
@@ -93,6 +95,8 @@ class InfoTool(QgsMapToolIdentify):
                 self.rb.reset(i)
 
     def activate(self):
+        self.canvas.setCursor(QCursor(QPixmap(os.path.join(
+            os.path.dirname(__file__), 'img/info_tool_icon.svg'))))
         self.update_lyrs_list()
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 

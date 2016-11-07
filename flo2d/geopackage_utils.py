@@ -105,7 +105,7 @@ def database_disconnect(con):
 
 
 class GeoPackageUtils(object):
-    """GeoPackage utils for handling GPKG files"""
+    """GeoPackage utils for handling data inside GeoPackage"""
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
@@ -226,9 +226,9 @@ class GeoPackageUtils(object):
         return cells
 
     def single_centroid(self, gid, table='grid', field='fid'):
-        sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
-        gpb_buff = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
-        return gpb_buff
+        sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        wkt = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
+        return wkt
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING('''
