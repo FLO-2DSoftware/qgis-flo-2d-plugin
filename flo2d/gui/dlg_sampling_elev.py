@@ -16,7 +16,7 @@ from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..grid_tools import raster2grid, grid_has_empty_elev
-import subprocess
+from subprocess import Popen, PIPE, STDOUT
 
 
 uiDialog, qtBaseClass = load_ui('sampling_elev')
@@ -136,16 +136,10 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             opts.append('-multi -wo NUM_THREADS=ALL_CPUS')
         else:
             pass
-        cmd = 'gdalwarp {} {} {}'.format(' '.join([opt for opt in opts]), self.src_raster, self.out_raster)
-        proc = subprocess.Popen(
-            cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stdin=open(os.devnull),
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        ).stdout
-        for line in proc:
+        cmd = 'gdalwarp {} "{}" "{}"'.format(' '.join([opt for opt in opts]), self.src_raster, self.out_raster)
+        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        out = proc.communicate()
+        for line in out:
             self.uc.log_info(line)
         # Fill NODATA raster cells if desired
         if self.fillNoDataChBox.isChecked():
@@ -162,16 +156,10 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         opts = [
             '-md {}'.format(self.radiusSBox.value())
         ]
-        cmd = 'gdal_fillnodata {} {}'.format(' '.join([opt for opt in opts]), self.out_raster)
-        proc = subprocess.Popen(
-            cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stdin=open(os.devnull),
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        ).stdout
-        for line in proc:
+        cmd = 'gdal_fillnodata {} "{}"'.format(' '.join([opt for opt in opts]), self.out_raster)
+        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        out = proc.communicate()
+        for line in out:
             self.uc.log_info(line)
 
     def show_probing_result_info(self):
