@@ -410,7 +410,8 @@ class Layers(QObject):
                     'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
                 },
                 'module': ['redfac'],
-                'readonly': False
+                'readonly': False,
+                'attrs_defaults': {'calc_arf': '1', 'calc_wrf': '1'} #
             }),
             ('mult_areas', {
                 'name': 'Multiple Channel Areas',
@@ -902,6 +903,17 @@ class Layers(QObject):
                     c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
                 pass # no attributes edit widgets config
+            # set attributes default value, if any
+            try:
+                dvs = data['attrs_defaults']
+            except:
+                dvs = None
+            if dvs:
+                for attr, val in dvs.iteritems():
+                    idx  = l.fieldNameIndex(attr)
+                    l.setDefaultValueExpression(idx, val)
+            else:
+                pass
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, 'User Layers')
