@@ -891,13 +891,13 @@ class Layers(QObject):
                     visible=lyr_is_on,
                     readonly=data['readonly']
             )
+            l = self.get_layer_tree_item(lyr_id).layer()
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                lyr = self.get_layer_tree_item(lyr_id).layer()
-                c = lyr.editFormConfig()
+                c = l.editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].iteritems():
-                    attr_idx = lyr.fieldNameIndex(attr)
+                    attr_idx = l.fieldNameIndex(attr)
                     c.setWidgetType(attr_idx, widget_data['name'])
                     c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
