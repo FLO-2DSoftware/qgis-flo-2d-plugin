@@ -62,7 +62,7 @@ class TestGridTools(unittest.TestCase):
         for row in calculate_arfwrf(glayer, blayer):
             awrf = [True if i <= 1 else False for i in row[-9:]]
             self.assertTrue(all(awrf))
-        self.assertTupleEqual(row[1:], (153L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
+        self.assertTupleEqual(row[1:], (153L, 4L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
 
 
 # Running tests:

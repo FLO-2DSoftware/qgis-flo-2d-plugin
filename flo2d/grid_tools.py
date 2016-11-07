@@ -111,7 +111,7 @@ def calculate_arfwrf(grid, areas):
                 centroid = geom.centroid()
                 centroid_wkt = centroid.exportToWkt()
                 if arf > 0.95:
-                    yield (centroid_wkt, feat.id(), 1) + full_wrf
+                    yield (centroid_wkt, feat.id(), f.id(), 1) + full_wrf
                     continue
                 else:
                     pass
@@ -122,7 +122,7 @@ def calculate_arfwrf(grid, areas):
                     wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
                 else:
                     wrf = empty_wrf
-                yield (centroid_wkt, feat.id(), arf) + tuple(wrf)
+                yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf)
             else:
                 pass
 
@@ -176,13 +176,13 @@ def evaluate_arfwrf(gutils, grid, areas):
     Calculating and inserting ARF and WRF values into 'blocked_cells' table
     """
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = '''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
+    qry_cells = '''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
     cur = gutils.con.cursor()
-    for i, row in enumerate(calculate_arfwrf(grid, areas), 1):
+    for row in calculate_arfwrf(grid, areas):
         point = row[0]
         gpb_qry = qry_cells.format(point)
-        cur.execute(gpb_qry, (i,) + row[1:])
+        cur.execute(gpb_qry, row[1:])
     gutils.con.commit()
 
 
