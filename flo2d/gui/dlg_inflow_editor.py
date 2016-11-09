@@ -15,7 +15,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow
 from plot_widget import PlotWidget
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, list_has_none_item
+from ..utils import m_fdata
 
 
 uiDialog, qtBaseClass = load_ui('inflow_editor')
