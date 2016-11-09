@@ -313,6 +313,14 @@ class Layers(QObject):
     def load_all_layers(self, gutils):
         self.gutils = gutils
         self.layers_data = OrderedDict([
+            ('user_bc_points', {
+                'name': 'Boundary Condition Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_points.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('user_levee_points', {
                 'name': 'Levee Points',
                 'sgroup': 'User Layers',
@@ -345,12 +353,28 @@ class Layers(QObject):
                 'module': ['streets'],
                 'readonly': False
             }),
+            ('user_bc_lines', {
+                'name': 'Boundary Condition Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_lines.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('user_levee_lines', {
                 'name': 'Levee Lines',
                 'sgroup': 'User Layers',
                 'styles': ['user_levee_lines.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['levees'],
+                'readonly': False
+            }),
+            ('user_bc_polygons', {
+                'name': 'Boundary Condition Polygons',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_polygons.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
                 'readonly': False
             }),
             ('user_levee_polygons', {

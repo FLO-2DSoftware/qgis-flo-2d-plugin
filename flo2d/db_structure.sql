@@ -67,7 +67,7 @@ CREATE TABLE "inflow" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('inflow', 'features', 4326);
 SELECT gpkgAddGeometryColumn('inflow', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('inflow', 'geom');
-SELECT gpkgAddSpatialIndex('inflow', 'geom');
+-- SELECT gpkgAddSpatialIndex('inflow', 'geom');
 
 CREATE TABLE "inflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE "reservoirs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
-SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
+-- SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
 
 CREATE TABLE "inflow_time_series" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -176,7 +176,7 @@ CREATE TABLE "outflow" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
 SELECT gpkgAddGeometryColumn('outflow', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('outflow', 'geom');
-SELECT gpkgAddSpatialIndex('outflow', 'geom');
+-- SELECT gpkgAddSpatialIndex('outflow', 'geom');
 
 CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -318,7 +318,7 @@ CREATE TABLE "out_hydrographs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('out_hydrographs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('out_hydrographs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('out_hydrographs', 'geom');
-SELECT gpkgAddSpatialIndex('out_hydrographs', 'geom');
+-- SELECT gpkgAddSpatialIndex('out_hydrographs', 'geom');
 
 CREATE TABLE "out_hydrographs_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -355,7 +355,7 @@ CREATE TABLE "rain_arf_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rain_arf_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('rain_arf_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('rain_arf_areas', 'geom');
-SELECT gpkgAddSpatialIndex('rain_arf_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('rain_arf_areas', 'geom');
 
 CREATE TABLE "rain_arf_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -407,7 +407,7 @@ CREATE TABLE "chan" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan', 'geom');
-SELECT gpkgAddSpatialIndex('chan', 'geom');
+-- SELECT gpkgAddSpatialIndex('chan', 'geom');
 
 CREATE TABLE "chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY, -- ICHANGRID, grid element number for left bank
@@ -422,7 +422,7 @@ CREATE TABLE "chan_elems" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_elems', 'geom');
-SELECT gpkgAddSpatialIndex('chan_elems', 'geom');
+-- SELECT gpkgAddSpatialIndex('chan_elems', 'geom');
 
 CREATE TABLE "chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -538,7 +538,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 -- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rightbanks', 'features', 4326);
 -- SELECT gpkgAddGeometryColumn('rightbanks', 'geom', 'LINESTRING', 0, 0, 0);
 -- SELECT gpkgAddGeometryTriggers('rightbanks', 'geom');
--- SELECT gpkgAddSpatialIndex('rightbanks', 'geom');
+-- -- SELECT gpkgAddSpatialIndex('rightbanks', 'geom');
 --
 -- CREATE TRIGGER "find_rbank_n_insert"
 --     AFTER INSERT ON "chan_n"
@@ -582,7 +582,7 @@ CREATE TABLE "chan_confluences" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_confluences', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_confluences', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_confluences', 'geom');
-SELECT gpkgAddSpatialIndex('chan_confluences', 'geom');
+-- SELECT gpkgAddSpatialIndex('chan_confluences', 'geom');
 
 -- automatically create/modify geometry of confluences on iconflo1/2 insert/update
 --CREATE TRIGGER "confluence_geom_insert"
@@ -610,7 +610,7 @@ CREATE TABLE "noexchange_chan_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('noexchange_chan_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('noexchange_chan_areas', 'geom');
-SELECT gpkgAddSpatialIndex('noexchange_chan_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('noexchange_chan_areas', 'geom');
 
 CREATE TABLE "noexchange_chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -737,7 +737,7 @@ CREATE TABLE "infil_areas_green" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_green', 'features', 4326);
 SELECT gpkgAddGeometryColumn('infil_areas_green', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('infil_areas_green', 'geom');
-SELECT gpkgAddSpatialIndex('infil_areas_green', 'geom');
+-- SELECT gpkgAddSpatialIndex('infil_areas_green', 'geom');
 
     -- Green Ampt
 
@@ -783,7 +783,7 @@ CREATE TABLE "infil_areas_scs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_scs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('infil_areas_scs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('infil_areas_scs', 'geom');
-SELECT gpkgAddSpatialIndex('infil_areas_scs', 'geom');
+-- SELECT gpkgAddSpatialIndex('infil_areas_scs', 'geom');
 
 CREATE TABLE "infil_cells_scs" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -829,7 +829,7 @@ CREATE TABLE "infil_areas_horton" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_horton', 'features', 4326);
 SELECT gpkgAddGeometryColumn('infil_areas_horton', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('infil_areas_horton', 'geom');
-SELECT gpkgAddSpatialIndex('infil_areas_horton', 'geom');
+-- SELECT gpkgAddSpatialIndex('infil_areas_horton', 'geom');
 
 CREATE TABLE "infil_cells_horton" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -873,7 +873,7 @@ CREATE TABLE "infil_areas_chan" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('infil_areas_chan', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('infil_areas_chan', 'geom');
-SELECT gpkgAddSpatialIndex('infil_areas_chan', 'geom');
+-- SELECT gpkgAddSpatialIndex('infil_areas_chan', 'geom');
 
 CREATE TABLE "infil_chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -927,7 +927,7 @@ CREATE TABLE "struct" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('struct', 'features', 4326);
 SELECT gpkgAddGeometryColumn('struct', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('struct', 'geom');
-SELECT gpkgAddSpatialIndex('struct', 'geom');
+-- SELECT gpkgAddSpatialIndex('struct', 'geom');
 
 -- TODO: triggers for creating the struct geom based on in- and outflonod
 
@@ -1012,7 +1012,7 @@ CREATE TABLE "street_seg" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('street_seg', 'features', 4326);
 SELECT gpkgAddGeometryColumn('street_seg', 'geom', 'MULTILINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('street_seg', 'geom');
-SELECT gpkgAddSpatialIndex('street_seg', 'geom');
+-- SELECT gpkgAddSpatialIndex('street_seg', 'geom');
 
 CREATE TABLE "street_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1033,7 +1033,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 -- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas_tot', 'features', 4326);
 -- SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
 -- SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
--- SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
+-- -- SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
 -- 
 -- CREATE TABLE "blocked_cells_tot" (
 --     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1077,7 +1077,7 @@ CREATE TABLE "blocked_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('blocked_areas', 'geom');
-SELECT gpkgAddSpatialIndex('blocked_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('blocked_areas', 'geom');
 
 CREATE TABLE "blocked_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1096,7 +1096,7 @@ CREATE TABLE "blocked_cells" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_cells', 'features', 4326);
 SELECT gpkgAddGeometryColumn('blocked_cells', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('blocked_cells', 'geom');
-SELECT gpkgAddSpatialIndex('blocked_cells', 'geom');
+-- SELECT gpkgAddSpatialIndex('blocked_cells', 'geom');
 
 CREATE VIEW arfwrf AS SELECT b.fid, b.grid_fid, b.arf, b.wrf1, b.wrf2, b.wrf3, b.wrf4, b.wrf5, b.wrf6, b.wrf7, b.wrf8, g.geom FROM blocked_cells as b, grid as g where g.fid = b.grid_fid;
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('arfwrf', 'features', 4326);
@@ -1163,7 +1163,7 @@ CREATE TABLE "mult_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('mult_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_areas', 'geom');
-SELECT gpkgAddSpatialIndex('mult_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('mult_areas', 'geom');
 
 CREATE TABLE "mult_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1220,7 +1220,7 @@ CREATE TABLE "levee_data" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('levee_data', 'features', 4326);
 SELECT gpkgAddGeometryColumn('levee_data', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('levee_data', 'geom');
-SELECT gpkgAddSpatialIndex('levee_data', 'geom');
+-- SELECT gpkgAddSpatialIndex('levee_data', 'geom');
 
 CREATE TABLE "levee_failure" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1254,7 +1254,7 @@ CREATE TABLE "fpxsec" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec', 'features', 4326);
 SELECT gpkgAddGeometryColumn('fpxsec', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('fpxsec', 'geom');
-SELECT gpkgAddSpatialIndex('fpxsec', 'geom');
+-- SELECT gpkgAddSpatialIndex('fpxsec', 'geom');
 
 CREATE TABLE "fpxsec_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1273,7 +1273,7 @@ CREATE TABLE "fpfroude" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpfroude', 'features', 4326);
 SELECT gpkgAddGeometryColumn('fpfroude', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('fpfroude', 'geom');
-SELECT gpkgAddSpatialIndex('fpfroude', 'geom');
+-- SELECT gpkgAddSpatialIndex('fpfroude', 'geom');
 
 CREATE TABLE "fpfroude_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1299,7 +1299,7 @@ CREATE TABLE "swmmflo" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
 SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmflo', 'geom');
-SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
+-- SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
 
 
 -- SWMMFLORT.DAT
@@ -1331,7 +1331,7 @@ CREATE TABLE "swmmoutf" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'features', 4326);
 SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
-SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
+-- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
 
 
 -- TOLSPATIAL.DAT
@@ -1343,7 +1343,7 @@ CREATE TABLE "tolspatial" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('tolspatial', 'features', 4326);
 SELECT gpkgAddGeometryColumn('tolspatial', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('tolspatial', 'geom');
-SELECT gpkgAddSpatialIndex('tolspatial', 'geom');
+-- SELECT gpkgAddSpatialIndex('tolspatial', 'geom');
 
 CREATE TABLE "tolspatial_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1363,7 +1363,7 @@ CREATE TABLE "wsurf" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wsurf', 'features', 4326);
 SELECT gpkgAddGeometryColumn('wsurf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('wsurf', 'geom');
-SELECT gpkgAddSpatialIndex('wsurf', 'geom');
+-- SELECT gpkgAddSpatialIndex('wsurf', 'geom');
 
 
 -- WSTIME.DAT
@@ -1377,7 +1377,7 @@ CREATE TABLE "wstime" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('wstime', 'features', 4326);
 SELECT gpkgAddGeometryColumn('wstime', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('wstime', 'geom');
-SELECT gpkgAddSpatialIndex('wstime', 'geom');
+-- SELECT gpkgAddSpatialIndex('wstime', 'geom');
 
 
 -- BREACH.DAT
@@ -1457,7 +1457,7 @@ CREATE TABLE "breach" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('breach', 'features', 4326);
 SELECT gpkgAddGeometryColumn('breach', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('breach', 'geom');
-SELECT gpkgAddSpatialIndex('breach', 'geom');
+-- SELECT gpkgAddSpatialIndex('breach', 'geom');
 
 CREATE TABLE "breach_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1495,7 +1495,7 @@ CREATE TABLE "mud_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mud_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('mud_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mud_areas', 'geom');
-SELECT gpkgAddSpatialIndex('mud_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('mud_areas', 'geom');
 
 CREATE TABLE "mud_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1536,7 +1536,7 @@ CREATE TABLE "sed_group_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
-SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
 
 CREATE TABLE "sed_group_frac" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1565,7 +1565,7 @@ CREATE TABLE "sed_rigid_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_rigid_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_rigid_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('sed_rigid_areas', 'geom');
-SELECT gpkgAddSpatialIndex('sed_rigid_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('sed_rigid_areas', 'geom');
 
 CREATE TABLE "sed_rigid_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1584,7 +1584,7 @@ CREATE TABLE "sed_supply_areas" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_supply_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_supply_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('sed_supply_areas', 'geom');
-SELECT gpkgAddSpatialIndex('sed_supply_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('sed_supply_areas', 'geom');
 
 CREATE TABLE "sed_supply_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1616,7 +1616,7 @@ CREATE TABLE "user_model_boundary" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_model_boundary', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
-SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
 
 CREATE TABLE "user_channel_seg" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1625,7 +1625,7 @@ CREATE TABLE "user_channel_seg" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_channel_seg', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_channel_seg', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_channel_seg', 'geom');
-SELECT gpkgAddSpatialIndex('user_channel_seg', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_channel_seg', 'geom');
 
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1634,7 +1634,7 @@ CREATE TABLE "user_xsections" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsections', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
-SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
 
 CREATE TABLE "user_levee_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1645,7 +1645,7 @@ CREATE TABLE "user_levee_points" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_points', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_points', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_levee_points', 'geom');
-SELECT gpkgAddSpatialIndex('user_levee_points', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_levee_points', 'geom');
 
 CREATE TABLE "user_levee_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1656,7 +1656,7 @@ CREATE TABLE "user_levee_lines" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_levee_lines', 'geom');
-SELECT gpkgAddSpatialIndex('user_levee_lines', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_levee_lines', 'geom');
 
 CREATE TABLE "user_levee_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1667,7 +1667,7 @@ CREATE TABLE "user_levee_polygons" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_levee_polygons', 'geom');
-SELECT gpkgAddSpatialIndex('user_levee_polygons', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_levee_polygons', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1676,7 +1676,7 @@ CREATE TABLE "user_streets" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_streets', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_streets', 'geom');
-SELECT gpkgAddSpatialIndex('user_streets', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_streets', 'geom');
 
 CREATE TABLE "user_roughness" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1686,7 +1686,7 @@ CREATE TABLE "user_roughness" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughness', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
-SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
 
 CREATE TABLE "user_elevation_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1695,4 +1695,34 @@ CREATE TABLE "user_elevation_polygons" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_elevation_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_elevation_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
-SELECT gpkgAddSpatialIndex('user_elevation_polygons', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_elevation_polygons', 'geom');
+
+CREATE TABLE "user_bc_points" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" INTEGER,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_points', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_bc_points', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_bc_points', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_bc_points', 'geom');
+
+CREATE TABLE "user_bc_lines" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" INTEGER,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_bc_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_bc_lines', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_bc_lines', 'geom');
+
+CREATE TABLE "user_bc_polygons" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" INTEGER,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polygons', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_bc_polygons', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_bc_polygons', 'geom');

@@ -13,14 +13,17 @@
   <property name="maximumSize">
    <size>
     <width>290</width>
-    <height>52</height>
+    <height>60</height>
    </size>
   </property>
   <property name="baseSize">
    <size>
-    <width>290</width>
-    <height>52</height>
+    <width>0</width>
+    <height>0</height>
    </size>
+  </property>
+  <property name="allowedAreas">
+   <set>Qt::AllDockWidgetAreas</set>
   </property>
   <property name="windowTitle">
    <string>FLO-2D Grid Parameters</string>

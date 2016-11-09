@@ -73,6 +73,8 @@ class Flo2D(object):
         self.set_editors_map()
         self.create_map_tools()
 
+        self.dlg_inflow_editor = None
+
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
 
@@ -226,10 +228,13 @@ class Flo2D(object):
                 self.tr(u'&Flo2D'),
                 action)
             self.iface.removeToolBarIcon(action)
+        # remove dialogs
         if self.grid_info_dock is not None:
             self.grid_info_dock.close()
             self.iface.removeDockWidget(self.grid_info_dock)
-
+        if self.dlg_inflow_editor is not None:
+            self.dlg_inflow_editor.close()
+            del self.dlg_inflow_editor
         # remove the toolbar
         del self.toolbar
         del self.con, self.gutils, self.lyrs
