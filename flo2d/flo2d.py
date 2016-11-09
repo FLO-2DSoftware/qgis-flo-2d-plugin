@@ -442,19 +442,20 @@ class Flo2D(object):
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
-        self.get_cell_size()
-        self.uc.progress_bar('Creating grid...')
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
-        result = square_grid(self.gutils, bl)
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        self.lyrs.update_layer_extents(grid_lyr)
-        if grid_lyr:
-            grid_lyr.triggerRepaint()
-        self.uc.clear_bar_messages()
-        if result > 0:
+        try:
+            self.get_cell_size()
+            self.uc.progress_bar('Creating grid...')
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
+            square_grid(self.gutils, bl)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            self.lyrs.update_layer_extents(grid_lyr)
+            if grid_lyr:
+                grid_lyr.triggerRepaint()
+            self.uc.clear_bar_messages()
             self.uc.show_info("Grid created!")
-        else:
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
 
     @connection_required
