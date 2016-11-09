@@ -529,6 +529,12 @@ class Flo2D(object):
 
     @connection_required
     def eval_arfwrf(self):
+        grid_exists = self.gutils.is_table_empty('grid')
+        if not grid_exists:
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the reduction factors.')
+            return
+        else:
+            pass
         if not self.gutils.is_table_empty('arfwrf'):
             q = 'There are some ARFs and WRFs already defined in the database. Overwrite it?\n\n'
             q += 'Please, note that the new reduction factors will be evaluated for existing blocked ares ONLY.'
