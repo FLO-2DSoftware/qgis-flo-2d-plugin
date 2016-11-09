@@ -28,16 +28,16 @@ class SamplingManningDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, 'FLO-2D')
+        self.current_lyr = None
         self.setup_src_layer_cbo()
         # connections
         self.srcLayerCbo.currentIndexChanged.connect(self.populate_src_field_cbo)
         self.allGridElemsRadio.toggled.connect(self.method_changed)
 
     def setup_src_layer_cbo(self):
-        """Filter src layer combo for plygons and connect field cbo"""
-        g = self.lyrs.group
+        """Filter src layer combo for polygons and connect field cbo"""
         self.srcLayerCbo.addItem('', None)
-        poly_lyrs = self.lyrs.list_group_vlayers(g)
+        poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
             if l.geometryType() == QGis.Polygon:
                 self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
@@ -48,9 +48,9 @@ class SamplingManningDialog(qtBaseClass, uiDialog):
         if idx == 0:
             return
         uri = self.srcLayerCbo.itemData(idx)
-        lyr_id = self.lyrs.layer_exists_in_group(uri, self.lyrs.group)
-        lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
-        self.srcFieldCbo.setLayer(lyr)
+        lyr_id = self.lyrs.layer_exists_in_group(uri)
+        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        self.srcFieldCbo.setLayer(self.current_lyr)
 
     def method_changed(self):
         if self.allGridElemsRadio.isChecked():

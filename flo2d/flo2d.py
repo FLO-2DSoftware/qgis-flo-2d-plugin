@@ -442,19 +442,20 @@ class Flo2D(object):
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
-        self.get_cell_size()
-        self.uc.progress_bar('Creating grid...')
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
-        result = square_grid(self.gutils, bl)
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        self.lyrs.update_layer_extents(grid_lyr)
-        if grid_lyr:
-            grid_lyr.triggerRepaint()
-        self.uc.clear_bar_messages()
-        if result > 0:
+        try:
+            self.get_cell_size()
+            self.uc.progress_bar('Creating grid...')
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
+            square_grid(self.gutils, bl)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            self.lyrs.update_layer_extents(grid_lyr)
+            if grid_lyr:
+                grid_lyr.triggerRepaint()
+            self.uc.clear_bar_messages()
             self.uc.show_info("Grid created!")
-        else:
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
 
     @connection_required
@@ -468,11 +469,12 @@ class Flo2D(object):
         else:
             return
         if self.mann_dlg.allGridElemsRadio.isChecked():
-            rough_name = self.mann_dlg.srcLayerCbo.currentText()
+            rough_lyr = self.mann_dlg.current_lyr
             nfield = self.mann_dlg.srcFieldCbo.currentText()
             flag = True
         else:
-            rough_name = "Roughness"
+            rough_name = 'Roughness'
+            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
             nfield = 'n'
             flag = False
             if self.gutils.is_table_empty('user_roughness'):
@@ -482,7 +484,6 @@ class Flo2D(object):
                 pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()

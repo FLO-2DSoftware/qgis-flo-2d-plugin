@@ -252,15 +252,16 @@ class Layers(QObject):
         if sel_lyrs:
             self.iface.legendInterface().setCurrentLayer(sel_lyrs[0])
 
-    def layer_exists_in_group(self, uri, group):
-        grp = self.root.findGroup(group)
+    def layer_exists_in_group(self, uri, group=None):
+        grp = self.root.findGroup(group) if group is not None else self.root
         if grp:
             for lyr in grp.findLayers():
                 if lyr.layer().dataProvider().dataSourceUri() == uri:
                     return lyr.layer().id()
         return None
 
-    def get_layer_table_name(self, layer):
+    @staticmethod
+    def get_layer_table_name(layer):
         t = layer.dataProvider().dataSourceUri().split('=')[1]
         if t:
             return t
