@@ -96,6 +96,11 @@ class Inflow(GeoPackageUtils):
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.time_series_data
 
+    def set_time_series_data(self, data):
+        qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
+        self.execute(qry, (self.series_fid,))
+        qry = 'INSERT INTO inflow_time_series_data (time, value, value2) VALUES (?, ?, ?);'
+        # TODO
 
 class Outflow(GeoPackageUtils):
     """Outflow object representation."""

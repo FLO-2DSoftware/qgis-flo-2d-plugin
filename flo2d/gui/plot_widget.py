@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 from ..deps import safe_pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
@@ -20,6 +21,7 @@ class PlotWidget(QWidget):
 
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
+        self.items = {}
         self.org_bed_plot = None
         self.new_bed_plot = None
         self.org_plot = None
@@ -31,25 +33,28 @@ class PlotWidget(QWidget):
         self.layout.addWidget(self.pw)
         self.setLayout(self.layout)
 
-    def clear_plot(self):
+    def clear(self):
         self.plot.clear()
+        self.items = {}
+
+    def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine):
+        x, y = data
+        pen = pg.mkPen(color=col, width=2, style=sty, cosmetic=True)
+        self.items[name] = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name=name)
+
+    def update_item(self, name, data):
+        x, y = data
+        self.items[name].setData(x,y)
+
+    # specific plot items
 
     def add_org_bed_plot(self, data):
         x, y = data
         pen = pg.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
-        self.org_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Existing')
+        self.items['org_bed'] = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Original Bed')
 
     def add_new_bed_plot(self, data):
         x, y = data
         pen = pg.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
-        self.new_bed_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Changed')
+        self.items['new_bed'] = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Current Bed')
 
-    def add_org_plot(self, data):
-        x, y = data
-        pen = pg.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
-        self.org_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Existing')
-
-    def add_new_plot(self, data):
-        x, y = data
-        pen = pg.mkPen(color=QColor("#0000aa"), width=2, cosmetic=True)
-        self.new_plot = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Changed')

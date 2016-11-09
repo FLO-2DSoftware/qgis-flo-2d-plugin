@@ -117,7 +117,7 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
 
     def update_plot(self):
         """When time series data for plot change, update the plot"""
-        self.plotWidget.clear_plot()
+        self.plotWidget.clear()
         dm = self.hourly_evap_model
         print dm.rowCount()
         x = []

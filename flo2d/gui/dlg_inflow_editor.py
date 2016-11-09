@@ -15,6 +15,8 @@ from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow
 from plot_widget import PlotWidget
 from ..user_communication import UserCommunication
+from ..utils import m_fdata, list_has_none_item
+
 
 uiDialog, qtBaseClass = load_ui('inflow_editor')
 
@@ -33,17 +35,22 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
         self.cur_inflow_fid = inflow_fid
         self.inflow = None
         self.gutils = GeoPackageUtils(con, iface)
-        self.inflow_data_model = None
+        self.inflow_data_model = QStandardItemModel()
         self.populate_inflows(inflow_fid)
         self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
+        # timeseries data variables
+        self.t, self.d, self.m = [[], [], []]
 
         # connections
         self.inflowNameCbo.currentIndexChanged.connect(self.populate_inflow_properties)
         self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
+        self.inflow_data_model.dataChanged.connect(self.update_plot)
+        self.saveTimeSeriesBtn.clicked.connect(self.save_tseries_data)
+        self.revertChangesBtn.clicked.connect(self.revert_tseries_data_changes)
 
     def setup_plot(self):
-        self.plotWidget = PlotWidget()
-        self.plotLayout.addWidget(self.plotWidget)
+        self.plot = PlotWidget()
+        self.plotLayout.addWidget(self.plot)
 
     def populate_inflows(self, inflow_fid=None):
         """Read inflow and inflow_time_series tables, populate proper combo boxes"""
@@ -106,38 +113,46 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
             fid = self.tseriesCbo.currentText().split()[0]
         except IndexError as e:
             fid = self.tseriesCbo.currentText()
+        self.plot.clear()
         self.inflow.series_fid = fid
-        series_data = self.inflow.get_time_series_data()
-        model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
-        for row in series_data:
+        self.infow_ts_data = self.inflow.get_time_series_data()
+        self.inflow_data_model.clear()
+        self.inflow_data_model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
+        self.ot, self.od, self.om = [[], [], []]
+        for row in self.infow_ts_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
-            model.appendRow(items)
-        self.tseriesDataTView.setModel(model)
+            self.inflow_data_model.appendRow(items)
+            self.ot.append(row[0] if not row[0] is None else float('NaN'))
+            self.od.append(row[1] if not row[1] is None else float('NaN'))
+            self.om.append(row[2] if not row[2] is None else float('NaN'))
+        self.tseriesDataTView.setModel(self.inflow_data_model)
         self.tseriesDataTView.resizeColumnsToContents()
-        self.inflow_data_model = model
-        for i in range(len(series_data)):
-            self.tseriesDataTView.setRowHeight(i, 18)
+        for i in range(len(self.infow_ts_data)):
+            self.tseriesDataTView.setRowHeight(i, 20)
         for i in range(3):
             self.tseriesDataTView.setColumnWidth(i, 80)
-        self.update_plot()
+        self.create_plot()
 
     def save_tseries_data(self):
-        """Get xsection data and save them in gpkg"""
+        """Get xsection data from table view and save them in gpkg"""
 
     def revert_tseries_data_changes(self):
         """Revert any time series data changes made by users (load original
         tseries data from tables)"""
 
+    def create_plot(self):
+        """Create initial plot"""
+        self.plot.add_item('Original Discharge', [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
+        self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
+        self.plot.add_item('Original Mud', [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
+        self.plot.add_item('Current Mud', [self.ot, self.om], col=QColor("#884800"))
+
     def update_plot(self):
         """When time series data for plot change, update the plot"""
-        self.plotWidget.clear_plot()
-        dm = self.inflow_data_model
-        print dm.rowCount()
-        x = []
-        y = []
-        for i in range(dm.rowCount()):
-            x.append(float(dm.data(dm.index(i, 0), Qt.DisplayRole)))
-            y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
-        self.plotWidget.add_new_plot([x, y])
-        self.plotWidget.add_org_plot([x, y])
+        self.t, self.d, self.m = [[], [], []]
+        for i in range(self.inflow_data_model.rowCount()):
+            self.t.append(m_fdata(self.inflow_data_model, i, 0))
+            self.d.append(m_fdata(self.inflow_data_model, i, 1))
+            self.m.append(m_fdata(self.inflow_data_model, i, 2))
+        self.plot.update_item('Current Discharge', [self.t, self.d])
+        self.plot.update_item('Current Mud', [self.t, self.m])

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>626</width>
-    <height>270</height>
+    <width>846</width>
+    <height>443</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -214,7 +214,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Hydrograph data</string>
+             <string>Hydrograph</string>
             </property>
            </widget>
           </item>
