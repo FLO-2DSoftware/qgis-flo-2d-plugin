@@ -469,11 +469,12 @@ class Flo2D(object):
         else:
             return
         if self.mann_dlg.allGridElemsRadio.isChecked():
-            rough_name = self.mann_dlg.srcLayerCbo.currentText()
+            rough_lyr = self.mann_dlg.current_lyr
             nfield = self.mann_dlg.srcFieldCbo.currentText()
             flag = True
         else:
-            rough_name = "Roughness"
+            rough_name = 'Roughness'
+            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
             nfield = 'n'
             flag = False
             if self.gutils.is_table_empty('user_roughness'):
@@ -483,7 +484,6 @@ class Flo2D(object):
                 pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()
