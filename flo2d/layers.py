@@ -405,9 +405,13 @@ class Layers(QObject):
                 'name': 'Blocked areas',
                 'sgroup': 'User Layers',
                 'styles': ['blocked_areas.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'calc_arf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
+                    'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
+                },
                 'module': ['redfac'],
-                'readonly': False
+                'readonly': False,
+                'attrs_defaults': {'calc_arf': '1', 'calc_wrf': '1'} #
             }),
             ('mult_areas', {
                 'name': 'Multiple Channel Areas',
@@ -888,17 +892,28 @@ class Layers(QObject):
                     visible=lyr_is_on,
                     readonly=data['readonly']
             )
+            l = self.get_layer_tree_item(lyr_id).layer()
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                lyr = self.get_layer_tree_item(lyr_id).layer()
-                c = lyr.editFormConfig()
+                c = l.editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].iteritems():
-                    attr_idx = lyr.fieldNameIndex(attr)
+                    attr_idx = l.fieldNameIndex(attr)
                     c.setWidgetType(attr_idx, widget_data['name'])
                     c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
                 pass # no attributes edit widgets config
+            # set attributes default value, if any
+            try:
+                dvs = data['attrs_defaults']
+            except:
+                dvs = None
+            if dvs:
+                for attr, val in dvs.iteritems():
+                    idx  = l.fieldNameIndex(attr)
+                    l.setDefaultValueExpression(idx, val)
+            else:
+                pass
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, 'User Layers')

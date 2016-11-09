@@ -1070,8 +1070,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 
 CREATE TABLE "blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "collapse" INTEGER -- collapse option for blocking object
-
+    "collapse" INTEGER, -- collapse option for blocking object
+    "calc_arf" INTEGER, -- flag for calculating ARFs
+    "calc_wrf" INTEGER -- flag for calculating WRFs
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
