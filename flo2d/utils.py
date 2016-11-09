@@ -11,7 +11,6 @@
 import os.path
 from PyQt4.QtCore import Qt
 
-
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(temp_dir, *paths)
