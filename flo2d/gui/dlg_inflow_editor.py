@@ -8,9 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-# from PyQt4.QtCore import *
-# from PyQt4.QtGui import *
-from PyQt4.QtCore import QEvent, QObject, Qt, QVariant
+from PyQt4.QtCore import QEvent, QObject, Qt
 from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QColor, QApplication
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -27,10 +25,10 @@ uiDialog, qtBaseClass = load_ui('inflow_editor')
 
 class InflowEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
-        if (event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy)):
+        if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
             receiver.copy_selection()
             return True
-        elif (event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste)):
+        elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste):
             receiver.paste()
             return True
         else:
@@ -161,10 +159,21 @@ class InflowEditorDialog(qtBaseClass, uiDialog):
 
     def save_tseries_data(self):
         """Get xsection data from table view and save them in gpkg"""
+        data = (
+            (
+                self.inflow.series_fid,
+                m_fdata(self.inflow_data_model, i, 0),
+                m_fdata(self.inflow_data_model, i, 1),
+                m_fdata(self.inflow_data_model, i, 2)
+            )
+            for i in range(self.inflow_data_model.rowCount())
+        )
+        self.inflow.set_time_series_data(data)
 
     def revert_tseries_data_changes(self):
         """Revert any time series data changes made by users (load original
         tseries data from tables)"""
+        self.populate_tseries_data()
 
     def create_plot(self):
         """Create initial plot"""

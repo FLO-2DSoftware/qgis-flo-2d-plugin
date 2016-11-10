@@ -77,6 +77,7 @@ class Inflow(GeoPackageUtils):
         self.fid = fid
         self.series_fid = None
         self.row = None
+        self.time_series = None
         self.time_series_data = None
 
     def get_row(self):
@@ -96,11 +97,26 @@ class Inflow(GeoPackageUtils):
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
         return self.time_series_data
 
+    def add_time_series(self, row):
+        ts_fid, name = row
+        qry = 'INSERT INTO inflow_time_series (fid, name) VALUES (?, ?);'
+        self.execute(qry, (ts_fid, name))
+        qry = '''UPDATE inflow SET series_fid = ? WHERE fid = ?'''
+        self.execute(qry, (ts_fid, self.fid))
+        self.series_fid = ts_fid
+
+    def remove_time_series(self):
+        qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
+        self.execute(qry, (self.series_fid,))
+        qry = 'DELETE FROM inflow_time_series WHERE fid = ?;'
+        self.execute(qry, (self.series_fid,))
+
     def set_time_series_data(self, data):
         qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
         self.execute(qry, (self.series_fid,))
-        qry = 'INSERT INTO inflow_time_series_data (time, value, value2) VALUES (?, ?, ?);'
-        # TODO
+        qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES (?, ?, ?, ?);'
+        self.execute_many(qry, data)
+
 
 class Outflow(GeoPackageUtils):
     """Outflow object representation."""
