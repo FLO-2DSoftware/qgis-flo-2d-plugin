@@ -1618,6 +1618,21 @@ SELECT gpkgAddGeometryColumn('user_model_boundary', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
 
+CREATE TABLE "user_1d_domain" (
+    "fid" INTEGER PRIMARY KEY NOT NULL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domain', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_1d_domain', 'geom');
+
+CREATE TABLE "user_centerline" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerline', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
+
 CREATE TABLE "user_channel_seg" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT
