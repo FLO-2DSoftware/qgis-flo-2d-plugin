@@ -17,12 +17,12 @@ class Flo2dError(Exception):
 class Flo2dLayerNotFound(Flo2dError):
     """Raise when layer was not found in the layers tree"""
     pass
-
+    
 
 class Flo2dNotString(Flo2dError):
     """Raise when a string or unicode was expected"""
     pass
-
+    
     
 class Flo2dLayerInvalid(Flo2dError):
     """Raise when a layer is invalid"""

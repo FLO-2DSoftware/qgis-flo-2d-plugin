@@ -52,23 +52,19 @@ def poly2grid(grid, polygons, value_column):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
-    allfeatures = {}
+    polys = polygons.selectedFeatures() if polygons.selectedFeatureCount() > 0 else polygons.getFeatures()
+    allfeatures = {feature.id(): feature for feature in polys}
     index = QgsSpatialIndex()
-    for feature in grid.getFeatures():
-        feature.setGeometry(feature.geometry().centroid())
-        allfeatures[feature.id()] = feature
-        index.insertFeature(feature)
-
-    for feat in polygons.getFeatures():
+    map(index.insertFeature, allfeatures.itervalues())
+    for feat in grid.getFeatures():
         geom = feat.geometry()
-        geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
-        geos_geom.prepareGeometry()
-        for fid in index.intersects(geom.boundingBox()):
-            grid_feat = allfeatures[fid]
-            other_geom = grid_feat.geometry()
-            isin = geos_geom.intersects(other_geom.geometry())
+        centroid = geom.centroid()
+        fids = index.intersects(centroid.boundingBox())
+        for fid in fids:
+            f = allfeatures[fid]
+            isin = f.geometry().contains(centroid)
             if isin is True:
-                yield (feat[value_column], grid_feat.id())
+                yield (f[value_column], feat.id())
             else:
                 pass
 
@@ -138,13 +134,18 @@ def square_grid(gutils, boundary):
     del_qry = 'DELETE FROM grid;'
     cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
-    insert_qry = '''INSERT INTO grid (geom) VALUES {};'''
-    gpb = '''(AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')))'''
+    insert_qry = '''INSERT INTO grid (geom) VALUES (AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')));'''
     gutils.execute(update_cellsize, (cellsize,))
     cellsize = float(cellsize)
-    polygons = (gpb.format(*poly) for poly in build_grid(boundary, cellsize))
-    gutils.execute(del_qry)
-    gutils.execute(insert_qry.format(','.join(polygons)))
+    polygons = build_grid(boundary, cellsize)
+    cur = gutils.con.cursor()
+    cur.execute(del_qry)
+    c = 0
+    for poly in polygons:
+        cur.execute(insert_qry.format(*poly))
+        c += 1
+    gutils.con.commit()
+    return c
 
 
 def update_roughness(gutils, grid, roughness, column_name, reset=False):

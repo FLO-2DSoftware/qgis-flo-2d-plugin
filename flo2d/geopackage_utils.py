@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
 import os
 import traceback
 from functools import wraps
@@ -71,7 +70,7 @@ def database_create(path):
         else:
             pass
     except Exception as e:
-        # Couldn't write on the existing GeoPackage file. Check if it is not opened by another process
+        print("Couldn't write on the existing GeoPackage file. Check if it is not opened by another process.")
         return False
 
     con = database_connect(path)
@@ -91,7 +90,8 @@ def database_connect(path):
         con = spatialite_connect(path)
         return con
     except Exception as e:
-        # Couldn't connect to GeoPackage
+        print("Couldn't connect to GeoPackage")
+        print(traceback.format_exc())
         return False
 
 
@@ -100,8 +100,8 @@ def database_disconnect(con):
     try:
         con.close()
     except Exception as e:
-        # There is no active connection!
-        pass
+        print("There is no active connection!")
+        print(traceback.format_exc())
 
 
 class GeoPackageUtils(object):

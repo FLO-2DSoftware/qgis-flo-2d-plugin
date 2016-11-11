@@ -8,12 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from operator import itemgetter
-from collections import defaultdict
-from math import pi
 from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QgsSpatialIndex, QgsFeatureRequest, QgsVector
+from operator import itemgetter
+from collections import defaultdict
 from grid_tools import fid_from_grid
+from math import pi
+
 
 def get_intervals(line_feature, point_layer, col_value, buffer_size):
     """
@@ -435,8 +436,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
 
     del_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
-    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
-                 VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
+    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom) VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
 
     # create levee segments for distinct levee directions in each grid element
     grid_levee_seg = {}

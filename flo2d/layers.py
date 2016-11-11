@@ -9,11 +9,12 @@
 # of the License, or (at your option) any later version
 
 import os
-from collections import OrderedDict
-
 from PyQt4.QtCore import QObject
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor
+from utils import *
+from collections import OrderedDict
+
 from qgis.core import (
     QgsProject,
     QgsMapLayerRegistry,
@@ -22,11 +23,8 @@ from qgis.core import (
     QgsRectangle,
     QgsLayerTreeGroup
 )
-
 from qgis.gui import QgsRubberBand
-
-from utils import is_number, get_file_path
-from errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
+from errors import *
 from user_communication import UserCommunication
 
 
@@ -282,7 +280,7 @@ class Layers(QObject):
             # why, oh why this is not working.... ?
             # layer.reload()
             # layer.updateExtents()
-            sql = '''SELECT min_x, min_y, max_x, max_y FROM gpkg_contents WHERE table_name=?;'''
+            sql= '''SELECT min_x, min_y, max_x, max_y FROM gpkg_contents WHERE table_name=?;'''
             min_x, min_y, max_x, max_y = self.gutils.execute(sql, (t,)).fetchone()
             try:
                 # works if min & max not null
@@ -886,13 +884,13 @@ class Layers(QObject):
             except:
                 lyr_is_on = True
             lyr_id = self.load_layer(
-                uri,
-                group,
-                data['name'],
-                style=lstyle,
-                subgroup=data['sgroup'],
-                visible=lyr_is_on,
-                readonly=data['readonly']
+                    uri,
+                    group,
+                    data['name'],
+                    style=lstyle,
+                    subgroup=data['sgroup'],
+                    visible=lyr_is_on,
+                    readonly=data['readonly']
             )
             l = self.get_layer_tree_item(lyr_id).layer()
             if lyr == 'blocked_cells':
@@ -912,7 +910,7 @@ class Layers(QObject):
                 dvs = None
             if dvs:
                 for attr, val in dvs.iteritems():
-                    idx = l.fieldNameIndex(attr)
+                    idx  = l.fieldNameIndex(attr)
                     l.setDefaultValueExpression(idx, val)
             else:
                 pass
@@ -944,11 +942,7 @@ class Layers(QObject):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr]))
         # ARF
-        exp_arf = '''make_polygon( make_line(translate( $geometry , -{0}, {0}),
-                                             translate($geometry, {0}, {0}),
-                                             translate($geometry, {0}, -{0}),
-                                             translate($geometry, -{0}, -{0}),
-                                             translate($geometry, -{0}, {0})))'''.format(cs * 0.5)
+        exp_arf = '''make_polygon( make_line(translate( $geometry , -{0}, {0}), translate($geometry, {0}, {0}), translate($geometry, {0}, -{0}), translate($geometry, -{0}, -{0}), translate($geometry, -{0}, {0})))'''.format(cs * 0.5)
         sym.symbolLayer(0).setGeometryExpression(exp_arf)
 
     def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0)):

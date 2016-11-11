@@ -8,11 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
-from qgis.core import QgsFeatureRequest
-
-from .utils import load_ui, center_canvas
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from qgis.core import *
+from .utils import *
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Outflow
 from ..user_communication import UserCommunication
@@ -70,7 +69,7 @@ class OutflowEditorDialog(qtBaseClass, uiDialog):
             1: {
                 'name': 'Floodplain outflow (no hydrograph)',
                 'wids': [],
-                'data_label': '',
+                 'data_label': '',
                 'tab_head': None
             },
             2: {
