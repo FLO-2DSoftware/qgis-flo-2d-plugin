@@ -33,6 +33,6 @@ def center_canvas(iface, x, y):
     x_max = cur_ext.xMaximum() + dx
     y_min = cur_ext.yMinimum() + dy
     y_max = cur_ext.yMaximum() + dy
-    rect = QgsRectangle(x_min,y_min,x_max,y_max)
+    rect = QgsRectangle(x_min, y_min, x_max, y_max)
     mc.setExtent(rect)
     mc.refresh()

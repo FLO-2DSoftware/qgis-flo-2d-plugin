@@ -15,7 +15,10 @@
 # R0915 too many statements
 # C0111 Missing class/method docstring
 # C0103 Invalid name (short)
-disable=I0011,E1101,E1103,E0611,F0401,R0904,R0902,R0912,R0913,R0903,W0142,R0914,R0915, C0111, C0103
+# C0302 Too many lines
+# W0403 Relative imports 
+
+disable=I0011,E1101,E1103,E0611,F0401,R0904,R0902,R0912,R0913,R0903,W0142,R0914,R0915, C0111, C0103, C0302, W0403
 
 [REPORTS]
 msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}

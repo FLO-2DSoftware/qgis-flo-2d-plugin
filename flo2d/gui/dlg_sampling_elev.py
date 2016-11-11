@@ -9,14 +9,14 @@
 # of the License, or (at your option) any later version
 
 import os
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
+from subprocess import Popen, PIPE, STDOUT
+from PyQt4.QtGui import QSettings, QFileDialog
+from qgis.core import QgsRasterLayer
+
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..grid_tools import raster2grid, grid_has_empty_elev
-from subprocess import Popen, PIPE, STDOUT
 
 
 uiDialog, qtBaseClass = load_ui('sampling_elev')

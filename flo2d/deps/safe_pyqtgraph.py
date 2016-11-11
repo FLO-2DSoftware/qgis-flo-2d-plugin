@@ -1,3 +1,5 @@
+# pylint: disable=W0401
+
 try:
     from pyqtgraph import *
 except ImportError:
