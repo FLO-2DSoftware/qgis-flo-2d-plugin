@@ -8,19 +8,25 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+# Lambda may not be necessary
+# pylint: disable=W0108
+
+import os
 import time
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+import traceback
+
+from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
+from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
 from qgis.gui import QgsProjectionSelectionWidget
-from qgis.core import *
+from qgis.core import QgsProject
 from layers import Layers
-from geopackage_utils import *
+from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
 from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
-from utils import *
+from user_communication import UserCommunication
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
 from .gui.dlg_inflow_editor import InflowEditorDialog
@@ -72,6 +78,7 @@ class Flo2D(object):
         self.create_grid_info_dock()
         self.set_editors_map()
         self.create_map_tools()
+        self.crs = None
 
         self.dlg_inflow_editor = None
 
@@ -430,7 +437,8 @@ class Flo2D(object):
         if cs:
             return cs
         else:
-            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999)
+            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size",
+                                           value=100, min=0.1, max=99999)
             if ok:
                 cs = r
                 self.gutils.set_cont_par('CELLSIZE', cs)

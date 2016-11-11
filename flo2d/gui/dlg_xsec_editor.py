@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QStandardItemModel, QModelIndex, QStandardItem
 from .utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import CrossSection
@@ -144,7 +144,6 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
         """When xsection data for plot change, update the plot"""
         self.plotWidget.clear()
         dm = self.xs_data_model
-        print(dm.rowCount())
         x = []
         y = []
         for i in range(dm.rowCount()):
@@ -156,8 +155,10 @@ class XsecEditorDialog(qtBaseClass, uiDialog):
     def cur_seg_changed(self):
         """User changed current segment. Update xsection list and populate xsection
         data fields and plot for the first xsection for that segment"""
-        print self.segCbo.currentIndex()
+        #print self.segCbo.currentIndex()
+        pass
 
     def cur_xsec_changed(self):
         """User changed current xsection in the xsections list. Populate xsection
         data fields and update the plot"""
+        pass

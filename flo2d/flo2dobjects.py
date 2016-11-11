@@ -79,6 +79,7 @@ class Inflow(GeoPackageUtils):
         self.row = None
         self.time_series = None
         self.time_series_data = None
+        self.time_series = None
 
     def get_row(self):
         qry = 'SELECT * FROM inflow WHERE fid = ?;'
@@ -227,7 +228,8 @@ class Outflow(GeoPackageUtils):
 
 class Rain(GeoPackageUtils):
     """Rain data representation."""
-    columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall', 'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
+    columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall',
+               'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
 
     def __init__(self, con, iface):
         super(Rain, self).__init__(con, iface)
