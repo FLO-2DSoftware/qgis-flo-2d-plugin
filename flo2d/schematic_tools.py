@@ -12,7 +12,7 @@ from operator import itemgetter
 from collections import defaultdict
 from math import pi
 from PyQt4.QtCore import QPyNullVariant
-from qgis.core import QGis, QgsSpatialIndex, QgsFeatureRequest, QgsVector
+from qgis.core import QGis, QgsSpatialIndex, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
 from grid_tools import fid_from_grid
 
 
@@ -484,9 +484,48 @@ def find_banks(domain_feature, centerline_fature, xs_lyr):
     index = QgsSpatialIndex()
     map(index.insertFeature, allfeatures.itervalues())
     geom = domain_feature.geometry()
+    centerline = centerline_fature.geometry()
     fids = index.intersects(geom.boundingBox())
     cross_sections = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(geom)]
+    # Trimming centerline
+    trimmed_centerline = geom.intersection(centerline).asPolyline()
+    # Converting domain polygon to polyline
     envelope = geom.convertToType(QGis.Line)
-    print(envelope.asPolyline())
+    # Splitting domain polyline by center line
+    splitted = envelope.splitGeometry(centerline.asPolyline(), 0)[1]
+    trimmed_envelope = envelope.asPolyline()
+    s1 = splitted[0].asPolyline()
+    if len(splitted) == 2:
+        s2 = splitted[1].asPolyline()
+        s2 += trimmed_envelope
+    else:
+        s2 = trimmed_envelope
+    if trimmed_envelope[-1] == s1[0]:
+        s1.reverse()
+    else:
+        s2.reverse()
+    # Determine which lines represents left and right
+    x0, y0 = trimmed_centerline[0]
+    x1, y1 = trimmed_centerline[1]
+    x2, y2 = s2[1]
+    con = (x1 - x0)*(y2 - y0) - (x2 - x0)*(y1 - y0)
+    geom1 = QgsGeometry.fromPolyline(s1)
+    geom2 = QgsGeometry.fromPolyline(s2)
+    if con > 0:
+        right = geom1
+        left = geom2
+    elif con < 0:
+        right = geom2
+        left = geom1
+    else:
+        return
+
+    # Finding bank stations
     for xs in cross_sections:
         xs_geom = xs.geometry()
+        xs_trimmed = xs_geom.intersection(geom).asPolyline()
+        start = QgsGeometry.fromPoint(QgsPoint(*xs_trimmed[0]))
+        end = QgsGeometry.fromPoint(QgsPoint(*xs_trimmed[-1]))
+        left_bank = left.nearestPoint(start)
+        right_bank = right.nearestPoint(end)
+        yield left_bank, right_bank

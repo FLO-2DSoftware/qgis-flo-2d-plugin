@@ -109,7 +109,6 @@ class TestSchematicTools(unittest.TestCase):
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 
-    @unittest.skip("Not ready")
     def test_find_banks(self):
         user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
         user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
@@ -120,7 +119,8 @@ class TestSchematicTools(unittest.TestCase):
         xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
 
         for feat1, feat2 in izip(domain_layer.getFeatures(), centerline_layer.getFeatures()):
-            find_banks(feat1, feat2, xs_layer)
+            for l, r in find_banks(feat1, feat2, xs_layer):
+                print(l.asPoint(), r.asPoint())
 
 
 # Running tests:
