@@ -10,7 +10,8 @@
 
 import os
 from subprocess import Popen, PIPE, STDOUT
-from PyQt4.QtGui import QSettings, QFileDialog
+from PyQt4.QtCore import QSettings
+from PyQt4.QtGui import QFileDialog
 from qgis.core import QgsRasterLayer
 
 from .utils import load_ui

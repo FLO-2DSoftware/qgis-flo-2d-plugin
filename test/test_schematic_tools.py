@@ -11,6 +11,7 @@
 import os
 import sys
 import unittest
+from itertools import izip
 sys.path.append(os.path.join('..', 'flo2d'))
 from qgis.core import *
 from utilities import get_qgis_app
@@ -107,6 +108,19 @@ class TestSchematicTools(unittest.TestCase):
         for s in coords.itervalues():
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
+
+    @unittest.skip("Not ready")
+    def test_find_banks(self):
+        user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
+        user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
+        user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
+
+        domain_layer = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
+        centerline_layer = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
+        xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
+
+        for feat1, feat2 in izip(domain_layer.getFeatures(), centerline_layer.getFeatures()):
+            find_banks(feat1, feat2, xs_layer)
 
 
 # Running tests:

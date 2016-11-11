@@ -12,8 +12,9 @@ from operator import itemgetter
 from collections import defaultdict
 from math import pi
 from PyQt4.QtCore import QPyNullVariant
-from qgis.core import QgsSpatialIndex, QgsFeatureRequest, QgsVector
+from qgis.core import QGis, QgsSpatialIndex, QgsFeatureRequest, QgsVector
 from grid_tools import fid_from_grid
+
 
 def get_intervals(line_feature, point_layer, col_value, buffer_size):
     """
@@ -475,3 +476,17 @@ def perp2side(vec, side, tol):
         return True
     else:
         return False
+
+
+def find_banks(domain_feature, centerline_fature, xs_lyr):
+    xs_feats = xs_lyr.getFeatures()
+    allfeatures = {feature.id(): feature for feature in xs_feats}
+    index = QgsSpatialIndex()
+    map(index.insertFeature, allfeatures.itervalues())
+    geom = domain_feature.geometry()
+    fids = index.intersects(geom.boundingBox())
+    cross_sections = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(geom)]
+    envelope = geom.convertToType(QGis.Line)
+    print(envelope.asPolyline())
+    for xs in cross_sections:
+        xs_geom = xs.geometry()
