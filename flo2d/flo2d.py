@@ -8,11 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+# Lambda may not be necessary
+# pylint: disable=W0108
+
 import time
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion
+from PyQt4.QtGui import QIcon, QAction
 from qgis.gui import QgsProjectionSelectionWidget
-from qgis.core import *
+from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import *
 from flo2dgeopackage import Flo2dGeoPackage
@@ -72,6 +75,7 @@ class Flo2D(object):
         self.create_grid_info_dock()
         self.set_editors_map()
         self.create_map_tools()
+        self.crs = None
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
