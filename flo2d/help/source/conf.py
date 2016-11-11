@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#pylint: skip-file
 #
 # Flo2D documentation build configuration file, created by
 # sphinx-quickstart on Sun Feb 12 17:11:03 2012.

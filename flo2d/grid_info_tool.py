@@ -8,10 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.gui import QgsMapToolIdentify
+#QgsMapToolIdentify required those functions to be self
+#pylint: disable=no-self-use
+
 import os
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QCursor, QPixmap
+from qgis.gui import QgsMapToolIdentify
 
 
 class GridInfoTool(QgsMapToolIdentify):

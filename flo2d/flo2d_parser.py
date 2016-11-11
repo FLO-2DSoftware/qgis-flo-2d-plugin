@@ -94,7 +94,7 @@ class ParseDAT(object):
 
         with open(cadpts) as cad:
             x1, y1 = cad.readline().split()[1:]
-            for l in xrange(neighbour-2):
+            for dummy in xrange(neighbour-2):
                 cad.readline()
             x2, y2 = cad.readline().split()[1:]
 
@@ -121,10 +121,10 @@ class ParseDAT(object):
     def fix_row_size(row, fix_size, default=None, index=None):
         loops = fix_size - len(row)
         if index is None:
-            for l in range(loops):
+            for dummy in range(loops):
                 row.append(default)
         else:
-            for l in range(loops):
+            for dummy in range(loops):
                 row.insert(index, default)
 
     def parse_cont(self):
@@ -487,13 +487,13 @@ class ParseDAT(object):
                 self.fix_row_size(row, chars[k])
         return data
 
-    def parse_fpfroude (self):
+    def parse_fpfroude(self):
         fpfroude = self.dat_files['FPFROUDE.DAT']
         par = self.single_parser(fpfroude)
         data = [row[1:] for row in par]
         return data
 
-    def parse_swmmflo (self):
+    def parse_swmmflo(self):
         swmmflo = self.dat_files['SWMMFLO.DAT']
         par = self.single_parser(swmmflo)
         data = [row[1:] for row in par]

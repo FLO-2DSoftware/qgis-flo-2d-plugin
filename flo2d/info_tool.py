@@ -8,14 +8,17 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
-from qgis.core import *
-from qgis.gui import QgsMapToolIdentify, QgsRubberBand
+#QgsMapToolIdentify required those functions to be self
+#pylint: disable=no-self-use
+
 from collections import OrderedDict
 import functools
 import os
 
+from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QMenu, QAction, QPoint, QColor, QCursor, QPixmap
+from qgis.core import QgsFeatureRequest
+from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 
 class InfoTool(QgsMapToolIdentify):
 
@@ -31,11 +34,11 @@ class InfoTool(QgsMapToolIdentify):
     def update_lyrs_list(self):
         self.lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
 
-    def canvasPressEvent(self, e):
+    def canvasPressEvent(self, dummy):
         self.clear_rubber()
 
     def canvasReleaseEvent(self, e):
-        pt = self.toMapCoordinates(e.pos())
+        #pt = self.toMapCoordinates(e.pos())
 
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
         lyrs_found = OrderedDict()
