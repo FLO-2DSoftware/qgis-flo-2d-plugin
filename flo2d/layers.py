@@ -167,6 +167,10 @@ class Layers(QObject):
             lyr.triggerRepaint()
         self.lyrs_to_repaint = []
 
+    def connect_lyrs_reload(self, layer1, layer2):
+        """Reload layer1 and update its extent when layer2 modifications are saved"""
+        layer2.editingStopped.connect(layer1.reload)
+
     def new_group(self, name):
         if isinstance(name, (str, unicode)):
             self.root.addGroup(name)
@@ -319,7 +323,9 @@ class Layers(QObject):
                 'name': 'Boundary Condition Points',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_points.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
                 'module': ['all'],
                 'readonly': False
             }),
@@ -367,7 +373,9 @@ class Layers(QObject):
                 'name': 'Boundary Condition Lines',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_lines.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
                 'module': ['all'],
                 'readonly': False
             }),
@@ -383,7 +391,9 @@ class Layers(QObject):
                 'name': 'Boundary Condition Polygons',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_polygons.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
                 'module': ['all'],
                 'readonly': False
             }),
@@ -430,7 +440,7 @@ class Layers(QObject):
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': 'User Layers',
-                'styles': ['inflow.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {
                     'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
                     'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
@@ -440,7 +450,7 @@ class Layers(QObject):
             ('outflow', {
                 'name': 'Outflow',
                 'sgroup': 'User Layers',
-                'styles': ['outflow.qml'],
+                'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),

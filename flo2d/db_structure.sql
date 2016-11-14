@@ -36,6 +36,14 @@ CREATE TABLE cont (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('cont', 'aspatial');
 
 
+-- Triggers control table
+CREATE TABLE "trigger_control" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "enabled" INTEGER
+);
+
+
 -- Grid table - data from FPLAIN.DAT, CADPTS.DAT, TOPO.DAT, MANNINGS_N.DAT
 
 CREATE TABLE "grid" (
@@ -60,13 +68,16 @@ CREATE TABLE "inflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "time_series_fid" INTEGER,
-    "ident" TEXT NOT NULL,
-    "inoutfc" INTEGER NOT NULL,
-    "note" TEXT
+    "ident" TEXT,
+    "inoutfc" INTEGER,
+    "note" TEXT,
+    "geom_type" TEXT,
+    "bc_fid" INTEGER
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('inflow', 'features', 4326);
-SELECT gpkgAddGeometryColumn('inflow', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('inflow', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow', 'aspatial');
+--INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('inflow', 'features', 4326);
+--SELECT gpkgAddGeometryColumn('inflow', 'geom', 'POLYGON', 0, 0, 0);
+--SELECT gpkgAddGeometryTriggers('inflow', 'geom');
 -- SELECT gpkgAddSpatialIndex('inflow', 'geom');
 
 CREATE TABLE "inflow_cells" (
@@ -76,6 +87,42 @@ CREATE TABLE "inflow_cells" (
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspatial');
+
+-- trigger for a new inflow
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_insert', 1);
+CREATE TRIGGER "update_inflow_cells_on_inflow_insert"
+    AFTER INSERT ON "inflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_insert'
+    )
+    BEGIN
+        INSERT INTO "inflow_cells" (inflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid AS g, all_user_bc AS abc
+        WHERE abc.type = 'inflow' AND NEW.bc_fid = abc.fid AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+    END;
+
+-- inflow updated
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_update', 1);
+CREATE TRIGGER "update_inflow_cells_on_inflow_update"
+    AFTER UPDATE ON "inflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_update'
+    )
+    BEGIN
+        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
+        INSERT INTO "inflow_cells" (inflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid AS g, all_user_bc AS abc
+        WHERE abc.type = 'inflow' AND NEW.bc_fid = abc.fid AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+    END;
+
+-- inflow deleted
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_delete', 1);
+CREATE TRIGGER "update_inflow_cells_on_inflow_delete"
+    AFTER DELETE ON "inflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_delete'
+    )
+    BEGIN
+        DELETE FROM inflow_cells WHERE inflow_fid = OLD.fid;
+    END;
 
 CREATE TABLE "reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -133,32 +180,6 @@ CREATE TABLE "rain_time_series_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_time_series_data', 'aspatial');
 
 
---CREATE TRIGGER "find_inflow_cells_insert"
---    AFTER INSERT ON "inflow"
---    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "inflow_cells" WHERE inflow_fid = NEW."fid";
---        INSERT INTO "inflow_cells" (inflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_inflow_cells_update"
---    AFTER UPDATE ON "inflow"
---    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "inflow_cells" WHERE inflow_fid = OLD."fid";
---        INSERT INTO "inflow_cells" (inflow_fid, grid_fid) SELECT OLD.fid, g.fid FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_inflow_cells_delete"
---    AFTER DELETE ON "inflow"
-----     WHEN (OLD."geom" NOT NULL AND NOT ST_IsEmpty(OLD."geom"))
---    BEGIN
---        DELETE FROM "inflow_cells" WHERE inflow_fid = OLD."fid";
---    END;
-
-
 -- OUTFLOW.DAT
 
 CREATE TABLE "outflow" (
@@ -171,11 +192,14 @@ CREATE TABLE "outflow" (
     "chan_qhpar_fid" INTEGER,
     "chan_qhtab_fid" INTEGER,
     "fp_tser_fid" INTEGER,
-    "type" INTEGER
+    "type" INTEGER,
+    "geom_type" TEXT,
+    "bc_fid" INTEGER
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
-SELECT gpkgAddGeometryColumn('outflow', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('outflow', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow', 'aspatial');
+--INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('outflow', 'features', 4326);
+--SELECT gpkgAddGeometryColumn('outflow', 'geom', 'POLYGON', 0, 0, 0);
+--SELECT gpkgAddGeometryTriggers('outflow', 'geom');
 -- SELECT gpkgAddSpatialIndex('outflow', 'geom');
 
 CREATE TABLE "outflow_cells" (
@@ -185,6 +209,42 @@ CREATE TABLE "outflow_cells" (
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
+
+-- trigger for a new outflow
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_insert', 1);
+CREATE TRIGGER "update_outflow_cells_on_outflow_insert"
+    AFTER INSERT ON "outflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_insert'
+    )
+    BEGIN
+        INSERT INTO "outflow_cells" (inflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid AS g, all_user_bc AS abc
+        WHERE abc.type = 'outflow' AND NEW.bc_fid = abc.fid AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+    END;
+
+-- outflow updated
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_update', 1);
+CREATE TRIGGER "update_outflow_cells_on_outflow_update"
+    AFTER UPDATE ON "outflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_update'
+    )
+    BEGIN
+        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
+        INSERT INTO "outflow_cells" (inflow_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid AS g, all_user_bc AS abc
+        WHERE abc.type = 'outflow' AND NEW.bc_fid = abc.fid AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+    END;
+
+-- outflow deleted
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_delete', 1);
+CREATE TRIGGER "update_outflow_cells_on_outflow_delete"
+    AFTER DELETE ON "outflow"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_delete'
+    )
+    BEGIN
+        DELETE FROM outflow_cells WHERE outflow_fid = OLD.fid;
+    END;
 
 CREATE VIEW outflow_chan_elems (
     elem_fid,
@@ -1714,7 +1774,7 @@ SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
 
 CREATE TABLE "user_bc_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" INTEGER,
+    "type" TEXT,
     "name" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_points', 'features', 4326);
@@ -1722,9 +1782,89 @@ SELECT gpkgAddGeometryColumn('user_bc_points', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_bc_points', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_bc_points', 'geom');
 
+-- trigger for a new POINT INFLOW boundary
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_on_bc_pts_insert', 1); -- enabled by default
+CREATE TRIGGER "update_inflow_on_bc_pts_insert"
+    AFTER INSERT ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_on_bc_pts_insert' AND
+        NEW."geom" NOT NULL AND NEW."type" = 'inflow'
+    )
+    BEGIN
+        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+    END;
+
+-- trigger for a new POINT OUTFLOW boundary
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_on_bc_pts_insert', 1);
+CREATE TRIGGER "update_outflow_on_bc_pts_insert"
+    AFTER INSERT ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_on_bc_pts_insert' AND
+        NEW."geom" NOT NULL AND NEW."type" = 'outflow'
+    )
+    BEGIN
+        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+    END;
+
+-- point boundary updated - type: inflow
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_on_bc_pts_update', 1);
+CREATE TRIGGER "update_inflow_on_bc_pts_update"
+    AFTER UPDATE ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_on_bc_pts_update' AND
+        NEW."type" = 'inflow'
+    )
+    BEGIN
+        -- delete this bc from other tables
+        DELETE FROM outflow WHERE bc_fid = NEW.fid;
+        -- try to insert to the inflow table, ignore on fail
+        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        -- update existing (includes geometry changes)
+        UPDATE inflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+    END;
+
+-- point boundary updated - type: outflow
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_on_bc_pts_update', 1);
+CREATE TRIGGER "update_outflow_on_bc_pts_update"
+    AFTER UPDATE ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_on_bc_pts_update' AND
+        NEW."type" = 'outflow'
+    )
+    BEGIN
+        -- delete this bc from other tables
+        DELETE FROM inflow WHERE bc_fid = NEW.fid;
+        -- try to insert to the inflow table, ignore on fail
+        INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
+        -- update existing (includes geometry changes)
+        UPDATE outflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+    END;
+
+-- inflow point boundary deleted
+INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_on_bc_pts_delete', 1);
+CREATE TRIGGER "update_inflow_on_bc_pts_delete"
+    AFTER DELETE ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_on_bc_pts_delete'
+    )
+    BEGIN
+        DELETE FROM "inflow" WHERE bc_fid = OLD."fid";
+    END;
+
+-- outflow point boundary deleted
+INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_on_bc_pts_delete', 1);
+CREATE TRIGGER "update_outflow_on_bc_pts_delete"
+    AFTER DELETE ON "user_bc_points"
+    WHEN (
+        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_on_bc_pts_delete'
+    )
+    BEGIN
+        DELETE FROM "outflow" WHERE bc_fid = OLD."fid";
+    END;
+
 CREATE TABLE "user_bc_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" INTEGER,
+    "type" TEXT,
     "name" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_lines', 'features', 4326);
@@ -1734,10 +1874,31 @@ SELECT gpkgAddGeometryTriggers('user_bc_lines', 'geom');
 
 CREATE TABLE "user_bc_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" INTEGER,
+    "type" TEXT,
     "name" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_bc_polygons', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_bc_polygons', 'geom');
+
+CREATE VIEW all_user_bc AS
+SELECT type, 'point' as "geom_type", fid, geom FROM user_bc_points
+UNION ALL
+SELECT type, 'line' as "geom_type", fid, geom FROM user_bc_lines
+UNION ALL
+SELECT type, 'polygon' as "geom_type", fid, geom FROM user_bc_polygons;
+--
+--CREATE VIEW all_user_inflows AS
+--SELECT 'point' as "geom_type", fid, geom FROM user_bc_points WHERE type = 'inflow'
+--UNION ALL
+--SELECT 'line' as "geom_type", fid, geom FROM user_bc_lines WHERE type = 'inflow'
+--UNION ALL
+--SELECT 'polygon' as "geom_type", fid, geom FROM user_bc_polygons WHERE type = 'inflow';
+--
+--CREATE VIEW all_user_outflows AS
+--SELECT 'point' as "geom_type", fid, geom FROM user_bc_points WHERE type = 'outflow'
+--UNION ALL
+--SELECT 'line' as "geom_type", fid, geom FROM user_bc_lines WHERE type = 'outflow'
+--UNION ALL
+--SELECT 'polygon' as "geom_type", fid, geom FROM user_bc_polygons WHERE type = 'outflow';
