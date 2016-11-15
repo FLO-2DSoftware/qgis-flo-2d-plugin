@@ -87,10 +87,10 @@ class TestSchematicTools(unittest.TestCase):
         cell_size = 500
         offset_x, offset_y = (2.5, -8.94999999999709)
         line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
-        segments = tuple(schematize_lines(line_layer, cell_size, offset_x, offset_y))
+        nodes_segments = tuple(schematize_lines(line_layer, cell_size, offset_x, offset_y))
         all_grids = 0
         unique_grids = 0
-        for seg in segments:
+        for node, seg in nodes_segments:
             all_grids += len(seg)
             unique_grids += len(set(seg))
         self.assertEqual(all_grids - unique_grids, 5)
@@ -100,16 +100,16 @@ class TestSchematicTools(unittest.TestCase):
         cell_size = 500
         offset_x, offset_y = (2.5, -8.94999999999709)
         line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
-        segments = schematize_lines(line_layer, cell_size, offset_x, offset_y)
+        nodes_segments = schematize_lines(line_layer, cell_size, offset_x, offset_y)
         coords = defaultdict(set)
-        for grids in segments:
+        for nodes, grids in nodes_segments:
             populate_directions(coords, grids)
         self.assertSetEqual(coords[(557497.5, 47508.95)], {1, 2, 3, 4})
         for s in coords.itervalues():
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 
-    def test_find_banks(self):
+    def test_crossing_points(self):
         user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
         user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
         user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
@@ -119,8 +119,8 @@ class TestSchematicTools(unittest.TestCase):
         xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
 
         for feat1, feat2 in izip(domain_layer.getFeatures(), centerline_layer.getFeatures()):
-            for l, r in find_banks(feat1, feat2, xs_layer):
-                print(l.asPoint(), r.asPoint())
+            for l, r in crossing_points(feat1, feat2, xs_layer):
+                print(l, r)
 
 
 # Running tests:
