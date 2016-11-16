@@ -118,10 +118,11 @@ class TestSchematicTools(unittest.TestCase):
         domain_layer = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
         centerline_layer = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
         xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
-
-        for feat1, feat2 in izip(domain_layer.getFeatures(), centerline_layer.getFeatures()):
-            for l, r in crossing_points(feat1, feat2, xs_layer):
-                print(l, r)
+        for feat1 in domain_layer.getFeatures():
+            xs_features = xs_layer.getFeatures()
+            feat2 = centerline_layer.getFeatures(QgsFeatureRequest(feat1.id())).next()
+            l, r, xs = bank_lines(feat1, feat2, xs_features)
+            print(l, r, xs)
 
 
 # Running tests:
