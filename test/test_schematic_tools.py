@@ -109,6 +109,7 @@ class TestSchematicTools(unittest.TestCase):
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 
+    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
     def test_crossing_points(self):
         user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
         user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
