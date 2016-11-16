@@ -11,7 +11,6 @@
 import os
 import sys
 import unittest
-from itertools import izip
 sys.path.append(os.path.join('..', 'flo2d'))
 from qgis.core import *
 from utilities import get_qgis_app

@@ -9,7 +9,6 @@
 # of the License, or (at your option) any later version
 
 from operator import itemgetter
-from itertools import izip
 from collections import defaultdict
 from math import pi
 from PyQt4.QtCore import QPyNullVariant
