@@ -601,16 +601,21 @@ def schematize_xs(coords, cell_size, x_offset, y_offset):
     x2, y2 = xs_nodes[1]
     yield x1, y1, x2, y2
     current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
+    xs_list = [current_xs]
     while True:
-        previous_xs = current_xs
         points = next(coords)
         xs_nodes = schematize_points(points, cell_size, x_offset, y_offset)[0]
         x1, y1 = xs_nodes[0]
         x2, y2 = xs_nodes[1]
         current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
-        if current_xs.intersects(previous_xs):
-            xy = current_xs.intersection(previous_xs).asPoint()
-            x2, y2 = xy.x(), xy.y()
+        for i in range(len(xs_list) - 1, -1, -1):
+            previous_xs = xs_list[i]
+            if current_xs.intersects(previous_xs):
+                xy = current_xs.intersection(previous_xs).asPoint()
+                x2, y2 = xy.x(), xy.y()
+            else:
+                del xs_list[i]
+        xs_list.append(current_xs)
         yield x1, y1, x2, y2
 
 
