@@ -488,10 +488,9 @@ def bank_lines(domain_feature, centerline_feature, xs_features):
     allfeatures = {feature.id(): feature for feature in xs_features}
     index = QgsSpatialIndex()
     map(index.insertFeature, allfeatures.itervalues())
+    domain = domain_feature.geometry()
     centerline = centerline_feature.geometry()
-    center_polyline = centerline.asPolyline()
-    domain = domain_feature.geometry().asPolygon()
-    geom1 = domain_feature.geometry()
+    geom1 = QgsGeometry.fromPolygon(domain.asPolygon())
     fids = index.intersects(geom1.boundingBox())
     cross_sections = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(geom1)]
     cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().intersection(centerline)))
@@ -504,10 +503,10 @@ def bank_lines(domain_feature, centerline_feature, xs_features):
     trimmed_centerline = geom1.intersection(centerline)
     for xs in cross_sections:
         xs_geom = xs.geometry()
-        trimmed = xs_geom.intersection(QgsGeometry.fromPolygon(domain))
+        trimmed = xs_geom.intersection(domain)
         xs.setGeometry(trimmed)
     # Splitting domain on left and right side using center line
-    geom2 = geom1.splitGeometry(center_polyline, 0)[1][0]
+    geom2 = geom1.splitGeometry(centerline.asPolyline(), 0)[1][0]
     if geom1.intersects(QgsGeometry.fromPoint(start_xs.geometry().vertexAt(0))):
         left_part = geom1
         right_part = geom2
@@ -585,18 +584,23 @@ def interpolate_xs(node_points, segment_points, right_points):
         return
 
 
-def schematize_points(points, cell_size, x_offset, y_offset):
+def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
     feat = QgsFeature()
-    feat.setGeometry(QgsGeometry.fromPolyline(points))
+    geom = QgsGeometry.fromPolyline(points)
+    if cut_line is not None:
+        if geom.intersects(cut_line):
+            points[-1] = geom.intersection(cut_line).asPoint()
+            geom = QgsGeometry.fromPolyline(points)
+    feat.setGeometry(geom)
     lines = (feat,)
     nodes_segments = tuple(schematize_lines(lines, cell_size, x_offset, y_offset, feats_only=True))
     nodes, segment = nodes_segments[0]
     return nodes, segment
 
 
-def schematize_xs(coords, cell_size, x_offset, y_offset):
+def schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=None):
     points = next(coords)
-    xs_nodes = schematize_points(points, cell_size, x_offset, y_offset)[0]
+    xs_nodes = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)[0]
     x1, y1 = xs_nodes[0]
     x2, y2 = xs_nodes[1]
     yield x1, y1, x2, y2
@@ -604,7 +608,7 @@ def schematize_xs(coords, cell_size, x_offset, y_offset):
     xs_list = [current_xs]
     while True:
         points = next(coords)
-        xs_nodes = schematize_points(points, cell_size, x_offset, y_offset)[0]
+        xs_nodes = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)[0]
         x1, y1 = xs_nodes[0]
         x2, y2 = xs_nodes[1]
         current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
@@ -640,6 +644,7 @@ def create_bank_lines(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
         vertices = ','.join(('{0} {1}'.format(*xy) for xy in segment if xy not in seen and not seen.add(xy)))
         cursor = gutils.con.cursor()
         cursor.execute(insert_sql.format(vertices), (i,))
-        for x1, y1, x2, y2 in schematize_xs(coords, cell_size, x_offset, y_offset):
+        cut_line = QgsGeometry.fromPolyline(right_points)
+        for x1, y1, x2, y2 in schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=cut_line):
             cursor.execute(insert_chan.format(x1, y1, x2, y2))
         gutils.con.commit()
