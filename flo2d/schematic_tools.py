@@ -524,6 +524,7 @@ def bank_lines(domain_feature, centerline_feature, xs_features):
 
 
 def bank_stations(sorted_xs, left_line, right_line):
+    fids = []
     left_points = []
     right_points = []
     for xs in sorted_xs:
@@ -535,7 +536,8 @@ def bank_stations(sorted_xs, left_line, right_line):
         right_cross = right_line.nearestPoint(end)
         left_points.append(left_cross.asPoint())
         right_points.append(right_cross.asPoint())
-    return left_points, right_points
+        fids.append(xs['fid'])
+    return fids, left_points, right_points
 
 
 def inject_points(line_geom, points):
@@ -585,16 +587,17 @@ def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
 
 
 def closest_nodes(segment_points, left_points):
-    """Returns closest vertex with index"""
+    """Returns closest vertex with index."""
     segment_geom = QgsGeometry.fromPolyline(segment_points)
     nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in left_points]
     return nodes
 
 
-def interpolate_xs(nodes, segment_points, right_points):
+def interpolate_xs(nodes, segment_points, right_points, fids):
     isegment = iter(segment_points)
     inodes = iter(nodes)
     irbanks = iter(right_points)
+    ifid = iter(fids)
 
     vertex = next(isegment)
     first_node, first_idx = next(inodes)
@@ -604,6 +607,8 @@ def interpolate_xs(nodes, segment_points, right_points):
 
     start_point = None
     end_point = None
+    xs_fid = next(ifid)
+    interpolated = 0
     i = 0
     try:
         while True:
@@ -621,32 +626,41 @@ def interpolate_xs(nodes, segment_points, right_points):
                 delta = vertex - start_point
                 start_point = vertex
                 end_point += delta
+                interpolated = 1
             elif i == second_idx:
                 first_node, first_idx = second_node, second_idx
                 first_rbank = second_rbank
+                interpolated = 0
                 try:
                     second_node, second_idx = next(inodes)
                     second_rbank = next(irbanks)
+                    xs_fid = next(ifid)
                 except StopIteration:
                     i = first_idx
                 continue
-            yield [start_point, end_point]
+            yield [start_point, end_point, xs_fid, interpolated]
             i += 1
             vertex = next(isegment)
     except StopIteration:
         return
 
 
-def schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=None):
-    points = next(coords)
+def schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=None):
+    xs = next(inter_xs)
+    points = xs[:2]
+    attrs = xs[2:]
+    org_fid, interpolated = attrs
     xs_segments = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)
     x1, y1 = xs_segments[0]
     x2, y2 = xs_segments[-1]
-    yield x1, y1, x2, y2
+    yield x1, y1, x2, y2, org_fid, interpolated
     current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
     xs_list = [current_xs]
     while True:
-        points = next(coords)
+        xs = next(inter_xs)
+        points = xs[:2]
+        attrs = xs[2:]
+        org_fid, interpolated = attrs
         xs_segments = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)
         x1, y1 = xs_segments[0]
         x2, y2 = xs_segments[-1]
@@ -659,32 +673,34 @@ def schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=None):
             else:
                 del xs_list[i]
         xs_list.append(current_xs)
-        yield x1, y1, x2, y2
+        yield x1, y1, x2, y2, org_fid, interpolated
 
 
 def create_bank_lines(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
-    del_chan = 'DELETE FROM chan_elems;'
-    insert_chan = '''INSERT INTO chan_elems (geom) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')));'''
     del_sql = '''DELETE FROM chan WHERE user_line_fid IS NOT NULL;'''
-    insert_sql = '''INSERT INTO chan (geom, user_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+    insert_sql = '''INSERT INTO chan (geom, domain_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+    del_chan = 'DELETE FROM chan_elems;'
+    insert_chan = '''INSERT INTO chan_elems (geom, user_xs_fid, interpolated) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')), ?, ?);'''
     gutils.execute(del_sql)
     gutils.execute(del_chan)
     x_offset, y_offset = calculate_offset(gutils, cell_size)
-    for i, feat1 in enumerate(domain_lyr.getFeatures(), 1):
+    for feat1 in domain_lyr.getFeatures():
+        dfid = feat1.id()
         xs_features = xs_lyr.getFeatures()
-        feat2 = centerline_lyr.getFeatures(QgsFeatureRequest(feat1.id())).next()
+        feat2 = centerline_lyr.getFeatures(QgsFeatureRequest(dfid)).next()
         left_line, right_line, sorted_xs = bank_lines(feat1, feat2, xs_features)
-        left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
+        fids, left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
         segment = schematize_points(left_points, cell_size, x_offset, y_offset)
         seen = set()
         vertices = ','.join(('{0} {1}'.format(*xy) for xy in segment if xy not in seen and not seen.add(xy)))
         cursor = gutils.con.cursor()
-        cursor.execute(insert_sql.format(vertices), (i,))
+        cursor.execute(insert_sql.format(vertices), (dfid,))
 
         segment_points = [QgsPoint(*xy) for xy in segment]
         nodes = closest_nodes(segment_points, left_points)
-        coords = interpolate_xs(nodes, segment_points, right_points)
+        inter_xs = interpolate_xs(nodes, segment_points, right_points, fids)
         cut_line = QgsGeometry.fromPolyline(right_points)
-        for x1, y1, x2, y2 in schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=cut_line):
-            cursor.execute(insert_chan.format(x1, y1, x2, y2))
+        schema_xs = schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=cut_line)
+        for x1, y1, x2, y2, org_fid, interpolated in schema_xs:
+            cursor.execute(insert_chan.format(x1, y1, x2, y2), (org_fid, interpolated))
         gutils.con.commit()

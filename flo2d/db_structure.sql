@@ -402,7 +402,7 @@ CREATE TABLE "chan" (
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
-    "user_line_fid" INTEGER -- FID of parent user channel line
+    "domain_fid" INTEGER -- FID of parent user 1D domain
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
@@ -417,7 +417,9 @@ CREATE TABLE "chan_elems" (
     "fcn" REAL, -- FCN, average Manning's n in the grid element
     "xlen" REAL, -- channel length contained within the grid element ICHANGRID
     "type" TEXT, -- SHAPE, type of cross-section shape definition
-    "notes" TEXT
+    "notes" TEXT,
+    "user_xs_fid" INTEGER,
+    "interpolated" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
