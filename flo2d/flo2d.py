@@ -223,12 +223,6 @@ class Flo2D(object):
             callback=lambda: self.schematize_streets(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
-            text=self.tr(u'Find bank lines'),
-            callback=lambda: self.schematize_bank_lines(),
-            parent=self.iface.mainWindow())
-
     def create_grid_info_dock(self):
         self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
@@ -677,18 +671,6 @@ class Flo2D(object):
 
     @connection_required
     def schematize_channels(self):
-        segments = self.lyrs.get_layer_by_name("Channel Segments", group=self.lyrs.group).layer()
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
-        try:
-            schematize_channels(self.gutils, segments, cell_size)
-            chan_schem = self.lyrs.get_layer_by_name("Channel segments (left bank)", group=self.lyrs.group).layer()
-            if chan_schem:
-                chan_schem.triggerRepaint()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-
-    @connection_required
-    def schematize_bank_lines(self):
         domain_lyr = self.lyrs.get_layer_by_name("1D Domain", group=self.lyrs.group).layer()
         centerline_lyr = self.lyrs.get_layer_by_name("River Centerline", group=self.lyrs.group).layer()
         xs_lyr = self.lyrs.get_layer_by_name("Cross-sections", group=self.lyrs.group).layer()

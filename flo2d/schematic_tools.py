@@ -212,7 +212,6 @@ def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False):
     """
     line_features = lines.getFeatures() if feats_only is False else lines
     for line in line_features:
-        nodes = []
         segment = []
         try:
             vertices = line.geometry().asPolyline()
@@ -220,17 +219,14 @@ def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False):
             x1, y1 = next(iver)
             x2, y2 = next(iver)
             vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)]
-            nodes += vals[:1]
-            nodes += vals[-1:]
             segment += vals
             while True:
                 x1, y1 = x2, y2
                 x2, y2 = next(iver)
                 vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)][1:]
-                nodes += vals[-1:]
                 segment += vals
         except StopIteration:
-            yield nodes, segment
+            yield segment
 
 
 def populate_directions(coords, grids):
@@ -294,13 +290,13 @@ def schematize_channels(gutils, line_layer, cell_size):
     Calculating and writing schematized channels into the 'chan' table.
     """
     x_offset, y_offset = calculate_offset(gutils, cell_size)
-    nodes_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
+    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
     del_sql = '''DELETE FROM chan WHERE user_line_fid IS NOT NULL;'''
     insert_sql = '''INSERT INTO chan (geom, user_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
     gutils.execute(del_sql)
     cursor = gutils.con.cursor()
     seen = set()
-    for i, (nodes, line) in enumerate(nodes_segments, 1):
+    for i, line in enumerate(segments, 1):
         vertices = ','.join(('{0} {1}'.format(*xy) for xy in line if xy not in seen and not seen.add(xy)))
         cursor.execute(insert_sql.format(vertices), (i,))
     gutils.con.commit()
@@ -311,9 +307,9 @@ def schematize_streets(gutils, line_layer, cell_size):
     Calculating and writing schematized streets into the 'street_seg' table.
     """
     x_offset, y_offset = calculate_offset(gutils, cell_size)
-    nodes_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
+    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
     coords = defaultdict(set)
-    for nodes, grids in nodes_segments:
+    for grids in segments:
         populate_directions(coords, grids)
     functions = {
         1: (lambda x, y, shift: (x, y + shift)),
@@ -542,46 +538,35 @@ def bank_stations(sorted_xs, left_line, right_line):
     return left_points, right_points
 
 
-def interpolate_xs(node_points, segment_points, right_points):
-    inodes = iter(node_points)
-    isegment = iter(segment_points)
-    irbanks = iter(right_points)
-    first_node = next(inodes)
-    second_node = next(inodes)
-    first_bank = next(irbanks)
-    second_bank = next(irbanks)
-    vertex = next(isegment)
+def inject_points(line_geom, points):
+    new_line = line_geom.asPolyline()
+    iline = iter(line_geom.asPolyline())
+    ipoints = iter(points)
+    pnt = next(ipoints)
+    xy = next(iline)
+    distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
+    vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+    shift = 0
+    index = 0
     try:
-        start_point = None
-        end_point = None
         while True:
-            if vertex == first_node:
-                start_point = first_node
-                azimuth = first_bank.azimuth(first_node)
-                if azimuth < 0:
-                    azimuth += 360
-                closest_angle = round(azimuth / 45) * 45
-                rotation = closest_angle - azimuth
-                end_geom = QgsGeometry.fromPoint(first_bank)
-                end_geom.rotate(rotation, start_point)
-                end_point = end_geom.asPoint()
-            elif vertex != second_node:
-                delta = vertex - start_point
-                start_point = vertex
-                end_point += delta
-            else:
-                first_node = second_node
-                first_bank = second_bank
-                try:
-                    second_node = next(inodes)
-                    second_bank = next(irbanks)
-                except StopIteration:
-                    vertex = first_node
-                continue
-            yield [start_point, end_point]
-            vertex = next(isegment)
+            if vdistance == distance:
+                pnt = next(ipoints)
+                xy = next(iline)
+                distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
+                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+                index += 1
+            elif vdistance < distance:
+                xy = next(iline)
+                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+                index += 1
+            elif vdistance > distance:
+                new_line.insert(index + shift, pnt)
+                pnt = next(ipoints)
+                distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
+                shift += 1
     except StopIteration:
-        return
+        return new_line
 
 
 def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
@@ -592,25 +577,79 @@ def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
             points[-1] = geom.intersection(cut_line).asPoint()
             geom = QgsGeometry.fromPolyline(points)
     feat.setGeometry(geom)
+    # One line only
     lines = (feat,)
-    nodes_segments = tuple(schematize_lines(lines, cell_size, x_offset, y_offset, feats_only=True))
-    nodes, segment = nodes_segments[0]
-    return nodes, segment
+    segments = tuple(schematize_lines(lines, cell_size, x_offset, y_offset, feats_only=True))
+    segment = segments[0]
+    return segment
+
+
+def closest_nodes(segment_points, left_points):
+    """Returns closest vertex with index"""
+    segment_geom = QgsGeometry.fromPolyline(segment_points)
+    nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in left_points]
+    return nodes
+
+
+def interpolate_xs(nodes, segment_points, right_points):
+    isegment = iter(segment_points)
+    inodes = iter(nodes)
+    irbanks = iter(right_points)
+
+    vertex = next(isegment)
+    first_node, first_idx = next(inodes)
+    second_node, second_idx = next(inodes)
+    first_rbank = next(irbanks)
+    second_rbank = next(irbanks)
+
+    start_point = None
+    end_point = None
+    i = 0
+    try:
+        while True:
+            if i == first_idx:
+                start_point = first_node
+                azimuth = first_rbank.azimuth(first_node)
+                if azimuth < 0:
+                    azimuth += 360
+                closest_angle = round(azimuth / 45) * 45
+                rotation = closest_angle - azimuth
+                end_geom = QgsGeometry.fromPoint(first_rbank)
+                end_geom.rotate(rotation, start_point)
+                end_point = end_geom.asPoint()
+            elif i < second_idx:
+                delta = vertex - start_point
+                start_point = vertex
+                end_point += delta
+            elif i == second_idx:
+                first_node, first_idx = second_node, second_idx
+                first_rbank = second_rbank
+                try:
+                    second_node, second_idx = next(inodes)
+                    second_rbank = next(irbanks)
+                except StopIteration:
+                    i = first_idx
+                continue
+            yield [start_point, end_point]
+            i += 1
+            vertex = next(isegment)
+    except StopIteration:
+        return
 
 
 def schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=None):
     points = next(coords)
-    xs_nodes = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)[0]
-    x1, y1 = xs_nodes[0]
-    x2, y2 = xs_nodes[1]
+    xs_segments = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)
+    x1, y1 = xs_segments[0]
+    x2, y2 = xs_segments[-1]
     yield x1, y1, x2, y2
     current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
     xs_list = [current_xs]
     while True:
         points = next(coords)
-        xs_nodes = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)[0]
-        x1, y1 = xs_nodes[0]
-        x2, y2 = xs_nodes[1]
+        xs_segments = schematize_points(points, cell_size, x_offset, y_offset, cut_line=cut_line)
+        x1, y1 = xs_segments[0]
+        x2, y2 = xs_segments[-1]
         current_xs = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
         for i in range(len(xs_list) - 1, -1, -1):
             previous_xs = xs_list[i]
@@ -636,14 +675,15 @@ def create_bank_lines(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
         feat2 = centerline_lyr.getFeatures(QgsFeatureRequest(feat1.id())).next()
         left_line, right_line, sorted_xs = bank_lines(feat1, feat2, xs_features)
         left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
-        nodes, segment = schematize_points(left_points, cell_size, x_offset, y_offset)
-        node_points = [QgsPoint(*xy) for xy in nodes]
-        segment_points = [QgsPoint(*xy) for xy in segment]
-        coords = interpolate_xs(node_points, segment_points, right_points)
+        segment = schematize_points(left_points, cell_size, x_offset, y_offset)
         seen = set()
         vertices = ','.join(('{0} {1}'.format(*xy) for xy in segment if xy not in seen and not seen.add(xy)))
         cursor = gutils.con.cursor()
         cursor.execute(insert_sql.format(vertices), (i,))
+
+        segment_points = [QgsPoint(*xy) for xy in segment]
+        nodes = closest_nodes(segment_points, left_points)
+        coords = interpolate_xs(nodes, segment_points, right_points)
         cut_line = QgsGeometry.fromPolyline(right_points)
         for x1, y1, x2, y2 in schematize_xs(coords, cell_size, x_offset, y_offset, cut_line=cut_line):
             cursor.execute(insert_chan.format(x1, y1, x2, y2))

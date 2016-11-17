@@ -86,10 +86,10 @@ class TestSchematicTools(unittest.TestCase):
         cell_size = 500
         offset_x, offset_y = (2.5, -8.94999999999709)
         line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
-        nodes_segments = tuple(schematize_lines(line_layer, cell_size, offset_x, offset_y))
+        segments = tuple(schematize_lines(line_layer, cell_size, offset_x, offset_y))
         all_grids = 0
         unique_grids = 0
-        for node, seg in nodes_segments:
+        for seg in segments:
             all_grids += len(seg)
             unique_grids += len(set(seg))
         self.assertEqual(all_grids - unique_grids, 5)
@@ -99,9 +99,9 @@ class TestSchematicTools(unittest.TestCase):
         cell_size = 500
         offset_x, offset_y = (2.5, -8.94999999999709)
         line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
-        nodes_segments = schematize_lines(line_layer, cell_size, offset_x, offset_y)
+        segments = schematize_lines(line_layer, cell_size, offset_x, offset_y)
         coords = defaultdict(set)
-        for nodes, grids in nodes_segments:
+        for grids in segments:
             populate_directions(coords, grids)
         self.assertSetEqual(coords[(557497.5, 47508.95)], {1, 2, 3, 4})
         for s in coords.itervalues():
