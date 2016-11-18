@@ -350,7 +350,7 @@ class Layers(QObject):
             ('user_xsections', {
                 'name': 'Cross-sections',
                 'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
+                'styles': ['user_xs.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False

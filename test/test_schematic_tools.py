@@ -114,12 +114,14 @@ class TestSchematicTools(unittest.TestCase):
         user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
         user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
 
-        domain_layer = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
-        centerline_layer = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
+        domain_lyr = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
+        centerline_lyr = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
         xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
-        for feat1 in domain_layer.getFeatures():
+        for feat1 in centerline_lyr.getFeatures():
+            center_fid = feat1['fid']
+            request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
+            feat2 = domain_lyr.getFeatures(request).next()
             xs_features = xs_layer.getFeatures()
-            feat2 = centerline_layer.getFeatures(QgsFeatureRequest(feat1.id())).next()
             l, r, xs = bank_lines(feat1, feat2, xs_features)
             print(l, r, xs)
 

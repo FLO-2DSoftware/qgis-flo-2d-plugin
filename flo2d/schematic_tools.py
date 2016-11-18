@@ -480,67 +480,10 @@ def perp2side(vec, side, tol):
         return False
 
 
-def bank_lines(domain_feature, centerline_feature, xs_features):
-    allfeatures = {feature.id(): feature for feature in xs_features}
-    index = QgsSpatialIndex()
-    map(index.insertFeature, allfeatures.itervalues())
-    domain = domain_feature.geometry()
-    centerline = centerline_feature.geometry()
-    geom1 = QgsGeometry.fromPolygon(domain.asPolygon())
-    fids = index.intersects(geom1.boundingBox())
-    cross_sections = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(geom1)]
-    cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().intersection(centerline)))
-    # Reshaping domain polygon
-    start_xs = cross_sections[0]
-    end_xs = cross_sections[-1]
-    geom1.reshapeGeometry(start_xs.geometry().asPolyline())
-    geom1.reshapeGeometry(end_xs.geometry().asPolyline())
-    # Trimming center line and cross sections to reshaped domain
-    trimmed_centerline = geom1.intersection(centerline)
-    for xs in cross_sections:
-        xs_geom = xs.geometry()
-        trimmed = xs_geom.intersection(domain)
-        xs.setGeometry(trimmed)
-    # Splitting domain on left and right side using center line
-    geom2 = geom1.splitGeometry(centerline.asPolyline(), 0)[1][0]
-    if geom1.intersects(QgsGeometry.fromPoint(start_xs.geometry().vertexAt(0))):
-        left_part = geom1
-        right_part = geom2
-    else:
-        left_part = geom2
-        right_part = geom1
-    # Converting sides to lines
-    left = left_part.convertToType(QGis.Line)
-    right = right_part.convertToType(QGis.Line)
-    # Erasing center line part from sides
-    left_line = left.symDifference(trimmed_centerline)
-    right_line = right.symDifference(trimmed_centerline)
-    # Removing first and last vertex from sides
-    left_line.deleteVertex(len(left_line.asPolyline()) - 1)
-    right_line.deleteVertex(len(right_line.asPolyline()) - 1)
-    left_line.deleteVertex(0)
-    right_line.deleteVertex(0)
-    return left_line, right_line, cross_sections
-
-
-def bank_stations(sorted_xs, left_line, right_line):
-    fids = []
-    left_points = []
-    right_points = []
-    for xs in sorted_xs:
-        xs_geom = xs.geometry()
-        xs_line = xs_geom.asPolyline()
-        start = QgsGeometry.fromPoint(xs_line[0])
-        end = QgsGeometry.fromPoint(xs_line[-1])
-        left_cross = left_line.nearestPoint(start)
-        right_cross = right_line.nearestPoint(end)
-        left_points.append(left_cross.asPoint())
-        right_points.append(right_cross.asPoint())
-        fids.append(xs['fid'])
-    return fids, left_points, right_points
-
-
 def inject_points(line_geom, points):
+    """
+    Function for inserting points located on line geometry as line vertexes.
+    """
     new_line = line_geom.asPolyline()
     iline = iter(line_geom.asPolyline())
     ipoints = iter(points)
@@ -571,7 +514,96 @@ def inject_points(line_geom, points):
         return new_line
 
 
+def bank_lines(centerline_feature, domain_feature, xs_features):
+    """
+    Calculating left and right bank lines from intersection of river center line, 1D Domain and cross sections.
+    Trimming and sorting cross sections.
+    """
+    allfeatures = {feature.id(): feature for feature in xs_features}
+    index = QgsSpatialIndex()
+    map(index.insertFeature, allfeatures.itervalues())
+    domain = domain_feature.geometry()
+    centerline = centerline_feature.geometry()
+    geom1 = QgsGeometry.fromPolygon(domain.asPolygon())
+    fids = index.intersects(geom1.boundingBox())
+    cross_sections = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(geom1)]
+    cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().intersection(centerline)))
+    # Reshaping domain polygon
+    start_xs = cross_sections[0]
+    end_xs = cross_sections[-1]
+    geom1.reshapeGeometry(start_xs.geometry().asPolyline())
+    geom1.reshapeGeometry(end_xs.geometry().asPolyline())
+    # Trimming center line and cross sections to reshaped domain
+    trimmed_centerline = geom1.intersection(centerline)
+    trim_xs(cross_sections, domain)
+    # Splitting domain on left and right side using center line
+    geom2 = geom1.splitGeometry(centerline.asPolyline(), 0)[1][0]
+    if geom1.intersects(QgsGeometry.fromPoint(start_xs.geometry().vertexAt(0))):
+        left_part = geom1
+        right_part = geom2
+    else:
+        left_part = geom2
+        right_part = geom1
+    # Converting sides to lines
+    left = left_part.convertToType(QGis.Line)
+    right = right_part.convertToType(QGis.Line)
+    # Erasing center line part from sides
+    left_line = left.symDifference(trimmed_centerline)
+    right_line = right.symDifference(trimmed_centerline)
+    # Removing first and last vertex from sides
+    llen = len(left_line.asPolyline()) - 1
+    rlen = len(right_line.asPolyline()) - 1
+    left_line.deleteVertex(llen)
+    right_line.deleteVertex(rlen)
+    left_line.deleteVertex(0)
+    right_line.deleteVertex(0)
+    # Flip bank lines if direction is inverted
+    end_xs_geom = end_xs.geometry()
+    if left_line.vertexAt(0) == end_xs_geom.vertexAt(0):
+        nodes = left_line.asPolyline()
+        nodes.reverse()
+        left_line = QgsGeometry.fromPolyline(nodes)
+    if right_line.vertexAt(0) == end_xs_geom.vertexAt(1):
+        nodes = right_line.asPolyline()
+        nodes.reverse()
+        right_line = QgsGeometry.fromPolyline(nodes)
+    return left_line, right_line, cross_sections
+
+
+def trim_xs(xs_features, poly_geom):
+    """
+    Trimming xs features list to poly_geom boundaries.
+    """
+    for xs in xs_features:
+        xs_geom = xs.geometry()
+        trimmed = xs_geom.intersection(poly_geom)
+        xs.setGeometry(trimmed)
+
+
+def bank_stations(sorted_xs, left_line, right_line):
+    """
+    Finding crossing points between bank lines and cross sections.
+    """
+    fids = []
+    left_points = []
+    right_points = []
+    for xs in sorted_xs:
+        xs_geom = xs.geometry()
+        xs_line = xs_geom.asPolyline()
+        start = QgsGeometry.fromPoint(xs_line[0])
+        end = QgsGeometry.fromPoint(xs_line[-1])
+        left_cross = left_line.nearestPoint(start)
+        right_cross = right_line.nearestPoint(end)
+        left_points.append(left_cross.asPoint())
+        right_points.append(right_cross.asPoint())
+        fids.append(xs['fid'])
+    return fids, left_points, right_points
+
+
 def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
+    """
+    Using Bresenham's Line Algorithm on list of points.
+    """
     feat = QgsFeature()
     geom = QgsGeometry.fromPolyline(points)
     if cut_line is not None:
@@ -586,24 +618,29 @@ def schematize_points(points, cell_size, x_offset, y_offset, cut_line=None):
     return segment
 
 
-def closest_nodes(segment_points, left_points):
-    """Returns closest vertex with index."""
+def closest_nodes(segment_points, bank_points):
+    """
+    Getting closest vertexes (with its indexes) to the bank points.
+    """
     segment_geom = QgsGeometry.fromPolyline(segment_points)
-    nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in left_points]
+    nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in bank_points]
     return nodes
 
 
-def interpolate_xs(nodes, segment_points, right_points, fids):
-    isegment = iter(segment_points)
-    inodes = iter(nodes)
-    irbanks = iter(right_points)
+def interpolate_xs(left_segment, left_nodes, right_points, fids):
+    """
+    Interpolating cross sections using left segment points, left closest nodes and cross sections right points.
+    """
+    isegment = iter(left_segment)
+    ileft_nodes = iter(left_nodes)
+    iright_points = iter(right_points)
     ifid = iter(fids)
 
     vertex = next(isegment)
-    first_node, first_idx = next(inodes)
-    second_node, second_idx = next(inodes)
-    first_rbank = next(irbanks)
-    second_rbank = next(irbanks)
+    first_left_node, first_idx = next(ileft_nodes)
+    second_left_node, second_idx = next(ileft_nodes)
+    first_right_point = next(iright_points)
+    second_right_point = next(iright_points)
 
     start_point = None
     end_point = None
@@ -613,13 +650,13 @@ def interpolate_xs(nodes, segment_points, right_points, fids):
     try:
         while True:
             if i == first_idx:
-                start_point = first_node
-                azimuth = first_rbank.azimuth(first_node)
+                start_point = first_left_node
+                azimuth = first_right_point.azimuth(first_left_node)
                 if azimuth < 0:
                     azimuth += 360
                 closest_angle = round(azimuth / 45) * 45
                 rotation = closest_angle - azimuth
-                end_geom = QgsGeometry.fromPoint(first_rbank)
+                end_geom = QgsGeometry.fromPoint(first_right_point)
                 end_geom.rotate(rotation, start_point)
                 end_point = end_geom.asPoint()
             elif i < second_idx:
@@ -628,12 +665,12 @@ def interpolate_xs(nodes, segment_points, right_points, fids):
                 end_point += delta
                 interpolated = 1
             elif i == second_idx:
-                first_node, first_idx = second_node, second_idx
-                first_rbank = second_rbank
+                first_left_node, first_idx = second_left_node, second_idx
+                first_right_point = second_right_point
                 interpolated = 0
                 try:
-                    second_node, second_idx = next(inodes)
-                    second_rbank = next(irbanks)
+                    second_left_node, second_idx = next(ileft_nodes)
+                    second_right_point = next(iright_points)
                     xs_fid = next(ifid)
                 except StopIteration:
                     i = first_idx
@@ -646,6 +683,9 @@ def interpolate_xs(nodes, segment_points, right_points, fids):
 
 
 def schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=None):
+    """
+    Schematizing interpolated cross sections using Bresenham's Line Algorithm.
+    """
     xs = next(inter_xs)
     points = xs[:2]
     attrs = xs[2:]
@@ -676,31 +716,114 @@ def schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=None):
         yield x1, y1, x2, y2, org_fid, interpolated
 
 
-def create_bank_lines(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
-    del_sql = '''DELETE FROM chan WHERE user_line_fid IS NOT NULL;'''
-    insert_sql = '''INSERT INTO chan (geom, domain_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
+    """
+    Schematizing 1D area.
+    """
+    del_left_sql = '''DELETE FROM chan WHERE center_line_fid IS NOT NULL;'''
+    insert_left_sql = '''
+        INSERT INTO chan (geom, center_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+    del_right_sql = '''DELETE FROM user_rbank WHERE center_line_fid IS NOT NULL;'''
+    insert_right_sql = '''
+        INSERT INTO user_rbank (geom, center_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
     del_chan = 'DELETE FROM chan_elems;'
-    insert_chan = '''INSERT INTO chan_elems (geom, user_xs_fid, interpolated) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')), ?, ?);'''
-    gutils.execute(del_sql)
+    insert_chan = '''
+        INSERT INTO chan_elems (geom, fid, rbankgrid, seg_fid, nr_in_seg, user_xs_fid, interpolated) VALUES
+        (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
+    gutils.execute(del_left_sql)
+    gutils.execute(del_right_sql)
     gutils.execute(del_chan)
     x_offset, y_offset = calculate_offset(gutils, cell_size)
-    for feat1 in domain_lyr.getFeatures():
-        dfid = feat1.id()
+    for feat1 in centerline_lyr.getFeatures():
+        center_fid = feat1.id()
+        request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
+        feat2 = domain_lyr.getFeatures(request).next()
         xs_features = xs_lyr.getFeatures()
-        feat2 = centerline_lyr.getFeatures(QgsFeatureRequest(dfid)).next()
+        # Getting trimmed and sorted cross section, left and right edge
         left_line, right_line, sorted_xs = bank_lines(feat1, feat2, xs_features)
-        fids, left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
-        segment = schematize_points(left_points, cell_size, x_offset, y_offset)
-        seen = set()
-        vertices = ','.join(('{0} {1}'.format(*xy) for xy in segment if xy not in seen and not seen.add(xy)))
+        # Writing right line to geopackage
         cursor = gutils.con.cursor()
-        cursor.execute(insert_sql.format(vertices), (dfid,))
-
-        segment_points = [QgsPoint(*xy) for xy in segment]
-        nodes = closest_nodes(segment_points, left_points)
-        inter_xs = interpolate_xs(nodes, segment_points, right_points, fids)
-        cut_line = QgsGeometry.fromPolyline(right_points)
-        schema_xs = schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=cut_line)
-        for x1, y1, x2, y2, org_fid, interpolated in schema_xs:
-            cursor.execute(insert_chan.format(x1, y1, x2, y2), (org_fid, interpolated))
+        vertices = ','.join(('{0} {1}'.format(*xy) for xy in right_line.asPolyline()))
+        cursor.execute(insert_right_sql.format(vertices), (center_fid,))
+        # Finding left and right crossing points along with cross sections fids
+        fids, left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
+        # Schematizing left bank line and writing it into the geopackage
+        left_segment = schematize_points(left_points, cell_size, x_offset, y_offset)
+        seen = set()
+        vertices = ','.join(('{0} {1}'.format(*xy) for xy in left_segment if xy not in seen and not seen.add(xy)))
+        cursor.execute(insert_left_sql.format(vertices), (center_fid,))
         gutils.con.commit()
+        # Interpolation of cross sections
+        left_seg_points = [QgsPoint(*xy) for xy in left_segment]
+        left_nodes = closest_nodes(left_seg_points, left_points)
+        inter_xs = interpolate_xs(left_seg_points, left_nodes, right_points, fids)
+        schema_xs = schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=right_line)
+        sqls = []
+        for i, (x1, y1, x2, y2, org_fid, interpolated) in enumerate(schema_xs, 1):
+            lbankgrid = grid_on_point(gutils, x1, y1)
+            rbankgrid = grid_on_point(gutils, x2, y2)
+            vals = (lbankgrid, rbankgrid, center_fid, i, org_fid, interpolated)
+            sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
+        cursor = gutils.con.cursor()
+        for qry, vals in sqls:
+            cursor.execute(qry, vals)
+        gutils.con.commit()
+    update_1d_area(gutils)
+
+
+def grid_on_point(gutils, x, y):
+    """
+    Getting fid of grid which contains given point.
+    """
+    qry = '''
+    SELECT g.fid
+    FROM grid AS g
+    WHERE g.ROWID IN (
+        SELECT id FROM rtree_grid_geom
+        WHERE
+            {0} <= maxx AND
+            {0} >= minx AND
+            {1} <= maxy AND
+            {1} >= miny)
+    AND
+        ST_Intersects(g.geom, ST_GeomFromText('POINT({0} {1})'));
+    '''
+    qry = qry.format(x, y)
+    gid = gutils.execute(qry).fetchone()[0]
+    return gid
+
+
+def update_1d_area(gutils):
+    """
+    Assigning properties from user layers.
+    """
+    update_chan = '''
+    UPDATE chan
+    SET
+        name = (SELECT name FROM user_centerline WHERE fid = chan.center_line_fid),
+        depinitial = (SELECT depinitial FROM user_centerline WHERE fid = chan.center_line_fid),
+        froudc = (SELECT froudc FROM user_centerline WHERE fid = chan.center_line_fid),
+        roughadj = (SELECT roughadj FROM user_centerline WHERE fid = chan.center_line_fid),
+        isedn = (SELECT isedn FROM user_centerline WHERE fid = chan.center_line_fid),
+        notes = (SELECT notes FROM user_centerline WHERE fid = chan.center_line_fid);
+    '''
+    update_chan_elems = '''
+    UPDATE chan_elems
+    SET
+        fcn = (SELECT fcn FROM user_xsections WHERE fid = chan_elems.user_xs_fid),
+        type = (SELECT type FROM user_xsections WHERE fid = chan_elems.user_xs_fid),
+        notes = (SELECT notes FROM user_xsections WHERE fid = chan_elems.user_xs_fid);
+    '''
+    update_xlen = '''
+    UPDATE chan_elems
+    SET
+        xlen = (
+            SELECT ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom)))
+            FROM grid AS g, chan AS l
+            WHERE g.fid = chan_elems.fid AND l.center_line_fid = chan_elems.seg_fid
+            );
+    '''
+
+    gutils.execute(update_chan)
+    gutils.execute(update_chan_elems)
+    gutils.execute(update_xlen)

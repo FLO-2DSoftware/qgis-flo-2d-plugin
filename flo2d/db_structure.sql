@@ -402,12 +402,13 @@ CREATE TABLE "chan" (
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
-    "domain_fid" INTEGER -- FID of parent user 1D domain
+    "center_line_fid" INTEGER -- FID of parent center line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan', 'geom');
 -- SELECT gpkgAddSpatialIndex('chan', 'geom');
+
 
 CREATE TABLE "chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY, -- ICHANGRID, grid element number for left bank
@@ -1621,7 +1622,8 @@ SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
 
 CREATE TABLE "user_1d_domain" (
-    "fid" INTEGER PRIMARY KEY NOT NULL
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "center_line_fid" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domain', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);
@@ -1629,7 +1631,12 @@ SELECT gpkgAddGeometryTriggers('user_1d_domain', 'geom');
 
 CREATE TABLE "user_centerline" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT
+    "name" TEXT, -- name of segment (optional)
+    "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
+    "froudc" REAL, -- FROUDC, max Froude channel number
+    "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
+    "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerline', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1646,7 +1653,9 @@ SELECT gpkgAddGeometryTriggers('user_channel_seg', 'geom');
 
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT
+    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "type" TEXT, -- SHAPE, type of cross-section shape definition
+    "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsections', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1743,3 +1752,11 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polyg
 SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_bc_polygons', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_bc_polygons', 'geom');
+
+CREATE TABLE "user_rbank" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "center_line_fid" INTEGER -- FID of parent center line
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_rbank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_rbank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_rbank', 'geom');
