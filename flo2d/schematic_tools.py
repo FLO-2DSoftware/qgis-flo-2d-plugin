@@ -667,11 +667,11 @@ def interpolate_xs(left_segment, left_nodes, right_points, fids):
             elif i == second_idx:
                 first_left_node, first_idx = second_left_node, second_idx
                 first_right_point = second_right_point
+                xs_fid = next(ifid)
                 interpolated = 0
                 try:
                     second_left_node, second_idx = next(ileft_nodes)
                     second_right_point = next(iright_points)
-                    xs_fid = next(ifid)
                 except StopIteration:
                     i = first_idx
                 continue
@@ -748,7 +748,7 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
         # Finding left and right crossing points along with cross sections fids
         fids, left_points, right_points = bank_stations(sorted_xs, left_line, right_line)
         # Schematizing left bank line and writing it into the geopackage
-        left_segment = schematize_points(left_points, cell_size, x_offset, y_offset)
+        left_segment = schematize_points(left_line.asPolyline(), cell_size, x_offset, y_offset)
         seen = set()
         vertices = ','.join(('{0} {1}'.format(*xy) for xy in left_segment if xy not in seen and not seen.add(xy)))
         cursor.execute(insert_left_sql.format(vertices), (center_fid,))
