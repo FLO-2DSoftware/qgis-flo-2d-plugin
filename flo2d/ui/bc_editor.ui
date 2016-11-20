@@ -578,6 +578,32 @@
          </widget>
         </item>
         <item>
+         <widget class="QToolButton" name="copy_btn">
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Copy</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="paste_btn">
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Paste</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QToolButton" name="import_data_btn">
           <property name="maximumSize">
            <size>

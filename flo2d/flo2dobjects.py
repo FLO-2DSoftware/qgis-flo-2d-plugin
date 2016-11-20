@@ -117,7 +117,7 @@ class Inflow(GeoPackageUtils):
         # print 'in get_time_series_data for fid', self.time_series_fid
         if not self.time_series_fid:
             return
-        qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
+        qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY time;'
         self.time_series_data = self.execute(qry, (self.time_series_fid,)).fetchall()
         if not self.time_series_data:
             # add a new time series
@@ -203,6 +203,11 @@ class Outflow(GeoPackageUtils):
         self.hydro_out = None
 
     def set_type_data(self, typ):
+        if typ == 4:
+            # keep nr of outflow hydrograph to set it later
+            old_hydro_out = self.hydro_out
+        else:
+            old_hydro_out = None
         self.clear_type_data()
         self.typ = typ
         if typ in (2, 8):
@@ -212,6 +217,9 @@ class Outflow(GeoPackageUtils):
         elif typ == 3:
             self.chan_out = 1
             self.fp_out = 1
+        elif typ == 4:
+            self.clear_data_fids()
+            self.hydro_out = old_hydro_out
         else:
             pass
 
@@ -371,7 +379,7 @@ class Outflow(GeoPackageUtils):
 
     def get_time_series_data(self):
         '''Get time, value pairs for the current outflow'''
-        qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ?;'
+        qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;'
         data_fid = self.get_cur_data_fid()
         if not data_fid:
             self.uc.bar_warn('No time series fid for current outflow is defined.')
@@ -406,7 +414,7 @@ class Outflow(GeoPackageUtils):
             return self.get_qh_params_data()
 
     def get_qh_table_data(self):
-        qry = 'SELECT depth, q FROM qh_table_data WHERE table_fid = ?;'
+        qry = 'SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY depth;'
         table_fid = self.get_cur_data_fid()
         self.qh_table_data = self.execute(qry, (table_fid,)).fetchall()
         if not self.qh_table_data:
