@@ -20,8 +20,8 @@ def build_grid(boundary, cell_size):
     half_size = cell_size * 0.5
     biter = boundary.getFeatures()
     feature = next(biter)
-    fgeom = feature.geometry()
-    bbox = fgeom.boundingBox()
+    geom = feature.geometry()
+    bbox = geom.boundingBox()
     xmin = math.floor(bbox.xMinimum())
     xmax = math.ceil(bbox.xMaximum())
     ymax = math.ceil(bbox.yMaximum())
@@ -30,10 +30,13 @@ def build_grid(boundary, cell_size):
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
     y = ymax - half_size
+    geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+    geos_geom.prepareGeometry()
     for col in xrange(cols):
         y_tmp = y
         for row in xrange(rows):
-            if fgeom.contains(QgsPoint(x, y_tmp)):
+            pnt = QgsGeometry.fromPoint(QgsPoint(x, y_tmp))
+            if geos_geom.intersects(pnt.geometry()):
                 poly = (
                     x - half_size, y_tmp - half_size,
                     x + half_size, y_tmp - half_size,
@@ -87,7 +90,7 @@ def calculate_arfwrf(grid, areas):
         (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     )
-    area_polys = areas.selectedFeatures() if areas.selectedFeatureCount() > 0 else areas.getFeatures()
+    area_polys = areas.getFeatures()
     allfeatures = {feature.id(): feature for feature in area_polys}
     index = QgsSpatialIndex()
     map(index.insertFeature, allfeatures.itervalues())

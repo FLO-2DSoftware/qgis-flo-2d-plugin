@@ -11,7 +11,6 @@
 import os
 import sys
 import unittest
-from itertools import izip
 sys.path.append(os.path.join('..', 'flo2d'))
 from qgis.core import *
 from utilities import get_qgis_app
@@ -109,18 +108,22 @@ class TestSchematicTools(unittest.TestCase):
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 
-    def test_find_banks(self):
+    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
+    def test_crossing_points(self):
         user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
         user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
         user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
 
-        domain_layer = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
-        centerline_layer = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
+        domain_lyr = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
+        centerline_lyr = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
         xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
-
-        for feat1, feat2 in izip(domain_layer.getFeatures(), centerline_layer.getFeatures()):
-            for l, r in find_banks(feat1, feat2, xs_layer):
-                print(l.asPoint(), r.asPoint())
+        for feat1 in centerline_lyr.getFeatures():
+            center_fid = feat1['fid']
+            request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
+            feat2 = domain_lyr.getFeatures(request).next()
+            xs_features = xs_layer.getFeatures()
+            l, r, xs = bank_lines(feat1, feat2, xs_features)
+            print(l, r, xs)
 
 
 # Running tests:

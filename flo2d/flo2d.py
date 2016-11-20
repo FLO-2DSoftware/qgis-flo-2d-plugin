@@ -23,7 +23,7 @@ from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees
+from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees, schematize_1d_area
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
@@ -217,7 +217,7 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
-            text=self.tr(u'Schematize channels'),
+            text=self.tr(u'Schematize 1D Area'),
             callback=lambda: self.schematize_channels(),
             parent=self.iface.mainWindow())
 
@@ -705,13 +705,17 @@ class Flo2D(object):
 
     @connection_required
     def schematize_channels(self):
-        segments = self.lyrs.get_layer_by_name("Channel Segments", group=self.lyrs.group).layer()
+        domain_lyr = self.lyrs.get_layer_by_name("1D Domain", group=self.lyrs.group).layer()
+        centerline_lyr = self.lyrs.get_layer_by_name("River Centerline", group=self.lyrs.group).layer()
+        xs_lyr = self.lyrs.get_layer_by_name("Cross-sections", group=self.lyrs.group).layer()
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
-            schematize_channels(self.gutils, segments, cell_size)
+            schematize_1d_area(self.gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr)
             chan_schem = self.lyrs.get_layer_by_name("Channel segments (left bank)", group=self.lyrs.group).layer()
+            chan_elems = self.lyrs.get_layer_by_name("Cross sections", group=self.lyrs.group).layer()
             if chan_schem:
                 chan_schem.triggerRepaint()
+                chan_elems.triggerRepaint()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
 

@@ -44,7 +44,10 @@ class UserCommunication(object):
 
     def log_info(self, msg):
         if self.iface is not None:
-            QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
+            try:
+                QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
+            except TypeError:
+                QgsMessageLog.logMessage(repr(msg), self.context, QgsMessageLog.INFO)
         else:
             print(msg)
 
