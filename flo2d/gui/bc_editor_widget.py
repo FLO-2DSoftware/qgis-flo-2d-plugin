@@ -466,6 +466,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 self.outflow_hydro_cbo.setCurrentIndex(int(self.outflow.hydro_out))
             else:
                 self.outflow_hydro_cbo.setCurrentIndex(1)
+            return
         elif self.outflow.typ > 4:
             self.create_outflow_plot()
             self.series = self.outflow.get_data_fid_name()
@@ -709,8 +710,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.update_inflow_plot()
         else:
             self.update_outflow_plot()
-
-
 
     def copy_selection(self):
         selection = self.bc_tview.selectedIndexes()
