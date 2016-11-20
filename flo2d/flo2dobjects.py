@@ -137,11 +137,20 @@ class Inflow(GeoPackageUtils):
         qry = 'DELETE FROM inflow_time_series WHERE fid = ?;'
         self.execute(qry, (self.time_series_fid,))
 
-    def set_row(self, data):
+    def set_row(self):
+        data = (
+            self.name,
+            self.time_series_fid,
+            self.ident,
+            self.inoutfc,
+            self.fid
+        )
         qry = 'UPDATE inflow SET name=?, time_series_fid=?, ident=?, inoutfc=? WHERE fid=?'
         self.execute(qry, data)
 
-    def set_time_series_data(self, data):
+    def set_time_series_data(self, name, data):
+        qry = 'UPDATE inflow_time_series SET name=? WHERE fid=?;'
+        self.execute(qry, (name, self.time_series_fid,))
         qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
         self.execute(qry, (self.time_series_fid,))
         qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES (?, ?, ?, ?);'

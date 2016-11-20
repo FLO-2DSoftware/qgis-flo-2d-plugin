@@ -166,6 +166,9 @@
        <property name="editable">
         <bool>true</bool>
        </property>
+       <property name="insertPolicy">
+        <enum>QComboBox::InsertAtBottom</enum>
+       </property>
        <property name="sizeAdjustPolicy">
         <enum>QComboBox::AdjustToMinimumContentsLength</enum>
        </property>

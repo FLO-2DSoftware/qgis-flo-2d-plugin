@@ -131,6 +131,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         else:
             try_disconnect(self.bc_name_cbo.currentIndexChanged, self.inflow_changed)
             try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
+            try_disconnect(self.ifc_fplain_radio.toggled, self.inflow_dest_changed)
+            try_disconnect(self.inflow_type_cbo.currentIndexChanged, self.inflow_type_changed)
             self.inflow_frame.setVisible(False)
             self.outflow_frame.setVisible(True)
             self.populate_outflows(fid)
@@ -161,6 +163,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # print 'in reset_inflow_gui'
         try_disconnect(self.bc_name_cbo.currentIndexChanged, self.inflow_changed)
         try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
+        try_disconnect(self.ifc_fplain_radio.toggled, self.inflow_dest_changed)
+        try_disconnect(self.inflow_type_cbo.currentIndexChanged, self.inflow_type_changed)
         self.bc_name_cbo.clear()
         self.inflow_tseries_cbo.clear()
         self.bc_data_model.clear()
@@ -191,6 +195,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow.get_row()
         self.bc_name_cbo.setCurrentIndex(cur_name_idx)
         self.bc_name_cbo.currentIndexChanged.connect(self.inflow_changed)
+        self.ifc_fplain_radio.toggled.connect(self.inflow_dest_changed)
+        self.inflow_type_cbo.currentIndexChanged.connect(self.inflow_type_changed)
         self.inflow_changed()
 
     def inflow_changed(self):
@@ -260,16 +266,15 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow_tseries_cbo.currentIndexChanged.connect(self.inflow_data_changed)
         self.inflow_data_changed()
 
-    def add_inflow_tseries(self):
-        # print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
-        if not self.inflow.time_series_fid:
-            # print 'no inflow series_fid'
-            return
-        self.inflow.add_time_series()
-        self.populate_inflow_data_cbo()
-        ts_nr = self.inflow_tseries_cbo.count()
-        # print 'nr of elements in tseries cbo: ', ts_nr
-        self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
+    def inflow_dest_changed(self):
+        if self.ifc_fplain_radio.isChecked():
+            self.inflow.ident = 'F'
+        else:
+            self.inflow.ident = 'C'
+
+    def inflow_type_changed(self):
+        self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
+
 
     def inflow_data_changed(self):
         # print 'in inflow_data_changed'
@@ -304,6 +309,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """Get inflow and time series data from table view and save them to gpkg"""
         cur_name_idx = self.bc_name_cbo.currentIndex()
         cur_inflow_fid, _ = self.bc_name_cbo.itemData(cur_name_idx)
+        self.inflow.name = self.bc_name_cbo.currentText()
         if self.ifc_fplain_radio.isChecked():
             ident = 'F'
         elif self.ifc_chan_radio.isChecked():
@@ -317,7 +323,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_type_cbo.currentIndex(),
             cur_inflow_fid
         )
-        self.inflow.set_row(inf_data)
+        self.inflow.set_row()
         ts_data = (
             (
                 self.inflow.time_series_fid,
@@ -327,8 +333,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             )
             for i in range(self.bc_data_model.rowCount())
         )
-        self.inflow.set_time_series_data(ts_data)
-        # self.populate_inflows(self.bc_name_cbo.currentIndex()+1)
+        data_name = self.inflow_tseries_cbo.currentText()
+        self.inflow.set_time_series_data(data_name, ts_data)
+        self.populate_inflows(self.inflow.fid)
 
     def show_inflow_rb(self):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
@@ -354,6 +361,17 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.m.append(m_fdata(self.bc_data_model, i, 2))
         self.plot.update_item('Current Discharge', [self.t, self.d])
         self.plot.update_item('Current Mud', [self.t, self.m])
+
+    def add_inflow_tseries(self):
+        # print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
+        if not self.inflow.time_series_fid:
+            # print 'no inflow series_fid'
+            return
+        self.inflow.add_time_series()
+        self.populate_inflow_data_cbo()
+        ts_nr = self.inflow_tseries_cbo.count()
+        # print 'nr of elements in tseries cbo: ', ts_nr
+        self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
 
     # OUTFLOWS
 

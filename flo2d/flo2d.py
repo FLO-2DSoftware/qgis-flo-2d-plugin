@@ -83,6 +83,7 @@ class Flo2D(object):
         self.set_editors_map()
         self.create_map_tools()
         self.crs = None
+        self.cur_info_table = None
 
         self.dlg_inflow_editor = None
 
@@ -237,6 +238,7 @@ class Flo2D(object):
         self.f2d_plot_dock = QgsDockWidget()
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
+        self.f2d_plot.setSizeHint(250, 250)
         self.f2d_plot_dock.setWidget(self.f2d_plot)
 
     def add_docks_to_iface(self):
@@ -398,6 +400,7 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
         else:
             pass
+        self.show_bc_editor()
 
     @connection_required
     def export_gds(self):

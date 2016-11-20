@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QVBoxLayout, QColor, QWidget
 
 from ..deps import safe_pyqtgraph as pg
@@ -19,6 +19,7 @@ pg.setConfigOption('antialias', True)
 
 
 class PlotWidget(QWidget):
+    _sizehint = None
 
     def __init__(self):
         QWidget.__init__(self)
@@ -33,6 +34,15 @@ class PlotWidget(QWidget):
         self.plot.showGrid(x=True, y=True)
         self.layout.addWidget(self.pw)
         self.setLayout(self.layout)
+
+    def setSizeHint(self, width, height):
+        self._sizehint = QSize(width, height)
+
+    def sizeHint(self):
+        # print('sizeHint:', self._sizehint)
+        if self._sizehint is not None:
+            return self._sizehint
+        return super(PlotWidget, self).sizeHint()
 
     def clear(self):
         self.plot.clear()
