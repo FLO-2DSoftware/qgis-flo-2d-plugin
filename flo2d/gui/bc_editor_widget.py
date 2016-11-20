@@ -27,7 +27,7 @@ uiDialog, qtBaseClass = load_ui('bc_editor')
 class BCEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
         if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
-            print receiver, type(receiver)
+            # print receiver, type(receiver)
             receiver.copy_selection()
             return True
         elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste):
@@ -102,7 +102,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                         type = (SELECT type FROM {} WHERE fid = ?);'''.format(user_bc_table)
             data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
             fid, typ = self.gutils.execute(qry, data).fetchone()
-        print 'in show_bc_editor', typ, fid
+        # print 'in show_bc_editor', typ, fid
         if fid and typ:
             self.change_bc_type(typ, fid)
         else:
@@ -110,7 +110,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn(msg)
 
     def change_bc_type(self, typ=None, fid=None):
-        print 'in change_bc_type'
+        # print 'in change_bc_type'
         if typ == 'inflow' and self.bc_type_outflow_radio.isChecked():
             self.bc_type_inflow_radio.setChecked(True)
             self.bc_type_outflow_radio.setChecked(False)
@@ -158,7 +158,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     # INFLOWS
 
     def reset_inflow_gui(self):
-        print 'in reset_inflow_gui'
+        # print 'in reset_inflow_gui'
         try_disconnect(self.bc_name_cbo.currentIndexChanged, self.inflow_changed)
         try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
         self.bc_name_cbo.clear()
@@ -167,7 +167,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.clear()
 
     def populate_inflows(self, inflow_fid=None):
-        print 'in populate_inflows'
+        # print 'in populate_inflows'
         """Read inflow and inflow_time_series tables, populate proper combo boxes"""
         if not self.iface.f2d['con']:
             return
@@ -194,7 +194,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow_changed()
 
     def inflow_changed(self):
-        print 'in inflow_changed'
+        # print 'in inflow_changed'
         try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
         bc_idx = self.bc_name_cbo.currentIndex()
         cur_data = self.bc_name_cbo.itemData(bc_idx)
@@ -237,10 +237,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def populate_inflow_data_cbo(self):
         """Read and set inflow properties"""
-        print 'in populate_inflow_data_cbo'
-
+        # print 'in populate_inflow_data_cbo'
         self.time_series = self.inflow.get_time_series()
-        print 'got series', self.time_series
+        # print 'got series', self.time_series
         if not self.time_series:
             self.uc.bar_warn('No data series for this inflow.')
             return
@@ -255,25 +254,25 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
             if ts_fid == self.inflow.time_series_fid:
                 cur_idx = i
-        print 'setting new series fid from idx', cur_idx
+        # print 'setting new series fid from idx', cur_idx
         self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
         self.inflow_tseries_cbo.setCurrentIndex(cur_idx)
         self.inflow_tseries_cbo.currentIndexChanged.connect(self.inflow_data_changed)
         self.inflow_data_changed()
 
     def add_inflow_tseries(self):
-        print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
+        # print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
         if not self.inflow.time_series_fid:
-            print 'no inflow series_fid'
+            # print 'no inflow series_fid'
             return
         self.inflow.add_time_series()
         self.populate_inflow_data_cbo()
         ts_nr = self.inflow_tseries_cbo.count()
-        print 'nr of elements in tseries cbo: ', ts_nr
+        # print 'nr of elements in tseries cbo: ', ts_nr
         self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
 
     def inflow_data_changed(self):
-        print 'in inflow_data_changed'
+        # print 'in inflow_data_changed'
         """Get current time series data, populate data table and create plot"""
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
@@ -359,7 +358,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     # OUTFLOWS
 
     def reset_outflow_gui(self):
-        print 'in reset_outflow_gui'
+        # print 'in reset_outflow_gui'
         try_disconnect(self.bc_name_cbo.currentIndexChanged, self.outflow_changed)
         try_disconnect(self.outflow_type_cbo.currentIndexChanged, self.outflow_type_changed)
         try_disconnect(self.outflow_data_cbo.currentIndexChanged, self.outflow_data_changed)
@@ -389,7 +388,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_tab_head = out_par['tab_head']
 
     def populate_outflows(self, outflow_fid=None):
-        print 'in populate_outflows'
+        # print 'in populate_outflows'
         """Read outflow table, populate the cbo and set apropriate outflow"""
         if not self.iface.f2d['con']:
             return
@@ -421,7 +420,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_changed()
 
     def outflow_changed(self):
-        print 'in outflow_changed'
+        # print 'in outflow_changed'
         try_disconnect(self.outflow_type_cbo.currentIndexChanged, self.outflow_type_changed)
         bc_idx = self.bc_name_cbo.currentIndex()
         cur_data = self.bc_name_cbo.itemData(bc_idx)
@@ -449,18 +448,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def outflow_type_changed(self):
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
-        print 'in outflow TYPE changed, typ_idx={}'.format(typ_idx)
+        # print 'in outflow TYPE changed, typ_idx={}'.format(typ_idx)
         self.set_outflow_widgets(typ_idx)
         self.outflow.set_type_data(typ_idx)
-        print 'outflow typ: ', self.outflow.typ
+        # print 'outflow typ: ', self.outflow.typ
         self.populate_outflow_data_cbo()
 
     def outflow_hydrograph_changed(self):
-        print 'set hydrograph to ', self.outflow_hydro_cbo.currentIndex()
+        # print 'set hydrograph to ', self.outflow_hydro_cbo.currentIndex()
         self.outflow.hydro_out = self.outflow_hydro_cbo.currentIndex()
 
     def populate_outflow_data_cbo(self):
-        print 'in populate_outflow_data_cbo'
+        # print 'in populate_outflow_data_cbo'
         self.series = None
         if self.outflow.typ == 4:
             if is_number(self.outflow.hydro_out):
@@ -499,7 +498,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
 
     def outflow_data_changed(self, data_idx=0):
-        print 'in outflow_data_changed for data_idx', data_idx
+        # print 'in outflow_data_changed for data_idx', data_idx
         self.outflow.get_cur_data_fid()
         out_nr = self.outflow_data_cbo.count()
         if not out_nr:
@@ -508,11 +507,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow.set_new_data_fid(self.outflow_data_fid)
         head = self.outflow_tab_head
         series_data = self.outflow.get_data()
-        print 'tseries:', series_data, type(series_data)
+        # print 'tseries:', series_data, type(series_data)
         self.d1, self.d2 = [[], []]
         self.bc_data_model.clear()
         self.bc_data_model.setHorizontalHeaderLabels(head)
-        print series_data[:2]
+        # print series_data[:2]
         for row in series_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
             self.d1.append(row[0] if not row[0] is None else float('NaN'))
@@ -551,7 +550,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
     def populate_hydrograph_cbo(self):
-        print 'in populate_hydrograph_cbo'
+        # print 'in populate_hydrograph_cbo'
         self.outflow_hydro_cbo.clear()
         self.outflow_hydro_cbo.addItem('', 0)
         for i in range(1, 10):
@@ -559,7 +558,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow_hydro_cbo.addItem(h_name, i)
 
     def populate_outflow_type_cbo(self):
-        print 'in populate_outflow_type_cbo'
+        # print 'in populate_outflow_type_cbo'
         """Populate outflow types cbo and set current type"""
         self.outflow_type_cbo.clear()
         type_name = '{}. {}'

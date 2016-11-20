@@ -94,7 +94,7 @@ class Inflow(GeoPackageUtils):
         self.inoutfc = self.row['inoutfc']
         self.geom_type = self.row['geom_type']
         self.bc_fid = self.row['bc_fid']
-        print 'inflow tser fid', self.time_series_fid
+        # print 'inflow tser fid', self.time_series_fid
         return self.row
 
     def get_time_series(self):
@@ -114,9 +114,8 @@ class Inflow(GeoPackageUtils):
             return self.get_time_series()
 
     def get_time_series_data(self):
-        print 'in get_time_series_data for fid', self.time_series_fid
+        # print 'in get_time_series_data for fid', self.time_series_fid
         if not self.time_series_fid:
-            print 'wychodze'
             return
         qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ?;'
         self.time_series_data = self.execute(qry, (self.time_series_fid,)).fetchall()
@@ -279,7 +278,7 @@ class Outflow(GeoPackageUtils):
             return self.get_qh_tables()
 
     def get_data_fid_name(self):
-        print 'in get_data_fid_name for typ', self.typ
+        # print 'in get_data_fid_name for typ', self.typ
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
         elif self.typ in [9, 10]:
@@ -376,7 +375,7 @@ class Outflow(GeoPackageUtils):
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
         '''Add new rows to outflow_time_series_data for a given ts_fid'''
-        print 'in add_time_series_data'
+        # print 'in add_time_series_data'
         qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -414,9 +413,9 @@ class Outflow(GeoPackageUtils):
 
     def get_data(self):
         '''Get data for current type and data_fid of the outflow'''
-        print 'in get_data, typ=', self.typ
+        # print 'in get_data, typ=', self.typ
         if self.typ in [5, 6, 7, 8]:
-            print 'getting time series...'
+            # print 'getting time series...'
             return self.get_time_series_data()
         elif self.typ in [9, 10]:
             return self.get_qh_params_data()
