@@ -36,3 +36,10 @@ def center_canvas(iface, x, y):
     rect = QgsRectangle(x_min, y_min, x_max, y_max)
     mc.setExtent(rect)
     mc.refresh()
+
+def try_disconnect(signal, met):
+    try:
+        signal.disconnect(met)
+    except TypeError:
+        # print 'signal not connected'
+        pass

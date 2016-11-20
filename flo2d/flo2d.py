@@ -16,8 +16,8 @@ import time
 import traceback
 
 from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
-from qgis.gui import QgsProjectionSelectionWidget
+from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices, QVBoxLayout
+from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
@@ -29,6 +29,8 @@ from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
 
 from .gui.dlg_xsec_editor import XsecEditorDialog
+from .gui.f2d_main_widget import FLO2DWidget
+from .gui.plot_widget import PlotWidget
 from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -36,7 +38,6 @@ from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
-from .gui.dlg_grid_info_dock import GridInfoDock
 from .gui.dlg_levee_elev import LeveesToolDialog
 
 
@@ -44,7 +45,7 @@ class Flo2D(object):
 
     def __init__(self, iface):
         self.iface = iface
-        # initialize plugin directory
+        self.iface.f2d = {}
         self.plugin_dir = os.path.dirname(__file__)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.crs_widget = QgsProjectionSelectionWidget()
@@ -70,12 +71,15 @@ class Flo2D(object):
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
         self.con = None
+        self.iface.f2d['con'] = self.con
         self.lyrs = Layers(iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
         self.prep_sql = None
-        self.create_grid_info_dock()
+        self.create_f2d_plot_dock()
+        self.create_f2d_dock()
+        self.add_docks_to_iface()
         self.set_editors_map()
         self.create_map_tools()
         self.crs = None
@@ -223,12 +227,29 @@ class Flo2D(object):
             callback=lambda: self.schematize_streets(),
             parent=self.iface.mainWindow())
 
-    def create_grid_info_dock(self):
-        self.grid_info_dock = GridInfoDock(self.iface, self.lyrs)
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.grid_info_dock)
+    def create_f2d_dock(self):
+        self.f2d_dock = QgsDockWidget()
+        self.f2d_dock.setWindowTitle(u'FLO-2D')
+        self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot)
+        self.f2d_dock.setWidget(self.f2d_widget)
+
+    def create_f2d_plot_dock(self):
+        self.f2d_plot_dock = QgsDockWidget()
+        self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
+        self.f2d_plot = PlotWidget()
+        self.f2d_plot_dock.setWidget(self.f2d_plot)
+
+    def add_docks_to_iface(self):
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_plot_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        self.lyrs.clear_rubber()
+        # remove maptools
+        del self.info_tool, self.grid_info_tool
+
+        del self.uc
         database_disconnect(self.con)
         for action in self.actions:
             self.iface.removePluginMenu(
@@ -236,17 +257,20 @@ class Flo2D(object):
                 action)
             self.iface.removeToolBarIcon(action)
         # remove dialogs
-        if self.grid_info_dock is not None:
-            self.grid_info_dock.close()
-            self.iface.removeDockWidget(self.grid_info_dock)
-        if self.dlg_inflow_editor is not None:
-            self.dlg_inflow_editor.close()
-            del self.dlg_inflow_editor
+        if self.f2d_widget.bc_editor is not None:
+            self.f2d_widget.bc_editor.close()
+            del self.f2d_widget.bc_editor
+        if self.f2d_dock is not None:
+            self.f2d_dock.close()
+            self.iface.removeDockWidget(self.f2d_dock)
+        if self.f2d_plot_dock is not None:
+            self.f2d_plot_dock.close()
+            self.iface.removeDockWidget(self.f2d_plot_dock)
+
         # remove the toolbar
         del self.toolbar
         del self.con, self.gutils, self.lyrs
-        # remove maptools
-        del self.info_tool, self.grid_info_tool
+
 
     def write_proj_entry(self, key, val):
         return self.project.writeEntry('FLO-2D', key, val)
@@ -265,10 +289,11 @@ class Flo2D(object):
         if result and dlg_settings.con:
             dlg_settings.write()
             self.con = dlg_settings.con
+            self.iface.f2d['con'] = self.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-        self.grid_info_dock.setVisible(True)
+            self.f2d_widget.bc_editor.populate_inflows()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
@@ -281,6 +306,7 @@ class Flo2D(object):
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 dlg_settings.connect(old_gpkg)
                 self.con = dlg_settings.con
+                self.iface.f2d['con'] = self.con
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
             else:
@@ -579,8 +605,8 @@ class Flo2D(object):
         grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group)
         if grid:
             self.grid_info_tool.grid = grid.layer()
-            self.grid_info_dock.set_info_layer(grid.layer())
-            self.grid_info_dock.mann_default = self.gutils.get_cont_par('MANNING')
+            self.f2d_widget.grid_info.set_info_layer(grid.layer())
+            self.f2d_widget.grid_info.mann_default = self.gutils.get_cont_par('MANNING')
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')
@@ -596,8 +622,16 @@ class Flo2D(object):
             self.uc.bar_warn('There is no cross-section data to display!')
 
     @connection_required
+    def show_bc_editor(self, fid=None):
+        """Show boundary editor"""
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.bc_editor_grp.setCollapsed(False)
+        self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_inflow_editor(self, fid=None):
-        """Show inflows editor"""
+        """Expand boundary cond editor group for inflows"""
         self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
         self.dlg_inflow_editor.show()
 
@@ -707,7 +741,7 @@ class Flo2D(object):
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.grid_info_tool.grid_elem_picked.connect(self.grid_info_dock.update_fields)
+        self.grid_info_tool.grid_elem_picked.connect(self.f2d_widget.grid_info.update_fields)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
@@ -716,6 +750,7 @@ class Flo2D(object):
     def get_feature_info(self, table, fid):
         try:
             show_editor = self.editors_map[table]
+            self.cur_info_table = table
         except KeyError:
             self.uc.bar_info("Not implemented.....")
             return
@@ -724,8 +759,9 @@ class Flo2D(object):
     def set_editors_map(self):
         self.editors_map = {
             'chan_elems': self.show_xsec_editor,
-            'inflow': self.show_inflow_editor,
-            'outflow': self.show_outflow_editor
+            'user_bc_points': self.show_bc_editor,
+            'user_bc_lines': self.show_bc_editor,
+            'user_bc_polygons': self.show_bc_editor
         }
 
     def restore_settings(self):

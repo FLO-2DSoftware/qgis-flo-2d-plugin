@@ -30,7 +30,6 @@ class InfoTool(QgsMapToolIdentify):
         self.rb = None
         QgsMapToolIdentify.__init__(self, self.canvas)
 
-
     def update_lyrs_list(self):
         self.lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
 
@@ -38,8 +37,6 @@ class InfoTool(QgsMapToolIdentify):
         self.clear_rubber()
 
     def canvasReleaseEvent(self, e):
-        #pt = self.toMapCoordinates(e.pos())
-
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
         lyrs_found = OrderedDict()
         for i, item in enumerate(res):

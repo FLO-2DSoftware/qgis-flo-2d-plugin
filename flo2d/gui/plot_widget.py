@@ -20,8 +20,8 @@ pg.setConfigOption('antialias', True)
 
 class PlotWidget(QWidget):
 
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
+    def __init__(self):
+        QWidget.__init__(self)
         self.items = {}
         self.org_bed_plot = None
         self.new_bed_plot = None
@@ -46,6 +46,9 @@ class PlotWidget(QWidget):
     def update_item(self, name, data):
         x, y = data
         self.items[name].setData(x,y)
+
+    def remove_item(self, name):
+        self.plot.removeItem(self.items[name])
 
     # specific plot items
 

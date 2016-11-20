@@ -111,15 +111,19 @@ class GeoPackageUtils(object):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = con
 
-    def execute(self, statement, inputs=None):
+    def execute(self, statement, inputs=None, get_rowid=False):
         """Execute a prepared SQL statement on this geopackage database."""
         cursor = self.con.cursor()
         if inputs is not None:
             result_cursor = cursor.execute(statement, inputs)
         else:
             result_cursor = cursor.execute(statement)
+        rowid = cursor.lastrowid
         self.con.commit()
-        return result_cursor
+        if get_rowid:
+            return rowid
+        else:
+            return result_cursor
 
     def execute_many(self, sql, data):
         cursor = self.con.cursor()

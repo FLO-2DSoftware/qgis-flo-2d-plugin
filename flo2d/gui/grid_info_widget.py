@@ -11,10 +11,10 @@
 from .utils import load_ui
 from qgis.core import QgsFeatureRequest
 
-uiDialog, qtBaseClass = load_ui('grid_info_dock')
+uiDialog, qtBaseClass = load_ui('grid_info_widget')
 
 
-class GridInfoDock(qtBaseClass, uiDialog):
+class GridInfoWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)

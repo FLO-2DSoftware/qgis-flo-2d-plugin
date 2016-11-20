@@ -44,30 +44,641 @@ class Layers(QObject):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = None
         self.lyrs_to_repaint = []
+        self.data = OrderedDict([
+            ('user_bc_points', {
+                'name': 'Boundary Condition Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_points.qml'],
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap',
+                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_levee_points', {
+                'name': 'Levee Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_points.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees'],
+                'readonly': False
+            }),
+            ('user_centerline', {
+                'name': 'River Centerline',
+                'sgroup': 'User Layers',
+                'styles': ['centerline.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
+            ('user_channel_seg', {
+                'name': 'Channel Segments',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
+            ('user_xsections', {
+                'name': 'Cross-sections',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
+            ('user_streets', {
+                'name': 'Street Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_line.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['streets'],
+                'readonly': False
+            }),
+            ('user_bc_lines', {
+                'name': 'Boundary Condition Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_lines.qml'],
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap',
+                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_levee_lines', {
+                'name': 'Levee Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_lines.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees'],
+                'readonly': False
+            }),
+            ('user_bc_polygons', {
+                'name': 'Boundary Condition Polygons',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_polygons.qml'],
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap',
+                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
+                },
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_levee_polygons', {
+                'name': 'Levee Polygons',
+                'sgroup': 'User Layers',
+                'styles': ['user_levee_polygons.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees'],
+                'readonly': False
+            }),
+            ('user_model_boundary', {
+                'name': 'Computational Domain',
+                'sgroup': 'User Layers',
+                'styles': ['model_boundary.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_1d_domain', {
+                'name': '1D Domain',
+                'sgroup': 'User Layers',
+                'styles': ['1d_domain.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_roughness', {
+                'name': 'Roughness',
+                'sgroup': 'User Layers',
+                'styles': ['user_roughness.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_elevation_polygons', {
+                'name': 'Grid Elevation',
+                'sgroup': 'User Layers',
+                'styles': ['user_elevation_polygons.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('blocked_areas', {
+                'name': 'Blocked areas',
+                'sgroup': 'User Layers',
+                'styles': ['blocked_areas.qml'],
+                'attrs_edit_widgets': {
+                    'calc_arf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
+                    'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
+                },
+                'module': ['redfac'],
+                'readonly': False,
+                'attrs_defaults': {'calc_arf': '1', 'calc_wrf': '1'}  #
+            }),
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': 'User Layers',
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': 'User Layers',
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('tolspatial', {
+                'name': 'Tolerance Areas',
+                'sgroup': 'User Layers',
+                'styles': ['tolspatial.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
 
-    def load_layer(self, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider='ogr'):
-        vlayer = QgsVectorLayer(uri, name, provider)
-        if not vlayer.isValid():
-            msg = 'Unable to load layer {}'.format(name)
-            raise Flo2dLayerInvalid(msg)
+            ('breach', {
+                'name': 'Breach Locations',
+                'sgroup': 'Schematic Layers',
+                'styles': ['breach.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['breach'],
+                'readonly': False
+            }),
+            ('levee_data', {
+                'name': 'Levees',
+                'sgroup': 'Schematic Layers',
+                'styles': ['levee.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['levees'],
+                'readonly': True
+            }),
+            ('struct', {
+                'name': 'Structures',
+                'sgroup': 'Schematic Layers',
+                'styles': ['struc.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['struct'],
+                'readonly': True
+            }),
+            ('street_seg', {
+                'name': 'Streets',
+                'sgroup': 'Schematic Layers',
+                'styles': ['street.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['struct'],
+                'readonly': True
+            }),
+            ('chan', {
+                'name': 'Channel segments (left bank)',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': True
+            }),
+            ('chan_elems', {
+                'name': 'Cross sections',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan_elems.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'module': ['chan'],
+                'readonly': True
+            }),
+            ('fpxsec', {
+                'name': 'Floodplain cross-sections',
+                'sgroup': 'Schematic Layers',
+                'styles': ['fpxsec.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('chan_confluences', {
+                'name': 'Channel confluences',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan_confluences.qml'],
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
+                },
+                'readonly': True
+            }),
 
-        QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
-        if subgroup:
-            grp = self.get_subgroup(group, subgroup)
-            if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
-                grp.setExpanded(False)
-            else:
-                pass
-        else:
-            grp = self.get_group(group)
-        # if a layer exists with the same uri, update its extents
+            ('grid', {
+                'name': 'Grid',
+                'sgroup': 'Schematic Layers',
+                'styles': ['grid.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('blocked_cells', {
+                'name': 'ARF_WRF',
+                'sgroup': 'Schematic Layers',
+                'styles': ['arfwrf.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+
+            ('reservoirs', {
+                'name': 'Reservoirs',
+                'sgroup': 'Schematic Layers',
+                'styles': ['reservoirs.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('fpfroude', {
+                'name': 'Froude numbers for grid elems',
+                'sgroup': 'User Layers',
+                'styles': ['fpfroude.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+
+            ('sed_supply_areas', {
+                'name': 'Supply Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_supply_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_group_areas', {
+                'name': 'Group Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_group_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_rigid_areas', {
+                'name': 'Rigid Bed Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_rigid_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('mud_areas', {
+                'name': 'Mud Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['mud_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_groups', {
+                'name': 'Sediment Groups',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_group_cells', {
+                'name': 'Group Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': True
+            }),
+            ('sed_supply_cells', {
+                'name': 'Supply Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': True
+            }),
+            ('sed_rigid_cells', {
+                'name': 'Rigid Bed Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': True
+            }),
+            ('mud_cells', {
+                'name': 'Mud Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': True
+            }),
+            ('infil_areas_green', {
+                'name': 'Areas Green Ampt',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_areas_scs', {
+                'name': 'Areas SCS',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_areas_horton', {
+                'name': 'Areas Horton',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            })
+            ,
+            ('infil_areas_chan', {
+                'name': 'Areas for Channels',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('swmmflo', {
+                'name': 'SD Inlets',
+                'sgroup': 'Storm Drain',
+                'styles': ['swmmflo.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('swmmoutf', {
+                'name': 'SD Outlets',
+                'sgroup': 'Storm Drain',
+                'styles': ['swmmoutf.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('swmmflort', {
+                'name': 'Rating tables',
+                'sgroup': 'Storm Drain',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('swmmflort_data', {
+                'name': 'Rating Tables Data',
+                'sgroup': 'Storm Drain',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+
+            ('tolspatial_cells', {
+                'name': 'Tolerance Cells',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('wstime', {
+                'name': 'Water Surface in Time',
+                'sgroup': 'Calibration Data',
+                'styles': ['wstime.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('wsurf', {
+                'name': 'Water Surface',
+                'sgroup': 'Calibration Data',
+                'styles': ['wsurf.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('cont', {
+                'name': 'Control',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('inflow', {
+                'name': 'Inflow',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {
+                    'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
+                    'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
+                },
+                'readonly': False
+            }),
+            ('outflow', {
+                'name': 'Outflow',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('inflow_cells', {
+                'name': 'Inflow Cells',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('outflow_cells', {
+                'name': 'Outflow Cells',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('qh_params', {
+                'name': 'QH Parameters',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('qh_params_data', {
+                'name': 'QH Parameters Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('qh_table', {
+                'name': 'QH Tables',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('qh_table_data', {
+                'name': 'QH Tables Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('inflow_time_series', {
+                'name': 'Inflow Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('inflow_time_series_data', {
+                'name': 'Inflow Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('outflow_time_series', {
+                'name': 'Outflow Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('outflow_time_series_data', {
+                'name': 'Outflow Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain_time_series', {
+                'name': 'Rain Time Series',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain_time_series_data', {
+                'name': 'Rain Time Series Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain', {
+                'name': 'Rain',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain_arf_cells', {
+                'name': 'Rain ARF Cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('noexchange_chan_elems', {
+                'name': 'No-exchange Channel Elements',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('fpxsec_cells', {
+                'name': 'Floodplain cross-sections cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('fpfroude_cells', {
+                'name': 'Froude numbers for grid elems',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('evapor', {
+                'name': 'Evaporation',
+                'sgroup': 'Evaporation Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('evapor_hourly', {
+                'name': 'Hourly data',
+                'sgroup': "Evaporation Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('evapor_monthly', {
+                'name': 'Monthly data',
+                'sgroup': "Evaporation Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('infil_cells_green', {
+                'name': 'Cells Green Ampt',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_cells_scs', {
+                'name': 'Cells SCS',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_cells_horton', {
+                'name': 'Cells Horton',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_chan_elems', {
+                'name': 'Channel elements',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            })
+        ])
+        # set QGIS layer (qlyr) to None for each table
+        for lyr in self.data:
+            self.data[lyr]['qlyr'] = None
+
+
+    def load_layer(self, table, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider='ogr'):
+        # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
-        if lyr_exists:
+        if not lyr_exists:
+            vlayer = QgsVectorLayer(uri, name, provider)
+            if not vlayer.isValid():
+                msg = 'Unable to load layer {}'.format(name)
+                raise Flo2dLayerInvalid(msg)
+            QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
+            # get target tree group
+            if subgroup:
+                grp = self.get_subgroup(group, subgroup)
+                if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
+                    grp.setExpanded(False)
+                else:
+                    pass
+            else:
+                grp = self.get_group(group)
+            # add layer to the tree group
+            tree_lyr = grp.addLayer(vlayer)
+        else:
             tree_lyr = self.get_layer_tree_item(lyr_exists)
             self.update_layer_extents(tree_lyr.layer())
-        else:
-            # add layer to the group of the tree
-            tree_lyr = grp.addLayer(vlayer)
+        self.data[table]['qlyr'] = tree_lyr.layer()
+
         # set visibility
         if visible:
             vis = Qt.Checked
@@ -75,28 +686,65 @@ class Layers(QObject):
             vis = Qt.Unchecked
         tree_lyr.setVisible(vis)
         tree_lyr.setExpanded(False)
+
+        # set style
         if style:
             style_path = get_file_path("styles", style)
             if os.path.isfile(style_path):
-                err_msg, res = vlayer.loadNamedStyle(style_path)
+                err_msg, res = self.data[table]['qlyr'].loadNamedStyle(style_path)
                 if not res:
                     msg = 'Unable to load style for layer {}.\n{}'.format(name, err_msg)
                     raise Flo2dError(msg)
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
+
+        # check if the layer should be 'readonly'
         if readonly:
             try:
                 # check if the signal is already connected
-                tree_lyr.layer().beforeEditingStarted.disconnect(self.warn_readonly)
+                self.data[table]['qlyr'].beforeEditingStarted.disconnect(self.warn_readonly)
             except TypeError:
                 pass
-            tree_lyr.layer().beforeEditingStarted.connect(self.warn_readonly)
+            self.data[table]['qlyr'].beforeEditingStarted.connect(self.warn_readonly)
         else:
             pass
-        return tree_lyr.layer().id()
+
+        return self.data[table]['qlyr'].id()
 
     def warn_readonly(self):
-        self.uc.show_warn('Warning:\nAll changes to this layer can be overwriten by changes in the user layer.')
+        self.uc.bar_warn('Warning:\nAll changes to this layer can be overwriten by changes in the user layer.')
+
+    def enter_edit_mode(self, table_name, default_attr_exp=None):
+        if not self.group:
+            msg = 'Connect to a GeoPackage!'
+            self.uc.bar_warn(msg)
+            return
+        try:
+            lyr = self.data[table_name]['qlyr']
+            self.iface.setActiveLayer(lyr)
+            if not default_attr_exp:
+                for idx in lyr.pendingAllAttributesList():
+                    lyr.setDefaultValueExpression(idx, '')
+            else:
+                for attr, exp in default_attr_exp.iteritems():
+                    idx = lyr.fieldNameIndex(attr)
+                    lyr.setDefaultValueExpression(idx, exp)
+            lyr.startEditing()
+            self.iface.actionAddFeature().trigger()
+        except:
+            msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
+            self.uc.bar_warn(msg)
+
+    def save_lyrs_edits(self, table_name_list=[]):
+        if not table_name_list:
+            return
+        for t in table_name_list:
+            try:
+                lyr = self.data[t]['qlyr']
+                lyr.commitChanges()
+            except:
+                msg = 'Could\'n save changes for table {}.'.format(t)
+                self.uc.bar_warn(msg)
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:
@@ -318,615 +966,12 @@ class Layers(QObject):
 
     def load_all_layers(self, gutils):
         self.gutils = gutils
-        self.layers_data = OrderedDict([
-            ('user_bc_points', {
-                'name': 'Boundary Condition Points',
-                'sgroup': 'User Layers',
-                'styles': ['user_bc_points.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_levee_points', {
-                'name': 'Levee Points',
-                'sgroup': 'User Layers',
-                'styles': ['user_levee_points.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': False
-            }),
-            ('user_centerline', {
-                'name': 'River Centerline',
-                'sgroup': 'User Layers',
-                'styles': ['centerline.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': False
-            }),
-            ('user_channel_seg', {
-                'name': 'Channel Segments',
-                'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': False
-            }),
-            ('user_xsections', {
-                'name': 'Cross-sections',
-                'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': False
-            }),
-            ('user_streets', {
-                'name': 'Street Lines',
-                'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['streets'],
-                'readonly': False
-            }),
-            ('user_bc_lines', {
-                'name': 'Boundary Condition Lines',
-                'sgroup': 'User Layers',
-                'styles': ['user_bc_lines.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_levee_lines', {
-                'name': 'Levee Lines',
-                'sgroup': 'User Layers',
-                'styles': ['user_levee_lines.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': False
-            }),
-            ('user_bc_polygons', {
-                'name': 'Boundary Condition Polygons',
-                'sgroup': 'User Layers',
-                'styles': ['user_bc_polygons.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_levee_polygons', {
-                'name': 'Levee Polygons',
-                'sgroup': 'User Layers',
-                'styles': ['user_levee_polygons.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': False
-            }),
-            ('user_model_boundary', {
-                'name': 'Computational Domain',
-                'sgroup': 'User Layers',
-                'styles': ['model_boundary.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_1d_domain', {
-                'name': '1D Domain',
-                'sgroup': 'User Layers',
-                'styles': ['1d_domain.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_roughness', {
-                'name': 'Roughness',
-                'sgroup': 'User Layers',
-                'styles': ['user_roughness.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_elevation_polygons', {
-                'name': 'Grid Elevation',
-                'sgroup': 'User Layers',
-                'styles': ['user_elevation_polygons.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('inflow', {
-                'name': 'Inflow',
-                'sgroup': 'User Layers',
-                'styles': None,
-                'attrs_edit_widgets': {
-                    'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
-                },
-                'readonly': False
-            }),
-            ('outflow', {
-                'name': 'Outflow',
-                'sgroup': 'User Layers',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('blocked_areas', {
-                'name': 'Blocked areas',
-                'sgroup': 'User Layers',
-                'styles': ['blocked_areas.qml'],
-                'attrs_edit_widgets': {
-                    'calc_arf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
-                    'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
-                },
-                'module': ['redfac'],
-                'readonly': False,
-                'attrs_defaults': {'calc_arf': '1', 'calc_wrf': '1'} #
-            }),
-            ('mult_areas', {
-                'name': 'Multiple Channel Areas',
-                'sgroup': 'User Layers',
-                'styles': ['mult_areas.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_arf_areas', {
-                'name': 'Rain ARF Areas',
-                'sgroup': 'User Layers',
-                'styles': ['rain_arf_areas.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('tolspatial', {
-                'name': 'Tolerance Areas',
-                'sgroup': 'User Layers',
-                'styles': ['tolspatial.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-
-            ('breach', {
-                'name': 'Breach Locations',
-                'sgroup': 'Schematic Layers',
-                'styles': ['breach.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['breach'],
-                'readonly': False
-            }),
-            ('levee_data', {
-                'name': 'Levees',
-                'sgroup': 'Schematic Layers',
-                'styles': ['levee.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': True
-            }),
-            ('struct', {
-                'name': 'Structures',
-                'sgroup': 'Schematic Layers',
-                'styles': ['struc.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['struct'],
-                'readonly': True
-            }),
-            ('street_seg', {
-                'name': 'Streets',
-                'sgroup': 'Schematic Layers',
-                'styles': ['street.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['struct'],
-                'readonly': True
-            }),
-            ('chan', {
-                'name': 'Channel segments (left bank)',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': True
-            }),
-            ('chan_elems', {
-                'name': 'Cross sections',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan_elems.qml'],
-                'attrs_edit_widgets': {},
-                'visible': True,
-                'module': ['chan'],
-                'readonly': True
-            }),
-            ('fpxsec', {
-                'name': 'Floodplain cross-sections',
-                'sgroup': 'Schematic Layers',
-                'styles': ['fpxsec.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('chan_confluences', {
-                'name': 'Channel confluences',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan_confluences.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
-                },
-                'readonly': True
-            }),
-
-            ('grid', {
-                'name': 'Grid',
-                'sgroup': 'Schematic Layers',
-                'styles': ['grid.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('blocked_cells', {
-                'name': 'ARF_WRF',
-                'sgroup': 'Schematic Layers',
-                'styles': ['arfwrf.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-
-            ('reservoirs', {
-                'name': 'Reservoirs',
-                'sgroup': 'Schematic Layers',
-                'styles': ['reservoirs.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('fpfroude', {
-                'name': 'Froude numbers for grid elems',
-                'sgroup': 'User Layers',
-                'styles': ['fpfroude.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-
-
-            ('sed_supply_areas', {
-                'name': 'Supply Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_supply_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_group_areas', {
-                'name': 'Group Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_group_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_rigid_areas', {
-                'name': 'Rigid Bed Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_rigid_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('mud_areas', {
-                'name': 'Mud Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['mud_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_groups', {
-                'name': 'Sediment Groups',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_group_cells', {
-                'name': 'Group Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('sed_supply_cells', {
-                'name': 'Supply Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('sed_rigid_cells', {
-                'name': 'Rigid Bed Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('mud_cells', {
-                'name': 'Mud Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('infil_areas_green', {
-                'name': 'Areas Green Ampt',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('infil_areas_scs', {
-                'name': 'Areas SCS',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('infil_areas_horton', {
-                'name': 'Areas Horton',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            })
-            ,
-            ('infil_areas_chan', {
-                'name': 'Areas for Channels',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('swmmflo', {
-                'name': 'SD Inlets',
-                'sgroup': 'Storm Drain',
-                'styles': ['swmmflo.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('swmmoutf', {
-                'name': 'SD Outlets',
-                'sgroup': 'Storm Drain',
-                'styles': ['swmmoutf.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('swmmflort', {
-                'name': 'Rating tables',
-                'sgroup': 'Storm Drain',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('swmmflort_data', {
-                'name': 'Rating Tables Data',
-                'sgroup': 'Storm Drain',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-
-            ('tolspatial_cells', {
-                'name': 'Tolerance Cells',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('wstime', {
-                'name': 'Water Surface in Time',
-                'sgroup': 'Calibration Data',
-                'styles': ['wstime.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('wsurf', {
-                'name': 'Water Surface',
-                'sgroup': 'Calibration Data',
-                'styles': ['wsurf.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('cont', {
-                'name': 'Control',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('inflow_cells', {
-                'name': 'Inflow Cells',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('outflow_cells', {
-                'name': 'Outflow Cells',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('qh_params', {
-                'name': 'QH Parameters',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('qh_params_data', {
-                'name': 'QH Parameters Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('qh_table', {
-                'name': 'QH Tables',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('qh_table_data', {
-                'name': 'QH Tables Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('inflow_time_series', {
-                'name': 'Inflow Time Series',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('inflow_time_series_data', {
-                'name': 'Inflow Time Series Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('outflow_time_series', {
-                'name': 'Outflow Time Series',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('outflow_time_series_data', {
-                'name': 'Outflow Time Series Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_time_series', {
-                'name': 'Rain Time Series',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_time_series_data', {
-                'name': 'Rain Time Series Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain', {
-                'name': 'Rain',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_arf_cells', {
-                'name': 'Rain ARF Cells',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('noexchange_chan_elems', {
-                'name': 'No-exchange Channel Elements',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('fpxsec_cells', {
-                'name': 'Floodplain cross-sections cells',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('fpfroude_cells', {
-                'name': 'Froude numbers for grid elems',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('evapor', {
-                'name': 'Evaporation',
-                'sgroup': 'Evaporation Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('evapor_hourly', {
-                'name': 'Hourly data',
-                'sgroup': "Evaporation Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('evapor_monthly', {
-                'name': 'Monthly data',
-                'sgroup': "Evaporation Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('infil_cells_green', {
-                'name': 'Cells Green Ampt',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('infil_cells_scs', {
-                'name': 'Cells SCS',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('infil_cells_horton', {
-                'name': 'Cells Horton',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('infil_chan_elems', {
-                'name': 'Channel elements',
-                'sgroup': "Infiltration Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            })
-        ])
         self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.collapse_all_flo2d_groups()
         self.group = group
-        for lyr in self.layers_data:
-            data = self.layers_data[lyr]
+        for lyr in self.data:
+            data = self.data[lyr]
             if data['styles']:
                 lstyle = data['styles'][0]
             else:
@@ -937,6 +982,7 @@ class Layers(QObject):
             except:
                 lyr_is_on = True
             lyr_id = self.load_layer(
+                lyr,
                 uri,
                 group,
                 data['name'],
@@ -1007,12 +1053,14 @@ class Layers(QObject):
         gt = lyr.geometryType()
         self.clear_rubber()
         self.rb = QgsRubberBand(self.canvas, gt)
+        color.setAlpha(255)
         self.rb.setColor(color)
+        self.rb.setFillColor(color)
+        fill_color = color
         if gt == 2:
-            fill_color = color
             fill_color.setAlpha(100)
             self.rb.setFillColor(fill_color)
-        self.rb.setWidth(2)
+        self.rb.setWidth(3)
         feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
         self.rb.setToGeometry(feat.geometry(), lyr)
 
