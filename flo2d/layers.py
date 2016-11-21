@@ -78,7 +78,8 @@ class Layers(QObject):
                 'styles': ['user_xs.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
-                'readonly': False
+                'readonly': False,
+                'attrs_defaults': {'type': "'R'"} # use also double quotes for strings: "'R'"
             }),
             ('user_streets', {
                 'name': 'Street Lines',
