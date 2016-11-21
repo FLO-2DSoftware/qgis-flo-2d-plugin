@@ -7,7 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
+import traceback
 from operator import itemgetter
 from collections import defaultdict
 from math import pi
@@ -760,8 +760,12 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
         schema_xs = schematize_xs(inter_xs, cell_size, x_offset, y_offset, cut_line=right_line)
         sqls = []
         for i, (x1, y1, x2, y2, org_fid, interpolated) in enumerate(schema_xs, 1):
-            lbankgrid = grid_on_point(gutils, x1, y1)
-            rbankgrid = grid_on_point(gutils, x2, y2)
+            try:
+                lbankgrid = grid_on_point(gutils, x1, y1)
+                rbankgrid = grid_on_point(gutils, x2, y2)
+            except Exception as e:
+                gutils.uc.log_info(traceback.format_exc())
+                continue
             vals = (lbankgrid, rbankgrid, center_fid, i, org_fid, interpolated)
             sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
         cursor = gutils.con.cursor()
@@ -810,7 +814,7 @@ def grid_on_point(gutils, x, y):
             {1} <= maxy AND
             {1} >= miny)
     AND
-        ST_Intersects(g.geom, ST_GeomFromText('POINT({0} {1})'));
+        ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
     '''
     qry = qry.format(x, y)
     gid = gutils.execute(qry).fetchone()[0]

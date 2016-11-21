@@ -735,6 +735,18 @@ class Flo2D(object):
 
     @connection_required
     def schematize_channels(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty('user_1d_domain'):
+            self.uc.bar_warn("There is no any 1D Domain polygons! Please digitize them before running tool.")
+            return
+        if self.gutils.is_table_empty('user_centerline'):
+            self.uc.bar_warn("There is no any river center lines! Please digitize them before running tool.")
+            return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running tool.")
+            return
         domain_lyr = self.lyrs.get_layer_by_name("1D Domain", group=self.lyrs.group).layer()
         centerline_lyr = self.lyrs.get_layer_by_name("River Centerline", group=self.lyrs.group).layer()
         xs_lyr = self.lyrs.get_layer_by_name("Cross-sections", group=self.lyrs.group).layer()
@@ -746,6 +758,7 @@ class Flo2D(object):
             if chan_schem:
                 chan_schem.triggerRepaint()
                 chan_elems.triggerRepaint()
+            self.uc.show_info("1D Domain schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
 
