@@ -761,9 +761,16 @@ class Flo2D(object):
             self.uc.show_info("1D Domain schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing aborted! PLease check correctness of 1D layers.")
 
     @connection_required
     def schematize_streets(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty('user_streets'):
+            self.uc.bar_warn("There is no any user streets to schematize! Please digitize them before running tool.")
+            return
         segments = self.lyrs.get_layer_by_name("Street Lines", group=self.lyrs.group).layer()
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
@@ -771,7 +778,9 @@ class Flo2D(object):
             streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
             if streets_schem:
                 streets_schem.triggerRepaint()
+            self.uc.show_info("Streets schematized!")
         except Exception as e:
+            self.uc.show_warn("Schematizing of streets aborted! Please check Street Lines layer.")
             self.uc.log_info(traceback.format_exc())
 
     def schematize_levees(self):
