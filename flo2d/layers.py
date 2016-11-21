@@ -72,14 +72,6 @@ class Layers(QObject):
                 'module': ['chan'],
                 'readonly': False
             }),
-            ('user_channel_seg', {
-                'name': 'Channel Segments',
-                'sgroup': 'User Layers',
-                'styles': ['user_line.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': False
-            }),
             ('user_xsections', {
                 'name': 'Cross-sections',
                 'sgroup': 'User Layers',
@@ -878,7 +870,7 @@ class Layers(QObject):
         group = self.get_group(group_name, create=False)
         if group:
             group.setExpanded(True)
-            first_lyr = self.get_layer_by_name('Channel Segments', group=group_name).layer()
+            first_lyr = self.get_layer_by_name('Boundary Condition Points', group=group_name).layer()
             if first_lyr:
                 self.iface.legendInterface().setCurrentLayer(first_lyr)
         else:
