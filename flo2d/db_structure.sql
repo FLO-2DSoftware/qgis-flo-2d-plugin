@@ -149,7 +149,7 @@ CREATE TABLE "reservoirs" (
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
-SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
 -- SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
 

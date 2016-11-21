@@ -81,7 +81,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_inflow(self):
         cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
-        inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc, geom) VALUES''', 4]
+        inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES''', 5]
+        user_bc_sql = ['''INSERT INTO user_bc_points (fid, type, geom) VALUES''', 3]
         cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''', 2]
         ts_sql = ['''INSERT INTO inflow_time_series (fid) VALUES''', 1]
         tsd_sql = ['''INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES''', 4]
@@ -91,25 +92,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head, inf, res = self.parser.parse_inflow()
         cont_sql += [('IDEPLT', head['IDEPLT']), ('IHOURDAILY', head['IHOURDAILY'])]
         gids = inf.keys() + res.keys()
-        cells = self.grid_centroids(gids)
+        cells = self.grid_centroids(gids, buffers=True)
+        user_fid = self.get_max('user_bc_points') + 1
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
-            inflow_sql += [(i, row[0], row[1], self.build_buffer(cells[gid], self.buffer))]
+            geom = cells[gid]
+            inflow_sql += [(i, row[0], row[1], 'point', user_fid)]
             cells_sql += [(i, gid)]
+            user_bc_sql += [(user_fid, 'inflow', geom)]
             ts_sql += [(i,)]
+            user_fid += 1
             for n in inf[gid]['time_series']:
                 tsd_sql += [(i,) + tuple(n[1:])]
 
         for gid in res:
             row = res[gid]['row']
             wsel = row[-1] if len(row) == 3 else None
-            reservoirs_sql += [(row[1], wsel, self.build_buffer(cells[gid], self.buffer))]
+            reservoirs_sql += [(row[1], wsel, cells[gid])]
 
-        self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
+        self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, user_bc_sql, tsd_sql, reservoirs_sql)
 
     def import_outflow(self):
-        outflow_sql = ['''INSERT INTO outflow (geom, chan_out, fp_out, hydro_out, chan_tser_fid,
-                                               chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid) VALUES''', 8]
+        outflow_sql = ['''INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
+                                            chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES''', 9]
+        user_bc_sql = ['''INSERT INTO user_bc_points (fid, type, geom) VALUES''', 3]
         cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''', 2]
         qh_params_sql = ['''INSERT INTO qh_params (fid) VALUES''', 1]
         qh_params_data_sql = ['''INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES''', 4]
@@ -122,8 +128,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                           'outflow_time_series', 'outflow_time_series_data')
         data = self.parser.parse_outflow()
         gids = (data.keys())
-        cells = self.grid_centroids(gids)
+        cells = self.grid_centroids(gids, buffers=True)
 
+        user_fid = self.get_max('user_bc_points') + 1
         qh_params_fid = 0
         qh_tab_fid = 0
         ts_fid = 0
@@ -133,7 +140,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             fp_out = values['O']
             hydro_out = values['hydro_out']
             chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
-            geom = self.build_buffer(cells[gid], self.buffer)
+            geom = cells[gid]
             if values['qh_params']:
                 qh_params_fid += 1
                 chan_qhpar_fid = qh_params_fid
@@ -163,12 +170,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ts_data_sql += [(ts_fid,) + tuple(row)]
             else:
                 pass
-            outflow_sql += [(geom, chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)]
+            outflow_sql += [(chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid,
+                             'point', user_fid)]
             cells_sql += [(fid, gid)]
+            user_bc_sql += [(user_fid, 'outflow', geom)]
             fid += 1
+            user_fid += 1
 
         self.batch_execute(qh_params_sql, qh_params_data_sql, qh_tab_sql, qh_tab_data_sql, ts_sql, ts_data_sql,
-                           outflow_sql, cells_sql)
+                           outflow_sql, cells_sql, user_bc_sql)
         type_qry = '''UPDATE outflow SET type = (CASE
                     WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
                     WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
