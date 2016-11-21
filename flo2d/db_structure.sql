@@ -1732,15 +1732,6 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerli
 SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
 
---CREATE TABLE "user_channel_seg" (
---    "fid" INTEGER PRIMARY KEY NOT NULL,
---    "name" TEXT
---);
---INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_channel_seg', 'features', 4326);
---SELECT gpkgAddGeometryColumn('user_channel_seg', 'geom', 'LINESTRING', 0, 0, 0);
---SELECT gpkgAddGeometryTriggers('user_channel_seg', 'geom');
--- SELECT gpkgAddSpatialIndex('user_channel_seg', 'geom');
-
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "fcn" REAL, -- FCN, average Manning's n in the grid element

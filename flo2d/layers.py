@@ -72,14 +72,6 @@ class Layers(QObject):
                 'module': ['chan'],
                 'readonly': False
             }),
-            # ('user_channel_seg', {
-            #     'name': 'Channel Segments',
-            #     'sgroup': 'User Layers',
-            #     'styles': ['user_line.qml'],
-            #     'attrs_edit_widgets': {},
-            #     'module': ['chan'],
-            #     'readonly': False
-            # }),
             ('user_xsections', {
                 'name': 'Cross-sections',
                 'sgroup': 'User Layers',
