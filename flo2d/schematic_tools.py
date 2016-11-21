@@ -769,6 +769,30 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
             cursor.execute(qry, vals)
         gutils.con.commit()
     update_1d_area(gutils)
+    update_xs_type(gutils)
+
+
+def update_xs_type(gutils):
+    gutils.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
+    chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+    chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
+    chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
+    chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
+    xs_sql = '''SELECT fid, type FROM chan_elems;'''
+    cross_sections = gutils.execute(xs_sql).fetchall()
+    cur = gutils.con.cursor()
+    for fid, typ in cross_sections:
+        if typ == 'N':
+            cur.execute(chan_n, (fid,))
+        elif typ == 'R':
+            cur.execute(chan_r, (fid,))
+        elif typ == 'T':
+            cur.execute(chan_t, (fid,))
+        elif typ == 'V':
+            cur.execute(chan_v, (fid,))
+        else:
+            pass
+    gutils.con.commit()
 
 
 def grid_on_point(gutils, x, y):
@@ -818,7 +842,7 @@ def update_1d_area(gutils):
     UPDATE chan_elems
     SET
         xlen = (
-            SELECT ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom)))
+            SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
             FROM grid AS g, chan AS l
             WHERE g.fid = chan_elems.fid AND l.center_line_fid = chan_elems.seg_fid
             );

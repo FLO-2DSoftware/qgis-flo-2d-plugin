@@ -7,8 +7,13 @@
     <edittype widgetv2type="TextEdit" name="fcn">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="type">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    <edittype widgetv2type="ValueMap" name="type">
+      <widgetv2config fieldEditable="1" constraint="" labelOnTop="0" constraintDescription="" notNull="1">
+        <value key="Natural" value="N"/>
+        <value key="Rectangular" value="R"/>
+        <value key="Trapezoidal" value="T"/>
+        <value key="Variable Area" value="V"/>
+      </widgetv2config>
     </edittype>
     <edittype widgetv2type="TextEdit" name="notes">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
