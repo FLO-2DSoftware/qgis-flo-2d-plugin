@@ -93,11 +93,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
             fid, typ = self.gutils.execute(qry, data).fetchone()
         # print 'in show_bc_editor', typ, fid
-        if fid and typ:
-            self.change_bc_type(typ, fid)
-        else:
-            msg = 'Couldn\'t find data for this user boundary condition.'
-            self.uc.bar_warn(msg)
+        self.change_bc_type(typ, fid)
 
     def change_bc_type(self, typ=None, fid=None):
         # print 'in change_bc_type'

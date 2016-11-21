@@ -156,7 +156,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="max_radius_lab">
        <property name="text">
         <string>Max search radius (pixels)</string>
        </property>
@@ -237,7 +237,7 @@
   <connection>
    <sender>fillNoDataChBox</sender>
    <signal>toggled(bool)</signal>
-   <receiver>label_3</receiver>
+   <receiver>max_radius_lab</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
