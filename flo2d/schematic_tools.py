@@ -776,29 +776,6 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
     update_xs_type(gutils)
 
 
-def update_xs_type(gutils):
-    gutils.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
-    chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
-    chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
-    chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
-    chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
-    xs_sql = '''SELECT fid, type FROM chan_elems;'''
-    cross_sections = gutils.execute(xs_sql).fetchall()
-    cur = gutils.con.cursor()
-    for fid, typ in cross_sections:
-        if typ == 'N':
-            cur.execute(chan_n, (fid,))
-        elif typ == 'R':
-            cur.execute(chan_r, (fid,))
-        elif typ == 'T':
-            cur.execute(chan_t, (fid,))
-        elif typ == 'V':
-            cur.execute(chan_v, (fid,))
-        else:
-            pass
-    gutils.con.commit()
-
-
 def grid_on_point(gutils, x, y):
     """
     Getting fid of grid which contains given point.
@@ -819,6 +796,30 @@ def grid_on_point(gutils, x, y):
     qry = qry.format(x, y)
     gid = gutils.execute(qry).fetchone()[0]
     return gid
+
+
+def update_xs_type(gutils):
+    """Updating parameters values specific for each cross section type."""
+    gutils.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
+    chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+    chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
+    chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
+    chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
+    xs_sql = '''SELECT fid, type FROM chan_elems;'''
+    cross_sections = gutils.execute(xs_sql).fetchall()
+    cur = gutils.con.cursor()
+    for fid, typ in cross_sections:
+        if typ == 'N':
+            cur.execute(chan_n, (fid,))
+        elif typ == 'R':
+            cur.execute(chan_r, (fid,))
+        elif typ == 'T':
+            cur.execute(chan_t, (fid,))
+        elif typ == 'V':
+            cur.execute(chan_v, (fid,))
+        else:
+            pass
+    gutils.con.commit()
 
 
 def update_1d_area(gutils):

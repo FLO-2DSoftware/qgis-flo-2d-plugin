@@ -73,7 +73,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
             intervals = get_intervals(feat, levee_points, 'elev', buf)
             interpolated = interpolate_along_line(feat, levee_schematic, intervals)
             for elev, fid in interpolated:
-                cur.execute(qry, (round(elev), 3), fid)
+                cur.execute(qry, (round(elev, 3), fid))
         self.con.commit()
 
     def elev_from_lines(self):
