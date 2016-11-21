@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>430</width>
-    <height>850</height>
+    <height>389</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
         <x>0</x>
         <y>0</y>
         <width>426</width>
-        <height>846</height>
+        <height>385</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -86,27 +86,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item>
-        <widget class="QgsCollapsibleGroupBox" name="grid_info_grp">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="title">
-          <string>Grid Info</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <property name="margin">
-           <number>3</number>
-          </property>
-          <item>
-           <layout class="QVBoxLayout" name="grid_info_lout"/>
-          </item>
-         </layout>
-        </widget>
        </item>
       </layout>
      </widget>

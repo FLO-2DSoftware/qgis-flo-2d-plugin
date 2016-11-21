@@ -25,26 +25,15 @@ import os
 uiDialog, qtBaseClass = load_ui('bc_editor')
 
 
-class BCEditorEventFilter(QObject):
-    def eventFilter(self, receiver, event):
-        if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
-            # print receiver, type(receiver)
-            receiver.copy_selection()
-            return True
-        elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste):
-            receiver.paste()
-            return True
-        else:
-            return super(BCEditorEventFilter, self).eventFilter(receiver, event)
-
-
 class BCEditorWidget(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, plot, lyrs):
+    def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.plot = plot
+        self.table_dock = table
+        self.bc_tview = table.bc_tview
         self.lyrs = lyrs
         self.setupUi(self)
         self.outflow_frame.setHidden(True)
@@ -79,9 +68,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.create_polygon_bc_btn.clicked.connect(self.create_polygon_bc)
         self.save_user_bc_edits_btn.clicked.connect(self.save_bc_edits)
         self.outflow_hydro_cbo.currentIndexChanged.connect(self.outflow_hydrograph_changed)
-        self.copy_btn.clicked.connect(self.copy_selection)
-        self.paste_btn.clicked.connect(self.paste)
-
 
     def set_icon(self, btn, icon_file):
         idir = os.path.join(os.path.dirname(__file__), '..\\img')
@@ -141,14 +127,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_frame.setVisible(False)
             self.outflow_frame.setVisible(True)
             self.populate_outflows(fid)
-
-    # def closeEvent(self, e):
-    #     self.removeEventFilter(self.ev_filter)
-    #     try:
-    #         del self.ev_filter
-    #     except AttributeError:
-    #         pass
-    #     return super(BCEditorWidget, self).closeEvent(e)
 
     def save_bc(self):
         if self.bc_type_inflow_radio.isChecked():
@@ -781,44 +759,3 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.update_inflow_plot()
         else:
             self.update_outflow_plot()
-
-    def copy_selection(self):
-        selection = self.bc_tview.selectedIndexes()
-        if selection:
-            rows = sorted(index.row() for index in selection)
-            columns = sorted(index.column() for index in selection)
-            rowcount = rows[-1] - rows[0] + 1
-            colcount = columns[-1] - columns[0] + 1
-            table = [[''] * colcount for _ in range(rowcount)]
-            for index in selection:
-                row = index.row() - rows[0]
-                column = index.column() - columns[0]
-                table[row][column] = unicode(index.data())
-            stream = StringIO.StringIO()
-            csv.writer(stream, delimiter='\t').writerows(table)
-            QApplication.clipboard().setText(stream.getvalue())
-
-    def paste(self):
-        paste_str = QApplication.clipboard().text()
-        rows = paste_str.split('\n')
-        num_rows = len(rows) - 1
-        num_cols = rows[0].count('\t') + 1
-        sel_ranges = self.bc_tview.selectionModel().selection()
-        if len(sel_ranges) == 1:
-            top_left_idx = sel_ranges[0].topLeft()
-            sel_col = top_left_idx.column()
-            sel_row = top_left_idx.row()
-            if sel_col + num_cols > self.bc_data_model.columnCount():
-                self.uc.bar_warn('Too many columns to paste.')
-                return
-            if sel_row + num_rows > self.bc_data_model.rowCount():
-                self.bc_data_model.insertRows(self.bc_data_model.rowCount(), num_rows - (self.bc_data_model.rowCount() - sel_row))
-                for i in range(self.bc_data_model.rowCount()):
-                    self.bc_tview.setRowHeight(i, 20)
-            self.bc_data_model.blockSignals(True)
-            for row in xrange(num_rows):
-                columns = rows[row].split('\t')
-                [self.bc_data_model.setItem(sel_row + row, sel_col + col, QStandardItem(columns[col].strip())
-                    ) for col in xrange(len(columns))]
-            self.bc_data_model.blockSignals(False)
-            self.bc_data_model.dataChanged.emit(top_left_idx, self.bc_data_model.createIndex(sel_row + num_rows, sel_col + num_cols))

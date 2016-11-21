@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from PyQt4.QtCore import QSize
 from .utils import load_ui
 from qgis.core import QgsFeatureRequest
 
@@ -26,6 +27,15 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.setEnabled(True)
         self.grid = None
         self.mann_default = None
+
+    def setSizeHint(self, width, height):
+        self._sizehint = QSize(width, height)
+
+    def sizeHint(self):
+        # print('sizeHint:', self._sizehint)
+        if self._sizehint is not None:
+            return self._sizehint
+        return super(GridInfoWidget, self).sizeHint()
 
     def set_info_layer(self, lyr):
         self.grid = lyr

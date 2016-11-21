@@ -31,6 +31,8 @@ from user_communication import UserCommunication
 from .gui.dlg_xsec_editor import XsecEditorDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
+from .gui.table_editor_widget import TableEditorWidget
+from .gui.grid_info_widget import GridInfoWidget
 from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -78,7 +80,9 @@ class Flo2D(object):
         self.f2g = None
         self.prep_sql = None
         self.create_f2d_plot_dock()
+        self.create_f2d_table_dock()
         self.create_f2d_dock()
+        self.create_f2d_grid_info_dock()
         self.add_docks_to_iface()
         self.set_editors_map()
         self.create_map_tools()
@@ -231,26 +235,43 @@ class Flo2D(object):
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
-        self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot)
+        self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot, self.f2d_table)
+        self.f2d_widget.setSizeHint(350, 600)
         self.f2d_dock.setWidget(self.f2d_widget)
 
     def create_f2d_plot_dock(self):
         self.f2d_plot_dock = QgsDockWidget()
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
-        self.f2d_plot.setSizeHint(250, 250)
+        self.f2d_plot.setSizeHint(350, 400)
         self.f2d_plot_dock.setWidget(self.f2d_plot)
 
+    def create_f2d_table_dock(self):
+        self.f2d_table_dock = QgsDockWidget()
+        self.f2d_table_dock.setWindowTitle(u'FLO-2D Table Editor')
+        self.f2d_table = TableEditorWidget(self.iface, self.f2d_plot, self.lyrs)
+        self.f2d_table.setSizeHint(350, 200)
+        self.f2d_table_dock.setWidget(self.f2d_table)
+
+    def create_f2d_grid_info_dock(self):
+        self.f2d_grid_info_dock = QgsDockWidget()
+        self.f2d_grid_info_dock.setWindowTitle(u'FLO-2D Grid Info')
+        self.f2d_grid_info = GridInfoWidget(self.iface, self.lyrs)
+        self.f2d_grid_info.setSizeHint(350, 30)
+        self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
+
     def add_docks_to_iface(self):
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_grid_info_dock)
         self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_plot_dock)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_table_dock)
+        self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         self.lyrs.clear_rubber()
         # remove maptools
         del self.info_tool, self.grid_info_tool
-
+        # others
         del self.uc
         database_disconnect(self.con)
         for action in self.actions:
@@ -259,16 +280,21 @@ class Flo2D(object):
                 action)
             self.iface.removeToolBarIcon(action)
         # remove dialogs
+        if self.f2d_table_dock is not None:
+            self.f2d_table_dock.close()
+            self.iface.removeDockWidget(self.f2d_table_dock)
+        if self.f2d_plot_dock is not None:
+            self.f2d_plot_dock.close()
+            self.iface.removeDockWidget(self.f2d_plot_dock)
+        if self.f2d_grid_info_dock is not None:
+            self.f2d_grid_info_dock.close()
+            self.iface.removeDockWidget(self.f2d_grid_info_dock)
         if self.f2d_widget.bc_editor is not None:
             self.f2d_widget.bc_editor.close()
             del self.f2d_widget.bc_editor
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)
-        if self.f2d_plot_dock is not None:
-            self.f2d_plot_dock.close()
-            self.iface.removeDockWidget(self.f2d_plot_dock)
-
         # remove the toolbar
         del self.toolbar
         del self.con, self.gutils, self.lyrs
@@ -605,11 +631,12 @@ class Flo2D(object):
 
     @connection_required
     def activate_grid_info_tool(self):
-        grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group)
+        self.f2d_grid_info_dock.setUserVisible(True)
+        grid = self.lyrs.data['grid']['qlyr']
         if grid:
-            self.grid_info_tool.grid = grid.layer()
-            self.f2d_widget.grid_info.set_info_layer(grid.layer())
-            self.f2d_widget.grid_info.mann_default = self.gutils.get_cont_par('MANNING')
+            self.grid_info_tool.grid = grid
+            self.f2d_grid_info.set_info_layer(grid)
+            self.f2d_grid_info.mann_default = self.gutils.get_cont_par('MANNING')
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')
@@ -748,7 +775,7 @@ class Flo2D(object):
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.grid_info_tool.grid_elem_picked.connect(self.f2d_widget.grid_info.update_fields)
+        self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
