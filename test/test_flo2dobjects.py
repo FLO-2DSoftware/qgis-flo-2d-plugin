@@ -11,6 +11,7 @@
 import os
 import sys
 import unittest
+from itertools import chain
 sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.geopackage_utils import *
 from flo2d.flo2dobjects import *
@@ -130,7 +131,7 @@ class TestOutflow(unittest.TestCase):
     def test_get_qh_tables(self):
         self.outflow.get_row()
         qht = self.outflow.get_qh_tables()
-        self.assertEqual(len(qht), 0)
+        self.assertListEqual(qht, [(1, u'New QH Table')])
 
     def test_get_data_fid_name(self):
         self.outflow.get_row()
@@ -145,7 +146,7 @@ class TestOutflow(unittest.TestCase):
             self.outflow.chan_qhpar_fid,
             self.outflow.chan_qhtab_fid
         )
-        self.assertTupleEqual(fids, (0, 0, 0, 0))
+        self.assertTupleEqual(fids, (None, None, None, None))
 
     def test_set_new_data_fid(self):
         self.outflow.get_row()
@@ -162,13 +163,13 @@ class TestOutflow(unittest.TestCase):
         self.outflow.get_row()
         self.outflow.get_qh_params()
         data = self.outflow.get_qh_params_data()
-        self.assertEqual(len(data), 0)
+        self.assertListEqual(data, [(5.0, 1.0, 6.0), (10.0, 2.0, 7.0), (20.0, 3.0, 8.0)])
 
     def test_get_qh_table_data(self):
         self.outflow.get_row()
         self.outflow.get_qh_tables()
         data = self.outflow.get_qh_table_data()
-        self.assertEqual(len(data), 0)
+        self.assertFalse(all(chain.from_iterable(data)))
 
     def test_get_data(self):
         self.outflow.get_row()

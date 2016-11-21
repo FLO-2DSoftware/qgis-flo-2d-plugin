@@ -33,7 +33,7 @@
           <prop k="head_length" v="1.5"/>
           <prop k="head_length_unit" v="MM"/>
           <prop k="head_length_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="head_thickness" v="0.8"/>
+          <prop k="head_thickness" v="0.6"/>
           <prop k="head_thickness_unit" v="MM"/>
           <prop k="head_thickness_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="head_type" v="0"/>

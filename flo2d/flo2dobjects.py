@@ -125,7 +125,7 @@ class Inflow(GeoPackageUtils):
         return self.time_series_data
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        '''Add new rows to inflow_time_series_data for a given ts_fid'''
+        """Add new rows to inflow_time_series_data for a given ts_fid"""
         qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -306,7 +306,7 @@ class Outflow(GeoPackageUtils):
             pass
 
     def add_data(self, name=None):
-        '''Add a new data to current outflow type data table (time series, qh params or qh table) '''
+        """Add a new data to current outflow type data table (time series, qh params or qh table)"""
         if self.typ in [5, 6, 7, 8]:
             self.add_time_series(name)
         elif self.typ in [9, 10]:
@@ -317,7 +317,7 @@ class Outflow(GeoPackageUtils):
             pass
 
     def set_data(self, name, data):
-        '''Save current model data to the right outflow data table'''
+        """Save current model data to the right outflow data table"""
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data(name, data)
@@ -353,7 +353,7 @@ class Outflow(GeoPackageUtils):
         self.execute_many(qry.format(self.data_fid), data)
 
     def get_cur_data_fid(self):
-        '''Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid)'''
+        """Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid)"""
         data_fid_vals = [self.chan_tser_fid, self.chan_qhpar_fid, self.chan_qhtab_fid, self.fp_tser_fid]
         return next((val for val in data_fid_vals if val), None)
 
@@ -364,7 +364,7 @@ class Outflow(GeoPackageUtils):
         self.chan_qhtab_fid = None
 
     def set_new_data_fid(self, fid):
-        '''Set new data fid for current outflow type'''
+        """Set new data fid for current outflow type"""
         self.clear_data_fids()
         if self.typ in [5, 7]:
             self.fp_tser_fid = fid
@@ -378,7 +378,7 @@ class Outflow(GeoPackageUtils):
             pass
 
     def get_time_series_data(self):
-        '''Get time, value pairs for the current outflow'''
+        """Get time, value pairs for the current outflow"""
         qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;'
         data_fid = self.get_cur_data_fid()
         if not data_fid:
@@ -391,7 +391,7 @@ class Outflow(GeoPackageUtils):
         return self.time_series_data
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        '''Add new rows to outflow_time_series_data for a given ts_fid'''
+        """Add new rows to outflow_time_series_data for a given ts_fid"""
         # print 'in add_time_series_data'
         qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
@@ -407,7 +407,7 @@ class Outflow(GeoPackageUtils):
         return self.qh_params_data
 
     def add_qh_params_data(self, params_fid, rows=1, fetch=False):
-        '''Add new rows to qh_params_data for a given params_fid'''
+        """Add new rows to qh_params_data for a given params_fid"""
         qry = 'INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES (?, NULL, NULL, NULL);'
         self.execute_many(qry, ([params_fid],)*rows)
         if fetch:
@@ -422,14 +422,14 @@ class Outflow(GeoPackageUtils):
         return self.qh_table_data
 
     def add_qh_table_data(self, table_fid, rows=5, fetch=False):
-        '''Add new rows to qh_table_data for a given table_fid'''
+        """Add new rows to qh_table_data for a given table_fid"""
         qry = 'INSERT INTO qh_table_data (table_fid, depth, q) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([table_fid],)*rows)
         if fetch:
             return self.get_qh_table_data()
 
     def get_data(self):
-        '''Get data for current type and data_fid of the outflow'''
+        """Get data for current type and data_fid of the outflow"""
         # print 'in get_data, typ=', self.typ
         if self.typ in [5, 6, 7, 8]:
             # print 'getting time series...'
