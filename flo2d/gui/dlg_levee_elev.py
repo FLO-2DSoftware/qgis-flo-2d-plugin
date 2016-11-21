@@ -72,8 +72,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         for feat in levee_lines.getFeatures():
             intervals = get_intervals(feat, levee_points, 'elev', buf)
             interpolated = interpolate_along_line(feat, levee_schematic, intervals)
-            for row in interpolated:
-                cur.execute(qry, row)
+            for elev, fid in interpolated:
+                cur.execute(qry, (round(elev), 3), fid)
         self.con.commit()
 
     def elev_from_lines(self):
@@ -93,7 +93,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
                 val = cor
             else:
                 continue
-            cur.execute(qry, (val, fid))
+            cur.execute(qry, (round(val, 3), fid))
         self.con.commit()
 
     def elev_from_polys(self):
@@ -104,6 +104,6 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         cur = self.con.cursor()
         for feat in levee_lines.getFeatures():
             poly_values = polys2levees(feat, levee_polys, levee_schematic, 'elev', 'correction')
-            for row in poly_values:
-                cur.execute(qry, row)
+            for elev, fid in poly_values:
+                cur.execute(qry, (round(elev, 3), fid))
         self.con.commit()
