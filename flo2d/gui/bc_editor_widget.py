@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import QEvent, QObject, Qt
-from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QColor, QApplication, QIcon
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
 from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas, try_disconnect
 from ..geopackage_utils import GeoPackageUtils
@@ -17,8 +17,6 @@ from ..flo2dobjects import Inflow, Outflow
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from math import isnan
-import StringIO
-import csv
 import os
 
 
@@ -253,7 +251,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def inflow_type_changed(self):
         self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
-
 
     def inflow_data_changed(self):
         # print 'in inflow_data_changed'
@@ -521,7 +518,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         out_nr = self.outflow_data_cbo.count()
         self.outflow_data_cbo.setCurrentIndex(out_nr - 1)
 
-
     def outflow_data_changed(self):
         # print 'in outflow_data_changed'
         self.outflow.get_cur_data_fid()
@@ -741,7 +737,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         }
 
     # common methods
-
     def create_plot(self):
         """Create initial plot"""
         if self.bc_type_inflow_radio.isChecked():
