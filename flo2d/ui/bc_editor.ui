@@ -126,7 +126,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="bc_type_layout">
+    <layout class="QHBoxLayout" name="bc_name_layout">
      <property name="spacing">
       <number>7</number>
      </property>
@@ -156,26 +156,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="bc_name_cbo">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="editable">
-        <bool>true</bool>
-       </property>
-       <property name="insertPolicy">
-        <enum>QComboBox::InsertAtBottom</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QComboBox::AdjustToMinimumContentsLength</enum>
-       </property>
-       <property name="frame">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="bc_name_cbo_layout"/>
      </item>
      <item>
       <widget class="QCheckBox" name="bc_center_chbox">
@@ -350,17 +331,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="inflow_tseries_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="inflow_tseries_cbo_layout"/>
         </item>
        </layout>
       </item>
@@ -511,17 +482,7 @@
          <number>7</number>
         </property>
         <item>
-         <widget class="QComboBox" name="outflow_data_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="outflow_data_cbo_layout"/>
         </item>
        </layout>
       </item>

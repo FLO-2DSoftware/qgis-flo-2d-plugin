@@ -11,6 +11,7 @@
 from PyQt4.QtCore import QEvent, QObject, QSize
 from PyQt4.QtGui import QKeySequence, QStandardItem, QApplication, QIcon
 from .utils import load_ui
+from ..utils import is_number
 from ..user_communication import UserCommunication
 import StringIO
 import csv
@@ -98,6 +99,9 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             self.bc_tview.model().blockSignals(True)
             for row in xrange(num_rows):
                 columns = rows[row].split('\t')
+                for i, col in enumerate(columns):
+                    if not is_number(col):
+                        columns[i] = ''
                 [self.bc_tview.model().setItem(sel_row + row, sel_col + col, QStandardItem(columns[col].strip())
                     ) for col in xrange(len(columns))]
             self.bc_tview.model().blockSignals(False)

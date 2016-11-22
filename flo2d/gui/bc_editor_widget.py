@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import QEvent, QObject, Qt
-from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QColor, QApplication, QIcon
+from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon, QComboBox, QSizePolicy
 from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas, try_disconnect
 from ..geopackage_utils import GeoPackageUtils
@@ -25,6 +25,19 @@ import os
 uiDialog, qtBaseClass = load_ui('bc_editor')
 
 
+class EditableComboBox(QComboBox):
+
+    def __init__(self, parent=None):
+        super(EditableComboBox, self).__init__(parent)
+
+    def keyPressEvent(self, event):
+        # save current bc on press Enter
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self.parent().save_bc()
+        else:
+            QComboBox.keyPressEvent(self, event)
+
+
 class BCEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, plot, table, lyrs):
@@ -36,8 +49,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_tview = table.bc_tview
         self.lyrs = lyrs
         self.setupUi(self)
+        self.set_editable_combos()
         self.outflow_frame.setHidden(True)
-        # self.ev_filter = BCEditorEventFilter()
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.inflow = None
         self.outflow = None
@@ -46,7 +59,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.populate_hydrograph_cbo()
         self.gutils = None
         self.bc_data_model = QStandardItemModel()
-        # self.installEventFilter(self.ev_filter)
         # inflow plot data variables
         self.t, self.d, self.m = [[], [], []]
         # outflow plot data variables
@@ -68,6 +80,22 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.create_polygon_bc_btn.clicked.connect(self.create_polygon_bc)
         self.save_user_bc_edits_btn.clicked.connect(self.save_bc_edits)
         self.outflow_hydro_cbo.currentIndexChanged.connect(self.outflow_hydrograph_changed)
+
+    def set_editable_combos(self):
+        sp = QSizePolicy()
+        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
+        self.bc_name_cbo = EditableComboBox(self)
+        self.inflow_tseries_cbo = EditableComboBox(self)
+        self.outflow_data_cbo = EditableComboBox(self)
+        combos = {
+            self.bc_name_cbo: self.bc_name_cbo_layout,
+            self.inflow_tseries_cbo: self.inflow_tseries_cbo_layout,
+            self.outflow_data_cbo: self.outflow_data_cbo_layout
+        }
+        for combo, layout in combos.iteritems():
+            combo.setEditable(True)
+            combo.setSizePolicy(sp)
+            layout.addWidget(combo)
 
     def set_icon(self, btn, icon_file):
         idir = os.path.join(os.path.dirname(__file__), '..\\img')
