@@ -10,7 +10,6 @@
 
 from PyQt4.QtCore import QSize
 from .utils import load_ui
-from grid_info_widget import GridInfoWidget
 from bc_editor_widget import BCEditorWidget
 from ..user_communication import UserCommunication
 

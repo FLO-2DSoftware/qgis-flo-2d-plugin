@@ -17,8 +17,6 @@ from ..flo2dobjects import Inflow, Outflow
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from math import isnan
-import StringIO
-import csv
 import os
 
 
@@ -29,11 +27,12 @@ class EditableComboBox(QComboBox):
 
     def __init__(self, parent=None):
         super(EditableComboBox, self).__init__(parent)
+        self.parent = parent
 
     def keyPressEvent(self, event):
         # save current bc on press Enter
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self.parent().save_bc()
+            self.parent.save_bc_edits()
         else:
             QComboBox.keyPressEvent(self, event)
 
@@ -67,18 +66,20 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.create_point_bc_btn, 'mActionCapturePoint.svg')
         self.set_icon(self.create_line_bc_btn, 'mActionCaptureLine.svg')
         self.set_icon(self.create_polygon_bc_btn, 'mActionCapturePolygon.svg')
-        self.set_icon(self.save_user_bc_edits_btn, 'mActionSaveAllEdits.svg')
+        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        self.set_icon(self.delete_bc_btn, 'mActionDeleteSelected.svg')
+        self.set_icon(self.add_data_btn, 'add_bc_data.svg')
         # connections
         self.bc_type_inflow_radio.toggled.connect(self.change_bc_type)
         self.bc_data_model.dataChanged.connect(self.update_plot)
-        self.add_inflow_tseries_btn.clicked.connect(self.add_inflow_tseries)
-        self.add_outflow_data_btn.clicked.connect(self.add_outflow_data)
-        self.save_changes_btn.clicked.connect(self.save_bc)
+        self.add_data_btn.clicked.connect(self.add_data)
+        self.delete_bc_btn.clicked.connect(self.delete_bc)
+        self.save_changes_btn.clicked.connect(self.save_bc_edits)
         self.revert_changes_btn.clicked.connect(self.revert_bc_changes)
         self.create_point_bc_btn.clicked.connect(self.create_point_bc)
         self.create_line_bc_btn.clicked.connect(self.create_line_bc)
         self.create_polygon_bc_btn.clicked.connect(self.create_polygon_bc)
-        self.save_user_bc_edits_btn.clicked.connect(self.save_bc_edits)
         self.outflow_hydro_cbo.currentIndexChanged.connect(self.outflow_hydrograph_changed)
 
     def set_editable_combos(self):
@@ -141,7 +142,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             try_disconnect(self.outflow_data_cbo.currentIndexChanged, self.outflow_data_changed)
             self.inflow_frame.setVisible(True)
             self.outflow_frame.setVisible(False)
-            self.populate_inflows(fid)
         else:
             try_disconnect(self.bc_name_cbo.currentIndexChanged, self.inflow_changed)
             try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
@@ -150,19 +150,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             try_disconnect(self.outflow_hydro_cbo.currentIndexChanged, self.outflow_hydrograph_changed)
             self.inflow_frame.setVisible(False)
             self.outflow_frame.setVisible(True)
-            self.populate_outflows(fid)
-
-    def save_bc(self):
-        if self.bc_type_inflow_radio.isChecked():
-            self.save_inflow()
-        else:
-            self.save_outflow()
-
-    def revert_bc_changes(self):
-        if self.bc_type_inflow_radio.isChecked():
-            self.revert_inflow_changes()
-        else:
-            self.revert_outflow_changes()
+        self.populate_bcs(fid)
 
     # INFLOWS
 
@@ -177,26 +165,34 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.clear()
         self.plot.clear()
 
-    def populate_inflows(self, inflow_fid=None):
+    def populate_inflows(self, inflow_fid=None, show_last_edited=False):
         # print 'in populate_inflows'
         """Read inflow and inflow_time_series tables, populate proper combo boxes"""
         if not self.iface.f2d['con']:
             return
         self.reset_inflow_gui()
         self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
-        all_inflows = self.gutils.execute('SELECT fid, name, time_series_fid FROM inflow ORDER BY fid;').fetchall()
+        all_inflows = self.gutils.execute('SELECT fid, name, geom_type, time_series_fid FROM inflow ORDER BY name;').fetchall()
         if not all_inflows:
             self.uc.bar_info('There is no inflow defined in the database...')
             return
         cur_name_idx = 0
+        inflows_skipped = 0
         for i, row in enumerate(all_inflows):
             row = [x if x is not None else '' for x in row]
-            fid, name, ts_fid = row
+            fid, name, geom_type, ts_fid = row
+            if not geom_type:
+                inflows_skipped += 1
+                continue
             if not name:
                 name = 'Inflow {}'.format(fid)
             self.bc_name_cbo.addItem(name, [fid, ts_fid])
             if inflow_fid and fid == inflow_fid:
-                cur_name_idx = i
+                cur_name_idx = i - inflows_skipped
+        if not self.bc_name_cbo.count():
+            return
+        if show_last_edited:
+            cur_name_idx = i - inflows_skipped
         self.in_fid, self.ts_fid = self.bc_name_cbo.itemData(cur_name_idx)
         self.inflow = Inflow(self.in_fid, self.iface.f2d['con'], self.iface)
         self.inflow.get_row()
@@ -238,7 +234,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_type_cbo.setCurrentIndex(self.inflow.inoutfc)
         else:
             self.inflow_type_cbo.setCurrentIndex(0)
-
+        if not self.inflow.geom_type:
+            return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.inflow.geom_type)
         self.show_inflow_rb()
         if self.bc_center_chbox.isChecked():
@@ -282,7 +279,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def inflow_type_changed(self):
         self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
 
-
     def inflow_data_changed(self):
         # print 'in inflow_data_changed'
         """Get current time series data, populate data table and create plot"""
@@ -318,8 +314,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def save_inflow(self):
         """Get inflow and time series data from table view and save them to gpkg"""
         self.inflow.name = self.bc_name_cbo.currentText()
+        if self.inflow.name in self.gutils.get_inflow_names():
+            msg = 'Inflow with name {} already exists in the database. Please, choose another name.'.format(self.inflow.name)
+            self.uc.show_warn(msg)
+            return
         self.inflow.set_row()
-        # self.bc_data_model.sort(0)
         ts_data = []
         for i in range(self.bc_data_model.rowCount()):
             # save only rows with a number in the first column
@@ -363,7 +362,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.update_item('Current Discharge', [self.t, self.d])
         self.plot.update_item('Current Mud', [self.t, self.m])
 
-    def add_inflow_tseries(self):
+    def add_inflow_data(self):
         # print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
         if not self.inflow.time_series_fid:
             # print 'no inflow series_fid'
@@ -390,7 +389,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.clear()
         self.plot.clear()
 
-    def set_outflow_widgets(self,outflow_type):
+    def set_outflow_widgets(self, outflow_type):
         # print 'in set_outflow_widgets'
         try_disconnect(self.outflow_data_cbo.currentIndexChanged, self.outflow_data_changed)
         self.outflow_data_cbo.clear()
@@ -408,27 +407,34 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_data_label.setText(out_par['data_label'])
         self.outflow_tab_head = out_par['tab_head']
 
-    def populate_outflows(self, outflow_fid=None):
+    def populate_outflows(self, outflow_fid=None, show_last_edited=False):
         # print 'in populate_outflows'
         """Read outflow table, populate the cbo and set apropriate outflow"""
         if not self.iface.f2d['con']:
             return
         self.reset_outflow_gui()
         self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
-        all_outflows = self.gutils.execute('SELECT fid, name, type, geom_type FROM outflow ORDER BY fid;').fetchall()
+        all_outflows = self.gutils.execute('SELECT fid, name, type, geom_type FROM outflow ORDER BY name;').fetchall()
         if not all_outflows:
             self.uc.bar_info('There is no outflow defined in the database...')
             return
         cur_out_idx = 0
+        outflows_skipped = 0
         for i, row in enumerate(all_outflows):
             row = [x if x is not None else '' for x in row]
             fid, name, typ, geom_type = row
+            if not geom_type:
+                outflows_skipped += 1
+                continue
             if not name:
                 name = 'Outflow {}'.format(fid)
             self.bc_name_cbo.addItem(name, [fid, typ, geom_type])
             if fid == outflow_fid:
-                cur_out_idx = i
-
+                cur_out_idx = i - outflows_skipped
+        if not self.bc_name_cbo.count():
+            return
+        if show_last_edited:
+            cur_name_idx = i - outflows_skipped
         self.out_fid, self.type_fid, self.geom_type = self.bc_name_cbo.itemData(cur_out_idx)
         self.outflow = Outflow(self.out_fid, self.iface.f2d['con'], self.iface)
         self.outflow.get_row()
@@ -458,6 +464,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow.bc_fid
         )
         # print msg
+        if not self.outflow.geom_type:
+            return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.outflow.hydro_out:
@@ -482,6 +490,10 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.type_fid = 0
         else:
             self.type_fid = int(self.type_fid)
+        if not self.outflow.geom_type:
+            return
+        if not self.outflow.geom_type:
+            return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.bc_center_chbox.isChecked():
@@ -534,6 +546,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         for i, row in enumerate(self.series):
             row = [x if x is not None else '' for x in row]
             s_fid, name = row
+            if not name:
+                name = self.outflow.get_new_data_name(s_fid)
             self.outflow_data_cbo.addItem(name, s_fid)
             if s_fid == self.outflow.get_cur_data_fid():
                 cur_idx = i
@@ -548,7 +562,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.populate_outflow_data_cbo()
         out_nr = self.outflow_data_cbo.count()
         self.outflow_data_cbo.setCurrentIndex(out_nr - 1)
-
 
     def outflow_data_changed(self):
         # print 'in outflow_data_changed'
@@ -618,58 +631,22 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_hydro_cbo.currentIndexChanged.connect(self.outflow_hydrograph_changed)
 
     def populate_outflow_type_cbo(self):
-        # print 'in populate_outflow_type_cbo'
         """Populate outflow types cbo and set current type"""
+        # print 'in populate_outflow_type_cbo'
         self.outflow_type_cbo.clear()
         type_name = '{}. {}'
         for typnr in sorted(self.outflow_types.iterkeys()):
             outflow_type = type_name.format(typnr, self.outflow_types[typnr]['name']).strip()
             self.outflow_type_cbo.addItem(outflow_type, typnr)
 
-    def show_outflow_rb(self):
-        self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.outflow.bc_fid)
-
-    def outflow_clicked(self, fid):
-        typ = self.gutils.execute('SELECT type FROM outflow WHERE fid={};'.format(fid)).fetchone()[0]
-        idx = self.bc_name_cbo.findData([fid, typ])
-        if not idx == -1:
-            self.bc_name_cbo.setCurrentIndex(idx)
-        else:
-            self.uc.bar_warn('Couldn\'t find outflow fid={} and type={}'.format(fid, typ))
-
-    def get_user_bc_lyr_for_geomtype(self, geom_type):
-        table_name = 'user_bc_{}s'.format(geom_type)
-        return self.lyrs.data[table_name]['qlyr']
-
-    def get_bc_def_attrs(self):
-        if self.bc_type_inflow_radio.isChecked():
-            return {'type': "'inflow'"}
-        else:
-            return {'type': "'outflow'"}
-
-    def create_point_bc(self):
-        self.lyrs.enter_edit_mode('user_bc_points', self.get_bc_def_attrs())
-
-    def create_line_bc(self):
-        self.lyrs.enter_edit_mode('user_bc_lines', self.get_bc_def_attrs())
-
-    def create_polygon_bc(self):
-        self.lyrs.enter_edit_mode('user_bc_polygons', self.get_bc_def_attrs())
-
-    def save_bc_edits(self):
-        bc_tables = ['user_bc_points', 'user_bc_lines', 'user_bc_polygons']
-        self.lyrs.save_lyrs_edits(bc_tables)
-        # update gui
-        if self.bc_type_inflow_radio.isChecked():
-            self.populate_inflows()
-        else:
-            self.populate_outflows()
-
     def save_outflow(self):
         """Get outflow data from widgets and save them to gpkg"""
         self.outflow.name = self.bc_name_cbo.currentText()
+        if self.outflow.name in self.gutils.get_outflow_names():
+            msg = 'Outflow with name {} already exists in the database. Please, choose another name.'.format(self.outflow.name)
+            self.uc.show_warn(msg)
+            return
         self.outflow.set_row()
-        # self.bc_data_model.sort(0)
         data = []
         for i in range(self.bc_data_model.rowCount()):
             # save only rows with a number in the first column
@@ -679,17 +656,14 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 )
             else:
                 pass
-        # data = [
-        #     [m_fdata(self.bc_data_model, i, j) for j in range(self.bc_data_model.columnCount())]
-        #     for i in range(self.bc_data_model.rowCount())
-        # ]
         data_name = self.outflow_data_cbo.currentText()
         self.outflow.set_data(data_name, data)
         self.populate_outflows(self.outflow.fid)
 
+
+
     def revert_outflow_changes(self):
-        """Revert any time-series data changes made by users (load original
-        tseries data from tables)"""
+        """Revert any data changes made by users (load original data from tables)"""
         self.populate_outflows(self.outflow.fid)
 
     def define_outflow_types(self):
@@ -769,6 +743,146 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         }
 
     # common methods
+
+    def add_data(self):
+        if self.bc_type_inflow_radio.isChecked():
+            self.add_inflow_data()
+        elif self.bc_type_outflow_radio.isChecked():
+            self.add_outflow_data()
+        else:
+            pass
+
+    def delete_bc(self):
+        """Delete the current boundary condition from user layer and schematic tables"""
+        if not self.bc_name_cbo.count():
+            return
+        q = 'Are you sure, you want delete the current BC?'
+        if not self.uc.question(q):
+            return
+        fid = None
+        bc_idx = self.bc_name_cbo.currentIndex()
+        cur_data = self.bc_name_cbo.itemData(bc_idx)
+        if cur_data:
+            fid = cur_data[0]
+        else:
+            return
+        if fid and self.bc_type_inflow_radio.isChecked():
+            self.inflow.del_row()
+        elif fid and self.bc_type_outflow_radio.isChecked():
+            self.outflow.del_row()
+        else:
+            pass
+        self.repaint_bcs()
+        # try to set current bc to the last before the deleted one
+        try:
+            self.populate_bcs(bc_fid=fid-1)
+        except:
+            self.populate_bcs()
+
+    def show_outflow_rb(self):
+        self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.outflow.bc_fid)
+
+    def outflow_clicked(self, fid):
+        typ = self.gutils.execute('SELECT type FROM outflow WHERE fid={};'.format(fid)).fetchone()[0]
+        idx = self.bc_name_cbo.findData([fid, typ])
+        if not idx == -1:
+            self.bc_name_cbo.setCurrentIndex(idx)
+        else:
+            self.uc.bar_warn('Couldn\'t find outflow fid={} and type={}'.format(fid, typ))
+
+    def get_user_bc_lyr_for_geomtype(self, geom_type):
+        table_name = 'user_bc_{}s'.format(geom_type)
+        return self.lyrs.data[table_name]['qlyr']
+
+    def get_bc_def_attrs(self):
+        if self.bc_type_inflow_radio.isChecked():
+            return {'type': "'inflow'"}
+        else:
+            return {'type': "'outflow'"}
+
+    def create_point_bc(self):
+        self.disable_bc_type_change()
+        self.lyrs.enter_edit_mode('user_bc_points', self.get_bc_def_attrs())
+
+    def create_line_bc(self):
+        self.disable_bc_type_change()
+        self.lyrs.enter_edit_mode('user_bc_lines', self.get_bc_def_attrs())
+
+    def create_polygon_bc(self):
+        self.disable_bc_type_change()
+        self.lyrs.enter_edit_mode('user_bc_polygons', self.get_bc_def_attrs())
+
+    def disable_bc_type_change(self, bool=True):
+        if bool:
+            self.bc_type_inflow_radio.setDisabled(True)
+            self.bc_type_outflow_radio.setDisabled(True)
+        else:
+            self.bc_type_inflow_radio.setDisabled(False)
+            self.bc_type_outflow_radio.setDisabled(False)
+
+    def revert_bc_changes(self):
+        if self.bc_type_inflow_radio.isChecked():
+            self.revert_inflow_changes()
+        else:
+            self.revert_outflow_changes()
+        self.disable_bc_type_change(False)
+
+    def save_bc_edits(self):
+        """Save changes of user bc layers or changes of bc widgets"""
+        self.delete_imported_bcs()
+        self.disable_bc_type_change(False)
+        bc_tables = ['user_bc_points', 'user_bc_lines', 'user_bc_polygons']
+        # try to save user bc layers (geometry additions/changes)
+        user_bc_edited = self.lyrs.save_lyrs_edits(bc_tables)
+        if user_bc_edited:
+            # update inflow names
+            if self.bc_type_inflow_radio.isChecked():
+                self.gutils.update_inflow_names()
+            else:
+                self.gutils.update_outflow_names()
+            # only populate widgets and show last edited bc
+            self.populate_bcs(show_last_edited=True)
+        else:
+            # save widgets data
+            if self.bc_type_inflow_radio.isChecked():
+                self.save_inflow()
+            else:
+                self.save_outflow()
+        self.repaint_bcs()
+
+    def populate_bcs(self, bc_fid=None, show_last_edited=False):
+        self.lyrs.clear_rubber()
+        if self.bc_type_inflow_radio.isChecked():
+            self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited)
+            if self.bc_name_cbo.count() == 0:
+                self.inflow_frame.setDisabled(True)
+            else:
+                 self.inflow_frame.setEnabled(True)
+        elif self.bc_type_outflow_radio.isChecked():
+            self.populate_outflows(outflow_fid=bc_fid, show_last_edited=show_last_edited)
+            if self.bc_name_cbo.count() == 0:
+                self.outflow_frame.setDisabled(True)
+            else:
+                self.outflow_frame.setEnabled(True)
+        else:
+            pass
+
+    def delete_imported_bcs(self):
+        if self.bc_type_inflow_radio.isChecked():
+            self.gutils.delete_all_imported_inflows()
+        elif self.bc_type_outflow_radio.isChecked():
+            self.gutils.delete_all_imported_outflows()
+        else:
+            pass
+
+    def repaint_bcs(self):
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data['all_schem_bc']['qlyr'],
+            self.lyrs.data['user_bc_points']['qlyr'],
+            self.lyrs.data['user_bc_lines']['qlyr'],
+            self.lyrs.data['user_bc_polygons']['qlyr']
+        ]
+        self.lyrs.repaint_layers()
 
     def create_plot(self):
         """Create initial plot"""

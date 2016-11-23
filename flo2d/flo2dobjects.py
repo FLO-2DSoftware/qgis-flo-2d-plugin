@@ -84,6 +84,16 @@ class Inflow(GeoPackageUtils):
         self.bc_fid = None
         self.time_series_data = None
 
+    def add_row(self):
+        data = (
+            self.name,
+            self.time_series_fid,
+            self.ident,
+            self.inoutfc
+        )
+        qry = 'INSERT INTO inflow (name, time_series_fid, ident, inoutfc) VALUES (?, ?, ?, ?);'
+        self.fid = self.execute(qry, data, get_rowid=True)
+
     def get_row(self):
         qry = 'SELECT * FROM inflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -94,48 +104,7 @@ class Inflow(GeoPackageUtils):
         self.inoutfc = self.row['inoutfc']
         self.geom_type = self.row['geom_type']
         self.bc_fid = self.row['bc_fid']
-        # print 'inflow tser fid', self.time_series_fid
         return self.row
-
-    def get_time_series(self):
-        qry = 'SELECT fid, name FROM inflow_time_series ORDER BY fid;'
-        self.time_series = self.execute(qry).fetchall()
-        if not self.time_series:
-            self.time_series = self.add_time_series(fetch=True)
-        return self.time_series
-
-    def add_time_series(self, name=None, fetch=False):
-        qry = 'INSERT INTO inflow_time_series (name) VALUES (?);'
-        rowid = self.execute(qry, (name,), get_rowid=True)
-        qry = '''UPDATE inflow SET time_series_fid = ? WHERE fid = ?'''
-        self.execute(qry, (rowid, self.fid))
-        self.time_series_fid = rowid
-        if fetch:
-            return self.get_time_series()
-
-    def get_time_series_data(self):
-        # print 'in get_time_series_data for fid', self.time_series_fid
-        if not self.time_series_fid:
-            return
-        qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY time;'
-        self.time_series_data = self.execute(qry, (self.time_series_fid,)).fetchall()
-        if not self.time_series_data:
-            # add a new time series
-            self.time_series_data = self.add_time_series_data(self.time_series_fid, fetch=True)
-        return self.time_series_data
-
-    def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to inflow_time_series_data for a given ts_fid"""
-        qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
-        self.execute_many(qry, ([ts_fid],)*rows)
-        if fetch:
-            return self.get_time_series_data()
-
-    def remove_time_series(self):
-        qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
-        self.execute(qry, (self.time_series_fid,))
-        qry = 'DELETE FROM inflow_time_series WHERE fid = ?;'
-        self.execute(qry, (self.time_series_fid,))
 
     def set_row(self):
         data = (
@@ -148,6 +117,50 @@ class Inflow(GeoPackageUtils):
         qry = 'UPDATE inflow SET name=?, time_series_fid=?, ident=?, inoutfc=? WHERE fid=?'
         self.execute(qry, data)
 
+    def del_row(self):
+        # first try to delete the bc from user layer
+        if self.geom_type and self.bc_fid:
+            qry = '''DELETE FROM user_bc_{}s WHERE fid=? AND type='inflow';'''.format(self.geom_type)
+            self.execute(qry, (self.bc_fid,))
+            # there is a trigger updating inflow table when the user bc layer is changed
+            # this is for inflow rows without geometry
+        qry = 'DELETE FROM inflow WHERE fid=?'
+        self.execute(qry, (self.fid,))
+
+    def add_time_series(self, name=None, fetch=False):
+        qry = 'INSERT INTO inflow_time_series (name) VALUES (?);'
+        rowid = self.execute(qry, (name,), get_rowid=True)
+        qry = '''UPDATE inflow SET time_series_fid = ? WHERE fid = ?'''
+        self.execute(qry, (rowid, self.fid))
+        self.time_series_fid = rowid
+        if fetch:
+            return self.get_time_series()
+
+    def get_time_series(self):
+        qry = 'SELECT fid, name FROM inflow_time_series ORDER BY fid;'
+        self.time_series = self.execute(qry).fetchall()
+        if not self.time_series:
+            self.time_series = self.add_time_series(fetch=True)
+        return self.time_series
+
+    def add_time_series_data(self, ts_fid, rows=5, fetch=False):
+        """Add new rows to inflow_time_series_data for a given ts_fid"""
+        qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
+        self.execute_many(qry, ([ts_fid],)*rows)
+        if fetch:
+            return self.get_time_series_data()
+
+    def get_time_series_data(self):
+        # print 'in get_time_series_data for fid', self.time_series_fid
+        if not self.time_series_fid:
+            return
+        qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY time;'
+        self.time_series_data = self.execute(qry, (self.time_series_fid,)).fetchall()
+        if not self.time_series_data:
+            # add a new time series
+            self.time_series_data = self.add_time_series_data(self.time_series_fid, fetch=True)
+        return self.time_series_data
+
     def set_time_series_data(self, name, data):
         qry = 'UPDATE inflow_time_series SET name=? WHERE fid=?;'
         self.execute(qry, (name, self.time_series_fid,))
@@ -155,6 +168,12 @@ class Inflow(GeoPackageUtils):
         self.execute(qry, (self.time_series_fid,))
         qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES (?, ?, ?, ?);'
         self.execute_many(qry, data)
+
+    def remove_time_series(self):
+        qry = 'DELETE FROM inflow_time_series_data WHERE series_fid = ?;'
+        self.execute(qry, (self.time_series_fid,))
+        qry = 'DELETE FROM inflow_time_series WHERE fid = ?;'
+        self.execute(qry, (self.time_series_fid,))
 
 
 class Outflow(GeoPackageUtils):
@@ -179,6 +198,31 @@ class Outflow(GeoPackageUtils):
         self.qh_table_data = None
         self.typ = None
 
+    def add_row(self):
+        data = (
+            self.name,
+            self.chan_out,
+            self.fp_out,
+            self.hydro_out,
+            self.chan_tser_fid,
+            self.chan_qhpar_fid,
+            self.chan_qhtab_fid,
+            self.fp_tser_fid,
+            self.typ
+        )
+        qry = '''INSERT INTO outflow (
+            name,
+            chan_out,
+            fp_out,
+            hydro_out,
+            chan_tser_fid,
+            chan_qhpar_fid,
+            chan_qhtab_fid,
+            fp_tser_fid,
+            type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
+        self.fid = self.execute(qry, data, get_rowid=True)
+
     def get_row(self):
         qry = 'SELECT * FROM outflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -195,6 +239,43 @@ class Outflow(GeoPackageUtils):
         self.geom_type = self.row['geom_type']
         self.bc_fid = self.row['bc_fid']
         return self.row
+
+    def set_row(self):
+        data = (
+            self.name,
+            self.chan_out,
+            self.fp_out,
+            self.hydro_out,
+            self.chan_tser_fid,
+            self.chan_qhpar_fid,
+            self.chan_qhtab_fid,
+            self.fp_tser_fid,
+            self.typ,
+            self.fid
+        )
+        qry = '''UPDATE outflow
+                    SET name=?,
+                    chan_out=?,
+                    fp_out=?,
+                    hydro_out=?,
+                    chan_tser_fid=?,
+                    chan_qhpar_fid=?,
+                    chan_qhtab_fid=?,
+                    fp_tser_fid=?,
+                    type=?
+                WHERE fid=?;'''
+        self.execute(qry, data)
+
+    def del_row(self):
+        # first try to delete the bc from user layer
+        if self.geom_type and self.bc_fid:
+            qry = '''DELETE FROM user_bc_{}s WHERE fid=? AND type='outflow';'''.format(self.geom_type)
+            self.execute(qry, (self.bc_fid,))
+        # there is a trigger updating outflow table when the user bc layer is changed
+        # this is for outflow rows without geometry
+        qry = 'DELETE FROM outflow WHERE fid=?'
+        self.execute(qry, (self.fid,))
+
 
     def clear_type_data(self):
         self.typ = None
@@ -223,32 +304,6 @@ class Outflow(GeoPackageUtils):
         else:
             pass
 
-    def set_row(self):
-        data = (
-            self.name,
-            self.chan_out,
-            self.fp_out,
-            self.hydro_out,
-            self.chan_tser_fid,
-            self.chan_qhpar_fid,
-            self.chan_qhtab_fid,
-            self.fp_tser_fid,
-            self.typ,
-            self.fid
-        )
-        qry = '''UPDATE outflow
-                    SET name=?,
-                    chan_out=?,
-                    fp_out=?,
-                    hydro_out=?,
-                    chan_tser_fid=?,
-                    chan_qhpar_fid=?,
-                    chan_qhtab_fid=?,
-                    fp_tser_fid=?,
-                    type=?
-                WHERE fid=?;'''
-        self.execute(qry, data)
-
     def get_time_series(self):
         ts = self.execute('SELECT fid, name FROM outflow_time_series ORDER BY fid;').fetchall()
         if not ts:
@@ -256,11 +311,11 @@ class Outflow(GeoPackageUtils):
         return ts
 
     def add_time_series(self, name=None, fetch=False):
-        if not name:
-            name = 'New time series'
         qry = '''INSERT INTO outflow_time_series (name) VALUES (?);'''
         rowid = self.execute(qry, (name,), get_rowid=True)
         self.set_new_data_fid(rowid)
+        if not name:
+            self.name = 'Time series {}'.format(rowid)
         if fetch:
             return self.get_time_series()
 
@@ -271,8 +326,6 @@ class Outflow(GeoPackageUtils):
         return p
 
     def add_qh_params(self, name=None, fetch=False):
-        if not name:
-            name = 'New QH Parameters'
         qry = '''INSERT INTO qh_params (name) VALUES (?);'''
         rowid = self.execute(qry, (name,), get_rowid=True)
         self.set_new_data_fid(rowid)
@@ -286,8 +339,6 @@ class Outflow(GeoPackageUtils):
         return t
 
     def add_qh_table(self, name=None, fetch=False):
-        if not name:
-            name = 'New QH Table'
         qry = '''INSERT INTO qh_table (name) VALUES (?);'''
         rowid = self.execute(qry, (name,), get_rowid=True)
         self.set_new_data_fid(rowid)
@@ -295,6 +346,8 @@ class Outflow(GeoPackageUtils):
             return self.get_qh_tables()
 
     def get_data_fid_name(self):
+        """Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
+        This could be time series, Qh Table or Qh Parameters."""
         # print 'in get_data_fid_name for typ', self.typ
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
@@ -441,6 +494,16 @@ class Outflow(GeoPackageUtils):
         else:
             pass
 
+    def get_new_data_name(self, fid):
+        if self.typ in [5, 6, 7, 8]:
+            # print 'getting time series...'
+            return 'Time series {}'.format(fid)
+        elif self.typ in [9, 10]:
+            return 'Q(h) table {}'.format(fid)
+        elif self.typ == 11:
+            return 'Q(h) table {}'.format(fid)
+        else:
+            return None
 
 class Rain(GeoPackageUtils):
     """Rain data representation."""

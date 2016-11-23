@@ -68,8 +68,8 @@ CREATE TABLE "inflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "time_series_fid" INTEGER,
-    "ident" TEXT,
-    "inoutfc" INTEGER,
+    "ident" TEXT  DEFAULT 'F',
+    "inoutfc" INTEGER DEFAULT 0,
     "note" TEXT,
     "geom_type" TEXT,
     "bc_fid" INTEGER,
@@ -1806,8 +1806,7 @@ SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
 
 CREATE TABLE "user_bc_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_points', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_points', 'geom', 'POINT', 0, 0, 0);
@@ -1825,7 +1824,7 @@ CREATE TRIGGER "update_inflow_on_bc_pts_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'point', NEW."fid";
     END;
 
 -- trigger for a new POINT OUTFLOW boundary
@@ -1837,7 +1836,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'point', NEW."fid";
     END;
 
 -- point boundary updated - type: inflow
@@ -1852,9 +1851,9 @@ CREATE TRIGGER "update_inflow_on_bc_pts_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'point';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'point' WHERE bc_fid = NEW.fid;
     END;
 
 -- point boundary updated - type: outflow
@@ -1871,7 +1870,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'point' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow point boundary deleted
@@ -1901,8 +1900,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_delete"
 
 CREATE TABLE "user_bc_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_lines', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1920,7 +1918,7 @@ CREATE TRIGGER "update_inflow_on_bc_lines_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'line', NEW."fid";
     END;
 
 -- trigger for a new LINE OUTFLOW boundary
@@ -1932,7 +1930,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'line', NEW."fid";
     END;
 
 -- line boundary updated - type: inflow
@@ -1947,9 +1945,9 @@ CREATE TRIGGER "update_inflow_on_bc_lines_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'line';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'line', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'line' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'line' WHERE bc_fid = NEW.fid;
     END;
 
 -- line boundary updated - type: outflow
@@ -1966,7 +1964,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'line', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'line' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'line' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow line boundary deleted
@@ -1995,8 +1993,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_delete"
 
 CREATE TABLE "user_bc_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
@@ -2022,7 +2019,7 @@ CREATE TRIGGER "update_inflow_on_bc_polygons_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
     END;
 
 -- trigger for a new POLYGON OUTFLOW boundary
@@ -2034,7 +2031,7 @@ CREATE TRIGGER "update_outflow_on_bc_polygons_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
     END;
 
 -- polygon boundary updated - type: inflow
@@ -2049,9 +2046,9 @@ CREATE TRIGGER "update_inflow_on_bc_polygons_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'polygon';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'polygon' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'polygon' WHERE bc_fid = NEW.fid;
     END;
 
 -- line boundary updated - type: outflow
@@ -2068,7 +2065,7 @@ CREATE TRIGGER "update_outflow_on_bc_polygons_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'polygon' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'polygon' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow polygon boundary deleted
@@ -2121,3 +2118,40 @@ SELECT 'outflow' as type, fid, geom_type, bc_fid FROM outflow;
 --SELECT 'line' as "geom_type", fid, geom FROM user_bc_lines WHERE type = 'outflow'
 --UNION ALL
 --SELECT 'polygon' as "geom_type", fid, geom FROM user_bc_polygons WHERE type = 'outflow';
+
+CREATE TABLE "all_schem_bc" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" TEXT,
+    "tab_bc_fid" INTEGER,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('all_schem_bc', 'features', 4326);
+SELECT gpkgAddGeometryColumn('all_schem_bc', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('all_schem_bc', 'geom');
+
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_on_bc_polygons_insert', 1); -- enabled by default
+CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_insert"
+    AFTER INSERT ON "inflow_cells"
+    BEGIN
+        INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
+        SELECT 'inflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_insert"
+    AFTER INSERT ON "outflow_cells"
+    BEGIN
+        INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
+        SELECT 'outflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_delete"
+    AFTER DELETE ON "inflow_cells"
+    BEGIN
+        DELETE FROM all_schem_bc WHERE type = 'inflow' AND grid_fid = OLD.grid_fid;
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_delete"
+    AFTER DELETE ON "outflow_cells"
+    BEGIN
+        DELETE FROM all_schem_bc WHERE type = 'outflow' AND grid_fid = OLD.grid_fid;
+    END;

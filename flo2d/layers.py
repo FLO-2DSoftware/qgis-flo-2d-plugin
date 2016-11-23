@@ -259,7 +259,13 @@ class Layers(QObject):
                 },
                 'readonly': True
             }),
-
+            ('all_schem_bc', {
+                'name': 'BC cells',
+                'sgroup': 'Schematic Layers',
+                'styles': ['all_schem_bc.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('grid', {
                 'name': 'Grid',
                 'sgroup': 'Schematic Layers',
@@ -729,15 +735,36 @@ class Layers(QObject):
             self.uc.bar_warn(msg)
 
     def save_lyrs_edits(self, table_name_list=[]):
+        '''Save changes to each layer if it is in edit mode'''
+        in_edit_mode = False
         if not table_name_list:
-            return
+            return None
         for t in table_name_list:
-            try:
-                lyr = self.data[t]['qlyr']
-                lyr.commitChanges()
-            except:
-                msg = 'Could\'n save changes for table {}.'.format(t)
-                self.uc.bar_warn(msg)
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+                try:
+                    lyr = self.data[t]['qlyr']
+                    lyr.commitChanges()
+                except:
+                    msg = 'Could\'n save changes for table {}.'.format(t)
+                    self.uc.bar_warn(msg)
+        return in_edit_mode
+
+    def rollback_lyrs_edits(self, table_name_list=[]):
+        '''Save changes to each layer if it is in edit mode'''
+        in_edit_mode = False
+        if not table_name_list:
+            return None
+        for t in table_name_list:
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+                try:
+                    lyr = self.data[t]['qlyr']
+                    lyr.rollBack()
+                except:
+                    msg = 'Could\'n rollback changes for table {}.'.format(t)
+                    self.uc.bar_warn(msg)
+        return in_edit_mode
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:
