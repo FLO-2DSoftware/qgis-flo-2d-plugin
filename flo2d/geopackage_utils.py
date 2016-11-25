@@ -369,3 +369,11 @@ class GeoPackageUtils(object):
         qry = '''SELECT name FROM outflow WHERE name IS NOT NULL;'''
         rows = self.execute(qry).fetchall()
         return [row[0] for row in rows]
+
+    def disable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 0;'
+        self.execute(qry)
+
+    def enable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 1;'
+        self.execute(qry)

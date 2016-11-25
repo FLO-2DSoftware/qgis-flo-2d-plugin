@@ -45,6 +45,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.disable_geom_triggers()
         cls.f2g.set_parser(CONT)
         cls.f2g.import_mannings_n_topo()
 
