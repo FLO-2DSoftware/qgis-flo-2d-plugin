@@ -205,7 +205,7 @@ def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
     return [int_to_float_coords(x, y) for x, y in points]
 
 
-def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False):
+def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get_id=False):
     """
     Generator for finding grid centroids coordinates for each schematized line segment.
     Calculations are done using Bresenham's Line Algorithm.
@@ -226,7 +226,10 @@ def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False):
                 vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)][1:]
                 segment += vals
         except StopIteration:
-            yield segment
+            if get_id is True:
+                yield line.id(), segment
+            else:
+                yield segment
 
 
 def populate_directions(coords, grids):
@@ -306,11 +309,12 @@ def schematize_streets(gutils, line_layer, cell_size):
     """
     Calculating and writing schematized streets into the 'street_seg' table.
     """
-    x_offset, y_offset = calculate_offset(gutils, cell_size)
-    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
-    coords = defaultdict(set)
-    for grids in segments:
-        populate_directions(coords, grids)
+    streets_sql = '''INSERT INTO streets (fid) VALUES (?);'''
+    seg_sql = '''INSERT INTO street_seg (geom, str_fid) VALUES (AsGPB(ST_GeomFromText('MULTILINESTRING({0})')), ?)'''
+    elems_sql = '''INSERT INTO street_elems (seg_fid, istdir) VALUES (?,?)'''
+    gpb_part = '''({0} {1}, {2} {3})'''
+    half_cell = cell_size * 0.5
+    gutils.clear_tables('streets', 'street_seg', 'street_elems')
     functions = {
         1: (lambda x, y, shift: (x, y + shift)),
         2: (lambda x, y, shift: (x + shift, y)),
@@ -321,27 +325,45 @@ def schematize_streets(gutils, line_layer, cell_size):
         7: (lambda x, y, shift: (x - shift, y - shift)),
         8: (lambda x, y, shift: (x - shift, y + shift))
     }
-    del_sql = '''DELETE FROM {0};'''
-    insert_elem_sql = '''INSERT INTO street_elems (seg_fid, istdir) VALUES (?,?)'''
-    insert_sql = '''INSERT INTO street_seg (geom) VALUES (AsGPB(ST_GeomFromText('MULTILINESTRING({0})')))'''
-    gpb_part = '''({0} {1}, {2} {3})'''
-    half_cell = cell_size * 0.5
-    gutils.execute(del_sql.format('street_seg'))
-    gutils.execute(del_sql.format('street_elems'))
+    x_offset, y_offset = calculate_offset(gutils, cell_size)
+    fid_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset, get_id=True)
     cursor = gutils.con.cursor()
+    fid_coords = {}
+    coords = defaultdict(set)
+    # Populating directions within each grid cell
+    for fid, grids in fid_segments:
+        populate_directions(coords, grids)
+        # Assigning user line fid for each grid centroid coordinates
+        for xy in coords.iterkeys():
+            if xy not in fid_coords:
+                fid_coords[xy] = fid
+            else:
+                continue
+        cursor.execute(streets_sql, (fid,))
     for i, (xy, directions) in enumerate(coords.iteritems(), 1):
         x1, y1 = xy
         xy_dir = []
         for d in directions:
-            cursor.execute(insert_elem_sql, (i, d))
+            cursor.execute(elems_sql, (i, d))
             xy_dir.append(functions[d](x1, y1, half_cell))
         multiline = ','.join((gpb_part.format(x1, y1, x2, y2) for x2, y2 in xy_dir))
-        gpb_insert = insert_sql.format(multiline)
-        cursor.execute(gpb_insert)
+        gpb_insert = seg_sql.format(multiline)
+        cursor.execute(gpb_insert, (fid_coords[xy],))
     gutils.con.commit()
     fid_grid = fid_from_grid(gutils, 'street_seg', grid_center=True, switch=True)
     grid_sql = '''UPDATE street_seg SET igridn = ? WHERE fid = ?;'''
     gutils.execute_many(grid_sql, fid_grid)
+    update_streets = '''
+    UPDATE streets SET
+        stname = (SELECT name FROM user_streets WHERE fid = streets.fid),
+        notes = (SELECT notes FROM user_streets WHERE fid = streets.fid);'''
+    update_street_seg = '''
+    UPDATE street_seg SET
+        depex = (SELECT depex FROM user_streets WHERE fid = street_seg.str_fid),
+        stman = (SELECT stman FROM user_streets WHERE fid = street_seg.str_fid),
+        elstr = (SELECT elstr FROM user_streets WHERE fid = street_seg.str_fid);'''
+    gutils.execute(update_streets)
+    gutils.execute(update_street_seg)
 
 
 def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid=True):
@@ -739,7 +761,6 @@ def clip_schema_xs(schema_xs):
 
         geom = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
         for fid in index.intersects(geom.boundingBox()):
-            print(fid)
             f = allfeatures[fid]
             fgeom = f.geometry()
             if fgeom.intersects(geom):
