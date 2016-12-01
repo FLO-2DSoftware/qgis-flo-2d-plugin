@@ -1778,10 +1778,11 @@ SELECT gpkgAddGeometryTriggers('user_levee_polygons', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT,
-    "depex" REAL, -- DEPX(L) or DEPEX(L), optional curb height, 0 to use global DEPX
-    "stman" REAL, -- STMAN(L), optional spatially variable street n-value within a given grid element. 0 for global
-    "elstr" REAL, -- ELSTR(L), optional street elevation. If 0, the model will assign the street elevation as grid element elevation
+    "name" TEXT NOT NULL,
+    "n_value" REAL DEFAULT 0, -- STMAN(L), optional spatially variable street n-value within a given grid element. 0 for global
+    "elevation" REAL DEFAULT 0, -- ELSTR(L), optional street elevation. If 0, the model will assign the street elevation as grid element elevation
+    "curb_height" REAL DEFAULT 0, -- DEPX(L) or DEPEX(L), optional curb height, 0 to use global DEPX
+    "street_width" REAL DEFAULT 0, -- WIDR, optional grid element street width in the ISTDIR direction
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets', 'features', 4326);

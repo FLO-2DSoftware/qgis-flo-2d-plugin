@@ -97,7 +97,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.twidget.after_paste.connect(self.unblock_saving)
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
-
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
 
@@ -105,7 +104,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.dataChanged.connect(self.save_bc_data)
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
-        '''Slot used to push changes of existing items onto undoStack'''
+        """Slot used to push changes of existing items onto undoStack"""
         # print 'in itemDataChanged'
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
@@ -129,7 +128,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             combo.setSizePolicy(sp)
             layout.addWidget(combo)
 
-    def set_icon(self, btn, icon_file):
+    @staticmethod
+    def set_icon(btn, icon_file):
         idir = os.path.join(os.path.dirname(__file__), '..\\img')
         btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
@@ -231,7 +231,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             # print new_name
             self.outflow.set_data_name(new_name)
             self.populate_outflows(outflow_fid=self.outflow.fid)
-
 
     # INFLOWS
 
@@ -523,7 +522,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.out_fid, self.type_fid, self.geom_type = self.bc_name_cbo.itemData(cur_out_idx)
         self.outflow = Outflow(self.out_fid, self.iface.f2d['con'], self.iface)
         self.outflow.get_row()
-        msg =  '''In populate_outflows. Got current outflow row:
+        msg = '''In populate_outflows. Got current outflow row:
         name = {}
         chan_out = {}
         fp_out = {}

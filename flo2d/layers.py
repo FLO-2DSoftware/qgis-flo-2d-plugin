@@ -652,7 +652,6 @@ class Layers(QObject):
         for lyr in self.data:
             self.data[lyr]['qlyr'] = None
 
-
     def load_layer(self, table, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider='ogr'):
         # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
@@ -737,7 +736,7 @@ class Layers(QObject):
             return None
 
     def any_lyr_in_edit(self, table_name_list=[]):
-        '''Return True if any layer from the table list is in edit mode'''
+        """Return True if any layer from the table list is in edit mode"""
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -747,7 +746,7 @@ class Layers(QObject):
         return in_edit_mode
 
     def save_lyrs_edits(self, table_name_list=[]):
-        '''Save changes to each layer if it is in edit mode'''
+        """Save changes to each layer if it is in edit mode"""
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -763,7 +762,7 @@ class Layers(QObject):
         return in_edit_mode
 
     def rollback_lyrs_edits(self, table_name_list=[]):
-        '''Save changes to each layer if it is in edit mode'''
+        """Save changes to each layer if it is in edit mode"""
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -1112,7 +1111,7 @@ class Layers(QObject):
             self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
-        """If the layer is in editmode, ask users for saving changes and proceeding."""
+        """If the layer is in edit mode, ask users for saving changes and proceeding."""
         l = self.get_layer_by_name(layer_name, group=self.group).layer()
         if l.isEditable():
             # ask user for saving changes

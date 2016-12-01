@@ -302,7 +302,6 @@ class Outflow(GeoPackageUtils):
         qry = 'DELETE FROM outflow WHERE fid=?'
         self.execute(qry, (self.fid,))
 
-
     def clear_type_data(self):
         self.typ = None
         self.chan_out = None
@@ -571,6 +570,7 @@ class Outflow(GeoPackageUtils):
         else:
             return None
 
+
 class Rain(GeoPackageUtils):
     """Rain data representation."""
     columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall',
@@ -633,3 +633,40 @@ class Evaporation(GeoPackageUtils):
         qry = 'SELECT ROUND(SUM(hourly_evap), 3) FROM evapor_hourly WHERE month = ? ORDER BY fid;'
         self.hourly_sum = self.execute(qry, (self.month,)).fetchone()[0]
         return self.hourly_sum
+
+
+class Street(GeoPackageUtils):
+    """Street data implementation."""
+    columns = ['fid', 'str_fid', 'igridn', 'depex', 'stman', 'elstr', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(Street, self).__init__(con, iface)
+        self.fid = fid
+        self.row = None
+        self.general = None
+        self.elems = None
+        self.name = None
+        self.notes = None
+        self.curb_height = None
+        self.n_value = None
+        self.elevation = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM street_elems WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.curb_height = self.row['depex']
+        self.n_value = self.row['stman']
+        self.elevation = self.row['elstr']
+        return self.row
+
+    def get_name_notes(self):
+        qry = 'SELECT stname, notes FROM streets WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.name, self.notes = values
+        return self.name, self.notes
+
+    def get_elems(self):
+        qry = 'SELECT istdir, widr FROM street_elems WHERE str_fid = ?;'
+        self.elems = self.execute(qry, (self.fid,)).fetchall()

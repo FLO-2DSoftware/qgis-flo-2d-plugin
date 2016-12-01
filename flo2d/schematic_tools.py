@@ -359,11 +359,19 @@ def schematize_streets(gutils, line_layer, cell_size):
         notes = (SELECT notes FROM user_streets WHERE fid = streets.fid);'''
     update_street_seg = '''
     UPDATE street_seg SET
-        depex = (SELECT depex FROM user_streets WHERE fid = street_seg.str_fid),
-        stman = (SELECT stman FROM user_streets WHERE fid = street_seg.str_fid),
-        elstr = (SELECT elstr FROM user_streets WHERE fid = street_seg.str_fid);'''
+        depex = (SELECT curb_height FROM user_streets WHERE fid = street_seg.str_fid),
+        stman = (SELECT n_value FROM user_streets WHERE fid = street_seg.str_fid),
+        elstr = (SELECT elevation FROM user_streets WHERE fid = street_seg.str_fid);'''
+    update_street_elems = '''
+        UPDATE street_elems SET
+            widr = (
+                    SELECT us.street_width
+                    FROM user_streets AS us, street_seg AS seg
+                    WHERE us.fid = seg.str_fid AND street_elems.seg_fid = seg.fid);
+                    '''
     gutils.execute(update_streets)
     gutils.execute(update_street_seg)
+    gutils.execute(update_street_elems)
 
 
 def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid=True):

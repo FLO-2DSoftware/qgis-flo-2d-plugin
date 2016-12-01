@@ -299,7 +299,6 @@ class Flo2D(object):
         del self.toolbar
         del self.con, self.gutils, self.lyrs
 
-
     def write_proj_entry(self, key, val):
         return self.project.writeEntry('FLO-2D', key, val)
 
@@ -322,6 +321,7 @@ class Flo2D(object):
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.f2d_widget.bc_editor.populate_bcs()
+            self.f2d_widget.street_editor.populate_streets()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
