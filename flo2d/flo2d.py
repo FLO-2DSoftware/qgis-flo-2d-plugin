@@ -321,7 +321,7 @@ class Flo2D(object):
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-            self.f2d_widget.bc_editor.populate_inflows()
+            self.f2d_widget.bc_editor.populate_bcs()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""

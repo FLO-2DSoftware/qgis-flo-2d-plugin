@@ -717,7 +717,7 @@ class Layers(QObject):
         if not self.group:
             msg = 'Connect to a GeoPackage!'
             self.uc.bar_warn(msg)
-            return
+            return None
         try:
             lyr = self.data[table_name]['qlyr']
             self.iface.setActiveLayer(lyr)
@@ -730,9 +730,21 @@ class Layers(QObject):
                     lyr.setDefaultValueExpression(idx, exp)
             lyr.startEditing()
             self.iface.actionAddFeature().trigger()
+            return True
         except:
             msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
             self.uc.bar_warn(msg)
+            return None
+
+    def any_lyr_in_edit(self, table_name_list=[]):
+        '''Return True if any layer from the table list is in edit mode'''
+        in_edit_mode = False
+        if not table_name_list:
+            return None
+        for t in table_name_list:
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+        return in_edit_mode
 
     def save_lyrs_edits(self, table_name_list=[]):
         '''Save changes to each layer if it is in edit mode'''

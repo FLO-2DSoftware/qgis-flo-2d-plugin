@@ -185,6 +185,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 END),
                 name = 'Outflow ' ||  cast(fid as text);'''
         self.execute(type_qry)
+        # update series and tables names
+        ts_name_qry = '''UPDATE outflow_time_series SET name = 'Time series ' ||  cast(fid as text);'''
+        self.execute(ts_name_qry)
+        qhpar_name_qry = '''UPDATE qh_params SET name = 'Q(h) parameters ' ||  cast(fid as text);'''
+        self.execute(qhpar_name_qry)
+        qhtab_name_qry = '''UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);'''
+        self.execute(qhtab_name_qry)
 
     def import_rain(self):
         rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,

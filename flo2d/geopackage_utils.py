@@ -352,11 +352,11 @@ class GeoPackageUtils(object):
         self.delete_all_imported_inflows()
         self.delete_all_imported_outflows()
 
-    def update_inflow_names(self):
+    def fill_empty_inflow_names(self):
         qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
-    def update_outflow_names(self):
+    def fill_empty_outflow_names(self):
         qry = '''UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
@@ -369,3 +369,11 @@ class GeoPackageUtils(object):
         qry = '''SELECT name FROM outflow WHERE name IS NOT NULL;'''
         rows = self.execute(qry).fetchall()
         return [row[0] for row in rows]
+
+    def get_inflows_list(self):
+        qry = 'SELECT fid, name, geom_type, time_series_fid FROM inflow ORDER BY LOWER(name);'
+        return self.execute(qry).fetchall()
+
+    def get_outflows_list(self):
+        qry = 'SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);'
+        return self.execute(qry).fetchall()

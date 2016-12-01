@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>284</width>
-    <height>243</height>
+    <width>331</width>
+    <height>330</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -31,11 +31,20 @@
         <string>Add point BC</string>
        </property>
        <property name="text">
-        <string>...</string>
+        <string/>
        </property>
        <property name="icon">
         <iconset>
          <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -51,6 +60,12 @@
         <iconset>
          <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -64,6 +79,12 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/mActionCapturePolygon.svg</normaloff>../img/mActionCapturePolygon.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -79,6 +100,12 @@
         <iconset>
          <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -92,6 +119,12 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -113,6 +146,12 @@
         <iconset>
          <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
       </widget>
      </item>
      <item>
@@ -126,6 +165,12 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
        </property>
       </widget>
      </item>
@@ -235,6 +280,17 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="bc_name_cbo_layout"/>
+     </item>
+     <item>
+      <widget class="QToolButton" name="change_bc_name_btn">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="bc_center_chbox">
@@ -404,6 +460,17 @@
         <item>
          <layout class="QHBoxLayout" name="inflow_tseries_cbo_layout"/>
         </item>
+        <item>
+         <widget class="QToolButton" name="change_inflow_data_name_btn">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
      </layout>
@@ -546,7 +613,22 @@
          <number>7</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="outflow_data_cbo_layout"/>
+         <layout class="QHBoxLayout" name="outflow_data_cbo_layout">
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+         </layout>
+        </item>
+        <item>
+         <widget class="QToolButton" name="change_outflow_data_name_btn">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
