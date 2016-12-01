@@ -377,3 +377,12 @@ class GeoPackageUtils(object):
     def get_outflows_list(self):
         qry = 'SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);'
         return self.execute(qry).fetchall()
+
+
+    def disable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 0;'
+        self.execute(qry)
+
+    def enable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 1;'
+        self.execute(qry)

@@ -363,7 +363,7 @@ class Flo2D(object):
     @connection_required
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
-        self.disable_geom_triggers()
+        self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             'import_cont_toler',
@@ -427,7 +427,7 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
         else:
             pass
-        self.enable_geom_triggers()
+        self.gutils.enable_geom_triggers()
         self.show_bc_editor()
 
     @connection_required
@@ -813,14 +813,6 @@ class Flo2D(object):
             self.uc.bar_info("Not implemented.....")
             return
         show_editor(fid)
-
-    def disable_geom_triggers(self):
-        qry = 'update trigger_control set enabled = 0;'
-        self.gutils.execute(qry)
-
-    def enable_geom_triggers(self):
-        qry = 'update trigger_control set enabled = 1;'
-        self.gutils.execute(qry)
 
     def set_editors_map(self):
         self.editors_map = {
