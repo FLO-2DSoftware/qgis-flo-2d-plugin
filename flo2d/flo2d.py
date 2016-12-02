@@ -23,7 +23,7 @@ from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees, schematize_1d_area
+from schematic_tools import generate_schematic_levees, schematize_1d_area
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
@@ -226,12 +226,6 @@ class Flo2D(object):
             callback=lambda: self.schematize_channels(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_streets.svg'),
-            text=self.tr(u'Schematize streets'),
-            callback=lambda: self.schematize_streets(),
-            parent=self.iface.mainWindow())
-
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
@@ -321,6 +315,7 @@ class Flo2D(object):
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.f2d_widget.bc_editor.populate_bcs()
+            self.f2d_widget.street_editor.setup_connection()
             self.f2d_widget.street_editor.populate_streets()
 
     def load_gpkg_from_proj(self):
@@ -337,6 +332,9 @@ class Flo2D(object):
                 self.iface.f2d['con'] = self.con
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
+                self.f2d_widget.bc_editor.populate_bcs()
+                self.f2d_widget.street_editor.setup_connection()
+                self.f2d_widget.street_editor.populate_streets()
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
@@ -764,26 +762,6 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Schematizing aborted! PLease check correctness of 1D layers.")
-
-    @connection_required
-    def schematize_streets(self):
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty('user_streets'):
-            self.uc.bar_warn("There is no any user streets to schematize! Please digitize them before running tool.")
-            return
-        segments = self.lyrs.get_layer_by_name("Street Lines", group=self.lyrs.group).layer()
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
-        try:
-            schematize_streets(self.gutils, segments, cell_size)
-            streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
-            if streets_schem:
-                streets_schem.triggerRepaint()
-            self.uc.show_info("Streets schematized!")
-        except Exception as e:
-            self.uc.show_warn("Schematizing of streets aborted! Please check Street Lines layer.")
-            self.uc.log_info(traceback.format_exc())
 
     def schematize_levees(self):
         """Generate schematic lines for user defined levee lines"""

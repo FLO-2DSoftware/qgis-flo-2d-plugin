@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog, QUndoStack
+from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog
 from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas, try_disconnect
 from ..geopackage_utils import GeoPackageUtils
@@ -105,7 +105,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
         """Slot used to push changes of existing items onto undoStack"""
-        # print 'in itemDataChanged'
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
@@ -152,11 +151,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                         type = (SELECT type FROM {} WHERE fid = ?);'''.format(user_bc_table)
             data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
             fid, typ = self.gutils.execute(qry, data).fetchone()
-        # print 'in show_bc_editor', typ, fid
         self.change_bc_type(typ, fid)
 
     def change_bc_type(self, typ=None, fid=None):
-        # print 'in change_bc_type'
         if typ == 'inflow' and self.bc_type_outflow_radio.isChecked():
             self.bc_type_inflow_radio.setChecked(True)
             self.bc_type_outflow_radio.setChecked(False)
@@ -209,7 +206,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.populate_outflows(outflow_fid=self.outflow.fid)
 
     def change_bc_data_name(self):
-        new_name, ok = QInputDialog.getText(None, 'Change data aname', 'New name:')
+        new_name, ok = QInputDialog.getText(None, 'Change data name', 'New name:')
         if not ok or not new_name:
             return
         # inflow
@@ -228,21 +225,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     new_name)
                 self.uc.show_warn(msg)
                 return
-            # print new_name
             self.outflow.set_data_name(new_name)
             self.populate_outflows(outflow_fid=self.outflow.fid)
 
     # INFLOWS
 
     def reset_inflow_gui(self):
-        # print 'in reset_inflow_gui'
         self.bc_name_cbo.clear()
         self.inflow_tseries_cbo.clear()
         self.bc_data_model.clear()
         self.plot.clear()
 
     def populate_inflows(self, inflow_fid=None, show_last_edited=False):
-        # print 'in populate_inflows'
         """Read inflow and inflow_time_series tables, populate proper combo boxes"""
         if not self.iface.f2d['con']:
             return
@@ -280,7 +274,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow_changed()
 
     def inflow_changed(self):
-        # print 'in inflow_changed'
         bc_idx = self.bc_name_cbo.currentIndex()
         cur_data = self.bc_name_cbo.itemData(bc_idx)
         self.bc_data_model.clear()
@@ -289,7 +282,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         else:
             return
         self.inflow = Inflow(self.in_fid, self.iface.f2d['con'], self.iface)
-        row = self.inflow.get_row()
+        self.inflow.get_row()
         if not is_number(self.ts_fid) or self.ts_fid == -1:
             self.ts_fid = 0
         else:
@@ -321,13 +314,10 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def populate_inflow_data_cbo(self):
         """Read and set inflow properties"""
-        # print 'in populate_inflow_data_cbo for inflow ', self.inflow.name, self.inflow.fid
         self.time_series = self.inflow.get_time_series()
-        # print 'got series', self.time_series
         if not self.time_series:
             self.uc.bar_warn('No data series for this inflow.')
             return
-        # try_disconnect(self.inflow_tseries_cbo.currentIndexChanged, self.inflow_data_changed)
         self.inflow_tseries_cbo.clear()
         cur_idx = 0
         for i, row in enumerate(self.time_series):
@@ -338,13 +328,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
             if ts_fid == self.inflow.time_series_fid:
                 cur_idx = i
-        # print 'setting new series fid from idx', cur_idx
         self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
         self.inflow_tseries_cbo.setCurrentIndex(cur_idx)
         self.inflow_data_changed()
 
     def inflow_dest_changed(self):
-        # print 'in inflow dest changed'
         if self.ifc_fplain_radio.isChecked():
             self.inflow.ident = 'F'
         else:
@@ -356,7 +344,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.save_inflow()
 
     def inflow_data_changed(self):
-        # print 'in inflow_data_changed'
         """Get current time series data, populate data table and create plot"""
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
@@ -379,7 +366,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         rc = self.bc_data_model.rowCount()
         if rc < 500:
             for row in range(rc, 500+1):
-                items = [StandardItem('') for x in range(0,3)]
+                items = [StandardItem(x) for x in ('',) * 3]
                 self.bc_data_model.appendRow(items)
         self.bc_tview.resizeColumnsToContents()
         for i in range(self.bc_data_model.rowCount()):
@@ -393,7 +380,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def save_inflow(self):
         """Get inflow and time series data from table view and save them to gpkg"""
         new_name = self.bc_name_cbo.currentText()
-
         # check if the name was changed
         if not self.inflow.name == new_name:
             if new_name in self.gutils.get_inflow_names():
@@ -445,20 +431,16 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.update_item('Current Mud', [self.t, self.m])
 
     def add_inflow_data(self):
-        # print 'in add_inflow_tseries for inflow fid', self.inflow.time_series_fid
         if not self.inflow.time_series_fid:
-            # print 'no inflow series_fid'
             return
         self.inflow.add_time_series()
         self.populate_inflow_data_cbo()
         ts_nr = self.inflow_tseries_cbo.count()
-        # print 'nr of elements in tseries cbo: ', ts_nr
         self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
 
     # OUTFLOWS
 
     def reset_outflow_gui(self):
-        # print 'in reset_outflow_gui'
         self.bc_name_cbo.clear()
         self.outflow_data_cbo.clear()
         self.outflow_type_cbo.setCurrentIndex(0)
@@ -470,8 +452,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.clear()
 
     def set_outflow_widgets(self, outflow_type):
-        # print 'in set_outflow_widgets'
-        # try_disconnect(self.outflow_data_cbo.currentIndexChanged, self.outflow_data_changed)
         self.outflow_data_cbo.clear()
         self.outflow_data_cbo.setDisabled(True)
         self.change_outflow_data_name_btn.setDisabled(True)
@@ -489,7 +469,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_tab_head = out_par['tab_head']
 
     def populate_outflows(self, outflow_fid=None, show_last_edited=False):
-        # print 'in populate_outflows'
         """Read outflow table, populate the cbo and set apropriate outflow"""
         if not self.iface.f2d['con']:
             return
@@ -547,7 +526,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow.geom_type,
             self.outflow.bc_fid
         )
-        # print msg
         if not self.outflow.geom_type:
             return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
@@ -558,7 +536,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_changed()
 
     def outflow_changed(self):
-        # print 'in outflow_changed'
         bc_idx = self.bc_name_cbo.currentIndex()
         cur_data = self.bc_name_cbo.itemData(bc_idx)
         self.bc_data_model.clear()
@@ -588,23 +565,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def outflow_type_changed(self):
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
-        # print 'in outflow TYPE changed, typ_idx={}'.format(typ_idx)
         self.set_outflow_widgets(typ_idx)
         self.outflow.set_type_data(typ_idx)
-        # print 'outflow typ: ', self.outflow.typ
         self.outflow.set_row()
         self.populate_outflow_data_cbo()
 
     def outflow_hydrograph_changed(self):
-        # print 'set hydrograph to ', self.outflow_hydro_cbo.currentIndex()
         self.outflow.hydro_out = self.outflow_hydro_cbo.currentIndex()
         self.outflow.set_row()
 
     def populate_outflow_data_cbo(self):
-        # print 'in populate_outflow_data_cbo'
         self.series = None
         if self.outflow.typ == 4:
-            # print 'should set hydrograph to ', self.outflow.hydro_out
             if self.outflow.hydro_out:
                 self.outflow_hydro_cbo.setCurrentIndex(self.outflow.hydro_out)
             else:
@@ -613,7 +585,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         elif self.outflow.typ > 4:
             self.create_outflow_plot()
             self.series = self.outflow.get_data_fid_name()
-            # print self.series
         else:
             return
         if not self.series:
@@ -636,29 +607,24 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_data_changed()
 
     def add_outflow_data(self):
-        # print 'in add_outflow_data'
         if not self.outflow:
             return
         self.outflow.add_data()
         self.populate_outflow_data_cbo()
 
     def outflow_data_changed(self):
-        # print 'in outflow_data_changed'
         self.outflow.get_cur_data_fid()
         out_nr = self.outflow_data_cbo.count()
         if not out_nr:
             return
         data_idx = self.outflow_data_cbo.currentIndex()
         data_fid = self.outflow_data_cbo.itemData(data_idx)
-        # print 'changind out data fid to: ', data_idx
         self.outflow.set_new_data_fid(data_fid)
         head = self.outflow_tab_head
         series_data = self.outflow.get_data()
-        # print 'tseries:', series_data, type(series_data)
         self.d1, self.d2 = [[], []]
         self.bc_data_model.clear()
         self.bc_data_model.setHorizontalHeaderLabels(head)
-        # print series_data[:2]
         for row in series_data:
             items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
             self.d1.append(row[0] if not row[0] is None else float('NaN'))
@@ -667,9 +633,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         rc = self.bc_data_model.rowCount()
         if rc < 500:
             for row in range(rc, 500 + 1):
-                items = [StandardItem('') for x in range(0, self.bc_data_model.columnCount())]
+                items = [StandardItem(x) for x in ('',) * self.bc_data_model.columnCount()]
                 self.bc_data_model.appendRow(items)
-        # self.bc_data_model.sort(0)
         self.bc_tview.setEnabled(True)
         cols = len(head)
         for col in range(cols):
@@ -703,7 +668,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
     def populate_hydrograph_cbo(self):
-        # print 'in populate_hydrograph_cbo'
         self.outflow_hydro_cbo.clear()
         self.outflow_hydro_cbo.addItem('', 0)
         for i in range(1, 10):
@@ -712,7 +676,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def populate_outflow_type_cbo(self):
         """Populate outflow types cbo and set current type"""
-        # print 'in populate_outflow_type_cbo'
         self.outflow_type_cbo.clear()
         type_name = '{}. {}'
         for typnr in sorted(self.outflow_types.iterkeys()):
@@ -721,7 +684,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def save_outflow(self):
         """Get outflow data from widgets and save them to gpkg"""
-        # print 'in save_outflow'
         new_name = self.bc_name_cbo.currentText()
         # check if the name was changed
         if not self.outflow.name == new_name:
@@ -923,7 +885,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not self.gutils:
             return
         self.enable_bc_type_change()
-        user_bc_edited = self.lyrs.rollback_lyrs_edits(self.user_bc_tables)
+        user_bc_edited = self.lyrs.rollback_lyrs_edits(*self.user_bc_tables)
         if user_bc_edited:
             self.populate_bcs()
         if self.bc_type_inflow_radio.isChecked():
@@ -939,12 +901,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def save_bc_lyrs_edits(self):
         """Save changes of user bc layers"""
-        if not self.gutils or not self.lyrs.any_lyr_in_edit(self.user_bc_tables):
+        if not self.gutils or not self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
             return
         self.delete_imported_bcs()
         # try to save user bc layers (geometry additions/changes)
-        user_bc_edited = self.lyrs.save_lyrs_edits(self.user_bc_tables)
-        # print user_bc_edited
+        user_bc_edited = self.lyrs.save_lyrs_edits(*self.user_bc_tables)
         # if user bc layers were edited
         if user_bc_edited:
             self.enable_bc_type_change()
@@ -962,10 +923,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if self.bc_type_inflow_radio.isChecked():
             self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited)
             if self.bc_name_cbo.count() == 0:
-                # print 'There are {} inflows. should disable inflow frame'.format(self.bc_name_cbo.count())
                 self.inflow_frame.setDisabled(True)
             else:
-                 # print 'There are {} inflows. should enable inflow frame'.format(self.bc_name_cbo.count())
                  self.inflow_frame.setEnabled(True)
         elif self.bc_type_outflow_radio.isChecked():
             self.populate_outflows(outflow_fid=bc_fid, show_last_edited=show_last_edited)
@@ -1001,7 +960,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.create_outflow_plot()
 
     def save_bc_data(self):
-        # print 'in save_bc_data'
         self.update_plot()
         if self.bc_type_inflow_radio.isChecked():
             self.save_inflow_data()

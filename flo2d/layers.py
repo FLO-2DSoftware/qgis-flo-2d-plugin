@@ -735,7 +735,7 @@ class Layers(QObject):
             self.uc.bar_warn(msg)
             return None
 
-    def any_lyr_in_edit(self, table_name_list=[]):
+    def any_lyr_in_edit(self, *table_name_list):
         """Return True if any layer from the table list is in edit mode"""
         in_edit_mode = False
         if not table_name_list:
@@ -745,7 +745,7 @@ class Layers(QObject):
                 in_edit_mode = True
         return in_edit_mode
 
-    def save_lyrs_edits(self, table_name_list=[]):
+    def save_lyrs_edits(self, *table_name_list):
         """Save changes to each layer if it is in edit mode"""
         in_edit_mode = False
         if not table_name_list:
@@ -761,7 +761,7 @@ class Layers(QObject):
                     self.uc.bar_warn(msg)
         return in_edit_mode
 
-    def rollback_lyrs_edits(self, table_name_list=[]):
+    def rollback_lyrs_edits(self, *table_name_list):
         """Save changes to each layer if it is in edit mode"""
         in_edit_mode = False
         if not table_name_list:

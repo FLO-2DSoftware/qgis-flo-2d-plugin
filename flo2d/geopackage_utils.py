@@ -314,6 +314,12 @@ class GeoPackageUtils(object):
         max_val = 0 if max_val is None else max_val
         return max_val
 
+    def count(self, table, field='fid'):
+        sql = '''SELECT COUNT("{0}") FROM "{1}";'''.format(field, table)
+        count = self.execute(sql).fetchone()[0]
+        count = 0 if count is None else count
+        return count
+
     def table_info(self, table, only_columns=False):
         qry = 'PRAGMA table_info("{0}")'.format(table)
         info = self.execute(qry)
@@ -377,7 +383,6 @@ class GeoPackageUtils(object):
     def get_outflows_list(self):
         qry = 'SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);'
         return self.execute(qry).fetchall()
-
 
     def disable_geom_triggers(self):
         qry = 'UPDATE trigger_control set enabled = 0;'

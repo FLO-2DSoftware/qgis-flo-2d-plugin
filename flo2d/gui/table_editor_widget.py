@@ -35,8 +35,6 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_tview()
         self.tview.undoStack = QUndoStack(self)
-        # self.ev_filter = TableEditorEventFilter()
-        # self.installEventFilter(self.ev_filter)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = None
         self.copy_btn.clicked.connect(self.copy_selection)
@@ -100,7 +98,6 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 self.tview.model().insertRows(self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row))
                 for i in range(self.tview.model().rowCount()):
                     self.tview.setRowHeight(i, 20)
-            # self.tview.model().blockSignals(True)
             for row in xrange(num_rows):
                 columns = rows[row].split('\t')
                 for i, col in enumerate(columns):
@@ -110,13 +107,12 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                     ) for col in xrange(len(columns))]
                 for col in xrange(len(columns)):
                     self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
-            # self.tview.model().blockSignals(False)
             self.after_paste.emit()
             self.tview.model().dataChanged.emit(top_left_idx, self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
 
 
 class CommandItemEdit(QUndoCommand):
-    '''Command for undoing/redoing text edit changes, to be placed in undostack'''
+    """Command for undoing/redoing text edit changes, to be placed in undostack."""
     def __init__(self, widget, item, oldText, newText, description):
         QUndoCommand.__init__(self, description)
         self.item = item
@@ -141,7 +137,6 @@ class CommandItemEdit(QUndoCommand):
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
         if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
-            # print receiver, type(receiver)
             receiver.copy_selection()
             return True
         elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste):
@@ -152,14 +147,13 @@ class TableEditorEventFilter(QObject):
 
 
 class StandardItemModel(QStandardItemModel):
-    '''Items will emit this signal when edited'''
+    """Items will emit this signal when edited"""
     itemDataChanged = pyqtSignal(object, object, object, object)
 
 
 class StandardItem(QStandardItem):
-    '''Subclass QStandardItem to reimplement setData to emit itemDataChanged'''
+    """Subclass QStandardItem to reimplement setData to emit itemDataChanged"""
     def setData(self, newValue, role=Qt.UserRole + 1):
-        # print "setData called with role ", role  #for debugging
         if role == Qt.EditRole:
             oldValue = self.data(role)
             QStandardItem.setData(self, newValue, role)
@@ -187,13 +181,9 @@ class TableView(QTableView):
         self.undoStack = QUndoStack(self)
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role):
-        '''Slot used to push changes of existing items onto undoStack'''
-        # print 'in itemDataChanged'
+        """Slot used to push changes of existing items onto undoStack"""
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
-
             self.undoStack.push(command)
             return True
-
-

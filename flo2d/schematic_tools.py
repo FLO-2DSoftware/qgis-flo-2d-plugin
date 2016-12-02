@@ -16,6 +16,7 @@ from qgis.core import QGis, QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsV
 from grid_tools import fid_from_grid
 
 
+# Levees tools
 def get_intervals(line_feature, point_layer, col_value, buffer_size):
     """
     Function which calculates intervals and assigning values based on intersection between line and snapped points.
@@ -132,246 +133,6 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_
                 break
             else:
                 pass
-
-
-def bresenham_line(x1, y1, x2, y2):
-    """
-    Bresenham's Line Algorithm.
-    Returns a list of [x,y] tuples. Works with integer coordinates.
-    Based on impl from http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
-    """
-
-    # Determine how steep the line is
-    is_steep = abs(y2 - y1) > abs(x2 - x1)
-
-    # Rotate line
-    if is_steep:
-        x1, y1 = y1, x1
-        x2, y2 = y2, x2
-
-    # Swap start and end points if necessary and store swap state
-    swapped = False
-    if x1 > x2:
-        x1, x2 = x2, x1
-        y1, y2 = y2, y1
-        swapped = True
-
-    # Calculate differentials
-    dx = x2 - x1
-    dy = y2 - y1
-
-    # Calculate error
-    error = int(dx / 2.0)
-    ystep = 1 if y1 < y2 else -1
-
-    # Iterate over bounding box generating points between start and end
-    y = y1
-    points = []
-    for x in range(x1, x2 + 1):
-        coord = (y, x) if is_steep else (x, y)
-        points.append(coord)
-        error -= abs(dy)
-        if error < 0:
-            y += ystep
-            error += dx
-
-    # Reverse the list if the coordinates were swapped
-    if swapped:
-        points.reverse()
-    return points
-
-
-def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
-    """
-    Take line from (x1,y1) to (x2,y2) and generate list of cell coordinates
-    covered by the line within the given grid.
-    """
-
-    def float_to_int_coords(x, y):
-        xt = int(round((x + offset_x) / float(cell_size)))
-        yt = int(round((y + offset_y) / float(cell_size)))
-        return xt, yt
-
-    def int_to_float_coords(xt, yt):
-        x = xt * cell_size - offset_x
-        y = yt * cell_size - offset_y
-        return x, y
-
-    xt1, yt1 = float_to_int_coords(x1, y1)
-    xt2, yt2 = float_to_int_coords(x2, y2)
-
-    points = bresenham_line(xt1, yt1, xt2, yt2)
-
-    return [int_to_float_coords(x, y) for x, y in points]
-
-
-def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get_id=False):
-    """
-    Generator for finding grid centroids coordinates for each schematized line segment.
-    Calculations are done using Bresenham's Line Algorithm.
-    """
-    line_features = lines.getFeatures() if feats_only is False else lines
-    for line in line_features:
-        segment = []
-        try:
-            vertices = line.geometry().asPolyline()
-            iver = iter(vertices)
-            x1, y1 = next(iver)
-            x2, y2 = next(iver)
-            vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)]
-            segment += vals
-            while True:
-                x1, y1 = x2, y2
-                x2, y2 = next(iver)
-                vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)][1:]
-                segment += vals
-        except StopIteration:
-            if get_id is True:
-                yield line.id(), segment
-            else:
-                yield segment
-
-
-def populate_directions(coords, grids):
-    """
-    Function for populating streets directions inside each grid cell.
-    """
-    try:
-        start, end = (0, 0)
-        igrids = iter(grids)
-        x1, y1 = next(igrids)
-        x2, y2 = next(igrids)
-        while True:
-            if x1 == x2 and y1 < y2:
-                start = 1
-                end = 3
-            elif x1 < x2 and y1 == y2:
-                start = 2
-                end = 4
-            elif x1 == x2 and y1 > y2:
-                start = 3
-                end = 1
-            elif x1 > x2 and y1 == y2:
-                start = 4
-                end = 2
-            elif x1 < x2 and y1 < y2:
-                start = 5
-                end = 7
-            elif x1 < x2 and y1 > y2:
-                start = 6
-                end = 8
-            elif x1 > x2 and y1 > y2:
-                start = 7
-                end = 5
-            elif x1 > x2 and y1 < y2:
-                start = 8
-                end = 6
-            else:
-                pass
-            coords[(x1, y1)].add(start)
-            coords[(x2, y2)].add(end)
-            x1, y1 = x2, y2
-            x2, y2 = next(igrids)
-    except StopIteration:
-        return
-
-
-def calculate_offset(gutils, cell_size):
-    """
-    Finding offset of grid squares centers which is formed after switching from float to integers.
-    Rounding to integers is needed for Bresenham's Line Algorithm.
-    """
-    geom = gutils.single_centroid('1').strip('POINT()').split()
-    x, y = float(geom[0]), float(geom[1])
-    x_offset = round(x / cell_size) * cell_size - x
-    y_offset = round(y / cell_size) * cell_size - y
-    return x_offset, y_offset
-
-
-def schematize_channels(gutils, line_layer, cell_size):
-    """
-    Calculating and writing schematized channels into the 'chan' table.
-    """
-    x_offset, y_offset = calculate_offset(gutils, cell_size)
-    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
-    del_sql = '''DELETE FROM chan WHERE user_line_fid IS NOT NULL;'''
-    insert_sql = '''INSERT INTO chan (geom, user_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
-    gutils.execute(del_sql)
-    cursor = gutils.con.cursor()
-    seen = set()
-    for i, line in enumerate(segments, 1):
-        vertices = ','.join(('{0} {1}'.format(*xy) for xy in line if xy not in seen and not seen.add(xy)))
-        cursor.execute(insert_sql.format(vertices), (i,))
-    gutils.con.commit()
-
-
-def schematize_streets(gutils, line_layer, cell_size):
-    """
-    Calculating and writing schematized streets into the 'street_seg' table.
-    """
-    streets_sql = '''INSERT INTO streets (fid) VALUES (?);'''
-    seg_sql = '''INSERT INTO street_seg (geom, str_fid) VALUES (AsGPB(ST_GeomFromText('MULTILINESTRING({0})')), ?)'''
-    elems_sql = '''INSERT INTO street_elems (seg_fid, istdir) VALUES (?,?)'''
-    gpb_part = '''({0} {1}, {2} {3})'''
-    half_cell = cell_size * 0.5
-    gutils.clear_tables('streets', 'street_seg', 'street_elems')
-    functions = {
-        1: (lambda x, y, shift: (x, y + shift)),
-        2: (lambda x, y, shift: (x + shift, y)),
-        3: (lambda x, y, shift: (x, y - shift)),
-        4: (lambda x, y, shift: (x - shift, y)),
-        5: (lambda x, y, shift: (x + shift, y + shift)),
-        6: (lambda x, y, shift: (x + shift, y - shift)),
-        7: (lambda x, y, shift: (x - shift, y - shift)),
-        8: (lambda x, y, shift: (x - shift, y + shift))
-    }
-    x_offset, y_offset = calculate_offset(gutils, cell_size)
-    fid_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset, get_id=True)
-    cursor = gutils.con.cursor()
-    fid_coords = {}
-    coords = defaultdict(set)
-    # Populating directions within each grid cell
-    for fid, grids in fid_segments:
-        populate_directions(coords, grids)
-        # Assigning user line fid for each grid centroid coordinates
-        for xy in coords.iterkeys():
-            if xy not in fid_coords:
-                fid_coords[xy] = fid
-            else:
-                continue
-        cursor.execute(streets_sql, (fid,))
-    for i, (xy, directions) in enumerate(coords.iteritems(), 1):
-        x1, y1 = xy
-        xy_dir = []
-        for d in directions:
-            cursor.execute(elems_sql, (i, d))
-            xy_dir.append(functions[d](x1, y1, half_cell))
-        multiline = ','.join((gpb_part.format(x1, y1, x2, y2) for x2, y2 in xy_dir))
-        gpb_insert = seg_sql.format(multiline)
-        cursor.execute(gpb_insert, (fid_coords[xy],))
-    gutils.con.commit()
-    fid_grid = fid_from_grid(gutils, 'street_seg', grid_center=True, switch=True)
-    grid_sql = '''UPDATE street_seg SET igridn = ? WHERE fid = ?;'''
-    gutils.execute_many(grid_sql, fid_grid)
-    update_streets = '''
-    UPDATE streets SET
-        stname = (SELECT name FROM user_streets WHERE fid = streets.fid),
-        notes = (SELECT notes FROM user_streets WHERE fid = streets.fid);'''
-    update_street_seg = '''
-    UPDATE street_seg SET
-        depex = (SELECT curb_height FROM user_streets WHERE fid = street_seg.str_fid),
-        stman = (SELECT n_value FROM user_streets WHERE fid = street_seg.str_fid),
-        elstr = (SELECT elevation FROM user_streets WHERE fid = street_seg.str_fid);'''
-    update_street_elems = '''
-        UPDATE street_elems SET
-            widr = (
-                    SELECT us.street_width
-                    FROM user_streets AS us, street_seg AS seg
-                    WHERE us.fid = seg.str_fid AND street_elems.seg_fid = seg.fid);
-                    '''
-    gutils.execute(update_streets)
-    gutils.execute(update_street_seg)
-    gutils.execute(update_street_elems)
 
 
 def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid=True):
@@ -497,17 +258,115 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     gutils.con.commit()
 
 
-def perp2side(vec, side, tol):
-    # octagon sides normal vectors
-    nvec = {
-        0: QgsVector(0, 1), 1: QgsVector(1, 1), 2: QgsVector(1, 0), 3: QgsVector(1, -1),
-        4: QgsVector(0, -1), 5: QgsVector(-1, -1), 6: QgsVector(-1, 0), 7: QgsVector(-1, 1)
-    }
-    tol = tol * pi / 180
-    if abs(nvec[side].angle(vec)) <= tol or abs(nvec[side].rotateBy(pi).angle(vec)) <= tol:
-        return True
-    else:
-        return False
+# Line schematizing tools
+def bresenham_line(x1, y1, x2, y2):
+    """
+    Bresenham's Line Algorithm.
+    Returns a list of [x,y] tuples. Works with integer coordinates.
+    Based on impl from http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
+    """
+
+    # Determine how steep the line is
+    is_steep = abs(y2 - y1) > abs(x2 - x1)
+
+    # Rotate line
+    if is_steep:
+        x1, y1 = y1, x1
+        x2, y2 = y2, x2
+
+    # Swap start and end points if necessary and store swap state
+    swapped = False
+    if x1 > x2:
+        x1, x2 = x2, x1
+        y1, y2 = y2, y1
+        swapped = True
+
+    # Calculate differentials
+    dx = x2 - x1
+    dy = y2 - y1
+
+    # Calculate error
+    error = int(dx / 2.0)
+    ystep = 1 if y1 < y2 else -1
+
+    # Iterate over bounding box generating points between start and end
+    y = y1
+    points = []
+    for x in range(x1, x2 + 1):
+        coord = (y, x) if is_steep else (x, y)
+        points.append(coord)
+        error -= abs(dy)
+        if error < 0:
+            y += ystep
+            error += dx
+
+    # Reverse the list if the coordinates were swapped
+    if swapped:
+        points.reverse()
+    return points
+
+
+def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
+    """
+    Take line from (x1,y1) to (x2,y2) and generate list of cell coordinates
+    covered by the line within the given grid.
+    """
+
+    def float_to_int_coords(x, y):
+        xt = int(round((x + offset_x) / float(cell_size)))
+        yt = int(round((y + offset_y) / float(cell_size)))
+        return xt, yt
+
+    def int_to_float_coords(xt, yt):
+        x = xt * cell_size - offset_x
+        y = yt * cell_size - offset_y
+        return x, y
+
+    xt1, yt1 = float_to_int_coords(x1, y1)
+    xt2, yt2 = float_to_int_coords(x2, y2)
+
+    points = bresenham_line(xt1, yt1, xt2, yt2)
+
+    return [int_to_float_coords(x, y) for x, y in points]
+
+
+def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get_id=False):
+    """
+    Generator for finding grid centroids coordinates for each schematized line segment.
+    Calculations are done using Bresenham's Line Algorithm.
+    """
+    line_features = lines.getFeatures() if feats_only is False else lines
+    for line in line_features:
+        segment = []
+        try:
+            vertices = line.geometry().asPolyline()
+            iver = iter(vertices)
+            x1, y1 = next(iver)
+            x2, y2 = next(iver)
+            vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)]
+            segment += vals
+            while True:
+                x1, y1 = x2, y2
+                x2, y2 = next(iver)
+                vals = [x for x in snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y)][1:]
+                segment += vals
+        except StopIteration:
+            if get_id is True:
+                yield line.id(), segment
+            else:
+                yield segment
+
+
+def calculate_offset(gutils, cell_size):
+    """
+    Finding offset of grid squares centers which is formed after switching from float to integers.
+    Rounding to integers is needed for Bresenham's Line Algorithm.
+    """
+    geom = gutils.single_centroid('1').strip('POINT()').split()
+    x, y = float(geom[0]), float(geom[1])
+    x_offset = round(x / cell_size) * cell_size - x
+    y_offset = round(y / cell_size) * cell_size - y
+    return x_offset, y_offset
 
 
 def inject_points(line_geom, points):
@@ -544,6 +403,138 @@ def inject_points(line_geom, points):
         return new_line
 
 
+def schematize_channels(gutils, line_layer, cell_size):
+    """
+    Calculating and writing schematized channels into the 'chan' table.
+    """
+    x_offset, y_offset = calculate_offset(gutils, cell_size)
+    segments = schematize_lines(line_layer, cell_size, x_offset, y_offset)
+    del_sql = '''DELETE FROM chan WHERE user_line_fid IS NOT NULL;'''
+    insert_sql = '''INSERT INTO chan (geom, user_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+    gutils.execute(del_sql)
+    cursor = gutils.con.cursor()
+    seen = set()
+    for i, line in enumerate(segments, 1):
+        vertices = ','.join(('{0} {1}'.format(*xy) for xy in line if xy not in seen and not seen.add(xy)))
+        cursor.execute(insert_sql.format(vertices), (i,))
+    gutils.con.commit()
+
+
+# Streets schematizing tools
+def populate_directions(coords, grids):
+    """
+    Function for populating streets directions inside each grid cell.
+    """
+    try:
+        start, end = (0, 0)
+        igrids = iter(grids)
+        x1, y1 = next(igrids)
+        x2, y2 = next(igrids)
+        while True:
+            if x1 == x2 and y1 < y2:
+                start = 1
+                end = 3
+            elif x1 < x2 and y1 == y2:
+                start = 2
+                end = 4
+            elif x1 == x2 and y1 > y2:
+                start = 3
+                end = 1
+            elif x1 > x2 and y1 == y2:
+                start = 4
+                end = 2
+            elif x1 < x2 and y1 < y2:
+                start = 5
+                end = 7
+            elif x1 < x2 and y1 > y2:
+                start = 6
+                end = 8
+            elif x1 > x2 and y1 > y2:
+                start = 7
+                end = 5
+            elif x1 > x2 and y1 < y2:
+                start = 8
+                end = 6
+            else:
+                pass
+            coords[(x1, y1)].add(start)
+            coords[(x2, y2)].add(end)
+            x1, y1 = x2, y2
+            x2, y2 = next(igrids)
+    except StopIteration:
+        return
+
+
+def schematize_streets(gutils, line_layer, cell_size):
+    """
+    Calculating and writing schematized streets into the 'street_seg' table.
+    """
+    streets_sql = '''INSERT INTO streets (fid) VALUES (?);'''
+    seg_sql = '''INSERT INTO street_seg (geom, str_fid) VALUES (AsGPB(ST_GeomFromText('MULTILINESTRING({0})')), ?)'''
+    elems_sql = '''INSERT INTO street_elems (seg_fid, istdir) VALUES (?,?)'''
+    gpb_part = '''({0} {1}, {2} {3})'''
+    half_cell = cell_size * 0.5
+    gutils.clear_tables('streets', 'street_seg', 'street_elems')
+    functions = {
+        1: (lambda x, y, shift: (x, y + shift)),
+        2: (lambda x, y, shift: (x + shift, y)),
+        3: (lambda x, y, shift: (x, y - shift)),
+        4: (lambda x, y, shift: (x - shift, y)),
+        5: (lambda x, y, shift: (x + shift, y + shift)),
+        6: (lambda x, y, shift: (x + shift, y - shift)),
+        7: (lambda x, y, shift: (x - shift, y - shift)),
+        8: (lambda x, y, shift: (x - shift, y + shift))
+    }
+    x_offset, y_offset = calculate_offset(gutils, cell_size)
+    fid_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset, get_id=True)
+    cursor = gutils.con.cursor()
+    fid_coords = {}
+    coords = defaultdict(set)
+    # Populating directions within each grid cell
+    for fid, grids in fid_segments:
+        populate_directions(coords, grids)
+        # Assigning user line fid for each grid centroid coordinates
+        for xy in coords.iterkeys():
+            if xy not in fid_coords:
+                fid_coords[xy] = fid
+            else:
+                continue
+        cursor.execute(streets_sql, (fid,))
+    for i, (xy, directions) in enumerate(coords.iteritems(), 1):
+        x1, y1 = xy
+        xy_dir = []
+        for d in directions:
+            cursor.execute(elems_sql, (i, d))
+            xy_dir.append(functions[d](x1, y1, half_cell))
+        multiline = ','.join((gpb_part.format(x1, y1, x2, y2) for x2, y2 in xy_dir))
+        gpb_insert = seg_sql.format(multiline)
+        cursor.execute(gpb_insert, (fid_coords[xy],))
+    gutils.con.commit()
+    fid_grid = fid_from_grid(gutils, 'street_seg', grid_center=True, switch=True)
+    grid_sql = '''UPDATE street_seg SET igridn = ? WHERE fid = ?;'''
+    gutils.execute_many(grid_sql, fid_grid)
+    update_streets = '''
+    UPDATE streets SET
+        stname = (SELECT name FROM user_streets WHERE fid = streets.fid),
+        notes = (SELECT notes FROM user_streets WHERE fid = streets.fid);'''
+    update_street_seg = '''
+    UPDATE street_seg SET
+        depex = (SELECT curb_height FROM user_streets WHERE fid = street_seg.str_fid),
+        stman = (SELECT n_value FROM user_streets WHERE fid = street_seg.str_fid),
+        elstr = (SELECT elevation FROM user_streets WHERE fid = street_seg.str_fid);'''
+    update_street_elems = '''
+        UPDATE street_elems SET
+            widr = (
+                    SELECT us.street_width
+                    FROM user_streets AS us, street_seg AS seg
+                    WHERE us.fid = seg.str_fid AND street_elems.seg_fid = seg.fid);
+                    '''
+    gutils.execute(update_streets)
+    gutils.execute(update_street_seg)
+    gutils.execute(update_street_elems)
+
+
+# Left bank and cross sections schematizing tools
 def bank_lines(centerline_feature, domain_feature, xs_features):
     """
     Calculating left and right bank lines from intersection of river center line, 1D Domain and cross sections.

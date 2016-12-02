@@ -178,7 +178,10 @@ def evaluate_arfwrf(gutils, grid, areas):
     Calculating and inserting ARF and WRF values into 'blocked_cells' table
     """
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = '''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
+    qry_cells = '''
+    INSERT INTO blocked_cells
+                (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
+                (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_arfwrf(grid, areas):
