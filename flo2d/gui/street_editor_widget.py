@@ -59,6 +59,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.delete_street_btn.clicked.connect(lambda: self.delete_street())
         self.schema_streets.clicked.connect(lambda: self.schematize_street_lines())
         self.change_street_name_btn.clicked.connect(lambda: self.change_street_name())
+        self.street_name_cbo.activated.connect(self.street_changed)
 
     @staticmethod
     def set_icon(btn, icon_file):
