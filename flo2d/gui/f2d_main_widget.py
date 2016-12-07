@@ -10,6 +10,7 @@
 
 from PyQt4.QtCore import QSize
 from .utils import load_ui
+from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
 from street_editor_widget import StreetEditorWidget
 from rain_editor_widget import RainEditorWidget
@@ -34,6 +35,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_bc_editor()
         self.setup_street_editor()
         self.setup_rain_editor()
+        self.setup_xsec_editor()
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -43,6 +45,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         if self._sizehint is not None:
             return self._sizehint
         return super(FLO2DWidget, self).sizeHint()
+
+    def setup_xsec_editor(self):
+        self.xs_editor = XsecEditorWidget(self.iface, self.plot, self.table, self.lyrs)
+        self.xs_editor_lout.addWidget(self.xs_editor)
 
     def setup_bc_editor(self):
         self.bc_editor = BCEditorWidget(self.iface, self.plot, self.table, self.lyrs)

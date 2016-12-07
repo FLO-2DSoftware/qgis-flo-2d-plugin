@@ -366,6 +366,10 @@ class GeoPackageUtils(object):
         qry = '''UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
+    def fill_empty_user_xsec_names(self):
+        qry = '''UPDATE user_xsections SET name = 'Cross-section ' ||  cast(fid as text) WHERE name IS NULL;'''
+        self.execute(qry)
+
     def get_inflow_names(self):
         qry = '''SELECT name FROM inflow WHERE name IS NOT NULL;'''
         rows = self.execute(qry).fetchall()

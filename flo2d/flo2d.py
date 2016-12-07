@@ -321,6 +321,8 @@ class Flo2D(object):
         self.f2d_widget.street_editor.populate_streets()
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
+        self.f2d_widget.xs_editor.setup_connection()
+        self.f2d_widget.xs_editor.populate_xsec_cbo()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""

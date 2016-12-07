@@ -28,6 +28,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.plot = plot
         self.table = table
+        self.tview = table.tview
         self.rain = None
         self.gutils = None
         self.rain_data_model = None
@@ -108,12 +109,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
     def update_plot(self):
         """When time series data for plot change, update the plot"""
-        self.plotWidget.clear()
+        self.plot.clear()
         dm = self.rain_data_model
         x = []
         y = []
         for i in range(dm.rowCount()):
             x.append(float(dm.data(dm.index(i, 0), Qt.DisplayRole)))
             y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
-        self.plotWidget.add_item('org_ts', [x, y])
-        self.plotWidget.add_item('new_ts', [x, y])
+        self.plot.add_item('org_ts', [x, y])
+        self.plot.add_item('new_ts', [x, y])

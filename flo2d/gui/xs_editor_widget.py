@@ -9,80 +9,104 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt, QModelIndex
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
+from PyQt4.QtGui import QStandardItemModel, QStandardItem, QIcon
 from .utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils, connection_required
 from ..flo2dobjects import CrossSection
 from plot_widget import PlotWidget
+import os
 
 uiDialog, qtBaseClass = load_ui('xs_editor')
 
 
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, xsec_fid=None):
+    def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
-        self.con = con
+        self.plot = plot
+        self.table = table
         self.lyrs = lyrs
-        self.xsec_lyr_id = self.lyrs.data['user_xsections']['qlyr'].id()
+        self.user_xs_lyr = lyrs.data['user_xsections']['qlyr']
+        self.con = None
+        self.cur_xs_fid = None
+        # self.xsec_lyr_id = self.lyrs.data['user_xsections']['qlyr'].id()
         self.setupUi(self)
-        self.setup_plot()
-        self.setModal(False)
-        self.cur_xsec_fid = xsec_fid
-        self.gutils = GeoPackageUtils(con, iface)
+        # self.setup_plot()
         self.xs_data_model = None
-        self.populate_seg_cbo(xsec_fid)
-        self.xsecDataTView.horizontalHeader().setStretchLastSection(True)
-
+        self.set_icon(self.digitize_btn, 'mActionCaptureLine.svg')
+        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
+        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        self.set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
+        self.set_icon(self.rename_xs_btn, 'change_name.svg')
         # connections
-        self.segCbo.currentIndexChanged.connect(self.cur_seg_changed)
+        self.digitize_btn.clicked.connect(self.digitize_xsec)
+        self.save_changes_btn.clicked.connect(self.save_user_lyr_edits)
+        self.xs_cbo.currentIndexChanged.connect(self.cur_xsec_changed)
+
+    @staticmethod
+    def set_icon(btn, icon_file):
+        idir = os.path.join(os.path.dirname(__file__), '..\\img')
+        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    def populate_seg_cbo(self, xsec_fid=None):
-        """Read chan table, populate the cbo and set active segment of the
-        current xsection"""
-        self.segCbo.clear()
-        all_seg = self.gutils.execute('SELECT fid FROM chan ORDER BY fid;')
-        for row in all_seg:
-            self.segCbo.addItem(str(row[0]))
-        if xsec_fid:
-            cur_seg = self.gutils.execute('SELECT seg_fid FROM chan_elems WHERE fid = ?;', (xsec_fid,)).fetchone()[0]
-        else:
-            cur_seg = str(self.segCbo.currentText())
-        index = self.segCbo.findText(str(cur_seg), Qt.MatchFixedString)
-        self.segCbo.setCurrentIndex(index)
-        self.populate_xsec_list()
-        self.segCbo.currentIndexChanged.connect(self.populate_xsec_list)
-        self.xsecList.selectionModel().selectionChanged.connect(self.populate_xsec_data)
+    @connection_required
+    def populate_xsec_cbo(self, show_last_edited=False):
+        """populate xsection cbo"""
+        self.xs_cbo.clear()
+        qry = 'SELECT fid, name FROM user_xsections ORDER BY name COLLATE NOCASE;'
+        rows = self.gutils.execute(qry)
+        cur_idx = 0
+        for i, row in enumerate(rows):
+            row = [x if x is not None else '' for x in row]
+            fid, name = row
+            self.xs_cbo.addItem(name, str(fid))
+            if fid == self.cur_xs_fid:
+                cur_idx = i
+        if show_last_edited:
+            cur_idx = i
+        self.xs_cbo.setCurrentIndex(cur_idx)
+        # self.populate_xsec_data()
 
-    def populate_xsec_list(self):
-        """Get chan_elems records of the current segment (chan) and populate
-        the xsection list"""
-        cur_seg = str(self.segCbo.currentText())
-        qry = 'SELECT fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
-        rows = self.gutils.execute(qry, (cur_seg,))
-        position = 0
-        model = QStandardItemModel()
-        for i, f in enumerate(rows):
-            gid = f[0]
-            item = QStandardItem(str(gid))
-            model.appendRow(item)
-            if gid == self.cur_xsec_fid:
-                position = i
-            else:
-                pass
-        self.xsecList.setModel(model)
-        index = self.xsecList.model().index(position, 0, QModelIndex())
-        self.xsecList.selectionModel().select(index, self.xsecList.selectionModel().Select)
-        self.xsecList.scrollTo(index)
-        self.xsecList.selectionModel().selectionChanged.connect(self.populate_xsec_data)
-        self.populate_xsec_data()
+    @connection_required
+    def digitize_xsec(self, i):
+        if not self.lyrs.enter_edit_mode('user_xsections'):
+            return
+        self.enable_widgets(False)
 
+    def enable_widgets(self, enable=True):
+        self.xs_cbo.setEnabled(enable)
+        self.rename_xs_btn.setEnabled(enable)
+        self.xs_type_cbo.setEnabled(enable)
+        self.xs_center_chbox.setEnabled(enable)
+        self.n_sbox.setEnabled(enable)
+
+    @connection_required
+    def save_user_lyr_edits(self, i):
+        if not self.gutils or not self.lyrs.any_lyr_in_edit('user_xsections'):
+            return
+        # try to save user bc layers (geometry additions/changes)
+        user_lyr_edited = self.lyrs.save_lyrs_edits('user_xsections')
+        # if user bc layers were edited
+        if user_lyr_edited:
+            self.gutils.fill_empty_user_xsec_names()
+            self.populate_xsec_cbo(show_last_edited=True)
+        self.enable_widgets()
+
+    @connection_required
     def populate_xsec_data(self):
         """Get current xsection data and populate all relevant fields of the
         dialog and create xsection plot"""
@@ -133,13 +157,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
+    @connection_required
     def apply_new_xsec_data(self):
         """Get xsection data and save them in gpkg"""
 
+    @connection_required
     def revert_xsec_data_changes(self):
         """Revert any xsection data changes made by users (load original
         xsection data from tables)"""
 
+    @connection_required
     def update_plot(self):
         """When xsection data for plot change, update the plot"""
         self.plotWidget.clear()
@@ -152,13 +179,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plotWidget.add_new_bed_plot([x, y])
         self.plotWidget.add_org_bed_plot([x, y])
 
-    def cur_seg_changed(self):
-        """User changed current segment. Update xsection list and populate xsection
-        data fields and plot for the first xsection for that segment"""
-        #print self.segCbo.currentIndex()
-        pass
-
-    def cur_xsec_changed(self):
+    @connection_required
+    def cur_xsec_changed(self, i):
         """User changed current xsection in the xsections list. Populate xsection
         data fields and update the plot"""
         pass
