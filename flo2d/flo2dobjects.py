@@ -68,6 +68,50 @@ class CrossSection(GeoPackageUtils):
         return self.xsec
 
 
+class UserCrossSection(GeoPackageUtils):
+    """Cross section object representation."""
+    columns = ['fid', 'fcn', 'type', 'name', 'user_xs_fid', 'interpolated']
+
+    def __init__(self, fid, con, iface):
+        super(UserCrossSection, self).__init__(con, iface)
+        self.row = None
+        self.fid = fid
+        self.fcn = None
+        self.type = None
+        self.chan_tab = None
+        self.xsec = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM chan_elems WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.type = self.row['type']
+        return self.row
+
+    def get_chan_x_row(self):
+        if self.row is not None:
+            pass
+        else:
+            return
+        tables = {'N': 'user_chan_n', 'R': 'user_chan_r', 'T': 'user_chan_t', 'V': 'user_chan_v'}
+        tab = tables[self.type]
+        args = self.table_info(tab, only_columns=True)
+        qry = 'SELECT * FROM {0} WHERE user_xs_fid = ?;'.format(tab)
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.chan_tab = OrderedDict(zip(args, values))
+        return self.chan_tab
+
+    def get_chan_n_data(self):
+        if self.row is not None and self.type == 'N':
+            pass
+        else:
+            return None
+        nxsecnum = self.chan_tab['nxsecnum']
+        qry = 'SELECT xi, yi FROM user_xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'
+        self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
+        return self.xsec
+
+
 class Inflow(GeoPackageUtils):
     """Inflow object representation."""
     columns = ['fid', 'name', 'time_series_fid', 'ident', 'inoutfc', 'note', 'geom_type', 'bc_fid']

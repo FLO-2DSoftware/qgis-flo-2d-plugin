@@ -15,18 +15,18 @@ from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import CrossSection
 from plot_widget import PlotWidget
 
-uiDialog, qtBaseClass = load_ui('xsec_editor')
+uiDialog, qtBaseClass = load_ui('xs_editor')
 
 
-class XsecEditorDialog(qtBaseClass, uiDialog):
+class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs, xsec_fid=None):
-        qtBaseClass.__init__(self, None, Qt.WindowStaysOnTopHint)
+        qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.con = con
         self.lyrs = lyrs
-        self.xsec_lyr_id = self.lyrs.get_layer_by_name('Cross sections', lyrs.group).layer().id()
+        self.xsec_lyr_id = self.lyrs.data['user_xsections']['qlyr'].id()
         self.setupUi(self)
         self.setup_plot()
         self.setModal(False)

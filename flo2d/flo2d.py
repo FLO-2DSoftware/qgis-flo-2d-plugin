@@ -28,13 +28,12 @@ from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
 
-from .gui.dlg_xsec_editor import XsecEditorDialog
+from .gui.xs_editor_widget import XsecEditorWidget
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.dlg_inflow_editor import InflowEditorDialog
-from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
@@ -314,9 +313,14 @@ class Flo2D(object):
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-            self.f2d_widget.bc_editor.populate_bcs()
-            self.f2d_widget.street_editor.setup_connection()
-            self.f2d_widget.street_editor.populate_streets()
+            self.setup_dock_widgets()
+
+    def setup_dock_widgets(self):
+        self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.street_editor.setup_connection()
+        self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.rain_editor.setup_connection()
+        self.f2d_widget.rain_editor.rain_properties()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
@@ -644,8 +648,11 @@ class Flo2D(object):
     @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.xs_editor_grp.setCollapsed(False)
+        self.f2d_widget.xs_editor.show_editor(self.cur_info_table, fid)
         try:
-            self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
+            self.dlg_xsec_editor = XsecEditorWidget(self.con, self.iface, self.lyrs, fid)
             self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
             self.dlg_xsec_editor.show()
         except IndexError:

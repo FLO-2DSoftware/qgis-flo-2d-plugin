@@ -11,72 +11,92 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QStandardItemModel, QStandardItem
 from .utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
+from ..utils import is_number
+from ..geopackage_utils import GeoPackageUtils, connection_required
 from ..flo2dobjects import Rain
 from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('rain_editor')
 
 
-class RainEditorDialog(qtBaseClass, uiDialog):
+class RainEditorWidget(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, parent=None):
+    def __init__(self, iface, plot, table):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.iface = iface
-        self.con = con
         self.setupUi(self)
-        self.setup_plot()
-        self.setModal(False)
-        self.rain = Rain(con, iface)
-        self.gutils = GeoPackageUtils(con, iface)
+        self.plot = plot
+        self.table = table
+        self.rain = None
+        self.gutils = None
         self.rain_data_model = None
-        self.rain_properties()
-        self.tseriesDataTView.horizontalHeader().setStretchLastSection(True)
+        # self.rain_properties()
+        # self.tview.horizontalHeader().setStretchLastSection(True)
 
         # connections
-        self.tseriesCbo.currentIndexChanged.connect(self.populate_tseries_data)
+        self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            qry = '''SELECT value FROM cont WHERE name = 'IRAIN';'''
+            row = self.gutils.execute(qry).fetchone()
+            if is_number(row[0]) and not row[0] == '0':
+                self.rain = Rain(self.con, self.iface)
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
+    @connection_required
     def rain_properties(self):
+        if not self.rain:
+            return
         row = self.rain.get_row()
-
-        self.realTimeChBox.setChecked(row['irainreal'])
-        self.buildingChBox.setChecked(row['irainbuilding'])
-        self.movingStormChBox.setChecked(row['movingstrom'])
-        self.totalRainfallEdit.setText(str(row['tot_rainfall']))
-        self.rainfallAbstcEdit.setText(str(row['rainabs']))
+        self.real_time_chbox.setChecked(row['irainreal'])
+        self.building_chbox.setChecked(row['irainbuilding'])
+        self.moving_storm_chbox.setChecked(row['movingstrom'])
+        if is_number(row['tot_rainfall']):
+            self.total_rainfall_sbox.setValue(float((row['tot_rainfall'])))
+        else:
+            self.total_rainfall_sbox.setValue(0)
+        if is_number(row['rainabs']):
+            self.rainfall_abst_sbox.setValue(float(row['rainabs']))
+        else:
+            self.rainfall_abst_sbox.setValue(0)
         fid_name = '{} {}'
         for row in self.rain.get_time_series():
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
             series_name = fid_name.format(ts_fid, name).strip()
-            self.tseriesCbo.addItem(series_name)
-        self.tseriesCbo.setCurrentIndex(0)
+            self.tseries_cbo.addItem(series_name)
+        self.tseries_cbo.setCurrentIndex(0)
         self.populate_tseries_data()
 
     def populate_tseries_data(self):
         """Get current time series data, populate data table and create plot"""
         try:
-            fid = self.tseriesCbo.currentText().split()[0]
+            fid = self.tseries_cbo.currentText().split()[0]
         except IndexError as e:
-            fid = self.tseriesCbo.currentText()
+            fid = self.tseries_cbo.currentText()
         self.rain.series_fid = fid
         series_data = self.rain.get_time_series_data()
         model = QStandardItemModel()
         for row in series_data:
             items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
             model.appendRow(items)
-        self.tseriesDataTView.setModel(model)
-        self.tseriesDataTView.resizeColumnsToContents()
+        self.tview.setModel(model)
+        self.tview.resizeColumnsToContents()
         self.rain_data_model = model
         for i in range(len(series_data)):
-            self.tseriesDataTView.setRowHeight(i, 18)
+            self.tview.setRowHeight(i, 18)
         for i in range(3):
-            self.tseriesDataTView.setColumnWidth(i, 80)
+            self.tview.setColumnWidth(i, 80)
         self.update_plot()
 
     def save_tseries_data(self):

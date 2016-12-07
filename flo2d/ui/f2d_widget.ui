@@ -33,8 +33,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>428</width>
-        <height>387</height>
+        <width>426</width>
+        <height>385</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -78,58 +78,44 @@
         </widget>
        </item>
        <item>
-        <widget class="QgsCollapsibleGroupBox" name="mGroupBox_2">
+        <widget class="QgsCollapsibleGroupBox" name="ic_editor_grp">
          <property name="title">
           <string>Initial Condition Editor</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="margin">
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="ic_editor_lout">
             <property name="bottomMargin">
              <number>0</number>
             </property>
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>To be done...</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </item>
          </layout>
         </widget>
        </item>
        <item>
-        <widget class="QgsCollapsibleGroupBox" name="mGroupBox">
+        <widget class="QgsCollapsibleGroupBox" name="xs_editor_grp">
          <property name="title">
           <string>Cross-section Editor</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <property name="margin">
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="verticalLayout_2">
+           <layout class="QVBoxLayout" name="xs_editor_lout">
             <property name="bottomMargin">
              <number>0</number>
             </property>
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>To be done...</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </item>
          </layout>
@@ -141,8 +127,47 @@
           <string>Street Editor</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_4">
+          <property name="margin">
+           <number>6</number>
+          </property>
           <item row="0" column="0">
            <layout class="QHBoxLayout" name="street_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QgsCollapsibleGroupBox" name="rain_editor_grp">
+         <property name="title">
+          <string>Rain Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <property name="margin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="rain_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QgsCollapsibleGroupBox" name="evap_editor_grp">
+         <property name="title">
+          <string>Evaporation Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <property name="margin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="evap_editor_lout"/>
           </item>
          </layout>
         </widget>

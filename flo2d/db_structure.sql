@@ -1732,16 +1732,82 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerli
 SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
 
+-- USER XSECTIONS
+
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "fcn" REAL, -- FCN, average Manning's n in the grid element
     "type" TEXT, -- SHAPE, type of cross-section shape definition
+    "name" TEXT,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsections', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TABLE "user_chan_r" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL -- channel channel thalweg depth (deepest part measured from the lowest bank)
+
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_r', 'aspatial');
+
+CREATE TABLE "user_chan_v" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "a1" REAL, -- A1,
+    "a2" REAL, -- A2,
+    "b1" REAL, -- B1,
+    "b2" REAL, -- B2,
+    "c1" REAL, -- C1,
+    "c2" REAL, -- C2,
+    "excdep" REAL, -- EXCDEP, channel depth above which second variable area relationship will be applied
+    "a11" REAL, -- A11,
+    "a22" REAL, -- A22,
+    "b11" REAL, -- B11,
+    "b22" REAL, -- B22,
+    "c11" REAL, -- C11,
+    "c22" REAL -- C22,
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_v', 'aspatial');
+
+CREATE TABLE "user_chan_t" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "zl" REAL, -- ZL left side slope
+    "zr" REAL --ZR right side slope
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_t', 'aspatial');
+
+CREATE TABLE "user_chan_n" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "nxsecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "xsecname" TEXT -- xsection name
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_n', 'aspatial');
+
+CREATE TABLE "user_xsec_n_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "chan_n_nxsecnum" INTEGER, -- NXSECNUM, fid of cross-section in chan_n
+    "xi" REAL, -- XI, station - distance from left point
+    "yi" REAL -- YI, elevation
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_xsec_n_data', 'aspatial');
+
+-- USER LEVEES
 
 CREATE TABLE "user_levee_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
