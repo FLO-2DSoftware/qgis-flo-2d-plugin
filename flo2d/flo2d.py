@@ -687,7 +687,7 @@ class Flo2D(object):
     def show_profile(self, fid=None):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
-        #self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
+        self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required
