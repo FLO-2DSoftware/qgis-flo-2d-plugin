@@ -29,7 +29,7 @@ PRAGMA journal_mode=MEMORY;
 
 CREATE TABLE cont (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
     "value" TEXT,
     "note" TEXT
 );
@@ -1748,7 +1748,7 @@ SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 
 CREATE TABLE "user_chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
     "fcw" REAL, -- FCW, channel width
@@ -1759,7 +1759,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_r', 'aspati
 
 CREATE TABLE "user_chan_v" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
     "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
@@ -1781,7 +1781,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_v', 'aspati
 
 CREATE TABLE "user_chan_t" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
     "bankell" REAL, -- BANKELL, left bank elevation
     "bankelr" REAL, -- BANKELR, right bank elevation
     "fcw" REAL, -- FCW, channel width
@@ -1793,7 +1793,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_t', 'aspati
 
 CREATE TABLE "user_chan_n" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "user_xs_fid" INTEGER, -- fid of the user cross-section
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
     "nxsecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
     "xsecname" TEXT -- xsection name
 );

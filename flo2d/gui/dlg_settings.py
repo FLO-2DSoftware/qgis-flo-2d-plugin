@@ -214,7 +214,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
     def write(self):
         for name, wid in self.widget_map.iteritems():
             ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
-            updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
+            # updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
@@ -230,7 +230,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
             self.gutils.execute(ins_qry, (name, value))
             # in case the name exists in the table, update its value
-            self.gutils.execute(updt_qry, (value, name))
+            # self.gutils.execute(updt_qry, (value, name))
 
     def select_all_modules(self):
         for cbx in self.modulesGrp.findChildren(QCheckBox):

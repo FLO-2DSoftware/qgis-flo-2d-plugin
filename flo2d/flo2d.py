@@ -87,11 +87,10 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
-
         self.dlg_inflow_editor = None
-
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
+        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API."""

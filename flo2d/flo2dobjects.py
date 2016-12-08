@@ -10,6 +10,7 @@
 
 from collections import OrderedDict
 from flo2dgeopackage import GeoPackageUtils
+from math import isnan
 
 
 class CrossSection(GeoPackageUtils):
@@ -70,7 +71,7 @@ class CrossSection(GeoPackageUtils):
 
 class UserCrossSection(GeoPackageUtils):
     """Cross section object representation."""
-    columns = ['fid', 'fcn', 'type', 'name', 'user_xs_fid', 'interpolated']
+    columns = ['fid', 'fcn', 'type', 'name', 'notes']
 
     def __init__(self, fid, con, iface):
         super(UserCrossSection, self).__init__(con, iface)
@@ -78,38 +79,100 @@ class UserCrossSection(GeoPackageUtils):
         self.fid = fid
         self.fcn = None
         self.type = None
-        self.chan_tab = None
+        self.name = None
+        self.chan_x_row = None
         self.xsec = None
+        self.chan_x_tabs = {'N': 'user_chan_n', 'R': 'user_chan_r', 'T': 'user_chan_t', 'V': 'user_chan_v'}
 
     def get_row(self):
-        qry = 'SELECT * FROM chan_elems WHERE fid = ?;'
+        qry = 'SELECT * FROM user_xsections WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
         self.type = self.row['type']
+        self.name = self.row['name']
         return self.row
 
     def get_chan_x_row(self):
+        # print 'in get_chan_x_row'
         if self.row is not None:
             pass
         else:
             return
-        tables = {'N': 'user_chan_n', 'R': 'user_chan_r', 'T': 'user_chan_t', 'V': 'user_chan_v'}
-        tab = tables[self.type]
-        args = self.table_info(tab, only_columns=True)
+        tab = self.chan_x_tabs[self.type]
         qry = 'SELECT * FROM {0} WHERE user_xs_fid = ?;'.format(tab)
-        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.chan_tab = OrderedDict(zip(args, values))
-        return self.chan_tab
+        chan_row = self.execute(qry, (self.fid,)).fetchone()
+        if not chan_row:
+            # create new row
+            chan_row = self.add_chan_x_row(fetch=True)
+        values = [x if x is not None else '' for x in chan_row]
+        args = self.table_info(tab, only_columns=True)
+        self.chan_x_row = OrderedDict(zip(args, values))
+        return self.chan_x_row
 
-    def get_chan_n_data(self):
+    def add_chan_x_row(self, fetch=False):
+        # add a new row in user_chan_(x) tables
+        tab = self.chan_x_tabs[self.type]
+        qry = 'INSERT INTO {0} (user_xs_fid) VALUES (?);'.format(tab)
+        self.execute(qry, (self.fid,))
+        if fetch:
+            qry = 'SELECT * FROM {0} WHERE user_xs_fid = ?;'.format(tab)
+            return self.execute(qry, (self.fid,)).fetchone()
+
+    def get_chan_natural_data(self):
         if self.row is not None and self.type == 'N':
             pass
         else:
             return None
-        nxsecnum = self.chan_tab['nxsecnum']
-        qry = 'SELECT xi, yi FROM user_xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'
-        self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
-        return self.xsec
+        qry = 'SELECT xi, yi FROM user_xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY xi;'
+        self.xiyi = self.execute(qry, (self.fid,)).fetchall()
+        if not self.xiyi:
+            self.xiyi = self.add_chan_natural_data(fetch=True)
+        return self.xiyi
+
+    def add_chan_natural_data(self, fetch=False):
+        qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi)
+                VALUES ({0}, 0, 1), ({0}, 1, 0), ({0}, 2, 1)'''.format(self.fid)
+        self.execute(qry)
+        if fetch:
+            qry = 'SELECT xi, yi FROM user_xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY xi;'
+            self.xiyi = self.execute(qry, (self.fid,)).fetchall()
+            return self.xiyi
+
+    def set_chan_data(self, data):
+        table = self.chan_x_tabs[self.type]
+        # qry = '''DELETE FROM {0} WHERE user_xs_fid = ?'''.format(table)
+        # self.execute(qry, (self.fid,))
+        cols = list(self.table_info(table, only_columns=True))[1:]
+        cols_t = ', '.join([c for c in cols])
+        vals = []
+        for v in data:
+            if not isnan(v):
+                vals.append(v)
+            else:
+                vals.append('NULL')
+        vals_t = ', '.join([str(v) for v in vals])
+        qry = '''INSERT INTO {0} ({1}) VALUES ({2}, {3});'''.format(table, cols_t, self.fid, vals_t)
+        self.execute(qry)
+
+    def set_chan_natural_data(self, data):
+        qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum = ?'''
+        self.execute(qry, (self.fid, ))
+        qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);'''
+        self.execute_many(qry, data)
+
+    def set_type(self, typ):
+        qry = '''UPDATE user_xsections SET type = ? WHERE fid = ?;'''
+        self.execute(qry, (typ, self.fid,))
+
+    def set_n(self, n):
+        qry = '''UPDATE user_xsections SET fcn = ? WHERE fid = ?;'''
+        self.execute(qry, (n, self.fid,))
+
+    def set_name(self, name=None):
+        if not name:
+            name = self.name
+        qry = '''UPDATE user_xsections SET name = ? WHERE fid = ?;'''
+        self.execute(qry, (name, self.fid,))
 
 
 class Inflow(GeoPackageUtils):
@@ -629,7 +692,10 @@ class Rain(GeoPackageUtils):
 
     def get_row(self):
         qry = 'SELECT * FROM rain;'
-        values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
+        data = self.execute(qry).fetchone()
+        if not data:
+            return
+        values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))
         self.series_fid = self.row['time_series_fid']
         return self.row
