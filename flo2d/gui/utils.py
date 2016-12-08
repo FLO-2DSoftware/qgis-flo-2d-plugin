@@ -37,9 +37,9 @@ def center_canvas(iface, x, y):
     mc.setExtent(rect)
     mc.refresh()
 
+
 def try_disconnect(signal, met):
     try:
         signal.disconnect(met)
     except TypeError:
-        # print 'signal not connected'
         pass

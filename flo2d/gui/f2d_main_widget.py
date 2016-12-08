@@ -14,6 +14,7 @@ from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
 from street_editor_widget import StreetEditorWidget
 from rain_editor_widget import RainEditorWidget
+from profile_tool import ProfileTool
 from ..user_communication import UserCommunication
 
 
@@ -36,6 +37,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_street_editor()
         self.setup_rain_editor()
         self.setup_xsec_editor()
+        self.setup_profile_tool()
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -61,3 +63,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_street_editor(self):
         self.street_editor = StreetEditorWidget(self.iface, self.lyrs)
         self.street_editor_lout.addWidget(self.street_editor)
+
+    def setup_profile_tool(self):
+        self.profile_tool = ProfileTool(self.iface, self.plot, self.table, self.lyrs)
+        self.profile_tool_lout.addWidget(self.profile_tool)

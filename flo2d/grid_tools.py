@@ -193,7 +193,7 @@ def evaluate_arfwrf(gutils, grid, areas):
 
 def raster2grid(grid, out_raster):
     """
-    Generator for resampling and probing raster data within 'grid' features
+    Generator for probing raster data within 'grid' features
     """
     probe_raster = QgsRasterLayer(out_raster)
     if not probe_raster.isValid():

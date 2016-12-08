@@ -267,7 +267,6 @@ class Inflow(GeoPackageUtils):
             return self.get_time_series_data()
 
     def get_time_series_data(self):
-        # print 'in get_time_series_data for fid', self.time_series_fid
         if not self.time_series_fid:
             return
         qry = 'SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY time;'
@@ -361,7 +360,6 @@ class Outflow(GeoPackageUtils):
         return self.row
 
     def set_row(self):
-        # print 'in set_row for fid', self.fid
         data = (
             self.name,
             self.chan_out,
@@ -374,18 +372,6 @@ class Outflow(GeoPackageUtils):
             self.typ,
             self.fid
         )
-        qry_prn = '''UPDATE outflow
-                    SET name={},
-                    chan_out={},
-                    fp_out={},
-                    hydro_out={},
-                    chan_tser_fid={},
-                    chan_qhpar_fid={},
-                    chan_qhtab_fid={},
-                    fp_tser_fid={},
-                    type={}
-                WHERE fid={};'''.format(*data)
-        # print qry_prn
         qry = '''UPDATE outflow
                     SET name=?,
                     chan_out=?,
@@ -495,7 +481,6 @@ class Outflow(GeoPackageUtils):
     def get_data_fid_name(self):
         """Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
         This could be time series, Qh Table or Qh Parameters."""
-        # print 'in get_data_fid_name for typ', self.typ
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
         elif self.typ in [9, 10]:
@@ -507,6 +492,7 @@ class Outflow(GeoPackageUtils):
 
     def add_data(self, name=None):
         """Add a new data to current outflow type data table (time series, qh params or qh table)"""
+        data = None
         if self.typ in [5, 6, 7, 8]:
             data = self.add_time_series(name)
         elif self.typ in [9, 10]:
@@ -617,7 +603,6 @@ class Outflow(GeoPackageUtils):
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
         """Add new rows to outflow_time_series_data for a given ts_fid"""
-        # print 'in add_time_series_data'
         qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -655,9 +640,7 @@ class Outflow(GeoPackageUtils):
 
     def get_data(self):
         """Get data for current type and data_fid of the outflow"""
-        # print 'in get_data, typ=', self.typ
         if self.typ in [5, 6, 7, 8]:
-            # print 'getting time series...'
             return self.get_time_series_data()
         elif self.typ in [9, 10]:
             return self.get_qh_params_data()
@@ -668,7 +651,6 @@ class Outflow(GeoPackageUtils):
 
     def get_new_data_name(self, fid):
         if self.typ in [5, 6, 7, 8]:
-            # print 'getting time series...'
             return 'Time series {}'.format(fid)
         elif self.typ in [9, 10]:
             return 'Q(h) parameters {}'.format(fid)
