@@ -131,7 +131,7 @@ class TestOutflow(unittest.TestCase):
     def test_get_qh_tables(self):
         self.outflow.get_row()
         qht = self.outflow.get_qh_tables()
-        self.assertListEqual(qht, [(1, None)])
+        self.assertListEqual(qht, [(1, u'Q(h) table 1')])
 
     def test_get_data_fid_name(self):
         self.outflow.get_row()

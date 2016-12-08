@@ -16,7 +16,7 @@ import time
 import traceback
 
 from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices, QVBoxLayout
+from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 from qgis.core import QgsProject
 from layers import Layers
@@ -194,11 +194,11 @@ class Flo2D(object):
             callback=lambda: self.show_xsec_editor(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
-            text=self.tr(u'Rain Editor'),
-            callback=lambda: self.show_rain_editor(),
-            parent=self.iface.mainWindow())
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
+        #     text=self.tr(u'Rain Editor'),
+        #     callback=lambda: self.show_rain_editor(),
+        #     parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
@@ -322,6 +322,7 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
+        #self.f2d_widget.profile_tool.setup_connection()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
@@ -647,6 +648,13 @@ class Flo2D(object):
             self.uc.bar_warn('There is no grid layer to identify.')
 
     @connection_required
+    def show_profile(self, fid=None):
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.profile_tool_grp.setCollapsed(False)
+        #self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
         self.f2d_dock.setUserVisible(True)
@@ -682,15 +690,6 @@ class Flo2D(object):
             self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
         self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
         self.dlg_outflow_editor.show()
-
-    @connection_required
-    def show_rain_editor(self):
-        """Show rain editor"""
-        try:
-            self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
-            self.dlg_rain_editor.show()
-        except TypeError:
-            self.uc.bar_warn('There is no rain data to display!')
 
     @connection_required
     def show_evap_editor(self):
@@ -802,6 +801,9 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            'user_levee_lines': self.show_profile,
+            'user_streets': self.show_profile,
+            'user_centerline': self.show_profile,
             'chan_elems': self.show_xsec_editor,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,

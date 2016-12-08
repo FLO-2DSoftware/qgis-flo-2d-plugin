@@ -227,6 +227,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_n">
+       <property name="decimals">
+        <number>3</number>
+       </property>
        <property name="minimum">
         <double>0.000000000000000</double>
        </property>
@@ -250,6 +253,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_e">
+       <property name="decimals">
+        <number>3</number>
+       </property>
        <property name="maximum">
         <double>30.000000000000000</double>
        </property>
@@ -277,6 +283,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_h">
+       <property name="decimals">
+        <number>3</number>
+       </property>
        <property name="minimum">
         <double>0.000000000000000</double>
        </property>
@@ -300,6 +309,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_w">
+       <property name="decimals">
+        <number>3</number>
+       </property>
        <property name="maximum">
         <double>300.000000000000000</double>
        </property>

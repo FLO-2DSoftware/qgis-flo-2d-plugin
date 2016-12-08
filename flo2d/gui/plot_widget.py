@@ -55,7 +55,7 @@ class PlotWidget(QWidget):
 
     def update_item(self, name, data):
         x, y = data
-        self.items[name].setData(x,y)
+        self.items[name].setData(x, y)
 
     def remove_item(self, name):
         self.plot.removeItem(self.items[name])
