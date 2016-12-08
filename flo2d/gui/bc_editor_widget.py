@@ -46,7 +46,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.twidget = table
         self.bc_data_model = StandardItemModel()
-        self.bc_tview.setModel(self.bc_data_model)
 
         self.inflow_frame.setDisabled(True)
         self.outflow_frame.setDisabled(True)
@@ -54,6 +53,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.user_change = False
         # inflow plot data variables
         self.t, self.d, self.m = [[], [], []]
+        self.ot, self.od, self.om = [[], [], []]
         # outflow plot data variables
         self.d1, self.d2 = [[], []]
         # set button icons
@@ -347,8 +347,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """Get current time series data, populate data table and create plot"""
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
-        self.plot.clear()
+        self.create_inflow_plot()
         self.bc_tview.undoStack.clear()
+        self.bc_tview.setModel(self.bc_data_model)
         self.inflow.time_series_fid = cur_ts_fid
         self.infow_tseries_data = self.inflow.get_time_series_data()
         self.bc_data_model.clear()
@@ -415,6 +416,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def create_inflow_plot(self):
         """Create initial plot"""
+        self.plot.clear()
         self.plot.add_item('Original Discharge', [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
         self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
         self.plot.add_item('Original Mud', [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
@@ -620,6 +622,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         data_idx = self.outflow_data_cbo.currentIndex()
         data_fid = self.outflow_data_cbo.itemData(data_idx)
         self.outflow.set_new_data_fid(data_fid)
+        self.create_outflow_plot()
+        self.bc_tview.undoStack.clear()
+        self.bc_tview.setModel(self.bc_data_model)
         head = self.outflow_tab_head
         series_data = self.outflow.get_data()
         self.d1, self.d2 = [[], []]
@@ -919,6 +924,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.repaint_bcs()
 
     def populate_bcs(self, bc_fid=None, show_last_edited=False):
+        self.bc_tview.setModel(self.bc_data_model)
         self.lyrs.clear_rubber()
         if self.bc_type_inflow_radio.isChecked():
             self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited)

@@ -235,8 +235,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.xs_type_cbo.currentText() == 'Natural':
             self.create_plot()
             self.update_plot()
-        else:
-            pass
 
     @connection_required
     def cur_xsec_type_changed(self, idx):

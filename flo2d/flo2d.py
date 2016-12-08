@@ -230,6 +230,11 @@ class Flo2D(object):
         self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot, self.f2d_table)
         self.f2d_widget.setSizeHint(350, 600)
         self.f2d_dock.setWidget(self.f2d_widget)
+        self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
+
+    def f2d_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('dock/area', area)
 
     def create_f2d_plot_dock(self):
         self.f2d_plot_dock = QgsDockWidget()
@@ -237,6 +242,11 @@ class Flo2D(object):
         self.f2d_plot = PlotWidget()
         self.f2d_plot.setSizeHint(350, 400)
         self.f2d_plot_dock.setWidget(self.f2d_plot)
+        self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
+
+    def f2d_plot_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('plot_dock/area', area)
 
     def create_f2d_table_dock(self):
         self.f2d_table_dock = QgsDockWidget()
@@ -244,6 +254,11 @@ class Flo2D(object):
         self.f2d_table = TableEditorWidget(self.iface, self.f2d_plot, self.lyrs)
         self.f2d_table.setSizeHint(350, 200)
         self.f2d_table_dock.setWidget(self.f2d_table)
+        self.f2d_table_dock.dockLocationChanged.connect(self.f2d_table_dock_save_area)
+
+    def f2d_table_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('table_dock/area', area)
 
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
@@ -251,12 +266,22 @@ class Flo2D(object):
         self.f2d_grid_info = GridInfoWidget(self.iface, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
+        self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
+
+    def f2d_grid_info_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('grid_info_dock/area', area)
 
     def add_docks_to_iface(self):
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_grid_info_dock)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_table_dock)
-        self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+        s = QSettings('FLO2D')
+        ma = s.value('dock/area', Qt.RightDockWidgetArea)
+        ta = s.value('table_dock/area', Qt.RightDockWidgetArea)
+        pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea)
+        ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea)
+        self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+        self.iface.addDockWidget(ma, self.f2d_dock)
+        self.iface.addDockWidget(ta, self.f2d_table_dock)
+        self.iface.addDockWidget(pa, self.f2d_plot_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -273,6 +298,7 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove dialogs
         if self.f2d_table_dock is not None:
+            # self.save_dock_geom(self.f2d_dock)
             self.f2d_table_dock.close()
             self.iface.removeDockWidget(self.f2d_table_dock)
         if self.f2d_plot_dock is not None:
@@ -290,6 +316,16 @@ class Flo2D(object):
         # remove the toolbar
         del self.toolbar
         del self.con, self.gutils, self.lyrs
+
+    def save_dock_geom(self, dock):
+        s = QSettings('FLO2D', dock.windowTitle())
+        s.setValue('geometry', dock.saveGeometry())
+
+    def restore_dock_geom(self, dock):
+        s = QSettings('FLO2D', dock.windowTitle())
+        g = s.value('geometry')
+        if g:
+            dock.restoreGeometry(g)
 
     def write_proj_entry(self, key, val):
         return self.project.writeEntry('FLO-2D', key, val)
