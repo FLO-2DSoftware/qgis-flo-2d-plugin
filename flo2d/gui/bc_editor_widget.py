@@ -64,9 +64,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         self.set_icon(self.delete_bc_btn, 'mActionDeleteSelected.svg')
         self.set_icon(self.add_data_btn, 'add_bc_data.svg')
+        self.set_icon(self.schem_bc_btn, 'schematize_bc.svg')
         self.set_icon(self.change_bc_name_btn, 'change_name.svg')
         self.set_icon(self.change_inflow_data_name_btn, 'change_name.svg')
         self.set_icon(self.change_outflow_data_name_btn, 'change_name.svg')
+
         # connections
         self.create_point_bc_btn.clicked.connect(self.create_point_bc)
         self.create_line_bc_btn.clicked.connect(self.create_line_bc)
@@ -76,6 +78,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.save_changes_btn.clicked.connect(self.save_bc_lyrs_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_bc_lyrs_edits)
         self.add_data_btn.clicked.connect(self.add_data)
+        self.schem_bc_btn.clicked.connect(self.schematize_bc)
 
         self.bc_name_cbo.activated.connect(self.inflow_changed)
         self.bc_type_inflow_radio.clicked.connect(self.change_bc_type)
@@ -110,6 +113,19 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
             self.bc_tview.undoStack.push(command)
             return True
+
+    def schematize_bc(self):
+        qry = 'SELECT * FROM all_schem_bc;'
+        exist_bc = self.gutils.execute(qry).fetchone()
+        if exist_bc:
+            if not self.uc.question('There are some inflow grid cells defined already. Overwrite them?'):
+                return
+        self.schematize_inflows()
+        self.schematize_outflows()
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data['all_schem_bc']['qlyr']
+        ]
+        self.lyrs.repaint_layers()
 
     def set_combos(self):
         sp = QSizePolicy()
@@ -244,7 +260,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows:
-            self.uc.bar_info('There is no inflow defined in the database...')
+            # self.uc.bar_info('There is no inflow defined in the database...')
             self.change_bc_name_btn.setDisabled(True)
             return
         else:
@@ -411,6 +427,19 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         data_name = self.inflow_tseries_cbo.currentText()
         self.inflow.set_time_series_data(data_name, ts_data)
 
+    def schematize_inflows(self):
+        del_qry = 'DELETE FROM inflow_cells;'
+        ins_qry = '''INSERT INTO inflow_cells (inflow_fid, grid_fid)
+            SELECT
+                abc.bc_fid, g.fid
+            FROM
+                grid AS g, all_user_bc AS abc
+            WHERE
+                abc.type = 'inflow' AND
+                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
+        self.gutils.execute(del_qry)
+        self.gutils.execute(ins_qry)
+
     def show_inflow_rb(self):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
 
@@ -478,7 +507,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows:
-            self.uc.bar_info('There is no outflow defined in the database...')
+            # self.uc.bar_info('There is no outflow defined in the database...')
             self.change_bc_name_btn.setDisabled(True)
             return
         else:
@@ -715,9 +744,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         data_name = self.outflow_data_cbo.currentText()
         self.outflow.set_data(data_name, data)
 
-    def revert_outflow_changes(self):
-        """Revert any data changes made by users (load original data from tables)"""
-        self.populate_outflows(self.outflow.fid)
+    def schematize_outflows(self):
+        del_qry = 'DELETE FROM outflow_cells;'
+        ins_qry = '''INSERT INTO outflow_cells (outflow_fid, grid_fid)
+            SELECT
+                abc.bc_fid, g.fid
+            FROM
+                grid AS g, all_user_bc AS abc
+            WHERE
+                abc.type = 'outflow' AND
+                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
+        self.gutils.execute(del_qry)
+        self.gutils.execute(ins_qry)
 
     def define_outflow_types(self):
         self.outflow_types = {
