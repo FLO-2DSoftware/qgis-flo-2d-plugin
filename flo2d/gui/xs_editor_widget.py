@@ -126,8 +126,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             row = [x if x is not None else '' for x in row]
             row_fid, name = row
             self.xs_cbo.addItem(name, str(row_fid))
-            if fid :
-                # print fid, row_fid, int(fid) == row_fid
+            if fid:
                 if row_fid == int(fid):
                     cur_idx = i
         if show_last_edited:
@@ -158,7 +157,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         user_lyr_edited = self.lyrs.rollback_lyrs_edits('user_xsections')
         if user_lyr_edited:
             self.populate_xsec_cbo()
-
 
     @connection_required
     def save_user_lyr_edits(self, i):
@@ -278,7 +276,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs.set_name()
         self.populate_xsec_cbo(fid=self.xs.fid)
 
-
     def save_xs_data(self):
         if self.xs.type == 'N':
             xiyi = []
@@ -323,11 +320,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         qry = '''DELETE FROM user_xsections WHERE fid = ?;'''
         self.gutils.execute(qry, (fid,))
 
-
         # try to set current xs to the last before the deleted one
         try:
             self.populate_xsec_cbo(fid=fid-1)
         except:
             self.populate_xsec_cbo()
         self.repaint_xs()
-

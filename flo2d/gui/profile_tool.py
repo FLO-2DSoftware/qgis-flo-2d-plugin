@@ -10,7 +10,6 @@
 
 from .utils import load_ui
 from ..utils import is_number
-from ..geopackage_utils import GeoPackageUtils, connection_required
 from ..user_communication import UserCommunication
 from operator import itemgetter
 from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
@@ -71,21 +70,18 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.data_model = StandardItemModel()
         self.tview.setModel(self.data_model)
         self.rprofile_radio.setChecked(True)
-        self.populate_rasters()
+        self.field_combo.setDisabled(True)
         self.rprofile_radio.toggled.connect(self.check_mode)
+        self.raster_combo.currentIndexChanged.connect(self.plot_raster_data)
         self.field_combo.currentIndexChanged.connect(self.plot_schema_data)
+
+    def setup_connection(self):
+        self.plot.plot.enableAutoRange()
+        self.populate_rasters()
         QgsMapLayerRegistry.instance().legendLayersAdded.connect(self.populate_rasters)
         QgsMapLayerRegistry.instance().layersRemoved.connect(self.populate_rasters)
 
-    # def setup_connection(self):
-    #     con = self.iface.f2d['con']
-    #     if con is None:
-    #         return
-    #     else:
-    #         self.con = con
-    #         self.gutils = GeoPackageUtils(self.con, self.iface)
-
-    def identify_feature(self, user_table, fid=1):
+    def identify_feature(self, user_table, fid):
         self.user_tab = user_table
         self.fid = fid
         self.user_lyr = self.lyrs.data[self.user_tab]['qlyr']
@@ -104,7 +100,7 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.populate_rasters()
             if self.fid is None:
                 return
-            self.plot_raster()
+            self.plot_raster_data()
         else:
             self.raster_combo.setDisabled(True)
             self.field_combo.setEnabled(True)
@@ -142,19 +138,21 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]
         self.feats_stations.sort(key=itemgetter(1))
         if self.rprofile_radio.isChecked():
-            self.plot_raster()
+            self.plot_raster_data()
         else:
             self.plot_schema_data()
 
-    def plot_raster(self):
+    def plot_raster_data(self):
         """
         Probing raster data and displaying on the plot.
         """
         idx = self.raster_combo.currentIndex()
+        if idx == -1 or self.fid is None or self.feats_stations is None:
+            self.plot.clear()
+            return
         probe_raster = self.raster_combo.itemData(idx)
         if not probe_raster.isValid():
             return
-
         user_geom = self.user_feat.geometry()
         x, y = [], []
         for feat, station in self.feats_stations:
@@ -167,13 +165,14 @@ class ProfileTool(qtBaseClass, uiDialog):
                     val = None
                 x.append(station)
                 y.append(val)
-        del probe_raster
         plot_data = [x, y]
         self.plot.clear()
         self.plot.add_item(self.user_tab, plot_data)
 
     def plot_schema_data(self):
-        if self.field_combo.currentIndex() == -1 or self.feats_stations is None:
+        idx = self.field_combo.currentIndex()
+        if idx == -1 or self.fid is None or self.feats_stations is None:
+            self.plot.clear()
             return
         schema_data = self.field_combo.currentText()
         x, y = [], []

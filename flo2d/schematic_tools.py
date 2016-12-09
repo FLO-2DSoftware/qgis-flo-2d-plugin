@@ -529,9 +529,13 @@ def schematize_streets(gutils, line_layer, cell_size):
                     FROM user_streets AS us, street_seg AS seg
                     WHERE us.fid = seg.str_fid AND street_elems.seg_fid = seg.fid);
                     '''
+    crop_seg_sql = '''DELETE FROM street_seg WHERE igridn IS NULL;'''
+    crop_elem_sql = '''DELETE FROM street_elems WHERE seg_fid NOT IN (SELECT fid FROM street_seg);'''
     gutils.execute(update_streets)
     gutils.execute(update_street_seg)
     gutils.execute(update_street_elems)
+    gutils.execute(crop_seg_sql)
+    gutils.execute(crop_elem_sql)
 
 
 # Left bank and cross sections schematizing tools

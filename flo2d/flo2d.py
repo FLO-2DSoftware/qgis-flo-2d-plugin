@@ -194,12 +194,6 @@ class Flo2D(object):
             callback=lambda: self.show_xsec_editor(),
             parent=self.iface.mainWindow())
 
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
-        #     text=self.tr(u'Rain Editor'),
-        #     callback=lambda: self.show_rain_editor(),
-        #     parent=self.iface.mainWindow())
-
         self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
@@ -312,6 +306,12 @@ class Flo2D(object):
         if self.f2d_widget.bc_editor is not None:
             self.f2d_widget.bc_editor.close()
             del self.f2d_widget.bc_editor
+        if self.f2d_widget.profile_tool is not None:
+            self.f2d_widget.profile_tool.close()
+            del self.f2d_widget.profile_tool
+        if self.f2d_widget is not None:
+            self.f2d_widget.close()
+            del self.f2d_widget
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)
@@ -356,6 +356,7 @@ class Flo2D(object):
             self.setup_dock_widgets()
 
     def setup_dock_widgets(self):
+        self.f2d_widget.profile_tool.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs()
         self.f2d_widget.street_editor.setup_connection()
         self.f2d_widget.street_editor.populate_streets()
@@ -363,7 +364,6 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
-        #self.f2d_widget.profile_tool.setup_connection()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
@@ -382,6 +382,7 @@ class Flo2D(object):
                 self.f2d_widget.bc_editor.populate_bcs()
                 self.f2d_widget.street_editor.setup_connection()
                 self.f2d_widget.street_editor.populate_streets()
+                self.f2d_widget.profile_tool.setup_connection()
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
