@@ -223,7 +223,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 for row in range(rc, 500 + 1):
                     items = [StandardItem(x) for x in ('',) * 2]
                     self.xs_data_model.appendRow(items)
-        # self.tview.resizeColumnsToContents()
         for i in range(self.xs_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.tview.horizontalHeader().setStretchLastSection(True)

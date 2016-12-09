@@ -43,7 +43,6 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self._sizehint = QSize(width, height)
 
     def sizeHint(self):
-        # print('sizeHint:', self._sizehint)
         if self._sizehint is not None:
             return self._sizehint
         return super(FLO2DWidget, self).sizeHint()
