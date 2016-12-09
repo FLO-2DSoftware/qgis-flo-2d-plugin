@@ -85,61 +85,61 @@ CREATE TABLE "inflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspatial');
 
--- trigger for a new inflow
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_insert', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_insert"
-    AFTER INSERT ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_insert'
-    )
-    BEGIN
-        INSERT INTO inflow_cells
-            (inflow_fid, grid_fid)
-        SELECT
-            NEW.fid, g.fid
-        FROM
-            grid AS g,
-            all_user_bc AS abc
-        WHERE
-            abc.type = 'inflow' AND
-            abc.geom_type = NEW.geom_type AND
-            abc.bc_fid = NEW.bc_fid AND
-            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- inflow updated
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_update', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_update"
-    AFTER UPDATE ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_update'
-    )
-    BEGIN
-        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
-        INSERT INTO inflow_cells
-            (inflow_fid, grid_fid)
-        SELECT
-            NEW.fid, g.fid
-        FROM
-            grid AS g,
-            all_user_bc AS abc
-        WHERE
-            abc.type = 'inflow' AND
-            abc.geom_type = NEW.geom_type AND
-            abc.bc_fid = NEW.bc_fid AND
-            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- inflow deleted
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_delete', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_delete"
-    AFTER DELETE ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_delete'
-    )
-    BEGIN
-        DELETE FROM inflow_cells WHERE inflow_fid = OLD.fid;
-    END;
+---- trigger for a new inflow
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_insert', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_insert"
+--    AFTER INSERT ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_insert'
+--    )
+--    BEGIN
+--        INSERT INTO inflow_cells
+--            (inflow_fid, grid_fid)
+--        SELECT
+--            NEW.fid, g.fid
+--        FROM
+--            grid AS g,
+--            all_user_bc AS abc
+--        WHERE
+--            abc.type = 'inflow' AND
+--            abc.geom_type = NEW.geom_type AND
+--            abc.bc_fid = NEW.bc_fid AND
+--            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- inflow updated
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_update', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_update"
+--    AFTER UPDATE ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_update'
+--    )
+--    BEGIN
+--        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
+--        INSERT INTO inflow_cells
+--            (inflow_fid, grid_fid)
+--        SELECT
+--            NEW.fid, g.fid
+--        FROM
+--            grid AS g,
+--            all_user_bc AS abc
+--        WHERE
+--            abc.type = 'inflow' AND
+--            abc.geom_type = NEW.geom_type AND
+--            abc.bc_fid = NEW.bc_fid AND
+--            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- inflow deleted
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_delete', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_delete"
+--    AFTER DELETE ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_delete'
+--    )
+--    BEGIN
+--        DELETE FROM inflow_cells WHERE inflow_fid = OLD.fid;
+--    END;
 
 CREATE TABLE "reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -224,57 +224,57 @@ CREATE TABLE "outflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
 
--- trigger for a new outflow
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_insert', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_insert"
-    AFTER INSERT ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_insert'
-    )
-    BEGIN
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
-            SELECT
-                NEW.fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'outflow' AND
-                abc.geom_type = NEW.geom_type AND
-                abc.bc_fid = NEW.bc_fid AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- outflow updated
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_update', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_update"
-    AFTER UPDATE ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_update'
-    )
-    BEGIN
-        DELETE FROM outflow_cells WHERE outflow_fid = NEW.fid;
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
-            SELECT
-                NEW.fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'outflow' AND
-                abc.geom_type = NEW.geom_type AND
-                abc.bc_fid = NEW.bc_fid AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- outflow deleted
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_delete', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_delete"
-    AFTER DELETE ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_delete'
-    )
-    BEGIN
-        DELETE FROM outflow_cells WHERE outflow_fid = OLD.fid;
-    END;
+---- trigger for a new outflow
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_insert', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_insert"
+--    AFTER INSERT ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_insert'
+--    )
+--    BEGIN
+--        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
+--            SELECT
+--                NEW.fid, g.fid
+--            FROM
+--                grid AS g, all_user_bc AS abc
+--            WHERE
+--                abc.type = 'outflow' AND
+--                abc.geom_type = NEW.geom_type AND
+--                abc.bc_fid = NEW.bc_fid AND
+--                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- outflow updated
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_update', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_update"
+--    AFTER UPDATE ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_update'
+--    )
+--    BEGIN
+--        DELETE FROM outflow_cells WHERE outflow_fid = NEW.fid;
+--        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
+--            SELECT
+--                NEW.fid, g.fid
+--            FROM
+--                grid AS g, all_user_bc AS abc
+--            WHERE
+--                abc.type = 'outflow' AND
+--                abc.geom_type = NEW.geom_type AND
+--                abc.bc_fid = NEW.bc_fid AND
+--                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- outflow deleted
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_delete', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_delete"
+--    AFTER DELETE ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_delete'
+--    )
+--    BEGIN
+--        DELETE FROM outflow_cells WHERE outflow_fid = OLD.fid;
+--    END;
 
 CREATE VIEW outflow_chan_elems (
     elem_fid,
