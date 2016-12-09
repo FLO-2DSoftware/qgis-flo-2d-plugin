@@ -240,7 +240,7 @@ class Flo2D(object):
         self.f2d_plot_dock = QgsDockWidget()
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
-        self.f2d_plot.setSizeHint(350, 400)
+        self.f2d_plot.setSizeHint(500, 200)
         self.f2d_plot_dock.setWidget(self.f2d_plot)
         self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
 
@@ -275,13 +275,13 @@ class Flo2D(object):
     def add_docks_to_iface(self):
         s = QSettings('FLO2D')
         ma = s.value('dock/area', Qt.RightDockWidgetArea)
-        ta = s.value('table_dock/area', Qt.RightDockWidgetArea)
+        ta = s.value('table_dock/area', Qt.BottomDockWidgetArea)
         pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea)
         ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea)
         self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
         self.iface.addDockWidget(ma, self.f2d_dock)
-        self.iface.addDockWidget(ta, self.f2d_table_dock)
         self.iface.addDockWidget(pa, self.f2d_plot_dock)
+        self.iface.addDockWidget(ta, self.f2d_table_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -298,24 +298,29 @@ class Flo2D(object):
             self.iface.removeToolBarIcon(action)
         # remove dialogs
         if self.f2d_table_dock is not None:
-            # self.save_dock_geom(self.f2d_dock)
             self.f2d_table_dock.close()
             self.iface.removeDockWidget(self.f2d_table_dock)
+            del self.f2d_table_dock
         if self.f2d_plot_dock is not None:
             self.f2d_plot_dock.close()
             self.iface.removeDockWidget(self.f2d_plot_dock)
+            del self.f2d_plot_dock
         if self.f2d_grid_info_dock is not None:
             self.f2d_grid_info_dock.close()
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
+            del self.f2d_grid_info_dock
         if self.f2d_widget.bc_editor is not None:
             self.f2d_widget.bc_editor.close()
             del self.f2d_widget.bc_editor
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)
+            del self.f2d_dock
         # remove the toolbar
         del self.toolbar
-        del self.con, self.gutils, self.lyrs
+        del self.gutils, self.lyrs
+        del self.iface.f2d['con']
+        del self.con
 
     def save_dock_geom(self, dock):
         s = QSettings('FLO2D', dock.windowTitle())

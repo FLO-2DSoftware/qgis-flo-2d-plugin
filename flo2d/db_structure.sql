@@ -20,8 +20,8 @@ VALUES (
 -- enable foreign keys, disable synchronous, setting journal_mode as 'MEMORY'
 
 PRAGMA foreign_keys = ON;
-PRAGMA synchronous=OFF;
-PRAGMA journal_mode=MEMORY;
+--PRAGMA synchronous=FULL;
+--PRAGMA journal_mode=WAL;
 
 -- FLO-2D tables definitions
 
