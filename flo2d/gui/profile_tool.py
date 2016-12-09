@@ -150,7 +150,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         geom = user_feat.geometry()
         self.user_feat = user_feat
         if self.user_tab == 'user_centerline':
-            self.feats_stations = [(f, geom.lineLocatePoint(geom.intersection(f.geometry()))) for f in schema_feats]
+            self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().nearestPoint(geom))) for f in schema_feats]
         else:
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]
         self.feats_stations.sort(key=itemgetter(1))
