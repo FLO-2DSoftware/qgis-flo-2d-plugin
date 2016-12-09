@@ -164,6 +164,8 @@ class ProfileTool(qtBaseClass, uiDialog):
         Probing raster data and displaying on the plot.
         """
         idx = self.raster_combo.currentIndex()
+        if self.vprofile_radio.isChecked():
+            return
         if idx == -1 or self.fid is None or self.feats_stations is None:
             self.plot.clear()
             return
@@ -194,6 +196,8 @@ class ProfileTool(qtBaseClass, uiDialog):
         """
         Displaying schematic data on the plot.
         """
+        if self.rprofile_radio.isChecked():
+            return
         idx = self.field_combo.currentIndex()
         if idx == -1 or self.fid is None or self.feats_stations is None:
             self.plot.clear()
