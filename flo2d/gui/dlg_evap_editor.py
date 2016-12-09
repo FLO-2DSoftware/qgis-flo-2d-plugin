@@ -20,6 +20,7 @@ uiDialog, qtBaseClass = load_ui('evaporation_editor')
 
 month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
+
 class EvapEditorDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, parent=None):
