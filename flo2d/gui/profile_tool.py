@@ -205,8 +205,11 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.schema_data = self.field_combo.currentText()
         axis_x, axis_y = [], []
         for feat, pos in self.feats_stations:
+            schema_data = feat[self.schema_data]
+            if is_number(schema_data) is False:
+                continue
             axis_x.append(pos)
-            axis_y.append(feat[self.schema_data])
+            axis_y.append(schema_data)
         self.plot_data = [axis_x, axis_y]
         self.plot.clear()
         self.plot.add_item(self.user_tab, self.plot_data)
