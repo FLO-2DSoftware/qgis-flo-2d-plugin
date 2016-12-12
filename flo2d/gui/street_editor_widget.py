@@ -122,8 +122,10 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         after = self.gutils.count('user_streets')
         if after > before:
             self.street_idx = after - 1
-        else:
+        elif self.street_idx >= 0:
             self.save_attrs()
+        else:
+            return
         self.populate_streets()
 
     @connection_required

@@ -13,6 +13,18 @@ from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, Qg
 from utils import is_number
 
 
+def spatial_index(features):
+    """
+    Creating spatial index over collection of features.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    for feat in features:
+        allfeatures[feat.id()] = feat
+        index.insertFeature(feat)
+    return allfeatures, index
+
+
 def build_grid(boundary, cell_size):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
