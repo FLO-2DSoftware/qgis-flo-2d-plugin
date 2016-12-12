@@ -73,7 +73,8 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.street_lyr = self.lyrs.get_layer_by_name('Street Lines', group=self.lyrs.group).layer()
+            self.street_lyr = self.lyrs.data['user_streets']['qlyr']
+            self.street_lyr.editingStopped.connect(lambda: self.populate_streets())
 
     def set_combo(self):
         sp = QSizePolicy()
@@ -184,7 +185,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
             schematize_streets(self.gutils, self.street_lyr, cell_size)
-            streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
+            streets_schem = self.street_lyr = self.lyrs.data['street_seg']['qlyr']
             if streets_schem:
                 streets_schem.triggerRepaint()
             self.uc.show_info("Streets schematized!")
