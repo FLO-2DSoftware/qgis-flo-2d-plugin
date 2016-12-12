@@ -570,6 +570,9 @@ class Flo2D(object):
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
             return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = self.mann_dlg.exec_()
         if ok:
@@ -608,6 +611,9 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_elevation_polygons'):
             self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
             return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -624,6 +630,9 @@ class Flo2D(object):
     def get_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -737,6 +746,9 @@ class Flo2D(object):
     @connection_required
     def show_levee_elev_tool(self):
         """Show levee elevation tool"""
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
