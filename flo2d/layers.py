@@ -243,6 +243,15 @@ class Layers(QObject):
                 'module': ['chan'],
                 'readonly': True
             }),
+            ('rbank', {
+                'name': 'Right Bank',
+                'sgroup': 'Schematic Layers',
+                'styles': ['rbank.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'module': ['chan'],
+                'readonly': True
+            }),
             ('fpxsec', {
                 'name': 'Floodplain cross-sections',
                 'sgroup': 'Schematic Layers',

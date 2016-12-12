@@ -843,6 +843,7 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
         gutils.con.commit()
     update_1d_area(gutils)
     update_xs_type(gutils)
+    update_rbank(gutils)
 
 
 def grid_on_point(gutils, x, y):
@@ -925,3 +926,24 @@ def update_1d_area(gutils):
     gutils.execute(update_chan)
     gutils.execute(update_chan_elems)
     gutils.execute(update_xlen)
+
+def update_rbank(gutils):
+    """
+    Create right bank lines
+    """
+    del_qry = 'DELETE FROM rbank;'
+    gutils.execute(del_qry)
+    qry = '''
+    INSERT INTO rbank (chan_seg_fid, geom)
+    SELECT c.fid, AsGPB(MakeLine(centroid(CastAutomagic(g.geom)))) as geom
+    FROM
+        chan as c,
+        (SELECT * FROM  chan_elems ORDER BY seg_fid, nr_in_seg) as ce, -- sorting the chan elems post aggregation doesn't work so we need to sort the before
+        grid as g
+    WHERE
+        c.fid = ce.seg_fid AND
+        ce.seg_fid = c.fid AND
+        g.fid = ce.rbankgrid
+    GROUP BY c.fid;
+    '''
+    gutils.execute(qry)

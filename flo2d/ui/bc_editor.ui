@@ -177,7 +177,7 @@
      <item>
       <widget class="QToolButton" name="schem_bc_btn">
        <property name="toolTip">
-        <string>Schemmatize boundary conditions</string>
+        <string>Schematize boundary conditions</string>
        </property>
        <property name="text">
         <string>...</string>

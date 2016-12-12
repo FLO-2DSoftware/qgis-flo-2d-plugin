@@ -517,6 +517,14 @@ SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_elems', 'geom');
 -- SELECT gpkgAddSpatialIndex('chan_elems', 'geom');
 
+CREATE TABLE rbank (
+    "fid" INTEGER PRIMARY KEY,
+    "chan_seg_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rbank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('rbank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('rbank', 'geom');
+
 CREATE TABLE "chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "elem_fid" INTEGER, -- fid of cross-section's element

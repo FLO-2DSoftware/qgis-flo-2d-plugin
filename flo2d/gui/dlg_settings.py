@@ -109,7 +109,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             pass
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
-
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         con = database_create(gpkg_path)
         if not con:
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
@@ -123,7 +123,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gpkgPathEdit.setText(gutils.path)
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
-
+        QApplication.restoreOverrideCursor()
         # CRS
         self.projectionSelector.selectCrs()
         if self.projectionSelector.crs().isValid():
