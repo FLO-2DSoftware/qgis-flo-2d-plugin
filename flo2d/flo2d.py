@@ -373,10 +373,7 @@ class Flo2D(object):
                 self.iface.f2d['con'] = self.con
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
-                self.f2d_widget.bc_editor.populate_bcs()
-                self.f2d_widget.street_editor.setup_connection()
-                self.f2d_widget.street_editor.populate_streets()
-                self.f2d_widget.profile_tool.setup_connection()
+                self.setup_dock_widgets()
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
