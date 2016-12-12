@@ -1720,8 +1720,7 @@ SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
 
 CREATE TABLE "user_1d_domain" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "center_line_fid" INTEGER
+    "fid" INTEGER PRIMARY KEY NOT NULL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domain', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);

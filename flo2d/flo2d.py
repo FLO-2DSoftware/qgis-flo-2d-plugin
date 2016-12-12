@@ -212,12 +212,6 @@ class Flo2D(object):
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
-            text=self.tr(u'Schematize 1D Area'),
-            callback=lambda: self.schematize_channels(),
-            parent=self.iface.mainWindow())
-
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
@@ -379,10 +373,7 @@ class Flo2D(object):
                 self.iface.f2d['con'] = self.con
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
-                self.f2d_widget.bc_editor.populate_bcs()
-                self.f2d_widget.street_editor.setup_connection()
-                self.f2d_widget.street_editor.populate_streets()
-                self.f2d_widget.profile_tool.setup_connection()
+                self.setup_dock_widgets()
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return

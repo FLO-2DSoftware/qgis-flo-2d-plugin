@@ -13,7 +13,7 @@ from collections import defaultdict, OrderedDict
 from math import pi
 from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QGis, QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
-from grid_tools import fid_from_grid
+from grid_tools import spatial_index, fid_from_grid
 
 
 # Levees tools
@@ -801,12 +801,20 @@ def schematize_1d_area(gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr):
     gutils.execute(del_right_sql)
     gutils.execute(del_chan)
     x_offset, y_offset = calculate_offset(gutils, cell_size)
+    # Creating spatial index on domain polygons and finding proper one for each river center line
+    dom_feats, dom_index = spatial_index(domain_lyr.getFeatures())
+    feat2 = None
     for feat1 in centerline_lyr.getFeatures():
         center_fid = feat1.id()
-        request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
-        feat2 = domain_lyr.getFeatures(request).next()
-        xs_features = xs_lyr.getFeatures()
+        center_geom = feat1.geometry()
+        center_point = center_geom.interpolate(center_geom.length() * 0.5)
+        for fid in dom_index.intersects(center_point.boundingBox()):
+            f = dom_feats[fid]
+            if f.geometry().contains(center_point):
+                feat2 = f
+                break
         # Getting trimmed and sorted cross section, left and right edge
+        xs_features = xs_lyr.getFeatures()
         left_line, right_line, sorted_xs = bank_lines(feat1, feat2, xs_features)
         # Schematizing left and right bank line and writing it into the geopackage
         cursor = gutils.con.cursor()
@@ -926,6 +934,7 @@ def update_1d_area(gutils):
     gutils.execute(update_chan)
     gutils.execute(update_chan_elems)
     gutils.execute(update_xlen)
+
 
 def update_rbank(gutils):
     """
