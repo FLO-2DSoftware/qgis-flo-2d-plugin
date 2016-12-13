@@ -21,7 +21,7 @@ VALUES (
 
 PRAGMA foreign_keys = ON;
 --PRAGMA synchronous=FULL;
---PRAGMA journal_mode=WAL;
+PRAGMA journal_mode = memory;
 
 -- FLO-2D tables definitions
 

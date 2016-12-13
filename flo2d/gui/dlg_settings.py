@@ -213,6 +213,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.lyrs.zoom_to_all()
 
         QApplication.restoreOverrideCursor()
+        print self.gutils.execute('pragma journal_mode;').fetchone()
 
     def connect(self, gpkg_path=None):
         """Connect to FLO-2D model database (GeoPackage)"""
