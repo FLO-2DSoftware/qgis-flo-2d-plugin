@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>299</width>
-    <height>271</height>
+    <width>466</width>
+    <height>330</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -24,10 +24,209 @@
     <number>6</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="bce_toolbar">
+    <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QToolButton" name="create_point_bc_btn">
+       <property name="toolTip">
+        <string>Add point BC</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="create_line_bc_btn">
+       <property name="toolTip">
+        <string>Add line BC</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="create_polygon_bc_btn">
+       <property name="toolTip">
+        <string>Add polygon BC</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionCapturePolygon.svg</normaloff>../img/mActionCapturePolygon.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="save_changes_btn">
+       <property name="toolTip">
+        <string>Save current BC</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="revert_changes_btn">
+       <property name="maximumSize">
+        <size>
+         <width>60</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Revert unsaved changes for current BC</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="delete_bc_btn">
+       <property name="toolTip">
+        <string>Delete current BC</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="add_data_btn">
+       <property name="toolTip">
+        <string>Add data series/table for current BC</string>
+       </property>
+       <property name="text">
+        <string>+</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="schem_bc_btn">
+       <property name="toolTip">
+        <string>Schematize boundary conditions</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/schematize_bc.svg</normaloff>../img/schematize_bc.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="bce_type_layout">
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item>
+      <widget class="QLabel" name="label_6">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>BC type</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QRadioButton" name="bc_type_inflow_radio">
        <property name="text">
@@ -67,66 +266,10 @@
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="QToolButton" name="create_point_bc_btn">
-       <property name="toolTip">
-        <string>Create point boundary condition</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="create_line_bc_btn">
-       <property name="toolTip">
-        <string>Create line boundary condition</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="create_polygon_bc_btn">
-       <property name="toolTip">
-        <string>Create polygon boundary condition</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionCapturePolygon.svg</normaloff>../img/mActionCapturePolygon.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="save_user_bc_edits_btn">
-       <property name="toolTip">
-        <string>Save edits</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="bc_type_layout">
+    <layout class="QHBoxLayout" name="bc_name_layout">
      <property name="spacing">
       <number>7</number>
      </property>
@@ -156,24 +299,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="bc_name_cbo">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+      <layout class="QHBoxLayout" name="bc_name_cbo_layout"/>
+     </item>
+     <item>
+      <widget class="QToolButton" name="change_bc_name_btn">
+       <property name="text">
+        <string>...</string>
        </property>
-       <property name="editable">
-        <bool>true</bool>
-       </property>
-       <property name="insertPolicy">
-        <enum>QComboBox::InsertAtBottom</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QComboBox::AdjustToMinimumContentsLength</enum>
-       </property>
-       <property name="frame">
-        <bool>true</bool>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
        </property>
       </widget>
      </item>
@@ -224,7 +359,7 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>Inflow defined for  </string>
+           <string>Defined for  </string>
           </property>
          </widget>
         </item>
@@ -343,22 +478,16 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="add_inflow_tseries_btn">
-          <property name="text">
-           <string>+</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="inflow_tseries_cbo_layout"/>
         </item>
         <item>
-         <widget class="QComboBox" name="inflow_tseries_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <widget class="QToolButton" name="change_inflow_data_name_btn">
+          <property name="text">
+           <string>...</string>
           </property>
-          <property name="editable">
-           <bool>true</bool>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
           </property>
          </widget>
         </item>
@@ -455,13 +584,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="add_outflow_data_btn">
-          <property name="text">
-           <string>+</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -511,15 +633,20 @@
          <number>7</number>
         </property>
         <item>
-         <widget class="QComboBox" name="outflow_data_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <layout class="QHBoxLayout" name="outflow_data_cbo_layout">
+          <property name="bottomMargin">
+           <number>0</number>
           </property>
-          <property name="editable">
-           <bool>true</bool>
+         </layout>
+        </item>
+        <item>
+         <widget class="QToolButton" name="change_outflow_data_name_btn">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
           </property>
          </widget>
         </item>
@@ -527,39 +654,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_8">
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QToolButton" name="save_changes_btn">
-       <property name="maximumSize">
-        <size>
-         <width>60</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Save</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="revert_changes_btn">
-       <property name="maximumSize">
-        <size>
-         <width>60</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Revert</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

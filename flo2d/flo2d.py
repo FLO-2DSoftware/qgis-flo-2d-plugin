@@ -16,25 +16,24 @@ import time
 import traceback
 
 from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices, QVBoxLayout
+from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import schematize_channels, schematize_streets, generate_schematic_levees, schematize_1d_area
+from schematic_tools import generate_schematic_levees, schematize_1d_area, update_rbank
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
 
-from .gui.dlg_xsec_editor import XsecEditorDialog
+from .gui.xs_editor_widget import XsecEditorWidget
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.dlg_inflow_editor import InflowEditorDialog
-from .gui.dlg_rain_editor import RainEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
@@ -88,11 +87,10 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
-
         self.dlg_inflow_editor = None
-
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
+        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API."""
@@ -197,12 +195,6 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/rain_editor.svg'),
-            text=self.tr(u'Rain Editor'),
-            callback=lambda: self.show_rain_editor(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
@@ -220,31 +212,29 @@ class Flo2D(object):
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
-            text=self.tr(u'Schematize 1D Area'),
-            callback=lambda: self.schematize_channels(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_streets.svg'),
-            text=self.tr(u'Schematize streets'),
-            callback=lambda: self.schematize_streets(),
-            parent=self.iface.mainWindow())
-
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
         self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot, self.f2d_table)
         self.f2d_widget.setSizeHint(350, 600)
         self.f2d_dock.setWidget(self.f2d_widget)
+        self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
+
+    def f2d_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('dock/area', area)
 
     def create_f2d_plot_dock(self):
         self.f2d_plot_dock = QgsDockWidget()
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
-        self.f2d_plot.setSizeHint(350, 400)
+        self.f2d_plot.setSizeHint(500, 200)
         self.f2d_plot_dock.setWidget(self.f2d_plot)
+        self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
+
+    def f2d_plot_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('plot_dock/area', area)
 
     def create_f2d_table_dock(self):
         self.f2d_table_dock = QgsDockWidget()
@@ -252,6 +242,11 @@ class Flo2D(object):
         self.f2d_table = TableEditorWidget(self.iface, self.f2d_plot, self.lyrs)
         self.f2d_table.setSizeHint(350, 200)
         self.f2d_table_dock.setWidget(self.f2d_table)
+        self.f2d_table_dock.dockLocationChanged.connect(self.f2d_table_dock_save_area)
+
+    def f2d_table_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('table_dock/area', area)
 
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
@@ -259,12 +254,22 @@ class Flo2D(object):
         self.f2d_grid_info = GridInfoWidget(self.iface, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
+        self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
+
+    def f2d_grid_info_dock_save_area(self, area):
+        s = QSettings('FLO2D')
+        s.setValue('grid_info_dock/area', area)
 
     def add_docks_to_iface(self):
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_grid_info_dock)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_table_dock)
-        self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+        s = QSettings('FLO2D')
+        ma = s.value('dock/area', Qt.RightDockWidgetArea)
+        ta = s.value('table_dock/area', Qt.BottomDockWidgetArea)
+        pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea)
+        ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea)
+        self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+        self.iface.addDockWidget(ma, self.f2d_dock)
+        self.iface.addDockWidget(pa, self.f2d_plot_dock)
+        self.iface.addDockWidget(ta, self.f2d_table_dock)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -283,22 +288,43 @@ class Flo2D(object):
         if self.f2d_table_dock is not None:
             self.f2d_table_dock.close()
             self.iface.removeDockWidget(self.f2d_table_dock)
+            del self.f2d_table_dock
         if self.f2d_plot_dock is not None:
             self.f2d_plot_dock.close()
             self.iface.removeDockWidget(self.f2d_plot_dock)
+            del self.f2d_plot_dock
         if self.f2d_grid_info_dock is not None:
             self.f2d_grid_info_dock.close()
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
+            del self.f2d_grid_info_dock
         if self.f2d_widget.bc_editor is not None:
             self.f2d_widget.bc_editor.close()
             del self.f2d_widget.bc_editor
+        if self.f2d_widget.profile_tool is not None:
+            self.f2d_widget.profile_tool.close()
+            del self.f2d_widget.profile_tool
+        if self.f2d_widget is not None:
+            self.f2d_widget.close()
+            del self.f2d_widget
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)
+            del self.f2d_dock
         # remove the toolbar
         del self.toolbar
-        del self.con, self.gutils, self.lyrs
+        del self.gutils, self.lyrs
+        del self.iface.f2d['con']
+        del self.con
 
+    def save_dock_geom(self, dock):
+        s = QSettings('FLO2D', dock.windowTitle())
+        s.setValue('geometry', dock.saveGeometry())
+
+    def restore_dock_geom(self, dock):
+        s = QSettings('FLO2D', dock.windowTitle())
+        g = s.value('geometry')
+        if g:
+            dock.restoreGeometry(g)
 
     def write_proj_entry(self, key, val):
         return self.project.writeEntry('FLO-2D', key, val)
@@ -321,7 +347,17 @@ class Flo2D(object):
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-            self.f2d_widget.bc_editor.populate_inflows()
+            self.setup_dock_widgets()
+
+    def setup_dock_widgets(self):
+        self.f2d_widget.profile_tool.setup_connection()
+        self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.street_editor.setup_connection()
+        self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.rain_editor.setup_connection()
+        self.f2d_widget.rain_editor.rain_properties()
+        self.f2d_widget.xs_editor.setup_connection()
+        self.f2d_widget.xs_editor.populate_xsec_cbo()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""
@@ -337,6 +373,7 @@ class Flo2D(object):
                 self.iface.f2d['con'] = self.con
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
+                self.setup_dock_widgets()
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
@@ -363,6 +400,7 @@ class Flo2D(object):
     @connection_required
     def import_gds(self):
         """Import traditional GDS files into FLO-2D database (GeoPackage)"""
+        self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             'import_cont_toler',
@@ -426,7 +464,9 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
         else:
             pass
+        self.gutils.enable_geom_triggers()
         self.show_bc_editor()
+        update_rbank(self.gutils)
 
     @connection_required
     def export_gds(self):
@@ -530,6 +570,9 @@ class Flo2D(object):
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed("Roughness"):
             return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = self.mann_dlg.exec_()
         if ok:
@@ -568,6 +611,9 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_elevation_polygons'):
             self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
             return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -584,6 +630,9 @@ class Flo2D(object):
     def get_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -642,10 +691,20 @@ class Flo2D(object):
             self.uc.bar_warn('There is no grid layer to identify.')
 
     @connection_required
+    def show_profile(self, fid=None):
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.profile_tool_grp.setCollapsed(False)
+        self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.xs_editor_grp.setCollapsed(False)
+        self.f2d_widget.xs_editor.show_editor(self.cur_info_table, fid)
         try:
-            self.dlg_xsec_editor = XsecEditorDialog(self.con, self.iface, self.lyrs, fid)
+            self.dlg_xsec_editor = XsecEditorWidget(self.con, self.iface, self.lyrs, fid)
             self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
             self.dlg_xsec_editor.show()
         except IndexError:
@@ -676,15 +735,6 @@ class Flo2D(object):
         self.dlg_outflow_editor.show()
 
     @connection_required
-    def show_rain_editor(self):
-        """Show rain editor"""
-        try:
-            self.dlg_rain_editor = RainEditorDialog(self.con, self.iface)
-            self.dlg_rain_editor.show()
-        except TypeError:
-            self.uc.bar_warn('There is no rain data to display!')
-
-    @connection_required
     def show_evap_editor(self):
         """Show evaporation editor"""
         try:
@@ -696,6 +746,9 @@ class Flo2D(object):
     @connection_required
     def show_levee_elev_tool(self):
         """Show levee elevation tool"""
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
@@ -739,49 +792,29 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_1d_domain'):
-            self.uc.bar_warn("There is no any 1D Domain polygons! Please digitize them before running tool.")
+            self.uc.bar_warn("There is no any 1D Domain polygons! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_centerline'):
-            self.uc.bar_warn("There is no any river center lines! Please digitize them before running tool.")
+            self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_xsections'):
-            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running tool.")
+            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
             return
-        domain_lyr = self.lyrs.get_layer_by_name("1D Domain", group=self.lyrs.group).layer()
-        centerline_lyr = self.lyrs.get_layer_by_name("River Centerline", group=self.lyrs.group).layer()
-        xs_lyr = self.lyrs.get_layer_by_name("Cross-sections", group=self.lyrs.group).layer()
+        domain_lyr = self.lyrs.data['user_1d_domain']['qlyr']
+        centerline_lyr = self.lyrs.data['user_centerline']['qlyr']
+        xs_lyr = self.lyrs.data['user_xsections']['qlyr']
         cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
             schematize_1d_area(self.gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr)
-            chan_schem = self.lyrs.get_layer_by_name("Channel segments (left bank)", group=self.lyrs.group).layer()
-            chan_elems = self.lyrs.get_layer_by_name("Cross sections", group=self.lyrs.group).layer()
-            if chan_schem:
-                chan_schem.triggerRepaint()
-                chan_elems.triggerRepaint()
+            chan_schem = self.lyrs.data['chan']['qlyr']
+            chan_elems = self.lyrs.data['chan_elems']['qlyr']
+            rbank = self.lyrs.data['rbank']['qlyr']
+            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank]
+            self.lyrs.repaint_layers()
             self.uc.show_info("1D Domain schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing aborted! PLease check correctness of 1D layers.")
-
-    @connection_required
-    def schematize_streets(self):
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty('user_streets'):
-            self.uc.bar_warn("There is no any user streets to schematize! Please digitize them before running tool.")
-            return
-        segments = self.lyrs.get_layer_by_name("Street Lines", group=self.lyrs.group).layer()
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
-        try:
-            schematize_streets(self.gutils, segments, cell_size)
-            streets_schem = self.lyrs.get_layer_by_name("Streets", group=self.lyrs.group).layer()
-            if streets_schem:
-                streets_schem.triggerRepaint()
-            self.uc.show_info("Streets schematized!")
-        except Exception as e:
-            self.uc.show_warn("Schematizing of streets aborted! Please check Street Lines layer.")
-            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
 
     def schematize_levees(self):
         """Generate schematic lines for user defined levee lines"""
@@ -814,6 +847,9 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            'user_levee_lines': self.show_profile,
+            'user_streets': self.show_profile,
+            'user_centerline': self.show_profile,
             'chan_elems': self.show_xsec_editor,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,

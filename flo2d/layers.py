@@ -243,6 +243,15 @@ class Layers(QObject):
                 'module': ['chan'],
                 'readonly': True
             }),
+            ('rbank', {
+                'name': 'Right Bank',
+                'sgroup': 'Schematic Layers',
+                'styles': ['rbank.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'module': ['chan'],
+                'readonly': True
+            }),
             ('fpxsec', {
                 'name': 'Floodplain cross-sections',
                 'sgroup': 'Schematic Layers',
@@ -259,7 +268,13 @@ class Layers(QObject):
                 },
                 'readonly': True
             }),
-
+            ('all_schem_bc', {
+                'name': 'BC cells',
+                'sgroup': 'Schematic Layers',
+                'styles': ['all_schem_bc.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('grid', {
                 'name': 'Grid',
                 'sgroup': 'Schematic Layers',
@@ -646,7 +661,6 @@ class Layers(QObject):
         for lyr in self.data:
             self.data[lyr]['qlyr'] = None
 
-
     def load_layer(self, table, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider='ogr'):
         # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
@@ -711,7 +725,7 @@ class Layers(QObject):
         if not self.group:
             msg = 'Connect to a GeoPackage!'
             self.uc.bar_warn(msg)
-            return
+            return None
         try:
             lyr = self.data[table_name]['qlyr']
             self.iface.setActiveLayer(lyr)
@@ -724,20 +738,53 @@ class Layers(QObject):
                     lyr.setDefaultValueExpression(idx, exp)
             lyr.startEditing()
             self.iface.actionAddFeature().trigger()
+            return True
         except:
             msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
             self.uc.bar_warn(msg)
+            return None
 
-    def save_lyrs_edits(self, table_name_list=[]):
+    def any_lyr_in_edit(self, *table_name_list):
+        """Return True if any layer from the table list is in edit mode"""
+        in_edit_mode = False
         if not table_name_list:
-            return
+            return None
         for t in table_name_list:
-            try:
-                lyr = self.data[t]['qlyr']
-                lyr.commitChanges()
-            except:
-                msg = 'Could\'n save changes for table {}.'.format(t)
-                self.uc.bar_warn(msg)
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+        return in_edit_mode
+
+    def save_lyrs_edits(self, *table_name_list):
+        """Save changes to each layer if it is in edit mode"""
+        in_edit_mode = False
+        if not table_name_list:
+            return None
+        for t in table_name_list:
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+                try:
+                    lyr = self.data[t]['qlyr']
+                    lyr.commitChanges()
+                except:
+                    msg = 'Could\'n save changes for table {}.'.format(t)
+                    self.uc.bar_warn(msg)
+        return in_edit_mode
+
+    def rollback_lyrs_edits(self, *table_name_list):
+        """Save changes to each layer if it is in edit mode"""
+        in_edit_mode = False
+        if not table_name_list:
+            return None
+        for t in table_name_list:
+            if self.data[t]['qlyr'].isEditable():
+                in_edit_mode = True
+                try:
+                    lyr = self.data[t]['qlyr']
+                    lyr.rollBack()
+                except:
+                    msg = 'Could\'n rollback changes for table {}.'.format(t)
+                    self.uc.bar_warn(msg)
+        return in_edit_mode
 
     def get_layer_tree_item(self, layer_id):
         if layer_id:
@@ -1073,7 +1120,7 @@ class Layers(QObject):
             self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
-        """If the layer is in editmode, ask users for saving changes and proceeding."""
+        """If the layer is in edit mode, ask users for saving changes and proceeding."""
         l = self.get_layer_by_name(layer_name, group=self.group).layer()
         if l.isEditable():
             # ask user for saving changes

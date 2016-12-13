@@ -10,7 +10,8 @@
 import os
 from PyQt4.QtCore import Qt, QSettings
 from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
-from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsCoordinateReferenceSystem, QGis
+from qgis.gui import QgsProjectionSelectionWidget
 
 from .utils import load_ui
 from ..utils import is_number
@@ -33,6 +34,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.con = con
         self.lyrs = lyrs
         self.gutils = gutils
+        self.si_units = None
+        self.crs = None
+        self.projectionSelector = QgsProjectionSelectionWidget()
+        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
         self.widget_map = {
             "ICHANNEL": self.chanChBox,
             "IEVAP": self.evapChBox,
@@ -44,12 +49,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "ISED": self.sedChBox,
             "IWRFS": self.redFactChBox,
             "LEVEE": self.leveesChBox,
-            "PROJ": self.projectionSelector,
+            # "PROJ": self.projectionSelector,
             "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
         }
-        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
+
         self.setup()
 
         # connection
@@ -80,22 +85,39 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     wid.setValue(float(value))
                 else:
                     pass
-            elif name == 'PROJ':
-                cs = QgsCoordinateReferenceSystem()
-                cs.createFromProj4(value)
-                wid.setCrs(cs)
-                self.crs = cs
             else:
                 pass
-
-    def setup(self):
-        if self.gutils:
-            self.gutils.path = self.gutils.get_gpkg_path()
-            self.gpkgPathEdit.setText(self.gutils.path)
-            self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.read()
+        proj = self.gutils.get_cont_par('PROJ')
+        cs = QgsCoordinateReferenceSystem()
+        cs.createFromProj4(proj)
+        self.projectionSelector.setCrs(cs)
+        self.crs = self.projectionSelector.crs()
+        if self.gutils.get_cont_par('METRIC') == '1':
+            self.si_units = True
+        elif self.gutils.get_cont_par('METRIC') == '0':
+            self.si_units = False
         else:
             pass
+        if self.crs:
+            pd = self.crs.description()
+        else:
+            pd = '----'
+        self.proj_lab.setText(pd)
+        if self.si_units == True:
+            mu = 'meters'
+        elif self.si_units == False:
+            mu = 'feet'
+        else:
+            mu = '----'
+        self.unit_lab.setText(mu)
+
+    def setup(self):
+        if not self.gutils:
+            return
+        self.gutils.path = self.gutils.get_gpkg_path()
+        self.gpkgPathEdit.setText(self.gutils.path)
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+        self.read()
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
@@ -109,7 +131,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             pass
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
-
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         con = database_create(gpkg_path)
         if not con:
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
@@ -123,12 +145,24 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gpkgPathEdit.setText(gutils.path)
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
-
+        QApplication.restoreOverrideCursor()
         # CRS
         self.projectionSelector.selectCrs()
         if self.projectionSelector.crs().isValid():
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
+            self.proj_lab.setText(self.crs.description())
+            if self.crs.mapUnits() == QGis.Meters:
+                self.si_units = True
+                mu = 'meters'
+            elif self.crs.mapUnits() == QGis.Feet:
+                self.si_units = False
+                mu = 'feet'
+            else:
+                msg = 'Unknown map units. Choose a different projection!'
+                self.uc.show_warn(msg)
+                return
+            self.unit_lab.setText(mu)
             proj4 = self.crs.toProj4()
 
             # check if the CRS exist in the db
@@ -162,6 +196,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkg_path = gpkg_path
         self.con = con
         self.gutils = gutils
+        if self.si_units:
+            self.gutils.set_cont_par('METRIC', 1)
+        else:
+            self.gutils.set_cont_par('METRIC', 0)
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -175,6 +213,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.lyrs.zoom_to_all()
 
         QApplication.restoreOverrideCursor()
+        print self.gutils.execute('pragma journal_mode;').fetchone()
 
     def connect(self, gpkg_path=None):
         """Connect to FLO-2D model database (GeoPackage)"""
@@ -212,9 +251,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def write(self):
+        ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
         for name, wid in self.widget_map.iteritems():
-            ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
-            updt_qry = '''UPDATE cont SET value = ? WHERE name = ?;'''
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
@@ -224,13 +262,20 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 value = str(wid.value())
             elif isinstance(wid, QCheckBox):
                 value = 1 if wid.isChecked() else 0
-            elif name == 'PROJ':
-                value = self.crs.toProj4()
+
             else:
                 pass
             self.gutils.execute(ins_qry, (name, value))
-            # in case the name exists in the table, update its value
-            self.gutils.execute(updt_qry, (value, name))
+        self.gutils.execute(ins_qry, ('PROJ', self.crs.toProj4(),))
+        if self.crs.mapUnits() == QGis.Meters:
+            metric = 1
+        elif self.crs.mapUnits() == QGis.Feet:
+            self.si_units = False
+            metric = 0
+        else:
+            metric = 1
+        self.gutils.execute(ins_qry, ('METRIC', metric,))
+
 
     def select_all_modules(self):
         for cbx in self.modulesGrp.findChildren(QCheckBox):

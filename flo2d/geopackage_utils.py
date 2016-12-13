@@ -314,6 +314,12 @@ class GeoPackageUtils(object):
         max_val = 0 if max_val is None else max_val
         return max_val
 
+    def count(self, table, field='fid'):
+        sql = '''SELECT COUNT("{0}") FROM "{1}";'''.format(field, table)
+        count = self.execute(sql).fetchone()[0]
+        count = 0 if count is None else count
+        return count
+
     def table_info(self, table, only_columns=False):
         qry = 'PRAGMA table_info("{0}")'.format(table)
         info = self.execute(qry)
@@ -331,3 +337,61 @@ class GeoPackageUtils(object):
             max_y = (SELECT MAX(MbrMaxY(GeomFromGPB(geom))) FROM "{0}")
             WHERE table_name='{0}';'''.format(table_name)
         self.execute(sql)
+
+    def delete_all_imported_inflows(self):
+        qry = '''SELECT fid FROM inflow WHERE geom_type IS NULL;'''
+        imported = self.execute(qry).fetchall()
+        if imported:
+            if self.uc.question('There are imported inflows in the database. Delete them?'):
+                qry = 'DELETE FROM inflow WHERE geom_type IS NULL;'
+                self.execute(qry)
+
+    def delete_all_imported_outflows(self):
+        qry = '''SELECT fid FROM outflow WHERE geom_type IS NULL;'''
+        imported = self.execute(qry).fetchall()
+        if imported:
+            if self.uc.question('There are imported outflows in the database. Delete them?'):
+                qry = 'DELETE FROM outflow WHERE geom_type IS NULL;'
+                self.execute(qry)
+
+    def delete_all_imported_bcs(self):
+        self.delete_all_imported_inflows()
+        self.delete_all_imported_outflows()
+
+    def fill_empty_inflow_names(self):
+        qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text) WHERE name IS NULL;'''
+        self.execute(qry)
+
+    def fill_empty_outflow_names(self):
+        qry = '''UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;'''
+        self.execute(qry)
+
+    def fill_empty_user_xsec_names(self):
+        qry = '''UPDATE user_xsections SET name = 'Cross-section ' ||  cast(fid as text) WHERE name IS NULL;'''
+        self.execute(qry)
+
+    def get_inflow_names(self):
+        qry = '''SELECT name FROM inflow WHERE name IS NOT NULL;'''
+        rows = self.execute(qry).fetchall()
+        return [row[0] for row in rows]
+
+    def get_outflow_names(self):
+        qry = '''SELECT name FROM outflow WHERE name IS NOT NULL;'''
+        rows = self.execute(qry).fetchall()
+        return [row[0] for row in rows]
+
+    def get_inflows_list(self):
+        qry = 'SELECT fid, name, geom_type, time_series_fid FROM inflow ORDER BY LOWER(name);'
+        return self.execute(qry).fetchall()
+
+    def get_outflows_list(self):
+        qry = 'SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);'
+        return self.execute(qry).fetchall()
+
+    def disable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 0;'
+        self.execute(qry)
+
+    def enable_geom_triggers(self):
+        qry = 'UPDATE trigger_control set enabled = 1;'
+        self.execute(qry)

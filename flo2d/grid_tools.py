@@ -13,6 +13,18 @@ from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, Qg
 from utils import is_number
 
 
+def spatial_index(features):
+    """
+    Creating spatial index over collection of features.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    for feat in features:
+        allfeatures[feat.id()] = feat
+        index.insertFeature(feat)
+    return allfeatures, index
+
+
 def build_grid(boundary, cell_size):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
@@ -178,7 +190,10 @@ def evaluate_arfwrf(gutils, grid, areas):
     Calculating and inserting ARF and WRF values into 'blocked_cells' table
     """
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = '''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
+    qry_cells = '''
+    INSERT INTO blocked_cells
+                (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
+                (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_arfwrf(grid, areas):
@@ -190,7 +205,7 @@ def evaluate_arfwrf(gutils, grid, areas):
 
 def raster2grid(grid, out_raster):
     """
-    Generator for resampling and probing raster data within 'grid' features
+    Generator for probing raster data within 'grid' features
     """
     probe_raster = QgsRasterLayer(out_raster)
     if not probe_raster.isValid():

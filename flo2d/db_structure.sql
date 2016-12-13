@@ -20,8 +20,8 @@ VALUES (
 -- enable foreign keys, disable synchronous, setting journal_mode as 'MEMORY'
 
 PRAGMA foreign_keys = ON;
-PRAGMA synchronous=OFF;
-PRAGMA journal_mode=MEMORY;
+--PRAGMA synchronous=FULL;
+PRAGMA journal_mode = memory;
 
 -- FLO-2D tables definitions
 
@@ -29,7 +29,7 @@ PRAGMA journal_mode=MEMORY;
 
 CREATE TABLE cont (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
     "value" TEXT,
     "note" TEXT
 );
@@ -68,8 +68,8 @@ CREATE TABLE "inflow" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "time_series_fid" INTEGER,
-    "ident" TEXT,
-    "inoutfc" INTEGER,
+    "ident" TEXT  DEFAULT 'F',
+    "inoutfc" INTEGER DEFAULT 0,
     "note" TEXT,
     "geom_type" TEXT,
     "bc_fid" INTEGER,
@@ -85,61 +85,61 @@ CREATE TABLE "inflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspatial');
 
--- trigger for a new inflow
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_insert', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_insert"
-    AFTER INSERT ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_insert'
-    )
-    BEGIN
-        INSERT INTO inflow_cells
-            (inflow_fid, grid_fid)
-        SELECT
-            NEW.fid, g.fid
-        FROM
-            grid AS g,
-            all_user_bc AS abc
-        WHERE
-            abc.type = 'inflow' AND
-            abc.geom_type = NEW.geom_type AND
-            abc.bc_fid = NEW.bc_fid AND
-            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- inflow updated
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_update', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_update"
-    AFTER UPDATE ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_update'
-    )
-    BEGIN
-        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
-        INSERT INTO inflow_cells
-            (inflow_fid, grid_fid)
-        SELECT
-            NEW.fid, g.fid
-        FROM
-            grid AS g,
-            all_user_bc AS abc
-        WHERE
-            abc.type = 'inflow' AND
-            abc.geom_type = NEW.geom_type AND
-            abc.bc_fid = NEW.bc_fid AND
-            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- inflow deleted
-INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_delete', 1);
-CREATE TRIGGER "update_inflow_cells_on_inflow_delete"
-    AFTER DELETE ON "inflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_delete'
-    )
-    BEGIN
-        DELETE FROM inflow_cells WHERE inflow_fid = OLD.fid;
-    END;
+---- trigger for a new inflow
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_insert', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_insert"
+--    AFTER INSERT ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_insert'
+--    )
+--    BEGIN
+--        INSERT INTO inflow_cells
+--            (inflow_fid, grid_fid)
+--        SELECT
+--            NEW.fid, g.fid
+--        FROM
+--            grid AS g,
+--            all_user_bc AS abc
+--        WHERE
+--            abc.type = 'inflow' AND
+--            abc.geom_type = NEW.geom_type AND
+--            abc.bc_fid = NEW.bc_fid AND
+--            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- inflow updated
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_update', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_update"
+--    AFTER UPDATE ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_update'
+--    )
+--    BEGIN
+--        DELETE FROM inflow_cells WHERE inflow_fid = NEW.fid;
+--        INSERT INTO inflow_cells
+--            (inflow_fid, grid_fid)
+--        SELECT
+--            NEW.fid, g.fid
+--        FROM
+--            grid AS g,
+--            all_user_bc AS abc
+--        WHERE
+--            abc.type = 'inflow' AND
+--            abc.geom_type = NEW.geom_type AND
+--            abc.bc_fid = NEW.bc_fid AND
+--            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- inflow deleted
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_cells_on_inflow_delete', 1);
+--CREATE TRIGGER "update_inflow_cells_on_inflow_delete"
+--    AFTER DELETE ON "inflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_inflow_cells_on_inflow_delete'
+--    )
+--    BEGIN
+--        DELETE FROM inflow_cells WHERE inflow_fid = OLD.fid;
+--    END;
 
 CREATE TABLE "reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -224,57 +224,57 @@ CREATE TABLE "outflow_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
 
--- trigger for a new outflow
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_insert', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_insert"
-    AFTER INSERT ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_insert'
-    )
-    BEGIN
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
-            SELECT
-                NEW.fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'outflow' AND
-                abc.geom_type = NEW.geom_type AND
-                abc.bc_fid = NEW.bc_fid AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- outflow updated
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_update', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_update"
-    AFTER UPDATE ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_update'
-    )
-    BEGIN
-        DELETE FROM outflow_cells WHERE outflow_fid = NEW.fid;
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
-            SELECT
-                NEW.fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'outflow' AND
-                abc.geom_type = NEW.geom_type AND
-                abc.bc_fid = NEW.bc_fid AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-    END;
-
--- outflow deleted
-INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_delete', 1);
-CREATE TRIGGER "update_outflow_cells_on_outflow_delete"
-    AFTER DELETE ON "outflow"
-    WHEN (
-        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_delete'
-    )
-    BEGIN
-        DELETE FROM outflow_cells WHERE outflow_fid = OLD.fid;
-    END;
+---- trigger for a new outflow
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_insert', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_insert"
+--    AFTER INSERT ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_insert'
+--    )
+--    BEGIN
+--        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
+--            SELECT
+--                NEW.fid, g.fid
+--            FROM
+--                grid AS g, all_user_bc AS abc
+--            WHERE
+--                abc.type = 'outflow' AND
+--                abc.geom_type = NEW.geom_type AND
+--                abc.bc_fid = NEW.bc_fid AND
+--                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- outflow updated
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_update', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_update"
+--    AFTER UPDATE ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_update'
+--    )
+--    BEGIN
+--        DELETE FROM outflow_cells WHERE outflow_fid = NEW.fid;
+--        INSERT INTO "outflow_cells" (outflow_fid, grid_fid)
+--            SELECT
+--                NEW.fid, g.fid
+--            FROM
+--                grid AS g, all_user_bc AS abc
+--            WHERE
+--                abc.type = 'outflow' AND
+--                abc.geom_type = NEW.geom_type AND
+--                abc.bc_fid = NEW.bc_fid AND
+--                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+--    END;
+--
+---- outflow deleted
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_outflow_cells_on_outflow_delete', 1);
+--CREATE TRIGGER "update_outflow_cells_on_outflow_delete"
+--    AFTER DELETE ON "outflow"
+--    WHEN (
+--        SELECT enabled FROM trigger_control WHERE name = 'update_outflow_cells_on_outflow_delete'
+--    )
+--    BEGIN
+--        DELETE FROM outflow_cells WHERE outflow_fid = OLD.fid;
+--    END;
 
 CREATE VIEW outflow_chan_elems (
     elem_fid,
@@ -516,6 +516,14 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('chan_elems', 'geom');
 -- SELECT gpkgAddSpatialIndex('chan_elems', 'geom');
+
+CREATE TABLE rbank (
+    "fid" INTEGER PRIMARY KEY,
+    "chan_seg_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rbank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('rbank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('rbank', 'geom');
 
 CREATE TABLE "chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1712,8 +1720,7 @@ SELECT gpkgAddGeometryTriggers('user_model_boundary', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_model_boundary', 'geom');
 
 CREATE TABLE "user_1d_domain" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "center_line_fid" INTEGER
+    "fid" INTEGER PRIMARY KEY NOT NULL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domain', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);
@@ -1732,16 +1739,82 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerli
 SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
 
+-- USER XSECTIONS
+
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "fcn" REAL, -- FCN, average Manning's n in the grid element
     "type" TEXT, -- SHAPE, type of cross-section shape definition
+    "name" TEXT,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsections', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TABLE "user_chan_r" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL -- channel channel thalweg depth (deepest part measured from the lowest bank)
+
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_r', 'aspatial');
+
+CREATE TABLE "user_chan_v" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "a1" REAL, -- A1,
+    "a2" REAL, -- A2,
+    "b1" REAL, -- B1,
+    "b2" REAL, -- B2,
+    "c1" REAL, -- C1,
+    "c2" REAL, -- C2,
+    "excdep" REAL, -- EXCDEP, channel depth above which second variable area relationship will be applied
+    "a11" REAL, -- A11,
+    "a22" REAL, -- A22,
+    "b11" REAL, -- B11,
+    "b22" REAL, -- B22,
+    "c11" REAL, -- C11,
+    "c22" REAL -- C22,
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_v', 'aspatial');
+
+CREATE TABLE "user_chan_t" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
+    "bankell" REAL, -- BANKELL, left bank elevation
+    "bankelr" REAL, -- BANKELR, right bank elevation
+    "fcw" REAL, -- FCW, channel width
+    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "zl" REAL, -- ZL left side slope
+    "zr" REAL --ZR right side slope
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_t', 'aspatial');
+
+CREATE TABLE "user_chan_n" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_xs_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of the user cross-section
+    "nxsecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "xsecname" TEXT -- xsection name
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_chan_n', 'aspatial');
+
+CREATE TABLE "user_xsec_n_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "chan_n_nxsecnum" INTEGER, -- NXSECNUM, fid of cross-section in chan_n
+    "xi" REAL, -- XI, station - distance from left point
+    "yi" REAL -- YI, elevation
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_xsec_n_data', 'aspatial');
+
+-- USER LEVEES
 
 CREATE TABLE "user_levee_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1778,7 +1851,12 @@ SELECT gpkgAddGeometryTriggers('user_levee_polygons', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT
+    "name" TEXT DEFAULT '',
+    "n_value" REAL DEFAULT 0, -- STMAN(L), optional spatially variable street n-value within a given grid element. 0 for global
+    "elevation" REAL DEFAULT 0, -- ELSTR(L), optional street elevation. If 0, the model will assign the street elevation as grid element elevation
+    "curb_height" REAL DEFAULT 0, -- DEPX(L) or DEPEX(L), optional curb height, 0 to use global DEPX
+    "street_width" REAL DEFAULT 0, -- WIDR, optional grid element street width in the ISTDIR direction
+    "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_streets', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1806,8 +1884,7 @@ SELECT gpkgAddGeometryTriggers('user_elevation_polygons', 'geom');
 
 CREATE TABLE "user_bc_points" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_points', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_points', 'geom', 'POINT', 0, 0, 0);
@@ -1825,7 +1902,7 @@ CREATE TRIGGER "update_inflow_on_bc_pts_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'point', NEW."fid";
     END;
 
 -- trigger for a new POINT OUTFLOW boundary
@@ -1837,7 +1914,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'point', NEW."fid";
     END;
 
 -- point boundary updated - type: inflow
@@ -1852,9 +1929,9 @@ CREATE TRIGGER "update_inflow_on_bc_pts_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'point';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'point', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'point' WHERE bc_fid = NEW.fid;
     END;
 
 -- point boundary updated - type: outflow
@@ -1871,7 +1948,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'point' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'point' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow point boundary deleted
@@ -1901,8 +1978,7 @@ CREATE TRIGGER "update_outflow_on_bc_pts_delete"
 
 CREATE TABLE "user_bc_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_lines', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1920,7 +1996,7 @@ CREATE TRIGGER "update_inflow_on_bc_lines_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'line', NEW."fid";
     END;
 
 -- trigger for a new LINE OUTFLOW boundary
@@ -1932,7 +2008,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'line', NEW."fid";
     END;
 
 -- line boundary updated - type: inflow
@@ -1947,9 +2023,9 @@ CREATE TRIGGER "update_inflow_on_bc_lines_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'line';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'line', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'line', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'line' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'line' WHERE bc_fid = NEW.fid;
     END;
 
 -- line boundary updated - type: outflow
@@ -1966,7 +2042,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'line', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'line' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'line' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow line boundary deleted
@@ -1995,8 +2071,7 @@ CREATE TRIGGER "update_outflow_on_bc_lines_delete"
 
 CREATE TABLE "user_bc_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "type" TEXT,
-    "name" TEXT
+    "type" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
@@ -2022,7 +2097,7 @@ CREATE TRIGGER "update_inflow_on_bc_polygons_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'inflow'
     )
     BEGIN
-        INSERT INTO "inflow" (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT INTO "inflow" (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
     END;
 
 -- trigger for a new POLYGON OUTFLOW boundary
@@ -2034,7 +2109,7 @@ CREATE TRIGGER "update_outflow_on_bc_polygons_insert"
         NEW."geom" NOT NULL AND NEW."type" = 'outflow'
     )
     BEGIN
-        INSERT INTO "outflow" (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT INTO "outflow" (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
     END;
 
 -- polygon boundary updated - type: inflow
@@ -2049,9 +2124,9 @@ CREATE TRIGGER "update_inflow_on_bc_polygons_update"
         -- delete this bc from other tables
         DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'polygon';
         -- try to insert to the inflow table, ignore on fail (there is a unique constraint on inflow.bc_fid)
-        INSERT OR IGNORE INTO inflow (name, geom_type, bc_fid) SELECT NEW."name", 'polygon', NEW."fid";
+        INSERT OR IGNORE INTO inflow (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE inflow SET name = NEW."name", geom_type = 'polygon' WHERE bc_fid = NEW.fid;
+        UPDATE inflow SET geom_type = 'polygon' WHERE bc_fid = NEW.fid;
     END;
 
 -- line boundary updated - type: outflow
@@ -2068,7 +2143,7 @@ CREATE TRIGGER "update_outflow_on_bc_polygons_update"
         -- try to insert to the inflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'polygon', NEW."fid";
         -- update existing (includes geometry changes)
-        UPDATE outflow SET name = NEW."name", geom_type = 'polygon' WHERE bc_fid = NEW.fid;
+        UPDATE outflow SET geom_type = 'polygon' WHERE bc_fid = NEW.fid;
     END;
 
 -- inflow polygon boundary deleted
@@ -2121,3 +2196,40 @@ SELECT 'outflow' as type, fid, geom_type, bc_fid FROM outflow;
 --SELECT 'line' as "geom_type", fid, geom FROM user_bc_lines WHERE type = 'outflow'
 --UNION ALL
 --SELECT 'polygon' as "geom_type", fid, geom FROM user_bc_polygons WHERE type = 'outflow';
+
+CREATE TABLE "all_schem_bc" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" TEXT,
+    "tab_bc_fid" INTEGER,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('all_schem_bc', 'features', 4326);
+SELECT gpkgAddGeometryColumn('all_schem_bc', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('all_schem_bc', 'geom');
+
+--INSERT INTO trigger_control (name, enabled) VALUES ('update_inflow_on_bc_polygons_insert', 1); -- enabled by default
+CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_insert"
+    AFTER INSERT ON "inflow_cells"
+    BEGIN
+        INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
+        SELECT 'inflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_insert"
+    AFTER INSERT ON "outflow_cells"
+    BEGIN
+        INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
+        SELECT 'outflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_delete"
+    AFTER DELETE ON "inflow_cells"
+    BEGIN
+        DELETE FROM all_schem_bc WHERE type = 'inflow' AND grid_fid = OLD.grid_fid;
+    END;
+
+CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_delete"
+    AFTER DELETE ON "outflow_cells"
+    BEGIN
+        DELETE FROM all_schem_bc WHERE type = 'outflow' AND grid_fid = OLD.grid_fid;
+    END;

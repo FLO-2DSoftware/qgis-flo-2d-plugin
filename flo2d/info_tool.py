@@ -20,6 +20,7 @@ from PyQt4.QtGui import QMenu, QAction, QColor, QCursor, QPixmap
 from qgis.core import QgsFeatureRequest
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 
+
 class InfoTool(QgsMapToolIdentify):
 
     feature_picked = pyqtSignal(str, int)
@@ -44,7 +45,7 @@ class InfoTool(QgsMapToolIdentify):
             lyr_id = item.mLayer.id()
             table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]
             fid = item.mFeature.id()
-            if not lyr_name in lyrs_found.keys():
+            if lyr_name not in lyrs_found.keys():
                 lyrs_found[lyr_name] = {'lid': lyr_id, 'table': table, 'fids': []}
             else:
                 pass

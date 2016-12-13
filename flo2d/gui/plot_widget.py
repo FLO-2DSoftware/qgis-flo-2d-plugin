@@ -46,6 +46,9 @@ class PlotWidget(QWidget):
 
     def clear(self):
         self.plot.clear()
+        self.plot.setTitle()
+        self.plot.setLabel('bottom', text='')
+        self.plot.setLabel('left', text='')
         self.items = {}
 
     def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine):
@@ -55,7 +58,7 @@ class PlotWidget(QWidget):
 
     def update_item(self, name, data):
         x, y = data
-        self.items[name].setData(x,y)
+        self.items[name].setData(x, y)
 
     def remove_item(self, name):
         self.plot.removeItem(self.items[name])

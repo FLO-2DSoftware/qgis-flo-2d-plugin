@@ -66,14 +66,21 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
         levee_points = self.lyrs.get_layer_by_name('Levee Points', self.lyrs.group).layer()
         levee_schematic = self.lyrs.get_layer_by_name('Levees', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
         cur = self.con.cursor()
         buf = self.buffer_size.value()
         for feat in levee_lines.getFeatures():
-            intervals = get_intervals(feat, levee_points, 'elev', buf)
+            try:
+                qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
+                intervals = get_intervals(feat, levee_points, 'elev', buf)
+            except TypeError:
+                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
+                intervals = get_intervals(feat, levee_points, 'correction', buf)
             interpolated = interpolate_along_line(feat, levee_schematic, intervals)
-            for elev, fid in interpolated:
-                cur.execute(qry, (round(elev, 3), fid))
+            try:
+                for elev, fid in interpolated:
+                    cur.execute(qry, (round(elev, 3), fid))
+            except IndexError:
+                continue
         self.con.commit()
 
     def elev_from_lines(self):
@@ -84,7 +91,9 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
             elev = feat['elev']
             cor = feat['correction']
             qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
-            if not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            if isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+                continue
+            elif not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
                 val = elev + cor
             elif not isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
                 val = elev
