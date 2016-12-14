@@ -618,7 +618,7 @@ class Flo2D(object):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_elevation(self.gutils, grid_lyr, elev_lyr, 'elev')
+            update_elevation(self.gutils, grid_lyr, elev_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning grid elevation finished!")
         except Exception as e:

@@ -17,17 +17,16 @@ from grid_tools import spatial_index, fid_from_grid
 
 
 # Levees tools
-def get_intervals(line_feature, point_layer, col_value, buffer_size):
+def get_intervals(line_feature, point_features, col_value, buffer_size):
     """
     Function which calculates intervals and assigning values based on intersection between line and snapped points.
     Points are selected by line buffer and filtered by the distance from the line feature.
     """
-    points = point_layer.getFeatures()
     lgeom = line_feature.geometry()
     tot_len = lgeom.length()
     buf = lgeom.buffer(buffer_size, 5)
     positions = {}
-    for feat in points:
+    for feat in point_features:
         pnt = feat.geometry()
         if buf.contains(pnt):
             pass
@@ -57,7 +56,7 @@ def get_intervals(line_feature, point_layer, col_value, buffer_size):
         return intervals
 
 
-def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid', join_col='user_line_fid'):
+def interpolate_along_line(line_feature, sampling_features, intervals, id_col='fid', join_col='user_line_fid'):
     """
     Generator for interpolating values of sampling features centroids snapped to interpolation line.
     Line intervals list needs to be calculated first and derived as a generator parameter.
@@ -66,8 +65,7 @@ def interpolate_along_line(line_feature, sampling_layer, intervals, id_col='fid'
     lgeom = line_feature.geometry()
     lid = line_feature[id_col]
     tot_len = lgeom.length()
-    fs = sampling_layer.getFeatures()
-    sc = [(lgeom.lineLocatePoint(f.geometry().centroid()) / tot_len, f[id_col]) for f in fs if f[join_col] == lid]
+    sc = [(lgeom.lineLocatePoint(f.geometry().centroid()) / tot_len, f[id_col]) for f in sampling_features if f[join_col] == lid]
     sc.sort()
     inter_iter = iter(intervals)
     snapped_iter = iter(sc)
@@ -104,9 +102,7 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_
     lgeom = line_feature.geometry()
     lid = line_feature[id_col]
     polys = poly_lyr.getFeatures()
-    allfeatures = {feature.id(): feature for feature in polys}
-    index = QgsSpatialIndex()
-    map(index.insertFeature, allfeatures.itervalues())
+    allfeatures, index = spatial_index(polys)
     fids = index.intersects(lgeom.boundingBox())
     sel_polys = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(lgeom)]
     for feat in levees_lyr.getFeatures():
@@ -544,9 +540,7 @@ def bank_lines(centerline_feature, domain_feature, xs_features):
     Calculating left and right bank lines from intersection of river center line, 1D Domain and cross sections.
     Trimming and sorting cross sections.
     """
-    allfeatures = {feature.id(): feature for feature in xs_features}
-    index = QgsSpatialIndex()
-    map(index.insertFeature, allfeatures.itervalues())
+    allfeatures, index = spatial_index(xs_features)
     domain = domain_feature.geometry()
     centerline = centerline_feature.geometry()
     geom1 = QgsGeometry.fromPolygon(domain.asPolygon())

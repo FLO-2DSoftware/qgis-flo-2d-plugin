@@ -71,11 +71,11 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         for feat in levee_lines.getFeatures():
             try:
                 qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
-                intervals = get_intervals(feat, levee_points, 'elev', buf)
+                intervals = get_intervals(feat, levee_points.getFeatures(), 'elev', buf)
             except TypeError:
                 qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
-                intervals = get_intervals(feat, levee_points, 'correction', buf)
-            interpolated = interpolate_along_line(feat, levee_schematic, intervals)
+                intervals = get_intervals(feat, levee_points.getFeatures(), 'correction', buf)
+            interpolated = interpolate_along_line(feat, levee_schematic.getFeatures(), intervals)
             try:
                 for elev, fid in interpolated:
                     cur.execute(qry, (round(elev, 3), fid))
