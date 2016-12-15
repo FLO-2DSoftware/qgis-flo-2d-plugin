@@ -232,3 +232,5 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.data_model.appendRow(items)
         self.tview.setModel(self.data_model)
         self.tview.resizeColumnsToContents()
+        for i in range(self.data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)

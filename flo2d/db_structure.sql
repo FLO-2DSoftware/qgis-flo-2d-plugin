@@ -21,7 +21,7 @@ VALUES (
 
 PRAGMA foreign_keys = ON;
 --PRAGMA synchronous=FULL;
-PRAGMA journal_mode = memory;
+--PRAGMA journal_mode = memory;
 
 -- FLO-2D tables definitions
 
@@ -2078,14 +2078,6 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_bc_polyg
 SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_bc_polygons', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_bc_polygons', 'geom');
-
-CREATE TABLE "user_rbank" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "center_line_fid" INTEGER -- FID of parent center line
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_rbank', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_rbank', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_rbank', 'geom');
 
 -- START user_bc_polygons TRIGGERS
 

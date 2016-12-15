@@ -23,7 +23,7 @@ from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import generate_schematic_levees, schematize_1d_area, update_rbank
+from schematic_tools import generate_schematic_levees, DomainSchematizer
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
@@ -466,7 +466,7 @@ class Flo2D(object):
             pass
         self.gutils.enable_geom_triggers()
         self.show_bc_editor()
-        update_rbank(self.gutils)
+        self.gutils.update_rbank()
 
     @connection_required
     def export_gds(self):
@@ -800,12 +800,11 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_xsections'):
             self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
             return
-        domain_lyr = self.lyrs.data['user_1d_domain']['qlyr']
-        centerline_lyr = self.lyrs.data['user_centerline']['qlyr']
-        xs_lyr = self.lyrs.data['user_xsections']['qlyr']
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
         try:
-            schematize_1d_area(self.gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr)
+            ds = DomainSchematizer(self.con, self.iface, self.lyrs)
+            ds.process_bank_lines()
+            ds.process_xsections()
+            ds.process_attributes()
             chan_schem = self.lyrs.data['chan']['qlyr']
             chan_elems = self.lyrs.data['chan_elems']['qlyr']
             rbank = self.lyrs.data['rbank']['qlyr']

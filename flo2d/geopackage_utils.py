@@ -395,3 +395,54 @@ class GeoPackageUtils(object):
     def enable_geom_triggers(self):
         qry = 'UPDATE trigger_control set enabled = 1;'
         self.execute(qry)
+
+    def calculate_offset(self, cell_size):
+        """
+        Finding offset of grid squares centers which is formed after switching from float to integers.
+        Rounding to integers is needed for Bresenham's Line Algorithm.
+        """
+        geom = self.single_centroid('1').strip('POINT()').split()
+        x, y = float(geom[0]), float(geom[1])
+        x_offset = round(x / cell_size) * cell_size - x
+        y_offset = round(y / cell_size) * cell_size - y
+        return x_offset, y_offset
+
+    def grid_on_point(self, x, y):
+        """
+        Getting fid of grid which contains given point.
+        """
+        qry = '''
+        SELECT g.fid
+        FROM grid AS g
+        WHERE g.ROWID IN (
+            SELECT id FROM rtree_grid_geom
+            WHERE
+                {0} <= maxx AND
+                {0} >= minx AND
+                {1} <= maxy AND
+                {1} >= miny)
+        AND
+            ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
+        '''
+        qry = qry.format(x, y)
+        gid = self.execute(qry).fetchone()[0]
+        return gid
+
+    def update_rbank(self):
+        """
+        Create right bank lines.
+        """
+        qry = '''
+        INSERT INTO rbank (chan_seg_fid, geom)
+        SELECT c.fid, AsGPB(MakeLine(centroid(CastAutomagic(g.geom)))) as geom
+        FROM
+            chan as c,
+            (SELECT * FROM  chan_elems ORDER BY seg_fid, nr_in_seg) as ce, -- sorting the chan elems post aggregation doesn't work so we need to sort the before
+            grid as g
+        WHERE
+            c.fid = ce.seg_fid AND
+            ce.seg_fid = c.fid AND
+            g.fid = ce.rbankgrid
+        GROUP BY c.fid;
+        '''
+        self.execute(qry)
