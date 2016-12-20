@@ -91,6 +91,7 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
+        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API."""
@@ -802,14 +803,38 @@ class Flo2D(object):
             ds.process_bank_lines()
             ds.process_xsections()
             ds.process_attributes()
-            # conf = Confluences(self.con, self.iface, self.lyrs)
-            # conf.find_confluences()
             chan_schem = self.lyrs.data['chan']['qlyr']
             chan_elems = self.lyrs.data['chan_elems']['qlyr']
             rbank = self.lyrs.data['rbank']['qlyr']
-            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank]
+            confluences = self.lyrs.data['chan_confluences']['qlyr']
+            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
             self.lyrs.repaint_layers()
             self.uc.show_info("1D Domain schematized!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
+
+    @connection_required
+    def schematize_confluences(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty('user_left_bank'):
+            self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
+            return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
+            return
+        try:
+            conf = Confluences(self.con, self.iface, self.lyrs)
+            conf.calculate_confluences()
+            chan_schem = self.lyrs.data['chan']['qlyr']
+            chan_elems = self.lyrs.data['chan_elems']['qlyr']
+            rbank = self.lyrs.data['rbank']['qlyr']
+            confluences = self.lyrs.data['chan_confluences']['qlyr']
+            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+            self.lyrs.repaint_layers()
+            self.uc.show_info("Confluences schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
@@ -847,7 +872,7 @@ class Flo2D(object):
         self.editors_map = {
             'user_levee_lines': self.show_profile,
             'user_streets': self.show_profile,
-            'user_centerline': self.show_profile,
+            'user_left_bank': self.show_profile,
             'chan_elems': self.show_xsec_editor,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,

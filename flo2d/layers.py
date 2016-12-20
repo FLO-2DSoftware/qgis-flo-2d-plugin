@@ -224,7 +224,7 @@ class Layers(QObject):
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
-                'readonly': True
+                'readonly': False
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
@@ -711,7 +711,7 @@ class Layers(QObject):
         return self.data[table]['qlyr'].id()
 
     def warn_readonly(self):
-        self.uc.bar_warn('Warning:\nAll changes to this layer can be overwriten by changes in the user layer.')
+        self.uc.bar_warn('All changes to this layer can be overwritten by changes in the user layer.')
 
     def enter_edit_mode(self, table_name, default_attr_exp=None):
         if not self.group:

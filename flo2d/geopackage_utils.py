@@ -229,10 +229,13 @@ class GeoPackageUtils(object):
             cells[g] = geom
         return cells
 
-    def single_centroid(self, gid, table='grid', field='fid'):
-        sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
-        wkt = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
-        return wkt
+    def single_centroid(self, gid, table='grid', field='fid', buffers=False):
+        if buffers is False:
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        else:
+            sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        geom = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
+        return geom
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING('''
@@ -428,10 +431,36 @@ class GeoPackageUtils(object):
         gid = self.execute(qry).fetchone()[0]
         return gid
 
+    def update_xs_type(self):
+        """
+        Updating parameters values specific for each cross section type.
+        """
+        self.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
+        chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+        chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
+        chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
+        chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
+        xs_sql = '''SELECT fid, type FROM chan_elems;'''
+        cross_sections = self.execute(xs_sql).fetchall()
+        cur = self.con.cursor()
+        for fid, typ in cross_sections:
+            if typ == 'N':
+                cur.execute(chan_n, (fid,))
+            elif typ == 'R':
+                cur.execute(chan_r, (fid,))
+            elif typ == 'T':
+                cur.execute(chan_t, (fid,))
+            elif typ == 'V':
+                cur.execute(chan_v, (fid,))
+            else:
+                pass
+        self.con.commit()
+
     def update_rbank(self):
         """
         Create right bank lines.
         """
+        self.clear_tables('rbank')
         qry = '''
         INSERT INTO rbank (chan_seg_fid, geom)
         SELECT c.fid, AsGPB(MakeLine(centroid(CastAutomagic(g.geom)))) as geom

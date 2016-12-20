@@ -539,7 +539,7 @@ class DomainSchematizer(GeoPackageUtils):
         Schematizing left bank.
         """
         # Creating spatial index on domain polygons and finding proper one for each river center line
-        self.clear_tables('chan', 'chan_elems', 'rbank')
+        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
         self.set_xs_features()
         for feat in self.user_lbank_lyr.getFeatures():
             lbank_fid = feat.id()
@@ -841,31 +841,6 @@ class DomainSchematizer(GeoPackageUtils):
             second_clip_xs.append((x1, y1, x2, y2, org_fid, interpolated))
         return second_clip_xs
 
-    def update_xs_type(self):
-        """
-        Updating parameters values specific for each cross section type.
-        """
-        self.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
-        chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
-        chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
-        chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
-        chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
-        xs_sql = '''SELECT fid, type FROM chan_elems;'''
-        cross_sections = self.execute(xs_sql).fetchall()
-        cur = self.con.cursor()
-        for fid, typ in cross_sections:
-            if typ == 'N':
-                cur.execute(chan_n, (fid,))
-            elif typ == 'R':
-                cur.execute(chan_r, (fid,))
-            elif typ == 'T':
-                cur.execute(chan_t, (fid,))
-            elif typ == 'V':
-                cur.execute(chan_v, (fid,))
-            else:
-                pass
-        self.con.commit()
-
     def update_1d_area(self):
         """
         Assigning properties from user layers.
@@ -878,7 +853,8 @@ class DomainSchematizer(GeoPackageUtils):
             froudc = (SELECT froudc FROM user_left_bank WHERE fid = chan.user_lbank_fid),
             roughadj = (SELECT roughadj FROM user_left_bank WHERE fid = chan.user_lbank_fid),
             isedn = (SELECT isedn FROM user_left_bank WHERE fid = chan.user_lbank_fid),
-            notes = (SELECT notes FROM user_left_bank WHERE fid = chan.user_lbank_fid);
+            notes = (SELECT notes FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            rank = (SELECT rank FROM user_left_bank WHERE fid = chan.user_lbank_fid);
         '''
         update_chan_elems = '''
         UPDATE chan_elems
@@ -911,45 +887,72 @@ class Confluences(GeoPackageUtils):
         super(Confluences, self).__init__(con, iface)
         self.lyrs = lyrs
 
-        self.grid_lyr = lyrs.data['grid']['qlyr']
         self.left_bank_lyr = lyrs.data['chan']['qlyr']
-        self.grid_feats, self.grid_index = spatial_index(self.grid_lyr.getFeatures())
+        self.right_bank_lyr = lyrs.data['rbank']['qlyr']
+        self.xsections_lyr = lyrs.data['chan_elems']['qlyr']
 
-    def find_neighbours(self):
-        qry = 'SELECT fid, seg_fid, MAX(nr_in_seg) FROM chan_elems GROUP BY seg_fid;'
-        grid_neighbours = {row[0]: {'seg_fid': row[1], 'neighbours': set()} for row in self.execute(qry)}
-        for gid in grid_neighbours.keys():
-            req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(gid))
-            src_bank = next(self.grid_lyr.getFeatures(req))
-            src_bank_geom = src_bank.geometry()
-            fids = self.grid_index.intersects(src_bank_geom.boundingBox())
-            for fid in fids:
-                grid_feat = self.grid_feats[fid]
-                grid_geom = grid_feat.geometry()
-                if fid != gid and grid_geom.intersects(src_bank_geom):
-                    grid_neighbours[gid]['neighbours'].add(fid)
-        return grid_neighbours
+    def calculate_confluences(self):
+        # Iterate over every left bank
+        vertex_range = []
+        qry = 'SELECT fid, rank FROM chan ORDER BY rank, fid;'
+        self.left_bank_lyr.startEditing()
+        for (fid, rank) in self.execute(qry):
+            # Skip searching for confluences for main channel
+            if rank <= 1:
+                continue
+            # Selecting left bank segment with given 'fid'
+            segment_req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(fid))
+            segment = next(self.left_bank_lyr.getFeatures(segment_req))
+            seg_geom = segment.geometry()
+            # Selecting and iterating over potential receivers with higher rank
+            rank_req = QgsFeatureRequest().setFilterExpression('"rank" = {}'.format(rank - 1))
+            receivers = self.left_bank_lyr.getFeatures(rank_req)
+            for lfeat in receivers:
+                lfeat_id = lfeat.id()
+                req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(lfeat_id))
+                rfeat = next(self.right_bank_lyr.getFeatures(req))
+                left_geom = lfeat.geometry()
+                right_geom = rfeat.geometry()
+                side = None
+                if seg_geom.intersects(left_geom):
+                    side = 'left'
+                elif seg_geom.intersects(right_geom):
+                    side = 'right'
+                if side is not None:
+                    new_geom, new_len = self.trim_segment(seg_geom, left_geom, right_geom)
+                    self.left_bank_lyr.changeGeometry(fid, new_geom)
+                    vertex_range.append((fid, lfeat_id, new_len, new_len+1, side))
+                    break
+        self.left_bank_lyr.commitChanges()
+        self.left_bank_lyr.updateExtents()
+        self.left_bank_lyr.triggerRepaint()
+        self.set_confluences(vertex_range)
+        self.update_xs_type()
+        self.update_rbank()
 
-    def potential_confluences(self):
-        grid_neighbours = self.find_neighbours()
-        confluences = {}
-        for tributary, values in grid_neighbours.items():
-            seg_fid = values['seg_fid']
-            confluences[seg_fid] = [tributary]
-            neighbours = values['neighbours']
-            for n in neighbours:
-                left_qry = 'SELECT fid, seg_fid FROM chan_elems WHERE seg_fid != ? AND fid = ?;'
-                left = self.execute(left_qry, (seg_fid, n)).fetchone()
-                if left:
-                    confluences[seg_fid].append(left)
-                    continue
-                right_qry = 'SELECT rbankgrid, seg_fid FROM chan_elems WHERE seg_fid != ? AND rbankgrid = ?;'
-                right = self.execute(right_qry, (seg_fid, n)).fetchone()
-                if right:
-                    confluences[seg_fid].append(right)
-        return confluences
+    @staticmethod
+    def trim_segment(seg_geom, left_geom, right_geom):
+        seg_len = len(seg_geom.asPolyline()) - 1
+        while True:
+            seg_geom.deleteVertex(seg_len)
+            if seg_geom.intersects(left_geom) or seg_geom.intersects(right_geom):
+                seg_len -= 1
+                continue
+            else:
+                break
+        return seg_geom, seg_len
 
-    def find_confluences(self):
-        confluences = self.potential_confluences()
-        for seg_fid, values in confluences.items():
-            print(seg_fid, values)
+    def set_confluences(self, vertex_range):
+        self.clear_tables('chan_confluences')
+        insert_qry = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid, geom) VALUES (?,?,?,?);'''
+        qry = '''SELECT fid, AsGPB(ST_StartPoint(GeomFromGPB(geom))) FROM chan_elems WHERE seg_fid = ? AND nr_in_seg = ?;'''
+        for i, (tributary_fid, main_fid, tvertex, mvertex, side) in enumerate(vertex_range, 1):
+            tributary_gid, tributary_geom = self.execute(qry, (tributary_fid, tvertex)).fetchone()
+            main_gid, main_geom = self.execute(qry, (tributary_fid, mvertex)).fetchone()
+            self.execute(insert_qry, (i, 0, tributary_gid, tributary_geom))
+            self.execute(insert_qry, (i, 1, main_gid, main_geom))
+            self.remove_xs_after_vertex(tributary_fid, tvertex)
+
+    def remove_xs_after_vertex(self, seg_fid, vertex_id):
+        del_sql = '''DELETE FROM chan_elems WHERE seg_fid = ? AND nr_in_seg > ?;'''
+        self.execute(del_sql, (seg_fid, vertex_id))
