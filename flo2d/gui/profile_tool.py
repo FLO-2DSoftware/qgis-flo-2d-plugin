@@ -36,8 +36,8 @@ class ProfileTool(qtBaseClass, uiDialog):
             'schema_tab': 'street_seg',
             'schema_fid': 'str_fid'
         },
-        'user_centerline': {
-            'user_name': 'River Centerline',
+        'user_left_bank': {
+            'user_name': 'Left Bank Line',
             'schema_tab': 'chan_elems',
             'schema_fid': 'seg_fid'
         }

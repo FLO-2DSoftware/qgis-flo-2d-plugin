@@ -21,7 +21,7 @@ VALUES (
 
 PRAGMA foreign_keys = ON;
 --PRAGMA synchronous=FULL;
---PRAGMA journal_mode = memory;
+PRAGMA journal_mode = memory;
 
 -- FLO-2D tables definitions
 
@@ -492,7 +492,7 @@ CREATE TABLE "chan" (
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
-    "center_line_fid" INTEGER -- FID of parent center line
+    "user_lbank_fid" INTEGER -- FID of parent left bank line
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
@@ -501,7 +501,8 @@ SELECT gpkgAddGeometryTriggers('chan', 'geom');
 
 
 CREATE TABLE "chan_elems" (
-    "fid" INTEGER NOT NULL PRIMARY KEY, -- ICHANGRID, grid element number for left bank
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "fid" INTEGER NOT NULL, -- ICHANGRID, grid element number for left bank
     "seg_fid" INTEGER, -- fid of cross-section's segment
     "nr_in_seg" INTEGER, -- cross-section number in segment
     "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
@@ -511,6 +512,7 @@ CREATE TABLE "chan_elems" (
     "notes" TEXT,
     "user_xs_fid" INTEGER,
     "interpolated" INTEGER
+
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1726,7 +1728,7 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domai
 SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_1d_domain', 'geom');
 
-CREATE TABLE "user_centerline" (
+CREATE TABLE "user_left_bank" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT, -- name of segment (optional)
     "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
@@ -1735,9 +1737,9 @@ CREATE TABLE "user_centerline" (
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
     "notes" TEXT
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerline', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_left_bank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_left_bank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_left_bank', 'geom');
 
 -- USER XSECTIONS
 
@@ -1752,6 +1754,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsection
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TABLE "chan_elems_interp" (
+    "fid" INTEGER PRIMARY KEY,
+    "up_fid" INTEGER, -- fid of upper chan_elem
+    "lo_fid" INTEGER, -- fid of lower chan_elem
+    "up_dist_lb" REAL, -- distance from the chan_elem along left bank
+    "up_lo_dist_lb" REAL -- distance between upper and lower left bank
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_elems_interp', 'aspatial');
 
 CREATE TABLE "user_chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

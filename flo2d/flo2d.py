@@ -23,7 +23,7 @@ from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import generate_schematic_levees, DomainSchematizer
+from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
@@ -791,10 +791,7 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        if self.gutils.is_table_empty('user_1d_domain'):
-            self.uc.bar_warn("There is no any 1D Domain polygons! Please digitize them before running the tool.")
-            return
-        if self.gutils.is_table_empty('user_centerline'):
+        if self.gutils.is_table_empty('user_left_bank'):
             self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_xsections'):
@@ -805,6 +802,8 @@ class Flo2D(object):
             ds.process_bank_lines()
             ds.process_xsections()
             ds.process_attributes()
+            # conf = Confluences(self.con, self.iface, self.lyrs)
+            # conf.find_confluences()
             chan_schem = self.lyrs.data['chan']['qlyr']
             chan_elems = self.lyrs.data['chan_elems']['qlyr']
             rbank = self.lyrs.data['rbank']['qlyr']

@@ -11,7 +11,7 @@ import traceback
 from operator import itemgetter
 from itertools import izip
 from collections import defaultdict, OrderedDict
-from math import pi
+from math import pi, sqrt
 from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QGis, QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
 from geopackage_utils import GeoPackageUtils
@@ -516,27 +516,22 @@ class DomainSchematizer(GeoPackageUtils):
         super(DomainSchematizer, self).__init__(con, iface)
         self.lyrs = lyrs
         self.cell_size = float(self.get_cont_par('CELLSIZE'))
+        self.diagonal = sqrt(2) * self.cell_size
         self.x_offset, self.y_offset = self.calculate_offset(self.cell_size)
 
-        self.centerline_lyr = lyrs.data['user_centerline']['qlyr']
-        self.domain_lyr = lyrs.data['user_1d_domain']['qlyr']
-        self.xsections_lyr = lyrs.data['user_xsections']['qlyr']
+        self.user_lbank_lyr = lyrs.data['user_left_bank']['qlyr']
         self.left_bank_lyr = lyrs.data['chan']['qlyr']
+        self.xsections_lyr = lyrs.data['user_xsections']['qlyr']
 
-        self.centerline_feats = None
-        self.domain_index = None
-        self.domain_feats = None
         self.xs_index = None
         self.xsections_feats = None
 
         self.banks_data = []
 
-    def set_features(self):
+    def set_xs_features(self):
         """
         Setting features and spatial indexes.
         """
-        self.centerline_feats = self.centerline_lyr.getFeatures()
-        self.domain_feats, self.domain_index = spatial_index(self.domain_lyr.getFeatures())
         self.xsections_feats, self.xs_index = spatial_index(self.xsections_lyr.getFeatures())
 
     def process_bank_lines(self):
@@ -545,25 +540,14 @@ class DomainSchematizer(GeoPackageUtils):
         """
         # Creating spatial index on domain polygons and finding proper one for each river center line
         self.clear_tables('chan', 'chan_elems', 'rbank')
-        dfeat = None
-        seen = set()
-        self.set_features()
-        for cfeat in self.centerline_feats:
-            center_fid = cfeat.id()
-            center_geom = cfeat.geometry()
-            center_point = center_geom.interpolate(center_geom.length() * 0.5)
-            for fid in self.domain_index.intersects(center_point.boundingBox()):
-                f = self.domain_feats[fid]
-                if f.geometry().contains(center_point):
-                    dfeat = f
-                    break
+        self.set_xs_features()
+        for feat in self.user_lbank_lyr.getFeatures():
+            lbank_fid = feat.id()
+            lbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
             # Getting sorted cross section, left and right edge
-            sorted_xs = self.get_sorted_xs(cfeat)
-            left_line, right_line = self.bank_lines(cfeat, dfeat, sorted_xs)
-            # Trimming sorted cross sections with original domain
-            self.trim_xs(sorted_xs, dfeat.geometry())
-            self.schematize_banks(center_fid, left_line, seen)
-            self.banks_data.append((center_fid, sorted_xs, left_line, right_line))
+            sorted_xs = self.get_sorted_xs(feat)
+            self.schematize_banks(feat)
+            self.banks_data.append((lbank_fid, lbank_geom, sorted_xs))
         self.left_bank_lyr.triggerRepaint()
 
     def process_xsections(self):
@@ -573,12 +557,12 @@ class DomainSchematizer(GeoPackageUtils):
         insert_chan = '''
         INSERT INTO chan_elems (geom, fid, rbankgrid, seg_fid, nr_in_seg, user_xs_fid, interpolated) VALUES
         (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
-        for center_fid, sorted_xs, left_line, right_line in self.banks_data:
-            req = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
+        for lbank_fid, lbank_geom, sorted_xs in self.banks_data:
+            req = QgsFeatureRequest().setFilterExpression('"user_lbank_fid" = {}'.format(lbank_fid))
             lsegment_feat = next(self.left_bank_lyr.getFeatures(req))
             lsegment_points = lsegment_feat.geometry().asPolyline()
             # Finding left crossing points
-            left_points = self.bank_stations(sorted_xs, left_line)
+            left_points = self.bank_stations(sorted_xs, lbank_geom)
             # Finding closest points to channel segment
             left_nodes = self.closest_nodes(lsegment_points, left_points)
             vertex_idx = []
@@ -602,7 +586,7 @@ class DomainSchematizer(GeoPackageUtils):
                 except Exception as e:
                     self.uc.log_info(traceback.format_exc())
                     continue
-                vals = (lbankgrid, rbankgrid, center_fid, i, org_fid, interpolated)
+                vals = (lbankgrid, rbankgrid, lbank_fid, i, org_fid, interpolated)
                 sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
             cursor = self.con.cursor()
             for qry, vals in sqls:
@@ -632,63 +616,17 @@ class DomainSchematizer(GeoPackageUtils):
         cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().intersection(centerline)))
         return cross_sections
 
-    @staticmethod
-    def bank_lines(centerline_feat, domain_feat, sorted_xs):
-        """
-        Calculating left and right bank lines from intersection of river center line, 1D Domain and cross sections.
-        """
-        domain_geom = domain_feat.geometry()
-        centerline = centerline_feat.geometry()
-        geom1 = QgsGeometry.fromPolygon(domain_geom.asPolygon())
-        # Reshaping domain polygon
-        start_xs = sorted_xs[0]
-        end_xs = sorted_xs[-1]
-        geom1.reshapeGeometry(start_xs.geometry().asPolyline())
-        geom1.reshapeGeometry(end_xs.geometry().asPolyline())
-        # Trimming center line to reshaped domain
-        trimmed_centerline = geom1.intersection(centerline)
-        # Splitting domain on left and right side using center line
-        geom2 = geom1.splitGeometry(centerline.asPolyline(), 0)[1][0]
-        if geom1.intersects(QgsGeometry.fromPoint(start_xs.geometry().vertexAt(0))):
-            left_part = geom1
-            right_part = geom2
-        else:
-            left_part = geom2
-            right_part = geom1
-        # Converting sides to lines
-        left = left_part.convertToType(QGis.Line)
-        right = right_part.convertToType(QGis.Line)
-        # Erasing center line part from sides
-        left_line = left.symDifference(trimmed_centerline)
-        right_line = right.symDifference(trimmed_centerline)
-        # Removing first and last vertex from sides
-        llen = len(left_line.asPolyline()) - 1
-        rlen = len(right_line.asPolyline()) - 1
-        left_line.deleteVertex(llen)
-        right_line.deleteVertex(rlen)
-        left_line.deleteVertex(0)
-        right_line.deleteVertex(0)
-        # Flip bank lines if direction is inverted
-        end_xs_geom = end_xs.geometry()
-        if left_line.vertexAt(0) == end_xs_geom.vertexAt(0):
-            nodes = left_line.asPolyline()
-            nodes.reverse()
-            left_line = QgsGeometry.fromPolyline(nodes)
-        if right_line.vertexAt(0) == end_xs_geom.vertexAt(1):
-            nodes = right_line.asPolyline()
-            nodes.reverse()
-            right_line = QgsGeometry.fromPolyline(nodes)
-        return left_line, right_line
-
-    def schematize_banks(self, centerline_fid, left_line, seen=set()):
+    def schematize_banks(self, lbank_feat):
         """
         Schematizing left bank and saving to GeoPackage.
         """
+        fid = lbank_feat.id()
+        left_line = lbank_feat.geometry()
         insert_left_sql = '''
-        INSERT INTO chan (geom, center_line_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
+        INSERT INTO chan (geom, user_lbank_fid) VALUES (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?)'''
         left_segment = self.schematize_points(left_line.asPolyline())
-        vertices = ','.join(('{0} {1}'.format(*xy) for xy in left_segment if xy not in seen and not seen.add(xy)))
-        self.execute(insert_left_sql.format(vertices), (centerline_fid,))
+        vertices = ','.join(('{0} {1}'.format(*xy) for xy in left_segment))
+        self.execute(insert_left_sql.format(vertices), (fid,))
 
     def schematize_points(self, points):
         """
@@ -725,7 +663,7 @@ class DomainSchematizer(GeoPackageUtils):
         feature.setGeometry(QgsGeometry.fromPolyline(polyline))
 
     @staticmethod
-    def bank_stations(sorted_xs, left_line):
+    def bank_stations(sorted_xs, lbank_geom):
         """
         Finding crossing points between bank lines and cross sections.
         """
@@ -734,7 +672,7 @@ class DomainSchematizer(GeoPackageUtils):
             xs_geom = xs.geometry()
             xs_line = xs_geom.asPolyline()
             start = QgsGeometry.fromPoint(xs_line[0])
-            left_cross = left_line.nearestPoint(start)
+            left_cross = lbank_geom.nearestPoint(start)
             left_points.append(left_cross.asPoint())
         return left_points
 
@@ -767,13 +705,14 @@ class DomainSchematizer(GeoPackageUtils):
             new_geom = QgsGeometry.fromPolyline([QgsPoint(*xs_schema[0]), QgsPoint(*xs_schema[-1])])
             xs_feat.setGeometry(new_geom)
 
-    @staticmethod
-    def interpolate_xs(left_segment, xs_features, idx):
+    def interpolate_xs(self, left_segment, xs_features, idx):
         """
         Interpolating cross sections.
         """
+        last_idx = idx[-1]
         isegment = iter(left_segment)
-        vertex = next(isegment)
+        current_vertex = next(isegment)
+        previous_vertex = current_vertex
 
         xs_iter = iter(xs_features)
         current_xs = next(xs_iter)
@@ -788,14 +727,13 @@ class DomainSchematizer(GeoPackageUtils):
         xs_fid = current_xs.id()
         interpolated = 0
         i = 0
-
         try:
             while True:
                 if i == current_idx:
                     xs_geom = current_xs.geometry()
                     start_point, end_point = xs_geom.asPolyline()
                 elif i < next_idx:
-                    shift = vertex - start_point
+                    shift = current_vertex - previous_vertex
                     start_point += shift
                     end_point += shift
                     interpolated = 1
@@ -804,17 +742,42 @@ class DomainSchematizer(GeoPackageUtils):
                     current_idx = next_idx
                     xs_fid = current_xs.id()
                     interpolated = 0
-                    try:
+                    if i == last_idx:
+                        xs_geom = current_xs.geometry()
+                        start_point, end_point = xs_geom.asPolyline()
+                    else:
                         next_xs = next(xs_iter)
                         next_idx = next(idx_iter)
-                    except StopIteration:
-                        i = current_idx
-                    continue
+                        continue
+                elif i > last_idx:
+                    shift = current_vertex - previous_vertex
+                    start_point += shift
+                    end_point += shift
+                    interpolated = 1
+                end_point = self.fix_xs_angle(left_segment, start_point, end_point)
                 yield [start_point.x(), start_point.y(), end_point.x(), end_point.y(), xs_fid, interpolated]
                 i += 1
-                vertex = next(isegment)
+                previous_vertex = current_vertex
+                current_vertex = next(isegment)
         except StopIteration:
             return
+
+    @staticmethod
+    def fix_xs_angle(segment, start_point, end_point):
+        if end_point in segment:
+            azimuth = start_point.azimuth(end_point)
+            if azimuth < 0:
+                azimuth += 360
+            if int(azimuth) % 90 == 0:
+                rotation = 90
+            else:
+                rotation = 45
+            end_geom = QgsGeometry.fromPoint(end_point)
+            end_geom.rotate(rotation, start_point)
+            end_point = end_geom.asPoint()
+        else:
+            pass
+        return end_point
 
     @staticmethod
     def clip_schema_xs(schema_xs):
@@ -910,12 +873,12 @@ class DomainSchematizer(GeoPackageUtils):
         update_chan = '''
         UPDATE chan
         SET
-            name = (SELECT name FROM user_centerline WHERE fid = chan.center_line_fid),
-            depinitial = (SELECT depinitial FROM user_centerline WHERE fid = chan.center_line_fid),
-            froudc = (SELECT froudc FROM user_centerline WHERE fid = chan.center_line_fid),
-            roughadj = (SELECT roughadj FROM user_centerline WHERE fid = chan.center_line_fid),
-            isedn = (SELECT isedn FROM user_centerline WHERE fid = chan.center_line_fid),
-            notes = (SELECT notes FROM user_centerline WHERE fid = chan.center_line_fid);
+            name = (SELECT name FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            depinitial = (SELECT depinitial FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            froudc = (SELECT froudc FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            roughadj = (SELECT roughadj FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            isedn = (SELECT isedn FROM user_left_bank WHERE fid = chan.user_lbank_fid),
+            notes = (SELECT notes FROM user_left_bank WHERE fid = chan.user_lbank_fid);
         '''
         update_chan_elems = '''
         UPDATE chan_elems
@@ -930,10 +893,63 @@ class DomainSchematizer(GeoPackageUtils):
             xlen = (
                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
                 FROM grid AS g, chan AS l
-                WHERE g.fid = chan_elems.fid AND l.center_line_fid = chan_elems.seg_fid
+                WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                 );
         '''
 
         self.execute(update_chan)
         self.execute(update_chan_elems)
         self.execute(update_xlen)
+
+
+class Confluences(GeoPackageUtils):
+    """
+    Class for finding confluences.
+    """
+
+    def __init__(self, con, iface, lyrs):
+        super(Confluences, self).__init__(con, iface)
+        self.lyrs = lyrs
+
+        self.grid_lyr = lyrs.data['grid']['qlyr']
+        self.left_bank_lyr = lyrs.data['chan']['qlyr']
+        self.grid_feats, self.grid_index = spatial_index(self.grid_lyr.getFeatures())
+
+    def find_neighbours(self):
+        qry = 'SELECT fid, seg_fid, MAX(nr_in_seg) FROM chan_elems GROUP BY seg_fid;'
+        grid_neighbours = {row[0]: {'seg_fid': row[1], 'neighbours': set()} for row in self.execute(qry)}
+        for gid in grid_neighbours.keys():
+            req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(gid))
+            src_bank = next(self.grid_lyr.getFeatures(req))
+            src_bank_geom = src_bank.geometry()
+            fids = self.grid_index.intersects(src_bank_geom.boundingBox())
+            for fid in fids:
+                grid_feat = self.grid_feats[fid]
+                grid_geom = grid_feat.geometry()
+                if fid != gid and grid_geom.intersects(src_bank_geom):
+                    grid_neighbours[gid]['neighbours'].add(fid)
+        return grid_neighbours
+
+    def potential_confluences(self):
+        grid_neighbours = self.find_neighbours()
+        confluences = {}
+        for tributary, values in grid_neighbours.items():
+            seg_fid = values['seg_fid']
+            confluences[seg_fid] = [tributary]
+            neighbours = values['neighbours']
+            for n in neighbours:
+                left_qry = 'SELECT fid, seg_fid FROM chan_elems WHERE seg_fid != ? AND fid = ?;'
+                left = self.execute(left_qry, (seg_fid, n)).fetchone()
+                if left:
+                    confluences[seg_fid].append(left)
+                    continue
+                right_qry = 'SELECT rbankgrid, seg_fid FROM chan_elems WHERE seg_fid != ? AND rbankgrid = ?;'
+                right = self.execute(right_qry, (seg_fid, n)).fetchone()
+                if right:
+                    confluences[seg_fid].append(right)
+        return confluences
+
+    def find_confluences(self):
+        confluences = self.potential_confluences()
+        for seg_fid, values in confluences.items():
+            print(seg_fid, values)

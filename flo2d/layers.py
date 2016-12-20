@@ -64,10 +64,10 @@ class Layers(QObject):
                 'module': ['levees'],
                 'readonly': False
             }),
-            ('user_centerline', {
-                'name': 'River Centerline',
+            ('user_left_bank', {
+                'name': 'Left Bank Line',
                 'sgroup': 'User Layers',
-                'styles': ['centerline.qml'],
+                'styles': ['user_lbank.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False
@@ -131,14 +131,6 @@ class Layers(QObject):
                 'name': 'Computational Domain',
                 'sgroup': 'User Layers',
                 'styles': ['model_boundary.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_1d_domain', {
-                'name': '1D Domain',
-                'sgroup': 'User Layers',
-                'styles': ['1d_domain.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
