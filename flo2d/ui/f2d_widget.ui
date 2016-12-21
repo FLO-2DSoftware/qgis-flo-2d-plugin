@@ -122,7 +122,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QgsCollapsibleGroupBox" name="mGroupBox_3">
+        <widget class="QgsCollapsibleGroupBox" name="street_editor_grp">
          <property name="title">
           <string>Street Editor</string>
          </property>

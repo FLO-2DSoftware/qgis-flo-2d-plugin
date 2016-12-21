@@ -41,6 +41,12 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_xsec_editor()
         self.setup_profile_tool()
 
+        self.cgroups = [
+            self.bc_editor_grp, self.evap_editor_grp, self.ic_editor_grp, self.street_editor_grp,
+            self.profile_tool_grp, self.rain_editor_grp, self.xs_editor_grp
+        ]
+        self.set_collapsible_groups()
+
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
 
@@ -72,3 +78,14 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_profile_tool(self):
         self.profile_tool = ProfileTool(self.iface, self.plot, self.table, self.lyrs)
         self.profile_tool_lout.addWidget(self.profile_tool)
+
+    def set_collapsible_groups(self):
+        for grp in self.cgroups:
+            grp.setSettingGroup('FLO-2D/Collapsible_groups')
+            grp.setSaveCollapsedState(True)
+            grp.setScrollOnExpand(True)
+            grp.loadState()
+
+    def save_collapsible_groups(self):
+        for grp in self.cgroups:
+            grp.saveState()

@@ -117,9 +117,13 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
 
     def show_res_rb(self):
+        if not self.reservoir.fid:
+            return
         self.lyrs.show_feat_rubber(self.res_lyr.id(), self.reservoir.fid)
 
     def show_chan_rb(self):
+        if not self.seg_fid:
+            return
         self.lyrs.show_feat_rubber(self.chan_lyr.id(), self.seg_fid)
 
     def create_user_res(self):

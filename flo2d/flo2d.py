@@ -305,9 +305,14 @@ class Flo2D(object):
         if self.f2d_widget.profile_tool is not None:
             self.f2d_widget.profile_tool.close()
             del self.f2d_widget.profile_tool
+        if self.f2d_widget.ic_editor is not None:
+            self.f2d_widget.ic_editor.close()
+            del self.f2d_widget.ic_editor
         if self.f2d_widget is not None:
+            self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
             del self.f2d_widget
+
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)

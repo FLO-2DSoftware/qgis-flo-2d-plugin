@@ -583,17 +583,6 @@ CREATE TABLE "chan_n" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 
-CREATE TABLE chan_elems_interp (
-    "fid" INTEGER PRIMARY KEY,
-    "up_fid" INTEGER, -- fid of upper chan_elem
-    "lo_fid" INTEGER, -- fid of lower chan_elem
-    "up_dist" REAL, -- distance from the chan_elem along centerline
-    "up_lo_dist" REAL, -- distance between upper and lower along centerline
-    "up_dist_lb" REAL, -- distance from the chan_elem along left bank
-    "up_lo_dist_lb" REAL -- distance between upper and lower left bank
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_elems_interp', 'aspatial');
-
 -- TODO: create triggers for geometry INSERT and UPDATE
 -- use notes column to flag features created by user!
 -- -- create geometry when rightbank and leftbank are given
@@ -1770,12 +1759,14 @@ SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
 
-CREATE TABLE "chan_elems_interp" (
+CREATE TABLE chan_elems_interp (
     "fid" INTEGER PRIMARY KEY,
-    "up_fid" INTEGER, -- fid of upper chan_elem
-    "lo_fid" INTEGER, -- fid of lower chan_elem
-    "up_dist_lb" REAL, -- distance from the chan_elem along left bank
-    "up_lo_dist_lb" REAL -- distance between upper and lower left bank
+    "up_fid" INTEGER, -- fid of upper user-based (not interpolated) chan_elem
+    "lo_fid" INTEGER, -- fid of lower user-based chan_elem
+    "up_lo_dist_left" REAL, -- distance between upper and lower user-based chan elems along left bank
+    "up_lo_dist_right" REAL, -- distance between upper and lower user-based chan elems along right bank
+    "up_dist_left" REAL, -- distance from the chan_elem along left bank
+    "up_dist_right" REAL -- distance from the chan_elem along right bank
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_elems_interp', 'aspatial');
 
