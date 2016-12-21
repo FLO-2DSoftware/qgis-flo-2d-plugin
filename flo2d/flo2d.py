@@ -819,6 +819,7 @@ class Flo2D(object):
             ds.process_bank_lines()
             ds.process_xsections()
             ds.process_attributes()
+            ds.calculate_distances()
             chan_schem = self.lyrs.data['chan']['qlyr']
             chan_elems = self.lyrs.data['chan_elems']['qlyr']
             rbank = self.lyrs.data['rbank']['qlyr']

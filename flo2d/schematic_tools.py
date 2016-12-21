@@ -507,6 +507,19 @@ def schematize_streets(gutils, line_layer, cell_size):
     gutils.execute(crop_elem_sql)
 
 
+def schematize_reservoirs(gutils):
+    gutils.clear_tables('reservoirs')
+    ins_qry = '''INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel)
+                SELECT
+                    ur.fid, ur.name, g.fid, ur.wsel
+                FROM
+                    grid AS g, user_reservoirs AS ur
+                WHERE
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom))
+                LIMIT 1;'''
+    gutils.execute(ins_qry)
+
+
 class DomainSchematizer(GeoPackageUtils):
     """
     Class for handling 1D Domain schematizing processes.
@@ -516,12 +529,13 @@ class DomainSchematizer(GeoPackageUtils):
         super(DomainSchematizer, self).__init__(con, iface)
         self.lyrs = lyrs
         self.cell_size = float(self.get_cont_par('CELLSIZE'))
-        self.diagonal = sqrt(2) * self.cell_size
         self.x_offset, self.y_offset = self.calculate_offset(self.cell_size)
 
         self.user_lbank_lyr = lyrs.data['user_left_bank']['qlyr']
         self.left_bank_lyr = lyrs.data['chan']['qlyr']
+        self.right_bank_lyr = lyrs.data['rbank']['qlyr']
         self.xsections_lyr = lyrs.data['user_xsections']['qlyr']
+        self.schema_xs_lyr = lyrs.data['chan_elems']['qlyr']
 
         self.xs_index = None
         self.xsections_feats = None
@@ -539,7 +553,7 @@ class DomainSchematizer(GeoPackageUtils):
         Schematizing left bank.
         """
         # Creating spatial index on domain polygons and finding proper one for each river center line
-        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
+        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences', 'chan_elems_interp')
         self.set_xs_features()
         for feat in self.user_lbank_lyr.getFeatures():
             lbank_fid = feat.id()
@@ -877,6 +891,81 @@ class DomainSchematizer(GeoPackageUtils):
         self.execute(update_chan_elems)
         self.execute(update_xlen)
 
+    def xs_intervals(self, seg_fids):
+        intervals = defaultdict(list)
+        for fid in seg_fids:
+            req = QgsFeatureRequest().setFilterExpression('"seg_fid" = {} AND "interpolated" = 0'.format(fid))
+            req.addOrderBy('"nr_in_seg"')
+            xsections_feats = self.schema_xs_lyr.getFeatures(req)
+            xs_iter = iter(xsections_feats)
+            up_feat = next(xs_iter)
+            lo_feat = next(xs_iter)
+            intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+            try:
+                while True:
+                    up_feat = lo_feat
+                    lo_feat = next(xs_iter)
+                    intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+            except StopIteration:
+                pass
+        return intervals
+
+    def xs_distances(self, seg_fids):
+        xs_distances = defaultdict(list)
+        for fid in seg_fids:
+            left_req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(fid))
+            right_req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(fid))
+            lbank = next(self.left_bank_lyr.getFeatures(left_req))
+            rbank = next(self.right_bank_lyr.getFeatures(right_req))
+            lbank_geom = lbank.geometry()
+            rbank_geom = rbank.geometry()
+            req = QgsFeatureRequest().setFilterExpression('"seg_fid" = {}'.format(fid))
+            req.addOrderBy('"nr_in_seg"')
+            xsections_feats = self.schema_xs_lyr.getFeatures(req)
+            for xs_feat in xsections_feats:
+                xs_geom = xs_feat.geometry()
+                ldist = lbank_geom.lineLocatePoint(xs_geom.intersection(lbank_geom))
+                rdist = rbank_geom.lineLocatePoint(xs_geom.intersection(rbank_geom))
+                xs_distances[fid].append((xs_feat.id(), xs_feat['nr_in_seg'], ldist, rdist))
+        return xs_distances
+
+    def calculate_distances(self):
+        infinity = float('inf')
+        seg_fids = [x[0] for x in self.execute('SELECT fid FROM chan ORDER BY fid;')]
+        intervals = self.xs_intervals(seg_fids)
+        xs_distances = self.xs_distances(seg_fids)
+        xs_rows = []
+        for fid in seg_fids:
+            seg_intervals = intervals[fid]
+            seg_xs = xs_distances[fid]
+            iseg_intervals = iter(seg_intervals)
+            iseg_xs = iter(seg_xs)
+            start, end = next(iseg_intervals)
+            xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
+            org_ldist, org_rdist = 0, 0
+            try:
+                while True:
+                    if nr_in_seg == start:
+                        org_ldist, org_rdist = ldistance, rdistance
+                    elif start < nr_in_seg < end:
+                        row = (xs_id, start, end if end < infinity else None, ldistance, rdistance, ldistance-org_ldist, rdistance-org_rdist)
+                        xs_rows.append(row)
+                    elif nr_in_seg == end:
+                        try:
+                            start, end = next(iseg_intervals)
+                        except StopIteration:
+                            start = end
+                            end = infinity
+                        continue
+                    xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
+            except StopIteration:
+                pass
+        qry = '''
+        INSERT INTO chan_elems_interp
+        (fid, up_fid, lo_fid, up_lo_dist_left, up_lo_dist_right, up_dist_left, up_dist_right)
+        VALUES (?,?,?,?,?,?,?);'''
+        self.execute_many(qry, xs_rows)
+
 
 class Confluences(GeoPackageUtils):
     """
@@ -956,16 +1045,3 @@ class Confluences(GeoPackageUtils):
     def remove_xs_after_vertex(self, seg_fid, vertex_id):
         del_sql = '''DELETE FROM chan_elems WHERE seg_fid = ? AND nr_in_seg > ?;'''
         self.execute(del_sql, (seg_fid, vertex_id))
-
-
-def schematize_reservoirs(gutils):
-    gutils.clear_tables('reservoirs')
-    ins_qry = '''INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel)
-                SELECT
-                    ur.fid, ur.name, g.fid, ur.wsel
-                FROM
-                    grid AS g, user_reservoirs AS ur
-                WHERE
-                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom))
-                LIMIT 1;'''
-    gutils.execute(ins_qry)
