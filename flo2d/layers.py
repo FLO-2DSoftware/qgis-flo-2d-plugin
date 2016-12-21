@@ -159,6 +159,14 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
+            ('user_reservoirs', {
+                'name': 'Reservoirs',
+                'sgroup': 'User Layers',
+                'styles': ['user_reservoirs.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('blocked_areas', {
                 'name': 'Blocked areas',
                 'sgroup': 'User Layers',

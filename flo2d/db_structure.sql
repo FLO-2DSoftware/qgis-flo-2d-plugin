@@ -21,7 +21,8 @@ VALUES (
 
 PRAGMA foreign_keys = ON;
 --PRAGMA synchronous=FULL;
-PRAGMA journal_mode = memory;
+PRAGMA journal_mode = memory; -- try to create the db using memory journal as it is much faster than WAL
+--then, once the db is opened by QGIS, it will switch automatically to WAL (persistent mode)
 
 -- FLO-2D tables definitions
 
@@ -143,13 +144,14 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspat
 
 CREATE TABLE "reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
+    "user_res_fid" INTEGER,
     "name" TEXT,
     "grid_fid" INTEGER,
     "wsel" REAL,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
-SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
 -- SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
 
@@ -577,6 +579,17 @@ CREATE TABLE "chan_n" (
     "xsecname" TEXT -- xsection name
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
+
+CREATE TABLE chan_elems_interp (
+    "fid" INTEGER PRIMARY KEY,
+    "up_fid" INTEGER, -- fid of upper chan_elem
+    "lo_fid" INTEGER, -- fid of lower chan_elem
+    "up_dist" REAL, -- distance from the chan_elem along centerline
+    "up_lo_dist" REAL, -- distance between upper and lower along centerline
+    "up_dist_lb" REAL, -- distance from the chan_elem along left bank
+    "up_lo_dist_lb" REAL -- distance between upper and lower left bank
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_elems_interp', 'aspatial');
 
 -- TODO: create triggers for geometry INSERT and UPDATE
 -- use notes column to flag features created by user!
@@ -2234,3 +2247,13 @@ CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_delete"
     BEGIN
         DELETE FROM all_schem_bc WHERE type = 'outflow' AND grid_fid = OLD.grid_fid;
     END;
+
+CREATE TABLE "user_reservoirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "wsel" REAL,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');

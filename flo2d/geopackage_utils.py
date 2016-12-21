@@ -329,6 +329,14 @@ class GeoPackageUtils(object):
             pass
         return info
 
+    def delete_imported_reservoirs(self):
+        qry = '''SELECT fid FROM reservoirs WHERE user_res_fid IS NULL;'''
+        imported = self.execute(qry).fetchall()
+        if imported:
+            if self.uc.question('There are imported reservoirs in the database. Delete them?'):
+                qry = 'DELETE FROM reservoirs WHERE user_res_fid IS NULL;'
+                self.execute(qry)
+
     def update_layer_extents(self, table_name):
         sql = '''UPDATE gpkg_contents SET
             min_x = (SELECT MIN(MbrMinX(GeomFromGPB(geom))) FROM "{0}"),
@@ -357,6 +365,10 @@ class GeoPackageUtils(object):
     def delete_all_imported_bcs(self):
         self.delete_all_imported_inflows()
         self.delete_all_imported_outflows()
+
+    def fill_empty_reservoir_names(self):
+        qry = '''UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text) WHERE name IS NULL;'''
+        self.execute(qry)
 
     def fill_empty_inflow_names(self):
         qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text) WHERE name IS NULL;'''

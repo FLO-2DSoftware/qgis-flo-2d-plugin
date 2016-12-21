@@ -108,6 +108,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
         qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);'''
         self.execute(qry)
+        qry = '''UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);'''
+        self.execute(qry)
 
     def import_outflow(self):
         outflow_sql = ['''INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
@@ -349,6 +351,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(chan_sql, chan_elems_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
                            chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql)
+        qry = '''UPDATE chan SET name = 'Channel ' ||  cast(fid as text);'''
+        self.execute(qry)
 
     def import_xsec(self):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''', 3]

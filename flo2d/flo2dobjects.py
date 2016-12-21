@@ -762,3 +762,37 @@ class Street(GeoPackageUtils):
     def get_elems(self):
         qry = 'SELECT istdir, widr FROM street_elems WHERE str_fid = ?;'
         self.elems = self.execute(qry, (self.fid,)).fetchall()
+
+
+class Reservoir(GeoPackageUtils):
+    """Reservoir data representation."""
+    columns = ['fid', 'name', 'wsel', 'notes']
+
+    def __init__(self, fid, con, iface):
+        super(Reservoir, self).__init__(con, iface)
+        self.fid = fid
+        self.row = None
+        self.name = None
+        self.wsel = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM user_reservoirs WHERE fid = ?;'
+        data = self.execute(qry, (self.fid, )).fetchone()
+        if not data:
+            return
+        values = [x if x is not None else '' for x in data]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.wsel = self.row['wsel']
+        return self.row
+
+    def set_row(self):
+        qry = '''UPDATE user_reservoirs SET
+            name = '{0}',
+            wsel = {1}
+        WHERE fid = {2};'''.format(self.name, self.wsel, self.fid)
+        self.execute(qry)
+
+    def del_row(self):
+        qry = 'DELETE FROM user_reservoirs WHERE fid=?'
+        self.execute(qry, (self.fid,))

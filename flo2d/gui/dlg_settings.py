@@ -202,7 +202,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gutils.set_cont_par('METRIC', 0)
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
         self.gutils.execute(sql, (srsid,))
@@ -211,7 +210,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.srs_id = srsid
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
-
         QApplication.restoreOverrideCursor()
 
     def connect(self, gpkg_path=None):

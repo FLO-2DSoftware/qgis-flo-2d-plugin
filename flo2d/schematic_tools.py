@@ -950,3 +950,16 @@ def update_rbank(gutils):
     GROUP BY c.fid;
     '''
     gutils.execute(qry)
+
+
+def schematize_reservoirs(gutils):
+    gutils.clear_tables('reservoirs')
+    ins_qry = '''INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel)
+                SELECT
+                    ur.fid, ur.name, g.fid, ur.wsel
+                FROM
+                    grid AS g, user_reservoirs AS ur
+                WHERE
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom))
+                LIMIT 1;'''
+    gutils.execute(ins_qry)

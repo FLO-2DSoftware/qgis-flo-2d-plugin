@@ -29,6 +29,7 @@ from grid_info_tool import GridInfoTool
 from user_communication import UserCommunication
 
 from .gui.xs_editor_widget import XsecEditorWidget
+from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
@@ -352,6 +353,7 @@ class Flo2D(object):
     def setup_dock_widgets(self):
         self.f2d_widget.profile_tool.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.ic_editor.populate_cbos()
         self.f2d_widget.street_editor.setup_connection()
         self.f2d_widget.street_editor.populate_streets()
         self.f2d_widget.rain_editor.setup_connection()
@@ -711,6 +713,15 @@ class Flo2D(object):
             self.uc.bar_warn('There is no cross-section data to display!')
 
     @connection_required
+    def show_schem_xsec_info(self, fid=None):
+        """Show schematic cross-section info"""
+        try:
+            self.dlg_schem_xsec_editor = SchemXsecEditorDialog(self.con, self.iface, self.lyrs, self.gutils, fid)
+            self.dlg_schem_xsec_editor.show()
+        except IndexError:
+            self.uc.bar_warn('There is no schematic cross-section data to display!')
+
+    @connection_required
     def show_bc_editor(self, fid=None):
         """Show boundary editor"""
         self.f2d_dock.setUserVisible(True)
@@ -850,7 +861,7 @@ class Flo2D(object):
             'user_levee_lines': self.show_profile,
             'user_streets': self.show_profile,
             'user_centerline': self.show_profile,
-            'chan_elems': self.show_xsec_editor,
+            'chan_elems': self.show_schem_xsec_info,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,
             'user_bc_polygons': self.show_bc_editor

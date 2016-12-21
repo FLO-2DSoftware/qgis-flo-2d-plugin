@@ -7,10 +7,42 @@
     <edittype widgetv2type="TextEdit" name="name">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
+    <edittype widgetv2type="TextEdit" name="depinitial">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="froudc">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="roughadj">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="isedn">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="notes">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
   </edittypes>
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="line" name="0">
+        <layer pass="0" class="SimpleLine" locked="0">
+          <prop k="capstyle" v="square"/>
+          <prop k="customdash" v="5;2"/>
+          <prop k="customdash_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="customdash_unit" v="MM"/>
+          <prop k="draw_inside_polygon" v="0"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="line_color" v="1,141,255,255"/>
+          <prop k="line_style" v="solid"/>
+          <prop k="line_width" v="0.4"/>
+          <prop k="line_width_unit" v="MM"/>
+          <prop k="offset" v="0"/>
+          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_unit" v="MM"/>
+          <prop k="use_custom_dash" v="0"/>
+          <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
+        </layer>
         <layer pass="0" class="MarkerLine" locked="0">
           <prop k="interval" v="3"/>
           <prop k="interval_map_unit_scale" v="0,0,0,0,0,0"/>
@@ -21,9 +53,9 @@
           <prop k="offset_along_line_unit" v="MM"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="placement" v="vertex"/>
+          <prop k="placement" v="firstvertex"/>
           <prop k="rotate" v="1"/>
-          <symbol alpha="1" clip_to_extent="1" type="marker" name="@0@0">
+          <symbol alpha="1" clip_to_extent="1" type="marker" name="@0@1">
             <layer pass="0" class="SimpleMarker" locked="0">
               <prop k="angle" v="0"/>
               <prop k="color" v="255,0,0,255"/>
@@ -33,9 +65,9 @@
               <prop k="offset" v="0,0"/>
               <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
               <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="1,255,247,255"/>
+              <prop k="outline_color" v="1,141,255,255"/>
               <prop k="outline_style" v="solid"/>
-              <prop k="outline_width" v="0"/>
+              <prop k="outline_width" v="0.4"/>
               <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
               <prop k="outline_width_unit" v="MM"/>
               <prop k="scale_method" v="diameter"/>
@@ -46,22 +78,40 @@
             </layer>
           </symbol>
         </layer>
-        <layer pass="0" class="SimpleLine" locked="0">
-          <prop k="capstyle" v="square"/>
-          <prop k="customdash" v="5;2"/>
-          <prop k="customdash_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="customdash_unit" v="MM"/>
-          <prop k="draw_inside_polygon" v="0"/>
-          <prop k="joinstyle" v="bevel"/>
-          <prop k="line_color" v="1,255,247,255"/>
-          <prop k="line_style" v="solid"/>
-          <prop k="line_width" v="0.4"/>
-          <prop k="line_width_unit" v="MM"/>
+        <layer pass="0" class="MarkerLine" locked="0">
+          <prop k="interval" v="3"/>
+          <prop k="interval_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="interval_unit" v="MM"/>
           <prop k="offset" v="0"/>
+          <prop k="offset_along_line" v="0"/>
+          <prop k="offset_along_line_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_along_line_unit" v="MM"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
-          <prop k="use_custom_dash" v="0"/>
-          <prop k="width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="placement" v="lastvertex"/>
+          <prop k="rotate" v="1"/>
+          <symbol alpha="1" clip_to_extent="1" type="marker" name="@0@2">
+            <layer pass="0" class="SimpleMarker" locked="0">
+              <prop k="angle" v="0"/>
+              <prop k="color" v="255,0,0,255"/>
+              <prop k="horizontal_anchor_point" v="1"/>
+              <prop k="joinstyle" v="bevel"/>
+              <prop k="name" v="arrowhead"/>
+              <prop k="offset" v="0,0"/>
+              <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+              <prop k="offset_unit" v="MM"/>
+              <prop k="outline_color" v="1,141,255,255"/>
+              <prop k="outline_style" v="solid"/>
+              <prop k="outline_width" v="0.4"/>
+              <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+              <prop k="outline_width_unit" v="MM"/>
+              <prop k="scale_method" v="diameter"/>
+              <prop k="size" v="2"/>
+              <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+              <prop k="size_unit" v="MM"/>
+              <prop k="vertical_anchor_point" v="1"/>
+            </layer>
+          </symbol>
         </layer>
       </symbol>
     </symbols>
@@ -270,6 +320,11 @@
   <aliases>
     <alias field="fid" index="0" name=""/>
     <alias field="name" index="1" name=""/>
+    <alias field="depinitial" index="2" name=""/>
+    <alias field="froudc" index="3" name=""/>
+    <alias field="roughadj" index="4" name=""/>
+    <alias field="isedn" index="5" name=""/>
+    <alias field="notes" index="6" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
@@ -279,6 +334,11 @@
       <column width="-1" hidden="0" type="field" name="fid"/>
       <column width="-1" hidden="0" type="field" name="name"/>
       <column width="-1" hidden="1" type="actions"/>
+      <column width="-1" hidden="0" type="field" name="depinitial"/>
+      <column width="-1" hidden="0" type="field" name="froudc"/>
+      <column width="-1" hidden="0" type="field" name="roughadj"/>
+      <column width="-1" hidden="0" type="field" name="isedn"/>
+      <column width="-1" hidden="0" type="field" name="notes"/>
     </columns>
   </attributetableconfig>
   <editform></editform>

@@ -120,7 +120,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(0)
         qry = 'SELECT fid, name FROM user_xsections ORDER BY name COLLATE NOCASE;'
-        rows = self.gutils.execute(qry)
+        rows = self.gutils.execute(qry).fetchall()
+        if not rows:
+            return
         cur_idx = 0
         for i, row in enumerate(rows):
             row = [x if x is not None else '' for x in row]

@@ -1,34 +1,44 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.18.1" simplifyAlgorithm="0" minimumScale="100000" maximumScale="1e+08" simplifyDrawingHints="1" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
+<qgis version="2.18.1" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
   <edittypes>
     <edittype widgetv2type="TextEdit" name="fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="rain_fid">
+    <edittype widgetv2type="TextEdit" name="name">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="arf">
+    <edittype widgetv2type="TextEdit" name="grid_fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="notes">
+    <edittype widgetv2type="TextEdit" name="wsel">
+      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
+    </edittype>
+    <edittype widgetv2type="TextEdit" name="note">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
   <renderer-v2 forceraster="0" symbollevels="0" type="singleSymbol" enableorderby="0">
     <symbols>
-      <symbol alpha="1" clip_to_extent="1" type="fill" name="0">
-        <layer pass="0" class="SimpleFill" locked="0">
-          <prop k="border_width_map_unit_scale" v="0,0,0,0,0,0"/>
-          <prop k="color" v="33,130,255,255"/>
+      <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
+        <layer pass="0" class="SimpleMarker" locked="0">
+          <prop k="angle" v="0"/>
+          <prop k="color" v="18,22,249,255"/>
+          <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
+          <prop k="name" v="triangle"/>
           <prop k="offset" v="0,0"/>
           <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
           <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="no"/>
-          <prop k="outline_width" v="0.26"/>
+          <prop k="outline_width" v="0"/>
+          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="outline_width_unit" v="MM"/>
-          <prop k="style" v="solid"/>
+          <prop k="scale_method" v="diameter"/>
+          <prop k="size" v="3"/>
+          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_unit" v="MM"/>
+          <prop k="vertical_anchor_point" v="1"/>
         </layer>
       </symbol>
     </symbols>
@@ -99,7 +109,7 @@
     <property key="labeling/obstacleType" value="0"/>
     <property key="labeling/offsetType" value="0"/>
     <property key="labeling/placeDirectionSymbol" value="0"/>
-    <property key="labeling/placement" value="1"/>
+    <property key="labeling/placement" value="0"/>
     <property key="labeling/placementFlags" value="10"/>
     <property key="labeling/plussign" value="false"/>
     <property key="labeling/predefinedPositionOrder" value="TR,TL,BR,BL,R,L,TSR,BSR"/>
@@ -182,7 +192,7 @@
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
   <layerTransparency>0</layerTransparency>
-  <displayfield>name</displayfield>
+  <displayfield>crestwidth</displayfield>
   <label>0</label>
   <labelattributes>
     <label fieldname="" text="Label"/>
@@ -204,8 +214,8 @@
     <multilineenabled fieldname="" on=""/>
     <selectedonly on=""/>
   </labelattributes>
-  <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
-    <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="100000">
+  <SingleCategoryDiagramRenderer diagramType="Pie" sizeLegend="0" attributeLegend="1">
+    <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="inf">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
       <attribute field="" color="#000000" label=""/>
     </DiagramCategory>
@@ -232,13 +242,14 @@
       </layer>
     </symbol>
   </SingleCategoryDiagramRenderer>
-  <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
+  <DiagramLayerSettings yPosColumn="-1" showColumn="0" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
   <annotationform></annotationform>
   <aliases>
     <alias field="fid" index="0" name=""/>
-    <alias field="rain_fid" index="1" name=""/>
-    <alias field="arf" index="2" name=""/>
-    <alias field="notes" index="3" name=""/>
+    <alias field="name" index="1" name=""/>
+    <alias field="grid_fid" index="2" name=""/>
+    <alias field="wsel" index="3" name=""/>
+    <alias field="note" index="4" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
@@ -247,9 +258,10 @@
     <columns>
       <column width="-1" hidden="0" type="field" name="fid"/>
       <column width="-1" hidden="1" type="actions"/>
-      <column width="-1" hidden="0" type="field" name="rain_fid"/>
-      <column width="-1" hidden="0" type="field" name="arf"/>
-      <column width="-1" hidden="0" type="field" name="notes"/>
+      <column width="-1" hidden="0" type="field" name="name"/>
+      <column width="-1" hidden="0" type="field" name="grid_fid"/>
+      <column width="-1" hidden="0" type="field" name="wsel"/>
+      <column width="-1" hidden="0" type="field" name="note"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
@@ -267,7 +279,7 @@ Enter the name of the function in the "Python Init function"
 field.
 An example follows:
 """
-from qgis.PyQt.QtWidgets import QWidget
+from PyQt4.QtGui import QWidget
 
 def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
@@ -280,5 +292,5 @@ def my_form_open(dialog, layer, feature):
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <layerGeometryType>2</layerGeometryType>
+  <layerGeometryType>0</layerGeometryType>
 </qgis>
