@@ -229,10 +229,13 @@ class GeoPackageUtils(object):
             cells[g] = geom
         return cells
 
-    def single_centroid(self, gid, table='grid', field='fid'):
-        sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
-        wkt = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
-        return wkt
+    def single_centroid(self, gid, table='grid', field='fid', buffers=False):
+        if buffers is False:
+            sql = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        else:
+            sql = '''SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''
+        geom = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
+        return geom
 
     def build_linestring(self, gids, table='grid', field='fid'):
         gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING('''
@@ -406,4 +409,81 @@ class GeoPackageUtils(object):
 
     def enable_geom_triggers(self):
         qry = 'UPDATE trigger_control set enabled = 1;'
+        self.execute(qry)
+
+    def calculate_offset(self, cell_size):
+        """
+        Finding offset of grid squares centers which is formed after switching from float to integers.
+        Rounding to integers is needed for Bresenham's Line Algorithm.
+        """
+        geom = self.single_centroid('1').strip('POINT()').split()
+        x, y = float(geom[0]), float(geom[1])
+        x_offset = round(x / cell_size) * cell_size - x
+        y_offset = round(y / cell_size) * cell_size - y
+        return x_offset, y_offset
+
+    def grid_on_point(self, x, y):
+        """
+        Getting fid of grid which contains given point.
+        """
+        qry = '''
+        SELECT g.fid
+        FROM grid AS g
+        WHERE g.ROWID IN (
+            SELECT id FROM rtree_grid_geom
+            WHERE
+                {0} <= maxx AND
+                {0} >= minx AND
+                {1} <= maxy AND
+                {1} >= miny)
+        AND
+            ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
+        '''
+        qry = qry.format(x, y)
+        gid = self.execute(qry).fetchone()[0]
+        return gid
+
+    def update_xs_type(self):
+        """
+        Updating parameters values specific for each cross section type.
+        """
+        self.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
+        chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+        chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
+        chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
+        chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
+        xs_sql = '''SELECT fid, type FROM chan_elems;'''
+        cross_sections = self.execute(xs_sql).fetchall()
+        cur = self.con.cursor()
+        for fid, typ in cross_sections:
+            if typ == 'N':
+                cur.execute(chan_n, (fid,))
+            elif typ == 'R':
+                cur.execute(chan_r, (fid,))
+            elif typ == 'T':
+                cur.execute(chan_t, (fid,))
+            elif typ == 'V':
+                cur.execute(chan_v, (fid,))
+            else:
+                pass
+        self.con.commit()
+
+    def update_rbank(self):
+        """
+        Create right bank lines.
+        """
+        self.clear_tables('rbank')
+        qry = '''
+        INSERT INTO rbank (chan_seg_fid, geom)
+        SELECT c.fid, AsGPB(MakeLine(centroid(CastAutomagic(g.geom)))) as geom
+        FROM
+            chan as c,
+            (SELECT * FROM  chan_elems ORDER BY seg_fid, nr_in_seg) as ce, -- sorting the chan elems post aggregation doesn't work so we need to sort the before
+            grid as g
+        WHERE
+            c.fid = ce.seg_fid AND
+            ce.seg_fid = c.fid AND
+            g.fid = ce.rbankgrid
+        GROUP BY c.fid;
+        '''
         self.execute(qry)

@@ -29,6 +29,7 @@ uiDialog, qtBaseClass = load_ui('xs_editor')
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
     schematize_1d = pyqtSignal()
+    find_confluences = pyqtSignal()
 
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -52,6 +53,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
         self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         self.set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
+        self.set_icon(self.confluences_btn, 'schematize_confluence.svg')
         self.set_icon(self.rename_xs_btn, 'change_name.svg')
         # connections
         self.digitize_btn.clicked.connect(self.digitize_xsec)
@@ -62,6 +64,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.schematize_xs_btn.clicked.connect(self.schematize_xs)
+        self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
         self.xs_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
@@ -89,6 +92,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_xs(self):
         self.schematize_1d.emit()
+
+    def schematize_confluences(self):
+        self.find_confluences.emit()
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
         """Slot used to push changes of existing items onto undoStack"""

@@ -64,10 +64,10 @@ class Layers(QObject):
                 'module': ['levees'],
                 'readonly': False
             }),
-            ('user_centerline', {
-                'name': 'River Centerline',
+            ('user_left_bank', {
+                'name': 'Left Bank Line',
                 'sgroup': 'User Layers',
-                'styles': ['centerline.qml'],
+                'styles': ['user_lbank.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False
@@ -131,14 +131,6 @@ class Layers(QObject):
                 'name': 'Computational Domain',
                 'sgroup': 'User Layers',
                 'styles': ['model_boundary.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
-            ('user_1d_domain', {
-                'name': '1D Domain',
-                'sgroup': 'User Layers',
-                'styles': ['1d_domain.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
@@ -240,7 +232,7 @@ class Layers(QObject):
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
-                'readonly': True
+                'readonly': False
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
@@ -727,7 +719,7 @@ class Layers(QObject):
         return self.data[table]['qlyr'].id()
 
     def warn_readonly(self):
-        self.uc.bar_warn('Warning:\nAll changes to this layer can be overwriten by changes in the user layer.')
+        self.uc.bar_warn('All changes to this layer can be overwritten by changes in the user layer.')
 
     def enter_edit_mode(self, table_name, default_attr_exp=None):
         if not self.group:

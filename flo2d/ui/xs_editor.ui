@@ -150,6 +150,20 @@
          </widget>
         </item>
         <item>
+         <widget class="QToolButton" name="confluences_btn">
+          <property name="toolTip">
+           <string>Find Confluences</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/schematize_confluence.svg</normaloff>../img/schematize_confluence.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
