@@ -494,7 +494,7 @@ CREATE TABLE "chan" (
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
-    "user_lbank_fid" INTEGER -- FID of parent left bank line,
+    "user_lbank_fid" INTEGER, -- FID of parent left bank line,
     "rank" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
