@@ -64,6 +64,14 @@ class Layers(QObject):
                 'module': ['levees'],
                 'readonly': False
             }),
+            ('user_fpxsec', {
+                'name': 'Floodplain cross-sections',
+                'sgroup': 'User Layers',
+                'styles': ['user_fpxsec.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
             ('user_left_bank', {
                 'name': 'Left Bank Line',
                 'sgroup': 'User Layers',

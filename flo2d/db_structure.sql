@@ -1716,6 +1716,14 @@ CREATE TABLE "sed_supply_frac_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
 -- USERS Layers
+CREATE TABLE "user_fpxsec" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iflo" INTEGER, -- IFLO, general direction that the flow is expected to cross the floodplain cross section
+    "name" TEXT -- name of fpxsec
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_fpxsec', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_fpxsec', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_fpxsec', 'geom');
 
 CREATE TABLE "user_model_boundary" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

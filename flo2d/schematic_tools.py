@@ -1045,3 +1045,50 @@ class Confluences(GeoPackageUtils):
     def remove_xs_after_vertex(self, seg_fid, vertex_id):
         del_sql = '''DELETE FROM chan_elems WHERE seg_fid = ? AND nr_in_seg > ?;'''
         self.execute(del_sql, (seg_fid, vertex_id))
+
+
+class FloodplainXS(GeoPackageUtils):
+    """
+    Class for schematizing floodplain cross-sections.
+    """
+
+    def __init__(self, con, iface, lyrs):
+        super(FloodplainXS, self).__init__(con, iface)
+        self.lyrs = lyrs
+        self.cell_size = float(self.get_cont_par('CELLSIZE'))
+        self.diagonal = sqrt(2) * self.cell_size
+        self.user_fpxs_lyr = lyrs.data['user_fpxsec']['qlyr']
+        self.schema_fpxs_lyr = lyrs.data['fpxsec']['qlyr']
+        self.cells_fpxs_lyr = lyrs.data['fpxsec_cells']['qlyr']
+
+    def schematize_floodplain_xs(self):
+        self.clear_tables('fpxsec', 'fpxsec_cells')
+        qry = 'INSERT INTO fpxsec (geom, fid, iflo) VALUES (?,?,?);'
+        cell_qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = ?;'''
+        rows = []
+        for feat in self.user_fpxs_lyr.getFeatures():
+            geom = feat.geometry()
+            geom_poly = geom.asPolyline()
+            start, end = geom_poly[0], geom_poly[-1]
+            azimuth = start.azimuth(end)
+            if azimuth < 0:
+                azimuth += 360
+            closest_angle = round(azimuth / 45) * 45
+            rotation = closest_angle - azimuth
+            end_geom = QgsGeometry.fromPoint(end)
+            end_geom.rotate(rotation, start)
+            end_point = end_geom.asPoint()
+            start_gid = self.grid_on_point(start.x(), start.y())
+            end_gid = self.grid_on_point(end_point.x(), end_point.y())
+            geom = self.build_linestring([start_gid, end_gid])
+            rows.append((geom, feat.id(), feat['iflo']))
+
+            space = self.cell_size if closest_angle % 90 == 0 else self.diagonal
+            start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
+            end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
+            start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
+            end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
+            #print((start_x, start_y), (end_x, end_y), space)
+        self.execute_many(qry, rows)
+        self.schema_fpxs_lyr.triggerRepaint()
+        self.cells_fpxs_lyr.triggerRepaint()

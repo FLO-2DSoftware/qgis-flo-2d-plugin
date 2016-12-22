@@ -308,6 +308,9 @@ class Flo2D(object):
         if self.f2d_widget.ic_editor is not None:
             self.f2d_widget.ic_editor.close()
             del self.f2d_widget.ic_editor
+        if self.f2d_widget.fpxsec_editor is not None:
+            self.f2d_widget.fpxsec_editor.close()
+            del self.f2d_widget.fpxsec_editor
         if self.f2d_widget is not None:
             self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
@@ -366,6 +369,7 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
+        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
         """If QGIS project has a gpkg path saved ask user if it should be loaded"""

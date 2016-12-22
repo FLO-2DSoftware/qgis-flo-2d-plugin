@@ -155,7 +155,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.reservoir.name = new_name
         self.save_res()
 
-
     def repaint_reservoirs(self):
         self.lyrs.lyrs_to_repaint = [
             self.lyrs.data['reservoirs']['qlyr']
