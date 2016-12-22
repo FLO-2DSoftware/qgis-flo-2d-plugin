@@ -193,7 +193,13 @@ class Layers(QObject):
                 'visible': False,
                 'readonly': False
             }),
-
+            ('fpxsec_cells', {
+                'name': 'Floodplain cross-sections cells',
+                'sgroup': 'Schematic Layers',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': 'Schematic Layers',
@@ -588,13 +594,6 @@ class Layers(QObject):
             }),
             ('noexchange_chan_elems', {
                 'name': 'No-exchange Channel Elements',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('fpxsec_cells', {
-                'name': 'Floodplain cross-sections cells',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},

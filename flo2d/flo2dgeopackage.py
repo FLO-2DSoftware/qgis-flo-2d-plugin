@@ -563,7 +563,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_fpxsec(self):
         cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
         fpxsec_sql = ['''INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES''', 3]
-        cells_sql = ['''INSERT INTO fpxsec_cells (fpxsec_fid, grid_fid) VALUES''', 2]
+        cells_sql = ['''INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES''', 3]
 
         self.clear_tables('fpxsec', 'fpxsec_cells')
         head, data = self.parser.parse_fpxsec()
@@ -573,7 +573,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             geom = self.build_linestring(gids)
             fpxsec_sql += [(geom,) + tuple(params)]
             for gid in gids:
-                cells_sql += [(i, gid)]
+                grid_geom = self.single_centroid(gid, buffers=True)
+                cells_sql += [(grid_geom, i, gid)]
 
         self.batch_execute(cont_sql, fpxsec_sql, cells_sql)
 

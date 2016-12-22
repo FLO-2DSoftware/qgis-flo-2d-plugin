@@ -1367,7 +1367,9 @@ CREATE TABLE "fpxsec_cells" (
     "fpxsec_fid" INTEGER, -- fid of a floodplain xsection from fpxsec table
     "grid_fid" INTEGER -- NODX, fid of grid cell contained in a fpxsection
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpxsec_cells', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('fpxsec_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('fpxsec_cells', 'geom');
 
 
 -- FPFROUDE.DAT
