@@ -2253,3 +2253,15 @@ CREATE TABLE "user_reservoirs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
+
+CREATE VIEW struct_types AS
+SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
+UNION ALL
+SELECT DISTINCT 'R' as type, struct_fid FROM repl_rat_curves
+UNION ALL
+SELECT DISTINCT 'T' as type, struct_fid FROM rat_table
+UNION ALL
+SELECT DISTINCT 'F' as type, struct_fid FROM culvert_equations
+UNION ALL
+SELECT DISTINCT 'D' as type, struct_fid FROM storm_drains;
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');
