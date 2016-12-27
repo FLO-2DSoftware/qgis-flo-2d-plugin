@@ -130,7 +130,7 @@
      <item>
       <widget class="QToolButton" name="schem_res_btn">
        <property name="toolTip">
-        <string>Schematize reservoirs</string>
+        <string>Schematize floodplain cross-sections</string>
        </property>
        <property name="text">
         <string>...</string>
