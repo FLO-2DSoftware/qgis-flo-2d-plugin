@@ -47,7 +47,7 @@ This user documentation provides steps to build a new model in QGIS using FLO-2D
     All the input data should be added to the user layer through the widgets and tools in  QGIS and the ones provided through the plugin. Once user completes the data input, an appropriate module will be required to translate the data to the grid format.
 
 
-    .. image:: img/schematization_process.svg
+    .. image:: img/schematization_process.*
       :align: center
       :alt: Workflow
 
@@ -59,8 +59,10 @@ This user documentation provides steps to build a new model in QGIS using FLO-2D
     	:align: center
     	:alt: User levee line
 
-    - Then running Levee Tool .. image:: ../../../flo2d/img/set_levee_elev.svg
+    - Then running Levee Tool |set_levee_elev|
     - The result as Schematized Levee Layer
+
+    .. |set_levee_elev| image:: ../../../flo2d/img/set_levee_elev.*
 
     .. image:: img/schematized_levee_lines.png
       :align: center
