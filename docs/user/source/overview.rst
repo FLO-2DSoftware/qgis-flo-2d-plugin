@@ -59,10 +59,8 @@ This user documentation provides steps to build a new model in QGIS using FLO-2D
     	:align: center
     	:alt: User levee line
 
-    - Then running Levee Tool |set_levee_elev|
+    - Then running Levee Tool .. image:: ../../../flo2d/img/set_levee_elev.svg
     - The result as Schematized Levee Layer
-
-    .. |set_levee_elev| image:: ../../../flo2d/img/set_levee_elev.svg
 
     .. image:: img/schematized_levee_lines.png
       :align: center
