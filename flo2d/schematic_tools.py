@@ -553,7 +553,7 @@ class DomainSchematizer(GeoPackageUtils):
         Schematizing left bank.
         """
         # Creating spatial index on domain polygons and finding proper one for each river center line
-        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences', 'chan_elems_interp')
+        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
         self.set_xs_features()
         for feat in self.user_lbank_lyr.getFeatures():
             lbank_fid = feat.id()
@@ -768,7 +768,7 @@ class DomainSchematizer(GeoPackageUtils):
                     start_point += shift
                     end_point += shift
                     interpolated = 1
-                end_point = self.fix_xs_angle(left_segment, start_point, end_point)
+                end_point = self.fix_angle(left_segment, start_point, end_point)
                 yield [start_point.x(), start_point.y(), end_point.x(), end_point.y(), xs_fid, interpolated]
                 i += 1
                 previous_vertex = current_vertex
@@ -777,7 +777,7 @@ class DomainSchematizer(GeoPackageUtils):
             return
 
     @staticmethod
-    def fix_xs_angle(segment, start_point, end_point):
+    def fix_angle(segment, start_point, end_point):
         if end_point in segment:
             azimuth = start_point.azimuth(end_point)
             if azimuth < 0:
@@ -968,6 +968,12 @@ class DomainSchematizer(GeoPackageUtils):
                     xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
                 pass
+        return distances
+
+    def make_distance_table(self):
+        self.clear_tables('chan_elems_interp')
+        distances = self.calculate_distances()
+        infinity = float('inf')
         qry = '''
         INSERT INTO chan_elems_interp
         (fid, seg_fid, up_fid, lo_fid, up_dist_left, up_dist_right, up_lo_dist_left, up_lo_dist_right)
@@ -1049,7 +1055,11 @@ class Confluences(GeoPackageUtils):
     def set_confluences(self, vertex_range):
         self.clear_tables('chan_confluences')
         insert_qry = '''INSERT INTO chan_confluences (conf_fid, type, chan_elem_fid, geom) VALUES (?,?,?,?);'''
-        qry = '''SELECT fid, AsGPB(ST_StartPoint(GeomFromGPB(geom))) FROM chan_elems WHERE seg_fid = ? AND nr_in_seg = ?;'''
+        qry = '''
+        SELECT fid, AsGPB(ST_StartPoint(GeomFromGPB(geom)))
+        FROM chan_elems
+        WHERE seg_fid = ? AND nr_in_seg = ?;
+        '''
         for i, (tributary_fid, main_fid, tvertex, mvertex, side) in enumerate(vertex_range, 1):
             tributary_gid, tributary_geom = self.execute(qry, (tributary_fid, tvertex)).fetchone()
             main_gid, main_geom = self.execute(qry, (tributary_fid, mvertex)).fetchone()
@@ -1100,24 +1110,32 @@ class FloodplainXS(GeoPackageUtils):
             geom = feat.geometry()
             geom_poly = geom.asPolyline()
             start, end = geom_poly[0], geom_poly[-1]
+            # Getting start grid fid and its centroid
+            start_gid = self.grid_on_point(start.x(), start.y())
+            start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
+            start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
+            # Finding shift vector between original start point and start grid centroid
+            shift = QgsPoint(start_x, start_y) - start
+            # Shifting start and end point of line
+            start += shift
+            end += shift
+            # Calculating and adjusting line angle
             azimuth = start.azimuth(end)
             if azimuth < 0:
                 azimuth += 360
             closest_angle = round(azimuth / 45) * 45
             rotation = closest_angle - azimuth
-            #print(feat_fid, azimuth, closest_angle, rotation)
             end_geom = QgsGeometry.fromPoint(end)
             end_geom.rotate(rotation, start)
             end_point = end_geom.asPoint()
-            start_gid = self.grid_on_point(start.x(), start.y())
+            # Getting shifted and rotated end grid fid and its centroid
             end_gid = self.grid_on_point(end_point.x(), end_point.y())
+            # Writing schematized line to 'fpxsec' table
             geom = self.build_linestring([start_gid, end_gid])
             rows.append((geom, feat_fid, feat['iflo']))
             # Finding 'fpxsec_cells' for floodplain cross-section
             step = self.cell_size if closest_angle % 90 == 0 else self.diagonal
-            start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
-            start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
             end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
             fpxec_line = QgsGeometry.fromPolyline([QgsPoint(start_x, start_y), QgsPoint(end_x, end_y)])
             sampling_points = tuple(self.interpolate_points(fpxec_line, step))
