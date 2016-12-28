@@ -941,18 +941,20 @@ class DomainSchematizer(GeoPackageUtils):
             iseg_intervals = iter(seg_intervals)
             iseg_xs = iter(seg_xs)
             start, end = next(iseg_intervals)
+            inter_ldist, inter_rdist = 0, 0
             xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             key = (fid, start, end)
             try:
                 while True:
                     if nr_in_seg == start:
-                        distances[key] = {'rows': [], 'start_l': ldistance, 'start_r': rdistance}
+                        inter_ldist, inter_rdist = ldistance, rdistance
+                        distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, fid, start, end, ldistance, rdistance)
+                        row = (xs_id, fid, start, end, ldistance - inter_ldist, rdistance - inter_rdist)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
-                        distances[key]['end_l'] = ldistance
-                        distances[key]['end_r'] = rdistance
+                        distances[key]['inter_llen'] = ldistance - inter_ldist
+                        distances[key]['inter_rlen'] = rdistance - inter_rdist
                         try:
                             start, end = next(iseg_intervals)
                         except StopIteration:
@@ -970,14 +972,11 @@ class DomainSchematizer(GeoPackageUtils):
         cursor = self.con.cursor()
         for k, val in distances.items():
             xs_rows = val['rows']
-            start_l = val['start_l']
-            start_r = val['start_r']
-            end_l = val['end_l'] if 'end_l' in val else 0
-            end_r = val['end_r'] if 'end_r' in val else 0
-            delta_l = end_l - start_l
-            delta_r = end_r - start_r
-            for xs_id, seg_fid, start, end, ldistance, rdistance in xs_rows:
-                cursor.execute(qry, (xs_id, seg_fid, start, end if end < infinity else None, ldistance, rdistance, delta_l, delta_r))
+            inter_llen = val['inter_llen'] if 'inter_llen' in val else 0
+            inter_rlen = val['inter_rlen'] if 'inter_rlen' in val else 0
+            for xs_id, seg_fid, start, end, ldist, rdist in xs_rows:
+                end = end if end < infinity else None
+                cursor.execute(qry, (xs_id, seg_fid, start, end, ldist, rdist, inter_llen, inter_rlen))
         self.con.commit()
 
 
