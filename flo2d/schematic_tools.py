@@ -924,8 +924,11 @@ class DomainSchematizer(GeoPackageUtils):
             xsections_feats = self.schema_xs_lyr.getFeatures(req)
             for xs_feat in xsections_feats:
                 xs_geom = xs_feat.geometry()
-                ldist = lbank_geom.lineLocatePoint(xs_geom.intersection(lbank_geom))
-                rdist = rbank_geom.lineLocatePoint(xs_geom.intersection(rbank_geom))
+                xs_geom_line = xs_geom.asPolyline()
+                xs_start = QgsGeometry.fromPoint(xs_geom_line[0])
+                xs_end = QgsGeometry.fromPoint(xs_geom_line[-1])
+                ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
+                rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
                 xs_distances[fid].append((xs_feat.id(), xs_feat['nr_in_seg'], ldist, rdist))
         return xs_distances
 
@@ -988,7 +991,6 @@ class Confluences(GeoPackageUtils):
     def __init__(self, con, iface, lyrs):
         super(Confluences, self).__init__(con, iface)
         self.lyrs = lyrs
-
         self.left_bank_lyr = lyrs.data['chan']['qlyr']
         self.right_bank_lyr = lyrs.data['rbank']['qlyr']
         self.xsections_lyr = lyrs.data['chan_elems']['qlyr']
@@ -1103,6 +1105,7 @@ class FloodplainXS(GeoPackageUtils):
                 azimuth += 360
             closest_angle = round(azimuth / 45) * 45
             rotation = closest_angle - azimuth
+            #print(feat_fid, azimuth, closest_angle, rotation)
             end_geom = QgsGeometry.fromPoint(end)
             end_geom.rotate(rotation, start)
             end_point = end_geom.asPoint()
@@ -1116,10 +1119,7 @@ class FloodplainXS(GeoPackageUtils):
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
             start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
             end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
-            s_point, e_point = QgsPoint(), QgsPoint()
-            s_point.set(start_x, start_y)
-            e_point.set(end_x, end_y)
-            fpxec_line = QgsGeometry.fromPolyline([s_point, e_point])
+            fpxec_line = QgsGeometry.fromPolyline([QgsPoint(start_x, start_y), QgsPoint(end_x, end_y)])
             sampling_points = tuple(self.interpolate_points(fpxec_line, step))
             # Writing schematized floodplain cross-sections and cells to GeoPackage
             cursor = self.con.cursor()
