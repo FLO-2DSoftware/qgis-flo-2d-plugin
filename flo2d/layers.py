@@ -204,7 +204,7 @@ class Layers(QObject):
             ('fpxsec_cells', {
                 'name': 'Floodplain cross-sections cells',
                 'sgroup': 'Schematic Layers',
-                'styles': None,
+                'styles': ['fpxsec_cells.qml'],
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),

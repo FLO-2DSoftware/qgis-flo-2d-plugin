@@ -123,7 +123,10 @@ class ProfileTool(qtBaseClass, uiDialog):
         Get loaded rasters into combobox.
         """
         self.raster_combo.clear()
-        rasters = self.lyrs.list_group_rlayers()
+        try:
+            rasters = self.lyrs.list_group_rlayers()
+        except AttributeError:
+            return
         for r in rasters:
             self.raster_combo.addItem(r.name(), r)
 
