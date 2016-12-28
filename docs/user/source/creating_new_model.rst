@@ -208,3 +208,48 @@ Note that in the attribute table, you can either assign the exact **elevation**,
 	:alt: Grid values after running the tool
 
 	Grid elevations after running the tool
+
+Adding levees
+-------------
+Levees can be added to model in various forms. The plugin supports the following formats:
+
+- Levee lines only: the levee geometry shape will be used to schematize the levee shape. Value from the attribute table will be used to adjust the schematized levees. This option is ideal for representing a levee with constant value.
+- Levee lines and levee points: Ideally, levee points should be snapped to the levee lines. The module will use levee lines to schematize levee shapes. Values from levee point's table of attribute will be used for interpolation along the levee line. This feature allow users to represent levees with sloped profile.
+- Levee polygon: functions as a selection polygon and assign the polygon values to the levees falling inside its area
+
+In this example, we are going to digitize a levee with sloped profile (i.e. levee lines and levee points). To start with, we can adjust **Snapping options** in QGIS, to ensure levee points are snapped to the lines:
+
+- In QGIS, from the main menu, select **Settings** > **Snapping Options ...**
+- A new window will appear:
+	- For **Layer selection** choose **All visible layers**
+	- Set **Snap to** to **To vertex**
+	- Set **Tolerance** to **10 pixels**
+	- Click **OK**
+
+Now that the snapping is set, we can turn off the unwanted vector layers and start digitizing **levee points** first:
+
+.. figure:: img/LeveePointsUserLayer.png
+	:align: center
+	:alt: Levee points
+
+	Levee points in user layer
+
+Now we can connect the points with line, digitized within the **levee line** under user layer:
+
+.. figure:: img/LeveeLinesUserLayer.png
+	:align: center
+	:alt: Levee lines
+
+	Levee line in user layer
+
+Note that levee line does not require any additional data, as the elevation source is from the snapped levee points.
+
+We can now run |set_levee_elev| to schematize levees:
+
+.. |set_levee_elev| image:: ../../../flo2d/img/set_levee_elev.png
+
+.. figure:: img/schematized_levee_line2.png
+	:align: center
+	:alt: Schematize levees
+
+	Schematize levees
