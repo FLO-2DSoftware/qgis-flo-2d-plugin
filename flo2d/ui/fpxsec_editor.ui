@@ -28,7 +28,7 @@
      <item>
       <widget class="QToolButton" name="add_user_fpxs_btn">
        <property name="toolTip">
-        <string>Add user reservoir</string>
+        <string>Add user floodplain cross-section</string>
        </property>
        <property name="text">
         <string/>
@@ -51,7 +51,7 @@
      <item>
       <widget class="QToolButton" name="save_changes_btn">
        <property name="toolTip">
-        <string>Save added reservoirs</string>
+        <string>Save added floodplain cross-section</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -77,7 +77,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Revert unsaved changes for reservoirs</string>
+        <string>Revert unsaved changes for floodplain cross-sections</string>
        </property>
        <property name="text">
         <string/>
@@ -97,7 +97,7 @@
      <item>
       <widget class="QToolButton" name="delete_fpxs_btn">
        <property name="toolTip">
-        <string>Delete current reservoir</string>
+        <string>Delete current floodplain cross-section</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -130,7 +130,7 @@
      <item>
       <widget class="QToolButton" name="schem_fpxs_btn">
        <property name="toolTip">
-        <string>Schematize reservoirs</string>
+        <string>Schematize floodplain cross-sections</string>
        </property>
        <property name="text">
         <string>...</string>

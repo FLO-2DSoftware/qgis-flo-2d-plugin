@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os.path
+from math import ceil
 from PyQt4.QtCore import Qt
 
 
@@ -42,3 +43,20 @@ def m_fdata(model, i, j):
     else:
         return float('NaN')
 
+
+def frange(start, stop=None, step=1):
+    """
+    frange generates a set of floating point values over the
+    range [start, stop) with step size step
+    frange([start,] stop [, step ])
+    """
+
+    if stop is None:
+        for x in xrange(int(ceil(start))):
+            yield x
+    else:
+        # create a generator expression for the index values
+        indices = (i for i in xrange(0, int((stop-start)/step)))
+        # yield results
+        for i in indices:
+            yield start + step * i

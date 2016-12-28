@@ -13,7 +13,7 @@ from itertools import izip
 from collections import defaultdict, OrderedDict
 from math import pi, sqrt
 from PyQt4.QtCore import QPyNullVariant
-from qgis.core import QGis, QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
+from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
 from geopackage_utils import GeoPackageUtils
 from grid_tools import spatial_index, fid_from_grid
 
@@ -934,7 +934,7 @@ class DomainSchematizer(GeoPackageUtils):
         seg_fids = [x[0] for x in self.execute('SELECT fid FROM chan ORDER BY fid;')]
         intervals = self.xs_intervals(seg_fids)
         xs_distances = self.xs_distances(seg_fids)
-        xs_rows = []
+        distances = OrderedDict()
         for fid in seg_fids:
             seg_intervals = intervals[fid]
             seg_xs = xs_distances[fid]
@@ -942,29 +942,43 @@ class DomainSchematizer(GeoPackageUtils):
             iseg_xs = iter(seg_xs)
             start, end = next(iseg_intervals)
             xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
-            org_ldist, org_rdist = 0, 0
+            key = (fid, start, end)
             try:
                 while True:
                     if nr_in_seg == start:
-                        org_ldist, org_rdist = ldistance, rdistance
+                        distances[key] = {'rows': [], 'start_l': ldistance, 'start_r': rdistance}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, start, end if end < infinity else None, ldistance, rdistance, ldistance-org_ldist, rdistance-org_rdist)
-                        xs_rows.append(row)
+                        row = (xs_id, fid, start, end, ldistance, rdistance)
+                        distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
+                        distances[key]['end_l'] = ldistance
+                        distances[key]['end_r'] = rdistance
                         try:
                             start, end = next(iseg_intervals)
                         except StopIteration:
                             start = end
                             end = infinity
+                        key = (fid, start, end)
                         continue
                     xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
                 pass
         qry = '''
         INSERT INTO chan_elems_interp
-        (fid, up_fid, lo_fid, up_lo_dist_left, up_lo_dist_right, up_dist_left, up_dist_right)
-        VALUES (?,?,?,?,?,?,?);'''
-        self.execute_many(qry, xs_rows)
+        (fid, seg_fid, up_fid, lo_fid, up_dist_left, up_dist_right, up_lo_dist_left, up_lo_dist_right)
+        VALUES (?,?,?,?,?,?,?,?);'''
+        cursor = self.con.cursor()
+        for k, val in distances.items():
+            xs_rows = val['rows']
+            start_l = val['start_l']
+            start_r = val['start_r']
+            end_l = val['end_l'] if 'end_l' in val else 0
+            end_r = val['end_r'] if 'end_r' in val else 0
+            delta_l = end_l - start_l
+            delta_r = end_r - start_r
+            for xs_id, seg_fid, start, end, ldistance, rdistance in xs_rows:
+                cursor.execute(qry, (xs_id, seg_fid, start, end if end < infinity else None, ldistance, rdistance, delta_l, delta_r))
+        self.con.commit()
 
 
 class Confluences(GeoPackageUtils):
@@ -1061,12 +1075,27 @@ class FloodplainXS(GeoPackageUtils):
         self.schema_fpxs_lyr = lyrs.data['fpxsec']['qlyr']
         self.cells_fpxs_lyr = lyrs.data['fpxsec_cells']['qlyr']
 
+    def interpolate_points(self, line, step):
+        length = line.length()
+        reps = round(length / step)
+        distance = 0
+        while reps >= 0:
+            pnt = line.interpolate(distance).asPoint()
+            gid = self.grid_on_point(pnt.x(), pnt.y())
+            geom = self.single_centroid(gid, buffers=True)
+            yield (geom, gid)
+            distance += step
+            reps -= 1
+
     def schematize_floodplain_xs(self):
         self.clear_tables('fpxsec', 'fpxsec_cells')
-        qry = 'INSERT INTO fpxsec (geom, fid, iflo) VALUES (?,?,?);'
+        fpxsec_qry = 'INSERT INTO fpxsec (geom, fid, iflo) VALUES (?,?,?);'
+        fpxsec_cells_qry = 'INSERT INTO fpxsec_cells (geom, grid_fid, fpxsec_fid) VALUES (?,?,?);'
         cell_qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = ?;'''
         rows = []
         for feat in self.user_fpxs_lyr.getFeatures():
+            # Schematizing user floodplain cross-section
+            feat_fid = feat.id()
             geom = feat.geometry()
             geom_poly = geom.asPolyline()
             start, end = geom_poly[0], geom_poly[-1]
@@ -1081,14 +1110,23 @@ class FloodplainXS(GeoPackageUtils):
             start_gid = self.grid_on_point(start.x(), start.y())
             end_gid = self.grid_on_point(end_point.x(), end_point.y())
             geom = self.build_linestring([start_gid, end_gid])
-            rows.append((geom, feat.id(), feat['iflo']))
-
-            space = self.cell_size if closest_angle % 90 == 0 else self.diagonal
+            rows.append((geom, feat_fid, feat['iflo']))
+            # Finding 'fpxsec_cells' for floodplain cross-section
+            step = self.cell_size if closest_angle % 90 == 0 else self.diagonal
             start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
             start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
             end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
-            #print((start_x, start_y), (end_x, end_y), space)
-        self.execute_many(qry, rows)
+            s_point, e_point = QgsPoint(), QgsPoint()
+            s_point.set(start_x, start_y)
+            e_point.set(end_x, end_y)
+            fpxec_line = QgsGeometry.fromPolyline([s_point, e_point])
+            sampling_points = tuple(self.interpolate_points(fpxec_line, step))
+            # Writing schematized floodplain cross-sections and cells to GeoPackage
+            cursor = self.con.cursor()
+            for geom, gid in sampling_points:
+                cursor.execute(fpxsec_cells_qry, (geom, gid, feat_fid))
+        self.con.commit()
+        self.execute_many(fpxsec_qry, rows)
         self.schema_fpxs_lyr.triggerRepaint()
         self.cells_fpxs_lyr.triggerRepaint()

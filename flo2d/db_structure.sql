@@ -1771,6 +1771,7 @@ SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 
 CREATE TABLE chan_elems_interp (
     "fid" INTEGER PRIMARY KEY,
+    "seg_fid" INTEGER,
     "up_fid" INTEGER, -- fid of upper user-based (not interpolated) chan_elem
     "lo_fid" INTEGER, -- fid of lower user-based chan_elem
     "up_lo_dist_left" REAL, -- distance between upper and lower user-based chan elems along left bank

@@ -82,6 +82,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     def cur_fpxs_changed(self, cur_idx):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
+        if row is None:
+            return
         self.fpxs_fid = row[0]
         row_flo = row[-1]
         flow_idx = row_flo - 1 if row_flo is not None else 0

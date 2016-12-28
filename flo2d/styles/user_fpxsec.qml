@@ -7,7 +7,7 @@
     <edittype widgetv2type="TextEdit" name="iflo">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="nnxsec">
+    <edittype widgetv2type="TextEdit" name="name">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
@@ -36,7 +36,7 @@
               <prop k="offset" v="0,0"/>
               <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
               <prop k="offset_unit" v="MM"/>
-              <prop k="outline_color" v="0,155,77,255"/>
+              <prop k="outline_color" v="0,91,44,255"/>
               <prop k="outline_style" v="solid"/>
               <prop k="outline_width" v="0"/>
               <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
@@ -56,7 +56,7 @@
           <prop k="customdash_unit" v="MM"/>
           <prop k="draw_inside_polygon" v="0"/>
           <prop k="joinstyle" v="bevel"/>
-          <prop k="line_color" v="0,182,88,255"/>
+          <prop k="line_color" v="0,91,44,255"/>
           <prop k="line_style" v="solid"/>
           <prop k="line_width" v="0.4"/>
           <prop k="line_width_unit" v="MM"/>
@@ -273,7 +273,7 @@
   <aliases>
     <alias field="fid" index="0" name=""/>
     <alias field="iflo" index="1" name=""/>
-    <alias field="nnxsec" index="2" name=""/>
+    <alias field="name" index="2" name=""/>
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
@@ -283,7 +283,7 @@
       <column width="-1" hidden="0" type="field" name="fid"/>
       <column width="-1" hidden="1" type="actions"/>
       <column width="-1" hidden="0" type="field" name="iflo"/>
-      <column width="-1" hidden="0" type="field" name="nnxsec"/>
+      <column width="-1" hidden="0" type="field" name="name"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
