@@ -180,7 +180,7 @@ Often users need to adjust elevation of the grids by lowering or raising the DTM
 - Save the edits for the layer
 - Run |AssignElevationFromPolygon| **Assign elevation from polygon** tool
 
-.. |SampleManning| image:: ../../../flo2d/img/sample_elev_polygon.png
+.. |AssignElevationFromPolygon| image:: ../../../flo2d/img/sample_elev_polygon.png
 
 Note that in the attribute table, you can either assign the exact **elevation**, or shift the existing values by the **correction**.
 
@@ -252,4 +252,104 @@ We can now run |set_levee_elev| to schematize levees:
 	:align: center
 	:alt: Schematize levees
 
-	Schematize levees
+	Schematized levees
+
+Adding streets
+--------------
+To add street, you can use the **Street Editor** from the FLO-2D dock widget to digitize and assign the appropriate parameters.
+
+.. figure:: img/StreetEditor.png
+	:align: center
+	:alt: The Street Editor
+
+	The Street Editor
+
+In this case, all the streets were imported from an existing vector layer and global parameters were assigned to all the lines.
+
+.. figure:: img/StreetUserLayer.png
+	:align: center
+	:alt: Street lines
+
+	User layer representing street lines
+
+Once all the street lines are added, you can run |schematize_streets| **Schematize Streets** tool from the widget.
+
+.. |schematize_streets| image:: ../../../flo2d/img/schematize_streets.png
+
+.. figure:: img/StreetUserLayer.png
+	:align: center
+	:alt: Street lines
+
+	Schematized street lines - **UPDATE ME**
+
+Adding boundary condition
+-------------------------
+To add a boundary condition, we can use the **Boundary Condtion Editor** widget.
+
+.. figure:: img/BCEditor.png
+	:align: center
+	:alt: BC Editor
+
+	The Boundary Condtion Editor
+
+First you need to decide which type of geometry best represents your bondary condition location. Use |mActionCapturePoint| point, |mActionCaptureLine| line or |mActionCapturePolygon| polygon geometry to digitize the bounday condition location first. You should be able to select if you want to use the digitized feature as **Inflow** or **Outflow**.
+
+
+.. |mActionCapturePoint| image:: ../../../flo2d/img/mActionCapturePoint.png
+
+.. |mActionCaptureLine| image:: ../../../flo2d/img/mActionCaptureLine.png
+
+.. |mActionCapturePolygon| image:: ../../../flo2d/img/mActionCapturePolygon.png
+
+.. figure:: img/BoundaryCondtionLayerAttrib.png
+	:align: center
+	:alt: Street lines
+
+	Boundary condtion type
+
+Once the geometry is added to the canvas and type is set, click on the |mActionSaveAllEdits| save icon to save your changes.
+
+If this is your first inflow bounday, a default name of **Inflow 1** appear as its name. you can assign a **name** by clicking on |change_name| the change name tool.
+
+.. |mActionSaveAllEdits| image:: ../../../flo2d/img/mActionSaveAllEdits.png
+
+.. |change_name| image:: ../../../flo2d/img/change_name.png
+
+You can then define, if this bounday condition is going to be assigned to the floodplain or a channel. Ensure to click on |mActionSaveAllEdits| the save icon from the widget as you make changes.
+
+Now that we have the location of the boundary and boundary type, a time series can be defined.
+
+If this is your first boundary condition, an empty time series will be automatically created and assigned to the feature (**Time series 1**). You can rename the time series by clicking on |change_name| within the time series section.
+
+There should be a tabular section, within your plugin panels, where you can enter time series. You can copy data from your spreadsheet or text editor and paste it within the tabular view. A plot of the time series should be automatically updated as you add data.
+
+Note that the data is assumed to be in the correct system. For example, if you are in the SI, the time series for an inflow hydrograph is m:sup:`3`/s.
+
+.. figure:: img/TableEditor.png
+	:scale: 75 %
+	:align: center
+	:alt: TableEditor
+
+	Table Editor
+
+.. figure:: img/PlotView.png
+	:scale: 75 %
+	:align: center
+	:alt: PlotView
+
+	Plot view of the tabular data
+
+For the subsequent boundary condtion features, you can either use an existing time series or generate a new one by clicking on |add_bc_data| **Add Boundary Condition Data** tool.
+
+.. |add_bc_data| image:: ../../../flo2d/img/add_bc_data.png
+
+Once all the boundary condition data are added, you can click on |schematize_bc| **Schematize BC** tool to translate the user layer and tables to the schematic layers.
+
+.. |schematize_bc| image:: ../../../flo2d/img/schematize_bc.png
+
+
+.. figure:: img/BCUserSchematicLayers.png
+	:align: center
+	:alt: BCUserSchematicLayers
+
+	Boundary condition user and schematic layers
