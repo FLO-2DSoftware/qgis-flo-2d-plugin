@@ -402,3 +402,48 @@ Once, all the left banks and cross sections are added, you can run |schematize_x
 	:alt: XsecTableAttrib
 
 	Schematized channel and cross sections **UPDATE ME**
+
+Initial condition
+-----------------
+Users can assign initial condition to the floodplain and channel segments. To add initial condition (reservoirs) to floodplain, click on |add_reservoir| **Add reservoir** tool from the **Initial Condition Editor** panel.
+
+.. |add_reservoir| image:: ../../../flo2d/img/add_reservoir.png
+
+.. figure:: img/ic_editor.png
+	:align: center
+	:alt: ic_editor
+
+	The Initial Condition Editor panel
+
+Digitize a point, where you want to apply the initail condition and assign a name and a value within the panel. Click on |schematize_res| to schematize the reservoir points.
+
+.. |schematize_res| image:: ../../../flo2d/img/schematize_res.png
+
+.. figure:: img/ICUserSchematicLayer.png
+	:align: center
+	:alt: ICUserSchematicLayer
+
+	User points for the initial condition (reservoirs) and schematized grids
+
+Floodplain sections
+-------------------
+
+To add a floodplain cross section, click on |add_fpxs| from the **Floodplain Cross-section Editor** panel and digitize a line. Click on |mActionSaveAllEdits| save button and then assign a name and select a direction from the panel.
+
+.. |add_fpxs| image:: ../../../flo2d/img/add_fpxs.png
+
+.. figure:: img/fpxsec_editor.png
+	:align: center
+	:alt: fpxsec_editor
+
+	The Floodplain Cross-section Editor panel
+
+To schematize the floodplain sections, click on |schematize_fpxs| from the panel. You should be able to see the schematized floodplain grids and lines.
+
+.. |schematize_fpxs| image:: ../../../flo2d/img/schematize_fpxs.png
+
+.. figure:: img/FpUserSchematicLayers.png
+	:align: center
+	:alt: FpUserSchematicLayers
+
+	User floodplain cross section and schematized floodplain layers
