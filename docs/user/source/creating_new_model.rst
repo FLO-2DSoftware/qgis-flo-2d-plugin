@@ -373,7 +373,7 @@ To add the left bank line, simply select the layer from the user layer list, tog
 
 The next step is to add suveyed cross sections. There is a widget within the plugin panel to help with adding section location (as a line), cross section type and cross section data.
 
-.. figure:: img/CrossSectionEditor.png
+.. figure:: img/XsecEditor.png
 	:align: center
 	:alt: CrossSectionEditor
 
