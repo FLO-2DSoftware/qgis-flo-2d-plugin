@@ -986,7 +986,7 @@ class Reservoir(GeoPackageUtils):
 
 
 class Structure(GeoPackageUtils):
-    """Outflow object representation."""
+    """Structure object representation."""
     columns = ['fid', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont', 'headrefel',
                'clength', 'cdiameter', 'notes']
 
@@ -998,119 +998,68 @@ class Structure(GeoPackageUtils):
         self.ifporchan = None
         self.icurvtable = None
         self.inflonod = None
-        self.chan_tser_fid = None
-        self.chan_qhpar_fid = None
-        self.chan_qhtab_fid = None
-        self.fp_tser_fid = None
-        self.time_series_data = None
-        self.qh_params_data = None
-        self.qh_table_data = None
-        self.typ = None
-
-    def add_row(self):
-        data = (
-            self.name,
-            self.chan_out,
-            self.fp_out,
-            self.hydro_out,
-            self.chan_tser_fid,
-            self.chan_qhpar_fid,
-            self.chan_qhtab_fid,
-            self.fp_tser_fid,
-            self.typ
-        )
-        qry = '''INSERT INTO outflow (
-            name,
-            chan_out,
-            fp_out,
-            hydro_out,
-            chan_tser_fid,
-            chan_qhpar_fid,
-            chan_qhtab_fid,
-            fp_tser_fid,
-            type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'''
-        self.fid = self.execute(qry, data, get_rowid=True)
+        self.outflonod = None
+        self.inoutcont = None
+        self.headrefel = None
+        self.clength = None
+        self.cdiameter = None
+        self.notes = None
+        self.geom = None
 
     def get_row(self):
-        qry = 'SELECT * FROM outflow WHERE fid = ?;'
+        qry = 'SELECT * FROM struct WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
-        self.name = self.row['name']
-        self.chan_out = self.row['chan_out']
-        self.fp_out = self.row['fp_out']
-        self.hydro_out = self.row['hydro_out']
-        self.chan_tser_fid = self.row['chan_tser_fid']
-        self.chan_qhpar_fid = self.row['chan_qhpar_fid']
-        self.chan_qhtab_fid = self.row['chan_qhtab_fid']
-        self.fp_tser_fid = self.row['fp_tser_fid']
-        self.typ = self.row['type']
-        self.geom_type = self.row['geom_type']
-        self.bc_fid = self.row['bc_fid']
+        self.fid = self.row['fid']
+        self.type = self.row['type']
+        self.name = self.row['structname']
+        self.ifporchan = self.row['ifporchan']
+        self.icurvtable = self.row['icurvtable']
+        self.inflonod = self.row['inflonod']
+        self.outflonod = self.row['outflonod']
+        self.inoutcont = self.row['inoutcont']
+        self.headrefel = self.row['headrefel']
+        self.clength = self.row['clength']
+        self.cdiameter = self.row['cdiameter']
+        self.notes = self.row['notes']
         return self.row
 
     def set_row(self):
         data = (
+            self.type,
             self.name,
-            self.chan_out,
-            self.fp_out,
-            self.hydro_out,
-            self.chan_tser_fid,
-            self.chan_qhpar_fid,
-            self.chan_qhtab_fid,
-            self.fp_tser_fid,
-            self.typ,
+            self.ifporchan,
+            self.icurvtable,
+            self.inflonod,
+            self.outflonod,
+            self.inoutcont,
+            self.headrefel,
+            self.clength,
+            self.cdiameter,
+            self.notes,
             self.fid
         )
-        qry = '''UPDATE outflow
-                    SET name=?,
-                    chan_out=?,
-                    fp_out=?,
-                    hydro_out=?,
-                    chan_tser_fid=?,
-                    chan_qhpar_fid=?,
-                    chan_qhtab_fid=?,
-                    fp_tser_fid=?,
-                    type=?
-                WHERE fid=?;'''
+        qry = '''UPDATE struct SET
+                    type = ?,
+                    structname = ?,
+                    ifporchan = ?,
+                    icurvtable = ?,
+                    inflonod = ?,
+                    outflonod = ?,
+                    inoutcont = ?,
+                    headrefel = ?,
+                    clength = ?,
+                    cdiameter = ?,
+                    notes = ?
+                WHERE fid = ?;'''
         self.execute(qry, data)
 
     def del_row(self):
-        # first try to delete the bc from user layer
-        if self.geom_type and self.bc_fid:
-            qry = '''DELETE FROM user_bc_{}s WHERE fid=? AND type='outflow';'''.format(self.geom_type)
-            self.execute(qry, (self.bc_fid,))
-        # there is a trigger updating outflow table when the user bc layer is changed
-        # this is for outflow rows without geometry
-        qry = 'DELETE FROM outflow WHERE fid=?'
+        # first try to delete the struct from user layer
+        qry = 'DELETE FROM user_struct WHERE fid=?;'
         self.execute(qry, (self.fid,))
-
-    def clear_type_data(self):
-        self.typ = None
-        self.chan_out = None
-        self.fp_out = None
-        self.hydro_out = None
-
-    def set_type_data(self, typ):
-        if typ == 4:
-            # keep nr of outflow hydrograph to set it later
-            old_hydro_out = self.hydro_out
-        else:
-            old_hydro_out = None
-        self.clear_type_data()
-        self.typ = typ
-        if typ in (2, 8):
-            self.chan_out = 1
-        elif typ in (1, 7):
-            self.fp_out = 1
-        elif typ == 3:
-            self.chan_out = 1
-            self.fp_out = 1
-        elif typ == 4:
-            self.clear_data_fids()
-            self.hydro_out = old_hydro_out
-        else:
-            pass
+        qry = 'DELETE FROM struct WHERE fid=?'
+        self.execute(qry, (self.fid,))
 
     def get_time_series(self, order_by='name'):
         if order_by == 'name':

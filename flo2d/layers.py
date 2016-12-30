@@ -90,6 +90,14 @@ class Layers(QObject):
                 'readonly': False,
                 'attrs_defaults': {'type': "'R'"} # use also double quotes for strings: "'R'"
             }),
+            ('user_struct', {
+                'name': 'Structure lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_struct.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['structures'],
+                'readonly': False
+            }),
             ('user_streets', {
                 'name': 'Street Lines',
                 'sgroup': 'User Layers',

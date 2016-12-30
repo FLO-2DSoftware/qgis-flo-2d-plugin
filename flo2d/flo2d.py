@@ -372,6 +372,7 @@ class Flo2D(object):
         self.f2d_widget.ic_editor.populate_cbos()
         self.f2d_widget.street_editor.setup_connection()
         self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.struct_editor.populate_structs()
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
@@ -718,8 +719,8 @@ class Flo2D(object):
 
     @connection_required
     def show_profile(self, fid=None):
-        self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.profile_tool_grp.setCollapsed(False)
+        # self.f2d_dock.setUserVisible(True)
+        # self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
@@ -729,6 +730,13 @@ class Flo2D(object):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.xs_editor_grp.setCollapsed(False)
         self.f2d_widget.xs_editor.populate_xsec_cbo(fid=fid)
+
+    @connection_required
+    def show_struct_editor(self, fid=None):
+        """Show hydraulic structure editor"""
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.struct_editor_grp.setCollapsed(False)
+        self.f2d_widget.struct_editor.populate_structs(fid=fid)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):
@@ -923,7 +931,8 @@ class Flo2D(object):
             'user_left_bank': self.show_user_profile,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,
-            'user_bc_polygons': self.show_bc_editor
+            'user_bc_polygons': self.show_bc_editor,
+            'user_struct': self.show_struct_editor
         }
 
     def restore_settings(self):

@@ -35,8 +35,8 @@ class ProfileTool(QgsMapToolIdentify):
         QgsMapToolIdentify.__init__(self, self.canvas)
 
     def update_lyrs_list(self):
-        lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
-        self.lyrs_list = lyrs_list
+        # lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
+        self.lyrs_list = [self.lyrs.data['chan']['qlyr']]
 
     def canvasPressEvent(self, dummy):
         self.clear_rubber()

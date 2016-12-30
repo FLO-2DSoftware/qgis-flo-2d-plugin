@@ -41,6 +41,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         # self.setup_struct_editor()
         self.setup_ic_editor()
         self.setup_street_editor()
+        self.setup_struct_editor()
         self.setup_rain_editor()
         self.setup_xsec_editor()
         self.setup_profile_tool()

@@ -369,6 +369,21 @@ class GeoPackageUtils(object):
         self.delete_all_imported_inflows()
         self.delete_all_imported_outflows()
 
+    def delete_all_imported_structs(self):
+        qry = '''SELECT fid FROM struct WHERE notes = 'imported';'''
+        imported = self.execute(qry).fetchall()
+        if imported:
+            if self.uc.question('There are imported structures in the database. If you proceed they will be deleted.\nProceed anyway?'):
+                qry = '''DELETE FROM struct WHERE notes = 'imported';'''
+                self.execute(qry)
+            else:
+                return False
+        return True
+
+    def copy_new_struct_from_user_lyr(self):
+        qry = '''INSERT OR IGNORE INTO struct (fid) SELECT fid FROM user_struct;'''
+        self.execute(qry)
+
     def fill_empty_reservoir_names(self):
         qry = '''UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
@@ -408,6 +423,10 @@ class GeoPackageUtils(object):
 
     def get_outflows_list(self):
         qry = 'SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);'
+        return self.execute(qry).fetchall()
+
+    def get_structs_list(self):
+        qry = 'SELECT fid, structname, type, notes FROM struct ORDER BY LOWER(structname);'
         return self.execute(qry).fetchall()
 
     def disable_geom_triggers(self):

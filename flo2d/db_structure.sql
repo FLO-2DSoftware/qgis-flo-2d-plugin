@@ -1033,9 +1033,14 @@ CREATE TABLE "struct" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('struct', 'features', 4326);
 SELECT gpkgAddGeometryColumn('struct', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('struct', 'geom');
--- SELECT gpkgAddSpatialIndex('struct', 'geom');
 
--- TODO: triggers for creating the struct geom based on in- and outflonod
+CREATE TABLE "user_struct" (
+    "fid" INTEGER NOT NULL PRIMARY KEY
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_struct', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_struct', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_struct', 'geom');
+
 
 CREATE TABLE "rat_curves" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

@@ -397,6 +397,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     sqls[char] += [(i,) + tuple(row)]
 
         self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql)
+        qry = '''UPDATE struct SET notes = 'imported';'''
+        self.execute(qry)
 
     def import_street(self):
         general_sql = ['''INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES''', 5]
