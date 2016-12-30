@@ -618,6 +618,7 @@ class DomainSchematizer(GeoPackageUtils):
         self.update_1d_area()
         self.update_xs_type()
         self.update_rbank()
+        self.copy_user_xs_data_to_schem()
 
     def get_sorted_xs(self, centerline_feat):
         """
@@ -886,10 +887,63 @@ class DomainSchematizer(GeoPackageUtils):
                 WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                 );
         '''
-
         self.execute(update_chan)
         self.execute(update_chan_elems)
         self.execute(update_xlen)
+
+    def copy_user_xs_data_to_schem(self):
+        qry_copy_r = '''UPDATE chan_r SET
+        bankell = (SELECT ucx.bankell FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        bankelr = (SELECT ucx.bankelr FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        fcw = (SELECT ucx.fcw FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        fcd = (SELECT ucx.fcd FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);'''
+        self.execute(qry_copy_r)
+        qry_copy_t = '''UPDATE chan_t SET
+        bankell = (SELECT ucx.bankell FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        bankelr = (SELECT ucx.bankelr FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        fcw = (SELECT ucx.fcw FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        fcd = (SELECT ucx.fcd FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        zl = (SELECT ucx.zl FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+        zr = (SELECT ucx.zr FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);
+        '''
+        self.execute(qry_copy_t)
+        qry_copy_v = '''UPDATE chan_v SET
+                bankell = (SELECT ucx.bankell FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                bankelr = (SELECT ucx.bankelr FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                fcd = (SELECT ucx.fcd FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                a1 = (SELECT ucx.a1 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                a2 = (SELECT ucx.a2 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                b1 = (SELECT ucx.b1 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                b2 = (SELECT ucx.b2 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                c1 = (SELECT ucx.c1 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                c2 = (SELECT ucx.c2 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                excdep = (SELECT ucx.excdep FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                a11 = (SELECT ucx.a11 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                a22 = (SELECT ucx.a22 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                b11 = (SELECT ucx.b11 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                b22 = (SELECT ucx.b22 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                c11 = (SELECT ucx.c11 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                c22 = (SELECT ucx.c22 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);
+                '''
+        self.execute(qry_copy_v)
+        qry_copy_n = '''UPDATE chan_n SET
+                nxsecnum = (SELECT ucx.nxsecnum FROM user_chan_n AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
+                xsecname = (SELECT ucx.xsecname FROM user_chan_n AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);
+                '''
+        self.execute(qry_copy_n)
+        self.clear_tables('xsec_n_data')
+        qry_copy_n_data = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi)
+            SELECT
+                cn.fid,
+                xi,
+                yi
+            FROM
+                user_xsec_n_data AS uxd,
+                user_chan_n AS ucn,
+                chan_n AS cn
+            WHERE ucn.user_xs_fid = uxd.chan_n_nxsecnum AND
+                ucn.nxsecnum = cn.nxsecnum;'''
+        self.execute(qry_copy_n_data)
 
     def xs_intervals(self, seg_fids):
         intervals = defaultdict(list)
@@ -929,7 +983,7 @@ class DomainSchematizer(GeoPackageUtils):
                 xs_end = QgsGeometry.fromPoint(xs_geom_line[-1])
                 ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
                 rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
-                xs_distances[fid].append((xs_feat.id(), xs_feat['nr_in_seg'], ldist, rdist))
+                xs_distances[fid].append((xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
         return xs_distances
 
     def calculate_distances(self):

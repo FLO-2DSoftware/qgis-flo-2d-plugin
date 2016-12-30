@@ -26,6 +26,7 @@ from grid_tools import square_grid, update_roughness, update_elevation, evaluate
 from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
+from profile_tool import ProfileTool
 from user_communication import UserCommunication
 
 from .gui.xs_editor_widget import XsecEditorWidget
@@ -158,6 +159,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
+            text=self.tr(u'Profile Tool'),
+            callback=self.profile,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -703,24 +710,25 @@ class Flo2D(object):
             self.uc.bar_warn('There is no grid layer to identify.')
 
     @connection_required
-    def show_profile(self, fid=None):
+    def show_user_profile(self, fid=None):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required
+    def show_profile(self, fid=None):
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.profile_tool_grp.setCollapsed(False)
+        self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """Show Cross-section editor"""
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.xs_editor_grp.setCollapsed(False)
-        self.f2d_widget.xs_editor.show_editor(self.cur_info_table, fid)
-        try:
-            self.dlg_xsec_editor = XsecEditorWidget(self.con, self.iface, self.lyrs, fid)
-            self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
-            self.dlg_xsec_editor.show()
-        except IndexError:
-            self.uc.bar_warn('There is no cross-section data to display!')
+        self.f2d_widget.xs_editor.populate_xsec_cbo(fid=fid)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):
@@ -830,6 +838,8 @@ class Flo2D(object):
             confluences = self.lyrs.data['chan_confluences']['qlyr']
             self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
             self.lyrs.repaint_layers()
+            if not self.f2d_widget.xs_editor.interp_bed_and_banks():
+                return
             self.uc.show_info("1D Domain schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -875,6 +885,8 @@ class Flo2D(object):
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
+        self.profile_tool = ProfileTool(self.canvas, self.lyrs)
+        self.profile_tool.feature_picked.connect(self.get_feature_profile)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
@@ -889,13 +901,26 @@ class Flo2D(object):
             return
         show_editor(fid)
 
+    def profile(self):
+        self.canvas.setMapTool(self.profile_tool)
+        self.profile_tool.update_lyrs_list()
+
+    def get_feature_profile(self, table, fid):
+        try:
+            self.cur_profile_table = table
+        except KeyError:
+            self.uc.bar_info("Not implemented.....")
+            return
+        self.show_profile(fid)
+
     def set_editors_map(self):
         self.editors_map = {
-            'user_levee_lines': self.show_profile,
-            'user_streets': self.show_profile,
-            'user_centerline': self.show_profile,
+            'user_levee_lines': self.show_user_profile,
+            'user_xsections': self.show_xsec_editor,
+            'user_streets': self.show_user_profile,
+            'user_centerline': self.show_user_profile,
             'chan_elems': self.show_schem_xsec_info,
-            'user_left_bank': self.show_profile,
+            'user_left_bank': self.show_user_profile,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,
             'user_bc_polygons': self.show_bc_editor

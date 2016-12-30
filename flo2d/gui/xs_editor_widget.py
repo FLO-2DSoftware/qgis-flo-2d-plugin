@@ -14,7 +14,7 @@ from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas,try_disconnect
 from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils, connection_required
-from ..flo2dobjects import UserCrossSection
+from ..flo2dobjects import UserCrossSection, ChannelSegment
 from ..user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from plot_widget import PlotWidget
@@ -92,6 +92,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_xs(self):
         self.schematize_1d.emit()
+
+    def interp_bed_and_banks(self):
+        qry = 'SELECT fid FROM chan;'
+        fids = self.gutils.execute(qry).fetchall()
+        for fid in fids:
+            seg = ChannelSegment(int(fid[0]), self.con, self.iface)
+            if not seg.interpolate_bed():
+                return False
+        return True
 
     def schematize_confluences(self):
         self.find_confluences.emit()
@@ -175,6 +184,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # if user bc layers were edited
         if user_lyr_edited:
             self.gutils.fill_empty_user_xsec_names()
+            self.gutils.set_def_n()
             self.populate_xsec_cbo(show_last_edited=True)
         self.enable_widgets()
 
@@ -190,6 +200,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         data fields and update the plot"""
         if not self.xs_cbo.count():
             return
+
         fid = self.xs_cbo.itemData(idx)
         self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
         self.xs = UserCrossSection(fid, self.con, self.iface)

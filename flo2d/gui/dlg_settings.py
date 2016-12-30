@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import time
 from PyQt4.QtCore import Qt, QSettings
 from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QGis
@@ -121,6 +122,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def create_db(self):
         """Create FLO-2D model database (GeoPackage)"""
+
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_path = QFileDialog.getSaveFileName(None,
@@ -130,14 +132,18 @@ class SettingsDialog(qtBaseClass, uiDialog):
             return
         else:
             pass
+
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        start_time = time.time()
         con = database_create(gpkg_path)
+        self.uc.log_info('{0:.3f} seconds => database create'.format(time.time() - start_time))
         if not con:
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
+        start_time = time.time()
         gutils = GeoPackageUtils(con, self.iface)
         if gutils.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_path))
@@ -146,8 +152,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
         QApplication.restoreOverrideCursor()
+        self.uc.log_info('{0:.3f} seconds => create gutils '.format(time.time() - start_time))
         # CRS
         self.projectionSelector.selectCrs()
+        start_time = time.time()
         if self.projectionSelector.crs().isValid():
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
@@ -207,10 +215,14 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gutils.execute(sql, (srsid,))
         sql = "UPDATE gpkg_contents SET srs_id = ?"
         self.gutils.execute(sql, (srsid,))
+        self.uc.log_info('{0:.3f} seconds => spatial ref of tables'.format(time.time() - start_time))
         self.srs_id = srsid
+
+        start_time = time.time()
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
         QApplication.restoreOverrideCursor()
+        self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
 
     def connect(self, gpkg_path=None):
         """Connect to FLO-2D model database (GeoPackage)"""
@@ -228,8 +240,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             database_disconnect(self.con)
         self.gpkg_path = gpkg_path
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
+        start_time = time.time()
         self.con = database_connect(self.gpkg_path)
         self.uc.log_info("Connected to {}".format(self.gpkg_path))
+        self.uc.log_info('{0:.3f} seconds => connecting'.format(time.time() - start_time))
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gutils = GeoPackageUtils(self.con, self.iface)
         if self.gutils.check_gpkg():
@@ -239,7 +253,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
             rc = self.gutils.execute(sql)
             rt = rc.fetchone()[0]
             self.srs_id = rt
+            start_time = time.time()
             self.lyrs.load_all_layers(self.gutils)
+            self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
             self.lyrs.zoom_to_all()
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gutils.path))

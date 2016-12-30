@@ -8,9 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .utils import load_ui
+from PyQt4.QtGui import QIcon
+from qgis.core import QgsFeatureRequest
 from ..user_communication import UserCommunication
 from ..flo2dobjects import CrossSection
+from .utils import load_ui, center_canvas
+import os
 
 
 uiDialog, qtBaseClass = load_ui('schem_xs_info')
@@ -18,7 +21,7 @@ uiDialog, qtBaseClass = load_ui('schem_xs_info')
 
 class SchemXsecEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, gutils, fid):
+    def __init__(self, con, iface, lyrs, gutils, id):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -27,15 +30,47 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
         self.con = con
         self.lyrs = lyrs
         self.gutils = gutils
-        self.fid = fid
+        self.id = id
+        self.fid = None
+        self.seg_fid = None
         self.setup()
 
-    def setup(self):
+        # set button icons
+        self.set_icon(self.prev_btn, 'arrow_1.svg')
+        self.set_icon(self.next_btn, 'arrow_3.svg')
+
+        # connections
+        self.prev_btn.clicked.connect(self.show_prev)
+        self.next_btn.clicked.connect(self.show_next)
+
+    @staticmethod
+    def set_icon(btn, icon_file):
+        idir = os.path.join(os.path.dirname(__file__), '..\\img')
+        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
+
+    def setup(self, id=None):
         if not self.gutils:
             return
-        self.xs = CrossSection(self.fid, self.con, self.iface)
-        row = self.xs.get_row()
+        self.xs_lyr = self.lyrs.data['chan_elems']['qlyr']
+        self.id = id if id else self.id
+        self.xs = CrossSection(self.id, self.con, self.iface)
+        row = self.xs.get_row(by_id=True)
         typ = row['type']
+        self.seg_fid = row['seg_fid']
+        self.nr_in_seg = row['nr_in_seg']
+
+        # find prev and next xsec ids
+        qry = 'SELECT id FROM chan_elems WHERE seg_fid = ? AND nr_in_seg = ?'
+        if self.nr_in_seg == 1:
+            self.prev_id = None
+        else:
+            self.prev_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg-1)).fetchone()[0]
+        self.next_id = None
+        try:
+            self.next_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg + 1)).fetchone()[0]
+        except:
+            pass
+        del row['geom']
         t = ''
         for col, val in row.iteritems():
             t += '{}:\t{}\n'.format(col, val)
@@ -51,8 +86,22 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
         else:
             for i, pt in enumerate(xy):
                 x, y = pt
-                t += '{.2f}\t\t{.2f}'.format(x, y)
+                t += '{0:.2f}\t\t{1:.2f}\n'.format(x, y)
         self.tedit.setText(t)
 
+        self.show_xs_rb()
+        if self.center_chbox.isChecked():
+            feat = self.xs_lyr.getFeatures(QgsFeatureRequest(self.id)).next()
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
 
+    def show_xs_rb(self):
+        if not self.id:
+            return
+        self.lyrs.show_feat_rubber(self.xs_lyr.id(), self.id)
 
+    def show_prev(self):
+        self.setup(id=self.prev_id)
+
+    def show_next(self):
+        self.setup(id=self.next_id)

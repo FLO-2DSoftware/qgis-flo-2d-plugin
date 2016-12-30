@@ -11,11 +11,13 @@
 from collections import OrderedDict
 from flo2dgeopackage import GeoPackageUtils
 from math import isnan
+from utils import is_number
+from errors import Flo2dError
 
 
 class CrossSection(GeoPackageUtils):
     """Cross section object representation."""
-    columns = ['fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'geom']
+    columns = ['id', 'fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'user_xs_fid', 'interpolated', 'geom']
 
     def __init__(self, fid, con, iface):
         super(CrossSection, self).__init__(con, iface)
@@ -25,13 +27,63 @@ class CrossSection(GeoPackageUtils):
         self.chan = None
         self.chan_tab = None
         self.xsec = None
+        self.chan_x_tabs = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
 
-    def get_row(self):
-        qry = 'SELECT * FROM chan_elems WHERE fid = ?;'
+
+    def get_row(self, by_id=False):
+        ident = 'id' if by_id else 'fid'
+        qry = 'SELECT * FROM chan_elems WHERE {} = ?;'.format(ident)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
+        self.fid = self.row['fid']
+        self.xlen = self.row['xlen']
         self.type = self.row['type']
         return self.row
+
+    def get_profile_data(self):
+        self.profile_data = {}
+        self.get_row()
+        self.get_chan_table()
+        if not self.type == 'N':
+            par_to_check = ['bankell', 'bankelr', 'fcd']
+            for par in par_to_check:
+                if not is_number(self.chan_tab[par]):
+                    msg = 'Missing {} data in user cross section {}'.format(par, self.row['user_xs_fid'])
+                    self.uc.show_warn(msg)
+                    raise Flo2dError
+            self.profile_data['lbank_elev'] = self.chan_tab['bankell']
+            self.profile_data['rbank_elev'] = self.chan_tab['bankelr']
+            self.profile_data['fcd'] = self.chan_tab['fcd']
+            self.profile_data['bed_elev'] = min(self.chan_tab['bankell'], self.chan_tab['bankelr']) - self.chan_tab['fcd']
+        else:
+            self.get_xsec_data()
+            if not self.xsec:
+                return {}
+            self.profile_data['lbank_elev'] = self.xsec[0][1]
+            self.profile_data['rbank_elev'] = self.xsec[-1][1]
+            min_bed_elev = 9999999
+            for row in self.xsec:
+                min_bed_elev = min(min_bed_elev, row[1])
+            self.profile_data['bed_elev'] = min_bed_elev
+            self.profile_data['fcd'] = min(self.xsec[0][1], self.xsec[-1][1]) - min_bed_elev
+        return self.profile_data
+
+    def set_profile_data(self):
+        if not self.profile_data:
+            return
+        if not self.type == 'N':
+            tab = self.chan_x_tabs[self.type]
+            qry = '''UPDATE {0} SET
+                    bankell = ?,
+                    bankelr = ?,
+                    fcd = ?
+                WHERE elem_fid = ?;'''.format(tab)
+            data = (self.profile_data['lbank_elev'],
+                    self.profile_data['rbank_elev'],
+                    self.profile_data['fcd'],
+                    self.fid,
+            )
+            self.execute(qry, data)
 
     def get_chan_segment(self):
         if self.row is not None:
@@ -50,8 +102,7 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return
-        tables = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
-        tab = tables[self.type]
+        tab = self.chan_x_tabs[self.type]
         args = self.table_info(tab, only_columns=True)
         qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -63,10 +114,19 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return None
-        nxsecnum = self.chan_tab['nxsecnum']
+        fid = self.chan_tab['fid']
         qry = 'SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'
-        self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
+        self.xsec = self.execute(qry, (fid,)).fetchall()
         return self.xsec
+
+    def shift_nxsec(self, dh):
+        if self.row is not None and self.type == 'N':
+            pass
+        else:
+            return None
+        fid = self.chan_tab['fid']
+        qry = 'UPDATE xsec_n_data SET yi = yi + ? WHERE chan_n_nxsecnum = ?;'
+        self.execute(qry, (dh, fid,))
 
 
 class UserCrossSection(GeoPackageUtils):
@@ -130,6 +190,7 @@ class UserCrossSection(GeoPackageUtils):
         return self.xiyi
 
     def add_chan_natural_data(self, fetch=False):
+        self.set_nxsecnum()
         qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi)
                 VALUES ({0}, 0, 1), ({0}, 1, 0), ({0}, 2, 1)'''.format(self.fid)
         self.execute(qry)
@@ -140,8 +201,8 @@ class UserCrossSection(GeoPackageUtils):
 
     def set_chan_data(self, data):
         table = self.chan_x_tabs[self.type]
-        # qry = '''DELETE FROM {0} WHERE user_xs_fid = ?'''.format(table)
-        # self.execute(qry, (self.fid,))
+        qry = '''DELETE FROM {0} WHERE user_xs_fid = ?'''.format(table)
+        self.execute(qry, (self.fid,))
         cols = list(self.table_info(table, only_columns=True))[1:]
         cols_t = ', '.join([c for c in cols])
         vals = []
@@ -154,15 +215,27 @@ class UserCrossSection(GeoPackageUtils):
         qry = '''INSERT INTO {0} ({1}) VALUES ({2}, {3});'''.format(table, cols_t, self.fid, vals_t)
         self.execute(qry)
 
+    def clear_unused_user_nxsec_data(self):
+        qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
+            (SELECT nxsecnum FROM user_chan_n);'''
+
     def set_chan_natural_data(self, data):
+        self.get_chan_x_row()
         qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum = ?'''
         self.execute(qry, (self.fid, ))
         qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);'''
         self.execute_many(qry, data)
+        self.set_nxsecnum()
+        self.clear_unused_user_nxsec_data()
 
     def set_type(self, typ):
         qry = '''UPDATE user_xsections SET type = ? WHERE fid = ?;'''
         self.execute(qry, (typ, self.fid,))
+        self.clear_unused_user_chan_x_rows()
+
+    def set_nxsecnum(self):
+        qry_xsecnum = '''UPDATE user_chan_n SET nxsecnum = fid, xsecname = 'Cross section ' || cast(fid as text);'''
+        self.execute(qry_xsecnum)
 
     def set_n(self, n):
         qry = '''UPDATE user_xsections SET fcn = ? WHERE fid = ?;'''
@@ -173,6 +246,120 @@ class UserCrossSection(GeoPackageUtils):
             name = self.name
         qry = '''UPDATE user_xsections SET name = ? WHERE fid = ?;'''
         self.execute(qry, (name, self.fid,))
+
+    def clear_unused_user_chan_x_rows(self):
+        qry_r = "DELETE FROM user_chan_r WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'R');"
+        qry_t = "DELETE FROM user_chan_t WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'T');"
+        qry_v = "DELETE FROM user_chan_v WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'V');"
+        qry_n = "DELETE FROM user_chan_n WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'N');"
+        self.execute(qry_r)
+        self.execute(qry_t)
+        self.execute(qry_v)
+        self.execute(qry_n)
+
+class ChannelSegment(GeoPackageUtils):
+    """Channel segment object representation."""
+    columns = ['fid', 'name', 'depinitial', 'froudc', 'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(ChannelSegment, self).__init__(con, iface)
+        self.con = con
+        self.iface = iface
+        self.row = None
+        self.fid = fid
+        self.name = None
+        self.depinitial = None
+        self.froudc = None
+        self.roughadj = None
+        self.isedn = None
+        self.notes = None
+        self.user_lbank_fid = None
+        self.rank = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM chan WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.depinitial = self.row['depinitial']
+        self.froudc = self.row['froudc']
+        self.roughadj = self.row['roughadj']
+        self.isedn = self.row['isedn']
+        self.notes = self.row['notes']
+        self.user_lbank_fid = self.row['user_lbank_fid']
+        self.rank = self.row['rank']
+        return self.row
+
+    def get_profiles(self, sta_start=0):
+        self.profiles = OrderedDict()
+        qry = 'SELECT * FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
+        rows = self.execute(qry, (self.fid, )).fetchall()
+        self.profiles = OrderedDict()
+        sta = sta_start
+        for row in rows:
+            lbank_grid = row[1]
+            xs = CrossSection(lbank_grid, self.con, self.iface)
+            try:
+                self.profiles[lbank_grid] = xs.get_profile_data()
+            except Flo2dError:
+                return False
+            self.profiles[lbank_grid]['station'] = sta
+            sta += xs.xlen
+            del xs
+        return True
+
+    def interpolate_bed(self):
+        cols = ['fid', 'seg_fid', 'up_fid', 'lo_fid', 'up_lo_dist_left', 'up_lo_dist_right', 'up_dist_left',
+                'up_dist_right']
+        qry = 'SELECT * FROM chan_elems_interp ORDER BY seg_fid, up_fid, up_dist_left;'
+        rows = self.execute(qry).fetchall()
+        for row in rows:
+            values = [x if x is not None else '' for x in row]
+            ipars = OrderedDict(zip(cols, values))
+
+            if not ipars['lo_fid']:
+                # no lower base xsection
+                continue
+
+            base_len = 0.5 * (ipars['up_lo_dist_left'] + ipars['up_lo_dist_right'])
+            dist = 0.5 * (ipars['up_dist_left'] + ipars['up_dist_right'])
+            icoef = dist / base_len
+            xsi = CrossSection(ipars['fid'], self.con, self.iface)
+            xsi.get_row()
+
+            xsup = CrossSection(ipars['up_fid'], self.con, self.iface)
+            xsup.get_row(by_id=True)
+
+            xslo = CrossSection(ipars['lo_fid'], self.con, self.iface)
+            xslo.get_row(by_id=True)
+
+            if not xsup.type == 'N':
+                # parametric cross-section - adjust banks elev and depth
+                try:
+                    xsi.get_profile_data()
+                    xsup.get_profile_data()
+                    xslo.get_profile_data()
+                    d_lbank_elev = xslo.profile_data['lbank_elev'] - xsup.profile_data['lbank_elev']
+                    d_rbank_elev = xslo.profile_data['rbank_elev'] - xsup.profile_data['rbank_elev']
+                    d_fcd = xslo.profile_data['fcd'] - xsup.profile_data['fcd']
+                    xsi.profile_data['lbank_elev'] = xsup.profile_data['lbank_elev'] + icoef * d_lbank_elev
+                    xsi.profile_data['rbank_elev'] = xsup.profile_data['rbank_elev'] + icoef * d_rbank_elev
+                    xsi.profile_data['fcd'] = xsup.profile_data['fcd'] + icoef * d_fcd
+                    xsi.set_profile_data()
+                except Flo2dError:
+                    return False
+            else:
+                # this is natural cross-section
+                try:
+                    xsi.get_profile_data()
+                    xsup.get_profile_data()
+                    xslo.get_profile_data()
+                    d_bed = xslo.profile_data['bed_elev'] - xsup.profile_data['bed_elev']
+                    dh =  icoef * d_bed
+                    xsi.shift_nxsec(dh)
+                except Flo2dError:
+                    return False
+        return True
 
 
 class Inflow(GeoPackageUtils):

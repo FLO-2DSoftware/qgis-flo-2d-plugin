@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
+import time
 from collections import OrderedDict
 
 from PyQt4.QtCore import QObject
@@ -672,12 +673,17 @@ class Layers(QObject):
         # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
         if not lyr_exists:
+            start_time = time.time()
             vlayer = QgsVectorLayer(uri, name, provider)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - create QgsVectorLayer'.format(time.time() - start_time, name))
             if not vlayer.isValid():
                 msg = 'Unable to load layer {}'.format(name)
                 raise Flo2dLayerInvalid(msg)
+            start_time = time.time()
             QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
             # get target tree group
+            start_time = time.time()
             if subgroup:
                 grp = self.get_subgroup(group, subgroup)
                 if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
@@ -688,9 +694,12 @@ class Layers(QObject):
                 grp = self.get_group(group)
             # add layer to the tree group
             tree_lyr = grp.addLayer(vlayer)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to layer group'.format(time.time() - start_time, name))
         else:
+            start_time = time.time()
             tree_lyr = self.get_layer_tree_item(lyr_exists)
             self.update_layer_extents(tree_lyr.layer())
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - only update extents'.format(time.time() - start_time, name))
         self.data[table]['qlyr'] = tree_lyr.layer()
 
         # set visibility
@@ -703,6 +712,7 @@ class Layers(QObject):
 
         # set style
         if style:
+            start_time = time.time()
             style_path = get_file_path("styles", style)
             if os.path.isfile(style_path):
                 err_msg, res = self.data[table]['qlyr'].loadNamedStyle(style_path)
@@ -711,15 +721,19 @@ class Layers(QObject):
                     raise Flo2dError(msg)
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set style'.format(time.time() - start_time, name))
 
         # check if the layer should be 'readonly'
+
         if readonly:
+            start_time = time.time()
             try:
                 # check if the signal is already connected
                 self.data[table]['qlyr'].beforeEditingStarted.disconnect(self.warn_readonly)
             except TypeError:
                 pass
             self.data[table]['qlyr'].beforeEditingStarted.connect(self.warn_readonly)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set readonly'.format(time.time() - start_time, name))
         else:
             pass
 
@@ -1012,12 +1026,15 @@ class Layers(QObject):
             raise Flo2dNotString(msg)
 
     def load_all_layers(self, gutils):
+
         self.gutils = gutils
         self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.collapse_all_flo2d_groups()
         self.group = group
+
         for lyr in self.data:
+            start_time = time.time()
             data = self.data[lyr]
             if data['styles']:
                 lstyle = data['styles'][0]
@@ -1060,6 +1077,8 @@ class Layers(QObject):
                     l.setDefaultValueExpression(idx, val)
             else:
                 pass
+            self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
+
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, 'User Layers')

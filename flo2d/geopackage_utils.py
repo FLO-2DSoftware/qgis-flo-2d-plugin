@@ -385,6 +385,13 @@ class GeoPackageUtils(object):
         qry = '''UPDATE user_xsections SET name = 'Cross-section ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
+    def set_def_n(self):
+        def_n = self.get_cont_par('MANNING')
+        if not def_n:
+            def_n = 0.035
+        qry = '''UPDATE user_xsections SET fcn = ? WHERE fcn IS NULL;'''
+        self.execute(qry, (def_n,))
+
     def get_inflow_names(self):
         qry = '''SELECT name FROM inflow WHERE name IS NOT NULL;'''
         rows = self.execute(qry).fetchall()
