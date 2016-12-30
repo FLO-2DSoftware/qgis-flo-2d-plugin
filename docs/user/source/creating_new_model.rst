@@ -349,7 +349,56 @@ Once all the boundary condition data are added, you can click on |schematize_bc|
 
 
 .. figure:: img/BCUserSchematicLayers.png
+	:scale: 75 %
 	:align: center
 	:alt: BCUserSchematicLayers
 
 	Boundary condition user and schematic layers
+
+Adding channels and cross sections
+----------------------------------
+Following elements are required to represent channels:
+
+- Left bank line
+- Surveyed cross sections
+
+To add the left bank line, simply select the layer from the user layer list, toggle editing and digitize a new line using QGIS digitizing toolbar. The line should be in the direction of the flow (upstream to downstream)
+
+.. figure:: img/LeftBankUserLayer.png
+	:scale: 75 %
+	:align: center
+	:alt: LeftBankUserLayer
+
+	Left bank user layer
+
+The next step is to add suveyed cross sections. There is a widget within the plugin panel to help with adding section location (as a line), cross section type and cross section data.
+
+.. figure:: img/CrossSectionEditor.png
+	:align: center
+	:alt: CrossSectionEditor
+
+	The Cross-section Editor
+
+To add a cross section,  click on |mActionCaptureLine| **Add cross section line** from the widget and digitize a section from left to right, looking downstream. Ensure the cross section line intersects with the left bank line.
+
+You can define the cross section type within the attribute table,  once the location line is digitized.
+
+.. figure:: img/XsecTableAttrib.png
+	:align: center
+	:alt: XsecTableAttrib
+
+	The Cross-section feature attribute
+
+Click on |mActionSaveAllEdits| save button from the widget after digitizing the section. You should be able to change the section name and type.
+
+Cross section data (bank levels, width, depth or profile), can be added within the tabular editor panel. Note that the plot is only available for **Natural** cross section profiles.
+
+Once, all the left banks and cross sections are added, you can run |schematize_xsec| **Schematize Cross-section** tool.
+
+.. |schematize_xsec| image:: ../../../flo2d/img/schematize_xsec.png
+
+.. figure:: img/XsecTableAttrib.png
+	:align: center
+	:alt: XsecTableAttrib
+
+	Schematized channel and cross sections **UPDATE ME**
