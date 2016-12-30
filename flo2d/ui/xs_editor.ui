@@ -52,7 +52,7 @@
         <item>
          <widget class="QToolButton" name="digitize_btn">
           <property name="toolTip">
-           <string>Add line BC</string>
+           <string>Add cross section lines</string>
           </property>
           <property name="text">
            <string>...</string>
