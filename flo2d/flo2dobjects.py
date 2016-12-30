@@ -1278,15 +1278,20 @@ class Structure(GeoPackageUtils):
             return self.get_qh_table_data()
 
     def get_data(self):
-        """Get data for current type and data_fid of the outflow"""
-        if self.typ in [5, 6, 7, 8]:
-            return self.get_time_series_data()
-        elif self.typ in [9, 10]:
-            return self.get_qh_params_data()
-        elif self.typ == 11:
-            return self.get_qh_table_data()
+        """Get data for current rating type"""
+        if self.type == 'C':
+            return self.get_rating_curves()
+        elif self.type == 'R':
+            return self.get_repl_rating_curves()
+        elif self.type == 'T':
+            return self.get_rating_tables()
+        elif self.type == 'F':
+            return self.get_culvert_eq()
+        elif self.type == 'D':
+            return self.get_storm_drain()
         else:
             pass
+
 
     def get_new_data_name(self, fid):
         if self.typ in [5, 6, 7, 8]:

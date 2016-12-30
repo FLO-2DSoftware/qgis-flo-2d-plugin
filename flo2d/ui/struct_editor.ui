@@ -28,7 +28,7 @@
      <item>
       <widget class="QToolButton" name="create_struct_btn">
        <property name="toolTip">
-        <string>Add line BC</string>
+        <string>Add a structure</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -48,7 +48,7 @@
      <item>
       <widget class="QToolButton" name="save_changes_btn">
        <property name="toolTip">
-        <string>Save current BC</string>
+        <string>Save new structures</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -74,7 +74,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Revert unsaved changes for current BC</string>
+        <string>Revert unsaved changes</string>
        </property>
        <property name="text">
         <string/>
@@ -94,7 +94,7 @@
      <item>
       <widget class="QToolButton" name="delete_struct_btn">
        <property name="toolTip">
-        <string>Delete current BC</string>
+        <string>Delete current structure</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -114,7 +114,7 @@
      <item>
       <widget class="QToolButton" name="add_data_btn">
        <property name="toolTip">
-        <string>Add data series/table for current BC</string>
+        <string>Add data for current structure</string>
        </property>
        <property name="text">
         <string>+</string>
@@ -147,7 +147,7 @@
      <item>
       <widget class="QToolButton" name="schem_struct_btn">
        <property name="toolTip">
-        <string>Schematize boundary conditions</string>
+        <string>Schematize structures</string>
        </property>
        <property name="text">
         <string>...</string>

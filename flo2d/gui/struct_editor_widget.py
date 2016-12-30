@@ -79,6 +79,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         self.tview.setModel(self.data_model)
         self.lyrs.clear_rubber()
+        self.struct_lyr = self.lyrs.data['struct']['qlyr']
+        self.user_struct_lyr = self.lyrs.data['user_struct']['qlyr']
         self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
         all_structs = self.gutils.get_structs_list()
         cur_name_idx = 0
@@ -161,6 +163,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct = Structure(fid, self.iface.f2d['con'], self.iface)
         self.struct.get_row()
         # print self.struct.row
+        self.show_struct_rb()
+        if self.center_chbox.isChecked():
+            feat = self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)).next()
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
         self.type_changed(typ=self.struct.ifporchan)
         self.rating_changed(rating=self.struct.type)
 
@@ -249,7 +256,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.inflow.set_time_series_data(data_name, ts_data)
 
     def show_struct_rb(self):
-        self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
+        self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)
 
     def create_plot(self):
         """Create initial plot"""
