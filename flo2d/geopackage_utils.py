@@ -400,6 +400,10 @@ class GeoPackageUtils(object):
         qry = '''UPDATE user_xsections SET name = 'Cross-section ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
+    def fill_empty_struct_names(self):
+        qry = '''UPDATE struct SET structname = 'Structure ' ||  cast(fid as text) WHERE structname IS NULL;'''
+        self.execute(qry)
+
     def set_def_n(self):
         def_n = self.get_cont_par('MANNING')
         if not def_n:

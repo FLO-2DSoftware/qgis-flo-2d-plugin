@@ -13,7 +13,7 @@ from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
 from .utils import load_ui, center_canvas, try_disconnect
-from ..geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils, connection_required
 from ..flo2dobjects import Structure
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
@@ -60,9 +60,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         # connections
         self.create_struct_btn.clicked.connect(self.create_struct)
-        self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.save_changes_btn.clicked.connect(self.save_struct_lyrs_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
+        self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.add_data_btn.clicked.connect(self.add_data)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
 
@@ -71,12 +71,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.rating_cbo.activated.connect(self.rating_changed)
         self.data_cbo.activated.connect(self.data_changed)
         self.change_struct_name_btn.clicked.connect(self.change_struct_name)
-        self.change_data_name_btn.clicked.connect(self.change_data_name)
+        self.storm_drain_cap_sbox.editingFinished.connect(self.save_stormdrain_capacity)
+        self.stormdrain_chbox.stateChanged.connect(self.clear_stormdrain_data)
 
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         # print 'in populate structs'
         if not self.iface.f2d['con']:
             return
+        self.struct_cbo.clear()
         self.tview.setModel(self.data_model)
         self.lyrs.clear_rubber()
         self.struct_lyr = self.lyrs.data['struct']['qlyr']
@@ -103,10 +105,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.rating_cbo.clear()
         self.rating_types = OrderedDict([
             ('C', {'name': 'Rating curve', 'cbo_idx': 0}),
-            ('R', {'name': 'Replacement rating curve', 'cbo_idx': 1}),
-            ('T', {'name': 'Rating table', 'cbo_idx': 2}),
-            ('F', {'name': 'Culvert equation', 'cbo_idx': 3}),
-            ('D', {'name': 'Drain outlet', 'cbo_idx': 4})
+            # ('R', {'name': 'Replacement rating curve', 'cbo_idx': 1}),
+            ('T', {'name': 'Rating table', 'cbo_idx': 1}),
+            ('F', {'name': 'Culvert equation', 'cbo_idx': 2})
+            # ('D', {'name': 'Drain outlet', 'cbo_idx': 4})
         ])
         for typ, data in self.rating_types.iteritems():
             self.rating_cbo.addItem(data['name'], typ)
@@ -138,17 +140,60 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.change_bc_type(typ, fid)
 
     def schematize_struct(self):
-        qry = 'SELECT * FROM all_schem_bc;'
-        exist_bc = self.gutils.execute(qry).fetchone()
-        if exist_bc:
-            if not self.uc.question('There are some inflow grid cells defined already. Overwrite them?'):
+        qry = 'SELECT * FROM struct WHERE geom IS NOT NULL;'
+        exist_struct = self.gutils.execute(qry).fetchone()
+        if exist_struct:
+            if not self.uc.question('There are some schematised structures created already. Overwrite them?'):
                 return
-        self.schematize_inflows()
-        self.schematize_outflows()
+        del_qry = 'DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);'
+        self.gutils.execute(del_qry)
+        upd_cells_qry = '''UPDATE struct SET
+            inflonod = (
+                SELECT g.fid FROM
+                    grid AS g,
+                    user_struct AS us
+                WHERE
+                    ST_Intersects(ST_StartPoint(GeomFromGPB(us.geom)), GeomFromGPB(g.geom)) AND
+                    us.fid = struct.fid
+                LIMIT 1
+            ),
+            outflonod = (
+                SELECT g.fid FROM
+                    grid AS g,
+                    user_struct AS us
+                WHERE
+                    ST_Intersects(ST_EndPoint(GeomFromGPB(us.geom)), GeomFromGPB(g.geom)) AND
+                    us.fid = struct.fid
+                LIMIT 1);'''
+        self.gutils.execute(upd_cells_qry)
+
+        upd_stormdrains_qry = '''UPDATE storm_drains SET
+                    istormdout = (
+                        SELECT outflonod FROM
+                            struct
+                        WHERE
+                            storm_drains.struct_fid = struct.fid
+                        LIMIT 1
+                    );'''
+        self.gutils.execute(upd_stormdrains_qry)
+
+        qry = 'SELECT fid, inflonod, outflonod FROM struct;'
+        structs = self.gutils.execute(qry).fetchall()
+        for struct in structs:
+            fid, inflo, outflo = struct
+            geom = self.gutils.build_linestring([inflo, outflo])
+            upd_geom_qry = '''UPDATE struct SET geom = ? WHERE fid = ?;'''
+            self.gutils.execute(upd_geom_qry, (geom, fid, ))
         self.lyrs.lyrs_to_repaint = [
-            self.lyrs.data['all_schem_bc']['qlyr']
+            self.lyrs.data['struct']['qlyr']
         ]
         self.lyrs.repaint_layers()
+
+    def clear_data_widgets(self):
+        self.storm_drain_cap_sbox.clear()
+        self.ref_head_elev_sbox.clear()
+        self.culvert_len_sbox.clear()
+        self.culvert_width_sbox.clear()
 
     def struct_changed(self):
         # print 'in struct_changed'
@@ -159,6 +204,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             # print 'cur struct fid: ', fid
         else:
             return
+        self.clear_data_widgets()
         self.data_model.clear()
         self.struct = Structure(fid, self.iface.f2d['con'], self.iface)
         self.struct.get_row()
@@ -168,6 +214,13 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             feat = self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)).next()
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
+
+        sd = self.struct.get_stormdrain()
+        if sd:
+            self.stormdrain_chbox.setChecked(True)
+            self.storm_drain_cap_sbox.setValue(sd)
+        else:
+            self.stormdrain_chbox.setChecked(False)
         self.type_changed(typ=self.struct.ifporchan)
         self.rating_changed(rating=self.struct.type)
 
@@ -197,19 +250,25 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         # print 'cur rating: ', cur_rating
         # print 'current type: ', cur_type
         if cur_rating == 'C':
-            self.storm_drain_cap_sbox.setDisabled(True)
+            pass
         elif cur_rating == 'R':
-            self.storm_drain_cap_sbox.setDisabled(True)
+            pass
         elif cur_rating == 'T':
-            self.storm_drain_cap_sbox.setDisabled(True)
+            pass
         elif cur_rating == 'F':
-            self.storm_drain_cap_sbox.setDisabled(True)
+            pass
         elif cur_rating == 'D':
-            self.storm_drain_cap_sbox.setEnabled(True)
+            pass
         else:
             pass
         self.rating_cbo.setCurrentIndex(self.rating_types[cur_rating]['cbo_idx'])
         self.struct.set_row()
+
+    def clear_stormdrain_data(self):
+        if not self.struct:
+            return
+        if not self.stormdrain_chbox.isChecked():
+            self.struct.clear_stormdrain_data()
 
     def data_changed(self):
         pass
@@ -236,6 +295,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         # save current inflow parameters
         self.inflow.set_row()
         self.save_inflow_data()
+
+    def save_stormdrain_capacity(self):
+        cap = self.storm_drain_cap_sbox.value()
+        self.struct.set_stormdrain_capacity(cap)
 
     def save_data(self):
         ts_data = []
@@ -279,8 +342,20 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     def add_data(self):
         pass
 
-    def delete_bc(self):
-        pass
+    def delete_struct(self):
+        if not self.struct_cbo.count() or not self.struct.fid:
+            return
+        q = 'Are you sure, you want delete the current structure?'
+        if not self.uc.question(q):
+            return
+        old_fid = self.struct.fid
+        self.struct.del_row()
+        self.repaint_structs()
+        # try to set current struct to the last before the deleted one
+        try:
+            self.populate_structs(struct_fid=old_fid-1)
+        except:
+            self.populate_structs()
 
     def create_struct(self):
         if not self.lyrs.enter_edit_mode('user_struct'):
@@ -316,18 +391,13 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct_frame.setEnabled(True)
             # populate widgets and show last edited struct
             self.gutils.copy_new_struct_from_user_lyr()
+            self.gutils.fill_empty_struct_names()
             self.populate_structs(show_last_edited=True)
         self.repaint_structs()
 
-
-
-    def delete_struct(self):
-        pass
-
-
-
     def repaint_structs(self):
         self.lyrs.lyrs_to_repaint = [
-            self.lyrs.data['user_struct']['qlyr']
+            self.lyrs.data['user_struct']['qlyr'],
+            self.lyrs.data['struct']['qlyr']
         ]
         self.lyrs.repaint_layers()

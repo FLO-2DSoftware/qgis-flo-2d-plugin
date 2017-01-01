@@ -1061,6 +1061,25 @@ class Structure(GeoPackageUtils):
         qry = 'DELETE FROM struct WHERE fid=?'
         self.execute(qry, (self.fid,))
 
+    def get_stormdrain(self):
+        qry = 'SELECT stormdmax FROM storm_drains WHERE struct_fid = ?;'
+        row = self.execute(qry, (self.fid,)).fetchone()
+        if row:
+            return row[0]
+        else:
+            return False
+
+    def set_stormdrain_capacity(self, stormdmax):
+        qry_del = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
+        self.execute(qry_del, (self.fid,))
+        qry_ins = 'INSERT INTO storm_drains (struct_fid, stormdmax) VALUES (?, ?);'
+        self.execute(qry_ins, (self.fid, stormdmax, ))
+
+    def clear_stormdrain_data(self):
+        """delete strom drain data when user uncheck the strom drain checkbox"""
+        qry = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
+        self.execute(qry, (self.fid, ))
+
     def get_time_series(self, order_by='name'):
         if order_by == 'name':
             ts = self.execute('SELECT fid, name FROM outflow_time_series ORDER BY name COLLATE NOCASE;').fetchall()
