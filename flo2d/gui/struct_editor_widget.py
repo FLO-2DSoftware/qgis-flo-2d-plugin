@@ -63,16 +63,17 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.save_changes_btn.clicked.connect(self.save_struct_lyrs_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
         self.delete_struct_btn.clicked.connect(self.delete_struct)
-        self.add_data_btn.clicked.connect(self.add_data)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
 
         self.struct_cbo.activated.connect(self.struct_changed)
         self.type_cbo.activated.connect(self.type_changed)
         self.rating_cbo.activated.connect(self.rating_changed)
-        self.data_cbo.activated.connect(self.data_changed)
         self.change_struct_name_btn.clicked.connect(self.change_struct_name)
         self.storm_drain_cap_sbox.editingFinished.connect(self.save_stormdrain_capacity)
         self.stormdrain_chbox.stateChanged.connect(self.clear_stormdrain_data)
+        self.ref_head_elev_sbox.editingFinished.connect(self.save_head_ref_elev)
+        self.culvert_len_sbox.editingFinished.connect(self.save_culvert_len)
+        self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
 
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         # print 'in populate structs'
@@ -101,22 +102,93 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_cbo.setCurrentIndex(cur_name_idx)
         self.struct_changed()
 
-    def populate_rating_cbo(self):
-        self.rating_cbo.clear()
-        self.rating_types = OrderedDict([
-            ('C', {'name': 'Rating curve', 'cbo_idx': 0}),
-            # ('R', {'name': 'Replacement rating curve', 'cbo_idx': 1}),
-            ('T', {'name': 'Rating table', 'cbo_idx': 1}),
-            ('F', {'name': 'Culvert equation', 'cbo_idx': 2})
-            # ('D', {'name': 'Drain outlet', 'cbo_idx': 4})
-        ])
-        for typ, data in self.rating_types.iteritems():
-            self.rating_cbo.addItem(data['name'], typ)
-
     @staticmethod
     def set_icon(btn, icon_file):
         idir = os.path.join(os.path.dirname(__file__), '..\\img')
         btn.setIcon(QIcon(os.path.join(idir, icon_file)))
+
+    def struct_changed(self):
+        cur_struct_idx = self.struct_cbo.currentIndex()
+        sdata = self.struct_cbo.itemData(cur_struct_idx)
+        if sdata:
+            fid = sdata
+            # print 'cur struct fid: ', fid
+        else:
+            return
+        self.clear_data_widgets()
+        self.data_model.clear()
+        self.struct = Structure(fid, self.iface.f2d['con'], self.iface)
+        self.struct.get_row()
+        self.show_struct_rb()
+        if self.center_chbox.isChecked():
+            feat = self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)).next()
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+
+        self.type_changed(None)
+        self.rating_changed(None)
+        self.twater_changed(None)
+        self.set_stormdrain()
+        if is_number(self.struct.headrefel):
+            self.ref_head_elev_sbox.setValue(self.struct.headrefel)
+        if is_number(self.struct.clength):
+            self.culvert_len_sbox.setValue(self.struct.clength)
+        if is_number(self.struct.cdiameter):
+            self.culvert_width_sbox.setValue(self.struct.cdiameter)
+
+    def type_changed(self, idx):
+        # print 'in type_changed', idx
+        if not self.struct:
+            return
+        if idx is None:
+            idx = self.struct.ifporchan
+            if is_number(idx):
+                # print 'read ifporchan', idx
+                self.type_cbo.setCurrentIndex(idx)
+        else:
+            self.struct.ifporchan = idx
+            self.struct.set_row()
+
+    def rating_changed(self, idx):
+        # print 'in rating_changed', idx
+        if not self.struct:
+            return
+        if idx is None:
+            idx = self.struct.icurvtable
+            if is_number(idx):
+                # print 'read icurvtable', idx
+                self.rating_cbo.setCurrentIndex(idx)
+        else:
+            self.struct.icurvtable = idx
+            self.struct.set_row()
+
+    def twater_changed(self, idx):
+        # print 'in twater changed', idx
+        if not self.struct:
+            return
+        if idx is None:
+            idx = self.struct.inoutcont
+            if is_number(idx):
+                # print 'read inoutcont', idx
+                self.twater_effect_cbo.setCurrentIndex(idx)
+        else:
+            self.struct.inoutcont = idx
+            self.struct.set_row()
+
+    def set_stormdrain(self):
+        sd = self.struct.get_stormdrain()
+        if sd:
+            self.stormdrain_chbox.setChecked(True)
+            self.storm_drain_cap_sbox.setValue(sd)
+        else:
+            self.stormdrain_chbox.setChecked(False)
+
+    def clear_stormdrain_data(self):
+        if not self.struct:
+            return
+        if not self.stormdrain_chbox.isChecked():
+            self.storm_drain_cap_sbox.clear()
+            self.struct.clear_stormdrain_data()
 
     def show_editor(self, user_bc_table=None, bc_fid=None):
         typ = 'inflow'
@@ -195,110 +267,84 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.culvert_len_sbox.clear()
         self.culvert_width_sbox.clear()
 
-    def struct_changed(self):
-        # print 'in struct_changed'
-        cur_struct_idx = self.struct_cbo.currentIndex()
-        sdata = self.struct_cbo.itemData(cur_struct_idx)
-        if sdata:
-            fid = sdata
-            # print 'cur struct fid: ', fid
-        else:
-            return
-        self.clear_data_widgets()
-        self.data_model.clear()
-        self.struct = Structure(fid, self.iface.f2d['con'], self.iface)
-        self.struct.get_row()
-        # print self.struct.row
-        self.show_struct_rb()
-        if self.center_chbox.isChecked():
-            feat = self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)).next()
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
-
-        sd = self.struct.get_stormdrain()
-        if sd:
-            self.stormdrain_chbox.setChecked(True)
-            self.storm_drain_cap_sbox.setValue(sd)
-        else:
-            self.stormdrain_chbox.setChecked(False)
-        self.type_changed(typ=self.struct.ifporchan)
-        self.rating_changed(rating=self.struct.type)
-
-    def type_changed(self, idx=None, typ=None):
-        # print 'in type_changed'
-        if not self.struct:
-            return
-        if not typ:
-            cur_type_idx = self.type_cbo.currentIndex()
-        else:
-            cur_type_idx = typ
-        self.struct.ifporchan = cur_type_idx
-        # print 'cur typ:', cur_type_idx
-        self.type_cbo.setCurrentIndex(cur_type_idx)
-        self.struct.set_row()
-
-    def rating_changed(self, idx=None, rating=None):
-        # print 'in rating_changed'
-        if not self.struct:
-            return
-        if not rating:
-            cur_rating_idx = self.rating_cbo.currentIndex()
-            cur_rating = self.rating_cbo.itemData(cur_rating_idx)
-        else:
-            cur_rating = rating
-        self.struct.type = cur_rating
-        # print 'cur rating: ', cur_rating
-        # print 'current type: ', cur_type
-        if cur_rating == 'C':
-            pass
-        elif cur_rating == 'R':
-            pass
-        elif cur_rating == 'T':
-            pass
-        elif cur_rating == 'F':
-            pass
-        elif cur_rating == 'D':
-            pass
-        else:
-            pass
-        self.rating_cbo.setCurrentIndex(self.rating_types[cur_rating]['cbo_idx'])
-        self.struct.set_row()
-
-    def clear_stormdrain_data(self):
-        if not self.struct:
-            return
-        if not self.stormdrain_chbox.isChecked():
-            self.struct.clear_stormdrain_data()
-
-    def data_changed(self):
-        pass
+    def populate_rating_cbo(self):
+        self.rating_cbo.clear()
+        self.rating_types = OrderedDict([
+            (0, 'Rating curve'),
+            (1, 'Rating table'),
+            (2, 'Culvert equation')
+        ])
+        for typ, name in self.rating_types.iteritems():
+            self.rating_cbo.addItem(name, typ)
 
     def change_struct_name(self):
-        pass
-
-    def change_data_name(self):
-        new_name, ok = QInputDialog.getText(None, 'Change data name', 'New name:')
+        if not self.struct_cbo.count():
+            return
+        new_name, ok = QInputDialog.getText(None, 'Change name', 'New name (no spaces, max 15 characters):')
         if not ok or not new_name:
             return
-        pass
-
-    def save_struct(self):
-        new_name = self.struct_cbo.currentText()
-        # check if the name was changed
-        if not self.inflow.name == new_name:
-            if new_name in self.gutils.get_inflow_names():
-                msg = 'Structure with name {} already exists in the database. Please, choose another name.'.format(self.struct.name)
-                self.uc.show_warn(msg)
-                return False
-            else:
-                self.inflow.name = new_name
-        # save current inflow parameters
-        self.inflow.set_row()
-        self.save_inflow_data()
+        if not self.struct_cbo.findText(new_name) == -1:
+            msg = 'Structure with name {} already exists in the database. Please, choose another name.'.format(
+                new_name)
+            self.uc.show_warn(msg)
+            return
+        self.struct.name = new_name.replace(' ', '_')[:15]
+        self.struct.set_row()
+        self.populate_structs(struct_fid=self.struct.fid)
 
     def save_stormdrain_capacity(self):
         cap = self.storm_drain_cap_sbox.value()
         self.struct.set_stormdrain_capacity(cap)
+
+    def save_head_ref_elev(self):
+        print 'in save head'
+        self.struct.headrefel = self.ref_head_elev_sbox.value()
+        print self.struct.headrefel
+        self.struct.set_row()
+
+    def save_culvert_len(self):
+        self.struct.clength = self.culvert_len_sbox.value()
+        self.struct.set_row()
+
+    def save_culvert_width(self):
+        self.struct.cdiameter = self.culvert_width_sbox.value()
+        self.struct.set_row()
+
+    def define_data_table_head(self):
+        if not self.struct:
+            return
+        heads = {0: ['hdepexc', 'coefq', 'expq', ]}
+        
+    def show_table_data(self):
+        # self.create_plot()
+        self.tview.undoStack.clear()
+        self.tview.setModel(self.data_model)
+        self.struct_data = self.inflow.get_time_series_data()
+        self.data_model.clear()
+        self.data_model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
+        self.ot, self.od, self.om = [[], [], []]
+        if not self.infow_tseries_data:
+            self.uc.bar_warn('No time series data defined for that inflow.')
+            return
+        for row in self.infow_tseries_data:
+            items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
+            self.bc_data_model.appendRow(items)
+            self.ot.append(row[0] if not row[0] is None else float('NaN'))
+            self.od.append(row[1] if not row[1] is None else float('NaN'))
+            self.om.append(row[2] if not row[2] is None else float('NaN'))
+        rc = self.bc_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [StandardItem(x) for x in ('',) * 3]
+                self.bc_data_model.appendRow(items)
+        self.bc_tview.resizeColumnsToContents()
+        for i in range(self.bc_data_model.rowCount()):
+            self.bc_tview.setRowHeight(i, 20)
+        self.bc_tview.horizontalHeader().setStretchLastSection(True)
+        for i in range(3):
+            self.bc_tview.setColumnWidth(i, 90)
+        self.save_inflow()
+        self.create_inflow_plot()
 
     def save_data(self):
         ts_data = []
@@ -338,9 +384,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.m.append(m_fdata(self.bc_data_model, i, 2))
         self.plot.update_item('Current Discharge', [self.t, self.d])
         self.plot.update_item('Current Mud', [self.t, self.m])
-
-    def add_data(self):
-        pass
 
     def delete_struct(self):
         if not self.struct_cbo.count() or not self.struct.fid:

@@ -309,7 +309,7 @@ class ChannelSegment(GeoPackageUtils):
         return True
 
     def interpolate_bed(self):
-        cols = ['fid', 'seg_fid', 'up_fid', 'lo_fid', 'up_lo_dist_left', 'up_lo_dist_right', 'up_dist_left',
+        cols = ['id', 'fid', 'seg_fid', 'up_fid', 'lo_fid', 'up_lo_dist_left', 'up_lo_dist_right', 'up_dist_left',
                 'up_dist_right']
         qry = 'SELECT * FROM chan_elems_interp ORDER BY seg_fid, up_fid, up_dist_left;'
         rows = self.execute(qry).fetchall()
@@ -324,8 +324,8 @@ class ChannelSegment(GeoPackageUtils):
             base_len = 0.5 * (ipars['up_lo_dist_left'] + ipars['up_lo_dist_right'])
             dist = 0.5 * (ipars['up_dist_left'] + ipars['up_dist_right'])
             icoef = dist / base_len
-            xsi = CrossSection(ipars['fid'], self.con, self.iface)
-            xsi.get_row()
+            xsi = CrossSection(ipars['id'], self.con, self.iface)
+            xsi.get_row(by_id=True)
 
             xsup = CrossSection(ipars['up_fid'], self.con, self.iface)
             xsup.get_row(by_id=True)
