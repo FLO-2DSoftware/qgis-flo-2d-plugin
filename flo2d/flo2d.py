@@ -284,7 +284,7 @@ class Flo2D(object):
         """Removes the plugin menu item and icon from QGIS GUI."""
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool
+        del self.info_tool, self.grid_info_tool, self.profile_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -315,9 +315,15 @@ class Flo2D(object):
         if self.f2d_widget.ic_editor is not None:
             self.f2d_widget.ic_editor.close()
             del self.f2d_widget.ic_editor
+        if self.f2d_widget.rain_editor is not None:
+            self.f2d_widget.rain_editor.close()
+            del self.f2d_widget.rain_editor
         if self.f2d_widget.fpxsec_editor is not None:
             self.f2d_widget.fpxsec_editor.close()
             del self.f2d_widget.fpxsec_editor
+        if self.f2d_widget.struct_editor is not None:
+            self.f2d_widget.struct_editor.close()
+            del self.f2d_widget.struct_editor
         if self.f2d_widget is not None:
             self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
@@ -485,7 +491,7 @@ class Flo2D(object):
         else:
             pass
         self.gutils.enable_geom_triggers()
-        self.show_bc_editor()
+        # self.show_bc_editor()
         self.gutils.update_rbank()
 
     @connection_required
@@ -736,7 +742,7 @@ class Flo2D(object):
         """Show hydraulic structure editor"""
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.struct_editor_grp.setCollapsed(False)
-        self.f2d_widget.struct_editor.populate_structs(fid=fid)
+        self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>109</height>
+    <width>344</width>
+    <height>139</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -331,6 +331,17 @@
       </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QCheckBox" name="report_chbox">
+       <property name="text">
+        <string>Reported in BASE.OUT</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

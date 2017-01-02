@@ -218,6 +218,7 @@ class UserCrossSection(GeoPackageUtils):
     def clear_unused_user_nxsec_data(self):
         qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
             (SELECT nxsecnum FROM user_chan_n);'''
+        self.execute(qry)
 
     def set_chan_natural_data(self, data):
         self.get_chan_x_row()
@@ -863,11 +864,20 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         data = self.execute(qry).fetchone()
         if not data:
-            return
-        values = [x if x is not None else '' for x in data]
+            values = ['' for x in self.columns]
+        else:
+            values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))
         self.series_fid = self.row['time_series_fid']
         return self.row
+
+    def set_row(self):
+        qry = '''INSERT OR REPLACE INTO rain (
+            fid, name, irainreal, irainbuilding, time_series_fid, tot_rainfall, rainabs, irainarf,
+            movingstrom, rainspeed, iraindir, notes)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
+        self.execute(qry, self.row)
+
 
     def get_time_series(self):
         qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
@@ -986,7 +996,7 @@ class Reservoir(GeoPackageUtils):
 
 
 class Structure(GeoPackageUtils):
-    """Structure object representation."""
+    """Hydraulic structure object representation."""
     columns = ['fid', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont', 'headrefel',
                'clength', 'cdiameter', 'notes']
 
@@ -1080,244 +1090,66 @@ class Structure(GeoPackageUtils):
         qry = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
         self.execute(qry, (self.fid, ))
 
-    def get_time_series(self, order_by='name'):
-        if order_by == 'name':
-            ts = self.execute('SELECT fid, name FROM outflow_time_series ORDER BY name COLLATE NOCASE;').fetchall()
+    def get_table_data(self):
+        res = []
+        if self.icurvtable == 0:
+            # rating curve
+            qry_curv = 'SELECT hdepexc, coefq, expq, coefa, expa FROM rat_curves WHERE struct_fid = ? ORDER BY hdepexc;'
+            curv = self.execute(qry_curv, (self.fid, ))
+            qry_repl = 'SELECT repdep, rqcoef, rqexp, racoef, raexp FROM repl_rat_curves WHERE struct_fid = ? ORDER BY repdep;'
+            repl = self.execute(qry_repl, (self.fid,))
+            for i, row in enumerate(curv):
+                res.append(row)
+                # check if a replacement curve is defined
+                try:
+                    if repl[i][0]:
+                        res += repl[i]
+                except:
+                    pass
+            if not res:
+                res = [''] * 10
+        elif self.icurvtable == 1:
+            # rating table
+            qry_tab = 'SELECT hdepth, qtable, atable FROM rat_table WHERE struct_fid = ? ORDER BY hdepth;'
+            res = self.execute(qry_tab, (self.fid,))
+            if not res:
+                res = [''] * 3
+        elif self.icurvtable == 2:
+            # culvert equation
+            qry_tab = 'SELECT typec, typeen, culvertn, ke, cubase FROM culvert_equations WHERE struct_fid = ?;'
+            res = self.execute(qry_tab, (self.fid,))
+            if not res:
+                res = [''] * 4
         else:
-            ts = self.execute('SELECT fid, name FROM outflow_time_series ORDER BY fid;').fetchall()
-        if not ts:
-            ts = self.add_time_series(fetch=True)
-        return ts
+            if not res:
+                res = [''] * 3
+        self.table_data = res
+        return res
 
-    def add_time_series(self, name=None, fetch=False):
-        qry = '''INSERT INTO outflow_time_series (name) VALUES (?);'''
-        rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE outflow_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;'''
-        self.execute(name_qry, (rowid,))
-        self.set_new_data_fid(rowid)
-        if not name:
-            self.name = 'Time series {}'.format(rowid)
-        if fetch:
-            return self.get_time_series()
-
-    def get_qh_params(self, order_by='name'):
-        if order_by == 'name':
-            p = self.execute('SELECT fid, name FROM qh_params ORDER BY name COLLATE NOCASE;').fetchall()
-        else:
-            p = self.execute('SELECT fid, name FROM qh_params ORDER BY fid;').fetchall()
-        if not p:
-            p = self.add_qh_params(fetch=True)
-        return p
-
-    def add_qh_params(self, name=None, fetch=False):
-        qry = '''INSERT INTO qh_params (name) VALUES (?);'''
-        rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE qh_params SET name =  'Q(h) parameters ' || cast(fid as text) WHERE fid = ?;'''
-        self.execute(name_qry, (rowid,))
-        self.set_new_data_fid(rowid)
-        if fetch:
-            return self.get_qh_params()
-
-    def get_qh_tables(self, order_by='name'):
-        if order_by == 'name':
-            t = self.execute('SELECT fid, name FROM qh_table ORDER BY name COLLATE NOCASE;').fetchall()
-        else:
-            t = self.execute('SELECT fid, name FROM qh_table ORDER BY fid;').fetchall()
-        if not t:
-            t = self.add_qh_table(fetch=True)
-        return t
-
-    def add_qh_table(self, name=None, fetch=False):
-        qry = '''INSERT INTO qh_table (name) VALUES (?);'''
-        rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE qh_table SET name = 'Q(h) table ' || cast(fid as text) WHERE fid = ?;'''
-        self.execute(name_qry, (rowid,))
-        self.set_new_data_fid(rowid)
-        if fetch:
-            return self.get_qh_tables()
-
-    def get_data_fid_name(self):
-        """Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
-        This could be time series, Qh Table or Qh Parameters."""
-        if self.typ in [5, 6, 7, 8]:
-            return self.get_time_series()
-        elif self.typ in [9, 10]:
-            return self.get_qh_params()
-        elif self.typ == 11:
-            return self.get_qh_tables()
+    def set_table_data(self, data):
+        if self.icurvtable == 0:
+            # rating curve
+            qry = 'DELETE FROM rat_curves WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES ({}, ?, ?, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:5] for row in data])
+            qry = 'DELETE FROM repl_rat_curves WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            for repl_data in [row[5:] for row in data]:
+                if is_number(repl_data[0]):
+                    qry = 'INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES ({}, ?, ?, ?, ?, ?);'
+                    self.execute(qry.format(self.fid), repl_data)
+        elif self.icurvtable == 1:
+            # rating table
+            qry = 'DELETE FROM rat_table WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES ({}, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:3] for row in data])
+        elif self.icurvtable == 2:
+            # culvert equation
+            qry = 'DELETE FROM culvert_equations WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES ({}, ?, ?, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:5] for row in data])
         else:
             pass
-
-    def add_data(self, name=None):
-        """Add a new data to current outflow type data table (time series, qh params or qh table)"""
-        data = None
-        if self.typ in [5, 6, 7, 8]:
-            data = self.add_time_series(name)
-        elif self.typ in [9, 10]:
-            data = self.add_qh_params(name)
-        elif self.typ == 11:
-            data = self.add_qh_table(name)
-        else:
-            pass
-        return data
-
-    def set_data_name(self, name):
-        """Save new data name"""
-        self.data_fid = self.get_cur_data_fid()
-        if self.typ in [5, 6, 7, 8]:
-            self.set_time_series_data_name(name)
-        elif self.typ in [9, 10]:
-            self.set_qh_params_data_name(name)
-        elif self.typ == 11:
-            self.set_qh_table_data_name(name)
-        else:
-            pass
-
-    def set_data(self, name, data):
-        """Save current model data to the right outflow data table"""
-        self.data_fid = self.get_cur_data_fid()
-        if self.typ in [5, 6, 7, 8]:
-            self.set_time_series_data(name, data)
-        elif self.typ in [9, 10]:
-            self.set_qh_params_data(name, data)
-        elif self.typ == 11:
-            self.set_qh_table_data(name, data)
-        else:
-            pass
-
-    def set_time_series_data_name(self, name):
-        qry = 'UPDATE outflow_time_series SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-
-    def set_time_series_data(self, name, data):
-        qry = 'UPDATE outflow_time_series SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-        qry = 'DELETE FROM outflow_time_series_data WHERE series_fid = ?;'
-        self.execute(qry, (self.data_fid,))
-        qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES ({}, ?, ?);'
-        self.execute_many(qry.format(self.data_fid), data)
-
-    def set_qh_params_data_name(self, name):
-        qry = 'UPDATE qh_params SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-
-    def set_qh_params_data(self, name, data):
-        qry = 'UPDATE qh_params SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-        qry = 'DELETE FROM qh_params_data WHERE params_fid = ?;'
-        self.execute(qry, (self.data_fid,))
-        qry = 'INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES ({}, ?, ?, ?);'
-        self.execute_many(qry.format(self.data_fid), data)
-
-    def set_qh_table_data_name(self, name):
-        qry = 'UPDATE qh_table SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-
-    def set_qh_table_data(self, name, data):
-        qry = 'UPDATE qh_table SET name=? WHERE fid=?;'
-        self.execute(qry, (name, self.data_fid,))
-        qry = 'DELETE FROM qh_table_data WHERE table_fid = ?;'
-        self.execute(qry, (self.data_fid,))
-        qry = 'INSERT INTO qh_table_data (table_fid, depth, q) VALUES ({}, ?, ?);'
-        self.execute_many(qry.format(self.data_fid), data)
-
-    def get_cur_data_fid(self):
-        """Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid)"""
-        data_fid_vals = [self.chan_tser_fid, self.chan_qhpar_fid, self.chan_qhtab_fid, self.fp_tser_fid]
-        return next((val for val in data_fid_vals if val), None)
-
-    def clear_data_fids(self):
-        self.chan_tser_fid = None
-        self.fp_tser_fid = None
-        self.chan_qhpar_fid = None
-        self.chan_qhtab_fid = None
-
-    def set_new_data_fid(self, fid):
-        """Set new data fid for current outflow type"""
-        self.clear_data_fids()
-        if self.typ in [5, 7]:
-            self.fp_tser_fid = fid
-        elif self.typ in [6, 8]:
-            self.chan_tser_fid = fid
-        elif self.typ in [9, 10]:
-            self.chan_qhpar_fid = fid
-        elif self.typ == 11:
-            self.chan_qhtab_fid = fid
-        else:
-            pass
-
-    def get_time_series_data(self):
-        """Get time, value pairs for the current outflow"""
-        qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;'
-        data_fid = self.get_cur_data_fid()
-        if not data_fid:
-            self.uc.bar_warn('No time series fid for current outflow is defined.')
-            return
-        self.time_series_data = self.execute(qry, (data_fid,)).fetchall()
-        if not self.time_series_data:
-            # add a new time series
-            self.time_series_data = self.add_time_series_data(data_fid, fetch=True)
-        return self.time_series_data
-
-    def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to outflow_time_series_data for a given ts_fid"""
-        qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
-        self.execute_many(qry, ([ts_fid],)*rows)
-        if fetch:
-            return self.get_time_series_data()
-
-    def get_qh_params_data(self):
-        qry = 'SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'
-        params_fid = self.get_cur_data_fid()
-        self.qh_params_data = self.execute(qry, (params_fid,)).fetchall()
-        if not self.qh_params_data:
-            self.qh_params_data = self.add_qh_params_data(params_fid, fetch=True)
-        return self.qh_params_data
-
-    def add_qh_params_data(self, params_fid, rows=1, fetch=False):
-        """Add new rows to qh_params_data for a given params_fid"""
-        qry = 'INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES (?, NULL, NULL, NULL);'
-        self.execute_many(qry, ([params_fid],)*rows)
-        if fetch:
-            return self.get_qh_params_data()
-
-    def get_qh_table_data(self):
-        qry = 'SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY depth;'
-        table_fid = self.get_cur_data_fid()
-        self.qh_table_data = self.execute(qry, (table_fid,)).fetchall()
-        if not self.qh_table_data:
-            self.qh_table_data = self.add_qh_table_data(table_fid, fetch=True)
-        return self.qh_table_data
-
-    def add_qh_table_data(self, table_fid, rows=5, fetch=False):
-        """Add new rows to qh_table_data for a given table_fid"""
-        qry = 'INSERT INTO qh_table_data (table_fid, depth, q) VALUES (?, NULL, NULL);'
-        self.execute_many(qry, ([table_fid],)*rows)
-        if fetch:
-            return self.get_qh_table_data()
-
-    def get_data(self):
-        """Get data for current rating type"""
-        if self.type == 'C':
-            return self.get_rating_curves()
-        elif self.type == 'R':
-            return self.get_repl_rating_curves()
-        elif self.type == 'T':
-            return self.get_rating_tables()
-        elif self.type == 'F':
-            return self.get_culvert_eq()
-        elif self.type == 'D':
-            return self.get_storm_drain()
-        else:
-            pass
-
-
-    def get_new_data_name(self, fid):
-        if self.typ in [5, 6, 7, 8]:
-            return 'Time series {}'.format(fid)
-        elif self.typ in [9, 10]:
-            return 'Q(h) parameters {}'.format(fid)
-        elif self.typ == 11:
-            return 'Q(h) table {}'.format(fid)
-        else:
-            return None

@@ -54,6 +54,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.rename_fpxs_btn.clicked.connect(self.rename_fpxs)
         self.fpxs_cbo.activated.connect(self.cur_fpxs_changed)
         self.flow_dir_cbo.activated.connect(self.save_fpxs)
+        self.report_chbox.stateChanged.connect(self.set_report)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -77,8 +78,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             elif show_last_edited and row[0] == max_fid:
                 cur_idx = i
         self.fpxs_cbo.setCurrentIndex(cur_idx)
-
         self.cur_fpxs_changed(cur_idx)
+        self.set_report()
 
     def cur_fpxs_changed(self, cur_idx):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
@@ -152,3 +153,9 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
         fpxs.schematize_floodplain_xs()
+
+    def set_report(self):
+        if self.report_chbox.isChecked():
+            self.gutils.set_cont_par('NXPRT', '1')
+        else:
+            self.gutils.set_cont_par('NXPRT', '0')

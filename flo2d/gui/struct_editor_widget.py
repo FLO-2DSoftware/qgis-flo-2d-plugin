@@ -9,15 +9,15 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog
+from PyQt4.QtGui import QColor, QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
-from .utils import load_ui, center_canvas, try_disconnect
-from ..geopackage_utils import GeoPackageUtils, connection_required
+from .utils import load_ui, center_canvas
+from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Structure
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
 import os
 
@@ -40,31 +40,24 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.struct = None
         self.gutils = None
-
+        self.define_data_table_head()
         self.data_model = StandardItemModel()
 
-        # inflow plot data variables
-        self.t, self.d, self.m = [[], [], []]
-        self.ot, self.od, self.om = [[], [], []]
-        # outflow plot data variables
-        self.d1, self.d2 = [[], []]
         # set button icons
         self.set_icon(self.create_struct_btn, 'mActionCaptureLine.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         self.set_icon(self.delete_struct_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.add_data_btn, 'add_bc_data.svg')
         self.set_icon(self.schem_struct_btn, 'schematize_struct.svg')
         self.set_icon(self.change_struct_name_btn, 'change_name.svg')
-        self.set_icon(self.change_data_name_btn, 'change_name.svg')
 
         # connections
+        self.data_model.dataChanged.connect(self.save_data)
         self.create_struct_btn.clicked.connect(self.create_struct)
         self.save_changes_btn.clicked.connect(self.save_struct_lyrs_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
         self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
-
         self.struct_cbo.activated.connect(self.struct_changed)
         self.type_cbo.activated.connect(self.type_changed)
         self.rating_cbo.activated.connect(self.rating_changed)
@@ -76,7 +69,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
 
     def populate_structs(self, struct_fid=None, show_last_edited=False):
-        # print 'in populate structs'
         if not self.iface.f2d['con']:
             return
         self.struct_cbo.clear()
@@ -112,7 +104,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         sdata = self.struct_cbo.itemData(cur_struct_idx)
         if sdata:
             fid = sdata
-            # print 'cur struct fid: ', fid
         else:
             return
         self.clear_data_widgets()
@@ -136,40 +127,36 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if is_number(self.struct.cdiameter):
             self.culvert_width_sbox.setValue(self.struct.cdiameter)
 
+        self.show_table_data()
+
     def type_changed(self, idx):
-        # print 'in type_changed', idx
         if not self.struct:
             return
         if idx is None:
             idx = self.struct.ifporchan
             if is_number(idx):
-                # print 'read ifporchan', idx
                 self.type_cbo.setCurrentIndex(idx)
         else:
             self.struct.ifporchan = idx
             self.struct.set_row()
 
     def rating_changed(self, idx):
-        # print 'in rating_changed', idx
         if not self.struct:
             return
         if idx is None:
             idx = self.struct.icurvtable
             if is_number(idx):
-                # print 'read icurvtable', idx
                 self.rating_cbo.setCurrentIndex(idx)
         else:
             self.struct.icurvtable = idx
             self.struct.set_row()
 
     def twater_changed(self, idx):
-        # print 'in twater changed', idx
         if not self.struct:
             return
         if idx is None:
             idx = self.struct.inoutcont
             if is_number(idx):
-                # print 'read inoutcont', idx
                 self.twater_effect_cbo.setCurrentIndex(idx)
         else:
             self.struct.inoutcont = idx
@@ -189,27 +176,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.stormdrain_chbox.isChecked():
             self.storm_drain_cap_sbox.clear()
             self.struct.clear_stormdrain_data()
-
-    def show_editor(self, user_bc_table=None, bc_fid=None):
-        typ = 'inflow'
-        fid = None
-        geom_type_map = {
-            'user_bc_points': 'point',
-            'user_bc_lines': 'line',
-            'user_bc_polygons': 'polygon'
-        }
-        if user_bc_table:
-            qry = '''SELECT
-                        fid, type
-                    FROM
-                        in_and_outflows
-                    WHERE
-                        bc_fid = ? and
-                        geom_type = ? and
-                        type = (SELECT type FROM {} WHERE fid = ?);'''.format(user_bc_table)
-            data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
-            fid, typ = self.gutils.execute(qry, data).fetchone()
-        self.change_bc_type(typ, fid)
 
     def schematize_struct(self):
         qry = 'SELECT * FROM struct WHERE geom IS NOT NULL;'
@@ -297,9 +263,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct.set_stormdrain_capacity(cap)
 
     def save_head_ref_elev(self):
-        print 'in save head'
         self.struct.headrefel = self.ref_head_elev_sbox.value()
-        print self.struct.headrefel
         self.struct.set_row()
 
     def save_culvert_len(self):
@@ -311,79 +275,45 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct.set_row()
 
     def define_data_table_head(self):
-        if not self.struct:
-            return
-        heads = {0: ['hdepexc', 'coefq', 'expq', ]}
+        self.tab_heads = {
+            0: ['hdepexc', 'coefq', 'expq', 'coefa', 'expa', 'repdep', 'rqcoef', 'rqexp', 'racoef', 'raexp'],
+            1: ['hdepth', 'qtable', 'atable'],
+            2: ['typec', 'typeen', 'culvertn', 'ke', 'cubase']
+        }
         
     def show_table_data(self):
-        # self.create_plot()
+        if not self.struct:
+            return
         self.tview.undoStack.clear()
         self.tview.setModel(self.data_model)
-        self.struct_data = self.inflow.get_time_series_data()
+        self.struct_data = self.struct.get_table_data()
         self.data_model.clear()
-        self.data_model.setHorizontalHeaderLabels(['Time', 'Discharge', 'Mud'])
-        self.ot, self.od, self.om = [[], [], []]
-        if not self.infow_tseries_data:
-            self.uc.bar_warn('No time series data defined for that inflow.')
-            return
-        for row in self.infow_tseries_data:
+        self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+        for row in self.struct_data:
             items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
-            self.bc_data_model.appendRow(items)
-            self.ot.append(row[0] if not row[0] is None else float('NaN'))
-            self.od.append(row[1] if not row[1] is None else float('NaN'))
-            self.om.append(row[2] if not row[2] is None else float('NaN'))
-        rc = self.bc_data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [StandardItem(x) for x in ('',) * 3]
-                self.bc_data_model.appendRow(items)
-        self.bc_tview.resizeColumnsToContents()
-        for i in range(self.bc_data_model.rowCount()):
-            self.bc_tview.setRowHeight(i, 20)
-        self.bc_tview.horizontalHeader().setStretchLastSection(True)
-        for i in range(3):
-            self.bc_tview.setColumnWidth(i, 90)
-        self.save_inflow()
-        self.create_inflow_plot()
+            self.data_model.appendRow(items)
+        rc = self.data_model.rowCount()
+        if rc < 10:
+            for row in range(rc, 10 + 1):
+                items = [StandardItem(x) for x in ('',) * len(self.tab_heads[self.struct.icurvtable])]
+                self.data_model.appendRow(items)
+        self.tview.resizeColumnsToContents()
+        for i in range(self.data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        self.tview.horizontalHeader().setStretchLastSection(True)
 
     def save_data(self):
-        ts_data = []
-        for i in range(self.bc_data_model.rowCount()):
+        data = []
+        for i in range(self.data_model.rowCount()):
             # save only rows with a number in the first column
-            if is_number(m_fdata(self.bc_data_model, i, 0)) and not isnan(m_fdata(self.bc_data_model, i, 0)):
-                ts_data.append(
-                    (
-                        self.inflow.time_series_fid,
-                        m_fdata(self.bc_data_model, i, 0),
-                        m_fdata(self.bc_data_model, i, 1),
-                        m_fdata(self.bc_data_model, i, 2)
-                    )
+            if is_number(m_fdata(self.data_model, i, 0)) and not isnan(m_fdata(self.data_model, i, 0)):
+                data.append(
+                    [m_fdata(self.data_model, i, j) for j in range(self.data_model.columnCount())]
                 )
-            else:
-                pass
-        data_name = self.inflow_tseries_cbo.currentText()
-        self.inflow.set_time_series_data(data_name, ts_data)
+        self.struct.set_table_data(data)
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)
-
-    def create_plot(self):
-        """Create initial plot"""
-        self.plot.clear()
-        self.plot.add_item('Original Discharge', [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
-        self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
-        self.plot.add_item('Original Mud', [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
-        self.plot.add_item('Current Mud', [self.ot, self.om], col=QColor("#884800"))
-
-    def update_plot(self):
-        """When time series data for plot change, update the plot"""
-        self.t, self.d, self.m = [[], [], []]
-        for i in range(self.bc_data_model.rowCount()):
-            self.t.append(m_fdata(self.bc_data_model, i, 0))
-            self.d.append(m_fdata(self.bc_data_model, i, 1))
-            self.m.append(m_fdata(self.bc_data_model, i, 2))
-        self.plot.update_item('Current Discharge', [self.t, self.d])
-        self.plot.update_item('Current Mud', [self.t, self.m])
 
     def delete_struct(self):
         if not self.struct_cbo.count() or not self.struct.fid:
@@ -416,21 +346,16 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def save_struct_lyrs_edits(self):
         """Save changes of user layer"""
-        # print 'in save struct'
         if not self.gutils or not self.lyrs.any_lyr_in_edit('user_struct'):
-            # print 'not 1'
             return
         # ask user if overwrite imported structures, if any
         if not self.gutils.delete_all_imported_structs():
-            # print 'not 2'
             self.cancel_struct_lyrs_edits()
             return
-        # print 'saving'
         # try to save user layer (geometry additions/changes)
         user_lyr_edited = self.lyrs.save_lyrs_edits('user_struct')
-        # if user bc layers were edited
+        # if user layer was edited
         if user_lyr_edited:
-            # print 'struct were edited'
             self.struct_frame.setEnabled(True)
             # populate widgets and show last edited struct
             self.gutils.copy_new_struct_from_user_lyr()

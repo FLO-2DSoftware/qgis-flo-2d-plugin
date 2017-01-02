@@ -37,6 +37,13 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         # connections
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
+        self.simulate_rain_chbox.stateChanged.connect(self.set_rain)
+        self.real_time_chbox.stateChanged.connect(self.set_realtime)
+        self.building_chbox.stateChanged.connect(self.set_building)
+        self.arf_chbox.stateChanged.connect(self.set_arf)
+        self.moving_storm_chbox.stateChanged.connect(self.set_moving_storm)
+        self.total_rainfall_sbox.editingFinished.connect(self.set_tot_rainfall)
+        self.rainfall_abst_sbox.editingFinished.connect(self.set_rainfall_abst)
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -48,6 +55,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             qry = '''SELECT value FROM cont WHERE name = 'IRAIN';'''
             row = self.gutils.execute(qry).fetchone()
             if is_number(row[0]) and not row[0] == '0':
+                self.simulate_rain_chbox.setChecked(True)
                 self.rain = Rain(self.con, self.iface)
 
     def setup_plot(self):
@@ -59,9 +67,26 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         if not self.rain:
             return
         row = self.rain.get_row()
-        self.real_time_chbox.setChecked(row['irainreal'])
-        self.building_chbox.setChecked(row['irainbuilding'])
-        self.moving_storm_chbox.setChecked(row['movingstrom'])
+        if self.gutils.get_cont_par('IRAIN') == '1':
+            self.simulate_rain_chbox.setChecked(True)
+        else:
+            self.simulate_rain_chbox.setChecked(False)
+        if row['irainreal'] == '1':
+            self.real_time_chbox.setChecked(True)
+        else:
+            self.real_time_chbox.setChecked(False)
+        if row['irainbuilding'] == '1':
+            self.building_chbox.setChecked(True)
+        else:
+            self.building_chbox.setChecked(False)
+        if row['movingstrom'] == '1':
+            self.moving_storm_chbox.setChecked(True)
+        else:
+            self.moving_storm_chbox.setChecked(False)
+        if row['irainarf'] == '1':
+            self.arf_chbox.setChecked(True)
+        else:
+            self.moving_storm_chbox.setChecked(False)
         if is_number(row['tot_rainfall']):
             self.total_rainfall_sbox.setValue(float((row['tot_rainfall'])))
         else:
@@ -118,3 +143,47 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
         self.plot.add_item('org_ts', [x, y])
         self.plot.add_item('new_ts', [x, y])
+
+    def set_rain(self):
+        if not self.rain:
+            return
+        if self.simulate_rain_chbox.isChecked():
+            self.gutils.set_cont_par('IRAIN', 1)
+        else:
+            self.gutils.set_cont_par('IRAIN', 0)
+
+    def set_realtime(self):
+        if not self.rain:
+            return
+        self.rain.row['irainreal'] = self.real_time_chbox.isChecked()
+        self.rain.set_row()
+
+    def set_building(self):
+        if not self.rain:
+            return
+        self.rain.row['irainbuilding'] = self.building_chbox.isChecked()
+        self.rain.set_row()
+
+    def set_arf(self):
+        if not self.rain:
+            return
+        self.rain.row['irainarf'] = self.arf_chbox.isChecked()
+        self.rain.set_row()
+
+    def set_moving_storm(self):
+        if not self.rain:
+            return
+        self.rain.row['movingstrom'] = self.moving_storm_chbox.isChecked()
+        self.rain.set_row()
+
+    def set_tot_rainfall(self):
+        if not self.rain:
+            return
+        self.rain.row['tot_rainfall'] = self.total_rainfall_sbox.value()
+        self.rain.set_row()
+
+    def set_rainfall_abst(self):
+        if not self.rain:
+            return
+        self.rain.row['rainabs'] = self.rainfall_abst_sbox.value()
+        self.rain.set_row()

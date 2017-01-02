@@ -430,7 +430,7 @@ CREATE TABLE "rain" (
     "time_series_fid" INTEGER, -- id of time series used for rain cumulative distribution (in time)
     "tot_rainfall" REAL, -- RTT, total storm rainfall [inch or mm]
     "rainabs" REAL, -- RAINABS, rain interception or abstraction
-    "irainarf" REAL, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
+    "irainarf" INTEGER, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
     "movingstrom" INTEGER, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
     "rainspeed" REAL, -- RAINSPEED, speed of moving storm
     "iraindir" INTEGER, -- IRAINDIR, direction of moving storm
