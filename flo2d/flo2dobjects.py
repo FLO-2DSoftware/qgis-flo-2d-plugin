@@ -258,6 +258,7 @@ class UserCrossSection(GeoPackageUtils):
         self.execute(qry_v)
         self.execute(qry_n)
 
+
 class ChannelSegment(GeoPackageUtils):
     """Channel segment object representation."""
     columns = ['fid', 'name', 'depinitial', 'froudc', 'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank', 'geom']
