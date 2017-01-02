@@ -1775,7 +1775,8 @@ SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
 
 CREATE TABLE chan_elems_interp (
-    "fid" INTEGER PRIMARY KEY,
+    "id" INTEGER PRIMARY KEY,
+    "fid" INTEGER,
     "seg_fid" INTEGER,
     "up_fid" INTEGER, -- fid of upper user-based (not interpolated) chan_elem
     "lo_fid" INTEGER, -- fid of lower user-based chan_elem

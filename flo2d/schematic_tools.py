@@ -983,7 +983,7 @@ class DomainSchematizer(GeoPackageUtils):
                 xs_end = QgsGeometry.fromPoint(xs_geom_line[-1])
                 ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
                 rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
-                xs_distances[fid].append((xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
+                xs_distances[fid].append((xs_feat.id(), xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
         return xs_distances
 
     def calculate_distances(self):
@@ -999,7 +999,7 @@ class DomainSchematizer(GeoPackageUtils):
             iseg_xs = iter(seg_xs)
             start, end = next(iseg_intervals)
             inter_ldist, inter_rdist = 0, 0
-            xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
+            xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             key = (fid, start, end)
             try:
                 while True:
@@ -1007,7 +1007,7 @@ class DomainSchematizer(GeoPackageUtils):
                         inter_ldist, inter_rdist = ldistance, rdistance
                         distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, fid, start, end, ldistance - inter_ldist, rdistance - inter_rdist)
+                        row = (xs_id, xs_fid, fid, start, end, ldistance - inter_ldist, rdistance - inter_rdist)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
                         distances[key]['inter_llen'] = ldistance - inter_ldist
@@ -1019,7 +1019,7 @@ class DomainSchematizer(GeoPackageUtils):
                             end = infinity
                         key = (fid, start, end)
                         continue
-                    xs_id, nr_in_seg, ldistance, rdistance = next(iseg_xs)
+                    xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
                 pass
         return distances
@@ -1030,16 +1030,16 @@ class DomainSchematizer(GeoPackageUtils):
         infinity = float('inf')
         qry = '''
         INSERT INTO chan_elems_interp
-        (fid, seg_fid, up_fid, lo_fid, up_dist_left, up_dist_right, up_lo_dist_left, up_lo_dist_right)
-        VALUES (?,?,?,?,?,?,?,?);'''
+        (id, fid, seg_fid, up_fid, lo_fid, up_dist_left, up_dist_right, up_lo_dist_left, up_lo_dist_right)
+        VALUES (?,?,?,?,?,?,?,?,?);'''
         cursor = self.con.cursor()
         for k, val in distances.items():
             xs_rows = val['rows']
             inter_llen = val['inter_llen'] if 'inter_llen' in val else 0
             inter_rlen = val['inter_rlen'] if 'inter_rlen' in val else 0
-            for xs_id, seg_fid, start, end, ldist, rdist in xs_rows:
+            for xs_id, xs_fid, seg_fid, start, end, ldist, rdist in xs_rows:
                 end = end if end < infinity else None
-                cursor.execute(qry, (xs_id, seg_fid, start, end, ldist, rdist, inter_llen, inter_rlen))
+                cursor.execute(qry, (xs_id, xs_fid, seg_fid, start, end, ldist, rdist, inter_llen, inter_rlen))
         self.con.commit()
 
 
