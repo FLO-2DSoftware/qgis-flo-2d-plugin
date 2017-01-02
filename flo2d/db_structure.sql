@@ -489,10 +489,10 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_arf_cells', 'asp
 CREATE TABLE "chan" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, -- name of segment (optional)
-    "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
-    "froudc" REAL, -- FROUDC, max Froude channel number
-    "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
-    "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "depinitial" REAL DEFAULT 0, -- DEPINITIAL, initial channel flow depth
+    "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
+    "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
+    "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
     "user_lbank_fid" INTEGER, -- FID of parent left bank line,
     "rank" INTEGER

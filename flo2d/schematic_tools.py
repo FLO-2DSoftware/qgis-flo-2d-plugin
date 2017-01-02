@@ -1091,7 +1091,6 @@ class Confluences(GeoPackageUtils):
         self.left_bank_lyr.updateExtents()
         self.left_bank_lyr.triggerRepaint()
         self.set_confluences(vertex_range)
-        self.update_xs_type()
         self.update_rbank()
 
     @staticmethod
@@ -1154,7 +1153,7 @@ class FloodplainXS(GeoPackageUtils):
 
     def schematize_floodplain_xs(self):
         self.clear_tables('fpxsec', 'fpxsec_cells')
-        fpxsec_qry = 'INSERT INTO fpxsec (geom, fid, iflo) VALUES (?,?,?);'
+        fpxsec_qry = 'INSERT INTO fpxsec (geom, fid, iflo, nnxsec) VALUES (?,?,?,?);'
         fpxsec_cells_qry = 'INSERT INTO fpxsec_cells (geom, grid_fid, fpxsec_fid) VALUES (?,?,?);'
         cell_qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = ?;'''
         rows = []
@@ -1184,15 +1183,15 @@ class FloodplainXS(GeoPackageUtils):
             end_point = end_geom.asPoint()
             # Getting shifted and rotated end grid fid and its centroid
             end_gid = self.grid_on_point(end_point.x(), end_point.y())
-            # Writing schematized line to 'fpxsec' table
-            geom = self.build_linestring([start_gid, end_gid])
-            rows.append((geom, feat_fid, feat['iflo']))
             # Finding 'fpxsec_cells' for floodplain cross-section
             step = self.cell_size if closest_angle % 90 == 0 else self.diagonal
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
             end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
             fpxec_line = QgsGeometry.fromPolyline([QgsPoint(start_x, start_y), QgsPoint(end_x, end_y)])
             sampling_points = tuple(self.interpolate_points(fpxec_line, step))
+            # Adding schematized line for 'fpxsec' table
+            geom = self.build_linestring([start_gid, end_gid])
+            rows.append((geom, feat_fid, feat['iflo'], len(sampling_points)))
             # Writing schematized floodplain cross-sections and cells to GeoPackage
             cursor = self.con.cursor()
             for geom, gid in sampling_points:

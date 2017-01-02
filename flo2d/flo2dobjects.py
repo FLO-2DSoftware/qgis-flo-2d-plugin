@@ -218,6 +218,7 @@ class UserCrossSection(GeoPackageUtils):
     def clear_unused_user_nxsec_data(self):
         qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
             (SELECT nxsecnum FROM user_chan_n);'''
+        self.execute(qry)
 
     def set_chan_natural_data(self, data):
         self.get_chan_x_row()
@@ -256,6 +257,7 @@ class UserCrossSection(GeoPackageUtils):
         self.execute(qry_t)
         self.execute(qry_v)
         self.execute(qry_n)
+
 
 class ChannelSegment(GeoPackageUtils):
     """Channel segment object representation."""
