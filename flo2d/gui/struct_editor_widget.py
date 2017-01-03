@@ -61,6 +61,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_cbo.activated.connect(self.struct_changed)
         self.type_cbo.activated.connect(self.type_changed)
         self.rating_cbo.activated.connect(self.rating_changed)
+        self.twater_effect_cbo.activated.connect(self.twater_changed)
         self.change_struct_name_btn.clicked.connect(self.change_struct_name)
         self.storm_drain_cap_sbox.editingFinished.connect(self.save_stormdrain_capacity)
         self.stormdrain_chbox.stateChanged.connect(self.clear_stormdrain_data)
@@ -141,6 +142,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.set_row()
 
     def rating_changed(self, idx):
+        print 'in rating changed', idx
         if not self.struct:
             return
         if idx is None:
@@ -150,8 +152,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         else:
             self.struct.icurvtable = idx
             self.struct.set_row()
+        self.show_table_data()
 
     def twater_changed(self, idx):
+        print 'in twater changed', idx
         if not self.struct:
             return
         if idx is None:
@@ -232,6 +236,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.ref_head_elev_sbox.clear()
         self.culvert_len_sbox.clear()
         self.culvert_width_sbox.clear()
+        self.data_model.clear()
 
     def populate_rating_cbo(self):
         self.rating_cbo.clear()
@@ -276,9 +281,29 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def define_data_table_head(self):
         self.tab_heads = {
-            0: ['hdepexc', 'coefq', 'expq', 'coefa', 'expa', 'repdep', 'rqcoef', 'rqexp', 'racoef', 'raexp'],
-            1: ['hdepth', 'qtable', 'atable'],
-            2: ['typec', 'typeen', 'culvertn', 'ke', 'cubase']
+            0: ['HDEPEXC', 'COEFQ', 'EXPQ', 'COEFA', 'EXPA', 'REPDEP', 'RQCOEF', 'RQEXP', 'RACOEF', 'RAEXP'],
+            1: ['HDEPTH', 'QTABLE', 'ATABLE'],
+            2: ['TYPEC', 'TYPEEN', 'CULVERTN', 'KE', 'CUBASE']
+        }
+        self.tab_tips = {
+            0: ['Maximum depth that a hydraulic structure rating curve is valid',
+                'Discharge rating curve coefficients as a power function of the headwater depth.',
+                'Hydraulic structure discharge exponent',
+                'Flow area rating curve coefficient (long culvert routine)',
+                'Flow area exponent (long culvert routine)',
+                'Flow depth that if exceeded will invoke the replacement structure rating curve parameters',
+                'Structure rating curve discharge replacement coefficients',
+                'Structure rating curve discharge replacement exponents',
+                'Flow area rating curve replacement coefficient (long culvert routine)',
+                'Flow area replacement exponent (long culvert routine)',],
+            1: ['Headwater depth for the structure headwater depth-discharge rating table',
+                'Hydraulic structure discharges for the headwater depths',
+                'hydraulic structure flow area for each headwater depth'],
+            2: ['Culvert switch, either 1 or 2. Set TYPEC=1 for a box culvert and TYPEC=2 for a pipe culvert',
+                'Culvert switch. Set TYPEEN(I) for entrance type 1, 2, or 3.',
+                'Culvert Manning’s roughness coefficient',
+                'Culvert entrance loss coefficient',
+                'Flow width of box culvert for TYPEC=1. For a circular culvert, CUBASE=0']
         }
         
     def show_table_data(self):
@@ -288,14 +313,17 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.tview.setModel(self.data_model)
         self.struct_data = self.struct.get_table_data()
         self.data_model.clear()
+        if self.struct.icurvtable == '':
+            self.struct.icurvtable = 0
         self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+        tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
         for row in self.struct_data:
             items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
             self.data_model.appendRow(items)
         rc = self.data_model.rowCount()
         if rc < 10:
             for row in range(rc, 10 + 1):
-                items = [StandardItem(x) for x in ('',) * len(self.tab_heads[self.struct.icurvtable])]
+                items = [StandardItem(x) for x in ('',) * tab_col_nr]
                 self.data_model.appendRow(items)
         self.tview.resizeColumnsToContents()
         for i in range(self.data_model.rowCount()):
@@ -323,6 +351,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         old_fid = self.struct.fid
         self.struct.del_row()
+        self.clear_data_widgets()
         self.repaint_structs()
         # try to set current struct to the last before the deleted one
         try:

@@ -938,7 +938,8 @@ class Flo2D(object):
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,
             'user_bc_polygons': self.show_bc_editor,
-            'user_struct': self.show_struct_editor
+            'user_struct': self.show_struct_editor,
+            'struct': self.show_struct_editor
         }
 
     def restore_settings(self):
