@@ -16,6 +16,7 @@ from ..schematic_tools import FloodplainXS
 from ..user_communication import UserCommunication
 
 import os
+import traceback
 
 
 uiDialog, qtBaseClass = load_ui('fpxsec_editor')
@@ -31,6 +32,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.con = None
         self.gutils = None
+        self.fpxsec_lyr = None
         self.uc = UserCommunication(iface, 'FLO-2D')
 
         # set button icons
@@ -46,27 +48,38 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.flow_dir_cbo.setItemIcon(i, QIcon(os.path.join(idir, icon_file)))
 
         # connections
-        self.add_user_fpxs_btn.clicked.connect(self.create_user_fpxs)
-        self.save_changes_btn.clicked.connect(self.save_fpxs_lyr_edits)
-        self.revert_changes_btn.clicked.connect(self.revert_fpxs_lyr_edits)
-        self.delete_fpxs_btn.clicked.connect(self.delete_cur_fpxs)
-        self.schem_fpxs_btn.clicked.connect(self.schematize_fpxs)
-        self.rename_fpxs_btn.clicked.connect(self.rename_fpxs)
-        self.fpxs_cbo.activated.connect(self.cur_fpxs_changed)
-        self.flow_dir_cbo.activated.connect(self.save_fpxs)
-        self.report_chbox.stateChanged.connect(self.set_report)
+        self.add_user_fpxs_btn.clicked.connect(lambda: self.create_user_fpxs())
+        self.save_changes_btn.clicked.connect(lambda: self.save_fpxs_lyr_edits())
+        self.revert_changes_btn.clicked.connect(lambda: self.revert_fpxs_lyr_edits())
+        self.delete_fpxs_btn.clicked.connect(lambda: self.delete_cur_fpxs())
+        self.schem_fpxs_btn.clicked.connect(lambda: self.schematize_fpxs())
+        self.rename_fpxs_btn.clicked.connect(lambda: self.rename_fpxs())
+        self.fpxs_cbo.activated.connect(lambda: self.cur_fpxs_changed())
+        self.flow_dir_cbo.activated.connect(lambda: self.save_fpxs())
 
     @staticmethod
     def set_icon(btn, icon_file):
         idir = os.path.join(os.path.dirname(__file__), '..\\img')
         btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
-    def populate_cbos(self, fid=None, show_last_edited=False):
-        if not self.iface.f2d['con']:
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
             return
-        self.fpxsec_lyr = self.lyrs.data['user_fpxsec']['qlyr']
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            self.fpxsec_lyr = self.lyrs.data['user_fpxsec']['qlyr']
+            nxprt = int(self.gutils.get_cont_par('NXPRT'))
+            if nxprt == 1:
+                self.report_chbox.setChecked(True)
+            else:
+                self.report_chbox.setChecked(False)
+            self.report_chbox.stateChanged.connect(lambda: self.set_report())
+
+    @connection_required
+    def populate_cbos(self, fid=None, show_last_edited=False):
         self.fpxs_cbo.clear()
-        self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
         qry = '''SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE'''
         rows = self.gutils.execute(qry).fetchall()
         max_fid = self.gutils.get_max('user_fpxsec')
@@ -78,10 +91,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             elif show_last_edited and row[0] == max_fid:
                 cur_idx = i
         self.fpxs_cbo.setCurrentIndex(cur_idx)
-        self.cur_fpxs_changed(cur_idx)
-        self.set_report()
+        self.cur_fpxs_changed()
 
-    def cur_fpxs_changed(self, cur_idx):
+    @connection_required
+    def cur_fpxs_changed(self,):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
         if row is None:
             return
@@ -99,11 +112,13 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         self.lyrs.show_feat_rubber(self.fpxsec_lyr, self.fpxs_fid)
 
+    @connection_required
     def create_user_fpxs(self):
         self.lyrs.enter_edit_mode('user_fpxsec')
 
+    @connection_required
     def save_fpxs_lyr_edits(self):
-        if not self.gutils or not self.lyrs.any_lyr_in_edit('user_fpxsec'):
+        if not self.lyrs.any_lyr_in_edit('user_fpxsec'):
             return
         user_fpxs_edited = self.lyrs.save_lyrs_edits('user_fpxsec')
         if user_fpxs_edited:
@@ -153,11 +168,22 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def schematize_fpxs(self):
-        self.con = self.iface.f2d['con']
-        if not self.con:
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
-        fpxs.schematize_floodplain_xs()
+        if self.gutils.is_table_empty('user_fpxsec'):
+            self.uc.bar_warn("There is no any user floodplain cross sections! "
+                             "Please digitize them before running the tool.")
+            return
+        try:
+            fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
+            fpxs.schematize_floodplain_xs()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Process failed on schematizing floodplain cross-sections! "
+                              "Please check your user layers.")
+            return
+        self.uc.show_info("Floodplain cross-sections schematized!")
 
     @connection_required
     def set_report(self):
