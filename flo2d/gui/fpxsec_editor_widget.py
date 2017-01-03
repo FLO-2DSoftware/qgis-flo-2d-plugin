@@ -11,7 +11,7 @@
 from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas
-from ..geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils, connection_required
 from ..schematic_tools import FloodplainXS
 from ..user_communication import UserCommunication
 
@@ -109,6 +109,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if user_fpxs_edited:
             self.populate_cbos(show_last_edited=True)
 
+    @connection_required
     def rename_fpxs(self):
         if not self.fpxs_cbo.count():
             return
@@ -123,11 +124,13 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.fpxs_cbo.setItemText(self.fpxs_cbo.currentIndex(), new_name)
         self.save_fpxs()
 
+    @connection_required
     def revert_fpxs_lyr_edits(self):
         user_fpxs_edited = self.lyrs.rollback_lyrs_edits('user_fpxsec')
         if user_fpxs_edited:
             self.populate_cbos()
 
+    @connection_required
     def delete_cur_fpxs(self):
         if not self.fpxs_cbo.count():
             return
@@ -138,6 +141,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.fpxsec_lyr.triggerRepaint()
         self.populate_cbos()
 
+    @connection_required
     def save_fpxs(self):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
         fid = row[0]
@@ -147,6 +151,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if fid > 0:
             self.gutils.execute(qry, (name, iflo, fid,))
 
+    @connection_required
     def schematize_fpxs(self):
         self.con = self.iface.f2d['con']
         if not self.con:
@@ -154,6 +159,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
         fpxs.schematize_floodplain_xs()
 
+    @connection_required
     def set_report(self):
         if self.report_chbox.isChecked():
             self.gutils.set_cont_par('NXPRT', '1')
