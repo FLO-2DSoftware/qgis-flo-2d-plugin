@@ -70,10 +70,15 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.fpxsec_lyr = self.lyrs.data['user_fpxsec']['qlyr']
-            if not self.gutils.get_cont_par('NXPRT'):
+            self.report_chbox.setEnabled(True)
+            nxprt = self.gutils.get_cont_par('NXPRT')
+            if nxprt == '0':
                 self.report_chbox.setChecked(False)
-            else:
+            elif nxprt == '1':
                 self.report_chbox.setChecked(True)
+            else:
+                self.report_chbox.setChecked(False)
+                self.set_report()
             self.report_chbox.stateChanged.connect(lambda: self.set_report())
 
     @connection_required
@@ -164,6 +169,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         qry = 'UPDATE user_fpxsec SET name = ?, iflo = ? WHERE fid = ?;'
         if fid > 0:
             self.gutils.execute(qry, (name, iflo, fid,))
+        self.populate_cbos(fid=fid)
 
     @connection_required
     def schematize_fpxs(self):
