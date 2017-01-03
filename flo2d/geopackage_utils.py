@@ -391,7 +391,7 @@ class GeoPackageUtils(object):
         self.execute(qry)
 
     def fill_empty_struct_names(self):
-        qry = '''UPDATE struct SET structname = 'Structure ' ||  cast(fid as text) WHERE structname IS NULL;'''
+        qry = '''UPDATE struct SET structname = 'Structure_' ||  cast(fid as text) WHERE structname IS NULL;'''
         self.execute(qry)
 
     def set_def_n(self):

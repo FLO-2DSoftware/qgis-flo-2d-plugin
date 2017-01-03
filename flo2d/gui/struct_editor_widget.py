@@ -137,6 +137,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             idx = self.struct.ifporchan
             if is_number(idx):
                 self.type_cbo.setCurrentIndex(idx)
+            else:
+                self.type_cbo.setCurrentIndex(0)
         else:
             self.struct.ifporchan = idx
             self.struct.set_row()
@@ -148,6 +150,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             idx = self.struct.icurvtable
             if is_number(idx):
                 self.rating_cbo.setCurrentIndex(idx)
+            else:
+                self.rating_cbo.setCurrentIndex(0)
         else:
             self.struct.icurvtable = idx
             self.struct.set_row()
@@ -160,6 +164,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             idx = self.struct.inoutcont
             if is_number(idx):
                 self.twater_effect_cbo.setCurrentIndex(idx)
+            else:
+                self.twater_effect_cbo.setCurrentIndex(0)
         else:
             self.struct.inoutcont = idx
             self.struct.set_row()
