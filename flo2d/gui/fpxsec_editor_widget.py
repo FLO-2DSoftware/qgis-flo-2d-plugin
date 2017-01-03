@@ -70,11 +70,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.fpxsec_lyr = self.lyrs.data['user_fpxsec']['qlyr']
-            nxprt = int(self.gutils.get_cont_par('NXPRT'))
-            if nxprt == 1:
-                self.report_chbox.setChecked(True)
-            else:
+            if not self.gutils.get_cont_par('NXPRT'):
                 self.report_chbox.setChecked(False)
+            else:
+                self.report_chbox.setChecked(True)
             self.report_chbox.stateChanged.connect(lambda: self.set_report())
 
     @connection_required

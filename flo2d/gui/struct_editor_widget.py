@@ -142,7 +142,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.set_row()
 
     def rating_changed(self, idx):
-        print 'in rating changed', idx
         if not self.struct:
             return
         if idx is None:
@@ -155,7 +154,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.show_table_data()
 
     def twater_changed(self, idx):
-        print 'in twater changed', idx
         if not self.struct:
             return
         if idx is None:

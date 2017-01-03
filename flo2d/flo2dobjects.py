@@ -1125,7 +1125,6 @@ class Structure(GeoPackageUtils):
             if not res:
                 res = [''] * 3
         self.table_data = res
-        print res
         return res
 
     def set_table_data(self, data):
