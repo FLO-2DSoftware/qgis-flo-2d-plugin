@@ -454,7 +454,7 @@ def schematize_streets(gutils, line_layer, cell_size):
         7: (lambda x, y, shift: (x - shift, y - shift)),
         8: (lambda x, y, shift: (x - shift, y + shift))
     }
-    x_offset, y_offset = gutils.calculate_offset(gutils, cell_size)
+    x_offset, y_offset = gutils.calculate_offset(cell_size)
     fid_segments = schematize_lines(line_layer, cell_size, x_offset, y_offset, get_id=True)
     cursor = gutils.con.cursor()
     fid_coords = {}

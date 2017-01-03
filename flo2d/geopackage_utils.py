@@ -192,6 +192,7 @@ class GeoPackageUtils(object):
     def set_cont_par(self, name, value):
         """Set a parameter value in cont table"""
         sql = '''INSERT OR REPLACE INTO cont (name, value) VALUES (?, ?);'''
+        self.execute(sql, (name, value))
 
     def get_gpkg_path(self):
         """Return database attached to the current connection"""

@@ -383,6 +383,7 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
+        self.f2d_widget.fpxsec_editor.setup_connection()
         self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
@@ -840,24 +841,40 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_xsections'):
             self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
             return
+        ds = DomainSchematizer(self.con, self.iface, self.lyrs)
         try:
-            ds = DomainSchematizer(self.con, self.iface, self.lyrs)
             ds.process_bank_lines()
-            ds.process_xsections()
-            ds.process_attributes()
-            ds.make_distance_table()
-            chan_schem = self.lyrs.data['chan']['qlyr']
-            chan_elems = self.lyrs.data['chan_elems']['qlyr']
-            rbank = self.lyrs.data['rbank']['qlyr']
-            confluences = self.lyrs.data['chan_confluences']['qlyr']
-            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
-            self.lyrs.repaint_layers()
-            if not self.f2d_widget.xs_editor.interp_bed_and_banks():
-                return
-            self.uc.show_info("1D Domain schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
+            self.uc.show_warn("Schematizing failed on bank lines! "
+                              "Please check your user layers.")
+            return
+        try:
+            ds.process_xsections()
+            ds.process_attributes()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing failed on cross-sections! "
+                              "Please check your user layers.")
+            return
+        try:
+            ds.make_distance_table()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing failed on preparing interpolation table! "
+                              "Please check your user layers.")
+            return
+        chan_schem = self.lyrs.data['chan']['qlyr']
+        chan_elems = self.lyrs.data['chan_elems']['qlyr']
+        rbank = self.lyrs.data['rbank']['qlyr']
+        confluences = self.lyrs.data['chan_confluences']['qlyr']
+        self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+        self.lyrs.repaint_layers()
+        if not self.f2d_widget.xs_editor.interp_bed_and_banks():
+            self.uc.show_warn("Schematizing failed on interpolating cross-sections values! "
+                              "Please check your user layers.")
+            return
+        self.uc.show_info("1D Domain schematized!")
 
     @connection_required
     def schematize_confluences(self):
