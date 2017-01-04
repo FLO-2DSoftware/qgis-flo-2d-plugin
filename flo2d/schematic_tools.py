@@ -628,8 +628,21 @@ class DomainSchematizer(GeoPackageUtils):
         fids = self.xs_index.intersects(centerline.boundingBox())
         cross_sections = [self.xsections_feats[fid] for fid in fids
                           if self.xsections_feats[fid].geometry().intersects(centerline)]
-        cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().intersection(centerline)))
-        return cross_sections
+        cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().nearestPoint(centerline)))
+        line_start = centerline.vertexAt(0)
+        first_xs = cross_sections[0]
+        xs_start = first_xs.geometry().vertexAt(0)
+        if len(cross_sections) < 2:
+            self.uc.bar_warn('You need at least 2 cross-sections crossing left bank line!')
+            raise Exception
+        if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
+            return cross_sections
+        else:
+            msg = 'Left Bank Line ({}) and first cross-section ({}) starts in different grid cells! '
+            msg = msg.format(centerline_feat.id(), first_xs.id())
+            msg += 'Please correct user layers.'
+            self.uc.bar_warn(msg)
+            raise Exception
 
     def schematize_banks(self, lbank_feat):
         """
