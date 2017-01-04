@@ -105,7 +105,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.populate_tseries_data()
 
     def populate_tseries_data(self):
-        """Get current time series data, populate data table and create plot"""
+        """
+        Get current time series data, populate data table and create plot.
+        """
         try:
             fid = self.tseries_cbo.currentText().split()[0]
         except IndexError as e:
@@ -126,14 +128,19 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.update_plot()
 
     def save_tseries_data(self):
-        """Get xsection data and save them in gpkg"""
+        """
+        Get xsection data and save them in gpkg.
+        """
 
     def revert_tseries_data_changes(self):
-        """Revert any time series data changes made by users (load original
-        tseries data from tables)"""
+        """
+        Revert any time series data changes made by users (load original tseries data from tables).
+        """
 
     def update_plot(self):
-        """When time series data for plot change, update the plot"""
+        """
+        When time series data for plot change, update the plot.
+        """
         self.plot.clear()
         dm = self.rain_data_model
         x = []

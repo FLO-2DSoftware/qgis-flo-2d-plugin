@@ -36,7 +36,9 @@ def is_number(s):
 
 
 def m_fdata(model, i, j):
-    """Return float of model data at index i, j. If the data cannot be converted to float, return NaN"""
+    """
+    Return float of model data at index i, j. If the data cannot be converted to float, return NaN.
+    """
     d = model.data(model.index(i, j), Qt.DisplayRole)
     if is_number(d):
         return float(d)

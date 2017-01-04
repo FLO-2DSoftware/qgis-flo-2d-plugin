@@ -29,15 +29,12 @@ from grid_info_tool import GridInfoTool
 from profile_tool import ProfileTool
 from user_communication import UserCommunication
 
-from .gui.xs_editor_widget import XsecEditorWidget
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.grid_info_widget import GridInfoWidget
-from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
-from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
@@ -96,7 +93,9 @@ class Flo2D(object):
         self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
     def tr(self, message):
-        """Get the translation for a string using Qt translation API."""
+        """
+        Get the translation for a string using Qt translation API.
+        """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
 
@@ -136,7 +135,9 @@ class Flo2D(object):
         return action
 
     def initGui(self):
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
+        """
+        Create the menu entries and toolbar icons inside the QGIS GUI.
+        """
         self.add_action(
             os.path.join(self.plugin_dir, 'img/settings.svg'),
             text=self.tr(u'Settings'),
@@ -281,7 +282,9 @@ class Flo2D(object):
         self.iface.addDockWidget(ta, self.f2d_table_dock)
 
     def unload(self):
-        """Removes the plugin menu item and icon from QGIS GUI."""
+        """
+        Removes the plugin menu item and icon from QGIS GUI.
+        """
         self.lyrs.clear_rubber()
         # remove maptools
         del self.info_tool, self.grid_info_tool, self.profile_tool
@@ -387,7 +390,9 @@ class Flo2D(object):
         self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
-        """If QGIS project has a gpkg path saved ask user if it should be loaded"""
+        """
+        If QGIS project has a gpkg path saved ask user if it should be loaded.
+        """
         old_gpkg = self.read_proj_entry('gpkg')
         if old_gpkg:
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
@@ -426,7 +431,9 @@ class Flo2D(object):
 
     @connection_required
     def import_gds(self):
-        """Import traditional GDS files into FLO-2D database (GeoPackage)"""
+        """
+        Import traditional GDS files into FLO-2D database (GeoPackage).
+        """
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -497,7 +504,9 @@ class Flo2D(object):
 
     @connection_required
     def export_gds(self):
-        """Export traditional GDS files into FLO-2D database (GeoPackage)"""
+        """
+        Export traditional GDS files into FLO-2D database (GeoPackage).
+        """
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         export_calls = [
             'export_cont_toler',
@@ -543,7 +552,8 @@ class Flo2D(object):
         self.lyrs.zoom_to_all()
 
     def get_cell_size(self):
-        """Get cell size from:
+        """
+        Get cell size from:
             - Computational Domain attr table (if defined, will be written to cont table)
             - cont table
             - ask user
@@ -733,21 +743,27 @@ class Flo2D(object):
 
     @connection_required
     def show_xsec_editor(self, fid=None):
-        """Show Cross-section editor"""
+        """
+        Show Cross-section editor.
+        """
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.xs_editor_grp.setCollapsed(False)
         self.f2d_widget.xs_editor.populate_xsec_cbo(fid=fid)
 
     @connection_required
     def show_struct_editor(self, fid=None):
-        """Show hydraulic structure editor"""
+        """
+        Show hydraulic structure editor.
+        """
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.struct_editor_grp.setCollapsed(False)
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):
-        """Show schematic cross-section info"""
+        """
+        Show schematic cross-section info.
+        """
         try:
             self.dlg_schem_xsec_editor = SchemXsecEditorDialog(self.con, self.iface, self.lyrs, self.gutils, fid)
             self.dlg_schem_xsec_editor.show()
@@ -756,31 +772,20 @@ class Flo2D(object):
 
     @connection_required
     def show_bc_editor(self, fid=None):
-        """Show boundary editor"""
+        """
+        Show boundary editor.
+        """
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.bc_editor_grp.setCollapsed(False)
         self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
-    @connection_required
-    def show_inflow_editor(self, fid=None):
-        """Expand boundary cond editor group for inflows"""
-        self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
-        self.dlg_inflow_editor.show()
-
-    @connection_required
-    def show_outflow_editor(self, fid=None):
-        """Show outflows editor"""
-        try:
-            self.dlg_outflow_editor.outflow_clicked(fid)
-        except AttributeError:
-            self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
-        self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
-        self.dlg_outflow_editor.show()
 
     @connection_required
     def show_evap_editor(self):
-        """Show evaporation editor"""
+        """
+        Show evaporation editor.
+        """
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
@@ -789,7 +794,9 @@ class Flo2D(object):
 
     @connection_required
     def show_levee_elev_tool(self):
-        """Show levee elevation tool"""
+        """
+        Show levee elevation tool.
+        """
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -902,7 +909,9 @@ class Flo2D(object):
             self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
 
     def schematize_levees(self):
-        """Generate schematic lines for user defined levee lines"""
+        """
+        Generate schematic lines for user defined levee lines.
+        """
         levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)

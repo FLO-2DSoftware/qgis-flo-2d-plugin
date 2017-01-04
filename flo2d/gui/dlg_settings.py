@@ -53,7 +53,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "ISED": self.sedChBox,
             "IWRFS": self.redFactChBox,
             "LEVEE": self.leveesChBox,
-            # "PROJ": self.projectionSelector,
             "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
@@ -68,13 +67,13 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
 
     def set_default_controls(self, con):
-        qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
+        qry = '''INSERT INTO cont (name) VALUES (?);'''
         cont_rows = self.parser.cont_rows
         toler_rows = self.parser.toler_rows
         parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
         cursor = con.cursor()
         for param in parameters:
-            cursor.execute(qry, (param, '0'))
+            cursor.execute(qry, (param,))
         con.commit()
 
     def read(self):
@@ -134,8 +133,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.read()
 
     def create_db(self):
-        """Create FLO-2D model database (GeoPackage)"""
-
+        """
+        Create FLO-2D model database (GeoPackage).
+        """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_path = QFileDialog.getSaveFileName(None,
@@ -241,7 +241,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
 
     def connect(self, gpkg_path=None):
-        """Connect to FLO-2D model database (GeoPackage)"""
+        """
+        Connect to FLO-2D model database (GeoPackage).
+        """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         if not gpkg_path:

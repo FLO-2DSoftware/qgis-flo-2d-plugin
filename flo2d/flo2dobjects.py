@@ -16,7 +16,9 @@ from errors import Flo2dError
 
 
 class CrossSection(GeoPackageUtils):
-    """Cross section object representation."""
+    """
+    Cross section object representation.
+    """
     columns = ['id', 'fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'user_xs_fid', 'interpolated', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -28,7 +30,6 @@ class CrossSection(GeoPackageUtils):
         self.chan_tab = None
         self.xsec = None
         self.chan_x_tabs = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
-
 
     def get_row(self, by_id=False):
         ident = 'id' if by_id else 'fid'
@@ -130,7 +131,9 @@ class CrossSection(GeoPackageUtils):
 
 
 class UserCrossSection(GeoPackageUtils):
-    """Cross section object representation."""
+    """
+    Cross section object representation.
+    """
     columns = ['fid', 'fcn', 'type', 'name', 'notes']
 
     def __init__(self, fid, con, iface):
@@ -260,7 +263,9 @@ class UserCrossSection(GeoPackageUtils):
 
 
 class ChannelSegment(GeoPackageUtils):
-    """Channel segment object representation."""
+    """
+    Channel segment object representation.
+    """
     columns = ['fid', 'name', 'depinitial', 'froudc', 'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -357,7 +362,7 @@ class ChannelSegment(GeoPackageUtils):
                     xsup.get_profile_data()
                     xslo.get_profile_data()
                     d_bed = xslo.profile_data['bed_elev'] - xsup.profile_data['bed_elev']
-                    dh =  icoef * d_bed
+                    dh = icoef * d_bed
                     xsi.shift_nxsec(dh)
                 except Flo2dError:
                     return False
@@ -365,7 +370,9 @@ class ChannelSegment(GeoPackageUtils):
 
 
 class Inflow(GeoPackageUtils):
-    """Inflow object representation."""
+    """
+    Inflow object representation.
+    """
     columns = ['fid', 'name', 'time_series_fid', 'ident', 'inoutfc', 'note', 'geom_type', 'bc_fid']
 
     def __init__(self, fid, con, iface):
@@ -449,7 +456,9 @@ class Inflow(GeoPackageUtils):
             return None
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to inflow_time_series_data for a given ts_fid"""
+        """
+        Add new rows to inflow_time_series_data for a given ts_fid.
+        """
         qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -485,7 +494,9 @@ class Inflow(GeoPackageUtils):
 
 
 class Outflow(GeoPackageUtils):
-    """Outflow object representation."""
+    """
+    Outflow object representation.
+    """
     columns = ['fid', 'name', 'chan_out', 'fp_out', 'hydro_out', 'chan_tser_fid', 'chan_qhpar_fid', 'chan_qhtab_fid',
                'fp_tser_fid', 'type', 'geom_type', 'bc_fid']
 
@@ -668,8 +679,10 @@ class Outflow(GeoPackageUtils):
             return self.get_qh_tables()
 
     def get_data_fid_name(self):
-        """Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
-        This could be time series, Qh Table or Qh Parameters."""
+        """
+        Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
+        This could be time series, Qh Table or Qh Parameters.
+        """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
         elif self.typ in [9, 10]:
@@ -680,7 +693,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def add_data(self, name=None):
-        """Add a new data to current outflow type data table (time series, qh params or qh table)"""
+        """
+        Add a new data to current outflow type data table (time series, qh params or qh table).
+        """
         data = None
         if self.typ in [5, 6, 7, 8]:
             data = self.add_time_series(name)
@@ -693,7 +708,9 @@ class Outflow(GeoPackageUtils):
         return data
 
     def set_data_name(self, name):
-        """Save new data name"""
+        """
+        Save new data name.
+        """
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data_name(name)
@@ -705,7 +722,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def set_data(self, name, data):
-        """Save current model data to the right outflow data table"""
+        """
+        Save current model data to the right outflow data table.
+        """
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data(name, data)
@@ -753,7 +772,9 @@ class Outflow(GeoPackageUtils):
         self.execute_many(qry.format(self.data_fid), data)
 
     def get_cur_data_fid(self):
-        """Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid)"""
+        """
+        Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid).
+        """
         data_fid_vals = [self.chan_tser_fid, self.chan_qhpar_fid, self.chan_qhtab_fid, self.fp_tser_fid]
         return next((val for val in data_fid_vals if val), None)
 
@@ -764,7 +785,9 @@ class Outflow(GeoPackageUtils):
         self.chan_qhtab_fid = None
 
     def set_new_data_fid(self, fid):
-        """Set new data fid for current outflow type"""
+        """
+        Set new data fid for current outflow type.
+        """
         self.clear_data_fids()
         if self.typ in [5, 7]:
             self.fp_tser_fid = fid
@@ -778,7 +801,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def get_time_series_data(self):
-        """Get time, value pairs for the current outflow"""
+        """
+        Get time, value pairs for the current outflow.
+        """
         qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;'
         data_fid = self.get_cur_data_fid()
         if not data_fid:
@@ -791,7 +816,9 @@ class Outflow(GeoPackageUtils):
         return self.time_series_data
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to outflow_time_series_data for a given ts_fid"""
+        """
+        Add new rows to outflow_time_series_data for a given ts_fid.
+        """
         qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -806,7 +833,9 @@ class Outflow(GeoPackageUtils):
         return self.qh_params_data
 
     def add_qh_params_data(self, params_fid, rows=1, fetch=False):
-        """Add new rows to qh_params_data for a given params_fid"""
+        """
+        Add new rows to qh_params_data for a given params_fid.
+        """
         qry = 'INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES (?, NULL, NULL, NULL);'
         self.execute_many(qry, ([params_fid],)*rows)
         if fetch:
@@ -821,14 +850,18 @@ class Outflow(GeoPackageUtils):
         return self.qh_table_data
 
     def add_qh_table_data(self, table_fid, rows=5, fetch=False):
-        """Add new rows to qh_table_data for a given table_fid"""
+        """
+        Add new rows to qh_table_data for a given table_fid.
+        """
         qry = 'INSERT INTO qh_table_data (table_fid, depth, q) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([table_fid],)*rows)
         if fetch:
             return self.get_qh_table_data()
 
     def get_data(self):
-        """Get data for current type and data_fid of the outflow"""
+        """
+        Get data for current type and data_fid of the outflow.
+        """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series_data()
         elif self.typ in [9, 10]:
@@ -850,7 +883,9 @@ class Outflow(GeoPackageUtils):
 
 
 class Rain(GeoPackageUtils):
-    """Rain data representation."""
+    """
+    Rain data representation.
+    """
     columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall',
                'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
 
@@ -879,7 +914,6 @@ class Rain(GeoPackageUtils):
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
         self.execute(qry, self.row)
 
-
     def get_time_series(self):
         qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
         self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
@@ -892,7 +926,9 @@ class Rain(GeoPackageUtils):
 
 
 class Evaporation(GeoPackageUtils):
-    """Evaporation data representation."""
+    """
+    Evaporation data representation.
+    """
     columns = ['fid', 'ievapmonth', 'iday', 'clocktime']
 
     def __init__(self, con, iface):
@@ -926,7 +962,9 @@ class Evaporation(GeoPackageUtils):
 
 
 class Street(GeoPackageUtils):
-    """Street data implementation."""
+    """
+    Street data implementation.
+    """
     columns = ['fid', 'str_fid', 'igridn', 'depex', 'stman', 'elstr', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -963,7 +1001,9 @@ class Street(GeoPackageUtils):
 
 
 class Reservoir(GeoPackageUtils):
-    """Reservoir data representation."""
+    """
+    Reservoir data representation.
+    """
     columns = ['fid', 'name', 'wsel', 'notes']
 
     def __init__(self, fid, con, iface):
@@ -997,7 +1037,9 @@ class Reservoir(GeoPackageUtils):
 
 
 class Structure(GeoPackageUtils):
-    """Hydraulic structure object representation."""
+    """
+    Hydraulic structure object representation.
+    """
     columns = ['fid', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont', 'headrefel',
                'clength', 'cdiameter', 'notes']
 
@@ -1087,7 +1129,9 @@ class Structure(GeoPackageUtils):
         self.execute(qry_ins, (self.fid, stormdmax, ))
 
     def clear_stormdrain_data(self):
-        """delete strom drain data when user uncheck the strom drain checkbox"""
+        """
+        Delete storm drain data when user uncheck the storm drain checkbox.
+        """
         qry = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
         self.execute(qry, (self.fid, ))
 

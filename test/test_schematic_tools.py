@@ -92,23 +92,6 @@ class TestSchematicTools(unittest.TestCase):
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 
-    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
-    def test_crossing_points(self):
-        user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
-        user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
-        user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
-
-        domain_lyr = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
-        centerline_lyr = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
-        xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
-        for feat1 in centerline_lyr.getFeatures():
-            center_fid = feat1['fid']
-            request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
-            feat2 = domain_lyr.getFeatures(request).next()
-            xs_features = xs_layer.getFeatures()
-            l, r, xs = bank_lines(feat1, feat2, xs_features)
-            print(l, r, xs)
-
 
 # Running tests:
 if __name__ == '__main__':

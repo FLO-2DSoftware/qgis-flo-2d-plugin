@@ -117,7 +117,9 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def save_street_edits(self):
-        """Save changes of user street layer"""
+        """
+        Save changes of user street layer.
+        """
         before = self.gutils.count('user_streets')
         self.lyrs.save_lyrs_edits('user_streets')
         after = self.gutils.count('user_streets')
@@ -154,7 +156,9 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def delete_street(self):
-        """Delete the current street from user layer"""
+        """
+        Delete the current street from user layer.
+        """
         if not self.street_name_cbo.count():
             return
         q = 'Are you sure, you want delete the current street line?'

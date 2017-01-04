@@ -8,16 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog
+from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
-from .utils import load_ui, center_canvas, try_disconnect
+from .utils import load_ui, center_canvas
 from ..flo2dobjects import Reservoir
-from ..geopackage_utils import GeoPackageUtils, connection_required
+from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, is_number
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
-from math import isnan
+from ..utils import is_number
 import os
 
 

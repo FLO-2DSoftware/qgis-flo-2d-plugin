@@ -33,7 +33,7 @@ from user_communication import UserCommunication
 
 class Layers(QObject):
     """
-    Class for managing project layers: load, add to layers tree
+    Class for managing project layers: load, add to layers tree.
     """
 
     def __init__(self, iface):
@@ -88,7 +88,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False,
-                'attrs_defaults': {'type': "'R'"} # use also double quotes for strings: "'R'"
+                'attrs_defaults': {'type': "'R'"}
             }),
             ('user_struct', {
                 'name': 'Structure lines',
@@ -774,7 +774,9 @@ class Layers(QObject):
             return None
 
     def any_lyr_in_edit(self, *table_name_list):
-        """Return True if any layer from the table list is in edit mode"""
+        """
+        Return True if any layer from the table list is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -784,7 +786,9 @@ class Layers(QObject):
         return in_edit_mode
 
     def save_lyrs_edits(self, *table_name_list):
-        """Save changes to each layer if it is in edit mode"""
+        """
+        Save changes to each layer if it is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -800,7 +804,9 @@ class Layers(QObject):
         return in_edit_mode
 
     def rollback_lyrs_edits(self, *table_name_list):
-        """Save changes to each layer if it is in edit mode"""
+        """
+        Save changes to each layer if it is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -885,7 +891,9 @@ class Layers(QObject):
         self.lyrs_to_repaint = []
 
     def connect_lyrs_reload(self, layer1, layer2):
-        """Reload layer1 and update its extent when layer2 modifications are saved"""
+        """
+        Reload layer1 and update its extent when layer2 modifications are saved.
+        """
         layer2.editingStopped.connect(layer1.reload)
 
     def new_group(self, name):
@@ -1154,7 +1162,9 @@ class Layers(QObject):
             self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
-        """If the layer is in edit mode, ask users for saving changes and proceeding."""
+        """
+        If the layer is in edit mode, ask users for saving changes and proceeding.
+        """
         l = self.get_layer_by_name(layer_name, group=self.group).layer()
         if l.isEditable():
             # ask user for saving changes

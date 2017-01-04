@@ -8,8 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QInputDialog
+from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
 from .utils import load_ui, center_canvas
@@ -378,7 +377,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_frame.setEnabled(True)
 
     def save_struct_lyrs_edits(self):
-        """Save changes of user layer"""
+        """
+        Save changes of user layer.
+        """
         if not self.gutils or not self.lyrs.any_lyr_in_edit('user_struct'):
             return
         # ask user if overwrite imported structures, if any

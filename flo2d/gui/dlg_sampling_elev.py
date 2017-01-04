@@ -49,13 +49,17 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.browseSrcBtn.clicked.connect(self.browse_src_raster)
 
     def populate_raster_cbo(self):
-        """Get loaded rasters into combobox"""
+        """
+        Get loaded rasters into combobox.
+        """
         rasters = self.lyrs.list_group_rlayers()
         for r in rasters:
             self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
 
     def browse_src_raster(self):
-        """Users pick a source raster not loaded into project"""
+        """
+        Users pick a source raster not loaded into project.
+        """
         s = QSettings()
         last_elev_raster_dir = s.value('FLO-2D/lastElevRasterDir', '')
         self.src = QFileDialog.getOpenFileName(None,
@@ -70,7 +74,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.srcRasterCbo.setCurrentIndex(len(self.srcRasterCbo)-1)
 
     def populate_alg_cbo(self):
-        """Populate resample algorithm combobox"""
+        """
+        Populate resample algorithm combobox.
+        """
         met = {
             "near": "Nearest neighbour",
             "bilinear": "Bilinear",
@@ -90,7 +96,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.algCbo.setCurrentIndex(0)
 
     def get_worp_opts_data(self):
-        """Get all data needed for GDAL Warp"""
+        """
+        Get all data needed for GDAL Warp.
+        """
         # grid extents
         self.grid = self.lyrs.get_layer_by_name('Grid', self.lyrs.group).layer()
         self.lyrs.update_layer_extents(self.grid)
@@ -112,7 +120,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.src_nodata = int(und)
 
     def probe_elevation(self):
-        """Resample raster to be aligned with the grid, then probe values and update elements elevation attr"""
+        """
+        Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
+        """
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
         self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4])
         try:

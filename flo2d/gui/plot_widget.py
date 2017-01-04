@@ -74,4 +74,3 @@ class PlotWidget(QWidget):
         x, y = data
         pen = pg.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
         self.items['new_bed'] = self.plot.plot(x=x, y=y, connect='finite', pen=pen, name='Current Bed')
-

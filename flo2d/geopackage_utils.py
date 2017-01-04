@@ -64,7 +64,9 @@ def spatialite_connect(*args, **kwargs):
 
 
 def database_create(path):
-    """Create geopackage with SpatiaLite functions"""
+    """
+    Create geopackage with SpatiaLite functions.
+    """
     try:
         if os.path.exists(path):
             os.remove(path)
@@ -86,7 +88,9 @@ def database_create(path):
 
 
 def database_connect(path):
-    """Connect database with sqlite3"""
+    """
+    Connect database with sqlite3.
+    """
     try:
         con = spatialite_connect(path)
         return con
@@ -96,7 +100,9 @@ def database_connect(path):
 
 
 def database_disconnect(con):
-    """Disconnect from database"""
+    """
+    Disconnect from database.
+    """
     try:
         con.close()
     except Exception as e:
@@ -105,14 +111,18 @@ def database_disconnect(con):
 
 
 class GeoPackageUtils(object):
-    """GeoPackage utils for handling data inside GeoPackage"""
+    """
+    GeoPackage utils for handling data inside GeoPackage.
+    """
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = con
 
     def execute(self, statement, inputs=None, get_rowid=False):
-        """Execute a prepared SQL statement on this geopackage database."""
+        """
+        Execute a prepared SQL statement on this geopackage database.
+        """
         cursor = self.con.cursor()
         if inputs is not None:
             result_cursor = cursor.execute(statement, inputs)
@@ -155,7 +165,9 @@ class GeoPackageUtils(object):
                 self.uc.log_info(traceback.format_exc())
 
     def check_gpkg(self):
-        """Check if file is GeoPackage """
+        """
+        Check if file is GeoPackage.
+        """
         try:
             c = self.con.cursor()
             c.execute('SELECT * FROM gpkg_contents;')
@@ -180,7 +192,9 @@ class GeoPackageUtils(object):
                 pass
 
     def get_cont_par(self, name):
-        """Get a parameter value from cont table"""
+        """
+        Get a parameter value from cont table.
+        """
         try:
             sql = '''SELECT value FROM cont WHERE name = ?;'''
             r = self.execute(sql, (name,)).fetchone()[0]
@@ -190,12 +204,16 @@ class GeoPackageUtils(object):
             return None
 
     def set_cont_par(self, name, value):
-        """Set a parameter value in cont table"""
+        """
+        Set a parameter value in cont table.
+        """
         sql = '''INSERT OR REPLACE INTO cont (name, value) VALUES (?, ?);'''
         self.execute(sql, (name, value))
 
     def get_gpkg_path(self):
-        """Return database attached to the current connection"""
+        """
+        Return database attached to the current connection.
+        """
         try:
             sql = '''PRAGMA database_list;'''
             r = self.execute(sql).fetchone()[2]

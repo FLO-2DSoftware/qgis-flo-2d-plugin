@@ -18,7 +18,9 @@ from qgis.core import QgsMessageLog
 
 
 class UserCommunication(object):
-    """Class for communication with user"""
+    """
+    Class for communication with user.
+    """
 
     def __init__(self, iface, context):
         self.iface = iface
