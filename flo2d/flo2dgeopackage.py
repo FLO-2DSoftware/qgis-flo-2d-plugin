@@ -768,8 +768,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_inflow(self, outdir):
         cont_sql = '''SELECT value FROM cont WHERE name = ?;'''
-        inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow ORDER BY fid;'''
-        inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY fid;'''
+        inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;'''
+        inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY fid, grid_fid;'''
         ts_data_sql = '''SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
         reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;'''
 
@@ -781,26 +781,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
         idplt = self.execute(cont_sql, ('IDEPLT',)).fetchone()
         ihourdaily = self.execute(cont_sql, ('IHOURDAILY',)).fetchone()
 
-        # if idplt is None or ihourdaily is None:
-        #     return
-        # else:
-        #     pass
-
+        # TODO: Need to implement correct export for idplt and ihourdaily parameters
         if ihourdaily is None:
             ihourdaily = (0,)
         if idplt is None:
             first_gid = self.execute('''SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;''').fetchone()
             idplt = first_gid if first_gid is not None else (0,)
 
-        inf_cells = dict(self.execute(inflow_cells_sql).fetchall())
-
         inflow = os.path.join(outdir, 'INFLOW.DAT')
+        previous_iid = -1
+        row = None
         with open(inflow, 'w') as i:
             i.write(head_line.format(ihourdaily[0], idplt[0]))
-            for row in self.execute(inflow_sql):
-                row = [x if x is not None else '' for x in row]
+            for iid, gid in self.execute(inflow_cells_sql):
+
+                if previous_iid != iid:
+                    row = self.execute(inflow_sql, (iid,)).fetchone()
+                    row = [x if x is not None else '' for x in row]
+                    previous_iid = iid
+                else:
+                    pass
+
                 fid, ts_fid, ident, inoutfc = row
-                gid = inf_cells[fid]
                 i.write(inf_line.format(ident, inoutfc, gid))
                 series = self.execute(ts_data_sql, (ts_fid,))
                 for tsd_row in series:
@@ -811,9 +813,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i.write(res_line.format(*res).rstrip())
 
     def export_outflow(self, outdir):
-        outflow_sql = '''SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-                         FROM outflow ORDER BY fid;'''
-        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells;'''
+        outflow_sql = '''
+        SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
+        FROM outflow WHERE fid = ?;'''
+        outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;'''
         qh_params_data_sql = '''SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'''
         qh_table_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
         ts_data_sql = '''SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
@@ -825,18 +828,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_line = 'S  {0}  {1}\n'
         o_line = '{0}  {1}\n'
 
-        outflow_rows = self.execute(outflow_sql).fetchall()
-        if not outflow_rows:
+        out_cells = self.execute(outflow_cells_sql).fetchall()
+        if not out_cells:
             return
         else:
             pass
-        out_cells = dict(self.execute(outflow_cells_sql).fetchall())
         outflow = os.path.join(outdir, 'OUTFLOW.DAT')
+        floodplains = {}
+        previous_oid = -1
+        row = None
         with open(outflow, 'w') as o:
-            for row in outflow_rows:
-                row = [x if x is not None else '' for x in row]
-                fid, dummy, chan_out, dummy2, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
-                gid = out_cells[fid]
+            for oid, gid in out_cells:
+
+                if previous_oid != oid:
+                    row = self.execute(outflow_sql, (oid,)).fetchone()
+                    row = [x if x is not None else '' for x in row]
+                    previous_oid = oid
+                else:
+                    pass
+
+                fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
+                if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                    floodplains[gid] = hydro_out
                 if chan_out == 1:
                     o.write(k_line.format(gid))
                     for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
@@ -853,7 +866,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         o.write(ts_line.format(*values))
                 else:
                     pass
-            floodplains = {out_cells[row[0]]: row[3] for row in outflow_rows if row[1] == 1 or row[3] > 0 and row[0] in out_cells}
+
             for gid, hydro_out in sorted(floodplains.iteritems(), key=lambda items: (items[1], items[0])):
                 ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                 o.write(o_line.format(ident, gid))
@@ -1146,9 +1159,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         option = self.execute(cont_sql).fetchone()
         if option is None:
-            return
-        else:
-            pass
+            # TODO: We need to implement correct export of 'arfblockmod'
+            option = ('arfblockmod', 0)
+
         arf = os.path.join(outdir, 'ARF.DAT')
         with open(arf, 'w') as a:
             head = option[-1]
@@ -1264,9 +1277,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         general = self.execute(levee_gen_sql).fetchone()
         if general is None:
-            return
-        else:
-            pass
+            # TODO: Need to implement correct export for levee_general, levee_failure and levee_fragility
+            general = (0, 0, None, None)
         head = general[:2]
         glob_frag = general[2:]
         levee = os.path.join(outdir, 'LEVEE.DAT')
