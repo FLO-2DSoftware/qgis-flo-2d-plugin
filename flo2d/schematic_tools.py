@@ -633,15 +633,14 @@ class DomainSchematizer(GeoPackageUtils):
         first_xs = cross_sections[0]
         xs_start = first_xs.geometry().vertexAt(0)
         if len(cross_sections) < 2:
-            self.uc.bar_warn('You need at least 2 cross-sections crossing left bank line!')
+            self.uc.show_warn('You need at least 2 cross-sections crossing left bank line!')
             raise Exception
         if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
             return cross_sections
         else:
-            msg = 'Left Bank Line ({}) and first cross-section ({}) starts in different grid cells! '
+            msg = 'Left bank line ({}) and first cross-section ({}) have to start in the same grid cell!'
             msg = msg.format(centerline_feat.id(), first_xs.id())
-            msg += 'Please correct user layers.'
-            self.uc.bar_warn(msg)
+            self.uc.show_warn(msg)
             raise Exception
 
     def schematize_banks(self, lbank_feat):
