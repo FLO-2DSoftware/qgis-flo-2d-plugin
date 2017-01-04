@@ -158,7 +158,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.enable_widgets(False)
         if self.xs_cbo.count():
             self.enable_widgets()
-            self.cur_xsec_changed()
+            self.cur_xsec_changed(cur_idx)
 
     @connection_required
     def digitize_xsec(self, i):
@@ -187,11 +187,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # try to save user bc layers (geometry additions/changes)
         user_lyr_edited = self.lyrs.save_lyrs_edits('user_xsections')
         # if user bc layers were edited
+        # self.enable_widgets()
         if user_lyr_edited:
             self.gutils.fill_empty_user_xsec_names()
             self.gutils.set_def_n()
             self.populate_xsec_cbo(show_last_edited=True)
-        self.enable_widgets()
 
     def repaint_xs(self):
         self.lyrs.lyrs_to_repaint = [
