@@ -1137,7 +1137,7 @@ class Structure(GeoPackageUtils):
             qry = 'DELETE FROM repl_rat_curves WHERE struct_fid = ?;'
             self.execute(qry, (self.fid,))
             for repl_data in [row[5:] for row in data]:
-                if is_number(repl_data[0]):
+                if is_number(repl_data[0]) and not isnan(repl_data[0]):
                     qry = 'INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES ({}, ?, ?, ?, ?, ?);'
                     self.execute(qry.format(self.fid), repl_data)
         elif self.icurvtable == 1:
