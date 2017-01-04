@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 import os
 import time
+from itertools import chain
 from PyQt4.QtCore import Qt, QSettings
 from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QGis
@@ -16,6 +17,7 @@ from qgis.gui import QgsProjectionSelectionWidget
 
 from .utils import load_ui
 from ..utils import is_number
+from ..flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
 from ..user_communication import UserCommunication
 from ..errors import Flo2dQueryResultNull
@@ -33,6 +35,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.setModal(True)
         self.con = con
+        self.parser = ParseDAT()
         self.lyrs = lyrs
         self.gutils = gutils
         self.si_units = None
@@ -63,6 +66,16 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgOpenBtn.clicked.connect(self.connect)
         self.modSelectAllBtn.clicked.connect(self.select_all_modules)
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
+
+    def set_default_controls(self, con):
+        qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
+        cont_rows = self.parser.cont_rows
+        toler_rows = self.parser.toler_rows
+        parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
+        cursor = con.cursor()
+        for param in parameters:
+            cursor.execute(qry, (param, '0'))
+        con.commit()
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
@@ -143,6 +156,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
+        # Inserting default values into the 'cont' table.
+        self.set_default_controls(con)
+
         start_time = time.time()
         gutils = GeoPackageUtils(con, self.iface)
         if gutils.check_gpkg():

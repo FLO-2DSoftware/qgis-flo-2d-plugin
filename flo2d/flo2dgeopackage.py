@@ -37,7 +37,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = self.cell_size * 0.95
 
     def import_cont_toler(self):
-        sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
+        sql = ['''INSERT OR REPLACE INTO cont (name, value) VALUES''', 2]
         mann = self.get_cont_par('MANNING')
         if not mann:
             mann = '0.05'
