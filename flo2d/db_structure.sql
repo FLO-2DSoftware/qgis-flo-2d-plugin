@@ -53,8 +53,8 @@ CREATE TABLE "grid" (
     "cell_east" INTEGER,
     "cell_south" INTEGER,
     "cell_west" INTEGER,
-    "n_value" REAL,
-    "elevation" REAL
+    "n_value" REAL DEFAULT 0.05,
+    "elevation" REAL DEFAULT -9999
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);

@@ -778,10 +778,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         idplt = self.execute(cont_sql, ('IDEPLT',)).fetchone()
         ihourdaily = self.execute(cont_sql, ('IHOURDAILY',)).fetchone()
-        if idplt is None or ihourdaily is None:
-            return
-        else:
-            pass
+
+        # if idplt is None or ihourdaily is None:
+        #     return
+        # else:
+        #     pass
+
+        if ihourdaily is None:
+            ihourdaily = (0,)
+        if idplt is None:
+            first_gid = self.execute('''SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;''').fetchone()
+            idplt = first_gid if first_gid is not None else (0,)
+
         inf_cells = dict(self.execute(inflow_cells_sql).fetchall())
 
         inflow = os.path.join(outdir, 'INFLOW.DAT')
