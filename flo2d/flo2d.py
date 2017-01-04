@@ -199,12 +199,6 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
-            text=self.tr(u'XSection Editor'),
-            callback=lambda: self.show_xsec_editor(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
