@@ -276,11 +276,12 @@ Once all the street lines are added, you can run |schematize_streets| **Schemati
 
 .. |schematize_streets| image:: ../../../flo2d/img/schematize_streets.png
 
-.. figure:: img/StreetUserLayer.png
+.. figure:: img/StreetScehmaticUserLayer.png
+	:scale: 50 %
 	:align: center
 	:alt: Street lines
 
-	Schematized street lines - **UPDATE ME**
+	Schematized street lines
 
 Adding boundary condition
 -------------------------
@@ -362,7 +363,7 @@ Following elements are required to represent channels:
 - Left bank line
 - Surveyed cross sections
 
-To add the left bank line, simply select the layer from the user layer list, toggle editing and digitize a new line using QGIS digitizing toolbar. The line should be in the direction of the flow (upstream to downstream)
+To add the left bank line, simply select the layer from the user layer list, toggle editing and digitize a new line using QGIS digitizing toolbar. The line should be in the direction of the flow (upstream to downstream). If the line represents the main channel, you need to fill in **rank** as **1** (see the confluence section for more).
 
 .. figure:: img/LeftBankUserLayer.png
 	:scale: 75 %
@@ -381,6 +382,11 @@ The next step is to add suveyed cross sections. There is a widget within the plu
 
 To add a cross section,  click on |mActionCaptureLine| **Add cross section line** from the widget and digitize a section from left to right, looking downstream. Ensure the cross section line intersects with the left bank line.
 
+**Important notes**
+
+- Ensure the starting of the first surveyed cross section line and left bank line fall within the same cell
+- Ensure cross sections intersect with the left bank
+
 You can define the cross section type within the attribute table,  once the location line is digitized.
 
 .. figure:: img/XsecTableAttrib.png
@@ -397,11 +403,24 @@ Once, all the left banks and cross sections are added, you can run |schematize_x
 
 .. |schematize_xsec| image:: ../../../flo2d/img/schematize_xsec.png
 
-.. figure:: img/XsecTableAttrib.png
-	:align: center
-	:alt: XsecTableAttrib
+.. |schematize_confluence| image:: ../../../flo2d/img/schematize_confluence.png
 
-	Schematized channel and cross sections **UPDATE ME**
+.. figure:: img/ChannelSchematicLayer.png
+	:align: center
+	:alt: ChannelSchematicLayer
+
+	Schematized channel and cross sections
+
+To add a lateral channel, digitize a new left bank. The line should intersect with the main channel (with **rank = 1**) right bank or left bank.
+Make sure, you assign **rank** value for the left bank of the lateral channel to be **2**. Add the surveyed cross sections for the lateral channel in the same way you did for the main channel. To generate the schematic layers, run |schematize_xsec| **Schematize Cross-section**.
+
+You will then need to run |schematize_confluence| **Schematize Confluence** to generate schematic confluence points.
+
+.. figure:: img/ChannelSchematicLayerWithConf.png
+	:align: center
+	:alt: ChannelSchematicLayer
+
+	Schematic layers for channel with confluence
 
 Initial condition
 -----------------
