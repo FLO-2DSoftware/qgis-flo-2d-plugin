@@ -23,19 +23,18 @@ from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
 from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
-from schematic_tools import generate_schematic_levees, schematize_1d_area, update_rbank
+from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
+from profile_tool import ProfileTool
 from user_communication import UserCommunication
 
-from .gui.xs_editor_widget import XsecEditorWidget
+from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.grid_info_widget import GridInfoWidget
-from .gui.dlg_inflow_editor import InflowEditorDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
-from .gui.dlg_outflow_editor import OutflowEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
@@ -91,9 +90,12 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
+        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
     def tr(self, message):
-        """Get the translation for a string using Qt translation API."""
+        """
+        Get the translation for a string using Qt translation API.
+        """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
 
@@ -133,7 +135,9 @@ class Flo2D(object):
         return action
 
     def initGui(self):
-        """Create the menu entries and toolbar icons inside the QGIS GUI."""
+        """
+        Create the menu entries and toolbar icons inside the QGIS GUI.
+        """
         self.add_action(
             os.path.join(self.plugin_dir, 'img/settings.svg'),
             text=self.tr(u'Settings'),
@@ -156,6 +160,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
+            text=self.tr(u'Profile Tool'),
+            callback=self.profile,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -186,12 +196,6 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
             text=self.tr(u'Grid Info Tool'),
             callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/xsec_editor.svg'),
-            text=self.tr(u'XSection Editor'),
-            callback=lambda: self.show_xsec_editor(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -272,10 +276,12 @@ class Flo2D(object):
         self.iface.addDockWidget(ta, self.f2d_table_dock)
 
     def unload(self):
-        """Removes the plugin menu item and icon from QGIS GUI."""
+        """
+        Removes the plugin menu item and icon from QGIS GUI.
+        """
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool
+        del self.info_tool, self.grid_info_tool, self.profile_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -303,9 +309,23 @@ class Flo2D(object):
         if self.f2d_widget.profile_tool is not None:
             self.f2d_widget.profile_tool.close()
             del self.f2d_widget.profile_tool
+        if self.f2d_widget.ic_editor is not None:
+            self.f2d_widget.ic_editor.close()
+            del self.f2d_widget.ic_editor
+        if self.f2d_widget.rain_editor is not None:
+            self.f2d_widget.rain_editor.close()
+            del self.f2d_widget.rain_editor
+        if self.f2d_widget.fpxsec_editor is not None:
+            self.f2d_widget.fpxsec_editor.close()
+            del self.f2d_widget.fpxsec_editor
+        if self.f2d_widget.struct_editor is not None:
+            self.f2d_widget.struct_editor.close()
+            del self.f2d_widget.struct_editor
         if self.f2d_widget is not None:
+            self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
             del self.f2d_widget
+
         if self.f2d_dock is not None:
             self.f2d_dock.close()
             self.iface.removeDockWidget(self.f2d_dock)
@@ -352,15 +372,21 @@ class Flo2D(object):
     def setup_dock_widgets(self):
         self.f2d_widget.profile_tool.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.ic_editor.populate_cbos()
         self.f2d_widget.street_editor.setup_connection()
         self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.struct_editor.populate_structs()
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
+        self.f2d_widget.fpxsec_editor.setup_connection()
+        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
-        """If QGIS project has a gpkg path saved ask user if it should be loaded"""
+        """
+        If QGIS project has a gpkg path saved ask user if it should be loaded.
+        """
         old_gpkg = self.read_proj_entry('gpkg')
         if old_gpkg:
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
@@ -399,7 +425,9 @@ class Flo2D(object):
 
     @connection_required
     def import_gds(self):
-        """Import traditional GDS files into FLO-2D database (GeoPackage)"""
+        """
+        Import traditional GDS files into FLO-2D database (GeoPackage).
+        """
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -465,12 +493,14 @@ class Flo2D(object):
         else:
             pass
         self.gutils.enable_geom_triggers()
-        self.show_bc_editor()
-        update_rbank(self.gutils)
+        # self.show_bc_editor()
+        self.gutils.update_rbank()
 
     @connection_required
     def export_gds(self):
-        """Export traditional GDS files into FLO-2D database (GeoPackage)"""
+        """
+        Export traditional GDS files into FLO-2D database (GeoPackage).
+        """
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         export_calls = [
             'export_cont_toler',
@@ -516,7 +546,8 @@ class Flo2D(object):
         self.lyrs.zoom_to_all()
 
     def get_cell_size(self):
-        """Get cell size from:
+        """
+        Get cell size from:
             - Computational Domain attr table (if defined, will be written to cont table)
             - cont table
             - ask user
@@ -618,7 +649,7 @@ class Flo2D(object):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_elevation(self.gutils, grid_lyr, elev_lyr, 'elev')
+            update_elevation(self.gutils, grid_lyr, elev_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning grid elevation finished!")
         except Exception as e:
@@ -691,52 +722,64 @@ class Flo2D(object):
             self.uc.bar_warn('There is no grid layer to identify.')
 
     @connection_required
-    def show_profile(self, fid=None):
+    def show_user_profile(self, fid=None):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required
+    def show_profile(self, fid=None):
+        # self.f2d_dock.setUserVisible(True)
+        # self.f2d_widget.profile_tool_grp.setCollapsed(False)
+        self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
-        """Show Cross-section editor"""
+        """
+        Show Cross-section editor.
+        """
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.xs_editor_grp.setCollapsed(False)
-        self.f2d_widget.xs_editor.show_editor(self.cur_info_table, fid)
+        self.f2d_widget.xs_editor.populate_xsec_cbo(fid=fid)
+
+    @connection_required
+    def show_struct_editor(self, fid=None):
+        """
+        Show hydraulic structure editor.
+        """
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.struct_editor_grp.setCollapsed(False)
+        self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
+
+    @connection_required
+    def show_schem_xsec_info(self, fid=None):
+        """
+        Show schematic cross-section info.
+        """
         try:
-            self.dlg_xsec_editor = XsecEditorWidget(self.con, self.iface, self.lyrs, fid)
-            self.dlg_xsec_editor.rejected.connect(self.lyrs.clear_rubber)
-            self.dlg_xsec_editor.show()
+            self.dlg_schem_xsec_editor = SchemXsecEditorDialog(self.con, self.iface, self.lyrs, self.gutils, fid)
+            self.dlg_schem_xsec_editor.show()
         except IndexError:
-            self.uc.bar_warn('There is no cross-section data to display!')
+            self.uc.bar_warn('There is no schematic cross-section data to display!')
 
     @connection_required
     def show_bc_editor(self, fid=None):
-        """Show boundary editor"""
+        """
+        Show boundary editor.
+        """
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.bc_editor_grp.setCollapsed(False)
         self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
-    @connection_required
-    def show_inflow_editor(self, fid=None):
-        """Expand boundary cond editor group for inflows"""
-        self.dlg_inflow_editor = InflowEditorDialog(self.con, self.iface, fid)
-        self.dlg_inflow_editor.show()
-
-    @connection_required
-    def show_outflow_editor(self, fid=None):
-        """Show outflows editor"""
-        try:
-            self.dlg_outflow_editor.outflow_clicked(fid)
-        except AttributeError:
-            self.dlg_outflow_editor = OutflowEditorDialog(self.con, self.iface, self.lyrs, fid)
-        self.dlg_outflow_editor.rejected.connect(self.lyrs.clear_rubber)
-        self.dlg_outflow_editor.show()
 
     @connection_required
     def show_evap_editor(self):
-        """Show evaporation editor"""
+        """
+        Show evaporation editor.
+        """
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
@@ -745,7 +788,9 @@ class Flo2D(object):
 
     @connection_required
     def show_levee_elev_tool(self):
-        """Show levee elevation tool"""
+        """
+        Show levee elevation tool.
+        """
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -791,33 +836,76 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        if self.gutils.is_table_empty('user_1d_domain'):
-            self.uc.bar_warn("There is no any 1D Domain polygons! Please digitize them before running the tool.")
-            return
-        if self.gutils.is_table_empty('user_centerline'):
+        if self.gutils.is_table_empty('user_left_bank'):
             self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_xsections'):
             self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
             return
-        domain_lyr = self.lyrs.data['user_1d_domain']['qlyr']
-        centerline_lyr = self.lyrs.data['user_centerline']['qlyr']
-        xs_lyr = self.lyrs.data['user_xsections']['qlyr']
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        ds = DomainSchematizer(self.con, self.iface, self.lyrs)
         try:
-            schematize_1d_area(self.gutils, cell_size, domain_lyr, centerline_lyr, xs_lyr)
+            ds.process_bank_lines()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing failed on bank lines! "
+                              "Please check your user layers.")
+            return
+        try:
+            ds.process_xsections()
+            ds.process_attributes()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing failed on cross-sections! "
+                              "Please check your user layers.")
+            return
+        try:
+            ds.make_distance_table()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Schematizing failed on preparing interpolation table! "
+                              "Please check your user layers.")
+            return
+        chan_schem = self.lyrs.data['chan']['qlyr']
+        chan_elems = self.lyrs.data['chan_elems']['qlyr']
+        rbank = self.lyrs.data['rbank']['qlyr']
+        confluences = self.lyrs.data['chan_confluences']['qlyr']
+        self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+        self.lyrs.repaint_layers()
+        if not self.f2d_widget.xs_editor.interp_bed_and_banks():
+            self.uc.show_warn("Schematizing failed on interpolating cross-sections values! "
+                              "Please check your user layers.")
+            return
+        self.uc.show_info("1D Domain schematized!")
+
+    @connection_required
+    def schematize_confluences(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty('user_left_bank'):
+            self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
+            return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
+            return
+        try:
+            conf = Confluences(self.con, self.iface, self.lyrs)
+            conf.calculate_confluences()
             chan_schem = self.lyrs.data['chan']['qlyr']
             chan_elems = self.lyrs.data['chan_elems']['qlyr']
             rbank = self.lyrs.data['rbank']['qlyr']
-            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank]
+            confluences = self.lyrs.data['chan_confluences']['qlyr']
+            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
             self.lyrs.repaint_layers()
-            self.uc.show_info("1D Domain schematized!")
+            self.uc.show_info("Confluences schematized!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
 
     def schematize_levees(self):
-        """Generate schematic lines for user defined levee lines"""
+        """
+        Generate schematic lines for user defined levee lines.
+        """
         levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
         generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
@@ -831,6 +919,8 @@ class Flo2D(object):
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
+        self.profile_tool = ProfileTool(self.canvas, self.lyrs)
+        self.profile_tool.feature_picked.connect(self.get_feature_profile)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
@@ -845,15 +935,31 @@ class Flo2D(object):
             return
         show_editor(fid)
 
+    def profile(self):
+        self.canvas.setMapTool(self.profile_tool)
+        self.profile_tool.update_lyrs_list()
+
+    def get_feature_profile(self, table, fid):
+        try:
+            self.cur_profile_table = table
+        except KeyError:
+            self.uc.bar_info("Not implemented.....")
+            return
+        self.show_profile(fid)
+
     def set_editors_map(self):
         self.editors_map = {
-            'user_levee_lines': self.show_profile,
-            'user_streets': self.show_profile,
-            'user_centerline': self.show_profile,
-            'chan_elems': self.show_xsec_editor,
+            'user_levee_lines': self.show_user_profile,
+            'user_xsections': self.show_xsec_editor,
+            'user_streets': self.show_user_profile,
+            'user_centerline': self.show_user_profile,
+            'chan_elems': self.show_schem_xsec_info,
+            'user_left_bank': self.show_user_profile,
             'user_bc_points': self.show_bc_editor,
             'user_bc_lines': self.show_bc_editor,
-            'user_bc_polygons': self.show_bc_editor
+            'user_bc_polygons': self.show_bc_editor,
+            'user_struct': self.show_struct_editor,
+            'struct': self.show_struct_editor
         }
 
     def restore_settings(self):

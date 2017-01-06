@@ -1,4 +1,4 @@
-# This file contains metadata for your plugin. 
+# This file contains metadata for your plugin.
 
 # Mandatory items:
 [general]
@@ -19,14 +19,28 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.2.3 New features:
- - Schematizing levees
- - Improving Z probe: filling NULL values through interpolation
- - Improving N probe: to apply roughness from external sources
- - Levee tools: adding levee with constant/sloped elevation
- - Topo tools: Amending grid elevation using polygon correction
+changelog=0.2.6 New features:
+ - Support for structures
+ - Support for floodplain cross section
+ - Support for initial condition
+ - Finalizing channel schematization
+ - Refactoring profile tool
+<p>changelog=0.2.5 New features:
+ - Initial support for channel schematization
+ - Finalizing boundary condition
+ - Profile tool
+<p>changelog=0.2.4 New features:
+ - Initial support for schematizing Boundary Condition
+ - Refactoring the plugin lay-out
+ - Schematizing Streets
+<p>changelog=0.2.3 New features:
+  - Schematizing levees
+  - Improving Z probe: filling NULL values through interpolation
+  - Improving N probe: to apply roughness from external sources
+  - Levee tools: adding levee with constant/sloped elevation
+  - Topo tools: Amending grid elevation using polygon correction
  <p>0.2.2 New features:
- - Model generation tools 
+ - Model generation tools
  - Added User Layers for boundary, roughness, blocked areas
  - Added plot tools for time series and cross section
  - Added info tool for model elements
@@ -46,4 +60,3 @@ experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
-

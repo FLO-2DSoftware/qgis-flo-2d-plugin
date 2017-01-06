@@ -11,11 +11,15 @@
 from collections import OrderedDict
 from flo2dgeopackage import GeoPackageUtils
 from math import isnan
+from utils import is_number
+from errors import Flo2dError
 
 
 class CrossSection(GeoPackageUtils):
-    """Cross section object representation."""
-    columns = ['fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'geom']
+    """
+    Cross section object representation.
+    """
+    columns = ['id', 'fid', 'seg_fid', 'nr_in_seg', 'rbankgrid', 'fcn', 'xlen', 'type', 'notes', 'user_xs_fid', 'interpolated', 'geom']
 
     def __init__(self, fid, con, iface):
         super(CrossSection, self).__init__(con, iface)
@@ -25,13 +29,62 @@ class CrossSection(GeoPackageUtils):
         self.chan = None
         self.chan_tab = None
         self.xsec = None
+        self.chan_x_tabs = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
 
-    def get_row(self):
-        qry = 'SELECT * FROM chan_elems WHERE fid = ?;'
+    def get_row(self, by_id=False):
+        ident = 'id' if by_id else 'fid'
+        qry = 'SELECT * FROM chan_elems WHERE {} = ?;'.format(ident)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
         self.row = OrderedDict(zip(self.columns, values))
+        self.fid = self.row['fid']
+        self.xlen = self.row['xlen']
         self.type = self.row['type']
         return self.row
+
+    def get_profile_data(self):
+        self.profile_data = {}
+        self.get_row()
+        self.get_chan_table()
+        if not self.type == 'N':
+            par_to_check = ['bankell', 'bankelr', 'fcd']
+            for par in par_to_check:
+                if not is_number(self.chan_tab[par]):
+                    msg = 'Missing {} data in user cross section {}'.format(par, self.row['user_xs_fid'])
+                    self.uc.show_warn(msg)
+                    raise Flo2dError
+            self.profile_data['lbank_elev'] = self.chan_tab['bankell']
+            self.profile_data['rbank_elev'] = self.chan_tab['bankelr']
+            self.profile_data['fcd'] = self.chan_tab['fcd']
+            self.profile_data['bed_elev'] = min(self.chan_tab['bankell'], self.chan_tab['bankelr']) - self.chan_tab['fcd']
+        else:
+            self.get_xsec_data()
+            if not self.xsec:
+                return {}
+            self.profile_data['lbank_elev'] = self.xsec[0][1]
+            self.profile_data['rbank_elev'] = self.xsec[-1][1]
+            min_bed_elev = 9999999
+            for row in self.xsec:
+                min_bed_elev = min(min_bed_elev, row[1])
+            self.profile_data['bed_elev'] = min_bed_elev
+            self.profile_data['fcd'] = min(self.xsec[0][1], self.xsec[-1][1]) - min_bed_elev
+        return self.profile_data
+
+    def set_profile_data(self):
+        if not self.profile_data:
+            return
+        if not self.type == 'N':
+            tab = self.chan_x_tabs[self.type]
+            qry = '''UPDATE {0} SET
+                    bankell = ?,
+                    bankelr = ?,
+                    fcd = ?
+                WHERE elem_fid = ?;'''.format(tab)
+            data = (self.profile_data['lbank_elev'],
+                    self.profile_data['rbank_elev'],
+                    self.profile_data['fcd'],
+                    self.fid,
+            )
+            self.execute(qry, data)
 
     def get_chan_segment(self):
         if self.row is not None:
@@ -50,8 +103,7 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return
-        tables = {'N': 'chan_n', 'R': 'chan_r', 'T': 'chan_t', 'V': 'chan_v'}
-        tab = tables[self.type]
+        tab = self.chan_x_tabs[self.type]
         args = self.table_info(tab, only_columns=True)
         qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -63,14 +115,25 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return None
-        nxsecnum = self.chan_tab['nxsecnum']
+        fid = self.chan_tab['fid']
         qry = 'SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'
-        self.xsec = self.execute(qry, (nxsecnum,)).fetchall()
+        self.xsec = self.execute(qry, (fid,)).fetchall()
         return self.xsec
+
+    def shift_nxsec(self, dh):
+        if self.row is not None and self.type == 'N':
+            pass
+        else:
+            return None
+        fid = self.chan_tab['fid']
+        qry = 'UPDATE xsec_n_data SET yi = yi + ? WHERE chan_n_nxsecnum = ?;'
+        self.execute(qry, (dh, fid,))
 
 
 class UserCrossSection(GeoPackageUtils):
-    """Cross section object representation."""
+    """
+    Cross section object representation.
+    """
     columns = ['fid', 'fcn', 'type', 'name', 'notes']
 
     def __init__(self, fid, con, iface):
@@ -130,6 +193,7 @@ class UserCrossSection(GeoPackageUtils):
         return self.xiyi
 
     def add_chan_natural_data(self, fetch=False):
+        self.set_nxsecnum()
         qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi)
                 VALUES ({0}, 0, 1), ({0}, 1, 0), ({0}, 2, 1)'''.format(self.fid)
         self.execute(qry)
@@ -140,8 +204,8 @@ class UserCrossSection(GeoPackageUtils):
 
     def set_chan_data(self, data):
         table = self.chan_x_tabs[self.type]
-        # qry = '''DELETE FROM {0} WHERE user_xs_fid = ?'''.format(table)
-        # self.execute(qry, (self.fid,))
+        qry = '''DELETE FROM {0} WHERE user_xs_fid = ?'''.format(table)
+        self.execute(qry, (self.fid,))
         cols = list(self.table_info(table, only_columns=True))[1:]
         cols_t = ', '.join([c for c in cols])
         vals = []
@@ -154,15 +218,28 @@ class UserCrossSection(GeoPackageUtils):
         qry = '''INSERT INTO {0} ({1}) VALUES ({2}, {3});'''.format(table, cols_t, self.fid, vals_t)
         self.execute(qry)
 
+    def clear_unused_user_nxsec_data(self):
+        qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
+            (SELECT nxsecnum FROM user_chan_n);'''
+        self.execute(qry)
+
     def set_chan_natural_data(self, data):
+        self.get_chan_x_row()
         qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum = ?'''
         self.execute(qry, (self.fid, ))
         qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);'''
         self.execute_many(qry, data)
+        self.set_nxsecnum()
+        self.clear_unused_user_nxsec_data()
 
     def set_type(self, typ):
         qry = '''UPDATE user_xsections SET type = ? WHERE fid = ?;'''
         self.execute(qry, (typ, self.fid,))
+        self.clear_unused_user_chan_x_rows()
+
+    def set_nxsecnum(self):
+        qry_xsecnum = '''UPDATE user_chan_n SET nxsecnum = fid, xsecname = 'Cross section ' || cast(fid as text);'''
+        self.execute(qry_xsecnum)
 
     def set_n(self, n):
         qry = '''UPDATE user_xsections SET fcn = ? WHERE fid = ?;'''
@@ -174,9 +251,128 @@ class UserCrossSection(GeoPackageUtils):
         qry = '''UPDATE user_xsections SET name = ? WHERE fid = ?;'''
         self.execute(qry, (name, self.fid,))
 
+    def clear_unused_user_chan_x_rows(self):
+        qry_r = "DELETE FROM user_chan_r WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'R');"
+        qry_t = "DELETE FROM user_chan_t WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'T');"
+        qry_v = "DELETE FROM user_chan_v WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'V');"
+        qry_n = "DELETE FROM user_chan_n WHERE user_xs_fid NOT IN (SELECT fid FROM user_xsections WHERE type = 'N');"
+        self.execute(qry_r)
+        self.execute(qry_t)
+        self.execute(qry_v)
+        self.execute(qry_n)
+
+
+class ChannelSegment(GeoPackageUtils):
+    """
+    Channel segment object representation.
+    """
+    columns = ['fid', 'name', 'depinitial', 'froudc', 'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank', 'geom']
+
+    def __init__(self, fid, con, iface):
+        super(ChannelSegment, self).__init__(con, iface)
+        self.con = con
+        self.iface = iface
+        self.row = None
+        self.fid = fid
+        self.name = None
+        self.depinitial = None
+        self.froudc = None
+        self.roughadj = None
+        self.isedn = None
+        self.notes = None
+        self.user_lbank_fid = None
+        self.rank = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM chan WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.depinitial = self.row['depinitial']
+        self.froudc = self.row['froudc']
+        self.roughadj = self.row['roughadj']
+        self.isedn = self.row['isedn']
+        self.notes = self.row['notes']
+        self.user_lbank_fid = self.row['user_lbank_fid']
+        self.rank = self.row['rank']
+        return self.row
+
+    def get_profiles(self, sta_start=0):
+        self.profiles = OrderedDict()
+        qry = 'SELECT * FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
+        rows = self.execute(qry, (self.fid, )).fetchall()
+        self.profiles = OrderedDict()
+        sta = sta_start
+        for row in rows:
+            lbank_grid = row[1]
+            xs = CrossSection(lbank_grid, self.con, self.iface)
+            try:
+                self.profiles[lbank_grid] = xs.get_profile_data()
+            except Flo2dError:
+                return False
+            self.profiles[lbank_grid]['station'] = sta
+            sta += xs.xlen
+            del xs
+        return True
+
+    def interpolate_bed(self):
+        cols = ['id', 'fid', 'seg_fid', 'up_fid', 'lo_fid', 'up_lo_dist_left', 'up_lo_dist_right', 'up_dist_left',
+                'up_dist_right']
+        qry = 'SELECT * FROM chan_elems_interp ORDER BY seg_fid, up_fid, up_dist_left;'
+        rows = self.execute(qry).fetchall()
+        for row in rows:
+            values = [x if x is not None else '' for x in row]
+            ipars = OrderedDict(zip(cols, values))
+
+            if not ipars['lo_fid']:
+                # no lower base xsection
+                continue
+
+            base_len = 0.5 * (ipars['up_lo_dist_left'] + ipars['up_lo_dist_right'])
+            dist = 0.5 * (ipars['up_dist_left'] + ipars['up_dist_right'])
+            icoef = dist / base_len
+            xsi = CrossSection(ipars['id'], self.con, self.iface)
+            xsi.get_row(by_id=True)
+
+            xsup = CrossSection(ipars['up_fid'], self.con, self.iface)
+            xsup.get_row(by_id=True)
+
+            xslo = CrossSection(ipars['lo_fid'], self.con, self.iface)
+            xslo.get_row(by_id=True)
+
+            if not xsup.type == 'N':
+                # parametric cross-section - adjust banks elev and depth
+                try:
+                    xsi.get_profile_data()
+                    xsup.get_profile_data()
+                    xslo.get_profile_data()
+                    d_lbank_elev = xslo.profile_data['lbank_elev'] - xsup.profile_data['lbank_elev']
+                    d_rbank_elev = xslo.profile_data['rbank_elev'] - xsup.profile_data['rbank_elev']
+                    d_fcd = xslo.profile_data['fcd'] - xsup.profile_data['fcd']
+                    xsi.profile_data['lbank_elev'] = xsup.profile_data['lbank_elev'] + icoef * d_lbank_elev
+                    xsi.profile_data['rbank_elev'] = xsup.profile_data['rbank_elev'] + icoef * d_rbank_elev
+                    xsi.profile_data['fcd'] = xsup.profile_data['fcd'] + icoef * d_fcd
+                    xsi.set_profile_data()
+                except Flo2dError:
+                    return False
+            else:
+                # this is natural cross-section
+                try:
+                    xsi.get_profile_data()
+                    xsup.get_profile_data()
+                    xslo.get_profile_data()
+                    d_bed = xslo.profile_data['bed_elev'] - xsup.profile_data['bed_elev']
+                    dh = icoef * d_bed
+                    xsi.shift_nxsec(dh)
+                except Flo2dError:
+                    return False
+        return True
+
 
 class Inflow(GeoPackageUtils):
-    """Inflow object representation."""
+    """
+    Inflow object representation.
+    """
     columns = ['fid', 'name', 'time_series_fid', 'ident', 'inoutfc', 'note', 'geom_type', 'bc_fid']
 
     def __init__(self, fid, con, iface):
@@ -260,7 +456,9 @@ class Inflow(GeoPackageUtils):
             return None
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to inflow_time_series_data for a given ts_fid"""
+        """
+        Add new rows to inflow_time_series_data for a given ts_fid.
+        """
         qry = 'INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -296,7 +494,9 @@ class Inflow(GeoPackageUtils):
 
 
 class Outflow(GeoPackageUtils):
-    """Outflow object representation."""
+    """
+    Outflow object representation.
+    """
     columns = ['fid', 'name', 'chan_out', 'fp_out', 'hydro_out', 'chan_tser_fid', 'chan_qhpar_fid', 'chan_qhtab_fid',
                'fp_tser_fid', 'type', 'geom_type', 'bc_fid']
 
@@ -479,8 +679,10 @@ class Outflow(GeoPackageUtils):
             return self.get_qh_tables()
 
     def get_data_fid_name(self):
-        """Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
-        This could be time series, Qh Table or Qh Parameters."""
+        """
+        Return a list of [fid, name] pairs for each data set of a kind appropriate for the current outflow.
+        This could be time series, Qh Table or Qh Parameters.
+        """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
         elif self.typ in [9, 10]:
@@ -491,7 +693,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def add_data(self, name=None):
-        """Add a new data to current outflow type data table (time series, qh params or qh table)"""
+        """
+        Add a new data to current outflow type data table (time series, qh params or qh table).
+        """
         data = None
         if self.typ in [5, 6, 7, 8]:
             data = self.add_time_series(name)
@@ -504,7 +708,9 @@ class Outflow(GeoPackageUtils):
         return data
 
     def set_data_name(self, name):
-        """Save new data name"""
+        """
+        Save new data name.
+        """
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data_name(name)
@@ -516,7 +722,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def set_data(self, name, data):
-        """Save current model data to the right outflow data table"""
+        """
+        Save current model data to the right outflow data table.
+        """
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data(name, data)
@@ -564,7 +772,9 @@ class Outflow(GeoPackageUtils):
         self.execute_many(qry.format(self.data_fid), data)
 
     def get_cur_data_fid(self):
-        """Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid)"""
+        """
+        Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid).
+        """
         data_fid_vals = [self.chan_tser_fid, self.chan_qhpar_fid, self.chan_qhtab_fid, self.fp_tser_fid]
         return next((val for val in data_fid_vals if val), None)
 
@@ -575,7 +785,9 @@ class Outflow(GeoPackageUtils):
         self.chan_qhtab_fid = None
 
     def set_new_data_fid(self, fid):
-        """Set new data fid for current outflow type"""
+        """
+        Set new data fid for current outflow type.
+        """
         self.clear_data_fids()
         if self.typ in [5, 7]:
             self.fp_tser_fid = fid
@@ -589,7 +801,9 @@ class Outflow(GeoPackageUtils):
             pass
 
     def get_time_series_data(self):
-        """Get time, value pairs for the current outflow"""
+        """
+        Get time, value pairs for the current outflow.
+        """
         qry = 'SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;'
         data_fid = self.get_cur_data_fid()
         if not data_fid:
@@ -602,7 +816,9 @@ class Outflow(GeoPackageUtils):
         return self.time_series_data
 
     def add_time_series_data(self, ts_fid, rows=5, fetch=False):
-        """Add new rows to outflow_time_series_data for a given ts_fid"""
+        """
+        Add new rows to outflow_time_series_data for a given ts_fid.
+        """
         qry = 'INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([ts_fid],)*rows)
         if fetch:
@@ -617,7 +833,9 @@ class Outflow(GeoPackageUtils):
         return self.qh_params_data
 
     def add_qh_params_data(self, params_fid, rows=1, fetch=False):
-        """Add new rows to qh_params_data for a given params_fid"""
+        """
+        Add new rows to qh_params_data for a given params_fid.
+        """
         qry = 'INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES (?, NULL, NULL, NULL);'
         self.execute_many(qry, ([params_fid],)*rows)
         if fetch:
@@ -632,14 +850,18 @@ class Outflow(GeoPackageUtils):
         return self.qh_table_data
 
     def add_qh_table_data(self, table_fid, rows=5, fetch=False):
-        """Add new rows to qh_table_data for a given table_fid"""
+        """
+        Add new rows to qh_table_data for a given table_fid.
+        """
         qry = 'INSERT INTO qh_table_data (table_fid, depth, q) VALUES (?, NULL, NULL);'
         self.execute_many(qry, ([table_fid],)*rows)
         if fetch:
             return self.get_qh_table_data()
 
     def get_data(self):
-        """Get data for current type and data_fid of the outflow"""
+        """
+        Get data for current type and data_fid of the outflow.
+        """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series_data()
         elif self.typ in [9, 10]:
@@ -661,7 +883,9 @@ class Outflow(GeoPackageUtils):
 
 
 class Rain(GeoPackageUtils):
-    """Rain data representation."""
+    """
+    Rain data representation.
+    """
     columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall',
                'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
 
@@ -676,11 +900,19 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         data = self.execute(qry).fetchone()
         if not data:
-            return
-        values = [x if x is not None else '' for x in data]
+            values = ['' for x in self.columns]
+        else:
+            values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))
         self.series_fid = self.row['time_series_fid']
         return self.row
+
+    def set_row(self):
+        qry = '''INSERT OR REPLACE INTO rain (
+            fid, name, irainreal, irainbuilding, time_series_fid, tot_rainfall, rainabs, irainarf,
+            movingstrom, rainspeed, iraindir, notes)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
+        self.execute(qry, self.row)
 
     def get_time_series(self):
         qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
@@ -694,7 +926,9 @@ class Rain(GeoPackageUtils):
 
 
 class Evaporation(GeoPackageUtils):
-    """Evaporation data representation."""
+    """
+    Evaporation data representation.
+    """
     columns = ['fid', 'ievapmonth', 'iday', 'clocktime']
 
     def __init__(self, con, iface):
@@ -728,7 +962,9 @@ class Evaporation(GeoPackageUtils):
 
 
 class Street(GeoPackageUtils):
-    """Street data implementation."""
+    """
+    Street data implementation.
+    """
     columns = ['fid', 'str_fid', 'igridn', 'depex', 'stman', 'elstr', 'geom']
 
     def __init__(self, fid, con, iface):
@@ -762,3 +998,203 @@ class Street(GeoPackageUtils):
     def get_elems(self):
         qry = 'SELECT istdir, widr FROM street_elems WHERE str_fid = ?;'
         self.elems = self.execute(qry, (self.fid,)).fetchall()
+
+
+class Reservoir(GeoPackageUtils):
+    """
+    Reservoir data representation.
+    """
+    columns = ['fid', 'name', 'wsel', 'notes']
+
+    def __init__(self, fid, con, iface):
+        super(Reservoir, self).__init__(con, iface)
+        self.fid = fid
+        self.row = None
+        self.name = None
+        self.wsel = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM user_reservoirs WHERE fid = ?;'
+        data = self.execute(qry, (self.fid, )).fetchone()
+        if not data:
+            return
+        values = [x if x is not None else '' for x in data]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.wsel = self.row['wsel']
+        return self.row
+
+    def set_row(self):
+        qry = '''UPDATE user_reservoirs SET
+            name = '{0}',
+            wsel = {1}
+        WHERE fid = {2};'''.format(self.name, self.wsel, self.fid)
+        self.execute(qry)
+
+    def del_row(self):
+        qry = 'DELETE FROM user_reservoirs WHERE fid=?'
+        self.execute(qry, (self.fid,))
+
+
+class Structure(GeoPackageUtils):
+    """
+    Hydraulic structure object representation.
+    """
+    columns = ['fid', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont', 'headrefel',
+               'clength', 'cdiameter', 'notes']
+
+    def __init__(self, fid, con, iface):
+        super(Structure, self).__init__(con, iface)
+        self.fid = fid
+        self.type = None
+        self.name = None
+        self.ifporchan = None
+        self.icurvtable = None
+        self.inflonod = None
+        self.outflonod = None
+        self.inoutcont = None
+        self.headrefel = None
+        self.clength = None
+        self.cdiameter = None
+        self.notes = None
+        self.geom = None
+
+    def get_row(self):
+        qry = 'SELECT * FROM struct WHERE fid = ?;'
+        values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
+        self.row = OrderedDict(zip(self.columns, values))
+        self.fid = self.row['fid']
+        self.type = self.row['type']
+        self.name = self.row['structname']
+        self.ifporchan = self.row['ifporchan']
+        self.icurvtable = self.row['icurvtable']
+        self.inflonod = self.row['inflonod']
+        self.outflonod = self.row['outflonod']
+        self.inoutcont = self.row['inoutcont']
+        self.headrefel = self.row['headrefel']
+        self.clength = self.row['clength']
+        self.cdiameter = self.row['cdiameter']
+        self.notes = self.row['notes']
+        return self.row
+
+    def set_row(self):
+        data = (
+            self.type,
+            self.name,
+            self.ifporchan,
+            self.icurvtable,
+            self.inflonod,
+            self.outflonod,
+            self.inoutcont,
+            self.headrefel,
+            self.clength,
+            self.cdiameter,
+            self.notes,
+            self.fid
+        )
+        qry = '''UPDATE struct SET
+                    type = ?,
+                    structname = ?,
+                    ifporchan = ?,
+                    icurvtable = ?,
+                    inflonod = ?,
+                    outflonod = ?,
+                    inoutcont = ?,
+                    headrefel = ?,
+                    clength = ?,
+                    cdiameter = ?,
+                    notes = ?
+                WHERE fid = ?;'''
+        self.execute(qry, data)
+
+    def del_row(self):
+        # first try to delete the struct from user layer
+        qry = 'DELETE FROM user_struct WHERE fid=?;'
+        self.execute(qry, (self.fid,))
+        qry = 'DELETE FROM struct WHERE fid=?'
+        self.execute(qry, (self.fid,))
+
+    def get_stormdrain(self):
+        qry = 'SELECT stormdmax FROM storm_drains WHERE struct_fid = ?;'
+        row = self.execute(qry, (self.fid,)).fetchone()
+        if row:
+            return row[0]
+        else:
+            return False
+
+    def set_stormdrain_capacity(self, stormdmax):
+        qry_del = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
+        self.execute(qry_del, (self.fid,))
+        qry_ins = 'INSERT INTO storm_drains (struct_fid, stormdmax) VALUES (?, ?);'
+        self.execute(qry_ins, (self.fid, stormdmax, ))
+
+    def clear_stormdrain_data(self):
+        """
+        Delete storm drain data when user uncheck the storm drain checkbox.
+        """
+        qry = 'DELETE FROM storm_drains WHERE struct_fid = ?;'
+        self.execute(qry, (self.fid, ))
+
+    def get_table_data(self):
+        res = []
+        if self.icurvtable == 0:
+            # rating curve
+            qry_curv = 'SELECT hdepexc, coefq, expq, coefa, expa FROM rat_curves WHERE struct_fid = ? ORDER BY hdepexc;'
+            curv = self.execute(qry_curv, (self.fid, ))
+            qry_repl = 'SELECT repdep, rqcoef, rqexp, racoef, raexp FROM repl_rat_curves WHERE struct_fid = ? ORDER BY repdep;'
+            repl = self.execute(qry_repl, (self.fid,))
+            for i, row in enumerate(curv):
+                res.append(row)
+                # check if a replacement curve is defined
+                try:
+                    if repl[i][0]:
+                        res += repl[i]
+                except:
+                    pass
+            if not res:
+                res = [''] * 10
+        elif self.icurvtable == 1:
+            # rating table
+            qry_tab = 'SELECT hdepth, qtable, atable FROM rat_table WHERE struct_fid = ? ORDER BY hdepth;'
+            res = self.execute(qry_tab, (self.fid,))
+            if not res:
+                res = [''] * 3
+        elif self.icurvtable == 2:
+            # culvert equation
+            qry_tab = 'SELECT typec, typeen, culvertn, ke, cubase FROM culvert_equations WHERE struct_fid = ?;'
+            res = self.execute(qry_tab, (self.fid,))
+            if not res:
+                res = [''] * 4
+        else:
+            if not res:
+                res = [''] * 3
+        self.table_data = res
+        return res
+
+    def set_table_data(self, data):
+        if self.icurvtable == 0:
+            # rating curve
+            qry = 'DELETE FROM rat_curves WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES ({}, ?, ?, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:5] for row in data])
+            qry = 'DELETE FROM repl_rat_curves WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            for repl_data in [row[5:] for row in data]:
+                if is_number(repl_data[0]) and not isnan(repl_data[0]):
+                    qry = 'INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES ({}, ?, ?, ?, ?, ?);'
+                    self.execute(qry.format(self.fid), repl_data)
+        elif self.icurvtable == 1:
+            # rating table
+            qry = 'DELETE FROM rat_table WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES ({}, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:3] for row in data])
+        elif self.icurvtable == 2:
+            # culvert equation
+            qry = 'DELETE FROM culvert_equations WHERE struct_fid = ?;'
+            self.execute(qry, (self.fid,))
+            qry = 'INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES ({}, ?, ?, ?, ?, ?);'
+            self.execute_many(qry.format(self.fid), [row[:5] for row in data])
+        else:
+            pass

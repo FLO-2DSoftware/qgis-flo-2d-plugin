@@ -47,7 +47,9 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.hourly_evap_model.dataChanged.connect(self.evaluate_hourly_sum)
 
     def populate_time_cbos(self):
-        """Populate month, day and time combos"""
+        """
+        Populate month, day and time combos.
+        """
         self.monthCbo.clear()
         self.dayCbo.clear()
         self.timeCbo.clear()
@@ -100,7 +102,9 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.plotLayout.addWidget(self.plotWidget)
 
     def evaluate_hourly_sum(self):
-        """Evaluate sum of hourly percentage evaporation data and show it"""
+        """
+        Evaluate sum of hourly percentage evaporation data and show it.
+        """
         sum = self.evap.get_hourly_sum()
         if not sum == 1:
             self.dailySumEdit.setStyleSheet("color: rgb(100, 0, 0);")
@@ -109,17 +113,24 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.dailySumEdit.setText(str(sum))
 
     def update_hourly_data(self, index):
-        """Current month has changed - update hourly data for it"""
+        """
+        Current month has changed - update hourly data for it.
+        """
 
     def save_evap_data(self):
-        """Save evap data changes in gpkg"""
+        """
+        Save evap data changes in gpkg.
+        """
 
     def revert_evap_data_changes(self):
-        """Revert any data changes made by users (load original
-        evap data from tables)"""
+        """
+        Revert any data changes made by users (load original evap data from tables).
+        """
 
     def update_plot(self):
-        """When time series data for plot change, update the plot"""
+        """
+        When time series data for plot change, update the plot.
+        """
         self.plotWidget.clear()
         dm = self.hourly_evap_model
         print dm.rowCount()

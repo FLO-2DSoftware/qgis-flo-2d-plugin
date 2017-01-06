@@ -10,6 +10,7 @@
 
 import math
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
+from PyQt4.QtCore import QPyNullVariant
 from utils import is_number
 
 
@@ -63,7 +64,7 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, value_column):
+def poly2grid(grid, polygons, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
@@ -83,7 +84,8 @@ def poly2grid(grid, polygons, value_column):
             other_geom = grid_feat.geometry()
             isin = geos_geom.intersects(other_geom.geometry())
             if isin is True:
-                yield (feat[value_column], grid_feat.id())
+                values = tuple(feat[col] for col in columns) + (grid_feat.id(),)
+                yield values
             else:
                 pass
 
@@ -164,7 +166,7 @@ def square_grid(gutils, boundary):
 
 def update_roughness(gutils, grid, roughness, column_name, reset=False):
     """
-    Updating roughness values inside 'grid' table
+    Updating roughness values inside 'grid' table.
     """
     if reset is True:
         default = gutils.get_cont_par('MANNING')
@@ -176,18 +178,28 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     gutils.con.commit()
 
 
-def update_elevation(gutils, grid, elev, column_name):
+def update_elevation(gutils, grid, elev):
     """
-    Updating elevation values inside 'grid' table
+    Updating elevation values inside 'grid' table.
     """
-    qry = 'UPDATE grid SET elevation=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, elev, column_name))
+    set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+    add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
+    set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
+    for el, cor, fid in poly2grid(grid, elev, 'elev', 'correction'):
+        if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+            gutils.con.execute(set_qry, (el, fid))
+        elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            gutils.con.execute(add_qry, (cor, fid))
+        elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            gutils.con.execute(set_add_qry, (el, cor, fid))
+        else:
+            pass
     gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):
     """
-    Calculating and inserting ARF and WRF values into 'blocked_cells' table
+    Calculating and inserting ARF and WRF values into 'blocked_cells' table.
     """
     del_cells = 'DELETE FROM blocked_cells;'
     qry_cells = '''
@@ -205,7 +217,7 @@ def evaluate_arfwrf(gutils, grid, areas):
 
 def raster2grid(grid, out_raster):
     """
-    Generator for probing raster data within 'grid' features
+    Generator for probing raster data within 'grid' features.
     """
     probe_raster = QgsRasterLayer(out_raster)
     if not probe_raster.isValid():
@@ -225,7 +237,7 @@ def raster2grid(grid, out_raster):
 
 def grid_has_empty_elev(gutils):
     """
-    Return number of grid elements that have no elevation defined
+    Return number of grid elements that have no elevation defined.
     """
     qry = '''SELECT count(*) FROM grid WHERE elevation IS NULL;'''
     res = gutils.execute(qry)

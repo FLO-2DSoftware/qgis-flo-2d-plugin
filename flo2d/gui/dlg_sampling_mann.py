@@ -35,7 +35,9 @@ class SamplingManningDialog(qtBaseClass, uiDialog):
         self.allGridElemsRadio.toggled.connect(self.method_changed)
 
     def setup_src_layer_cbo(self):
-        """Filter src layer combo for polygons and connect field cbo"""
+        """
+        Filter src layer combo for polygons and connect field cbo.
+        """
         self.srcLayerCbo.addItem('', None)
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:

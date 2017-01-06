@@ -14,7 +14,7 @@ from qgis.core import QgsFeatureRequest
 from .utils import load_ui, center_canvas,try_disconnect
 from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils, connection_required
-from ..flo2dobjects import UserCrossSection
+from ..flo2dobjects import UserCrossSection, ChannelSegment
 from ..user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from plot_widget import PlotWidget
@@ -29,6 +29,7 @@ uiDialog, qtBaseClass = load_ui('xs_editor')
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
     schematize_1d = pyqtSignal()
+    find_confluences = pyqtSignal()
 
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -52,6 +53,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
         self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         self.set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
+        self.set_icon(self.confluences_btn, 'schematize_confluence.svg')
         self.set_icon(self.rename_xs_btn, 'change_name.svg')
         # connections
         self.digitize_btn.clicked.connect(self.digitize_xsec)
@@ -62,6 +64,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.schematize_xs_btn.clicked.connect(self.schematize_xs)
+        self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
         self.xs_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
@@ -90,8 +93,22 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def schematize_xs(self):
         self.schematize_1d.emit()
 
+    def interp_bed_and_banks(self):
+        qry = 'SELECT fid FROM chan;'
+        fids = self.gutils.execute(qry).fetchall()
+        for fid in fids:
+            seg = ChannelSegment(int(fid[0]), self.con, self.iface)
+            if not seg.interpolate_bed():
+                return False
+        return True
+
+    def schematize_confluences(self):
+        self.find_confluences.emit()
+
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
-        """Slot used to push changes of existing items onto undoStack"""
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
@@ -99,8 +116,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return True
 
     def populate_xsec_type_cbo(self):
-        """Get current xsection data, populate all relevant fields of the
-        dialog and create xsection plot"""
+        """
+        Get current xsection data, populate all relevant fields of the dialog and create xsection plot.
+        """
         self.xs_type_cbo.clear()
         self.xs_types = OrderedDict()
         self.xs_types['R'] = {'name': 'Rectangular', 'cbo_idx': 0}
@@ -116,11 +134,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def populate_xsec_cbo(self, fid=None, show_last_edited=False):
-        """populate xsection cbo"""
+        """
+        Populate xsection cbo.
+        """
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(0)
         qry = 'SELECT fid, name FROM user_xsections ORDER BY name COLLATE NOCASE;'
-        rows = self.gutils.execute(qry)
+        rows = self.gutils.execute(qry).fetchall()
+        if not rows:
+            return
         cur_idx = 0
         for i, row in enumerate(rows):
             row = [x if x is not None else '' for x in row]
@@ -136,7 +158,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.enable_widgets(False)
         if self.xs_cbo.count():
             self.enable_widgets()
-            self.cur_xsec_changed()
+            self.cur_xsec_changed(cur_idx)
 
     @connection_required
     def digitize_xsec(self, i):
@@ -165,10 +187,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # try to save user bc layers (geometry additions/changes)
         user_lyr_edited = self.lyrs.save_lyrs_edits('user_xsections')
         # if user bc layers were edited
+        # self.enable_widgets()
         if user_lyr_edited:
             self.gutils.fill_empty_user_xsec_names()
+            self.gutils.set_def_n()
             self.populate_xsec_cbo(show_last_edited=True)
-        self.enable_widgets()
 
     def repaint_xs(self):
         self.lyrs.lyrs_to_repaint = [
@@ -178,10 +201,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def cur_xsec_changed(self, idx=0):
-        """User changed current xsection in the xsections list. Populate xsection
-        data fields and update the plot"""
+        """
+        User changed current xsection in the xsections list.
+        Populate xsection data fields and update the plot.
+        """
         if not self.xs_cbo.count():
             return
+
         fid = self.xs_cbo.itemData(idx)
         self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
         self.xs = UserCrossSection(fid, self.con, self.iface)
@@ -242,13 +268,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.cur_xsec_changed(xs_cbo_idx)
 
     def create_plot(self):
-        """Create initial plot"""
+        """
+        Create initial plot.
+        """
         self.plot.clear()
         self.plot.add_item('Cross-section', [self.xi, self.yi], col=QColor("#0018d4"))
 
     @connection_required
     def update_plot(self):
-        """When time series data for plot change, update the plot"""
+        """
+        When time series data for plot change, update the plot.
+        """
         self.xi, self.yi = [[], []]
         for i in range(self.xs_data_model.rowCount()):
             self.xi.append(m_fdata(self.xs_data_model, i, 0))
@@ -303,7 +333,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def delete_xs(self, i):
-        """Delete the current cross-section from user layer"""
+        """
+        Delete the current cross-section from user layer.
+        """
         if not self.xs_cbo.count():
             return
         q = 'Are you sure, you want to delete current cross-section?'

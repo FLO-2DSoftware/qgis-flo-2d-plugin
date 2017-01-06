@@ -41,7 +41,7 @@ class TestSchematicTools(unittest.TestCase):
         point_layer = QgsVectorLayer(user_points, 'points', 'ogr')
         inter_lens = [10, 7]
         for feat in line_layer.getFeatures():
-            intervals = get_intervals(feat, point_layer, 'elev', 'correction', 500)
+            intervals = get_intervals(feat, point_layer.getFeatures(), 'elev', 500)
             self.assertIn(len(intervals), inter_lens)
 
     @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
@@ -56,30 +56,14 @@ class TestSchematicTools(unittest.TestCase):
 
         total_sum = 0
         for feat in line_layer.getFeatures():
-            intervals = get_intervals(feat, point_layer, 'elev', 'correction', 500)
-            interpolated = interpolate_along_line(feat, levees_layer, intervals)
+            intervals = get_intervals(feat, point_layer.getFeatures(), 'elev', 500)
+            interpolated = interpolate_along_line(feat, levees_layer.getFeatures(), intervals)
             for row in interpolated:
                 val = row[0]
                 self.assertGreaterEqual(val, 50)
                 self.assertLessEqual(val, 300)
                 total_sum += 1
         self.assertEqual(total_sum, 88)
-
-    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
-    def test_polys2levees(self):
-        user_lines = os.path.join(VECTOR_PATH, 'user_levee_lines.geojson')
-        user_polygons = os.path.join(VECTOR_PATH, 'user_levee_polygons.geojson')
-        levees = os.path.join(VECTOR_PATH, 'levees.geojson')
-
-        line_layer = QgsVectorLayer(user_lines, 'lines', 'ogr')
-        polygon_layer = QgsVectorLayer(user_polygons, 'polygons', 'ogr')
-        levees_layer = QgsVectorLayer(levees, 'levees', 'ogr')
-
-        for feat in line_layer.getFeatures():
-            poly_values = polys2levees(feat, polygon_layer, levees_layer, 'elev')
-            vals = [77, 33.33]
-            for row in poly_values:
-                self.assertIn(row[0], vals)
 
     def test_schematize_lines(self):
         user_lines = os.path.join(VECTOR_PATH, 'channels_streets.geojson')
@@ -107,23 +91,6 @@ class TestSchematicTools(unittest.TestCase):
         for s in coords.itervalues():
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
-
-    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
-    def test_crossing_points(self):
-        user_1d_domain = os.path.join(VECTOR_PATH, 'user_1d_domain.geojson')
-        user_centerline = os.path.join(VECTOR_PATH, 'centerline.geojson')
-        user_xs = os.path.join(VECTOR_PATH, 'user_xs.geojson')
-
-        domain_lyr = QgsVectorLayer(user_1d_domain, 'domain', 'ogr')
-        centerline_lyr = QgsVectorLayer(user_centerline, 'centerline', 'ogr')
-        xs_layer = QgsVectorLayer(user_xs, 'xs', 'ogr')
-        for feat1 in centerline_lyr.getFeatures():
-            center_fid = feat1['fid']
-            request = QgsFeatureRequest().setFilterExpression('"center_line_fid" = {}'.format(center_fid))
-            feat2 = domain_lyr.getFeatures(request).next()
-            xs_features = xs_layer.getFeatures()
-            l, r, xs = bank_lines(feat1, feat2, xs_features)
-            print(l, r, xs)
 
 
 # Running tests:

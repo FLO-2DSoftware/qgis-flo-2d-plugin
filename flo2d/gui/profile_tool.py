@@ -14,7 +14,9 @@ from ..user_communication import UserCommunication
 from operator import itemgetter
 from itertools import izip
 from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
+from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor
+from PyQt4.QtCore import Qt
+from ..flo2dobjects import ChannelSegment
 
 
 uiDialog, qtBaseClass = load_ui('profile_tool')
@@ -36,8 +38,8 @@ class ProfileTool(qtBaseClass, uiDialog):
             'schema_tab': 'street_seg',
             'schema_fid': 'str_fid'
         },
-        'user_centerline': {
-            'user_name': 'River Centerline',
+        'user_left_bank': {
+            'user_name': 'Left Bank Line',
             'schema_tab': 'chan_elems',
             'schema_fid': 'seg_fid'
         }
@@ -62,6 +64,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.schema_data = None
 
         self.user_feat = None
+        self.chan_seg = None
         self.feats_stations = None
         self.raster_layers = None
 
@@ -99,6 +102,31 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.populate_fields()
         self.calculate_stations()
 
+    def show_channel(self, table, fid):
+        self.chan_seg = ChannelSegment(fid, self.iface.f2d['con'], self.iface)
+        self.chan_seg.get_row()
+        if self.chan_seg.get_profiles():
+            self.plot_channel_data()
+
+    def plot_channel_data(self):
+        if not self.chan_seg:
+            return
+        self.plot.clear()
+        sta, lb, rb, bed = [], [], [], []
+        for st, data in self.chan_seg.profiles.iteritems():
+            sta.append(data['station'])
+            lb.append(data['lbank_elev'])
+            rb.append(data['rbank_elev'])
+            bed.append(data['bed_elev'])
+        self.plot.clear()
+        self.plot.add_item('Bed elevation', [sta, bed], col=QColor("#000000"), sty=Qt.SolidLine)
+        self.plot.add_item('Left bank', [sta, lb], col=QColor("#0000aa"), sty=Qt.SolidLine)
+        self.plot.add_item('Right bank', [sta, rb], col=QColor("#00aa00"), sty=Qt.SolidLine)
+        self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
+        self.plot.plot.setLabel('bottom', text='Channel length')
+        self.plot.plot.setLabel('left', text='Elevation')
+        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
+
     def check_mode(self):
         """
         Checking plotting mode.
@@ -123,7 +151,10 @@ class ProfileTool(qtBaseClass, uiDialog):
         Get loaded rasters into combobox.
         """
         self.raster_combo.clear()
-        rasters = self.lyrs.list_group_rlayers()
+        try:
+            rasters = self.lyrs.list_group_rlayers()
+        except AttributeError:
+            return
         for r in rasters:
             self.raster_combo.addItem(r.name(), r)
 
@@ -232,3 +263,5 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.data_model.appendRow(items)
         self.tview.setModel(self.data_model)
         self.tview.resizeColumnsToContents()
+        for i in range(self.data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)

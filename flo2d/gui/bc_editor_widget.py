@@ -107,7 +107,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.dataChanged.connect(self.save_bc_data)
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
-        """Slot used to push changes of existing items onto undoStack"""
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
@@ -253,7 +255,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.clear()
 
     def populate_inflows(self, inflow_fid=None, show_last_edited=False):
-        """Read inflow and inflow_time_series tables, populate proper combo boxes"""
+        """
+        Read inflow and inflow_time_series tables, populate proper combo boxes.
+        """
         if not self.iface.f2d['con']:
             return
         self.reset_inflow_gui()
@@ -329,7 +333,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.populate_inflow_data_cbo()
 
     def populate_inflow_data_cbo(self):
-        """Read and set inflow properties"""
+        """
+        Read and set inflow properties.
+        """
         self.time_series = self.inflow.get_time_series()
         if not self.time_series:
             self.uc.bar_warn('No data series for this inflow.')
@@ -360,7 +366,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.save_inflow()
 
     def inflow_data_changed(self):
-        """Get current time series data, populate data table and create plot"""
+        """
+        Get current time series data, populate data table and create plot.
+        """
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
         self.create_inflow_plot()
@@ -395,7 +403,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.create_inflow_plot()
 
     def save_inflow(self):
-        """Get inflow and time series data from table view and save them to gpkg"""
+        """
+        Get inflow and time series data from table view and save them to gpkg.
+        """
         new_name = self.bc_name_cbo.currentText()
         # check if the name was changed
         if not self.inflow.name == new_name:
@@ -444,7 +454,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
 
     def create_inflow_plot(self):
-        """Create initial plot"""
+        """
+        Create initial plot.
+        """
         self.plot.clear()
         self.plot.add_item('Original Discharge', [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
         self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
@@ -452,7 +464,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item('Current Mud', [self.ot, self.om], col=QColor("#884800"))
 
     def update_inflow_plot(self):
-        """When time series data for plot change, update the plot"""
+        """
+        When time series data for plot change, update the plot.
+        """
         self.t, self.d, self.m = [[], [], []]
         for i in range(self.bc_data_model.rowCount()):
             self.t.append(m_fdata(self.bc_data_model, i, 0))
@@ -500,7 +514,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_tab_head = out_par['tab_head']
 
     def populate_outflows(self, outflow_fid=None, show_last_edited=False):
-        """Read outflow table, populate the cbo and set apropriate outflow"""
+        """
+        Read outflow table, populate the cbo and set apropriate outflow.
+        """
         if not self.iface.f2d['con']:
             return
         self.reset_outflow_gui()
@@ -680,7 +696,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.update_outflow_plot()
 
     def create_outflow_plot(self):
-        """Create initial plot for the current outflow type"""
+        """
+        Create initial plot for the current outflow type.
+        """
         self.plot.clear()
         self.plot_item_name = None
         if self.outflow.typ in [5, 6, 7, 8]:
@@ -692,7 +710,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_outflow_plot(self):
-        """When time series data for plot change, update the plot"""
+        """
+        When time series data for plot change, update the plot.
+        """
         if not self.plot_item_name:
             return
         self.d1, self.d2 = [[], []]
@@ -709,7 +729,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow_hydro_cbo.addItem(h_name, i)
 
     def populate_outflow_type_cbo(self):
-        """Populate outflow types cbo and set current type"""
+        """
+        Populate outflow types cbo and set current type.
+        """
         self.outflow_type_cbo.clear()
         type_name = '{}. {}'
         for typnr in sorted(self.outflow_types.iterkeys()):
@@ -717,7 +739,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow_type_cbo.addItem(outflow_type, typnr)
 
     def save_outflow(self):
-        """Get outflow data from widgets and save them to gpkg"""
+        """
+        Get outflow data from widgets and save them to gpkg.
+        """
         new_name = self.bc_name_cbo.currentText()
         # check if the name was changed
         if not self.outflow.name == new_name:
@@ -846,7 +870,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             pass
 
     def delete_bc(self):
-        """Delete the current boundary condition from user layer and schematic tables"""
+        """
+        Delete the current boundary condition from user layer and schematic tables.
+        """
         if not self.bc_name_cbo.count():
             return
         q = 'Are you sure, you want delete the current BC?'
@@ -943,7 +969,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 self.populate_bcs()
 
     def save_bc_lyrs_edits(self):
-        """Save changes of user bc layers"""
+        """
+        Save changes of user bc layers.
+        """
         if not self.gutils or not self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
             return
         self.delete_imported_bcs()
@@ -997,7 +1025,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.repaint_layers()
 
     def create_plot(self):
-        """Create initial plot"""
+        """
+        Create initial plot.
+        """
         if self.bc_type_inflow_radio.isChecked():
             self.create_inflow_plot()
         else:
@@ -1011,7 +1041,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.save_outflow_data()
 
     def update_plot(self):
-        """When data model data change, update the plot"""
+        """
+        When data model data change, update the plot.
+        """
         if self.bc_type_inflow_radio.isChecked():
             self.update_inflow_plot()
         else:

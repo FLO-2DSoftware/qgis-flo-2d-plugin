@@ -21,7 +21,8 @@ VALUES (
 
 PRAGMA foreign_keys = ON;
 --PRAGMA synchronous=FULL;
-PRAGMA journal_mode = memory;
+PRAGMA journal_mode = memory; -- try to create the db using memory journal as it is much faster than WAL
+--then, once the db is opened by QGIS, it will switch automatically to WAL (persistent mode)
 
 -- FLO-2D tables definitions
 
@@ -52,8 +53,8 @@ CREATE TABLE "grid" (
     "cell_east" INTEGER,
     "cell_south" INTEGER,
     "cell_west" INTEGER,
-    "n_value" REAL,
-    "elevation" REAL
+    "n_value" REAL DEFAULT 0.05,
+    "elevation" REAL DEFAULT -9999
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);
@@ -143,13 +144,14 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('inflow_cells', 'aspat
 
 CREATE TABLE "reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
+    "user_res_fid" INTEGER,
     "name" TEXT,
     "grid_fid" INTEGER,
     "wsel" REAL,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
-SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
 -- SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
 
@@ -428,7 +430,7 @@ CREATE TABLE "rain" (
     "time_series_fid" INTEGER, -- id of time series used for rain cumulative distribution (in time)
     "tot_rainfall" REAL, -- RTT, total storm rainfall [inch or mm]
     "rainabs" REAL, -- RAINABS, rain interception or abstraction
-    "irainarf" REAL, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
+    "irainarf" INTEGER, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
     "movingstrom" INTEGER, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
     "rainspeed" REAL, -- RAINSPEED, speed of moving storm
     "iraindir" INTEGER, -- IRAINDIR, direction of moving storm
@@ -487,12 +489,13 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_arf_cells', 'asp
 CREATE TABLE "chan" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, -- name of segment (optional)
-    "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
-    "froudc" REAL, -- FROUDC, max Froude channel number
-    "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
-    "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "depinitial" REAL DEFAULT 0, -- DEPINITIAL, initial channel flow depth
+    "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
+    "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
+    "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
     "notes" TEXT,
-    "center_line_fid" INTEGER -- FID of parent center line
+    "user_lbank_fid" INTEGER, -- FID of parent left bank line,
+    "rank" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan', 'geom', 'LINESTRING', 0, 0, 0);
@@ -501,7 +504,8 @@ SELECT gpkgAddGeometryTriggers('chan', 'geom');
 
 
 CREATE TABLE "chan_elems" (
-    "fid" INTEGER NOT NULL PRIMARY KEY, -- ICHANGRID, grid element number for left bank
+    "id" INTEGER NOT NULL PRIMARY KEY,
+    "fid" INTEGER NOT NULL, -- ICHANGRID, grid element number for left bank
     "seg_fid" INTEGER, -- fid of cross-section's segment
     "nr_in_seg" INTEGER, -- cross-section number in segment
     "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
@@ -511,6 +515,7 @@ CREATE TABLE "chan_elems" (
     "notes" TEXT,
     "user_xs_fid" INTEGER,
     "interpolated" INTEGER
+
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
@@ -1028,9 +1033,14 @@ CREATE TABLE "struct" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('struct', 'features', 4326);
 SELECT gpkgAddGeometryColumn('struct', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('struct', 'geom');
--- SELECT gpkgAddSpatialIndex('struct', 'geom');
 
--- TODO: triggers for creating the struct geom based on in- and outflonod
+CREATE TABLE "user_struct" (
+    "fid" INTEGER NOT NULL PRIMARY KEY
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_struct', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_struct', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_struct', 'geom');
+
 
 CREATE TABLE "rat_curves" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1362,7 +1372,9 @@ CREATE TABLE "fpxsec_cells" (
     "fpxsec_fid" INTEGER, -- fid of a floodplain xsection from fpxsec table
     "grid_fid" INTEGER -- NODX, fid of grid cell contained in a fpxsection
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpxsec_cells', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('fpxsec_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('fpxsec_cells', 'geom');
 
 
 -- FPFROUDE.DAT
@@ -1709,6 +1721,14 @@ CREATE TABLE "sed_supply_frac_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
 -- USERS Layers
+CREATE TABLE "user_fpxsec" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iflo" INTEGER, -- IFLO, general direction that the flow is expected to cross the floodplain cross section
+    "name" TEXT -- name of fpxsec
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_fpxsec', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_fpxsec', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_fpxsec', 'geom');
 
 CREATE TABLE "user_model_boundary" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1726,18 +1746,19 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_1d_domai
 SELECT gpkgAddGeometryColumn('user_1d_domain', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_1d_domain', 'geom');
 
-CREATE TABLE "user_centerline" (
+CREATE TABLE "user_left_bank" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT, -- name of segment (optional)
     "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
     "froudc" REAL, -- FROUDC, max Froude channel number
     "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "rank" INTEGER,
     "notes" TEXT
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_centerline', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_centerline', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_centerline', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_left_bank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_left_bank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_left_bank', 'geom');
 
 -- USER XSECTIONS
 
@@ -1752,6 +1773,19 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsection
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TABLE chan_elems_interp (
+    "id" INTEGER PRIMARY KEY,
+    "fid" INTEGER,
+    "seg_fid" INTEGER,
+    "up_fid" INTEGER, -- fid of upper user-based (not interpolated) chan_elem
+    "lo_fid" INTEGER, -- fid of lower user-based chan_elem
+    "up_lo_dist_left" REAL, -- distance between upper and lower user-based chan elems along left bank
+    "up_lo_dist_right" REAL, -- distance between upper and lower user-based chan elems along right bank
+    "up_dist_left" REAL, -- distance from the chan_elem along left bank
+    "up_dist_right" REAL -- distance from the chan_elem along right bank
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_elems_interp', 'aspatial');
 
 CREATE TABLE "user_chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1875,7 +1909,8 @@ SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
 
 CREATE TABLE "user_elevation_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "elev" REAL
+    "elev" REAL,
+    "correction" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_elevation_polygons', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_elevation_polygons', 'geom', 'POLYGON', 0, 0, 0);
@@ -2078,14 +2113,6 @@ SELECT gpkgAddGeometryColumn('user_bc_polygons', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_bc_polygons', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_bc_polygons', 'geom');
 
-CREATE TABLE "user_rbank" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "center_line_fid" INTEGER -- FID of parent center line
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_rbank', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_rbank', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_rbank', 'geom');
-
 -- START user_bc_polygons TRIGGERS
 
 -- trigger for a new POLYGON INFLOW boundary
@@ -2233,3 +2260,25 @@ CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_delete"
     BEGIN
         DELETE FROM all_schem_bc WHERE type = 'outflow' AND grid_fid = OLD.grid_fid;
     END;
+
+CREATE TABLE "user_reservoirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "wsel" REAL,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
+
+CREATE VIEW struct_types AS
+SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
+UNION ALL
+SELECT DISTINCT 'R' as type, struct_fid FROM repl_rat_curves
+UNION ALL
+SELECT DISTINCT 'T' as type, struct_fid FROM rat_table
+UNION ALL
+SELECT DISTINCT 'F' as type, struct_fid FROM culvert_equations
+UNION ALL
+SELECT DISTINCT 'D' as type, struct_fid FROM storm_drains;
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');

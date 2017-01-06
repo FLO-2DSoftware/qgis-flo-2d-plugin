@@ -112,7 +112,9 @@ class TableEditorWidget(qtBaseClass, uiDialog):
 
 
 class CommandItemEdit(QUndoCommand):
-    """Command for undoing/redoing text edit changes, to be placed in undostack."""
+    """
+    Command for undoing/redoing text edit changes, to be placed in undostack.
+    """
     def __init__(self, widget, item, oldText, newText, description):
         QUndoCommand.__init__(self, description)
         self.item = item
@@ -147,12 +149,16 @@ class TableEditorEventFilter(QObject):
 
 
 class StandardItemModel(QStandardItemModel):
-    """Items will emit this signal when edited"""
+    """
+    Items will emit this signal when edited.
+    """
     itemDataChanged = pyqtSignal(object, object, object, object)
 
 
 class StandardItem(QStandardItem):
-    """Subclass QStandardItem to reimplement setData to emit itemDataChanged"""
+    """
+    Subclass QStandardItem to reimplement setData to emit itemDataChanged.
+    """
     def setData(self, newValue, role=Qt.UserRole + 1):
         if role == Qt.EditRole:
             oldValue = self.data(role)
@@ -181,7 +187,9 @@ class TableView(QTableView):
         self.undoStack = QUndoStack(self)
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role):
-        """Slot used to push changes of existing items onto undoStack"""
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
         if role == Qt.EditRole:
             command = CommandItemEdit(self, item, oldValue, newValue,
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))

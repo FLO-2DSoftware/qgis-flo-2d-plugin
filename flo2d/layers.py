@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
+import time
 from collections import OrderedDict
 
 from PyQt4.QtCore import QObject
@@ -32,7 +33,7 @@ from user_communication import UserCommunication
 
 class Layers(QObject):
     """
-    Class for managing project layers: load, add to layers tree
+    Class for managing project layers: load, add to layers tree.
     """
 
     def __init__(self, iface):
@@ -64,10 +65,18 @@ class Layers(QObject):
                 'module': ['levees'],
                 'readonly': False
             }),
-            ('user_centerline', {
-                'name': 'River Centerline',
+            ('user_fpxsec', {
+                'name': 'Floodplain cross-sections',
                 'sgroup': 'User Layers',
-                'styles': ['centerline.qml'],
+                'styles': ['user_fpxsec.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
+            ('user_left_bank', {
+                'name': 'Left Bank Line',
+                'sgroup': 'User Layers',
+                'styles': ['user_lbank.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False
@@ -79,7 +88,15 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
                 'readonly': False,
-                'attrs_defaults': {'type': "'R'"} # use also double quotes for strings: "'R'"
+                'attrs_defaults': {'type': "'R'"}
+            }),
+            ('user_struct', {
+                'name': 'Structure lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_struct.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['structures'],
+                'readonly': False
             }),
             ('user_streets', {
                 'name': 'Street Lines',
@@ -135,14 +152,6 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
-            ('user_1d_domain', {
-                'name': '1D Domain',
-                'sgroup': 'User Layers',
-                'styles': ['1d_domain.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
             ('user_roughness', {
                 'name': 'Roughness',
                 'sgroup': 'User Layers',
@@ -155,6 +164,14 @@ class Layers(QObject):
                 'name': 'Grid Elevation',
                 'sgroup': 'User Layers',
                 'styles': ['user_elevation_polygons.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
+            ('user_reservoirs', {
+                'name': 'Reservoirs',
+                'sgroup': 'User Layers',
+                'styles': ['user_reservoirs.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
@@ -193,7 +210,13 @@ class Layers(QObject):
                 'visible': False,
                 'readonly': False
             }),
-
+            ('fpxsec_cells', {
+                'name': 'Floodplain cross-sections cells',
+                'sgroup': 'Schematic Layers',
+                'styles': ['fpxsec_cells.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('breach', {
                 'name': 'Breach Locations',
                 'sgroup': 'Schematic Layers',
@@ -232,7 +255,7 @@ class Layers(QObject):
                 'styles': ['chan.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['chan'],
-                'readonly': True
+                'readonly': False
             }),
             ('chan_elems', {
                 'name': 'Cross sections',
@@ -593,13 +616,6 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),
-            ('fpxsec_cells', {
-                'name': 'Floodplain cross-sections cells',
-                'sgroup': "Tables",
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
             ('fpfroude_cells', {
                 'name': 'Froude numbers for grid elems',
                 'sgroup': "Tables",
@@ -665,12 +681,17 @@ class Layers(QObject):
         # check if the layer is already loaded
         lyr_exists = self.layer_exists_in_group(uri, group)
         if not lyr_exists:
+            start_time = time.time()
             vlayer = QgsVectorLayer(uri, name, provider)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - create QgsVectorLayer'.format(time.time() - start_time, name))
             if not vlayer.isValid():
                 msg = 'Unable to load layer {}'.format(name)
                 raise Flo2dLayerInvalid(msg)
+            start_time = time.time()
             QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
             # get target tree group
+            start_time = time.time()
             if subgroup:
                 grp = self.get_subgroup(group, subgroup)
                 if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
@@ -681,9 +702,12 @@ class Layers(QObject):
                 grp = self.get_group(group)
             # add layer to the tree group
             tree_lyr = grp.addLayer(vlayer)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to layer group'.format(time.time() - start_time, name))
         else:
+            start_time = time.time()
             tree_lyr = self.get_layer_tree_item(lyr_exists)
             self.update_layer_extents(tree_lyr.layer())
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - only update extents'.format(time.time() - start_time, name))
         self.data[table]['qlyr'] = tree_lyr.layer()
 
         # set visibility
@@ -696,6 +720,7 @@ class Layers(QObject):
 
         # set style
         if style:
+            start_time = time.time()
             style_path = get_file_path("styles", style)
             if os.path.isfile(style_path):
                 err_msg, res = self.data[table]['qlyr'].loadNamedStyle(style_path)
@@ -704,22 +729,26 @@ class Layers(QObject):
                     raise Flo2dError(msg)
             else:
                 raise Flo2dError('Unable to load style file {}'.format(style_path))
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set style'.format(time.time() - start_time, name))
 
         # check if the layer should be 'readonly'
+
         if readonly:
+            start_time = time.time()
             try:
                 # check if the signal is already connected
                 self.data[table]['qlyr'].beforeEditingStarted.disconnect(self.warn_readonly)
             except TypeError:
                 pass
             self.data[table]['qlyr'].beforeEditingStarted.connect(self.warn_readonly)
+            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set readonly'.format(time.time() - start_time, name))
         else:
             pass
 
         return self.data[table]['qlyr'].id()
 
     def warn_readonly(self):
-        self.uc.bar_warn('Warning:\nAll changes to this layer can be overwriten by changes in the user layer.')
+        self.uc.bar_warn('All changes to this layer can be overwritten by changes in the user layer.')
 
     def enter_edit_mode(self, table_name, default_attr_exp=None):
         if not self.group:
@@ -745,7 +774,9 @@ class Layers(QObject):
             return None
 
     def any_lyr_in_edit(self, *table_name_list):
-        """Return True if any layer from the table list is in edit mode"""
+        """
+        Return True if any layer from the table list is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -755,7 +786,9 @@ class Layers(QObject):
         return in_edit_mode
 
     def save_lyrs_edits(self, *table_name_list):
-        """Save changes to each layer if it is in edit mode"""
+        """
+        Save changes to each layer if it is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -771,7 +804,9 @@ class Layers(QObject):
         return in_edit_mode
 
     def rollback_lyrs_edits(self, *table_name_list):
-        """Save changes to each layer if it is in edit mode"""
+        """
+        Save changes to each layer if it is in edit mode.
+        """
         in_edit_mode = False
         if not table_name_list:
             return None
@@ -856,7 +891,9 @@ class Layers(QObject):
         self.lyrs_to_repaint = []
 
     def connect_lyrs_reload(self, layer1, layer2):
-        """Reload layer1 and update its extent when layer2 modifications are saved"""
+        """
+        Reload layer1 and update its extent when layer2 modifications are saved.
+        """
         layer2.editingStopped.connect(layer1.reload)
 
     def new_group(self, name):
@@ -1005,12 +1042,15 @@ class Layers(QObject):
             raise Flo2dNotString(msg)
 
     def load_all_layers(self, gutils):
+
         self.gutils = gutils
         self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.collapse_all_flo2d_groups()
         self.group = group
+
         for lyr in self.data:
+            start_time = time.time()
             data = self.data[lyr]
             if data['styles']:
                 lstyle = data['styles'][0]
@@ -1053,6 +1093,8 @@ class Layers(QObject):
                     l.setDefaultValueExpression(idx, val)
             else:
                 pass
+            self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
+
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, 'User Layers')
@@ -1120,7 +1162,9 @@ class Layers(QObject):
             self.iface.mapCanvas().refresh()
 
     def save_edits_and_proceed(self, layer_name):
-        """If the layer is in edit mode, ask users for saving changes and proceeding."""
+        """
+        If the layer is in edit mode, ask users for saving changes and proceeding.
+        """
         l = self.get_layer_by_name(layer_name, group=self.group).layer()
         if l.isEditable():
             # ask user for saving changes

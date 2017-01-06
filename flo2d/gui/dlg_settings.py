@@ -8,6 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import time
+from itertools import chain
 from PyQt4.QtCore import Qt, QSettings
 from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QGis
@@ -15,6 +17,7 @@ from qgis.gui import QgsProjectionSelectionWidget
 
 from .utils import load_ui
 from ..utils import is_number
+from ..flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
 from ..user_communication import UserCommunication
 from ..errors import Flo2dQueryResultNull
@@ -32,6 +35,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.setModal(True)
         self.con = con
+        self.parser = ParseDAT()
         self.lyrs = lyrs
         self.gutils = gutils
         self.si_units = None
@@ -49,7 +53,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "ISED": self.sedChBox,
             "IWRFS": self.redFactChBox,
             "LEVEE": self.leveesChBox,
-            # "PROJ": self.projectionSelector,
             "MANNING": self.manningDSpinBox,
             "SWMM": self.swmmChBox,
             "CELLSIZE": self.cellSizeDSpinBox
@@ -62,6 +65,16 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgOpenBtn.clicked.connect(self.connect)
         self.modSelectAllBtn.clicked.connect(self.select_all_modules)
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
+
+    def set_default_controls(self, con):
+        qry = '''INSERT INTO cont (name) VALUES (?);'''
+        cont_rows = self.parser.cont_rows
+        toler_rows = self.parser.toler_rows
+        parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
+        cursor = con.cursor()
+        for param in parameters:
+            cursor.execute(qry, (param,))
+        con.commit()
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
@@ -120,7 +133,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.read()
 
     def create_db(self):
-        """Create FLO-2D model database (GeoPackage)"""
+        """
+        Create FLO-2D model database (GeoPackage).
+        """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         gpkg_path = QFileDialog.getSaveFileName(None,
@@ -130,14 +145,21 @@ class SettingsDialog(qtBaseClass, uiDialog):
             return
         else:
             pass
+
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        start_time = time.time()
         con = database_create(gpkg_path)
+        self.uc.log_info('{0:.3f} seconds => database create'.format(time.time() - start_time))
         if not con:
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
+        # Inserting default values into the 'cont' table.
+        self.set_default_controls(con)
+
+        start_time = time.time()
         gutils = GeoPackageUtils(con, self.iface)
         if gutils.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_path))
@@ -146,8 +168,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
         QApplication.restoreOverrideCursor()
+        self.uc.log_info('{0:.3f} seconds => create gutils '.format(time.time() - start_time))
         # CRS
         self.projectionSelector.selectCrs()
+        start_time = time.time()
         if self.projectionSelector.crs().isValid():
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
@@ -202,21 +226,24 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gutils.set_cont_par('METRIC', 0)
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
         self.gutils.execute(sql, (srsid,))
         sql = "UPDATE gpkg_contents SET srs_id = ?"
         self.gutils.execute(sql, (srsid,))
+        self.uc.log_info('{0:.3f} seconds => spatial ref of tables'.format(time.time() - start_time))
         self.srs_id = srsid
+
+        start_time = time.time()
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
-
         QApplication.restoreOverrideCursor()
-        print self.gutils.execute('pragma journal_mode;').fetchone()
+        self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
 
     def connect(self, gpkg_path=None):
-        """Connect to FLO-2D model database (GeoPackage)"""
+        """
+        Connect to FLO-2D model database (GeoPackage).
+        """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         if not gpkg_path:
@@ -231,8 +258,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             database_disconnect(self.con)
         self.gpkg_path = gpkg_path
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(self.gpkg_path))
+        start_time = time.time()
         self.con = database_connect(self.gpkg_path)
         self.uc.log_info("Connected to {}".format(self.gpkg_path))
+        self.uc.log_info('{0:.3f} seconds => connecting'.format(time.time() - start_time))
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gutils = GeoPackageUtils(self.con, self.iface)
         if self.gutils.check_gpkg():
@@ -242,7 +271,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
             rc = self.gutils.execute(sql)
             rt = rc.fetchone()[0]
             self.srs_id = rt
+            start_time = time.time()
             self.lyrs.load_all_layers(self.gutils)
+            self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
             self.lyrs.zoom_to_all()
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gutils.path))
@@ -275,7 +306,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             metric = 1
         self.gutils.execute(ins_qry, ('METRIC', metric,))
-
 
     def select_all_modules(self):
         for cbx in self.modulesGrp.findChildren(QCheckBox):
