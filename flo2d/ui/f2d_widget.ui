@@ -77,7 +77,7 @@
          <item>
           <widget class="QToolButton" name="help_btn">
            <property name="toolTip">
-            <string>Expand All Groups</string>
+            <string>Show help</string>
            </property>
            <property name="text">
             <string>Help</string>
