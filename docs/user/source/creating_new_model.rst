@@ -32,7 +32,7 @@ The main sub-groups we will be interested in during the model build are:
 * User Layers
 * Schematic Layers
 
-**User Layers** group consists of FLO-2D building blocks. Users can digitise, add and edit GIS and tabular data through these layers and tables. Once the data are prepared, there will be a function to assign or modify the underlying grid cells based on the inputs.
+**User Layers** group consists of FLO-2D building blocks. Users can digitize, add and edit GIS and tabular data through these layers and tables. Once the data are prepared, there will be a function to assign or modify the underlying grid cells based on the inputs.
 
 **Schematic Layers** are the processed information from the User Layers expressed in grid format and ready to be used in a FLO-2D simulation.
 

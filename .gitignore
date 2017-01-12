@@ -11,3 +11,4 @@ pylint.log
 *.gpkg
 *.gpkg-journal
 *flo2d.zip
+*.bak
