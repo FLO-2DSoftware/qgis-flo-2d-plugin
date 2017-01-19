@@ -578,6 +578,10 @@ class Flo2D(object):
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
             return
+        if self.gutils.count('user_model_boundary') > 1:
+            warn = 'There are multiple features created on Computational Domain layer.'
+            warn += 'Only ONE will be used with the lowest fid (first created).'
+            self.uc.show_warn(warn)
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
