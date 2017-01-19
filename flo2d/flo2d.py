@@ -556,11 +556,17 @@ class Flo2D(object):
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
+            if cs <= 0:
+                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
+                return None
             self.gutils.set_cont_par('CELLSIZE', cs)
         else:
             cs = self.gutils.get_cont_par('CELLSIZE')
             cs = None if cs == '' else cs
         if cs:
+            if cs <= 0:
+                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
+                return None
             return cs
         else:
             r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size",
@@ -579,14 +585,15 @@ class Flo2D(object):
             self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
             return
         if self.gutils.count('user_model_boundary') > 1:
-            warn = 'There are multiple features created on Computational Domain layer.'
+            warn = 'There are multiple features created on Computational Domain layer.\n'
             warn += 'Only ONE will be used with the lowest fid (first created).'
             self.uc.show_warn(warn)
         if not self.gutils.is_table_empty('grid'):
             if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
                 return
+        if not self.get_cell_size():
+            return
         try:
-            self.get_cell_size()
             self.uc.progress_bar('Creating grid...')
             self.gutils = GeoPackageUtils(self.con, self.iface)
             bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
