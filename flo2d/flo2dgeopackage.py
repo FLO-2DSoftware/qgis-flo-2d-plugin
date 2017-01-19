@@ -767,6 +767,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 t.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
 
     def export_inflow(self, outdir):
+        # check if there are any inflows defined
+        if self.is_table_empty('inflow'):
+            return
         cont_sql = '''SELECT value FROM cont WHERE name = ?;'''
         inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;'''
         inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY fid, grid_fid;'''
@@ -813,6 +816,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 i.write(res_line.format(*res).rstrip())
 
     def export_outflow(self, outdir):
+        # check if there are any outflows defined
+        if self.is_table_empty('outflow'):
+            return
         outflow_sql = '''
         SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
         FROM outflow WHERE fid = ?;'''
@@ -872,6 +878,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 o.write(o_line.format(ident, gid))
 
     def export_rain(self, outdir):
+        # check if there is any rain defined
+        if self.is_table_empty('rain'):
+            return
         rain_sql = '''SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall,
                              rainabs, irainarf, movingstrom, rainspeed, iraindir
                       FROM rain;'''
@@ -904,6 +913,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 r.write(cell_line.format(*row))
 
     def export_infil(self, outdir):
+        # check if there is any infiltration defined
+        if self.is_table_empty('infil'):
+            return
         infil_sql = '''SELECT * FROM infil;'''
         infil_r_sql = '''SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;'''
         iarea_green_sql = '''SELECT hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_areas_green WHERE fid = ?;'''
@@ -967,6 +979,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     i.write(line10.format(gid, *row))
 
     def export_evapor(self, outdir):
+        # check if there is any evaporation defined
+        if self.is_table_empty('evapor'):
+            return
         evapor_sql = '''SELECT ievapmonth, iday, clocktime FROM evapor;'''
         evapor_month_sql = '''SELECT month, monthly_evap FROM evapor_monthly ORDER BY fid;'''
         evapor_hour_sql = '''SELECT hourly_evap FROM evapor_hourly WHERE month = ? ORDER BY fid;'''
@@ -990,6 +1005,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     e.write(hourly.format(*hrow))
 
     def export_chan(self, outdir):
+        # check if there are any channels defined
+        if self.is_table_empty('chan'):
+            return
         chan_sql = '''SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
         chan_elems_sql = '''SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'''
 
@@ -1081,6 +1099,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
 
     def export_hystruc(self, outdir):
+        # check if there is any hydraulic structure defined
+        if self.is_table_empty('struct'):
+            return
         hystruct_sql = '''SELECT * FROM struct ORDER BY fid;'''
         ratc_sql = '''SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;'''
         repl_ratc_sql = '''SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;'''
@@ -1120,6 +1141,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         h.write(line.format(*subvals))
 
     def export_street(self, outdir):
+        # check if there is any street defined
+        if self.is_table_empty('streets'):
+            return
         street_gen_sql = '''SELECT * FROM street_general ORDER BY fid;'''
         streets_sql = '''SELECT stname FROM streets ORDER BY fid;'''
         streets_seg_sql = '''SELECT igridn, depex, stman, elstr FROM street_seg WHERE str_fid = ? ORDER BY fid;'''
@@ -1148,6 +1172,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     seg_fid += 1
 
     def export_arf(self, outdir):
+        # check if there are any grid cells with ARF defined
+        if self.is_table_empty('arfwrf'):
+            return
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
         tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
         pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -1176,6 +1203,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 a.write(line3.format(*row))
 
     def export_mult(self, outdir):
+        # check if there is any multiple channel defined
+        if self.is_table_empty('mult'):
+            return
         mult_sql = '''SELECT * FROM mult;'''
         mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
         mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = ?;'''
@@ -1197,6 +1227,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     m.write(line2.format(gid, *vals))
 
     def export_sed(self, outdir):
+        # check if there is any sedimentation data defined
+        if self.is_table_empty('mud') and self.is_table_empty('sed'):
+            return
         sed_m_sql = '''SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;'''
         sed_ce_sql = '''SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
                         FROM sed ORDER BY fid;'''
@@ -1262,6 +1295,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 s.write(line10.format(gid, group_fid))
 
     def export_levee(self, outdir):
+        # check if there are any levees defined
+        if self.is_table_empty('levee_data'):
+            return
         levee_gen_sql = '''SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;'''
         levee_data_sql = '''SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;'''
         levee_fail_sql = '''SELECT * FROM levee_failure ORDER BY grid_fid, fid;'''
@@ -1302,6 +1338,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 l.write(line7.format(*row))
 
     def export_fpxsec(self, outdir):
+        # check if there are any floodplain cross section defined
+        if self.is_table_empty('fpxsec'):
+            return
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'NXPRT';'''
         fpxsec_sql = '''SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;'''
         cell_sql = '''SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;'''
@@ -1326,6 +1365,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 f.write(line2.format(iflo, nnxsec, grids_txt))
 
     def export_breach(self, outdir):
+        # check if there is any breach defined
+        if self.is_table_empty('breach'):
+            return
         global_sql = '''SELECT * FROM breach_global ORDER BY fid;'''
         local_sql = '''SELECT * FROM breach ORDER BY fid;'''
         cells_sql = '''SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;'''
@@ -1384,6 +1426,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 b.write(fline.format(*row))
 
     def export_fpfroude(self, outdir):
+        # check if there is any limiting Froude number defined
+        if self.is_table_empty('fpfroude'):
+            return
         fpfroude_sql = '''SELECT fid, froudefp FROM fpfroude ORDER BY fid;'''
         cell_sql = '''SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;'''
 
@@ -1401,6 +1446,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 f.write(line1.format(gid, froudefp))
 
     def export_swmmflo(self, outdir):
+        # check if there is any SWMM data defined
+        if self.is_table_empty('swmm_flo'):
+            return
         swmmflo_sql = '''SELECT swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate
                          FROM swmmflo ORDER BY fid;'''
 
@@ -1417,6 +1465,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 s.write(line1.format(*row))
 
     def export_swmmflort(self, outdir):
+        # check if there is any SWMM rating data defined
+        if self.is_table_empty('swmmflort'):
+            return
         swmmflort_sql = '''SELECT fid, grid_fid FROM swmmflort ORDER BY grid_fid;'''
         data_sql = '''SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;'''
 
@@ -1436,6 +1487,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     s.write(line2.format(*row))
 
     def export_swmmoutf(self, outdir):
+        # check if there is any SWMM data defined
+        if self.is_table_empty('swmmoutf'):
+            return
         swmmoutf_sql = '''SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;'''
 
         line1 = '{0}  {1}  {2}\n'
@@ -1451,6 +1505,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 s.write(line1.format(*row))
 
     def export_tolspatial(self, outdir):
+        # check if there is any tolerance data defined
+        if self.is_table_empty('tolspatial'):
+            return
         tolspatial_sql = '''SELECT fid, tol FROM tolspatial ORDER BY fid;'''
         cell_sql = '''SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;'''
 
@@ -1469,6 +1526,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     t.write(line1.format(gid, tol))
 
     def export_wsurf(self, outdir):
+        # check if there is any water surface data defined
+        if self.is_table_empty('wsurf'):
+            return
         count_sql = '''SELECT COUNT(fid) FROM wsurf;'''
         wsurf_sql = '''SELECT grid_fid, wselev FROM wsurf ORDER BY fid;'''
 
@@ -1488,6 +1548,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 w.write(line2.format(*row))
 
     def export_wstime(self, outdir):
+        # check if there is any water surface data defined
+        if self.is_table_empty('wstime'):
+            return
         count_sql = '''SELECT COUNT(fid) FROM wstime;'''
         wstime_sql = '''SELECT grid_fid, wselev, wstime FROM wstime ORDER BY fid;'''
 
