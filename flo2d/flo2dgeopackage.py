@@ -1447,7 +1447,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_swmmflo(self, outdir):
         # check if there is any SWMM data defined
-        if self.is_table_empty('swmm_flo'):
+        if self.is_table_empty('swmmflo'):
             return
         swmmflo_sql = '''SELECT swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate
                          FROM swmmflo ORDER BY fid;'''
