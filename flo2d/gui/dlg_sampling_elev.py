@@ -25,7 +25,7 @@ uiDialog, qtBaseClass = load_ui('sampling_elev')
 
 class SamplingElevDialog(qtBaseClass, uiDialog):
 
-    RTYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'Unknown']
+    RTYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
 
     def __init__(self, con, iface, lyrs, cell_size, parent=None):
         qtBaseClass.__init__(self)
@@ -110,14 +110,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.output_bounds = (xmin, ymin, xmax, ymax)
         # CRS
         self.out_srs = self.grid.dataProvider().crs().toProj4()
-        # raster type
+        # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        # if the type is unkknown, it is usally for ASCII rasters
-        # we could try to treat them as Float32
-        # but then there is CRS problem, as it is usually also uknown
-        if self.raster_type == 7:
-            return None
         self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
         # NODATA
         und = self.srcNoDataEdit.text()
@@ -137,11 +132,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             msg = 'Couldn\'t remove existing raster:\n{}\nChoose another filename.'.format(self.out_raster)
             self.uc.show_warn(msg)
             return False
-        if not self.get_worp_opts_data():
-            warn = 'The source raster typy is unknown.\n'
-            warn += 'If this is an ASCII raster, save it as GeoTiFF and retry.'
-            self.uc.show_warn(warn)
-            return False
+        self.get_worp_opts_data()
         opts = [
             '-of GTiff',
             '-ot {}'.format(self.RTYPE[self.raster_type]),
