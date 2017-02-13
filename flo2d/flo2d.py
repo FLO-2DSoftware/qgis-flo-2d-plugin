@@ -333,7 +333,10 @@ class Flo2D(object):
         # remove the toolbar
         del self.toolbar
         del self.gutils, self.lyrs
-        del self.iface.f2d['con']
+        try:
+            del self.iface.f2d['con']
+        except KeyError as e:
+            pass
         del self.con
 
     def save_dock_geom(self, dock):
@@ -357,6 +360,8 @@ class Flo2D(object):
             return None
 
     def show_settings(self):
+        # import pydevd
+        # pydevd.settrace()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
@@ -784,7 +789,6 @@ class Flo2D(object):
         self.f2d_widget.bc_editor_grp.setCollapsed(False)
         self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
-
 
     @connection_required
     def show_evap_editor(self):

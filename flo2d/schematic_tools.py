@@ -548,18 +548,45 @@ class DomainSchematizer(GeoPackageUtils):
         """
         self.xsections_feats, self.xs_index = spatial_index(self.xsections_lyr.getFeatures())
 
+    def get_sorted_xs(self, line_feat):
+        """
+        Selecting and sorting cross sections for given line.
+        """
+        line = line_feat.geometry()
+        fids = self.xs_index.intersects(line.boundingBox())
+        cross_sections = [self.xsections_feats[fid] for fid in fids
+                          if self.xsections_feats[fid].geometry().intersects(line)]
+        cross_sections.sort(key=lambda cs: line.lineLocatePoint(cs.geometry().nearestPoint(line)))
+        line_start = line.vertexAt(0)
+        first_xs = cross_sections[0]
+        xs_start = first_xs.geometry().vertexAt(0)
+        if len(cross_sections) < 2:
+            self.uc.show_warn('You need at least 2 cross-sections crossing left bank line!')
+            raise Exception
+        if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
+            return cross_sections
+        else:
+            msg = 'Left bank line ({}) and first cross-section ({}) have to start in the same grid cell!'
+            msg = msg.format(line_feat.id(), first_xs.id())
+            self.uc.show_warn(msg)
+            raise Exception
+
     def process_bank_lines(self):
         """
         Schematizing left bank.
         """
         # Creating spatial index on domain polygons and finding proper one for each river center line
-        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
         self.set_xs_features()
+        feat_xs = []
         for feat in self.user_lbank_lyr.getFeatures():
+            # Getting sorted cross section
+            sorted_xs = self.get_sorted_xs(feat)
+            feat_xs.append((feat, sorted_xs))
+        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
+        for feat, sorted_xs in feat_xs:
             lbank_fid = feat.id()
             lbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
-            # Getting sorted cross section, left and right edge
-            sorted_xs = self.get_sorted_xs(feat)
+            # Getting left and right edge
             self.schematize_banks(feat)
             self.banks_data.append((lbank_fid, lbank_geom, sorted_xs))
         self.left_bank_lyr.triggerRepaint()
@@ -619,29 +646,6 @@ class DomainSchematizer(GeoPackageUtils):
         self.update_xs_type()
         self.update_rbank()
         self.copy_user_xs_data_to_schem()
-
-    def get_sorted_xs(self, centerline_feat):
-        """
-        Selecting and sorting cross sections for given river center line.
-        """
-        centerline = centerline_feat.geometry()
-        fids = self.xs_index.intersects(centerline.boundingBox())
-        cross_sections = [self.xsections_feats[fid] for fid in fids
-                          if self.xsections_feats[fid].geometry().intersects(centerline)]
-        cross_sections.sort(key=lambda cs: centerline.lineLocatePoint(cs.geometry().nearestPoint(centerline)))
-        line_start = centerline.vertexAt(0)
-        first_xs = cross_sections[0]
-        xs_start = first_xs.geometry().vertexAt(0)
-        if len(cross_sections) < 2:
-            self.uc.show_warn('You need at least 2 cross-sections crossing left bank line!')
-            raise Exception
-        if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
-            return cross_sections
-        else:
-            msg = 'Left bank line ({}) and first cross-section ({}) have to start in the same grid cell!'
-            msg = msg.format(centerline_feat.id(), first_xs.id())
-            self.uc.show_warn(msg)
-            raise Exception
 
     def schematize_banks(self, lbank_feat):
         """

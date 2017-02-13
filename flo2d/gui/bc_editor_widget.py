@@ -120,7 +120,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         qry = 'SELECT * FROM all_schem_bc;'
         exist_bc = self.gutils.execute(qry).fetchone()
         if exist_bc:
-            if not self.uc.question('There are some inflow grid cells defined already. Overwrite them?'):
+            if not self.uc.question('There are some boundary conditions grid cells defined already. Overwrite them?'):
                 return
         self.schematize_inflows()
         self.schematize_outflows()
@@ -770,14 +770,16 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_outflows(self):
         del_qry = 'DELETE FROM outflow_cells;'
-        ins_qry = '''INSERT INTO outflow_cells (outflow_fid, grid_fid)
+        ins_qry = '''
+            INSERT INTO outflow_cells (outflow_fid, grid_fid)
             SELECT
                 abc.bc_fid, g.fid
             FROM
                 grid AS g, all_user_bc AS abc
             WHERE
                 abc.type = 'outflow' AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
+                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+                '''
         self.gutils.execute(del_qry)
         self.gutils.execute(ins_qry)
 
