@@ -843,6 +843,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         floodplains = {}
         previous_oid = -1
         row = None
+
         with open(outflow, 'w') as o:
             for oid, gid in out_cells:
 
