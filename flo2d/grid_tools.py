@@ -14,6 +14,54 @@ from PyQt4.QtCore import QPyNullVariant
 from utils import is_number
 
 
+class ZonalStatistics(object):
+
+    def __init__(self, grid_lyr, point_lyr, field_name, calculation_type):
+        self.grid = grid_lyr
+        self.points = point_lyr
+        self.field = field_name
+        self.calculation_type = calculation_type
+        self.points_feats = None
+        self.points_index = None
+        self.calculation_method = None
+        self.setup_probing()
+
+    def setup_probing(self):
+        self.points_feats, self.points_index = spatial_index(self.points.getFeatures())
+        if self.calculation_type == 'Average':
+            self.calculation_method = lambda vals: sum(vals) / len(vals)
+        elif self.calculation_type == 'Max':
+            self.calculation_method = lambda vals: max(vals)
+        elif self.calculation_type == 'Min':
+            self.calculation_method = lambda vals: min(vals)
+        else:
+            pass
+
+    def grid_statistics(self):
+        """
+        Method for calculating grid cell values from point layer.
+        """
+
+        for feat in self.grid.getFeatures():
+            geom = feat.geometry()
+            geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+            geos_geom.prepareGeometry()
+            fids = self.points_index.intersects(geom.boundingBox())
+            points = []
+            for fid in fids:
+                point_feat = self.points_feats[fid]
+                other_geom = point_feat.geometry()
+                isin = geos_geom.intersects(other_geom.geometry())
+                if isin is True:
+                    points.append(point_feat[self.field])
+                else:
+                    pass
+            try:
+                yield self.calculation_method(points), feat['fid']
+            except (ValueError, ZeroDivisionError) as e:
+                pass
+
+
 def spatial_index(features):
     """
     Creating spatial index over collection of features.
@@ -178,9 +226,9 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     gutils.con.commit()
 
 
-def update_elevation(gutils, grid, elev):
+def modify_elevation(gutils, grid, elev):
     """
-    Updating elevation values inside 'grid' table.
+    Modifying elevation values inside 'grid' table.
     """
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
@@ -195,6 +243,16 @@ def update_elevation(gutils, grid, elev):
         else:
             pass
     gutils.con.commit()
+
+
+def set_elevation(gutils, elev_fid):
+    """
+    Setting elevation values inside 'grid' table.
+    """
+    set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+    for el, fid in elev_fid:
+        gutils.con.execute(set_qry, (el, fid))
+        gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):

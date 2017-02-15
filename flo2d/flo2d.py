@@ -22,7 +22,7 @@ from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
+from grid_tools import square_grid, update_roughness, modify_elevation, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics, set_elevation
 from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -38,6 +38,7 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
+from .gui.dlg_sampling_xyz import SamplingXYZDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 
 
@@ -216,6 +217,12 @@ class Flo2D(object):
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
+            text=self.tr(u'Assign Elevation from points'),
+            callback=lambda: self.points_elevation(),
+            parent=self.iface.mainWindow())
+
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
@@ -360,8 +367,6 @@ class Flo2D(object):
             return None
 
     def show_settings(self):
-        # import pydevd
-        # pydevd.settrace()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
@@ -665,13 +670,41 @@ class Flo2D(object):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_elevation(self.gutils, grid_lyr, elev_lyr)
+            modify_elevation(self.gutils, grid_lyr, elev_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning grid elevation finished!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
+
+    @connection_required
+    def points_elevation(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        points_lyr = dlg.current_lyr
+        zfield = dlg.fields_cbo.currentText()
+        calc_type = dlg.calc_cbo.currentText()
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            zs = ZonalStatistics(grid_lyr, points_lyr, zfield, calc_type)
+            elev_with_fid = zs.grid_statistics()
+            set_elevation(self.gutils, elev_with_fid)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning grid elevation aborted! Please check elevation points layer.")
 
     @connection_required
     def get_elevation(self):
