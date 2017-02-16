@@ -22,7 +22,7 @@ from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, modify_elevation, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics, set_elevation
+from grid_tools import square_grid, update_roughness, modify_elevation, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -692,13 +692,22 @@ class Flo2D(object):
         points_lyr = dlg.current_lyr
         zfield = dlg.fields_cbo.currentText()
         calc_type = dlg.calc_cbo.currentText()
+        search_distance = dlg.search_spin_box.value()
 
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            zs = ZonalStatistics(grid_lyr, points_lyr, zfield, calc_type)
-            elev_with_fid = zs.grid_statistics()
-            set_elevation(self.gutils, elev_with_fid)
+            zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+            points_elevation = zs.grid_statistics()
+            zs.set_elevation(points_elevation)
+            cmd, out = zs.rasterize_grid()
+            self.uc.log_info(cmd)
+            self.uc.log_info(out)
+            cmd, out = zs.fill_nodata()
+            self.uc.log_info(cmd)
+            self.uc.log_info(out)
+            zs.update_null_elevation()
+            zs.remove_rasters()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning elevation finished!")
         except Exception as e:

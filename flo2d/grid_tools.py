@@ -8,27 +8,42 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import os
 import math
-from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster
+import uuid
+from subprocess import Popen, PIPE, STDOUT
+from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from PyQt4.QtCore import QPyNullVariant
 from utils import is_number
 
 
 class ZonalStatistics(object):
 
-    def __init__(self, grid_lyr, point_lyr, field_name, calculation_type):
+    def __init__(self, gutils, grid_lyr, point_lyr, field_name, calculation_type, search_distance=0):
+        self.gutils = gutils
         self.grid = grid_lyr
         self.points = point_lyr
         self.field = field_name
         self.calculation_type = calculation_type
+        self.search_distance = search_distance
         self.points_feats = None
         self.points_index = None
         self.calculation_method = None
+        self.gap_raster = None
+        self.filled_raster = None
+        self.tmp = os.environ['TMP']
         self.setup_probing()
+
+    def remove_rasters(self):
+        try:
+            os.remove(self.gap_raster)
+            os.remove(self.filled_raster)
+        except OSError as e:
+            pass
 
     def setup_probing(self):
         self.points_feats, self.points_index = spatial_index(self.points.getFeatures())
-        if self.calculation_type == 'Average':
+        if self.calculation_type == 'Mean':
             self.calculation_method = lambda vals: sum(vals) / len(vals)
         elif self.calculation_type == 'Max':
             self.calculation_method = lambda vals: max(vals)
@@ -36,12 +51,14 @@ class ZonalStatistics(object):
             self.calculation_method = lambda vals: min(vals)
         else:
             pass
+        self.gap_raster = os.path.join(self.tmp, 'gap_raster_{0}.tif'.format(uuid.uuid4()))
+        self.filled_raster = os.path.join(self.tmp, 'filled_raster_{0}.tif'.format(uuid.uuid4()))
+        self.gutils.execute('UPDATE grid SET elevation = NULL;')
 
     def grid_statistics(self):
         """
         Method for calculating grid cell values from point layer.
         """
-
         for feat in self.grid.getFeatures():
             geom = feat.geometry()
             geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
@@ -60,6 +77,61 @@ class ZonalStatistics(object):
                 yield self.calculation_method(points), feat['fid']
             except (ValueError, ZeroDivisionError) as e:
                 pass
+
+    def rasterize_grid(self):
+        grid_extent = self.grid.extent()
+        corners = (grid_extent.xMinimum(), grid_extent.yMinimum(), grid_extent.xMaximum(), grid_extent.yMaximum())
+
+        command = 'gdal_rasterize'
+        field = '-a elevation'
+        rtype = '-ot Float64'
+        rformat = '-of GTiff'
+        extent = '-te {0} {1} {2} {3}'.format(*corners)
+        res = '-tr {0} {0}'.format(self.gutils.get_cont_par('CELLSIZE'))
+        nodata = '-a_nodata NULL'
+        compress = '-co COMPRESS=LZW'
+        predictor = '-co PREDICTOR=1'
+        vlayer = '-l grid'
+        gpkg = '"{0}"'.format(self.grid.source().split('|')[0])
+        raster = '"{0}"'.format(self.gap_raster)
+
+        parameters = (command, field, rtype, rformat, extent, res, nodata, compress, predictor, vlayer, gpkg, raster)
+        cmd = ' '.join(parameters)
+        success = False
+        loop = 0
+        out = None
+        while success is False:
+            proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            out = proc.communicate()
+            if os.path.exists(self.gap_raster):
+                success = True
+            else:
+                loop += 1
+            if loop > 3:
+                raise Exception
+        return cmd, out
+
+    def fill_nodata(self):
+        search = '-md {0}'.format(self.search_distance) if self.search_distance > 0 else ''
+        cmd = 'gdal_fillnodata {0} "{1}" "{2}"'.format(search, self.gap_raster, self.filled_raster)
+        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        out = proc.communicate()
+        return cmd, out
+
+    def update_null_elevation(self):
+        req = QgsFeatureRequest().setFilterExpression('"elevation" IS NULL')
+        elev_fid = raster2grid(self.grid, self.filled_raster, request=req)
+        self.set_elevation(elev_fid)
+
+    def set_elevation(self, elev_fid):
+        """
+        Setting elevation values inside 'grid' table.
+        """
+        set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        cur = self.gutils.con.cursor()
+        for el, fid in elev_fid:
+            cur.execute(set_qry, (el, fid))
+        self.gutils.con.commit()
 
 
 def spatial_index(features):
@@ -245,16 +317,6 @@ def modify_elevation(gutils, grid, elev):
     gutils.con.commit()
 
 
-def set_elevation(gutils, elev_fid):
-    """
-    Setting elevation values inside 'grid' table.
-    """
-    set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-    for el, fid in elev_fid:
-        gutils.con.execute(set_qry, (el, fid))
-        gutils.con.commit()
-
-
 def evaluate_arfwrf(gutils, grid, areas):
     """
     Calculating and inserting ARF and WRF values into 'blocked_cells' table.
@@ -273,7 +335,7 @@ def evaluate_arfwrf(gutils, grid, areas):
     gutils.con.commit()
 
 
-def raster2grid(grid, out_raster):
+def raster2grid(grid, out_raster, request=None):
     """
     Generator for probing raster data within 'grid' features.
     """
@@ -281,7 +343,8 @@ def raster2grid(grid, out_raster):
     if not probe_raster.isValid():
         return
 
-    for feat in grid.getFeatures():
+    features = grid.getFeatures() if request is None else grid.getFeatures(request)
+    for feat in features:
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
         if ident.isValid():
