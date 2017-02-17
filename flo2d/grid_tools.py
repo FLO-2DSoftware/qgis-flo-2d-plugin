@@ -26,6 +26,7 @@ class ZonalStatistics(object):
         self.field = field_name
         self.calculation_type = calculation_type
         self.search_distance = search_distance
+        self.uid = uuid.uuid4()
         self.points_feats = None
         self.points_index = None
         self.calculation_method = None
@@ -33,13 +34,6 @@ class ZonalStatistics(object):
         self.filled_raster = None
         self.tmp = os.environ['TMP']
         self.setup_probing()
-
-    def remove_rasters(self):
-        try:
-            os.remove(self.gap_raster)
-            os.remove(self.filled_raster)
-        except OSError as e:
-            pass
 
     def setup_probing(self):
         self.points_feats, self.points_index = spatial_index(self.points.getFeatures())
@@ -51,11 +45,18 @@ class ZonalStatistics(object):
             self.calculation_method = lambda vals: min(vals)
         else:
             pass
-        self.gap_raster = os.path.join(self.tmp, 'gap_raster_{0}.tif'.format(uuid.uuid4()))
-        self.filled_raster = os.path.join(self.tmp, 'filled_raster_{0}.tif'.format(uuid.uuid4()))
+        self.gap_raster = os.path.join(self.tmp, 'gap_raster_{0}.tif'.format(self.uid))
+        self.filled_raster = os.path.join(self.tmp, 'filled_raster_{0}.tif'.format(self.uid))
         self.gutils.execute('UPDATE grid SET elevation = NULL;')
 
-    def grid_statistics(self):
+    def remove_rasters(self):
+        try:
+            os.remove(self.gap_raster)
+            os.remove(self.filled_raster)
+        except OSError as e:
+            pass
+
+    def points_elevation(self):
         """
         Method for calculating grid cell values from point layer.
         """
@@ -74,7 +75,7 @@ class ZonalStatistics(object):
                 else:
                     pass
             try:
-                yield self.calculation_method(points), feat['fid']
+                yield round(self.calculation_method(points), 3), feat['fid']
             except (ValueError, ZeroDivisionError) as e:
                 pass
 
@@ -118,10 +119,10 @@ class ZonalStatistics(object):
         out = proc.communicate()
         return cmd, out
 
-    def update_null_elevation(self):
+    def null_elevation(self):
         req = QgsFeatureRequest().setFilterExpression('"elevation" IS NULL')
         elev_fid = raster2grid(self.grid, self.filled_raster, request=req)
-        self.set_elevation(elev_fid)
+        return elev_fid
 
     def set_elevation(self, elev_fid):
         """
@@ -353,7 +354,6 @@ def raster2grid(grid, out_raster, request=None):
             else:
                 val = None
             yield (val, feat.id())
-    del probe_raster
 
 
 def grid_has_empty_elev(gutils):

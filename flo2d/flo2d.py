@@ -158,6 +158,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
+            text=self.tr(u'Show Control Table'),
+            callback=lambda: self.show_control_table(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
@@ -179,6 +185,18 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
             text=self.tr(u'Sampling Grid Elevation'),
             callback=lambda: self.get_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
+            text=self.tr(u'Assign Elevation from polygons'),
+            callback=lambda: self.single_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_xyz.svg'),
+            text=self.tr(u'Assign Elevation from points'),
+            callback=lambda: self.xyz_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -206,22 +224,11 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
-            text=self.tr(u'Assign Elevation from polygons'),
-            callback=lambda: self.single_elevation(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
-            text=self.tr(u'Assign Elevation from points'),
-            callback=lambda: self.points_elevation(),
-            parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
@@ -588,6 +595,11 @@ class Flo2D(object):
                 return None
 
     @connection_required
+    def show_control_table(self):
+        cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
+        self.iface.showAttributeTable(cont_table)
+
+    @connection_required
     def create_grid(self):
         if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
@@ -679,7 +691,7 @@ class Flo2D(object):
             self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
 
     @connection_required
-    def points_elevation(self):
+    def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -698,7 +710,7 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
-            points_elevation = zs.grid_statistics()
+            points_elevation = zs.points_elevation()
             zs.set_elevation(points_elevation)
             cmd, out = zs.rasterize_grid()
             self.uc.log_info(cmd)
@@ -706,14 +718,15 @@ class Flo2D(object):
             cmd, out = zs.fill_nodata()
             self.uc.log_info(cmd)
             self.uc.log_info(out)
-            zs.update_null_elevation()
+            null_elevation = zs.null_elevation()
+            zs.set_elevation(null_elevation)
             zs.remove_rasters()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning elevation finished!")
+            self.uc.show_info("Calculating elevation finished!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning grid elevation aborted! Please check elevation points layer.")
+            self.uc.show_warn("Calculating grid elevation aborted! Please check elevation points layer.")
 
     @connection_required
     def get_elevation(self):
