@@ -164,15 +164,21 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
+            text=self.tr(u'Profile Tool'),
+            callback=self.profile,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
-            text=self.tr(u'Profile Tool'),
-            callback=self.profile,
+            os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
+            text=self.tr(u'Grid Info Tool'),
+            callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -212,12 +218,6 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
-            text=self.tr(u'Grid Info Tool'),
-            callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
@@ -229,7 +229,6 @@ class Flo2D(object):
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow())
 
-
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
         self.f2d_dock.setWindowTitle(u'FLO-2D')
@@ -238,7 +237,8 @@ class Flo2D(object):
         self.f2d_dock.setWidget(self.f2d_widget)
         self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
 
-    def f2d_dock_save_area(self, area):
+    @staticmethod
+    def f2d_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('dock/area', area)
 
@@ -250,7 +250,8 @@ class Flo2D(object):
         self.f2d_plot_dock.setWidget(self.f2d_plot)
         self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
 
-    def f2d_plot_dock_save_area(self, area):
+    @staticmethod
+    def f2d_plot_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('plot_dock/area', area)
 
@@ -262,7 +263,8 @@ class Flo2D(object):
         self.f2d_table_dock.setWidget(self.f2d_table)
         self.f2d_table_dock.dockLocationChanged.connect(self.f2d_table_dock_save_area)
 
-    def f2d_table_dock_save_area(self, area):
+    @staticmethod
+    def f2d_table_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('table_dock/area', area)
 
@@ -274,7 +276,8 @@ class Flo2D(object):
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
 
-    def f2d_grid_info_dock_save_area(self, area):
+    @staticmethod
+    def f2d_grid_info_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('grid_info_dock/area', area)
 
@@ -353,11 +356,13 @@ class Flo2D(object):
             pass
         del self.con
 
-    def save_dock_geom(self, dock):
+    @staticmethod
+    def save_dock_geom(dock):
         s = QSettings('FLO2D', dock.windowTitle())
         s.setValue('geometry', dock.saveGeometry())
 
-    def restore_dock_geom(self, dock):
+    @staticmethod
+    def restore_dock_geom(dock):
         s = QSettings('FLO2D', dock.windowTitle())
         g = s.value('geometry')
         if g:
