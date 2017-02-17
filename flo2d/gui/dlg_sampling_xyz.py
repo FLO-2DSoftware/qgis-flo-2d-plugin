@@ -37,18 +37,20 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         """
         Filter layer combo for points and connect field cbo.
         """
-        self.points_cbo.addItem('', None)
-        lyrs = self.lyrs.list_group_vlayers()
-        for l in lyrs:
-            if l.geometryType() == QGis.Point:
-                self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
-            else:
-                pass
+        try:
+            lyrs = self.lyrs.list_group_vlayers()
+            for l in lyrs:
+                if l.geometryType() == QGis.Point:
+                    self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                else:
+                    pass
+            self.populate_fields_cbo(self.points_cbo.currentIndex())
+        except Exception as e:
+            pass
 
     def populate_fields_cbo(self, idx):
-        if idx == 0:
-            return
         uri = self.points_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
         self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
         self.fields_cbo.setLayer(self.current_lyr)
+        self.fields_cbo.setCurrentIndex(0)

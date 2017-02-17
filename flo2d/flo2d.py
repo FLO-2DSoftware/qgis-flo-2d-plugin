@@ -601,8 +601,11 @@ class Flo2D(object):
 
     @connection_required
     def show_control_table(self):
-        cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
-        self.iface.showAttributeTable(cont_table)
+        try:
+            cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
+            self.iface.showAttributeTable(cont_table)
+        except AttributeError as e:
+            pass
 
     @connection_required
     def create_grid(self):
