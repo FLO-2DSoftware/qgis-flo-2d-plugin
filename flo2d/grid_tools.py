@@ -13,8 +13,34 @@ import math
 import uuid
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
+from qgis.analysis import QgsInterpolator, QgsTINInterpolator
 from PyQt4.QtCore import QPyNullVariant
 from utils import is_number
+
+
+class TINInterpolator(object):
+
+    def __init__(self, point_lyr, field_name, memory=True):
+        self.lyr = point_lyr
+        self.field_name = field_name
+        self.memory = memory
+        self.lyr_data = None
+        self.interpolator = None
+
+    def setup_layer_data(self):
+        index = self.lyr.fieldNameIndex(self.field_name)
+        self.lyr_data = QgsInterpolator.LayerData()
+        self.lyr_data.interpolationAttribute = index
+        self.lyr_data.ldata.vectorLayer = self.lyr
+        self.lyr_data.mInputType = 0
+        self.lyr_data.zCoordInterpolation = False
+        self.interpolator = QgsTINInterpolator([self.lyr_data])
+
+    def tin_at_xy(self, x, y):
+        success, value = self.interpolator(x, y)
+        if success != 0:
+            raise ValueError
+        return value
 
 
 class ZonalStatistics(object):
@@ -185,7 +211,7 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, *columns):
+def poly2grid(grid, polygons, request, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
@@ -196,7 +222,8 @@ def poly2grid(grid, polygons, *columns):
         allfeatures[feature.id()] = feature
         index.insertFeature(feature)
 
-    for feat in polygons.getFeatures():
+    polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
+    for feat in polygon_features:
         geom = feat.geometry()
         geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
         geos_geom.prepareGeometry()
@@ -295,7 +322,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, column_name))
     gutils.con.commit()
 
 
@@ -306,7 +333,7 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-    for el, cor, fid in poly2grid(grid, elev, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, 'elev', 'correction'):
         if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
             gutils.con.execute(set_qry, (el, fid))
         elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):

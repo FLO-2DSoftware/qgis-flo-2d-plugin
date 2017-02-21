@@ -46,7 +46,7 @@ class TestGridTools(unittest.TestCase):
         glayer = QgsVectorLayer(grid, 'grid', 'ogr')
         rlayer = QgsVectorLayer(roughness, 'roughness', 'ogr')
         n_values = []
-        for n, gid in poly2grid(glayer, rlayer, 'manning'):
+        for n, gid in poly2grid(glayer, rlayer, None, 'manning'):
             n_values.append(float(n))
         man_sum = sum(n_values)
         self.assertEqual(round(man_sum, 1), 16.5)
