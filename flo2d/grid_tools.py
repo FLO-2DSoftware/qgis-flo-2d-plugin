@@ -31,16 +31,14 @@ class TINInterpolator(object):
         index = self.lyr.fieldNameIndex(self.field_name)
         self.lyr_data = QgsInterpolator.LayerData()
         self.lyr_data.interpolationAttribute = index
-        self.lyr_data.ldata.vectorLayer = self.lyr
+        self.lyr_data.vectorLayer = self.lyr
         self.lyr_data.mInputType = 0
         self.lyr_data.zCoordInterpolation = False
         self.interpolator = QgsTINInterpolator([self.lyr_data])
 
     def tin_at_xy(self, x, y):
-        success, value = self.interpolator(x, y)
-        if success != 0:
-            raise ValueError
-        return value
+        success, value = self.interpolator.interpolatePoint(x, y)
+        return success, value
 
 
 class ZonalStatistics(object):

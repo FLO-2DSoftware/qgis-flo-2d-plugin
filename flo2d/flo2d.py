@@ -22,7 +22,7 @@ from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, modify_elevation, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
+from grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -39,6 +39,7 @@ from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
 from .gui.dlg_sampling_xyz import SamplingXYZDialog
+from .gui.dlg_grid_elev import GridCorrectionDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 
 
@@ -190,19 +191,19 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
             text=self.tr(u'Sampling Grid Elevation'),
-            callback=lambda: self.get_elevation(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
-            text=self.tr(u'Assign Elevation from polygons'),
-            callback=lambda: self.single_elevation(),
+            callback=lambda: self.raster_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/sample_elev_xyz.svg'),
             text=self.tr(u'Assign Elevation from points'),
             callback=lambda: self.xyz_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
+            text=self.tr(u'Correct Grid Elevation'),
+            callback=lambda: self.correct_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -639,64 +640,23 @@ class Flo2D(object):
             self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
 
     @connection_required
-    def get_roughness(self):
-        if not self.lyrs.save_edits_and_proceed("Roughness"):
+    def raster_elevation(self):
+        if self.gutils.is_table_empty('user_model_boundary'):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
-        ok = self.mann_dlg.exec_()
+        cell_size = self.get_cell_size()
+        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
+        ok = dlg.exec_()
         if ok:
             pass
         else:
             return
-        if self.mann_dlg.allGridElemsRadio.isChecked():
-            rough_lyr = self.mann_dlg.current_lyr
-            nfield = self.mann_dlg.srcFieldCbo.currentText()
-            flag = True
-        else:
-            rough_name = 'Roughness'
-            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
-            nfield = 'n'
-            flag = False
-            if self.gutils.is_table_empty('user_roughness'):
-                self.uc.show_warn("There is no roughness polygons! Please digitize them before running tool.")
-                return
-            else:
-                pass
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning roughness finished!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
-
-    @connection_required
-    def single_elevation(self):
-        if not self.lyrs.save_edits_and_proceed("Grid Elevation"):
-            return
-        if self.gutils.is_table_empty('user_elevation_polygons'):
-            self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
-            return
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            modify_elevation(self.gutils, grid_lyr, elev_lyr)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning grid elevation finished!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
+        res = dlg.probe_elevation()
+        if res:
+            dlg.show_probing_result_info()
 
     @connection_required
     def xyz_elevation(self):
@@ -737,23 +697,68 @@ class Flo2D(object):
             self.uc.show_warn("Calculating grid elevation aborted! Please check elevation points layer.")
 
     @connection_required
-    def get_elevation(self):
-        if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+    def correct_elevation(self):
+        if not self.lyrs.save_edits_and_proceed("Elevation Polygons"):
+            return
+        if self.gutils.is_table_empty('user_elevation_polygons'):
+            self.uc.bar_warn("There is no any elevation polygons! Please digitize them before running tool.")
             return
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        cell_size = self.get_cell_size()
-        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
+        self.correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
+        ok = self.correct_dlg.exec_()
         if ok:
             pass
         else:
             return
-        res = dlg.probe_elevation()
-        if res:
-            dlg.show_probing_result_info()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.correct_dlg.method()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning grid elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning grid elevation aborted! Please check elevation polygons layer.")
+
+    @connection_required
+    def get_roughness(self):
+        if not self.lyrs.save_edits_and_proceed("Roughness"):
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        self.mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
+        ok = self.mann_dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        if self.mann_dlg.allGridElemsRadio.isChecked():
+            rough_lyr = self.mann_dlg.current_lyr
+            nfield = self.mann_dlg.srcFieldCbo.currentText()
+            flag = True
+        else:
+            rough_name = 'Roughness'
+            rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
+            nfield = 'n'
+            flag = False
+            if self.gutils.is_table_empty('user_roughness'):
+                self.uc.show_warn("There is no roughness polygons! Please digitize them before running tool.")
+                return
+            else:
+                pass
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning roughness finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
 
     @connection_required
     def eval_arfwrf(self):
@@ -872,6 +877,9 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
+        if self.gutils.is_table_empty('user_levee_lines'):
+            self.uc.bar_warn("There is user levee lines! Please create them before running tool.")
+            return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
@@ -881,7 +889,7 @@ class Flo2D(object):
         else:
             pass
         # check if user levee layers are in edit mode
-        levee_lyrs = ['Levee Points', 'Levee Lines', 'Levee Polygons']
+        levee_lyrs = ['Elevation Points', 'Levee Lines', 'Elevation Polygons']
         for lyr in levee_lyrs:
             if not self.lyrs.save_edits_and_proceed(lyr):
                 return
@@ -907,7 +915,7 @@ class Flo2D(object):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+            self.uc.show_warn("Assigning values aborted! Please check your crest elevation source layers.")
 
     @connection_required
     def schematize_channels(self):

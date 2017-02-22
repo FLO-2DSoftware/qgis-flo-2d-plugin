@@ -57,14 +57,6 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
-            ('user_levee_points', {
-                'name': 'Levee Points',
-                'sgroup': 'User Layers',
-                'styles': ['user_levee_points.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': False
-            }),
             ('user_fpxsec', {
                 'name': 'Floodplain cross-sections',
                 'sgroup': 'User Layers',
@@ -136,14 +128,6 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
-            ('user_levee_polygons', {
-                'name': 'Levee Polygons',
-                'sgroup': 'User Layers',
-                'styles': ['user_levee_polygons.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['levees'],
-                'readonly': False
-            }),
             ('user_model_boundary', {
                 'name': 'Computational Domain',
                 'sgroup': 'User Layers',
@@ -160,8 +144,16 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
+            ('user_elevation_points', {
+                'name': 'Elevation Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_elevation_points.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('user_elevation_polygons', {
-                'name': 'Grid Elevation',
+                'name': 'Elevation Polygons',
                 'sgroup': 'User Layers',
                 'styles': ['user_elevation_polygons.qml'],
                 'attrs_edit_widgets': {},
@@ -1073,8 +1065,8 @@ class Layers(QObject):
             )
             l = self.get_layer_tree_item(lyr_id).layer()
             if l.name() == 'Control':
-                filter_expresion = 'SELECT name, value, note FROM cont ORDER BY name;'
-                l.setSubsetString(filter_expresion)
+                filter_expression = 'SELECT name, value, note FROM cont ORDER BY name;'
+                l.setSubsetString(filter_expression)
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:

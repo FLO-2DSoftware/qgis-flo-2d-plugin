@@ -56,7 +56,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             row = self.gutils.execute(qry).fetchone()
             if is_number(row[0]) and not row[0] == '0':
                 self.simulate_rain_chbox.setChecked(True)
-                self.rain = Rain(self.con, self.iface)
+            self.rain = Rain(self.con, self.iface)
 
     def setup_plot(self):
         self.plotWidget = PlotWidget()

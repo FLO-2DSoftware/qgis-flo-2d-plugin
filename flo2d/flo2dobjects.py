@@ -900,7 +900,8 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         data = self.execute(qry).fetchone()
         if not data:
-            values = ['' for x in self.columns]
+            values = [''] * len(self.columns)
+            values[0] = 1
         else:
             values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))
@@ -912,7 +913,7 @@ class Rain(GeoPackageUtils):
             fid, name, irainreal, irainbuilding, time_series_fid, tot_rainfall, rainabs, irainarf,
             movingstrom, rainspeed, iraindir, notes)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
-        self.execute(qry, self.row)
+        self.execute(qry, self.row.values())
 
     def get_time_series(self):
         qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
@@ -1045,6 +1046,7 @@ class Structure(GeoPackageUtils):
 
     def __init__(self, fid, con, iface):
         super(Structure, self).__init__(con, iface)
+        self.row = None
         self.fid = fid
         self.type = None
         self.name = None
