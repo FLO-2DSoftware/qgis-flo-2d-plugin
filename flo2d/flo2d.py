@@ -79,20 +79,17 @@ class Flo2D(object):
         self.gutils = None
         self.f2g = None
         self.prep_sql = None
-        self.create_f2d_plot_dock()
-        self.create_f2d_table_dock()
-        self.create_f2d_dock()
-        self.create_f2d_grid_info_dock()
-        self.add_docks_to_iface()
-        self.set_editors_map()
+        self.f2d_widget = None
+        self.f2d_plot_dock = None
+        self.f2d_table_dock = None
+        self.f2d_dock = None
+        self.f2d_grid_info_dock = None
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
         self.dlg_inflow_editor = None
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
-        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
-        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
     def tr(self, message):
         """
@@ -100,6 +97,34 @@ class Flo2D(object):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
+
+    def setup_dock_widgets(self):
+        self.create_f2d_plot_dock()
+        self.create_f2d_table_dock()
+        self.create_f2d_dock()
+        self.create_f2d_grid_info_dock()
+        self.add_docks_to_iface()
+        self.set_editors_map()
+
+        self.info_tool.feature_picked.connect(self.get_feature_info)
+        self.profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
+
+        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
+        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
+
+        self.f2d_widget.profile_tool.setup_connection()
+        self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.ic_editor.populate_cbos()
+        self.f2d_widget.street_editor.setup_connection()
+        self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.struct_editor.populate_structs()
+        self.f2d_widget.rain_editor.setup_connection()
+        self.f2d_widget.rain_editor.rain_properties()
+        self.f2d_widget.xs_editor.setup_connection()
+        self.f2d_widget.xs_editor.populate_xsec_cbo()
+        self.f2d_widget.fpxsec_editor.setup_connection()
+        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def add_action(
             self,
@@ -321,25 +346,25 @@ class Flo2D(object):
             self.f2d_grid_info_dock.close()
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
             del self.f2d_grid_info_dock
-        if self.f2d_widget.bc_editor is not None:
-            self.f2d_widget.bc_editor.close()
-            del self.f2d_widget.bc_editor
-        if self.f2d_widget.profile_tool is not None:
-            self.f2d_widget.profile_tool.close()
-            del self.f2d_widget.profile_tool
-        if self.f2d_widget.ic_editor is not None:
-            self.f2d_widget.ic_editor.close()
-            del self.f2d_widget.ic_editor
-        if self.f2d_widget.rain_editor is not None:
-            self.f2d_widget.rain_editor.close()
-            del self.f2d_widget.rain_editor
-        if self.f2d_widget.fpxsec_editor is not None:
-            self.f2d_widget.fpxsec_editor.close()
-            del self.f2d_widget.fpxsec_editor
-        if self.f2d_widget.struct_editor is not None:
-            self.f2d_widget.struct_editor.close()
-            del self.f2d_widget.struct_editor
         if self.f2d_widget is not None:
+            if self.f2d_widget.bc_editor is not None:
+                self.f2d_widget.bc_editor.close()
+                del self.f2d_widget.bc_editor
+            if self.f2d_widget.profile_tool is not None:
+                self.f2d_widget.profile_tool.close()
+                del self.f2d_widget.profile_tool
+            if self.f2d_widget.ic_editor is not None:
+                self.f2d_widget.ic_editor.close()
+                del self.f2d_widget.ic_editor
+            if self.f2d_widget.rain_editor is not None:
+                self.f2d_widget.rain_editor.close()
+                del self.f2d_widget.rain_editor
+            if self.f2d_widget.fpxsec_editor is not None:
+                self.f2d_widget.fpxsec_editor.close()
+                del self.f2d_widget.fpxsec_editor
+            if self.f2d_widget.struct_editor is not None:
+                self.f2d_widget.struct_editor.close()
+                del self.f2d_widget.struct_editor
             self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
             del self.f2d_widget
@@ -392,19 +417,6 @@ class Flo2D(object):
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.setup_dock_widgets()
 
-    def setup_dock_widgets(self):
-        self.f2d_widget.profile_tool.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs()
-        self.f2d_widget.ic_editor.populate_cbos()
-        self.f2d_widget.street_editor.setup_connection()
-        self.f2d_widget.street_editor.populate_streets()
-        self.f2d_widget.struct_editor.populate_structs()
-        self.f2d_widget.rain_editor.setup_connection()
-        self.f2d_widget.rain_editor.rain_properties()
-        self.f2d_widget.xs_editor.setup_connection()
-        self.f2d_widget.xs_editor.populate_xsec_cbo()
-        self.f2d_widget.fpxsec_editor.setup_connection()
-        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
         """
@@ -706,15 +718,24 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        self.correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
-        ok = self.correct_dlg.exec_()
+        lyrs = ['Elevation Points', 'Elevation Polygons']
+        for lyr in lyrs:
+            if not self.lyrs.save_edits_and_proceed(lyr):
+                return
+        correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
+        ok = correct_dlg.exec_()
         if ok:
-            pass
+            if correct_dlg.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one elevation source!")
+                return
         else:
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.correct_dlg.method()
+            for no in sorted(correct_dlg.methods):
+                correct_dlg.methods[no]()
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning grid elevation finished!")
         except Exception as e:
@@ -1002,11 +1023,8 @@ class Flo2D(object):
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
-        self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
         self.profile_tool = ProfileTool(self.canvas, self.lyrs)
-        self.profile_tool.feature_picked.connect(self.get_feature_profile)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)

@@ -26,21 +26,29 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         self.con = con
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)
-        self.method = None
         self.corrector = GridElevation(self.gutils, self.lyrs)
         self.corrector.setup_layers()
 
-        # connections
-        self.elev_polygons_radio.toggled.connect(self.polygons_checked)
-        self.elev_tin_radio.toggled.connect(self.tin_checked)
+        self.methods = {}
 
-        self.elev_polygons_radio.setChecked(True)
+        # connections
+        self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
+        self.elev_tin_chbox.stateChanged.connect(self.tin_checked)
+
+        self.elev_polygons_chbox.setChecked(True)
+        self.elev_tin_chbox.setChecked(True)
 
     def polygons_checked(self):
-        self.method = self.polygon_method
+        if self.elev_polygons_chbox.isChecked():
+            self.methods[2] = self.polygon_method
+        else:
+            self.methods.pop(2)
 
     def tin_checked(self):
-        self.method = self.tin_method
+        if self.elev_tin_chbox.isChecked():
+            self.methods[1] = self.tin_method
+        else:
+            self.methods.pop(1)
 
     def polygon_method(self):
         try:

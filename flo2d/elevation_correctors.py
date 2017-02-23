@@ -10,14 +10,15 @@
 
 from grid_tools import TINInterpolator, poly2grid
 from schematic_tools import get_intervals, interpolate_along_line, polys2levees
-from qgis.core import QgsFeatureRequest
-from PyQt4.QtCore import QPyNullVariant
+from qgis.core import QgsFeatureRequest, QgsField
+from PyQt4.QtCore import QPyNullVariant, QVariant
 
 
 class ElevationCorrector(object):
 
     ELEVATION_FIELD = 'elev'
     CORRECTION_FIELD = 'correction'
+    VIRTUAL_SUM = 'elev_correction'
 
     def __init__(self, gutils, lyrs):
         self.gutils = gutils
@@ -28,6 +29,13 @@ class ElevationCorrector(object):
         self.tin = None
         self.schematic = None
         self.filter_expression = ''
+        self.field_expression = '''
+        CASE 
+        WHEN ("{0}" IS NOT NULL AND "{1}" IS NULL) THEN "{0}" 
+        WHEN ("{0}" IS NULL AND "{1}" IS NOT NULL) THEN "{1}" 
+        WHEN ("{0}" is NOT NULL AND "{1}" IS NOT NULL) THEN "{0}" + "{1}"
+        END
+        '''
 
     def set_filter(self):
         self.points.setSubsetString(self.filter_expression.format('user_elevation_points'))
@@ -36,6 +44,15 @@ class ElevationCorrector(object):
     def clear_filter(self):
         self.points.setSubsetString('')
         self.polygons.setSubsetString('')
+
+    def add_virtual_sum(self, layer):
+        expr = self.field_expression.format(self.ELEVATION_FIELD, self.CORRECTION_FIELD)
+        field = QgsField(self.VIRTUAL_SUM, QVariant.Double)
+        layer.addExpressionField(expr, field)
+
+    def remove_virtual_sum(self, layer):
+        index = layer.fieldNameIndex(self.VIRTUAL_SUM)
+        layer.removeExpressionField(index)
 
 
 class GridElevation(ElevationCorrector):
@@ -66,20 +83,22 @@ class GridElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_from_tin(self):
-        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        self.tin = TINInterpolator(self.points, self.ELEVATION_FIELD)
+        self.add_virtual_sum(self.points)
+        self.tin = TINInterpolator(self.points, self.VIRTUAL_SUM)
         self.tin.setup_layer_data()
         grid_fids = [val[0] for val in poly2grid(self.schematic, self.polygons, None)]
         cur = self.gutils.con.cursor()
         request = QgsFeatureRequest().setFilterFids(grid_fids)
+        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
         for feat in self.schematic.getFeatures(request):
             geom = feat.geometry()
             centroid = geom.centroid().asPoint()
             succes, value = self.tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            cur.execute(qry, (value, feat.id()))
+            cur.execute(qry, (round(value, 3), feat.id()))
         self.gutils.con.commit()
+        self.remove_virtual_sum(self.points)
 
 
 class LeveesElevation(ElevationCorrector):
