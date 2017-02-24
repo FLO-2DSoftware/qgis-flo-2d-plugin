@@ -615,7 +615,7 @@ class Flo2D(object):
             index = cont_table.fieldNameIndex('note')
             tab_conf = cont_table.attributeTableConfig()
             tab_conf.setSortExpression('"name"')
-            tab_conf.setColumnWidth(index, 1000)
+            tab_conf.setColumnWidth(index, 250)
             cont_table.setAttributeTableConfig(tab_conf)
             self.iface.showAttributeTable(cont_table)
         except AttributeError as e:

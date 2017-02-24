@@ -34,8 +34,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rain_data_model = None
         # self.rain_properties()
         # self.tview.horizontalHeader().setStretchLastSection(True)
+        self.tseries_cbo.setDisabled(True)
 
-        # connections
+    def connect_signals(self):
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_chbox.stateChanged.connect(self.set_rain)
         self.real_time_chbox.stateChanged.connect(self.set_realtime)
@@ -95,14 +96,20 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.rainfall_abst_sbox.setValue(float(row['rainabs']))
         else:
             self.rainfall_abst_sbox.setValue(0)
+        self.populate_tseries()
+        idx = self.tseries_cbo.findData(self.rain.series_fid)
+        self.tseries_cbo.setCurrentIndex(idx)
+        self.populate_tseries_data()
+        self.connect_signals()
+
+    def populate_tseries(self):
         fid_name = '{} {}'
-        for row in self.rain.get_time_series():
+        qry = 'SELECT fid, name FROM rain_time_series ORDER BY fid;'
+        for row in self.gutils.execute(qry):
             row = [x if x is not None else '' for x in row]
             ts_fid, name = row
             series_name = fid_name.format(ts_fid, name).strip()
-            self.tseries_cbo.addItem(series_name)
-        self.tseries_cbo.setCurrentIndex(0)
-        self.populate_tseries_data()
+            self.tseries_cbo.addItem(series_name, ts_fid)
 
     def populate_tseries_data(self):
         """

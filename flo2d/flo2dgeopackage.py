@@ -81,7 +81,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
     def import_inflow(self):
-        cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
+        cont_sql = ['''INSERT INTO cont (name, value, note) VALUES''', 3]
         inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc) VALUES''', 3]
         cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''', 2]
         ts_sql = ['''INSERT INTO inflow_time_series (fid) VALUES''', 1]
@@ -90,7 +90,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('inflow', 'inflow_cells', 'reservoirs', 'inflow_time_series', 'inflow_time_series_data')
         head, inf, res = self.parser.parse_inflow()
-        cont_sql += [('IDEPLT', head['IDEPLT']), ('IHOURDAILY', head['IHOURDAILY'])]
+        cont_sql += [
+            ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
+            ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
+        ]
         gids = res.keys()
         cells = self.grid_centroids(gids, buffers=True)
         for i, gid in enumerate(inf, 1):

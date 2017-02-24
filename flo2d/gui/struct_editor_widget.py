@@ -267,18 +267,26 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.populate_structs(struct_fid=self.struct.fid)
 
     def save_stormdrain_capacity(self):
+        if not self.struct_cbo.count():
+            return
         cap = self.storm_drain_cap_sbox.value()
         self.struct.set_stormdrain_capacity(cap)
 
     def save_head_ref_elev(self):
+        if not self.struct_cbo.count():
+            return
         self.struct.headrefel = self.ref_head_elev_sbox.value()
         self.struct.set_row()
 
     def save_culvert_len(self):
+        if not self.struct_cbo.count():
+            return
         self.struct.clength = self.culvert_len_sbox.value()
         self.struct.set_row()
 
     def save_culvert_width(self):
+        if not self.struct_cbo.count():
+            return
         self.struct.cdiameter = self.culvert_width_sbox.value()
         self.struct.set_row()
 
