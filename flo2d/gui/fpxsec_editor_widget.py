@@ -162,6 +162,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def save_fpxs(self):
+        if not self.fpxs_cbo.count():
+            return
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
         fid = row[0]
         name = self.fpxs_cbo.currentText()

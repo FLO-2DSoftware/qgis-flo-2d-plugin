@@ -40,6 +40,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.tview = table.tview
         self.lyrs = lyrs
         self.con = None
+        self.xs = None
         self.cur_xs_fid = None
         self.setupUi(self)
         self.populate_xsec_type_cbo()
@@ -262,6 +263,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     @connection_required
     def cur_xsec_type_changed(self, idx):
         # print 'type idx', idx
+        if not self.xs_cbo.count():
+            return
         typ = self.xs_type_cbo.itemData(idx)
         self.xs.set_type(typ)
         xs_cbo_idx = self.xs_cbo.currentIndex()
@@ -287,6 +290,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def save_n(self, n_val):
+        if not self.xs_cbo.count():
+            return
         self.xs.set_n(n_val)
 
     @connection_required
