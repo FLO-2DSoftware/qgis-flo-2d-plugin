@@ -39,7 +39,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = self.cell_size * 0.95
 
     def import_cont_toler(self):
-        sql = ['''INSERT OR REPLACE INTO cont (name, value) VALUES''', 2]
+        sql = ['''INSERT OR REPLACE INTO cont (name, value, note) VALUES''', 3]
         mann = self.get_cont_par('MANNING')
         if not mann:
             mann = '0.05'
@@ -50,10 +50,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         toler = self.parser.parse_toler()
         cont.update(toler)
         for option in cont:
-            sql += [(option, cont[option])]
-        sql += [('CELLSIZE', self.cell_size)]
-        sql += [('MANNING', mann)]
-
+            sql += [(option, cont[option], self.PARAMETER_DESCRIPTION[option])]
+        sql += [('CELLSIZE', self.cell_size, self.PARAMETER_DESCRIPTION['CELLSIZE'])]
+        sql += [('MANNING', mann, self.PARAMETER_DESCRIPTION['MANNING'])]
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
@@ -82,7 +81,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
     def import_inflow(self):
-        cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
+        cont_sql = ['''INSERT INTO cont (name, value, note) VALUES''', 3]
         inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc) VALUES''', 3]
         cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''', 2]
         ts_sql = ['''INSERT INTO inflow_time_series (fid) VALUES''', 1]
@@ -91,7 +90,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('inflow', 'inflow_cells', 'reservoirs', 'inflow_time_series', 'inflow_time_series_data')
         head, inf, res = self.parser.parse_inflow()
-        cont_sql += [('IDEPLT', head['IDEPLT']), ('IHOURDAILY', head['IHOURDAILY'])]
+        cont_sql += [
+            ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
+            ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
+        ]
         gids = res.keys()
         cells = self.grid_centroids(gids, buffers=True)
         for i, gid in enumerate(inf, 1):
@@ -843,6 +845,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         floodplains = {}
         previous_oid = -1
         row = None
+
         with open(outflow, 'w') as o:
             for oid, gid in out_cells:
 

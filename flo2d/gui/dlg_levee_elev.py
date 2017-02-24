@@ -8,8 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import QPyNullVariant
-from ..schematic_tools import get_intervals, interpolate_along_line, polys2levees
+from ..elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
 from .utils import load_ui
 
@@ -26,6 +25,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.con = con
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)
+        self.corrector = LeveesElevation(self.gutils, self.lyrs)
+        self.corrector.setup_layers()
         self.methods = {}
 
         # connections
@@ -63,56 +64,18 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
             self.methods.pop(3)
 
     def elev_from_points(self):
-        levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
-        levee_points = self.lyrs.get_layer_by_name('Levee Points', self.lyrs.group).layer()
-        levee_schematic = self.lyrs.get_layer_by_name('Levees', self.lyrs.group).layer()
-        cur = self.con.cursor()
-        buf = self.buffer_size.value()
-        for feat in levee_lines.getFeatures():
-            try:
-                qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
-                intervals = get_intervals(feat, levee_points.getFeatures(), 'elev', buf)
-            except TypeError:
-                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
-                intervals = get_intervals(feat, levee_points.getFeatures(), 'correction', buf)
-            interpolated = interpolate_along_line(feat, levee_schematic.getFeatures(), intervals)
-            try:
-                for elev, fid in interpolated:
-                    cur.execute(qry, (round(elev, 3), fid))
-            except IndexError:
-                continue
-        self.con.commit()
+        try:
+            self.corrector.set_filter()
+            self.corrector.elevation_from_points(self.buffer_size.value())
+        finally:
+            self.corrector.clear_filter()
 
     def elev_from_lines(self):
-        levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
-        cur = self.con.cursor()
-        for feat in levee_lines.getFeatures():
-            fid = feat['fid']
-            elev = feat['elev']
-            cor = feat['correction']
-            qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
-            if isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
-                continue
-            elif not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
-                val = elev + cor
-            elif not isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
-                val = elev
-            elif isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
-                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
-                val = cor
-            else:
-                continue
-            cur.execute(qry, (round(val, 3), fid))
-        self.con.commit()
+        self.corrector.elevation_from_lines()
 
     def elev_from_polys(self):
-        levee_lines = self.lyrs.get_layer_by_name('Levee Lines', self.lyrs.group).layer()
-        levee_polys = self.lyrs.get_layer_by_name('Levee Polygons', self.lyrs.group).layer()
-        levee_schematic = self.lyrs.get_layer_by_name('Levees', self.lyrs.group).layer()
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
-        cur = self.con.cursor()
-        for feat in levee_lines.getFeatures():
-            poly_values = polys2levees(feat, levee_polys, levee_schematic, 'elev', 'correction')
-            for elev, fid in poly_values:
-                cur.execute(qry, (round(elev, 3), fid))
-        self.con.commit()
+        try:
+            self.corrector.set_filter()
+            self.corrector.elevation_from_polygons()
+        finally:
+            self.corrector.clear_filter()

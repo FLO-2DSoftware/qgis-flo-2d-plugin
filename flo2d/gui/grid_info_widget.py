@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from math import sqrt
 from PyQt4.QtCore import QSize
 from .utils import load_ui
 from qgis.core import QgsFeatureRequest
@@ -43,14 +44,18 @@ class GridInfoWidget(qtBaseClass, uiDialog):
     def update_fields(self, fid):
         if not fid == -1:
             feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
+            cell_size = sqrt(feat.geometry().area())
             elev = str(feat['elevation'])
             n = feat['n_value']
+            cell = '{}'.format(cell_size)
             if not n:
                 n = '{} (default)'.format(self.mann_default)
             else:
                 pass
             self.elevEdit.setText(elev)
             self.mannEdit.setText(str(n))
+            self.cellEdit.setText(cell)
         else:
             self.elevEdit.setText('')
             self.mannEdit.setText('')
+            self.cellEdit.setText('')

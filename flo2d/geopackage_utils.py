@@ -12,6 +12,7 @@
 import os
 import traceback
 from functools import wraps
+from collections import defaultdict
 from user_communication import UserCommunication
 
 
@@ -114,6 +115,62 @@ class GeoPackageUtils(object):
     """
     GeoPackage utils for handling data inside GeoPackage.
     """
+    _descriptions = [
+        ['TIME_ACCEL', 'Timestep Sensitivity'],
+        ['DEPTOL', 'Percent Change in Depth'],
+        ['NOPRTC', 'Detailed Channel Output Options'],
+        ['WAVEMAX', 'Wavemax Sensitivity'],
+        ['MUD', 'Mudflow Switch'],
+        ['COURANTFP', 'Courant Stability FP'],
+        ['SWMM', 'Storm Drain Switch'],
+        ['GRAPTIM', 'Graphical Update Interval'],
+        ['AMANN', 'Increment n Value at runtime'],
+        ['IMULTC', 'Multiple Channel Switch'],
+        ['FROUDL', 'Global Limiting Froude'],
+        ['LGPLOT', 'Graphic Mode'],
+        ['MSTREET', 'Street Switch'],
+        ['NOPRTFP', 'Detailed Floodplain Output Options'],
+        ['IDEBRV', 'Debris Switch'],
+        ['build', 'Executable Build'],
+        ['ITIMTEP', 'Time Series Output Interval'],
+        ['XCONC', 'Global Sediment Concentration'],
+        ['ICHANNEL', 'Channel Switch'],
+        ['TIMTEP', 'Time Series Selection Switch'],
+        ['SHALLOWN', 'Shallow n Value'],
+        ['TOLGLOBAL', 'Low flow exchange limit'],
+        ['COURCHAR_T', 'Stability Line 3 Character'],
+        ['IFLOODWAY', 'Floodway Analysis Switch'],
+        ['METRIC', 'Metric Switch'],
+        ['SIMULT', 'Simulation Time'],
+        ['COURANTC', 'Courant Stability C'],
+        ['LEVEE', 'Levee Switch'],
+        ['IHYDRSTRUCT', 'Hydraulic Structure Switch'],
+        ['ISED', 'Sediment Transport Switch'],
+        ['DEPTHDUR', 'Depth Duration'],
+        ['XARF', 'Global Area Reduction'],
+        ['IWRFS', 'Building Switch'],
+        ['IRAIN', 'Rain Switch'],
+        ['COURCHAR_C', 'Stability Line 2 Character ID'],
+        ['COURANTST', 'Courant Stability St'],
+        ['IBACKUPrescont', 'Backup Switch'],
+        ['INFIL', 'Infiltration Switch'],
+        ['TOUT', 'Output Data Interval'],
+        ['ENCROACH', 'Encroachment Analysis Depth'],
+        ['IEVAP', 'Evaporation Switch'],
+        ['IMODFLOW', 'Modflow Switch'],
+        ['SUPER', 'Super'],
+        ['CELLSIZE', 'Cellsize'],
+        ['MANNING', 'Global n Value Adjustment'],
+        ['IDEPLT', 'Plot Hydrograph'],
+        ['IHOURDAILY', 'Basetime Switch Hourly / Daily'],
+        ['NXPRT', 'Detailed FP cross section output.'],
+        ['PROJ', 'Projection']
+    ]
+
+    PARAMETER_DESCRIPTION = defaultdict(str)
+    for name, description in _descriptions:
+        PARAMETER_DESCRIPTION[name] = description
+
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
@@ -207,8 +264,9 @@ class GeoPackageUtils(object):
         """
         Set a parameter value in cont table.
         """
-        sql = '''INSERT OR REPLACE INTO cont (name, value) VALUES (?, ?);'''
-        self.execute(sql, (name, value))
+        description = self.PARAMETER_DESCRIPTION[name]
+        sql = '''INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);'''
+        self.execute(sql, (name, value, description))
 
     def get_gpkg_path(self):
         """

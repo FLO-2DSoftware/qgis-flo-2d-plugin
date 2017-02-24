@@ -22,7 +22,7 @@ from qgis.core import QgsProject
 from layers import Layers
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, update_elevation, evaluate_arfwrf, grid_has_empty_elev
+from grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from info_tool import InfoTool
 from grid_info_tool import GridInfoTool
@@ -38,6 +38,8 @@ from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_sampling_elev import SamplingElevDialog
 from .gui.dlg_sampling_mann import SamplingManningDialog
+from .gui.dlg_sampling_xyz import SamplingXYZDialog
+from .gui.dlg_grid_elev import GridCorrectionDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 
 
@@ -77,20 +79,17 @@ class Flo2D(object):
         self.gutils = None
         self.f2g = None
         self.prep_sql = None
-        self.create_f2d_plot_dock()
-        self.create_f2d_table_dock()
-        self.create_f2d_dock()
-        self.create_f2d_grid_info_dock()
-        self.add_docks_to_iface()
-        self.set_editors_map()
+        self.f2d_widget = None
+        self.f2d_plot_dock = None
+        self.f2d_table_dock = None
+        self.f2d_dock = None
+        self.f2d_grid_info_dock = None
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
         self.dlg_inflow_editor = None
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
-        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
-        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
     def tr(self, message):
         """
@@ -98,6 +97,34 @@ class Flo2D(object):
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Flo2D', message)
+
+    def setup_dock_widgets(self):
+        self.create_f2d_plot_dock()
+        self.create_f2d_table_dock()
+        self.create_f2d_dock()
+        self.create_f2d_grid_info_dock()
+        self.add_docks_to_iface()
+        self.set_editors_map()
+
+        self.info_tool.feature_picked.connect(self.get_feature_info)
+        self.profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
+
+        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
+        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
+
+        self.f2d_widget.profile_tool.setup_connection()
+        self.f2d_widget.bc_editor.populate_bcs()
+        self.f2d_widget.ic_editor.populate_cbos()
+        self.f2d_widget.street_editor.setup_connection()
+        self.f2d_widget.street_editor.populate_streets()
+        self.f2d_widget.struct_editor.populate_structs()
+        self.f2d_widget.rain_editor.setup_connection()
+        self.f2d_widget.rain_editor.rain_properties()
+        self.f2d_widget.xs_editor.setup_connection()
+        self.f2d_widget.xs_editor.populate_xsec_cbo()
+        self.f2d_widget.fpxsec_editor.setup_connection()
+        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def add_action(
             self,
@@ -157,15 +184,27 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/info_tool.svg'),
-            text=self.tr(u'Info Tool'),
-            callback=self.identify,
+            os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
+            text=self.tr(u'Show Control Table'),
+            callback=lambda: self.show_control_table(),
             parent=self.iface.mainWindow())
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
             text=self.tr(u'Profile Tool'),
             callback=self.profile,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/info_tool.svg'),
+            text=self.tr(u'Info Tool'),
+            callback=self.identify,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
+            text=self.tr(u'Grid Info Tool'),
+            callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -177,7 +216,19 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/sample_elev.svg'),
             text=self.tr(u'Sampling Grid Elevation'),
-            callback=lambda: self.get_elevation(),
+            callback=lambda: self.raster_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_xyz.svg'),
+            text=self.tr(u'Assign Elevation from points'),
+            callback=lambda: self.xyz_elevation(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
+            text=self.tr(u'Correct Grid Elevation'),
+            callback=lambda: self.correct_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -193,21 +244,9 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
-            text=self.tr(u'Grid Info Tool'),
-            callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/sample_elev_polygon.svg'),
-            text=self.tr(u'Assign Elevation from polygons'),
-            callback=lambda: self.single_elevation(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -224,7 +263,8 @@ class Flo2D(object):
         self.f2d_dock.setWidget(self.f2d_widget)
         self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
 
-    def f2d_dock_save_area(self, area):
+    @staticmethod
+    def f2d_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('dock/area', area)
 
@@ -236,7 +276,8 @@ class Flo2D(object):
         self.f2d_plot_dock.setWidget(self.f2d_plot)
         self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
 
-    def f2d_plot_dock_save_area(self, area):
+    @staticmethod
+    def f2d_plot_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('plot_dock/area', area)
 
@@ -248,7 +289,8 @@ class Flo2D(object):
         self.f2d_table_dock.setWidget(self.f2d_table)
         self.f2d_table_dock.dockLocationChanged.connect(self.f2d_table_dock_save_area)
 
-    def f2d_table_dock_save_area(self, area):
+    @staticmethod
+    def f2d_table_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('table_dock/area', area)
 
@@ -260,7 +302,8 @@ class Flo2D(object):
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
 
-    def f2d_grid_info_dock_save_area(self, area):
+    @staticmethod
+    def f2d_grid_info_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('grid_info_dock/area', area)
 
@@ -303,25 +346,25 @@ class Flo2D(object):
             self.f2d_grid_info_dock.close()
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
             del self.f2d_grid_info_dock
-        if self.f2d_widget.bc_editor is not None:
-            self.f2d_widget.bc_editor.close()
-            del self.f2d_widget.bc_editor
-        if self.f2d_widget.profile_tool is not None:
-            self.f2d_widget.profile_tool.close()
-            del self.f2d_widget.profile_tool
-        if self.f2d_widget.ic_editor is not None:
-            self.f2d_widget.ic_editor.close()
-            del self.f2d_widget.ic_editor
-        if self.f2d_widget.rain_editor is not None:
-            self.f2d_widget.rain_editor.close()
-            del self.f2d_widget.rain_editor
-        if self.f2d_widget.fpxsec_editor is not None:
-            self.f2d_widget.fpxsec_editor.close()
-            del self.f2d_widget.fpxsec_editor
-        if self.f2d_widget.struct_editor is not None:
-            self.f2d_widget.struct_editor.close()
-            del self.f2d_widget.struct_editor
         if self.f2d_widget is not None:
+            if self.f2d_widget.bc_editor is not None:
+                self.f2d_widget.bc_editor.close()
+                del self.f2d_widget.bc_editor
+            if self.f2d_widget.profile_tool is not None:
+                self.f2d_widget.profile_tool.close()
+                del self.f2d_widget.profile_tool
+            if self.f2d_widget.ic_editor is not None:
+                self.f2d_widget.ic_editor.close()
+                del self.f2d_widget.ic_editor
+            if self.f2d_widget.rain_editor is not None:
+                self.f2d_widget.rain_editor.close()
+                del self.f2d_widget.rain_editor
+            if self.f2d_widget.fpxsec_editor is not None:
+                self.f2d_widget.fpxsec_editor.close()
+                del self.f2d_widget.fpxsec_editor
+            if self.f2d_widget.struct_editor is not None:
+                self.f2d_widget.struct_editor.close()
+                del self.f2d_widget.struct_editor
             self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
             del self.f2d_widget
@@ -333,14 +376,19 @@ class Flo2D(object):
         # remove the toolbar
         del self.toolbar
         del self.gutils, self.lyrs
-        del self.iface.f2d['con']
+        try:
+            del self.iface.f2d['con']
+        except KeyError as e:
+            pass
         del self.con
 
-    def save_dock_geom(self, dock):
+    @staticmethod
+    def save_dock_geom(dock):
         s = QSettings('FLO2D', dock.windowTitle())
         s.setValue('geometry', dock.saveGeometry())
 
-    def restore_dock_geom(self, dock):
+    @staticmethod
+    def restore_dock_geom(dock):
         s = QSettings('FLO2D', dock.windowTitle())
         g = s.value('geometry')
         if g:
@@ -368,20 +416,6 @@ class Flo2D(object):
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.setup_dock_widgets()
-
-    def setup_dock_widgets(self):
-        self.f2d_widget.profile_tool.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs()
-        self.f2d_widget.ic_editor.populate_cbos()
-        self.f2d_widget.street_editor.setup_connection()
-        self.f2d_widget.street_editor.populate_streets()
-        self.f2d_widget.struct_editor.populate_structs()
-        self.f2d_widget.rain_editor.setup_connection()
-        self.f2d_widget.rain_editor.rain_properties()
-        self.f2d_widget.xs_editor.setup_connection()
-        self.f2d_widget.xs_editor.populate_xsec_cbo()
-        self.f2d_widget.fpxsec_editor.setup_connection()
-        self.f2d_widget.fpxsec_editor.populate_cbos()
 
     def load_gpkg_from_proj(self):
         """
@@ -479,10 +513,7 @@ class Flo2D(object):
                 self.call_methods(import_calls, True)
 
                 # save CRS to table cont
-                sql = '''INSERT INTO cont (name, value) VALUES ('PROJ', ?);'''
-                data = (self.crs.toProj4(), )
-                rc = self.gutils.execute(sql, data)
-                del rc
+                self.gutils.set_cont_par('PROJ', self.crs.toProj4())
 
                 # load layers and tables
                 self.load_layers()
@@ -578,6 +609,19 @@ class Flo2D(object):
                 return None
 
     @connection_required
+    def show_control_table(self):
+        try:
+            cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
+            index = cont_table.fieldNameIndex('note')
+            tab_conf = cont_table.attributeTableConfig()
+            tab_conf.setSortExpression('"name"')
+            tab_conf.setColumnWidth(index, 250)
+            cont_table.setAttributeTableConfig(tab_conf)
+            self.iface.showAttributeTable(cont_table)
+        except AttributeError as e:
+            pass
+
+    @connection_required
     def create_grid(self):
         if not self.lyrs.save_edits_and_proceed("Computational Domain"):
             return
@@ -607,6 +651,98 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
+
+    @connection_required
+    def raster_elevation(self):
+        if self.gutils.is_table_empty('user_model_boundary'):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        cell_size = self.get_cell_size()
+        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        res = dlg.probe_elevation()
+        if res:
+            dlg.show_probing_result_info()
+
+    @connection_required
+    def xyz_elevation(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        points_lyr = dlg.current_lyr
+        zfield = dlg.fields_cbo.currentText()
+        calc_type = dlg.calc_cbo.currentText()
+        search_distance = dlg.search_spin_box.value()
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+            points_elevation = zs.points_elevation()
+            zs.set_elevation(points_elevation)
+            cmd, out = zs.rasterize_grid()
+            self.uc.log_info(cmd)
+            self.uc.log_info(out)
+            cmd, out = zs.fill_nodata()
+            self.uc.log_info(cmd)
+            self.uc.log_info(out)
+            null_elevation = zs.null_elevation()
+            zs.set_elevation(null_elevation)
+            zs.remove_rasters()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Calculating elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Calculating grid elevation aborted! Please check elevation points layer.")
+
+    @connection_required
+    def correct_elevation(self):
+        if not self.lyrs.save_edits_and_proceed("Elevation Polygons"):
+            return
+        if self.gutils.is_table_empty('user_elevation_polygons'):
+            self.uc.bar_warn("There is no any elevation polygons! Please digitize them before running tool.")
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        lyrs = ['Elevation Points', 'Elevation Polygons']
+        for lyr in lyrs:
+            if not self.lyrs.save_edits_and_proceed(lyr):
+                return
+        correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
+        ok = correct_dlg.exec_()
+        if ok:
+            if correct_dlg.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one elevation source!")
+                return
+        else:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            for no in sorted(correct_dlg.methods):
+                correct_dlg.methods[no]()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Assigning grid elevation finished!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Assigning grid elevation aborted! Please check elevation polygons layer.")
 
     @connection_required
     def get_roughness(self):
@@ -645,47 +781,6 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
-
-    @connection_required
-    def single_elevation(self):
-        if not self.lyrs.save_edits_and_proceed("Grid Elevation"):
-            return
-        if self.gutils.is_table_empty('user_elevation_polygons'):
-            self.uc.bar_warn("There is no any grid elevation polygons! Please digitize them before running tool.")
-            return
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        elev_lyr = self.lyrs.get_layer_by_name("Grid Elevation", group=self.lyrs.group).layer()
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            update_elevation(self.gutils, grid_lyr, elev_lyr)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning grid elevation finished!")
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning grid elevation aborted! Please check grid elevation layer.")
-
-    @connection_required
-    def get_elevation(self):
-        if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-            return
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        cell_size = self.get_cell_size()
-        dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
-        if ok:
-            pass
-        else:
-            return
-        res = dlg.probe_elevation()
-        if res:
-            dlg.show_probing_result_info()
 
     @connection_required
     def eval_arfwrf(self):
@@ -785,7 +880,6 @@ class Flo2D(object):
         self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
-
     @connection_required
     def show_evap_editor(self):
         """
@@ -805,6 +899,9 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
+        if self.gutils.is_table_empty('user_levee_lines'):
+            self.uc.bar_warn("There is user levee lines! Please create them before running tool.")
+            return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
@@ -814,7 +911,7 @@ class Flo2D(object):
         else:
             pass
         # check if user levee layers are in edit mode
-        levee_lyrs = ['Levee Points', 'Levee Lines', 'Levee Polygons']
+        levee_lyrs = ['Elevation Points', 'Levee Lines', 'Elevation Polygons']
         for lyr in levee_lyrs:
             if not self.lyrs.save_edits_and_proceed(lyr):
                 return
@@ -840,7 +937,7 @@ class Flo2D(object):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning values aborted! Please check your levees layers.")
+            self.uc.show_warn("Assigning values aborted! Please check your crest elevation source layers.")
 
     @connection_required
     def schematize_channels(self):
@@ -927,11 +1024,8 @@ class Flo2D(object):
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
-        self.info_tool.feature_picked.connect(self.get_feature_info)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
         self.profile_tool = ProfileTool(self.canvas, self.lyrs)
-        self.profile_tool.feature_picked.connect(self.get_feature_profile)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
