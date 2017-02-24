@@ -1064,9 +1064,6 @@ class Layers(QObject):
                 readonly=data['readonly']
             )
             l = self.get_layer_tree_item(lyr_id).layer()
-            if l.name() == 'Control':
-                filter_expression = 'SELECT name, value, note FROM cont ORDER BY name;'
-                l.setSubsetString(filter_expression)
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:

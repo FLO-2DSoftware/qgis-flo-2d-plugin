@@ -67,14 +67,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.modDeselAllBtn.clicked.connect(self.deselect_all_modules)
 
     def set_default_controls(self, con):
-        qry = '''INSERT INTO cont (name) VALUES (?);'''
+        qry = '''INSERT INTO cont (name, note) VALUES (?,?);'''
         cont_rows = self.parser.cont_rows
         toler_rows = self.parser.toler_rows
         parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
-        cursor = con.cursor()
-        for param in parameters:
-            cursor.execute(qry, (param,))
-        con.commit()
+        values = ((param, GeoPackageUtils.PARAMETER_DESCRIPTION[param]) for param in parameters)
+        con.executemany(qry, values)
 
     def read(self):
         for name, wid in self.widget_map.iteritems():
@@ -282,7 +280,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def write(self):
-        ins_qry = '''INSERT INTO cont (name, value) VALUES (?, ?);'''
         for name, wid in self.widget_map.iteritems():
             value = None
             if isinstance(wid, QLineEdit):
@@ -296,8 +293,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
             else:
                 pass
-            self.gutils.execute(ins_qry, (name, value))
-        self.gutils.execute(ins_qry, ('PROJ', self.crs.toProj4(),))
+            self.gutils.set_cont_par(name, value)
+        self.gutils.set_cont_par('PROJ', self.crs.toProj4())
         if self.crs.mapUnits() == QGis.Meters:
             metric = 1
         elif self.crs.mapUnits() == QGis.Feet:
@@ -305,7 +302,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             metric = 0
         else:
             metric = 1
-        self.gutils.execute(ins_qry, ('METRIC', metric,))
+        self.gutils.set_cont_par('METRIC', metric)
 
     def select_all_modules(self):
         for cbx in self.modulesGrp.findChildren(QCheckBox):

@@ -417,7 +417,6 @@ class Flo2D(object):
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.setup_dock_widgets()
 
-
     def load_gpkg_from_proj(self):
         """
         If QGIS project has a gpkg path saved ask user if it should be loaded.
@@ -514,10 +513,7 @@ class Flo2D(object):
                 self.call_methods(import_calls, True)
 
                 # save CRS to table cont
-                sql = '''INSERT INTO cont (name, value) VALUES ('PROJ', ?);'''
-                data = (self.crs.toProj4(), )
-                rc = self.gutils.execute(sql, data)
-                del rc
+                self.gutils.set_cont_par('PROJ', self.crs.toProj4())
 
                 # load layers and tables
                 self.load_layers()
@@ -616,6 +612,11 @@ class Flo2D(object):
     def show_control_table(self):
         try:
             cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
+            index = cont_table.fieldNameIndex('note')
+            tab_conf = cont_table.attributeTableConfig()
+            tab_conf.setSortExpression('"name"')
+            tab_conf.setColumnWidth(index, 1000)
+            cont_table.setAttributeTableConfig(tab_conf)
             self.iface.showAttributeTable(cont_table)
         except AttributeError as e:
             pass

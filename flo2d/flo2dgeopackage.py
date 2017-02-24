@@ -39,7 +39,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = self.cell_size * 0.95
 
     def import_cont_toler(self):
-        sql = ['''INSERT OR REPLACE INTO cont (name, value) VALUES''', 2]
+        sql = ['''INSERT OR REPLACE INTO cont (name, value, note) VALUES''', 3]
         mann = self.get_cont_par('MANNING')
         if not mann:
             mann = '0.05'
@@ -50,10 +50,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         toler = self.parser.parse_toler()
         cont.update(toler)
         for option in cont:
-            sql += [(option, cont[option])]
-        sql += [('CELLSIZE', self.cell_size)]
-        sql += [('MANNING', mann)]
-
+            sql += [(option, cont[option], self.PARAMETER_DESCRIPTION[option])]
+        sql += [('CELLSIZE', self.cell_size, self.PARAMETER_DESCRIPTION['CELLSIZE'])]
+        sql += [('MANNING', mann, self.PARAMETER_DESCRIPTION['MANNING'])]
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
