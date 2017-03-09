@@ -52,7 +52,7 @@ class ParseDAT(object):
             'WSTIME.DAT': None
         }
         self.cont_rows = [
-            ['SIMULT', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUPrescont', 'build'],
+            ['SIMUL', 'TOUT', 'LGPLOT', 'METRIC', 'IBACKUP', 'build'],
             ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
             ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
             ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
