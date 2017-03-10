@@ -41,6 +41,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = None
         self.d1, self.d2 = [[], []]
 
+        self.set_icon(self.show_table_btn, 'show_cont_table.svg')
         self.set_icon(self.remove_tseries_btn, 'mActionDeleteSelected.svg')
         self.set_icon(self.add_tseries_btn, 'add_bc_data.svg')
         self.set_icon(self.rename_tseries_btn, 'change_name.svg')
@@ -75,6 +76,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_chbox.stateChanged.connect(self.set_moving_storm)
         self.total_rainfall_sbox.editingFinished.connect(self.set_tot_rainfall)
         self.rainfall_abst_sbox.editingFinished.connect(self.set_rainfall_abst)
+        self.show_table_btn.clicked.connect(self.populate_tseries_data)
         self.add_tseries_btn.clicked.connect(self.add_tseries)
         self.remove_tseries_btn.clicked.connect(self.delete_tseries)
         self.rename_tseries_btn.clicked.connect(self.rename_tseries)
@@ -192,7 +194,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rain_data_model.setHorizontalHeaderLabels(['Time', 'Cum. Perc. of Total Storm'])
         self.d1, self.d1 = [[], []]
         for row in self.rain_tseries_data:
-            items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
+            items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
             self.rain_data_model.appendRow(items)
             self.d1.append(row[0] if not row[0] is None else float('NaN'))
             self.d2.append(row[1] if not row[1] is None else float('NaN'))

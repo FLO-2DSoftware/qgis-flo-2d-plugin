@@ -163,6 +163,16 @@
          </widget>
         </item>
         <item>
+         <widget class="QToolButton" name="show_table_btn">
+          <property name="toolTip">
+           <string>Show timeseries table</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QToolButton" name="add_tseries_btn">
           <property name="toolTip">
            <string>Add rain timeseries</string>
