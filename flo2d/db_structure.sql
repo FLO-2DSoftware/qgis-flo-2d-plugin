@@ -1749,10 +1749,10 @@ SELECT gpkgAddGeometryTriggers('user_1d_domain', 'geom');
 CREATE TABLE "user_left_bank" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT, -- name of segment (optional)
-    "depinitial" REAL, -- DEPINITIAL, initial channel flow depth
-    "froudc" REAL, -- FROUDC, max Froude channel number
-    "roughadj" REAL, -- ROUGHADJ, coefficient for depth adjustment
-    "isedn" INTEGER, -- ISEDN, sediment transport equation or data
+    "depinitial" REAL DEFAULT 0, -- DEPINITIAL, initial channel flow depth
+    "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
+    "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
+    "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
     "rank" INTEGER,
     "notes" TEXT
 );

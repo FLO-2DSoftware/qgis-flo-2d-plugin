@@ -895,7 +895,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         rain_line1 = '{0}  {1}\n'
         rain_line2 = '{0}   {1}  {2}  {3}\n'
         rain_line4 = '{0}   {1}\n'
-        tsd_line = 'R {0:.3f}   {1:.3f}\n'
+        tsd_line = 'R {0}   {1}\n'
         cell_line = '{0: <10} {1}\n'
 
         rain_row = self.execute(rain_sql).fetchone()
