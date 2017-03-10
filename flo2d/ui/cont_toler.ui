@@ -55,6 +55,9 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="cont_lout">
+      <property name="horizontalSpacing">
+       <number>30</number>
+      </property>
       <property name="verticalSpacing">
        <number>10</number>
       </property>
