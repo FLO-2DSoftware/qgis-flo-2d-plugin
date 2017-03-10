@@ -186,12 +186,6 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
-            text=self.tr(u'Show Control Table'),
-            callback=lambda: self.show_control_table(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
             text=self.tr(u'Set Control Parameters'),
             callback=lambda: self.show_cont_toler(),
             parent=self.iface.mainWindow())
@@ -631,7 +625,14 @@ class Flo2D(object):
     @connection_required
     def show_cont_toler(self):
         dlg = ContTolerDialog(self.con, self.iface)
-        dlg.exec_()
+        save = dlg.exec_()
+        if save:
+            try:
+                dlg.save_parameters()
+                self.uc.bar_info("Parameters saved!", dur=3)
+            except Exception as e:
+                self.uc.bar_warn("Could not save parameters! Please check if they are correct.")
+                return
 
     @connection_required
     def create_grid(self):
