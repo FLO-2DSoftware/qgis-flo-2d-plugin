@@ -65,9 +65,9 @@ class ContTolerDialog(qtBaseClass, uiDialog):
     ])
 
     COMBO_KEYS = {
-            'IBACKUP': ['off', 'on [1]', 'on [2]'],
-            'ITIMTEP': ['off', 'on [1]', 'on [2]', 'on [3]', 'on [4]'],
-            'LGPLOT': ['text', 'batch', 'graphic'],
+            'IBACKUP': ['OFF', 'ON [1]', 'ON [2]'],
+            'ITIMTEP': ['OFF', 'ON [1]', 'ON [2]', 'ON [3]', 'ON [4]'],
+            'LGPLOT': ['TEXT', 'BATCH', 'GRAPHIC'],
             'NOPRTC': ['data is reported', 'data is not reported', 'none is reported'],
             'NOPRTFP': ['data is reported', 'data is not reported', 'none is reported']
         }
