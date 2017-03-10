@@ -29,6 +29,7 @@ from grid_info_tool import GridInfoTool
 from profile_tool import ProfileTool
 from user_communication import UserCommunication
 
+from .gui.dlg_cont_toler import ContTolerDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.plot_widget import PlotWidget
@@ -187,6 +188,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
             text=self.tr(u'Show Control Table'),
             callback=lambda: self.show_control_table(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
+            text=self.tr(u'Set Control Parameters'),
+            callback=lambda: self.show_cont_toler(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -620,6 +627,11 @@ class Flo2D(object):
             self.iface.showAttributeTable(cont_table)
         except AttributeError as e:
             pass
+
+    @connection_required
+    def show_cont_toler(self):
+        dlg = ContTolerDialog(self.con, self.iface)
+        dlg.exec_()
 
     @connection_required
     def create_grid(self):
