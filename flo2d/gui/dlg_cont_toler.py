@@ -19,11 +19,11 @@ uiDialog, qtBaseClass = load_ui('cont_toler')
 
 class ContTolerDialog(qtBaseClass, uiDialog):
     PARAMS = OrderedDict([
-        ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT'}],
-        ['DEPTHDUR', {'label': 'Depth Duration', 'type': 'r', 'dat': 'CONT'}],
-        ['ENCROACH', {'label': 'Encroachment Analysis Depth', 'type': 'r', 'dat': 'CONT'}],
-        ['FROUDL', {'label': 'Global Limiting Froude', 'type': 'r', 'dat': 'CONT'}],
-        ['GRAPTIM', {'label': 'Graphical Update Interval', 'type': 'r', 'dat': 'CONT'}],
+        ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT', 'min': -99, 'max': float('inf'), 'dec': 1}],
+        ['DEPTHDUR', {'label': 'Depth Duration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 3}],
+        ['ENCROACH', {'label': 'Encroachment Analysis Depth', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 10, 'dec': 1}],
+        ['FROUDL', {'label': 'Global Limiting Froude', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 5, 'dec': 1}],
+        ['GRAPTIM', {'label': 'Graphical Update Interval', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
         ['IBACKUP', {'label': 'Backup Switch', 'type': 's2', 'dat': 'CONT'}],
         ['ICHANNEL', {'label': 'Channel Switch', 'type': 's', 'dat': 'CONT'}],
         ['IDEBRV', {'label': 'Debris Switch', 'type': 's', 'dat': 'CONT'}],
@@ -44,29 +44,29 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         ['MUD', {'label': 'Mudflow Switch', 'type': 's', 'dat': 'CONT'}],
         ['NOPRTC', {'label': 'Detailed Channel Output Options', 'type': 's2', 'dat': 'CONT'}],
         ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
-        ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT'}],
-        ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT'}],
+        ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
+        ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
         ['SUPER', {'label': 'Super', 'type': 's', 'dat': 'CONT'}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
-        ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT'}],
-        ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT'}],
-        ['XARF', {'label': 'Global Area Reduction', 'type': 'r', 'dat': 'CONT'}],
-        ['XCONC', {'label': 'Global Sediment Concentration', 'type': 'r', 'dat': 'CONT'}],
+        ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 1}],
+        ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],
+        ['XARF', {'label': 'Global Area Reduction', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
+        ['XCONC', {'label': 'Global Sediment Concentration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.50, 'dec': 2}],
 
-        ['COURANTC', {'label': 'Courant Stability C', 'type': 'r', 'dat': 'TOLER'}],
-        ['COURANTFP', {'label': 'Courant Stability FP', 'type': 'r', 'dat': 'TOLER'}],
-        ['COURANTST', {'label': 'Courant Stability St', 'type': 'r', 'dat': 'TOLER'}],
+        ['COURANTC', {'label': 'Courant Stability C', 'type': 'r', 'dat': 'TOLER', 'min': 0.2, 'max': 1, 'dec': 1}],
+        ['COURANTFP', {'label': 'Courant Stability FP', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],
+        ['COURANTST', {'label': 'Courant Stability St', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],
         ['COURCHAR_C', {'label': 'Stability Line 2 Character', 'type': 'c', 'dat': 'TOLER'}],
         ['COURCHAR_T', {'label': 'Stability Line 3 Character', 'type': 'c', 'dat': 'TOLER'}],
-        ['DEPTOL', {'label': 'Percent Change in Depth', 'type': 'r', 'dat': 'TOLER'}],
-        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER'}],
-        ['TOLGLOBAL', {'label': 'Low flow exchange limit', 'type': 'r', 'dat': 'TOLER'}],
-        ['WAVEMAX', {'label': 'Wavemax Sensitivity', 'type': 'r', 'dat': 'TOLER'}]
+        ['DEPTOL', {'label': 'Percent Change in Depth', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 1}],
+        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0.01, 'max': 100, 'dec': 2}],
+        ['TOLGLOBAL', {'label': 'Low flow exchange limit', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 4}],
+        ['WAVEMAX', {'label': 'Wavemax Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 2, 'dec': 2}]
     ])
 
     COMBO_KEYS = {
-            'IBACKUP': ['off', 'on (1)', 'on (2)'],
-            'ITIMTEP': ['off', 'on (1)', 'on (2)', 'on (3)', 'on (4)'],
+            'IBACKUP': ['off', 'on [1]', 'on [2]'],
+            'ITIMTEP': ['off', 'on [1]', 'on [2]', 'on [3]', 'on [4]'],
             'LGPLOT': ['text', 'batch', 'graphic'],
             'NOPRTC': ['data is reported', 'data is not reported', 'none is reported'],
             'NOPRTFP': ['data is reported', 'data is not reported', 'none is reported']
@@ -87,8 +87,21 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         for i in self.COMBO_KEYS[key]:
             combo.addItem(i)
 
+    def set_spinbox(self, key, spin):
+        values = self.PARAMS[key]
+        spin.setDecimals(values['dec'])
+        spin.setRange(values['min'], values['max'])
+
     def setup_layout(self):
         for i, (key, values) in enumerate(self.PARAMS.items()):
+            if i < 17:
+                first_col = 0
+                second_col = 1
+                row_no = i
+            else:
+                first_col = 2
+                second_col = 3
+                row_no = i - 17
             lab = QLabel(values['label'])
             lab.setToolTip(key)
             typ = values['type']
@@ -103,8 +116,8 @@ class ContTolerDialog(qtBaseClass, uiDialog):
                 widget.setMaximumWidth(120)
             widget.setLayoutDirection(1)
             lout = self.cont_lout if values['dat'] == 'CONT' else self.toler_lout
-            lout.addWidget(lab, i, 0)
-            lout.addWidget(widget, i, 1)
+            lout.addWidget(lab, row_no, first_col)
+            lout.addWidget(widget, row_no, second_col)
             setattr(self, key, widget)
 
     def polulate_values(self):
@@ -123,6 +136,24 @@ class ContTolerDialog(qtBaseClass, uiDialog):
                 else:
                     widget.setChecked(False)
             elif isinstance(widget, QDoubleSpinBox):
+                self.set_spinbox(key, widget)
                 widget.setValue(db_val)
             else:
                 widget.setCurrentIndex(db_val)
+
+    def save_parameters(self):
+        for key in self.PARAMS.keys():
+            widget = getattr(self, key)
+            if isinstance(widget, QCheckBox):
+                if key == 'COURCHAR_C':
+                    val = 'C' if widget.isChecked() else None
+                elif key == 'COURCHAR_T':
+                    val = 'T' if widget.isChecked() else None
+                else:
+                    val = 1 if widget.isChecked() else 0
+
+            elif isinstance(widget, QDoubleSpinBox):
+                val = widget.value()
+            else:
+                val = widget.currentIndex()
+            self.gutils.set_cont_par(key, val)
