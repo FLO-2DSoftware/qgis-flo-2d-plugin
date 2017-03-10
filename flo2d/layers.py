@@ -484,7 +484,7 @@ class Layers(QObject):
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
-                'readonly': True
+                'readonly': False
             }),
             ('inflow', {
                 'name': 'Inflow',
