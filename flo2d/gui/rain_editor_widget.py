@@ -9,12 +9,15 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
-from .utils import load_ui
-from ..utils import is_number
+from PyQt4.QtGui import QColor, QIcon, QInputDialog
+from .utils import load_ui, try_disconnect
+from ..utils import is_number, m_fdata
 from ..geopackage_utils import GeoPackageUtils, connection_required
+from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from ..flo2dobjects import Rain
-from plot_widget import PlotWidget
+from ..user_communication import UserCommunication
+from math import isnan
+import os
 
 uiDialog, qtBaseClass = load_ui('rain_editor')
 
@@ -25,16 +28,43 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        self.con = None
         self.setupUi(self)
         self.plot = plot
         self.table = table
         self.tview = table.tview
         self.rain = None
         self.gutils = None
-        self.rain_data_model = None
-        # self.rain_properties()
-        # self.tview.horizontalHeader().setStretchLastSection(True)
-        self.tseries_cbo.setDisabled(True)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.rain_data_model = StandardItemModel()
+        self.rain_tseries_data = None
+        self.plot_item_name = None
+        self.d1, self.d2 = [[], []]
+
+        self.set_icon(self.remove_tseries_btn, 'mActionDeleteSelected.svg')
+        self.set_icon(self.add_tseries_btn, 'add_bc_data.svg')
+        self.set_icon(self.rename_tseries_btn, 'change_name.svg')
+
+    def block_saving(self):
+        try_disconnect(self.rain_data_model.dataChanged, self.save_tseries_data)
+
+    def unblock_saving(self):
+        self.rain_data_model.dataChanged.connect(self.save_tseries_data)
+
+    def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
+        if role == Qt.EditRole:
+            command = CommandItemEdit(self, item, oldValue, newValue,
+                                      "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
+            self.tview.undoStack.push(command)
+            return True
+
+    @staticmethod
+    def set_icon(btn, icon_file):
+        idir = os.path.join(os.path.dirname(__file__), '..\\img')
+        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def connect_signals(self):
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
@@ -45,23 +75,34 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_chbox.stateChanged.connect(self.set_moving_storm)
         self.total_rainfall_sbox.editingFinished.connect(self.set_tot_rainfall)
         self.rainfall_abst_sbox.editingFinished.connect(self.set_rainfall_abst)
+        self.add_tseries_btn.clicked.connect(self.add_tseries)
+        self.remove_tseries_btn.clicked.connect(self.delete_tseries)
+        self.rename_tseries_btn.clicked.connect(self.rename_tseries)
+        self.rain_data_model.dataChanged.connect(self.save_tseries_data)
+        self.table.before_paste.connect(self.block_saving)
+        self.table.after_paste.connect(self.unblock_saving)
+        self.rain_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
     def setup_connection(self):
         con = self.iface.f2d['con']
         if con is None:
             return
-        else:
-            self.con = con
-            self.gutils = GeoPackageUtils(self.con, self.iface)
-            qry = '''SELECT value FROM cont WHERE name = 'IRAIN';'''
-            row = self.gutils.execute(qry).fetchone()
-            if is_number(row[0]) and not row[0] == '0':
-                self.simulate_rain_chbox.setChecked(True)
-            self.rain = Rain(self.con, self.iface)
+        self.con = con
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+        qry = '''SELECT value FROM cont WHERE name = 'IRAIN';'''
+        row = self.gutils.execute(qry).fetchone()
+        if is_number(row[0]) and not row[0] == '0':
+            self.simulate_rain_chbox.setChecked(True)
+        self.rain = Rain(self.con, self.iface)
+        self.create_plot()
 
-    def setup_plot(self):
-        self.plotWidget = PlotWidget()
-        self.plotLayout.addWidget(self.plotWidget)
+    def create_plot(self):
+        """
+        Create initial plot.
+        """
+        self.plot.clear()
+        self.plot_item_name = 'Rain timeseries'
+        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     @connection_required
     def rain_properties(self):
@@ -72,19 +113,19 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.simulate_rain_chbox.setChecked(True)
         else:
             self.simulate_rain_chbox.setChecked(False)
-        if row['irainreal'] == '1':
+        if row['irainreal'] == 1:
             self.real_time_chbox.setChecked(True)
         else:
             self.real_time_chbox.setChecked(False)
-        if row['irainbuilding'] == '1':
+        if row['irainbuilding'] == 1:
             self.building_chbox.setChecked(True)
         else:
             self.building_chbox.setChecked(False)
-        if row['movingstrom'] == '1':
+        if row['movingstrom'] == 1:
             self.moving_storm_chbox.setChecked(True)
         else:
             self.moving_storm_chbox.setChecked(False)
-        if row['irainarf'] == '1':
+        if row['irainarf'] == 1:
             self.arf_chbox.setChecked(True)
         else:
             self.moving_storm_chbox.setChecked(False)
@@ -103,60 +144,104 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.connect_signals()
 
     def populate_tseries(self):
-        fid_name = '{} {}'
-        qry = 'SELECT fid, name FROM rain_time_series ORDER BY fid;'
-        for row in self.gutils.execute(qry):
-            row = [x if x is not None else '' for x in row]
-            ts_fid, name = row
-            series_name = fid_name.format(ts_fid, name).strip()
-            self.tseries_cbo.addItem(series_name, ts_fid)
+        self.tseries_cbo.clear()
+        for row in self.rain.get_time_series():
+            ts_fid, name = [x if x is not None else '' for x in row]
+            self.tseries_cbo.addItem(name, ts_fid)
+
+    def add_tseries(self):
+        if not self.rain:
+            return
+        self.rain.add_time_series()
+        self.populate_tseries()
+
+    def delete_tseries(self):
+        if not self.rain:
+            return
+        self.rain.del_time_series()
+        self.populate_tseries()
+
+    def rename_tseries(self):
+        if not self.rain:
+            return
+        new_name, ok = QInputDialog.getText(None, 'Change timeseries name', 'New name:')
+        if not ok or not new_name:
+            return
+        if not self.tseries_cbo.findText(new_name) == -1:
+            msg = 'Time series with name {} already exists in the database. Please, choose another name.'.format(
+                new_name)
+            self.uc.show_warn(msg)
+            return
+        self.rain.set_time_series_data_name(new_name)
+        self.populate_tseries()
 
     def populate_tseries_data(self):
         """
         Get current time series data, populate data table and create plot.
         """
-        try:
-            fid = self.tseries_cbo.currentText().split()[0]
-        except IndexError as e:
-            fid = self.tseries_cbo.currentText()
-        self.rain.series_fid = fid
-        series_data = self.rain.get_time_series_data()
-        model = QStandardItemModel()
-        for row in series_data:
-            items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
-            model.appendRow(items)
-        self.tview.setModel(model)
-        self.tview.resizeColumnsToContents()
-        self.rain_data_model = model
-        for i in range(len(series_data)):
-            self.tview.setRowHeight(i, 18)
-        for i in range(3):
-            self.tview.setColumnWidth(i, 80)
+        cur_ts_idx = self.tseries_cbo.currentIndex()
+        cur_ts_fid = self.tseries_cbo.itemData(cur_ts_idx)
+        self.rain.series_fid = cur_ts_fid
+        self.rain_tseries_data = self.rain.get_time_series_data()
+        if not self.rain_tseries_data:
+            return
+        self.create_plot()
+        self.tview.undoStack.clear()
+        self.tview.setModel(self.rain_data_model)
+        self.rain_data_model.clear()
+        self.rain_data_model.setHorizontalHeaderLabels(['Time', 'Cum. Perc. of Total Storm'])
+        self.d1, self.d1 = [[], []]
+        for row in self.rain_tseries_data:
+            items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
+            self.rain_data_model.appendRow(items)
+            self.d1.append(row[0] if not row[0] is None else float('NaN'))
+            self.d2.append(row[1] if not row[1] is None else float('NaN'))
+        rc = self.rain_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [StandardItem(x) for x in ('',) * 2]
+                self.rain_data_model.appendRow(items)
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(2):
+            self.tview.setColumnWidth(col, 100)
+        for i in range(self.rain_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        self.rain.set_row()
         self.update_plot()
 
     def save_tseries_data(self):
         """
-        Get xsection data and save them in gpkg.
+        Get rain timeseries data and save them in gpkg.
         """
-
-    def revert_tseries_data_changes(self):
-        """
-        Revert any time series data changes made by users (load original tseries data from tables).
-        """
+        self.update_plot()
+        ts_data = []
+        for i in range(self.rain_data_model.rowCount()):
+            # save only rows with a number in the first column
+            if is_number(m_fdata(self.rain_data_model, i, 0)) and not isnan(m_fdata(self.rain_data_model, i, 0)):
+                ts_data.append(
+                    (
+                        self.rain.series_fid,
+                        m_fdata(self.rain_data_model, i, 0),
+                        m_fdata(self.rain_data_model, i, 1)
+                    )
+                )
+            else:
+                pass
+        data_name = self.tseries_cbo.currentText()
+        self.rain.set_time_series_data(data_name, ts_data)
 
     def update_plot(self):
         """
         When time series data for plot change, update the plot.
         """
-        self.plot.clear()
-        dm = self.rain_data_model
-        x = []
-        y = []
-        for i in range(dm.rowCount()):
-            x.append(float(dm.data(dm.index(i, 0), Qt.DisplayRole)))
-            y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
-        self.plot.add_item('org_ts', [x, y])
-        self.plot.add_item('new_ts', [x, y])
+        if not self.plot_item_name:
+            return
+        # self.plot.clear()
+        self.d1, self.d2 = [[], []]
+        for i in range(self.rain_data_model.rowCount()):
+            self.d1.append(m_fdata(self.rain_data_model, i, 0))
+            self.d2.append(m_fdata(self.rain_data_model, i, 1))
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
     def set_rain(self):
         if not self.rain:
@@ -169,35 +254,35 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def set_realtime(self):
         if not self.rain:
             return
-        self.rain.row['irainreal'] = self.real_time_chbox.isChecked()
+        self.rain.irainreal = self.real_time_chbox.isChecked()
         self.rain.set_row()
 
     def set_building(self):
         if not self.rain:
             return
-        self.rain.row['irainbuilding'] = self.building_chbox.isChecked()
+        self.rain.irainbuilding = self.building_chbox.isChecked()
         self.rain.set_row()
 
     def set_arf(self):
         if not self.rain:
             return
-        self.rain.row['irainarf'] = self.arf_chbox.isChecked()
+        self.rain.irainarf = self.arf_chbox.isChecked()
         self.rain.set_row()
 
     def set_moving_storm(self):
         if not self.rain:
             return
-        self.rain.row['movingstrom'] = self.moving_storm_chbox.isChecked()
+        self.rain.movingstrom = self.moving_storm_chbox.isChecked()
         self.rain.set_row()
 
     def set_tot_rainfall(self):
         if not self.rain:
             return
-        self.rain.row['tot_rainfall'] = self.total_rainfall_sbox.value()
+        self.rain.tot_rainfall = self.total_rainfall_sbox.value()
         self.rain.set_row()
 
     def set_rainfall_abst(self):
         if not self.rain:
             return
-        self.rain.row['rainabs'] = self.rainfall_abst_sbox.value()
+        self.rain.rainabs = self.rainfall_abst_sbox.value()
         self.rain.set_row()

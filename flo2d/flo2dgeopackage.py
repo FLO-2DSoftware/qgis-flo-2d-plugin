@@ -228,6 +228,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid, val)]
 
         self.batch_execute(ts_sql, rain_sql, tsd_sql, rain_arf_sql, cells_sql)
+        name_qry = '''UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) '''
+        self.execute(name_qry)
 
     def import_infil(self):
         infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall',

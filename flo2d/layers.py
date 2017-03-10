@@ -1135,7 +1135,10 @@ class Layers(QObject):
             fill_color.setAlpha(100)
             self.rb.setFillColor(fill_color)
         self.rb.setWidth(3)
-        feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+        try:
+            feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+        except StopIteration:
+            return
         self.rb.setToGeometry(feat.geometry(), lyr)
 
     def clear_rubber(self):

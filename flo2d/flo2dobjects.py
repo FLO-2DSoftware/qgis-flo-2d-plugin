@@ -895,6 +895,17 @@ class Rain(GeoPackageUtils):
         self.series_fid = None
         self.time_series = None
         self.time_series_data = None
+        self.name = None
+        self.irainreal = None
+        self.irainbuilding = None
+        self.series_fid = None
+        self.tot_rainfall = None
+        self.rainabs = None
+        self.irainarf = None
+        self.movingstrom = None
+        self.rainspeed = None
+        self.iraindir = None
+        self.notes = None
 
     def get_row(self):
         qry = 'SELECT * FROM rain;'
@@ -905,7 +916,17 @@ class Rain(GeoPackageUtils):
         else:
             values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))
+        self.name = self.row['name']
+        self.irainreal = self.row['irainreal']
+        self.irainbuilding = self.row['irainbuilding']
         self.series_fid = self.row['time_series_fid']
+        self.tot_rainfall = self.row['tot_rainfall']
+        self.rainabs = self.row['rainabs']
+        self.irainarf = self.row['irainarf']
+        self.movingstrom = self.row['movingstrom']
+        self.rainspeed = self.row['rainspeed']
+        self.iraindir = self.row['iraindir']
+        self.notes = self.row['notes']
         return self.row
 
     def set_row(self):
@@ -913,17 +934,79 @@ class Rain(GeoPackageUtils):
             fid, name, irainreal, irainbuilding, time_series_fid, tot_rainfall, rainabs, irainarf,
             movingstrom, rainspeed, iraindir, notes)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
-        self.execute(qry, self.row.values())
+        data = (
+            1,
+            self.name,
+            self.irainreal,
+            self.irainbuilding,
+            self.series_fid,
+            self.tot_rainfall,
+            self.rainabs,
+            self.irainarf,
+            self.movingstrom,
+            self.rainspeed,
+            self.iraindir,
+            self.notes
+        )
+        self.execute(qry, data)
 
-    def get_time_series(self):
-        qry = 'SELECT fid, name FROM rain_time_series WHERE fid = ?;'
-        self.time_series = self.execute(qry, (self.series_fid,)).fetchall()
-        return self.time_series
+    def get_time_series(self, order_by='name'):
+        if order_by == 'name':
+            ts = self.execute('SELECT fid, name FROM rain_time_series ORDER BY name COLLATE NOCASE;').fetchall()
+        else:
+            ts = self.execute('SELECT fid, name FROM rain_time_series ORDER BY fid;').fetchall()
+        if not ts:
+            ts = self.add_time_series(fetch=True)
+        return ts
+
+    def add_time_series(self, name=None, fetch=False):
+        qry = '''INSERT INTO rain_time_series (name) VALUES (?);'''
+        rowid = self.execute(qry, (name,), get_rowid=True)
+        name_qry = '''UPDATE rain_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;'''
+        self.execute(name_qry, (rowid,))
+        self.series_fid = rowid
+        if not name:
+            self.name = 'Time series {}'.format(rowid)
+        if fetch:
+            return self.get_time_series()
+
+    def del_time_series(self):
+        qry = 'DELETE FROM rain_time_series WHERE fid = ?;'
+        self.execute(qry, (self.series_fid,))
+        qry = 'DELETE FROM rain_time_series_data WHERE fid = ?;'
+        self.execute(qry, (self.series_fid,))
 
     def get_time_series_data(self):
-        qry = 'SELECT time, value FROM rain_time_series_data WHERE series_fid = ?;'
+        if not self.series_fid:
+            self.uc.bar_warn('No time series fid for rain defined.')
+            return
+        qry = 'SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY time;'
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
+        if not self.time_series_data:
+            # add a new time series
+            self.time_series_data = self.add_time_series_data(self.series_fid, fetch=True)
         return self.time_series_data
+
+    def add_time_series_data(self, ts_fid, rows=5, fetch=False):
+        """
+        Add new rows to rain_time_series_data for a given ts_fid.
+        """
+        qry = 'INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);'
+        self.execute_many(qry, ([ts_fid],)*rows)
+        if fetch:
+            return self.get_time_series_data()
+
+    def set_time_series_data(self, name, data):
+        qry = 'UPDATE rain_time_series SET name=? WHERE fid=?;'
+        self.execute(qry, (name, self.series_fid,))
+        qry = 'DELETE FROM rain_time_series_data WHERE series_fid = ?;'
+        self.execute(qry, (self.series_fid,))
+        qry = 'INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, ?, ?);'
+        self.execute_many(qry, data)
+
+    def set_time_series_data_name(self, name):
+        qry = 'UPDATE rain_time_series SET name=? WHERE fid=?;'
+        self.execute(qry, (name, self.series_fid,))
 
 
 class Evaporation(GeoPackageUtils):
