@@ -16,10 +16,11 @@ from qgis.core import QgsCoordinateReferenceSystem, QGis
 from qgis.gui import QgsProjectionSelectionWidget
 
 from .utils import load_ui
+from ..utils import is_number
 from ..flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
 from ..user_communication import UserCommunication
-
+from ..errors import Flo2dQueryResultNull
 
 uiDialog, qtBaseClass = load_ui('settings')
 
@@ -41,6 +42,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.crs = None
         self.projectionSelector = QgsProjectionSelectionWidget()
         self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
+        self.widget_map = {
+            "MANNING": self.manningDSpinBox,
+            "CELLSIZE": self.cellSizeDSpinBox
+        }
+
         self.setup()
 
         # connection
@@ -56,6 +62,29 @@ class SettingsDialog(qtBaseClass, uiDialog):
         con.executemany(qry, values)
 
     def read(self):
+        for name, wid in self.widget_map.iteritems():
+            qry = '''SELECT value FROM cont WHERE name = ?;'''
+            row = self.gutils.execute(qry, (name,)).fetchone()
+            if not row:
+                msg = 'Database query for param {} from cont table return null. Check your DB.'.format(name)
+                raise Flo2dQueryResultNull(msg)
+            value = row[0]
+            if isinstance(wid, QLineEdit):
+                wid.setText(str(value))
+            elif isinstance(wid, QCheckBox):
+                wid.setChecked(int(value))
+            elif isinstance(wid, QSpinBox):
+                if value and is_number(value):
+                    wid.setValue(int(value))
+                else:
+                    pass
+            elif isinstance(wid, QDoubleSpinBox):
+                if value and is_number(value):
+                    wid.setValue(float(value))
+                else:
+                    pass
+            else:
+                pass
         proj = self.gutils.get_cont_par('PROJ')
         cs = QgsCoordinateReferenceSystem()
         cs.createFromProj4(proj)
@@ -238,6 +267,20 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def write(self):
+        for name, wid in self.widget_map.iteritems():
+            value = None
+            if isinstance(wid, QLineEdit):
+                value = wid.text()
+            elif isinstance(wid, QSpinBox):
+                value = wid.value()
+            elif isinstance(wid, QDoubleSpinBox):
+                value = str(wid.value())
+            elif isinstance(wid, QCheckBox):
+                value = 1 if wid.isChecked() else 0
+
+            else:
+                pass
+            self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par('PROJ', self.crs.toProj4())
         if self.crs.mapUnits() == QGis.Meters:
             metric = 1
