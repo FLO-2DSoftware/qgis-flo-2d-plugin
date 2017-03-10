@@ -913,7 +913,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_levee_lines'):
-            self.uc.bar_warn("There is user levee lines! Please create them before running tool.")
+            self.uc.bar_warn("No levee line in the database! Please create them before running tool.")
             return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
@@ -996,6 +996,8 @@ class Flo2D(object):
             self.uc.show_warn("Schematizing failed on interpolating cross-sections values! "
                               "Please check your user layers.")
             return
+        idx = self.f2d_widget.xs_editor.xs_cbo.currentIndex()
+        self.f2d_widget.xs_editor.cur_xsec_changed(idx)
         self.uc.show_info("1D Domain schematized!")
 
     @connection_required
