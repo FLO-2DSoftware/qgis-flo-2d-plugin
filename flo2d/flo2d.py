@@ -17,31 +17,31 @@ import traceback
 
 from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
 from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
-from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 from qgis.core import QgsProject
-from layers import Layers
-from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
-from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
-from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
-from info_tool import InfoTool
-from grid_info_tool import GridInfoTool
-from profile_tool import ProfileTool
-from user_communication import UserCommunication
+from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
-from .gui.dlg_cont_toler import ContTolerDialog
-from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
-from .gui.f2d_main_widget import FLO2DWidget
-from .gui.plot_widget import PlotWidget
-from .gui.table_editor_widget import TableEditorWidget
-from .gui.grid_info_widget import GridInfoWidget
-from .gui.dlg_evap_editor import EvapEditorDialog
-from .gui.dlg_settings import SettingsDialog
-from .gui.dlg_sampling_elev import SamplingElevDialog
-from .gui.dlg_sampling_mann import SamplingManningDialog
-from .gui.dlg_sampling_xyz import SamplingXYZDialog
-from .gui.dlg_grid_elev import GridCorrectionDialog
-from .gui.dlg_levee_elev import LeveesToolDialog
+from layers import Layers
+from user_communication import UserCommunication
+from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
+from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from flo2d_tools.grid_info_tool import GridInfoTool
+from flo2d_tools.info_tool import InfoTool
+from flo2d_tools.profile_tool import ProfileTool
+from flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
+from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
+from gui.dlg_cont_toler import ContTolerDialog
+from gui.dlg_evap_editor import EvapEditorDialog
+from gui.dlg_grid_elev import GridCorrectionDialog
+from gui.dlg_levee_elev import LeveesToolDialog
+from gui.dlg_sampling_elev import SamplingElevDialog
+from gui.dlg_sampling_mann import SamplingManningDialog
+from gui.dlg_sampling_xyz import SamplingXYZDialog
+from gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from gui.dlg_settings import SettingsDialog
+from gui.f2d_main_widget import FLO2DWidget
+from gui.grid_info_widget import GridInfoWidget
+from gui.plot_widget import PlotWidget
+from gui.table_editor_widget import TableEditorWidget
 
 
 class Flo2D(object):
@@ -170,6 +170,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/settings.svg'),
             text=self.tr(u'Settings'),
             callback=self.show_settings,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/import_gds.svg'),
+            text=self.tr(u'Import from GeoPackage'),
+            callback=lambda: self.import_from_gpkg(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -571,6 +577,21 @@ class Flo2D(object):
             self.call_methods(export_calls, True, outdir)
             self.uc.bar_info('Flo2D model exported', dur=3)
             QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def import_from_gpkg(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastGpkgDir', '')
+        attached_gpkg = QFileDialog.getOpenFileName(
+            None,
+            'Select GeoPackage with data to import',
+            directory=last_dir,
+            filter='*.gpkg')
+        if attached_gpkg:
+            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(attached_gpkg))
+            self.gutils.copy_from_other(attached_gpkg)
+            self.load_layers()
+            self.setup_dock_widgets()
 
     def load_layers(self):
         self.lyrs.load_all_layers(self.gutils)

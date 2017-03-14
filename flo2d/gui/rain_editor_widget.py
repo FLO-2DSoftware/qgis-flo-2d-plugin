@@ -10,12 +10,12 @@
 
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor, QIcon, QInputDialog
-from .utils import load_ui, try_disconnect
-from ..utils import is_number, m_fdata
-from ..geopackage_utils import GeoPackageUtils, connection_required
+from ui_utils import load_ui, try_disconnect
+from flo2d.utils import is_number, m_fdata
+from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
-from ..flo2dobjects import Rain
-from ..user_communication import UserCommunication
+from flo2d.flo2dobjects import Rain
+from flo2d.user_communication import UserCommunication
 from math import isnan
 import os
 

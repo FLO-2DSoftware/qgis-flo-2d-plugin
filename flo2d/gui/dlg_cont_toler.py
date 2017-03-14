@@ -9,9 +9,9 @@
 # of the License, or (at your option) any later version
 
 from collections import OrderedDict
-from .utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from ui_utils import load_ui
+from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.user_communication import UserCommunication
 from PyQt4.QtGui import QLabel, QComboBox, QCheckBox, QDoubleSpinBox
 
 uiDialog, qtBaseClass = load_ui('cont_toler')

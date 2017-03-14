@@ -8,14 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import traceback
-from operator import itemgetter
-from itertools import izip
 from collections import defaultdict, OrderedDict
+from itertools import izip
 from math import pi, sqrt
+from operator import itemgetter
+
 from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
-from geopackage_utils import GeoPackageUtils
+
 from grid_tools import spatial_index, fid_from_grid
+from flo2d.geopackage_utils import GeoPackageUtils
 
 
 # Levees tools

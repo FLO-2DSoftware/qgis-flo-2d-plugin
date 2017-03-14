@@ -11,7 +11,7 @@
 from PyQt4.QtCore import Qt, QSize
 from PyQt4.QtGui import QVBoxLayout, QColor, QWidget
 
-from ..deps import safe_pyqtgraph as pg
+from flo2d.deps import safe_pyqtgraph as pg
 
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')

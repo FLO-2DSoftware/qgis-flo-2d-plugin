@@ -8,15 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .utils import load_ui
-from ..utils import is_number
-from ..user_communication import UserCommunication
+from ui_utils import load_ui
+from flo2d.utils import is_number
+from flo2d.user_communication import UserCommunication
 from operator import itemgetter
 from itertools import izip
 from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
 from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt4.QtCore import Qt
-from ..flo2dobjects import ChannelSegment
+from flo2d.flo2dobjects import ChannelSegment
 
 
 uiDialog, qtBaseClass = load_ui('profile_tool')

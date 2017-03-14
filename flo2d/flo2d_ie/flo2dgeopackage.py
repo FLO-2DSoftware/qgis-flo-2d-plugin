@@ -9,10 +9,11 @@
 # of the License, or (at your option) any later version
 
 import os
-from operator import itemgetter
 from itertools import chain, groupby, izip
+from operator import itemgetter
+
 from flo2d_parser import ParseDAT
-from geopackage_utils import GeoPackageUtils
+from flo2d.geopackage_utils import GeoPackageUtils
 
 
 class Flo2dGeoPackage(GeoPackageUtils):

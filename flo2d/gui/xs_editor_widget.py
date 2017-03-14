@@ -11,11 +11,11 @@
 from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QStandardItem, QIcon, QColor, QInputDialog
 from qgis.core import QgsFeatureRequest
-from .utils import load_ui, center_canvas,try_disconnect
-from ..utils import m_fdata, is_number
-from ..geopackage_utils import GeoPackageUtils, connection_required
-from ..flo2dobjects import UserCrossSection, ChannelSegment
-from ..user_communication import UserCommunication
+from ui_utils import load_ui, center_canvas,try_disconnect
+from flo2d.utils import m_fdata, is_number
+from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.flo2dobjects import UserCrossSection, ChannelSegment
+from flo2d.user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from plot_widget import PlotWidget
 import os

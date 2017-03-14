@@ -8,9 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..elevation_correctors import LeveesElevation
-from ..geopackage_utils import GeoPackageUtils
-from .utils import load_ui
+from flo2d.flo2d_tools.elevation_correctors import LeveesElevation
+from ui_utils import load_ui
+from flo2d.geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')
 
