@@ -29,6 +29,7 @@ from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.profile_tool import ProfileTool
 from flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
+from flo2d_tools.schematic_conversion import SchemaDomainConverter, SchemaLeveesConverter, SchemaBCConverter
 from gui.dlg_cont_toler import ContTolerDialog
 from gui.dlg_evap_editor import EvapEditorDialog
 from gui.dlg_grid_elev import GridCorrectionDialog
@@ -173,7 +174,7 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/import_gds.svg'),
+            os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
             text=self.tr(u'Import from GeoPackage'),
             callback=lambda: self.import_from_gpkg(),
             parent=self.iface.mainWindow())
@@ -260,6 +261,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
+            text=self.tr(u'Convert schematized 1D Domain'),
+            callback=lambda: self.schematic2user(),
             parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
@@ -1056,6 +1063,36 @@ class Flo2D(object):
         levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
         if levee_schem:
             levee_schem.triggerRepaint()
+
+    @connection_required
+    def schematic2user(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+            domain_converter = SchemaDomainConverter(self.con, self.iface, self.lyrs)
+            domain_converter.create_user_lbank()
+            domain_converter.create_user_xs()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on 1D Domain elements conversion!")
+
+        try:
+            levee_converter = SchemaLeveesConverter(self.con, self.iface, self.lyrs)
+            levee_converter.create_user_levees()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Levees conversion!")
+
+        try:
+            bc_converter = SchemaBCConverter(self.con, self.iface, self.lyrs)
+            bc_converter.create_user_bc()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Boundary Conditions conversion!")
+
+        self.uc.bar_info('Converting schematic layers to user layers finished!')
+        QApplication.restoreOverrideCursor()
+        self.setup_dock_widgets()
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
