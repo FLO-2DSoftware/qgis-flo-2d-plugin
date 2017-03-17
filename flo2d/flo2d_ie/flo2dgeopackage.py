@@ -327,7 +327,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 char = row[0]
                 gid = row[1]
                 rbank = row[-1]
-                geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else None
+                geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
                 sql, fcn_idx, xlen_idx = sqls[char]
                 xlen = row.pop(xlen_idx)
                 fcn = row.pop(fcn_idx)

@@ -26,7 +26,7 @@ from geopackage_utils import connection_required, database_disconnect, GeoPackag
 from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from flo2d_tools.grid_info_tool import GridInfoTool
 from flo2d_tools.info_tool import InfoTool
-from flo2d_tools.profile_tool import ProfileTool
+from flo2d_tools.channel_profile_tool import ChannelProfile
 from flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
 from flo2d_tools.schematic_conversion import SchemaDomainConverter, SchemaLeveesConverter, SchemaBCConverter
@@ -109,7 +109,7 @@ class Flo2D(object):
         self.set_editors_map()
 
         self.info_tool.feature_picked.connect(self.get_feature_info)
-        self.profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
@@ -199,8 +199,8 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
-            text=self.tr(u'Profile Tool'),
-            callback=self.profile,
+            text=self.tr(u'Channel Profile'),
+            callback=self.channel_profile,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -338,7 +338,7 @@ class Flo2D(object):
         """
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool, self.profile_tool
+        del self.info_tool, self.grid_info_tool, self.channel_profile_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -1090,15 +1090,15 @@ class Flo2D(object):
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating user layers failed on Boundary Conditions conversion!")
 
+        self.setup_dock_widgets()
         self.uc.bar_info('Converting schematic layers to user layers finished!')
         QApplication.restoreOverrideCursor()
-        self.setup_dock_widgets()
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.profile_tool = ProfileTool(self.canvas, self.lyrs)
+        self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
@@ -1113,9 +1113,9 @@ class Flo2D(object):
             return
         show_editor(fid)
 
-    def profile(self):
-        self.canvas.setMapTool(self.profile_tool)
-        self.profile_tool.update_lyrs_list()
+    def channel_profile(self):
+        self.canvas.setMapTool(self.channel_profile_tool)
+        self.channel_profile_tool.update_lyrs_list()
 
     def get_feature_profile(self, table, fid):
         try:

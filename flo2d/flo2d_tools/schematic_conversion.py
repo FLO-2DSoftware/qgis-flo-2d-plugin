@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
 from flo2d.geopackage_utils import GeoPackageUtils
 from qgis.core import QgsFeature, QgsGeometry
 
@@ -53,9 +52,8 @@ class SchemaConverter(GeoPackageUtils):
     def set_feature(schema_feat, user_fields, common_fnames, geom_function):
         user_feat = QgsFeature()
         geom = schema_feat.geometry()
-        if geom is not None:
-            new_geom = geom_function(geom)
-            user_feat.setGeometry(new_geom)
+        new_geom = geom_function(geom)
+        user_feat.setGeometry(new_geom)
         user_feat.setFields(user_fields)
         for user_fname, schema_fname in common_fnames.items():
             user_feat.setAttribute(user_fname, schema_feat[schema_fname])
@@ -81,15 +79,19 @@ class SchemaConverter(GeoPackageUtils):
                 user_fname = schema_fname
             if user_fname in user_fnames:
                 common_fnames[user_fname] = schema_fname
-        self.remove_features(user_lyr)
-        user_lyr.startEditing()
+
         fn = self.geom_functions[geometry_type]
+        new_features = []
         for feat in schema_lyr.getFeatures():
             new_feat = self.set_feature(feat, user_fields, common_fnames, fn)
-            user_lyr.addFeature(new_feat)
+            new_features.append(new_feat)
+        self.remove_features(user_lyr)
+        user_lyr.startEditing()
+        user_lyr.addFeatures(new_features)
         user_lyr.commitChanges()
         user_lyr.updateExtents()
         user_lyr.triggerRepaint()
+        user_lyr.removeSelection()
 
 
 class SchemaDomainConverter(SchemaConverter):
@@ -97,29 +99,63 @@ class SchemaDomainConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaDomainConverter, self).__init__(con, iface, lyrs)
 
-        self.left_bank_lyr = lyrs.data['chan']['qlyr']
-        self.user_lbank_lyr = lyrs.data['user_left_bank']['qlyr']
+        self.schema_lbank_tab = 'chan'
+        self.user_lbank_tab = 'user_left_bank'
+        self.schema_xs_tab = 'chan_elems'
+        self.user_xs_tab = 'user_xsections'
 
-        self.schema_xs_lyr = lyrs.data['chan_elems']['qlyr']
-        self.xsections_lyr = lyrs.data['user_xsections']['qlyr']
+        self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]['qlyr']
+        self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]['qlyr']
+        self.schema_xs_lyr = lyrs.data[self.schema_xs_tab]['qlyr']
+        self.user_xs_lyr = lyrs.data[self.user_xs_tab]['qlyr']
 
-        self.xs_types = {
-            'N': {'tab': 'chan_n'},
-            'R': {'tab': 'chan_r'},
-            'T': {'tab': 'chan_t'},
-            'V': {'tab': 'chan_v'},
+        self.xs_tables = {
+            'user_chan_n': 'chan_n',
+            'user_chan_r': 'chan_r',
+            'user_chan_t': 'chan_t',
+            'user_chan_v': 'chan_v',
+            'user_xsec_n_data': 'xsec_n_data'
         }
 
-    def populate_xs_lyrs(self):
-        for typ in self.xs_types.keys():
-            tab = self.xs_types[typ]['tab']
-            self.xs_types[typ]['lyr'] = self.lyrs.data[tab]['qlyr']
+    def copy_xs_tables(self):
+        self.clear_tables(*self.xs_tables.keys())
+        for user_tab, schema_tab in self.xs_tables.items():
+            self.execute('''INSERT INTO {0} SELECT * FROM {1};'''.format(user_tab, schema_tab))
+
+    def set_geomless_xs(self, feat):
+        fid = feat['fid']
+        wkt_pnt = self.single_centroid(fid)
+        point_geom = QgsGeometry().fromWkt(wkt_pnt)
+        point = point_geom.asPoint()
+        new_geom = QgsGeometry().fromPolyline([point, point])
+        feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
-        self.schema2user(self.left_bank_lyr, self.user_lbank_lyr, 'polyline')
+        self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, 'polyline')
 
     def create_user_xs(self):
-        self.schema2user(self.schema_xs_lyr, self.xsections_lyr, 'polyline', xlen='name')
+        self.disable_geom_triggers()
+        fields = self.user_xs_lyr.fields()
+        common_fnames = {'fid': 'fid', 'type': 'type', 'fcn': 'fcn'}
+        geom_fn = self.geom_functions['polyline']
+        new_features = []
+        for i, feat in enumerate(self.schema_xs_lyr.getFeatures(), start=1):
+
+            if feat.geometry() is None:
+                self.set_geomless_xs(feat)
+
+            new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
+            new_feat['name'] = 'Cross-section {}'.format(i)
+            new_features.append(new_feat)
+        self.remove_features(self.user_xs_lyr)
+        self.user_xs_lyr.startEditing()
+        self.user_xs_lyr.addFeatures(new_features)
+        self.user_xs_lyr.commitChanges()
+        self.user_xs_lyr.updateExtents()
+        self.user_xs_lyr.triggerRepaint()
+        self.user_xs_lyr.removeSelection()
+        self.copy_xs_tables()
+        self.enable_geom_triggers()
 
 
 class SchemaLeveesConverter(SchemaConverter):
@@ -127,11 +163,19 @@ class SchemaLeveesConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaLeveesConverter, self).__init__(con, iface, lyrs)
 
-        self.schema_levee_lyr = lyrs.data['levee_data']['qlyr']
-        self.user_levee_lyr = lyrs.data['user_levee_lines']['qlyr']
+        self.schema_levee_tab = 'levee_data'
+        self.user_levee_tab = 'user_levee_lines'
+        self.schema_levee_lyr = lyrs.data[self.schema_levee_tab]['qlyr']
+        self.user_levee_lyr = lyrs.data[self.user_levee_tab]['qlyr']
+
+    def set_user_fids(self):
+        self.execute('UPDATE levee_data SET user_line_fid = fid;')
 
     def create_user_levees(self):
+        self.disable_geom_triggers()
+        self.set_user_fids()
         self.schema2user(self.schema_levee_lyr, self.user_levee_lyr, 'polyline', levcrest='elev')
+        self.enable_geom_triggers()
 
 
 class SchemaBCConverter(SchemaConverter):
@@ -139,19 +183,35 @@ class SchemaBCConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaBCConverter, self).__init__(con, iface, lyrs)
 
-        self.schema_bc_lyr = lyrs.data['all_schem_bc']['qlyr']
-        self.user_bc_lyr = lyrs.data['user_bc_points']['qlyr']
+        self.schema_bc_tab = 'all_schem_bc'
+        self.user_bc_tab = 'user_bc_points'
+        self.schema_bc_lyr = lyrs.data[self.schema_bc_tab]['qlyr']
+        self.user_bc_lyr = lyrs.data[self.user_bc_tab]['qlyr']
+
+    def update_bc_fids(self, bc_updates):
+        cur = self.con.cursor()
+        for table, fid, tab_bc_fid in bc_updates:
+            qry = '''UPDATE {0} SET bc_fid = ?, geom_type = ? WHERE fid = ?;'''.format(table)
+            cur.execute(qry, (fid, 'point', tab_bc_fid))
+        self.con.commit()
 
     def create_user_bc(self):
+        self.disable_geom_triggers()
+        self.remove_features(self.user_bc_lyr)
         fields = self.user_bc_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type'}
         geom_fn = self.geom_functions['centroid']
-        self.remove_features(self.user_bc_lyr)
-        self.user_bc_lyr.startEditing()
+        new_features = []
+        bc_updates = []
         for feat in self.schema_bc_lyr.getFeatures():
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
-            self.user_bc_lyr.addFeature(new_feat)
+            new_features.append(new_feat)
+            bc_updates.append((feat['type'], feat['fid'], feat['tab_bc_fid']))
+        self.user_bc_lyr.startEditing()
+        self.user_bc_lyr.addFeatures(new_features)
         self.user_bc_lyr.commitChanges()
         self.user_bc_lyr.updateExtents()
         self.user_bc_lyr.triggerRepaint()
-
+        self.user_bc_lyr.removeSelection()
+        self.update_bc_fids(bc_updates)
+        self.enable_geom_triggers()

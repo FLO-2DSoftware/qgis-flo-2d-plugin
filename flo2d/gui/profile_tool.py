@@ -165,7 +165,9 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.field_combo.clear()
         for field in self.schema_lyr.fields():
             if field.isNumeric():
-                self.field_combo.addItem(field.name(), field)
+                fname = field.name()
+                if fname != 'id':
+                    self.field_combo.addItem(fname, field)
             else:
                 continue
 
@@ -180,7 +182,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         user_feat = next(user_feats)
         geom = user_feat.geometry()
         self.user_feat = user_feat
-        if self.user_tab == 'user_centerline':
+        if self.user_tab == 'user_left_bank':
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().nearestPoint(geom))) for f in schema_feats]
         else:
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]

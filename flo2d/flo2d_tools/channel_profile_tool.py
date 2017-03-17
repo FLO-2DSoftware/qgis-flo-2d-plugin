@@ -21,7 +21,7 @@ from qgis.core import QgsFeatureRequest
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 
 
-class ProfileTool(QgsMapToolIdentify):
+class ChannelProfile(QgsMapToolIdentify):
 
     feature_picked = pyqtSignal(str, int)
 
