@@ -215,3 +215,31 @@ class SchemaBCConverter(SchemaConverter):
         self.user_bc_lyr.removeSelection()
         self.update_bc_fids(bc_updates)
         self.enable_geom_triggers()
+
+
+class ModelBoundaryConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(ModelBoundaryConverter, self).__init__(con, iface, lyrs)
+
+        self.schema_grid_tab = 'grid'
+        self.user_boundary_tab = 'user_model_boundary'
+
+        self.schema_grid_lyr = lyrs.data[self.schema_grid_tab]['qlyr']
+        self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
+
+    def boundary_from_grid(self):
+        fields = self.user_boundary_lyr.fields()
+        geom_list = []
+        for feat in self.schema_grid_lyr.getFeatures():
+            geom_poly = feat.geometry().asPolygon()
+            geom_list.append(QgsGeometry.fromPolygon(geom_poly))
+        bfeat = QgsFeature()
+        bgeom = QgsGeometry.unaryUnion(geom_list)
+        bfeat.setGeometry(bgeom)
+        bfeat.setFields(fields)
+        self.user_boundary_lyr.startEditing()
+        self.user_boundary_lyr.addFeature(bfeat)
+        self.user_boundary_lyr.commitChanges()
+        self.user_boundary_lyr.updateExtents()
+        self.user_boundary_lyr.triggerRepaint()

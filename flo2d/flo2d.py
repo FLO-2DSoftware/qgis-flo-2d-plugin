@@ -29,7 +29,6 @@ from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.channel_profile_tool import ChannelProfile
 from flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
 from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
-from flo2d_tools.schematic_conversion import SchemaDomainConverter, SchemaLeveesConverter, SchemaBCConverter
 from gui.dlg_cont_toler import ContTolerDialog
 from gui.dlg_evap_editor import EvapEditorDialog
 from gui.dlg_grid_elev import GridCorrectionDialog
@@ -43,6 +42,7 @@ from gui.f2d_main_widget import FLO2DWidget
 from gui.grid_info_widget import GridInfoWidget
 from gui.plot_widget import PlotWidget
 from gui.table_editor_widget import TableEditorWidget
+from gui.dlg_schema2user import Schema2UserDialog
 
 
 class Flo2D(object):
@@ -1066,30 +1066,19 @@ class Flo2D(object):
 
     @connection_required
     def schematic2user(self):
+        converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
+        ok = converter_dlg.exec_()
+        if ok:
+            if converter_dlg.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one conversion source!")
+                return
+        else:
+            return
         QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        try:
-            domain_converter = SchemaDomainConverter(self.con, self.iface, self.lyrs)
-            domain_converter.create_user_lbank()
-            domain_converter.create_user_xs()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on 1D Domain elements conversion!")
-
-        try:
-            levee_converter = SchemaLeveesConverter(self.con, self.iface, self.lyrs)
-            levee_converter.create_user_levees()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Levees conversion!")
-
-        try:
-            bc_converter = SchemaBCConverter(self.con, self.iface, self.lyrs)
-            bc_converter.create_user_bc()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Boundary Conditions conversion!")
-
+        for no in sorted(converter_dlg.methods):
+            converter_dlg.methods[no]()
         self.setup_dock_widgets()
         self.uc.bar_info('Converting schematic layers to user layers finished!')
         QApplication.restoreOverrideCursor()
