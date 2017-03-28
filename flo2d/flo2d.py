@@ -192,6 +192,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
+            text=self.tr(u'Convert schematic layers to user layers'),
+            callback=lambda: self.schematic2user(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
             text=self.tr(u'Set Control Parameters'),
             callback=lambda: self.show_cont_toler(),
@@ -264,9 +270,9 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematize_channels.svg'),
-            text=self.tr(u'Convert schematized 1D Domain'),
-            callback=lambda: self.schematic2user(),
+            os.path.join(self.plugin_dir, 'img/help_contents.svg'),
+            text=self.tr(u'FlO-2D Help'),
+            callback=self.show_help,
             parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
@@ -819,8 +825,8 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning roughness finished!")
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
 
     @connection_required
@@ -841,20 +847,24 @@ class Flo2D(object):
         if self.gutils.is_table_empty('blocked_areas'):
             self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        # try:
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
-        evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-        arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
-        arf_lyr.reload()
-        self.lyrs.update_layer_extents(arf_lyr)
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+            evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
+            arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
+            arf_lyr.reload()
+            self.lyrs.update_layer_extents(arf_lyr)
 
-        self.lyrs.update_style_blocked(arf_lyr.id())
-        self.iface.mapCanvas().clearCache()
-        user_arf_lyr.triggerRepaint()
-        QApplication.restoreOverrideCursor()
-        self.uc.show_info("ARF and WRF values calculated!")
+            self.lyrs.update_style_blocked(arf_lyr.id())
+            self.iface.mapCanvas().clearCache()
+            user_arf_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("ARF and WRF values calculated!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Evaluation of ARFs and WRFs failed! Please check your blocked areas user layer.")
+            QApplication.restoreOverrideCursor()
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -877,8 +887,6 @@ class Flo2D(object):
 
     @connection_required
     def show_profile(self, fid=None):
-        # self.f2d_dock.setUserVisible(True)
-        # self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
@@ -1132,10 +1140,8 @@ class Flo2D(object):
     def restore_settings(self):
         pass
 
-    def show_help(self, page='index.html'):
-        helpFile = 'file:///{0}/help/{1}'.format(self.plugin_dir, page)
-        self.uc.log_info(helpFile)
-        QDesktopServices.openUrl(QUrl(helpFile))
-
-    def help_clicked(self):
-        self.show_help(page='index.html')
+    @staticmethod
+    def show_help():
+        pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = 'file:///{0}/help/index.html'.format(pth)
+        QDesktopServices.openUrl(QUrl(help_file))

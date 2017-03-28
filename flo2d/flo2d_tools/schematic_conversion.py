@@ -131,10 +131,11 @@ class SchemaDomainConverter(SchemaConverter):
         feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
+        self.remove_features(self.user_lbank_lyr)
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, 'polyline')
 
     def create_user_xs(self):
-        self.disable_geom_triggers()
+        self.remove_features(self.user_xs_lyr)
         fields = self.user_xs_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type', 'fcn': 'fcn'}
         geom_fn = self.geom_functions['polyline']
@@ -147,7 +148,6 @@ class SchemaDomainConverter(SchemaConverter):
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
             new_feat['name'] = 'Cross-section {}'.format(i)
             new_features.append(new_feat)
-        self.remove_features(self.user_xs_lyr)
         self.user_xs_lyr.startEditing()
         self.user_xs_lyr.addFeatures(new_features)
         self.user_xs_lyr.commitChanges()
@@ -155,7 +155,6 @@ class SchemaDomainConverter(SchemaConverter):
         self.user_xs_lyr.triggerRepaint()
         self.user_xs_lyr.removeSelection()
         self.copy_xs_tables()
-        self.enable_geom_triggers()
 
 
 class SchemaLeveesConverter(SchemaConverter):
@@ -172,10 +171,9 @@ class SchemaLeveesConverter(SchemaConverter):
         self.execute('UPDATE levee_data SET user_line_fid = fid;')
 
     def create_user_levees(self):
-        self.disable_geom_triggers()
+        self.remove_features(self.user_levee_lyr)
         self.set_user_fids()
         self.schema2user(self.schema_levee_lyr, self.user_levee_lyr, 'polyline', levcrest='elev')
-        self.enable_geom_triggers()
 
 
 class SchemaBCConverter(SchemaConverter):
@@ -229,6 +227,8 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
 
     def boundary_from_grid(self):
+        self.remove_features(self.user_boundary_lyr)
+        cellsize = self.get_cont_par('CELLSIZE')
         fields = self.user_boundary_lyr.fields()
         geom_list = []
         for feat in self.schema_grid_lyr.getFeatures():
@@ -238,6 +238,7 @@ class ModelBoundaryConverter(SchemaConverter):
         bgeom = QgsGeometry.unaryUnion(geom_list)
         bfeat.setGeometry(bgeom)
         bfeat.setFields(fields)
+        bfeat.setAttribute('cell_size', cellsize)
         self.user_boundary_lyr.startEditing()
         self.user_boundary_lyr.addFeature(bfeat)
         self.user_boundary_lyr.commitChanges()
