@@ -8,12 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
-import sys
-import unittest
-sys.path.append(os.path.join('..', 'flo2d'))
 from flo2d.geopackage_utils import *
-from flo2d.flo2dgeopackage import Flo2dGeoPackage
+from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+import os
+import unittest
+
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')

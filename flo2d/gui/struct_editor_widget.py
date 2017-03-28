@@ -11,11 +11,11 @@
 from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
-from .utils import load_ui, center_canvas
-from ..geopackage_utils import GeoPackageUtils
-from ..flo2dobjects import Structure
-from ..user_communication import UserCommunication
-from ..utils import m_fdata, is_number
+from ui_utils import load_ui, center_canvas
+from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.flo2dobjects import Structure
+from flo2d.user_communication import UserCommunication
+from flo2d.utils import m_fdata, is_number
 from table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
 import os

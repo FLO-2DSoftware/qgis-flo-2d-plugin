@@ -10,9 +10,9 @@
 
 from PyQt4.QtCore import Qt, QModelIndex
 from PyQt4.QtGui import QStandardItemModel, QStandardItem
-from .utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
-from ..flo2dobjects import Evaporation
+from ui_utils import load_ui
+from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.flo2dobjects import Evaporation
 from plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('evaporation_editor')

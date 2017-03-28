@@ -10,17 +10,18 @@
 import os
 import time
 from itertools import chain
+
 from PyQt4.QtCore import Qt, QSettings
 from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QGis
 from qgis.gui import QgsProjectionSelectionWidget
 
-from .utils import load_ui
-from ..utils import is_number
-from ..flo2d_parser import ParseDAT
-from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
-from ..user_communication import UserCommunication
-from ..errors import Flo2dQueryResultNull
+from flo2d.flo2d_ie.flo2d_parser import ParseDAT
+from ui_utils import load_ui
+from flo2d.errors import Flo2dQueryResultNull
+from flo2d.geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
+from flo2d.user_communication import UserCommunication
+from flo2d.utils import is_number
 
 uiDialog, qtBaseClass = load_ui('settings')
 

@@ -17,31 +17,32 @@ import traceback
 
 from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
 from PyQt4.QtGui import QIcon, QAction, QInputDialog, QFileDialog, QApplication, QDesktopServices
-from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 from qgis.core import QgsProject
-from layers import Layers
-from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
-from flo2dgeopackage import Flo2dGeoPackage
-from grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
-from schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
-from info_tool import InfoTool
-from grid_info_tool import GridInfoTool
-from profile_tool import ProfileTool
-from user_communication import UserCommunication
+from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
-from .gui.dlg_cont_toler import ContTolerDialog
-from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
-from .gui.f2d_main_widget import FLO2DWidget
-from .gui.plot_widget import PlotWidget
-from .gui.table_editor_widget import TableEditorWidget
-from .gui.grid_info_widget import GridInfoWidget
-from .gui.dlg_evap_editor import EvapEditorDialog
-from .gui.dlg_settings import SettingsDialog
-from .gui.dlg_sampling_elev import SamplingElevDialog
-from .gui.dlg_sampling_mann import SamplingManningDialog
-from .gui.dlg_sampling_xyz import SamplingXYZDialog
-from .gui.dlg_grid_elev import GridCorrectionDialog
-from .gui.dlg_levee_elev import LeveesToolDialog
+from layers import Layers
+from user_communication import UserCommunication
+from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
+from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from flo2d_tools.grid_info_tool import GridInfoTool
+from flo2d_tools.info_tool import InfoTool
+from flo2d_tools.channel_profile_tool import ChannelProfile
+from flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, grid_has_empty_elev, ZonalStatistics
+from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
+from gui.dlg_cont_toler import ContTolerDialog
+from gui.dlg_evap_editor import EvapEditorDialog
+from gui.dlg_grid_elev import GridCorrectionDialog
+from gui.dlg_levee_elev import LeveesToolDialog
+from gui.dlg_sampling_elev import SamplingElevDialog
+from gui.dlg_sampling_mann import SamplingManningDialog
+from gui.dlg_sampling_xyz import SamplingXYZDialog
+from gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from gui.dlg_settings import SettingsDialog
+from gui.f2d_main_widget import FLO2DWidget
+from gui.grid_info_widget import GridInfoWidget
+from gui.plot_widget import PlotWidget
+from gui.table_editor_widget import TableEditorWidget
+from gui.dlg_schema2user import Schema2UserDialog
 
 
 class Flo2D(object):
@@ -108,7 +109,7 @@ class Flo2D(object):
         self.set_editors_map()
 
         self.info_tool.feature_picked.connect(self.get_feature_info)
-        self.profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
@@ -173,6 +174,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
+            text=self.tr(u'Import from GeoPackage'),
+            callback=lambda: self.import_from_gpkg(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
             callback=lambda: self.import_gds(),
@@ -185,6 +192,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
+            text=self.tr(u'Convert schematic layers to user layers'),
+            callback=lambda: self.schematic2user(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
             text=self.tr(u'Set Control Parameters'),
             callback=lambda: self.show_cont_toler(),
@@ -192,8 +205,8 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
-            text=self.tr(u'Profile Tool'),
-            callback=self.profile,
+            text=self.tr(u'Channel Profile'),
+            callback=self.channel_profile,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -254,6 +267,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
             callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/help_contents.svg'),
+            text=self.tr(u'FlO-2D Help'),
+            callback=self.show_help,
             parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
@@ -325,7 +344,7 @@ class Flo2D(object):
         """
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool, self.profile_tool
+        del self.info_tool, self.grid_info_tool, self.channel_profile_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -572,6 +591,21 @@ class Flo2D(object):
             self.uc.bar_info('Flo2D model exported', dur=3)
             QApplication.restoreOverrideCursor()
 
+    @connection_required
+    def import_from_gpkg(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastGpkgDir', '')
+        attached_gpkg = QFileDialog.getOpenFileName(
+            None,
+            'Select GeoPackage with data to import',
+            directory=last_dir,
+            filter='*.gpkg')
+        if attached_gpkg:
+            s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(attached_gpkg))
+            self.gutils.copy_from_other(attached_gpkg)
+            self.load_layers()
+            self.setup_dock_widgets()
+
     def load_layers(self):
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.repaint_layers()
@@ -791,8 +825,8 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Assigning roughness finished!")
         except Exception as e:
-            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
 
     @connection_required
@@ -813,20 +847,24 @@ class Flo2D(object):
         if self.gutils.is_table_empty('blocked_areas'):
             self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        # try:
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-        user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
-        evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-        arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
-        arf_lyr.reload()
-        self.lyrs.update_layer_extents(arf_lyr)
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+            evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
+            arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
+            arf_lyr.reload()
+            self.lyrs.update_layer_extents(arf_lyr)
 
-        self.lyrs.update_style_blocked(arf_lyr.id())
-        self.iface.mapCanvas().clearCache()
-        user_arf_lyr.triggerRepaint()
-        QApplication.restoreOverrideCursor()
-        self.uc.show_info("ARF and WRF values calculated!")
+            self.lyrs.update_style_blocked(arf_lyr.id())
+            self.iface.mapCanvas().clearCache()
+            user_arf_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("ARF and WRF values calculated!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Evaluation of ARFs and WRFs failed! Please check your blocked areas user layer.")
+            QApplication.restoreOverrideCursor()
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -849,8 +887,6 @@ class Flo2D(object):
 
     @connection_required
     def show_profile(self, fid=None):
-        # self.f2d_dock.setUserVisible(True)
-        # self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
@@ -1036,11 +1072,30 @@ class Flo2D(object):
         if levee_schem:
             levee_schem.triggerRepaint()
 
+    @connection_required
+    def schematic2user(self):
+        converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
+        ok = converter_dlg.exec_()
+        if ok:
+            if converter_dlg.methods:
+                pass
+            else:
+                self.uc.show_warn("Please choose at least one conversion source!")
+                return
+        else:
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        for no in sorted(converter_dlg.methods):
+            converter_dlg.methods[no]()
+        self.setup_dock_widgets()
+        self.uc.bar_info('Converting schematic layers to user layers finished!')
+        QApplication.restoreOverrideCursor()
+
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
-        self.profile_tool = ProfileTool(self.canvas, self.lyrs)
+        self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
 
     def identify(self):
         self.canvas.setMapTool(self.info_tool)
@@ -1055,9 +1110,9 @@ class Flo2D(object):
             return
         show_editor(fid)
 
-    def profile(self):
-        self.canvas.setMapTool(self.profile_tool)
-        self.profile_tool.update_lyrs_list()
+    def channel_profile(self):
+        self.canvas.setMapTool(self.channel_profile_tool)
+        self.channel_profile_tool.update_lyrs_list()
 
     def get_feature_profile(self, table, fid):
         try:
@@ -1085,10 +1140,8 @@ class Flo2D(object):
     def restore_settings(self):
         pass
 
-    def show_help(self, page='index.html'):
-        helpFile = 'file:///{0}/help/{1}'.format(self.plugin_dir, page)
-        self.uc.log_info(helpFile)
-        QDesktopServices.openUrl(QUrl(helpFile))
-
-    def help_clicked(self):
-        self.show_help(page='index.html')
+    @staticmethod
+    def show_help():
+        pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = 'file:///{0}/help/index.html'.format(pth)
+        QDesktopServices.openUrl(QUrl(help_file))

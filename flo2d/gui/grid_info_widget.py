@@ -10,7 +10,7 @@
 
 from math import sqrt
 from PyQt4.QtCore import QSize
-from .utils import load_ui
+from ui_utils import load_ui
 from qgis.core import QgsFeatureRequest
 
 uiDialog, qtBaseClass = load_ui('grid_info_widget')

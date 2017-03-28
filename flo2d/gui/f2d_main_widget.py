@@ -10,7 +10,7 @@
 
 from PyQt4.QtCore import QSize, QUrl
 from PyQt4.QtGui import QIcon, QDesktopServices
-from .utils import load_ui
+from ui_utils import load_ui
 from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
 from struct_editor_widget import StructEditorWidget
@@ -19,7 +19,7 @@ from street_editor_widget import StreetEditorWidget
 from rain_editor_widget import RainEditorWidget
 from profile_tool import ProfileTool
 from fpxsec_editor_widget import FPXsecEditorWidget
-from ..user_communication import UserCommunication
+from flo2d.user_communication import UserCommunication
 import os
 
 uiDialog, qtBaseClass = load_ui('f2d_widget')
@@ -56,12 +56,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         # connections
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
         self.expand_groups_btn.clicked.connect(self.expand_all_groups)
-        self.help_btn.clicked.connect(self.show_help)
 
         # set icons
         self.set_icon(self.collapse_groups_btn, 'collapse_groups.svg')
         self.set_icon(self.expand_groups_btn, 'expand_groups.svg')
-        self.set_icon(self.help_btn, 'help_contents.svg')
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -75,12 +73,6 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def expand_all_groups(self):
         for grp in self.cgroups:
             grp.setCollapsed(False)
-
-    @staticmethod
-    def show_help():
-        pth = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        help_file = 'file:///{0}/help/index.html'.format(pth)
-        QDesktopServices.openUrl(QUrl(help_file))
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)

@@ -9,12 +9,10 @@
 # of the License, or (at your option) any later version
 
 import os
-import sys
 import unittest
-sys.path.append(os.path.join('..', 'flo2d'))
 from qgis.core import *
 from utilities import get_qgis_app
-from flo2d.schematic_tools import *
+from flo2d.flo2d_tools.schematic_tools import *
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))

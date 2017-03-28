@@ -8,15 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QIcon, QComboBox, QSizePolicy, QInputDialog
-from qgis.core import QgsFeatureRequest
-from .utils import load_ui, center_canvas
-from ..geopackage_utils import GeoPackageUtils, connection_required
-from ..schematic_tools import schematize_streets
-from ..user_communication import UserCommunication
 import os
 import traceback
 
+from PyQt4.QtGui import QIcon, QComboBox, QSizePolicy, QInputDialog
+from qgis.core import QgsFeatureRequest
+
+from flo2d.flo2d_tools.schematic_tools import schematize_streets
+from ui_utils import load_ui, center_canvas
+from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('street_editor')
 uiDialog_pop, qtBaseClass_pop = load_ui('street_global')

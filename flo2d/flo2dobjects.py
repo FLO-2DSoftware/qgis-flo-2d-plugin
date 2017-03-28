@@ -9,10 +9,11 @@
 # of the License, or (at your option) any later version
 
 from collections import OrderedDict
-from flo2dgeopackage import GeoPackageUtils
 from math import isnan
-from utils import is_number
+
 from errors import Flo2dError
+from geopackage_utils import GeoPackageUtils
+from utils import is_number
 
 
 class CrossSection(GeoPackageUtils):

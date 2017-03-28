@@ -176,6 +176,24 @@ class GeoPackageUtils(object):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = con
 
+    def copy_from_other(self, other_gpkg):
+        tab_sql = '''SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';'''
+        tabs = [row[0] for row in self.execute(tab_sql)]
+        self.execute('ATTACH ? AS other;', (other_gpkg,))
+        insert_sql = '''INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};'''
+        self.clear_tables(*tabs)
+        for tab in tabs:
+            names_new = self.table_info(tab, only_columns=True)
+            names_old = set(self.table_info(tab, only_columns=True, attached_db='other'))
+            import_names = (name for name in names_new if name in names_old)
+            columns = ', '.join(import_names)
+            try:
+                qry = insert_sql.format(tab, columns)
+                self.execute(qry)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+        self.execute('DETACH other;')
+
     def execute(self, statement, inputs=None, get_rowid=False):
         """
         Execute a prepared SQL statement on this geopackage database.
@@ -389,8 +407,11 @@ class GeoPackageUtils(object):
         count = 0 if count is None else count
         return count
 
-    def table_info(self, table, only_columns=False):
-        qry = 'PRAGMA table_info("{0}")'.format(table)
+    def table_info(self, table, only_columns=False, attached_db=None):
+        if attached_db is None:
+            qry = 'PRAGMA table_info("{0}")'.format(table)
+        else:
+            qry = 'PRAGMA {0}.table_info("{1}")'.format(attached_db, table)
         info = self.execute(qry)
         if only_columns is True:
             info = (col[1] for col in info)

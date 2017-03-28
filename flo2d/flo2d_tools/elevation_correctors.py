@@ -8,10 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from PyQt4.QtCore import QPyNullVariant, QVariant
+from qgis.core import QgsFeatureRequest, QgsField
+
 from grid_tools import TINInterpolator, poly2grid
 from schematic_tools import get_intervals, interpolate_along_line, polys2levees
-from qgis.core import QgsFeatureRequest, QgsField
-from PyQt4.QtCore import QPyNullVariant, QVariant
 
 
 class ElevationCorrector(object):

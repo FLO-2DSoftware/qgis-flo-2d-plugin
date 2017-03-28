@@ -8,16 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QIcon, QInputDialog
-from qgis.core import QgsFeatureRequest
-from .utils import load_ui, center_canvas
-from ..geopackage_utils import GeoPackageUtils, connection_required
-from ..schematic_tools import FloodplainXS
-from ..user_communication import UserCommunication
-
 import os
 import traceback
 
+from PyQt4.QtGui import QIcon, QInputDialog
+from qgis.core import QgsFeatureRequest
+
+from flo2d.flo2d_tools.schematic_tools import FloodplainXS
+from ui_utils import load_ui, center_canvas
+from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('fpxsec_editor')
 

@@ -15,7 +15,7 @@ from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from qgis.analysis import QgsInterpolator, QgsTINInterpolator
 from PyQt4.QtCore import QPyNullVariant
-from utils import is_number
+from flo2d.utils import is_number
 
 
 class TINInterpolator(object):

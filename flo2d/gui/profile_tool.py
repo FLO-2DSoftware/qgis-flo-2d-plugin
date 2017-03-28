@@ -8,15 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .utils import load_ui
-from ..utils import is_number
-from ..user_communication import UserCommunication
+from ui_utils import load_ui
+from flo2d.utils import is_number
+from flo2d.user_communication import UserCommunication
 from operator import itemgetter
 from itertools import izip
 from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
 from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt4.QtCore import Qt
-from ..flo2dobjects import ChannelSegment
+from flo2d.flo2dobjects import ChannelSegment
 
 
 uiDialog, qtBaseClass = load_ui('profile_tool')
@@ -165,7 +165,9 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.field_combo.clear()
         for field in self.schema_lyr.fields():
             if field.isNumeric():
-                self.field_combo.addItem(field.name(), field)
+                fname = field.name()
+                if fname != 'id':
+                    self.field_combo.addItem(fname, field)
             else:
                 continue
 
@@ -180,7 +182,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         user_feat = next(user_feats)
         geom = user_feat.geometry()
         self.user_feat = user_feat
-        if self.user_tab == 'user_centerline':
+        if self.user_tab == 'user_left_bank':
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().nearestPoint(geom))) for f in schema_feats]
         else:
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]
