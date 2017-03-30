@@ -24,6 +24,7 @@ from layers import Layers
 from user_communication import UserCommunication
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from flo2d_ie.ras_import import RASProject
 from flo2d_tools.grid_info_tool import GridInfoTool
 from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.channel_profile_tool import ChannelProfile
@@ -273,6 +274,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/help_contents.svg'),
             text=self.tr(u'FlO-2D Help'),
             callback=self.show_help,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
+            text=self.tr(u'Import RAS geometry'),
+            callback=lambda: self.import_from_ras(),
             parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
@@ -605,6 +612,35 @@ class Flo2D(object):
             self.gutils.copy_from_other(attached_gpkg)
             self.load_layers()
             self.setup_dock_widgets()
+
+    @connection_required
+    def import_from_ras(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastRasDir', '')
+        ras_file = QFileDialog.getOpenFileName(
+            None,
+            'Select HEC-RAS project or geometry file to import data',
+            directory=last_dir,
+            filter='(*.prj *.g*)')
+        if not ras_file:
+            return
+        s.setValue('FLO-2D/lastRasDir', os.path.dirname(ras_file))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            if ras_file.lower().endswith('.prj'):
+                project = RASProject(self.con, self.iface, self.lyrs, ras_file)
+                project.find_geometry()
+                ras_geom = project.get_geometry()
+            else:
+                project = RASProject(self.con, self.iface, self.lyrs)
+                ras_geom = project.get_geometry(ras_file)
+            project.write_xsections(ras_geom)
+            self.setup_dock_widgets()
+            self.uc.bar_info('HEC-RAS geometry data imported!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn('Could not read HEC-RAS file!')
+        QApplication.restoreOverrideCursor()
 
     def load_layers(self):
         self.lyrs.load_all_layers(self.gutils)

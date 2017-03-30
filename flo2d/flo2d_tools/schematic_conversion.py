@@ -12,6 +12,13 @@ from flo2d.geopackage_utils import GeoPackageUtils
 from qgis.core import QgsFeature, QgsGeometry
 
 
+def remove_features(lyr):
+    ids = lyr.allFeatureIds()
+    lyr.startEditing()
+    lyr.deleteFeatures(ids)
+    lyr.commitChanges()
+
+
 class SchemaConverter(GeoPackageUtils):
 
     def __init__(self, con, iface, lyrs):
@@ -59,13 +66,6 @@ class SchemaConverter(GeoPackageUtils):
             user_feat.setAttribute(user_fname, schema_feat[schema_fname])
         return user_feat
 
-    @staticmethod
-    def remove_features(lyr):
-        ids = lyr.allFeatureIds()
-        lyr.startEditing()
-        lyr.deleteFeatures(ids)
-        lyr.commitChanges()
-
     def schema2user(self, schema_lyr, user_lyr, geometry_type, **name_map):
         schema_fields = schema_lyr.fields()
         user_fields = user_lyr.fields()
@@ -85,7 +85,7 @@ class SchemaConverter(GeoPackageUtils):
         for feat in schema_lyr.getFeatures():
             new_feat = self.set_feature(feat, user_fields, common_fnames, fn)
             new_features.append(new_feat)
-        self.remove_features(user_lyr)
+        remove_features(user_lyr)
         user_lyr.startEditing()
         user_lyr.addFeatures(new_features)
         user_lyr.commitChanges()
@@ -131,11 +131,11 @@ class SchemaDomainConverter(SchemaConverter):
         feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
-        self.remove_features(self.user_lbank_lyr)
+        remove_features(self.user_lbank_lyr)
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, 'polyline')
 
     def create_user_xs(self):
-        self.remove_features(self.user_xs_lyr)
+        remove_features(self.user_xs_lyr)
         fields = self.user_xs_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type', 'fcn': 'fcn'}
         geom_fn = self.geom_functions['polyline']
@@ -171,7 +171,7 @@ class SchemaLeveesConverter(SchemaConverter):
         self.execute('UPDATE levee_data SET user_line_fid = fid;')
 
     def create_user_levees(self):
-        self.remove_features(self.user_levee_lyr)
+        remove_features(self.user_levee_lyr)
         self.set_user_fids()
         self.schema2user(self.schema_levee_lyr, self.user_levee_lyr, 'polyline', levcrest='elev')
 
@@ -195,7 +195,7 @@ class SchemaBCConverter(SchemaConverter):
 
     def create_user_bc(self):
         self.disable_geom_triggers()
-        self.remove_features(self.user_bc_lyr)
+        remove_features(self.user_bc_lyr)
         fields = self.user_bc_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type'}
         geom_fn = self.geom_functions['centroid']
@@ -227,7 +227,7 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
 
     def boundary_from_grid(self):
-        self.remove_features(self.user_boundary_lyr)
+        remove_features(self.user_boundary_lyr)
         cellsize = self.get_cont_par('CELLSIZE')
         fields = self.user_boundary_lyr.fields()
         geom_list = []
