@@ -58,6 +58,7 @@ class RASProject(GeoPackageUtils):
         user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
         remove_features(user_lbank_lyr)
         remove_features(user_xs_lyr)
+        self.clear_tables('user_chan_n', 'user_xsec_n_data')
         river_fields = user_lbank_lyr.fields()
         xs_fields = user_xs_lyr.fields()
         xs_fid = self.get_max('user_xsections') + 1
@@ -122,22 +123,26 @@ class RASGeometry(object):
 
     @staticmethod
     def find_slices(indexes):
-        indicies = []
+        indices = []
         for n in range(len(indexes)):
             sl = indexes[n:n + 2]
             if len(sl) < 2:
                 sl.append(None)
-            indicies.append(sl)
-        return indicies
+            indices.append(sl)
+        return indices
 
     @staticmethod
     def split_txt_data(txt, width, chunk_size):
-        split_txt = []
+        split_values = []
         for row in txt.strip('\n').split('\n'):
             for n in range(0, width, chunk_size):
-                element = row[n:n+chunk_size]
-                split_txt.append(element)
-        return split_txt
+                chunk = row[n:n + chunk_size]
+                try:
+                    fchunk = float(chunk)
+                    split_values.append(fchunk)
+                except ValueError:
+                    continue
+        return split_values
 
     def get_ras_geometry(self):
         self.extract_xsections()
@@ -145,7 +150,7 @@ class RASGeometry(object):
 
     def extract_rivers(self):
         river_pattern = r'River Reach=(?P<river>[^,]+),(?P<reach>[^\r\n]+)[\r\n]' \
-                        r'Reach XY=(?P<length>\s*\d+)(?P<points>[^a-zA-Z]+)'
+                        r'Reach XY=(?P<length>\s*\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)'
         re_river = re.compile(river_pattern, re.M | re.S)
         river_results = re.finditer(re_river, self.geom_txt)
         endings = []
@@ -157,11 +162,12 @@ class RASGeometry(object):
             reach_txt = river_groups['reach']
             length_txt = river_groups['length']
             points_txt = river_groups['points']
+            points_split = self.split_txt_data(points_txt, 64, 16)
 
             river = river_txt.strip()
             reach = reach_txt.strip()
             length = int(length_txt)
-            points = list(izip_longest(*(iter(points_txt.split()),) * 2))
+            points = list(izip_longest(*(iter(points_split),) * 2))
             if length == len(points):
                 valid = True
             else:
@@ -171,8 +177,8 @@ class RASGeometry(object):
             self.ras_geometry[key] = values
             endings.append(river_end)
 
-        indicies = self.find_slices(endings)
-        for key, (start, end) in zip(self.ras_geometry.keys(), indicies):
+        indices = self.find_slices(endings)
+        for key, (start, end) in zip(self.ras_geometry.keys(), indices):
             self.ras_geometry[key]['slice'] = slice(start, end)
 
     def extract_xsections(self):
@@ -197,11 +203,14 @@ class RASGeometry(object):
                 elev_txt = xs_groups['elev']
                 man_txt = xs_groups['man']
 
+                points_split = self.split_txt_data(points_txt, 64, 16)
+                elev_split = self.split_txt_data(elev_txt, 80, 8)
+
                 rm = float(rm_txt)
                 length = int(length_txt)
-                points = list(izip_longest(*(iter(points_txt.split()),) * 2))
+                points = list(izip_longest(*(iter(points_split),) * 2))
                 sta = int(sta_txt)
-                elev = list(izip_longest(*(iter(self.split_txt_data(elev_txt, 80, 8)),) * 2))
+                elev = list(izip_longest(*(iter(elev_split),) * 2))
                 man = [float(n) for n in man_txt.split() if n != ',']
                 if length != len(points):
                     continue
