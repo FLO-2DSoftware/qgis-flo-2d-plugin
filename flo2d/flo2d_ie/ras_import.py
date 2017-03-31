@@ -188,7 +188,7 @@ class RASGeometry(object):
         self.extract_rivers()
         xs_pattern = r'Type RM[^,]+,(?P<rm>[^,]+),.+?' \
                      r'XS GIS Cut Line=(?P<length>\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)[^#]+' \
-                     r'#Sta/Elev=(?P<sta>\s*\d+)[^\r\n]*(?P<elev>[^a-zA-Z]+)' \
+                     r'#Sta/Elev=\s*(?P<sta>\d+)[^\r\n]*(?P<elev>[^a-zA-Z#]+)' \
                      r'#Mann=(?P<man>[^a-zA-Z#]+)'
         re_xs = re.compile(xs_pattern, re.M | re.S)
         for key, values in self.ras_geometry.iteritems():
