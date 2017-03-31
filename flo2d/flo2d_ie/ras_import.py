@@ -189,7 +189,7 @@ class RASGeometry(object):
         xs_pattern = r'Type RM[^,]+,(?P<rm>[^,]+),.+?' \
                      r'XS GIS Cut Line=(?P<length>\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)[^#]+' \
                      r'#Sta/Elev=\s*(?P<sta>\d+)[^\r\n]*(?P<elev>[^a-zA-Z#]+)' \
-                     r'#Mann=(?P<man>[^a-zA-Z#]+)'
+                     r'#Mann=(?P<man>[^a-zA-Z#]+)(?P<extra>[^/]+)'
         re_xs = re.compile(xs_pattern, re.M | re.S)
         for key, values in self.ras_geometry.iteritems():
             s = values['slice']
@@ -205,6 +205,7 @@ class RASGeometry(object):
                 sta_txt = xs_groups['sta']
                 elev_txt = xs_groups['elev']
                 man_txt = xs_groups['man']
+                extra_txt = xs_groups['extra']
 
                 points_split = self.split_txt_data(points_txt, 64, 16)
                 elev_split = self.split_txt_data(elev_txt, 80, 8)
@@ -218,5 +219,5 @@ class RASGeometry(object):
                 if length != len(points):
                     continue
                 xs_key = '{} {}'.format(key, rm)
-                xs_data[xs_key] = {'rm': rm, 'points': points, 'sta': sta, 'elev': elev, 'man': man}
+                xs_data[xs_key] = {'rm': rm, 'points': points, 'sta': sta, 'elev': elev, 'man': man, 'extra': extra_txt}
             self.ras_geometry[key]['xs_data'] = xs_data
