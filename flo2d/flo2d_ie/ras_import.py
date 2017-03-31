@@ -49,6 +49,9 @@ class RASProject(GeoPackageUtils):
         geometry = RASGeometry(geom_pth)
         ras_geometry = geometry.get_ras_geometry()
         if ras_geometry:
+            first_val = next(ras_geometry.itervalues())
+            if not first_val['xs_data']:
+                raise Exception
             return ras_geometry
         else:
             raise Exception
@@ -150,7 +153,7 @@ class RASGeometry(object):
 
     def extract_rivers(self):
         river_pattern = r'River Reach=(?P<river>[^,]+),(?P<reach>[^\r\n]+)[\r\n]' \
-                        r'Reach XY=(?P<length>\s*\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)'
+                        r'Reach XY=\s*(?P<length>\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)'
         re_river = re.compile(river_pattern, re.M | re.S)
         river_results = re.finditer(re_river, self.geom_txt)
         endings = []
@@ -211,7 +214,7 @@ class RASGeometry(object):
                 points = list(izip_longest(*(iter(points_split),) * 2))
                 sta = int(sta_txt)
                 elev = list(izip_longest(*(iter(elev_split),) * 2))
-                man = [float(n) for n in man_txt.split() if n != ',']
+                man = [float(n) for n in man_txt.replace(',', ' ').split()]
                 if length != len(points):
                     continue
                 xs_key = '{} {}'.format(key, rm)
