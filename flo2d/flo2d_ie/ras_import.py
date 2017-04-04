@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import re
+import bisect
 from collections import OrderedDict
 from itertools import izip_longest
 from flo2d.geopackage_utils import GeoPackageUtils
@@ -56,7 +57,82 @@ class RASProject(GeoPackageUtils):
         else:
             raise Exception
 
-    def write_xsections(self, ras_geometry):
+    @staticmethod
+    def find_banks(xs_data):
+        text = xs_data['extra']
+        elev = xs_data['elev']
+        stations = [x[0] for x in elev]
+        regex = re.compile(r'Bank Sta=(?P<stations>[^\r\n]+)')
+        result = re.search(regex, text)
+        if not result:
+            return None, None, None
+        banksdict = result.groupdict()
+        banks = banksdict['stations']
+        lbank_station, rbank_station = [float(b) for b in banks.split(',')]
+
+        lidx = stations.index(lbank_station)
+        ridx = stations.index(rbank_station) + 1
+        new_elev = [(round(s-lbank_station, 3), e) for s, e in elev[lidx:ridx]]
+        return lbank_station, rbank_station, new_elev
+
+    @staticmethod
+    def find_levees(xs_data):
+        text = xs_data['extra']
+        elev = xs_data['elev']
+        stations = [x[0] for x in elev]
+        regex = re.compile(r'Levee=(?P<stations>[^\r\n]+)')
+        result = re.search(regex, text)
+        if not result:
+            return None, None, None
+        leveedict = result.groupdict()
+        levees = leveedict['stations'].split(',')
+        trim_elev = elev
+        shift = 0
+        try:
+            llevee_station, llevee_value = [float(l) for l in levees[1:3]]
+            lidx = bisect.bisect(stations, llevee_station)
+            trim_elev = trim_elev[lidx:]
+            trim_elev.insert(0, (llevee_station, llevee_value))
+            shift = lidx - 1
+        except ValueError as e:
+            pass
+        try:
+            rlevee_station, rlevee_value = [float(l) for l in levees[4:6]]
+            ridx = bisect.bisect(stations, rlevee_station) - shift
+            trim_elev = trim_elev[:ridx]
+            trim_elev.append((rlevee_station, rlevee_value))
+        except ValueError as e:
+            pass
+        first_station = trim_elev[0][0]
+        new_elev = [(round(s - first_station, 3), e) for s, e in trim_elev]
+        llevee_station = new_elev[0][0]
+        rlevee_station = new_elev[-1][0]
+        return llevee_station, rlevee_station, new_elev
+
+    def create_xs_geometry(self, xs_data, limit=0):
+        xs_points = xs_data['points']
+        xs_polyline = [QgsPoint(float(x), float(y)) for x, y in xs_points]
+        xs_geom = QgsGeometry().fromPolyline(xs_polyline)
+        if limit == 1:
+            left_station, right_station, new_elev = self.find_banks(xs_data)
+        elif limit == 2:
+            left_station, right_station, new_elev = self.find_levees(xs_data)
+        else:
+            return xs_geom
+        if left_station and right_station and new_elev:
+            xs_data['elev'] = new_elev
+            lpoint = xs_geom.interpolate(left_station)
+            rpoint = xs_geom.interpolate(right_station)
+            stations = [xs_geom.lineLocatePoint(QgsGeometry().fromPoint(p)) for p in xs_polyline]
+            lidx = bisect.bisect(stations, left_station)
+            ridx = bisect.bisect(stations, right_station)
+            xs_polyline = xs_polyline[lidx:ridx]
+            xs_polyline.insert(0, lpoint.asPoint())
+            xs_polyline.append(rpoint.asPoint())
+            xs_geom = QgsGeometry().fromPolyline(xs_polyline)
+        return xs_geom
+
+    def write_xsections(self, ras_geometry, limit):
         user_lbank_lyr = self.lyrs.data['user_left_bank']['qlyr']
         user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
         remove_features(user_lbank_lyr)
@@ -75,10 +151,8 @@ class RASProject(GeoPackageUtils):
             river_feat = QgsFeature()
             river_feat.setFields(river_fields)
             for xs_key, xs_data in data['xs_data'].iteritems():
-                xs_points = xs_data['points']
-                xs_polyline = [QgsPoint(float(x), float(y)) for x, y in xs_points]
-                river_polyline.append(xs_polyline[0])
-                xs_geom = QgsGeometry().fromPolyline(xs_polyline)
+                xs_geom = self.create_xs_geometry(xs_data, limit)
+                river_polyline.append(xs_geom.vertexAt(0))
                 xs_feat = QgsFeature()
                 xs_feat.setFields(xs_fields)
                 xs_feat.setGeometry(xs_geom)

@@ -24,7 +24,6 @@ from layers import Layers
 from user_communication import UserCommunication
 from geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from flo2d_ie.ras_import import RASProject
 from flo2d_tools.grid_info_tool import GridInfoTool
 from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.channel_profile_tool import ChannelProfile
@@ -44,6 +43,7 @@ from gui.grid_info_widget import GridInfoWidget
 from gui.plot_widget import PlotWidget
 from gui.table_editor_widget import TableEditorWidget
 from gui.dlg_schema2user import Schema2UserDialog
+from gui.dlg_ras_import import RasImportDialog
 
 
 class Flo2D(object):
@@ -193,6 +193,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/import_ras.svg'),
+            text=self.tr(u'Import RAS geometry'),
+            callback=lambda: self.import_from_ras(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
             text=self.tr(u'Convert schematic layers to user layers'),
             callback=lambda: self.schematic2user(),
@@ -274,12 +280,6 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/help_contents.svg'),
             text=self.tr(u'FlO-2D Help'),
             callback=self.show_help,
-            parent=self.iface.mainWindow())
-
-        self.add_action(
-            os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
-            text=self.tr(u'Import RAS geometry'),
-            callback=lambda: self.import_from_ras(),
             parent=self.iface.mainWindow())
 
     def create_f2d_dock(self):
@@ -615,26 +615,15 @@ class Flo2D(object):
 
     @connection_required
     def import_from_ras(self):
-        s = QSettings()
-        last_dir = s.value('FLO-2D/lastRasDir', '')
-        ras_file = QFileDialog.getOpenFileName(
-            None,
-            'Select HEC-RAS project or geometry file to import data',
-            directory=last_dir,
-            filter='(*.prj *.g*)')
-        if not ras_file:
+        dlg = RasImportDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
             return
-        s.setValue('FLO-2D/lastRasDir', os.path.dirname(ras_file))
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            if ras_file.lower().endswith('.prj'):
-                project = RASProject(self.con, self.iface, self.lyrs, ras_file)
-                project.find_geometry()
-                ras_geom = project.get_geometry()
-            else:
-                project = RASProject(self.con, self.iface, self.lyrs)
-                ras_geom = project.get_geometry(ras_file)
-            project.write_xsections(ras_geom)
+            dlg.import_geometry()
             self.setup_dock_widgets()
             self.uc.bar_info('HEC-RAS geometry data imported!')
         except Exception as e:
