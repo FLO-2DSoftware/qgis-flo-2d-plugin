@@ -83,6 +83,8 @@ class SchemaConverter(GeoPackageUtils):
         fn = self.geom_functions[geometry_type]
         new_features = []
         for feat in schema_lyr.getFeatures():
+            if feat.geometry() is None:
+                continue
             new_feat = self.set_feature(feat, user_fields, common_fnames, fn)
             new_features.append(new_feat)
         remove_features(user_lyr)
@@ -215,6 +217,22 @@ class SchemaBCConverter(SchemaConverter):
         self.enable_geom_triggers()
 
 
+class SchemaFPXSECConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaFPXSECConverter, self).__init__(con, iface, lyrs)
+
+        self.schema_fpxsec_tab = 'fpxsec'
+        self.user_fpxsec_tab = 'user_fpxsec'
+
+        self.schema_fpxsec_lyr = lyrs.data[self.schema_fpxsec_tab]['qlyr']
+        self.user_fpxsec_lyr = lyrs.data[self.user_fpxsec_tab]['qlyr']
+
+    def create_user_fpxsec(self):
+        remove_features(self.user_fpxsec_lyr)
+        self.schema2user(self.schema_fpxsec_lyr, self.user_fpxsec_lyr, 'polyline')
+
+
 class ModelBoundaryConverter(SchemaConverter):
 
     def __init__(self, con, iface, lyrs):
@@ -244,3 +262,4 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr.commitChanges()
         self.user_boundary_lyr.updateExtents()
         self.user_boundary_lyr.triggerRepaint()
+

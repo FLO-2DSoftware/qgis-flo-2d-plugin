@@ -58,65 +58,14 @@ class RASProject(GeoPackageUtils):
             raise Exception
 
     @staticmethod
-    def find_banks(xs_data):
-        text = xs_data['extra']
-        elev = xs_data['elev']
-        stations = [x[0] for x in elev]
-        regex = re.compile(r'Bank Sta=(?P<stations>[^\r\n]+)')
-        result = re.search(regex, text)
-        if not result:
-            return None, None, None
-        banksdict = result.groupdict()
-        banks = banksdict['stations']
-        lbank_station, rbank_station = [float(b) for b in banks.split(',')]
-
-        lidx = stations.index(lbank_station)
-        ridx = stations.index(rbank_station) + 1
-        new_elev = [(round(s-lbank_station, 3), e) for s, e in elev[lidx:ridx]]
-        return lbank_station, rbank_station, new_elev
-
-    @staticmethod
-    def find_levees(xs_data):
-        text = xs_data['extra']
-        elev = xs_data['elev']
-        stations = [x[0] for x in elev]
-        regex = re.compile(r'Levee=(?P<stations>[^\r\n]+)')
-        result = re.search(regex, text)
-        if not result:
-            return None, None, None
-        leveedict = result.groupdict()
-        levees = leveedict['stations'].split(',')
-        trim_elev = elev
-        shift = 0
-        try:
-            llevee_station, llevee_value = [float(l) for l in levees[1:3]]
-            lidx = bisect.bisect(stations, llevee_station)
-            trim_elev = trim_elev[lidx:]
-            trim_elev.insert(0, (llevee_station, llevee_value))
-            shift = lidx - 1
-        except ValueError as e:
-            pass
-        try:
-            rlevee_station, rlevee_value = [float(l) for l in levees[4:6]]
-            ridx = bisect.bisect(stations, rlevee_station) - shift
-            trim_elev = trim_elev[:ridx]
-            trim_elev.append((rlevee_station, rlevee_value))
-        except ValueError as e:
-            pass
-        first_station = trim_elev[0][0]
-        new_elev = [(round(s - first_station, 3), e) for s, e in trim_elev]
-        llevee_station = new_elev[0][0]
-        rlevee_station = new_elev[-1][0]
-        return llevee_station, rlevee_station, new_elev
-
-    def create_xs_geometry(self, xs_data, limit=0):
+    def create_xs_geometry(xs_data, limit=0):
         xs_points = xs_data['points']
         xs_polyline = [QgsPoint(float(x), float(y)) for x, y in xs_points]
         xs_geom = QgsGeometry().fromPolyline(xs_polyline)
         if limit == 1:
-            left_station, right_station, new_elev = self.find_banks(xs_data)
+            left_station, right_station, new_elev = RASGeometry.find_banks(xs_data)
         elif limit == 2:
-            left_station, right_station, new_elev = self.find_levees(xs_data)
+            left_station, right_station, new_elev = RASGeometry.find_levees(xs_data)
         else:
             return xs_geom
         if left_station and right_station and new_elev:
@@ -220,6 +169,58 @@ class RASGeometry(object):
                 except ValueError:
                     continue
         return split_values
+
+    @staticmethod
+    def find_banks(xs_data):
+        text = xs_data['extra']
+        elev = xs_data['elev']
+        stations = [x[0] for x in elev]
+        regex = re.compile(r'Bank Sta=(?P<stations>[^\r\n]+)')
+        result = re.search(regex, text)
+        if not result:
+            return None, None, None
+        banksdict = result.groupdict()
+        banks = banksdict['stations']
+        lbank_station, rbank_station = [float(b) for b in banks.split(',')]
+
+        lidx = stations.index(lbank_station)
+        ridx = stations.index(rbank_station) + 1
+        new_elev = [(round(s - lbank_station, 3), e) for s, e in elev[lidx:ridx]]
+        return lbank_station, rbank_station, new_elev
+
+    @staticmethod
+    def find_levees(xs_data):
+        text = xs_data['extra']
+        elev = xs_data['elev']
+        stations = [x[0] for x in elev]
+        regex = re.compile(r'Levee=(?P<stations>[^\r\n]+)')
+        result = re.search(regex, text)
+        if not result:
+            return None, None, None
+        leveedict = result.groupdict()
+        levees = leveedict['stations'].split(',')
+        llevee_station = elev[0][0]
+        rlevee_station = elev[-1][0]
+        trim_elev = elev
+        shift = 0
+        try:
+            llevee_station, llevee_value = [float(l) for l in levees[1:3]]
+            lidx = bisect.bisect(stations, llevee_station)
+            trim_elev = trim_elev[lidx:]
+            trim_elev.insert(0, (llevee_station, llevee_value))
+            shift = lidx - 1
+        except ValueError as e:
+            pass
+        try:
+            rlevee_station, rlevee_value = [float(l) for l in levees[4:6]]
+            ridx = bisect.bisect(stations, rlevee_station) - shift
+            trim_elev = trim_elev[:ridx]
+            trim_elev.append((rlevee_station, rlevee_value))
+        except ValueError as e:
+            pass
+        first_station = trim_elev[0][0]
+        new_elev = [(round(s - first_station, 3), e) for s, e in trim_elev]
+        return llevee_station, rlevee_station, new_elev
 
     def get_ras_geometry(self):
         self.extract_xsections()

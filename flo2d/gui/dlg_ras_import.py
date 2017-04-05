@@ -29,7 +29,6 @@ class RasImportDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
 
         self.browse_btn.clicked.connect(self.get_ras_file)
-        self.levee_radio.setDisabled(True)
 
     def get_ras_file(self):
         s = QSettings()

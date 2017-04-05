@@ -13,6 +13,7 @@ from flo2d.flo2d_tools.schematic_conversion import (
     SchemaBCConverter,
     SchemaDomainConverter,
     SchemaLeveesConverter,
+    SchemaFPXSECConverter,
     ModelBoundaryConverter
 )
 from ui_utils import load_ui
@@ -36,12 +37,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_bc.stateChanged.connect(self.convert_bc_checked)
         self.ckbox_1d.stateChanged.connect(self.convert_1d_checked)
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
+        self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_grid.stateChanged.connect(self.convert_grid_checked)
-
-        self.ckbox_bc.setChecked(True)
-        self.ckbox_1d.setChecked(True)
-        self.ckbox_levees.setChecked(True)
-        self.ckbox_grid.setChecked(True)
 
     def convert_bc_checked(self):
         if self.ckbox_bc.isChecked():
@@ -61,11 +58,17 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.methods.pop(3)
 
-    def convert_grid_checked(self):
-        if self.ckbox_grid.isChecked():
-            self.methods[4] = self.convert_grid
+    def convert_fpxsec_checked(self):
+        if self.ckbox_fpxsec.isChecked():
+            self.methods[4] = self.convert_fpxsec
         else:
             self.methods.pop(4)
+
+    def convert_grid_checked(self):
+        if self.ckbox_grid.isChecked():
+            self.methods[5] = self.convert_grid
+        else:
+            self.methods.pop(5)
 
     def convert_bc(self):
         try:
@@ -91,6 +94,14 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating user layers failed on Levees conversion!")
+
+    def convert_fpxsec(self):
+        try:
+            fpxsec_converter = SchemaFPXSECConverter(self.con, self.iface, self.lyrs)
+            fpxsec_converter.create_user_fpxsec()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Floodplain cross-sections conversion!")
 
     def convert_grid(self):
         try:

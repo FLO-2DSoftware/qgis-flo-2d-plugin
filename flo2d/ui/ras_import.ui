@@ -19,7 +19,7 @@
      <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>XS limits</string>
+        <string>Cross-sections range</string>
        </property>
       </widget>
      </item>

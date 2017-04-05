@@ -974,7 +974,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_levee_lines'):
-            self.uc.bar_warn("No levee line in the database! Please create them before running tool.")
+            self.uc.bar_warn("There is no any user levee lines! Please create them before running tool.")
             return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
