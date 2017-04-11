@@ -1723,7 +1723,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data'
 -- USERS Layers
 CREATE TABLE "user_fpxsec" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "iflo" INTEGER, -- IFLO, general direction that the flow is expected to cross the floodplain cross section
+    "iflo" INTEGER DEFAULT 1, -- IFLO, general direction that the flow is expected to cross the floodplain cross section
     "name" TEXT -- name of fpxsec
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_fpxsec', 'features', 4326);
