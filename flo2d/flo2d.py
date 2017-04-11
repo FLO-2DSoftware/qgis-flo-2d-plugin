@@ -128,6 +128,7 @@ class Flo2D(object):
         self.f2d_widget.xs_editor.populate_xsec_cbo()
         self.f2d_widget.fpxsec_editor.setup_connection()
         self.f2d_widget.fpxsec_editor.populate_cbos()
+        self.f2d_widget.infil_editor.setup_connection()
 
     def add_action(
             self,

@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import QSize, QUrl
-from PyQt4.QtGui import QIcon, QDesktopServices
+from PyQt4.QtCore import QSize
+from PyQt4.QtGui import QIcon
 from ui_utils import load_ui
 from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
@@ -19,6 +19,7 @@ from street_editor_widget import StreetEditorWidget
 from rain_editor_widget import RainEditorWidget
 from profile_tool import ProfileTool
 from fpxsec_editor_widget import FPXsecEditorWidget
+from infil_editor_widget import InfilEditorWidget
 from flo2d.user_communication import UserCommunication
 import os
 
@@ -46,10 +47,12 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_xsec_editor()
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
+        self.setup_infil_editor()
 
         self.cgroups = [
-            self.bc_editor_grp, self.evap_editor_grp, self.fpxsec_editor_grp, self.ic_editor_grp, self.street_editor_grp,
-            self.rain_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
+            self.bc_editor_grp, self.evap_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
+            self.ic_editor_grp, self.street_editor_grp, self.rain_editor_grp, self.struct_editor_grp,
+            self.xs_editor_grp, self.profile_tool_grp
         ]
         self.set_collapsible_groups()
 
@@ -113,6 +116,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_fpxsec_editor(self):
         self.fpxsec_editor = FPXsecEditorWidget(self.iface, self.lyrs)
         self.fpxsec_editor_lout.addWidget(self.fpxsec_editor)
+
+    def setup_infil_editor(self):
+        self.infil_editor = InfilEditorWidget(self.iface, self.lyrs)
+        self.infil_editor_lout.addWidget(self.infil_editor)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:
