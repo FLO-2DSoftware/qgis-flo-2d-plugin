@@ -1201,17 +1201,18 @@ class FloodplainXS(GeoPackageUtils):
         fpxsec_qry = 'INSERT INTO fpxsec (geom, fid, iflo, nnxsec) VALUES (?,?,?,?);'
         fpxsec_cells_qry = 'INSERT INTO fpxsec_cells (geom, grid_fid, fpxsec_fid) VALUES (?,?,?);'
         cell_qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid = ?;'''
-        rows = []
+        point_rows = []
+        line_rows = []
         for feat in self.user_fpxs_lyr.getFeatures():
             # Schematizing user floodplain cross-section
-            feat_fid = feat.id()
+            feat_fid = feat['fid']
             geom = feat.geometry()
             geom_poly = geom.asPolyline()
             start, end = geom_poly[0], geom_poly[-1]
             # Getting start grid fid and its centroid
             start_gid = self.grid_on_point(start.x(), start.y())
             start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
-            start_x, start_y = [float(i) for i in start_wkt.strip('POINT()').split()]
+            start_x, start_y = [float(s) for s in start_wkt.strip('POINT()').split()]
             # Finding shift vector between original start point and start grid centroid
             shift = QgsPoint(start_x, start_y) - start
             # Shifting start and end point of line
@@ -1231,17 +1232,16 @@ class FloodplainXS(GeoPackageUtils):
             # Finding 'fpxsec_cells' for floodplain cross-section
             step = self.cell_size if closest_angle % 90 == 0 else self.diagonal
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
-            end_x, end_y = [float(i) for i in end_wkt.strip('POINT()').split()]
+            end_x, end_y = [float(e) for e in end_wkt.strip('POINT()').split()]
             fpxec_line = QgsGeometry.fromPolyline([QgsPoint(start_x, start_y), QgsPoint(end_x, end_y)])
             sampling_points = tuple(self.interpolate_points(fpxec_line, step))
             # Adding schematized line for 'fpxsec' table
-            geom = self.build_linestring([start_gid, end_gid])
-            rows.append((geom, feat_fid, feat['iflo'], len(sampling_points)))
-            # Writing schematized floodplain cross-sections and cells to GeoPackage
-            cursor = self.con.cursor()
-            for geom, gid in sampling_points:
-                cursor.execute(fpxsec_cells_qry, (geom, gid, feat_fid))
-        self.con.commit()
-        self.execute_many(fpxsec_qry, rows)
+            line_geom = self.build_linestring([start_gid, end_gid])
+            line_rows.append((line_geom, feat_fid, feat['iflo'], len(sampling_points)))
+            for point_geom, gid in sampling_points:
+                point_rows.append((point_geom, gid, feat_fid))
+        # Writing schematized floodplain cross-sections and cells to GeoPackage
+        self.execute_many(fpxsec_cells_qry, point_rows)
+        self.execute_many(fpxsec_qry, line_rows)
         self.schema_fpxs_lyr.triggerRepaint()
         self.cells_fpxs_lyr.triggerRepaint()
