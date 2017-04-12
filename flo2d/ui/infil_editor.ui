@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>418</height>
+    <height>420</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -218,7 +218,7 @@
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
-       <widget class="QGroupBox" name="groupBox_4">
+       <widget class="QGroupBox" name="fplain_grp">
         <property name="title">
          <string>Floodplain Element</string>
         </property>
@@ -311,7 +311,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QGroupBox" name="groupBox_5">
+       <widget class="QGroupBox" name="chan_grp">
         <property name="title">
          <string>Channel Element</string>
         </property>

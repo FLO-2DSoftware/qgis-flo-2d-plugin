@@ -26,7 +26,7 @@
       <bool>true</bool>
      </property>
      <property name="checked">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
       <property name="horizontalSpacing">
@@ -340,7 +340,7 @@
        </widget>
       </item>
       <item row="0" column="7">
-       <widget class="QDoubleSpinBox" name="spin_deca"/>
+       <widget class="QDoubleSpinBox" name="spin_decaya"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_13">
