@@ -2275,6 +2275,30 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoi
 SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
 
+CREATE TABLE "user_infiltration" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "type" INTEGER NOT NULL,
+    "green_char" TEXT,
+    "hydc" REAL DEFAULT 0,
+    "soils" REAL DEFAULT 0,
+    "dtheta" REAL DEFAULT 0,
+    "abstrinf" REAL DEFAULT 0,
+    "rtimpf" REAL DEFAULT 0,
+    "soil_depth" REAL DEFAULT 0,
+    "hydconch" REAL DEFAULT 0,
+    "scsn" REAL DEFAULT 0,
+    "fhorti" REAL DEFAULT 0,
+    "fhortf" REAL DEFAULT 0,
+    "deca" REAL DEFAULT 0,
+    "notes" TEXT
+
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_infiltration', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_infiltration', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_infiltration', 'geom');
+
+
 CREATE VIEW struct_types AS
 SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
 UNION ALL

@@ -31,7 +31,7 @@
      <item row="0" column="0">
       <widget class="QToolButton" name="create_polygon_btn">
        <property name="toolTip">
-        <string>Add polygon BC</string>
+        <string>Add infiltration polygon</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -57,7 +57,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Revert unsaved changes for current street</string>
+        <string>Revert unsaved changes for current infiltration polygon</string>
        </property>
        <property name="text">
         <string/>
@@ -74,17 +74,17 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QToolButton" name="delete_btn">
+     <item row="0" column="5">
+      <widget class="QToolButton" name="schema_btn">
        <property name="toolTip">
-        <string>Delete current street</string>
+        <string>Schematize infiltration polygons</string>
        </property>
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+         <normaloff>../img/schematize_res.svg</normaloff>../img/schematize_res.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -94,14 +94,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="7">
-      <widget class="QPushButton" name="global_params">
-       <property name="text">
-        <string>Global Infiltration</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
+     <item row="0" column="6">
       <spacer name="horizontalSpacer_4">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -113,6 +106,13 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item row="0" column="8">
+      <widget class="QPushButton" name="global_params">
+       <property name="text">
+        <string>Global Infiltration</string>
+       </property>
+      </widget>
      </item>
      <item row="0" column="2">
       <widget class="QToolButton" name="save_changes_btn">
@@ -134,30 +134,30 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="8">
+      <widget class="QPushButton" name="calculate_btn">
+       <property name="text">
+        <string>Calculate Infiltration</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="4">
-      <widget class="QToolButton" name="schema_btn">
+      <widget class="QToolButton" name="delete_btn">
        <property name="toolTip">
-        <string>Schematize initial conditions</string>
+        <string>Delete current infiltration polygon</string>
        </property>
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/schematize_res.svg</normaloff>../img/schematize_res.svg</iconset>
+         <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
          <width>24</width>
          <height>24</height>
         </size>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="7">
-      <widget class="QPushButton" name="calculate_btn">
-       <property name="text">
-        <string>Calculate Infiltration</string>
        </property>
       </widget>
      </item>

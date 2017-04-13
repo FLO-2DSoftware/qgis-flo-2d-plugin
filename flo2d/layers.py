@@ -202,6 +202,14 @@ class Layers(QObject):
                 'visible': False,
                 'readonly': False
             }),
+            ('user_infiltration', {
+                'name': 'Infiltration Areas',
+                'sgroup': 'User Layers',
+                'styles': ['user_roughness.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('fpxsec_cells', {
                 'name': 'Floodplain cross-sections cells',
                 'sgroup': 'Schematic Layers',
@@ -312,6 +320,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
+
             ('fpfroude', {
                 'name': 'Froude numbers for grid elems',
                 'sgroup': 'User Layers',
@@ -1051,7 +1060,7 @@ class Layers(QObject):
             uri = self.gutils.path + '|layername={}'.format(lyr)
             try:
                 lyr_is_on = data['visible']
-            except:
+            except Exception as e:
                 lyr_is_on = True
             lyr_id = self.load_layer(
                 lyr,
@@ -1077,7 +1086,7 @@ class Layers(QObject):
             # set attributes default value, if any
             try:
                 dvs = data['attrs_defaults']
-            except:
+            except Exception as e:
                 dvs = None
             if dvs:
                 for attr, val in dvs.iteritems():
