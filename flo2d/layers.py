@@ -205,7 +205,7 @@ class Layers(QObject):
             ('user_infiltration', {
                 'name': 'Infiltration Areas',
                 'sgroup': 'User Layers',
-                'styles': ['user_roughness.qml'],
+                'styles': ['user_infiltration.qml'],
                 'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False

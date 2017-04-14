@@ -9,13 +9,10 @@
 # of the License, or (at your option) any later version
 
 import os
-import traceback
-
 from collections import OrderedDict
 from PyQt4.QtCore import pyqtSignal, pyqtSlot
-from PyQt4.QtGui import QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QSizePolicy, QInputDialog
+from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog
 from qgis.core import QgsFeatureRequest
-
 from ui_utils import load_ui, center_canvas
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
@@ -108,8 +105,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.infil_lyr = None
         self.infil_idx = 0
-        self.infil_name_cbo = QComboBox(self)
         self.iglobal = InfilGlobal(self.iface, self.lyrs)
+        self.infmethod = self.iglobal.global_imethod
         self.groups = set()
         self.params = [
             'infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall', 'soilall', 'hydcadj',
@@ -143,7 +140,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             3: slice(0, 9),
             4: slice(9, 12)
         }
-        self.set_combo()
         self.set_icon(self.create_polygon_btn, 'mActionCapturePolygon.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         self.set_icon(self.schema_btn, 'schematize_res.svg')
@@ -152,11 +148,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.change_name_btn, 'change_name.svg')
         self.create_polygon_btn.clicked.connect(lambda: self.create_infil_polygon())
         self.save_changes_btn.clicked.connect(lambda: self.save_infil_edits())
+        self.revert_changes_btn.clicked.connect(lambda: self.revert_infil_lyr_edits())
+        self.delete_btn.clicked.connect(lambda: self.delete_cur_infil())
+        self.change_name_btn.clicked.connect(lambda: self.rename_infil())
         self.global_params.clicked.connect(lambda: self.show_global_params())
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
         self.chan_grp.toggled.connect(self.channel_checked)
-        self.infil_name_cbo.activated.connect(self.infiltration_changed)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -172,14 +170,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.read_global_params()
             self.infil_lyr = self.lyrs.data['user_infiltration']['qlyr']
-            self.infil_lyr.editingStopped.connect(lambda: self.populate_infiltration())
-
-    def set_combo(self):
-        sp = QSizePolicy()
-        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
-        self.infil_name_cbo.setEditable(False)
-        self.infil_name_cbo.setSizePolicy(sp)
-        self.infil_name_cbo_layout.addWidget(self.infil_name_cbo)
+            self.infil_lyr.editingStopped.connect(self.populate_infiltration)
+            self.infil_name_cbo.activated.connect(self.infiltration_changed)
 
     @connection_required
     def create_infil_polygon(self):
@@ -187,10 +179,40 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
 
     @connection_required
+    def rename_infil(self):
+        if not self.infil_name_cbo.count():
+            return
+        new_name, ok = QInputDialog.getText(None, 'Change name', 'New name:')
+        if not ok or not new_name:
+            return
+        if not self.infil_name_cbo.findText(new_name) == -1:
+            msg = 'Infiltration with name {} already exists in the database. Please, choose another name.'
+            msg = msg.format(new_name)
+            self.uc.show_warn(msg)
+            return
+        self.infil_name_cbo.setItemText(self.infil_name_cbo.currentIndex(), new_name)
+        self.save_infil_edits()
+
+    @connection_required
+    def revert_infil_lyr_edits(self):
+        user_infil_edited = self.lyrs.rollback_lyrs_edits('user_infiltration')
+        if user_infil_edited:
+            self.populate_infiltration()
+
+    @connection_required
+    def delete_cur_infil(self):
+        if not self.infil_name_cbo.count():
+            return
+        q = 'Are you sure, you want delete the current infiltration?'
+        if not self.uc.question(q):
+            return
+        infil_fid = self.infil_name_cbo.itemData(self.infil_idx)['fid']
+        self.gutils.execute('DELETE FROM user_infiltration WHERE fid = ?;', (infil_fid,))
+        self.infil_lyr.triggerRepaint()
+        self.populate_infiltration()
+
+    @connection_required
     def save_infil_edits(self):
-        """
-        Save changes of user infil layer.
-        """
         before = self.gutils.count('user_infiltration')
         self.lyrs.save_lyrs_edits('user_infiltration')
         after = self.gutils.count('user_infiltration')
@@ -203,23 +225,31 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.populate_infiltration()
 
     def save_attrs(self):
-        pass
-        # update_qry = '''
-        # UPDATE user_streets
-        # SET
-        #     name = ?,
-        #     n_value = ?,
-        #     elevation = ?,
-        #     curb_height = ?,
-        #     street_width = ?
-        # WHERE fid = ?;'''
-        # fid = self.street_name_cbo.itemData(self.street_idx)[0]
-        # name = self.street_name_cbo.currentText()
-        # n = self.spin_n.value()
-        # elev = self.spin_e.value()
-        # curb = self.spin_h.value()
-        # width = self.spin_w.value()
-        # self.gutils.execute(update_qry, (name, n, elev, curb, width, fid))
+        infil_dict = self.infil_name_cbo.itemData(self.infil_idx)
+        fid = infil_dict['fid']
+        name = self.infil_name_cbo.currentText()
+
+        for grp in self.single_groups[self.infmethod]:
+            grp_name = grp.objectName()
+            if grp_name == 'single_green_grp':
+                if self.fplain_grp.isChecked():
+                    infil_dict['green_char'] = 'F'
+                    grp = self.fplain_grp
+                elif self.chan_grp.isChecked():
+                    infil_dict['green_char'] = 'C'
+                    grp = self.chan_grp
+            for obj in grp.children():
+                obj_name = obj.objectName().split('_', 1)[-1]
+                if isinstance(obj, QDoubleSpinBox):
+                    infil_dict[obj_name] = obj.value()
+                else:
+                    continue
+
+        col_gen = ('{}=?'.format(c) for c in infil_dict.keys()[1:])
+        col_names = ', '.join(col_gen)
+        vals = [name] + infil_dict.values()[2:] + [fid]
+        update_qry = '''UPDATE user_infiltration SET {0} WHERE fid = ?;'''.format(col_names)
+        self.gutils.execute(update_qry, vals)
 
     @connection_required
     def show_global_params(self):
@@ -252,20 +282,21 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.single_green_grp.setHidden(True)
             self.single_scs_grp.setHidden(True)
             self.single_horton_grp.setHidden(False)
+
+        self.infmethod = imethod
         self.populate_infiltration()
 
-    @connection_required
     def populate_infiltration(self):
         self.infil_name_cbo.clear()
-        imethod = self.iglobal.global_imethod
+        imethod = self.infmethod
         if imethod == 0:
             return
         sl = self.slices[imethod]
         columns = self.infil_columns[sl]
-        qry = '''SELECT fid, name, {0} FROM user_infiltration WHERE type = ? ORDER BY fid;'''
+        qry = '''SELECT fid, name, {0} FROM user_infiltration ORDER BY fid;'''
         qry = qry.format(' ,'.join(columns))
         columns = ['fid', 'name'] + columns
-        rows = self.gutils.execute(qry, (imethod,))
+        rows = self.gutils.execute(qry)
         for row in rows:
             infil_dict = OrderedDict(zip(columns, row))
             name = infil_dict['name']
@@ -274,7 +305,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.infiltration_changed()
 
     def infiltration_changed(self):
-        imethod = self.iglobal.global_imethod
+        imethod = self.infmethod
         self.infil_idx = self.infil_name_cbo.currentIndex()
         infil_dict = self.infil_name_cbo.itemData(self.infil_idx)
         if not infil_dict:
@@ -324,6 +355,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     obj.setValue(val)
         self.iglobal.save_imethod()
 
+    @connection_required
     def write_global_params(self):
         qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
         method = self.iglobal.global_imethod
