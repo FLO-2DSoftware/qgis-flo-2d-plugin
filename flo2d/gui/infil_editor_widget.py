@@ -333,7 +333,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
         glob = self.gutils.execute(qry).fetchone()
         if glob is None:
-            self.show_groups()
+            self.show_groups(0)
             return
         row = OrderedDict(zip(self.params, glob))
         try:
