@@ -26,43 +26,68 @@ class InfiltrationCalculator(GeoPackageUtils):
         super(InfiltrationCalculator, self).__init__(con, iface)
         self.lyrs = lyrs
         self.schema_grid_lyr = self.lyrs.data['grid']['qlyr']
-        self.land_lyr = None
-        self.land_field = None
         self.soil_lyr = None
-        self.soil_field = None
+        self.land_lyr = None
         self.impervious_lyr = None
-        self.impervious_field = None
 
-    def setup_green_ampt(self, land, land_fld, soil, soil_fld):
-        self.land_lyr = land
-        self.land_field = land_fld
-        self.soil_lyr = soil
-        self.soil_field = soil_fld
+        # Soil fields
+        self.xksat_fld = None
+        self.rtimps_fld = None
+        self.eff_fld = None
 
-    def setup_scp(self, land, land_fld, soil, soil_fld, impervious, impervious_fld):
-        self.land_lyr = land
-        self.land_field = land_fld
+        # Land use fields
+        self.saturation_fld = None
+        self.vc_fld = None
+        self.rtimpl_fld = None
+
+    def setup_green_ampt(
+            self,
+            soil,
+            land,
+            xksat_fld='XKSAT',
+            rtimps_fld='field_4',
+            eff_fld='field_5',
+            saturation_fld='field_6',
+            vc_fld='field_5',
+            rtimpl_fld='field_4'):
+
         self.soil_lyr = soil
-        self.soil_field = soil_fld
+        self.land_lyr = land
+
+        # Soil fields
+        self.xksat_fld = xksat_fld
+        self.rtimps_fld = rtimps_fld
+        self.eff_fld = eff_fld
+
+        # Land use fields
+        self.saturation_fld = saturation_fld
+        self.vc_fld = vc_fld
+        self.rtimpl_fld = rtimpl_fld
+
+    def setup_scp(self, soil, land, impervious):
+        self.land_lyr = land
+        self.soil_lyr = soil
         self.impervious_lyr = impervious
-        self.impervious_field = impervious_fld
 
     def green_ampt_infiltration(self):
         grid_params = {}
-        soil_values = grid_intersections(self.schema_grid_lyr, self.soil_lyr)
+        soil_values = grid_intersections(self.schema_grid_lyr, self.soil_lyr, self.xksat_fld, self.rtimps_fld, self.eff_fld)
+        for gid, values in soil_values.items():
+            xksat_parts = [(row[0], row[-1]) for row in values]
+            imp_parts = [(row[1], row[2], row[-1]) for row in values]
+            avg_xksat = GreenAmpt.calculate_xksat(xksat_parts)
+            psif = GreenAmpt.calculate_psif(avg_xksat)
+            rtimp_1 = GreenAmpt.calculate_rtimp_1(imp_parts)
 
 
 class GreenAmpt(object):
 
-    def __init__(self, gid, soil_params, land_use):
-        self.gid = gid
-        self.parameters = {}
-
     @staticmethod
-    def calculate_xksat(part_area, part_xksat, full_area):
+    def calculate_xksat(parts):
         # avg_xksat = exp((0.625 * log(0.40) + 0.375 * log(0.06)) / 1)
-        xksat_gen = (part_area * log(part_xksat))
-        avg_xksat = exp(sum(xksat_gen) / full_area)
+        # avg_xksat = exp(sum(xksat_gen) / full_area)
+        xksat_gen = (area * log(xksat) for xksat, area in parts)
+        avg_xksat = exp(sum(xksat_gen))
         return avg_xksat
 
     @staticmethod
@@ -106,11 +131,19 @@ class GreenAmpt(object):
         return dtheta
 
     @staticmethod
-    def calculate_xksatc(avg_xksat, part_area, part_vc):
-        part_c = (part_vc - 10) / 90 + 1
+    def calculate_xksatc(avg_xksat, parts):
+        pc_gen = (((vc - 10) / 90 + 1) * area for vc, area in parts)
+        xksatc = avg_xksat * sum(pc_gen)
+        return xksatc
+
+    @staticmethod
+    def calculate_rtimp_1(parts):
+        rtimp_gen = (area * (rtimps * eff) for rtimps, eff, area in parts)
+        rtimp_1 = sum(rtimp_gen)
+        return rtimp_1
 
 
 class SCPCurveNumber(object):
 
     def __init__(self):
-        pass
+        self.parameters = {}
