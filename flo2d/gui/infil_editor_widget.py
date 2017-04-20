@@ -16,6 +16,7 @@ from qgis.core import QgsFeatureRequest
 from ui_utils import load_ui, center_canvas
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
+from flo2d.flo2d_tools.infiltration_tools import InfiltrationCalculator
 
 uiDialog, qtBaseClass = load_ui('infil_editor')
 uiDialog_pop, qtBaseClass_pop = load_ui('infil_global')
@@ -155,6 +156,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
         self.chan_grp.toggled.connect(self.channel_checked)
+        self.calculate_btn.clicked.connect(self.calculate_infiltration)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -394,3 +396,21 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if self.chan_grp.isChecked():
             if self.fplain_grp.isChecked():
                 self.fplain_grp.setChecked(False)
+
+    def calculate_infiltration(self):
+        grid_lyr = self.lyrs.data['grid']['qlyr']
+        soil_lyr = None
+        land_lyr = None
+        lyrs = self.lyrs.list_group_vlayers()
+        for l in lyrs:
+            if l.name() == 'Soil':
+                soil_lyr = l
+            elif l.name() == 'LandUse':
+                land_lyr = l
+            else:
+                continue
+        inf_calc = InfiltrationCalculator(grid_lyr)
+        inf_calc.setup_green_ampt(soil_lyr, land_lyr)
+        grid_params = inf_calc.green_ampt_infiltration()
+        for gid, params in grid_params.iteritems():
+            print(gid, params)

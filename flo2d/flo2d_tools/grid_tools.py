@@ -11,7 +11,6 @@
 import os
 import math
 import uuid
-from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from qgis.analysis import QgsInterpolator, QgsTINInterpolator
@@ -257,7 +256,7 @@ def grid_intersections(grid, polygons, *columns):
         if not fids:
             continue
         gid = feat['fid']
-        grid_areas = defaultdict(list)
+        grid_areas = []
         for fid in fids:
             f = allfeatures[fid]
             fgeom = f.geometry()
@@ -267,8 +266,8 @@ def grid_intersections(grid, polygons, *columns):
             intersection_geom = fgeom.intersection(geom)
             subarea = intersection_geom.area() / grid_area
             values = tuple(f[col] for col in columns) + (subarea,)
-            grid_areas[gid].append(values)
-        yield grid_areas
+            grid_areas.append(values)
+        yield gid, grid_areas
 
 
 def calculate_arfwrf(grid, areas):

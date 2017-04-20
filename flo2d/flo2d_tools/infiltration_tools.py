@@ -7,25 +7,16 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
 import traceback
 from math import log, exp
-from collections import defaultdict, OrderedDict
-from itertools import izip
-from operator import itemgetter
-
-from PyQt4.QtCore import QPyNullVariant
-from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
-
 from grid_tools import grid_intersections
-from flo2d.geopackage_utils import GeoPackageUtils
 
 
-class InfiltrationCalculator(GeoPackageUtils):
+class InfiltrationCalculator(object):
 
-    def __init__(self, con, iface, lyrs):
-        super(InfiltrationCalculator, self).__init__(con, iface)
-        self.lyrs = lyrs
-        self.schema_grid_lyr = self.lyrs.data['grid']['qlyr']
+    def __init__(self, grid_lyr):
+        self.grid_lyr = grid_lyr
         self.soil_lyr = None
         self.land_lyr = None
         self.impervious_lyr = None
@@ -38,6 +29,7 @@ class InfiltrationCalculator(GeoPackageUtils):
         # Land use fields
         self.saturation_fld = None
         self.vc_fld = None
+        self.ia_fld = None
         self.rtimpl_fld = None
 
     def setup_green_ampt(
@@ -49,6 +41,7 @@ class InfiltrationCalculator(GeoPackageUtils):
             eff_fld='field_5',
             saturation_fld='field_6',
             vc_fld='field_5',
+            ia_fld='field_3',
             rtimpl_fld='field_4'):
 
         self.soil_lyr = soil
@@ -62,6 +55,7 @@ class InfiltrationCalculator(GeoPackageUtils):
         # Land use fields
         self.saturation_fld = saturation_fld
         self.vc_fld = vc_fld
+        self.ia_fld = ia_fld
         self.rtimpl_fld = rtimpl_fld
 
     def setup_scp(self, soil, land, impervious):
@@ -71,22 +65,43 @@ class InfiltrationCalculator(GeoPackageUtils):
 
     def green_ampt_infiltration(self):
         grid_params = {}
-        soil_values = grid_intersections(self.schema_grid_lyr, self.soil_lyr, self.xksat_fld, self.rtimps_fld, self.eff_fld)
-        for gid, values in soil_values.items():
+        soil_values = grid_intersections(self.grid_lyr, self.soil_lyr, self.xksat_fld, self.rtimps_fld, self.eff_fld)
+        for gid, values in soil_values:
             xksat_parts = [(row[0], row[-1]) for row in values]
-            imp_parts = [(row[1], row[2], row[-1]) for row in values]
+            imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
             avg_xksat = GreenAmpt.calculate_xksat(xksat_parts)
             psif = GreenAmpt.calculate_psif(avg_xksat)
             rtimp_1 = GreenAmpt.calculate_rtimp_1(imp_parts)
+            grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1}
+
+        land_values = grid_intersections(self.grid_lyr, self.land_lyr, self.saturation_fld, self.vc_fld, self.ia_fld, self.rtimpl_fld)
+        for gid, values in land_values:
+            params = grid_params[gid]
+            avg_xksat = params['hydc']
+            rtimp_1 = params['rtimpf']
+
+            vc_parts = [(row[1], row[-1]) for row in values]
+            ia_parts = [(row[2], row[-1]) for row in values]
+            rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
+
+            dtheta = sum([GreenAmpt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
+            xksatc = GreenAmpt.calculate_xksatc(avg_xksat, vc_parts)
+            iabstr = GreenAmpt.calculate_iabstr(ia_parts)
+            rtimp = GreenAmpt.calculate_rtimp(rtimp_1, rtimp_parts)
+
+            params['dtheta'] = dtheta
+            params['hydc'] = xksatc
+            params['abstrinf'] = iabstr
+            params['rtimpf'] = rtimp
+
+        return grid_params
 
 
 class GreenAmpt(object):
 
     @staticmethod
     def calculate_xksat(parts):
-        # avg_xksat = exp((0.625 * log(0.40) + 0.375 * log(0.06)) / 1)
-        # avg_xksat = exp(sum(xksat_gen) / full_area)
-        xksat_gen = (area * log(xksat) for xksat, area in parts)
+        xksat_gen = (area * log(xksat) for xksat, area in parts if xksat > 0)
         avg_xksat = exp(sum(xksat_gen))
         return avg_xksat
 
@@ -132,15 +147,30 @@ class GreenAmpt(object):
 
     @staticmethod
     def calculate_xksatc(avg_xksat, parts):
-        pc_gen = (((vc - 10) / 90 + 1) * area for vc, area in parts)
-        xksatc = avg_xksat * sum(pc_gen)
+        if avg_xksat < 0.4:
+            pc_gen = (((vc - 10) / 90 + 1) * area for vc, area in parts)
+            xksatc = avg_xksat * sum(pc_gen)
+        else:
+            xksatc = avg_xksat
         return xksatc
 
     @staticmethod
+    def calculate_iabstr(parts):
+        iabstr_gen = (area * ia for ia, area in parts)
+        iabstr = sum(iabstr_gen)
+        return iabstr
+
+    @staticmethod
     def calculate_rtimp_1(parts):
-        rtimp_gen = (area * (rtimps * eff) for rtimps, eff, area in parts)
-        rtimp_1 = sum(rtimp_gen)
+        rtimp_gen_1 = (area * (rtimps * eff) for rtimps, eff, area in parts)
+        rtimp_1 = sum(rtimp_gen_1)
         return rtimp_1
+
+    @staticmethod
+    def calculate_rtimp(rtimp_1, parts):
+        rtimp_gen = (area * rtimpl for rtimpl, area in parts)
+        rtimp = rtimp_1 + sum(rtimp_gen)
+        return rtimp
 
 
 class SCPCurveNumber(object):
