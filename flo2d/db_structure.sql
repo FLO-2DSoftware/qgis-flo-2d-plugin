@@ -884,7 +884,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_green', '
 
 CREATE TABLE "infil_areas_scs" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "scscn" REAL -- SCSCN, SCS curve numbers of the floodplain grid elements
+    "scsn" REAL -- SCSN, SCS curve numbers of the floodplain grid elements
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_scs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('infil_areas_scs', 'geom', 'POLYGON', 0, 0, 0);

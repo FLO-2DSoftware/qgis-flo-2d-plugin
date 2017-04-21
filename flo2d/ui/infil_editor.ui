@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>420</height>
+    <height>455</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -109,6 +109,12 @@
      </item>
      <item row="0" column="8">
       <widget class="QPushButton" name="global_params">
+       <property name="minimumSize">
+        <size>
+         <width>130</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
         <string>Global Infiltration</string>
        </property>
@@ -131,13 +137,6 @@
          <width>24</width>
          <height>24</height>
         </size>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="8">
-      <widget class="QPushButton" name="calculate_btn">
-       <property name="text">
-        <string>Calculate Infiltration</string>
        </property>
       </widget>
      </item>
@@ -236,7 +235,49 @@
       <string>Green Ampt</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
+      <item row="1" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <spacer name="horizontalSpacer_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="green_ampt_btn">
+          <property name="minimumSize">
+           <size>
+            <width>130</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Calculate Green-Ampt</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="4" column="0">
        <widget class="QGroupBox" name="fplain_grp">
         <property name="title">
          <string>Floodplain Element</string>
@@ -329,7 +370,7 @@
         </layout>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="5" column="0">
        <widget class="QGroupBox" name="chan_grp">
         <property name="title">
          <string>Channel Element</string>
@@ -392,23 +433,7 @@
       <string>SCS</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="2">
-       <widget class="QDoubleSpinBox" name="spin_scsn"/>
-      </item>
-      <item row="0" column="3">
-       <spacer name="horizontalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1">
+      <item row="1" column="1">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>SCS Curve Number</string>
@@ -418,7 +443,10 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="spin_scsn"/>
+      </item>
+      <item row="1" column="0">
        <spacer name="horizontalSpacer_5">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -430,6 +458,25 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item row="1" column="3">
+       <widget class="QPushButton" name="scs_btn">
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Calculate SCS CN</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

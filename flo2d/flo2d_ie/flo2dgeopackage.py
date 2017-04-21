@@ -239,7 +239,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil_seg_sql = ['''INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES''', 4]
         infil_green_sql = ['''INSERT INTO infil_areas_green (geom, hydc, soils, dtheta,
                                                              abstrinf, rtimpf, soil_depth) VALUES''', 7]
-        infil_scs_sql = ['''INSERT INTO infil_areas_scs (geom, scscn) VALUES''', 2]
+        infil_scs_sql = ['''INSERT INTO infil_areas_scs (geom, scsn) VALUES''', 2]
         infil_horton_sql = ['''INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES''', 4]
         infil_chan_sql = ['''INSERT INTO infil_areas_chan (geom, hydconch) VALUES''', 2]
 
@@ -926,7 +926,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil_r_sql = '''SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;'''
         iarea_green_sql = '''SELECT hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_areas_green WHERE fid = ?;'''
         icell_green_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_green ORDER BY grid_fid;'''
-        iarea_scs_sql = '''SELECT scscn FROM infil_areas_scs WHERE fid = ?;'''
+        iarea_scs_sql = '''SELECT scsn FROM infil_areas_scs WHERE fid = ?;'''
         icell_scs_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_scs ORDER BY grid_fid;'''
         iarea_horton_sql = '''SELECT fhorti, fhortf, deca FROM infil_areas_horton WHERE fid = ?;'''
         icell_horton_sql = '''SELECT grid_fid, infil_area_fid FROM infil_cells_horton ORDER BY grid_fid;'''

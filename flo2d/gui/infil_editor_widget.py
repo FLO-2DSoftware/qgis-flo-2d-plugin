@@ -156,7 +156,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
         self.chan_grp.toggled.connect(self.channel_checked)
-        self.calculate_btn.clicked.connect(self.calculate_scs)
+        self.green_ampt_btn.clicked.connect(self.calculate_green_ampt)
+        self.scs_btn.clicked.connect(self.calculate_scs)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -412,8 +413,20 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         inf_calc = InfiltrationCalculator(grid_lyr)
         inf_calc.setup_green_ampt(soil_lyr, land_lyr)
         grid_params = inf_calc.green_ampt_infiltration()
+        qry = '''
+        INSERT INTO infil_areas_green (
+                    geom,
+                    hydc,
+                    soils,
+                    dtheta,
+                    abstrinf,
+                    rtimpf)
+        VALUES ((SELECT geom FROM grid WHERE fid = ?), ?, ?, ?, ?, ?);'''
+        cur = self.con.cursor()
         for gid, params in grid_params.iteritems():
-            print(gid, params)
+            values = (gid, params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'])
+            cur.execute(qry, values)
+        self.con.commit()
 
     def calculate_scs(self):
         grid_lyr = self.lyrs.data['grid']['qlyr']
@@ -427,5 +440,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         inf_calc = InfiltrationCalculator(grid_lyr)
         inf_calc.setup_scs_multi(soil_lyr)
         grid_params = inf_calc.scs_infiltration_multi()
+        qry = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?), ?);'''
+        cur = self.con.cursor()
         for gid, params in grid_params.iteritems():
-            print(gid, params)
+            values = (gid, params['scsn'])
+            cur.execute(qry, values)
+        self.con.commit()

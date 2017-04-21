@@ -123,7 +123,7 @@ class InfiltrationCalculator(object):
         curve_values = grid_intersections(self.grid_lyr, self.curve_lyr, self.curve_fld)
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
-            grid_params[gid] = grid_cn
+            grid_params[gid] = {'scsn': grid_cn}
 
         return grid_params
 
@@ -133,7 +133,7 @@ class InfiltrationCalculator(object):
         ground_values = grid_intersections(self.grid_lyr, self.combined_lyr, self.landsoil_fld, self.cd_fld, self.imp_fld)
         for gid, values in ground_values:
             grid_cn = scs.calculate_scs_cn(values)
-            grid_params[gid] = grid_cn
+            grid_params[gid] = {'scsn': grid_cn}
 
         return grid_params
 
