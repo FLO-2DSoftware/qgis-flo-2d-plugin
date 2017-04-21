@@ -156,7 +156,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
         self.chan_grp.toggled.connect(self.channel_checked)
-        self.calculate_btn.clicked.connect(self.calculate_infiltration)
+        self.calculate_btn.clicked.connect(self.calculate_scs)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -397,7 +397,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             if self.fplain_grp.isChecked():
                 self.fplain_grp.setChecked(False)
 
-    def calculate_infiltration(self):
+    def calculate_green_ampt(self):
         grid_lyr = self.lyrs.data['grid']['qlyr']
         soil_lyr = None
         land_lyr = None
@@ -412,5 +412,20 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         inf_calc = InfiltrationCalculator(grid_lyr)
         inf_calc.setup_green_ampt(soil_lyr, land_lyr)
         grid_params = inf_calc.green_ampt_infiltration()
+        for gid, params in grid_params.iteritems():
+            print(gid, params)
+
+    def calculate_scs(self):
+        grid_lyr = self.lyrs.data['grid']['qlyr']
+        soil_lyr = None
+        lyrs = self.lyrs.list_group_vlayers()
+        for l in lyrs:
+            if l.name() == 'Soil':
+                soil_lyr = l
+            else:
+                continue
+        inf_calc = InfiltrationCalculator(grid_lyr)
+        inf_calc.setup_scs_multi(soil_lyr)
+        grid_params = inf_calc.scs_infiltration_multi()
         for gid, params in grid_params.iteritems():
             print(gid, params)
