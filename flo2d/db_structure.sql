@@ -2278,7 +2278,7 @@ SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
 CREATE TABLE "user_infiltration" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "green_char" TEXT CHECK("green_char" = 'F' OR "green_char" = 'C'),
+    "green_char" TEXT, --CHECK("green_char" = 'F' OR "green_char" = 'C')
     "hydc" REAL DEFAULT 0,
     "soils" REAL DEFAULT 0,
     "dtheta" REAL DEFAULT 0,

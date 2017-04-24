@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
 from math import log, exp
 from grid_tools import grid_intersections
 
@@ -87,7 +86,12 @@ class InfiltrationCalculator(object):
         grid_params = {}
         green_ampt = GreenAmpt()
 
-        soil_values = grid_intersections(self.grid_lyr, self.soil_lyr, self.xksat_fld, self.rtimps_fld, self.eff_fld)
+        soil_values = grid_intersections(
+            self.grid_lyr,
+            self.soil_lyr,
+            self.xksat_fld,
+            self.rtimps_fld,
+            self.eff_fld)
         for gid, values in soil_values:
             xksat_parts = [(row[0], row[-1]) for row in values]
             imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
@@ -96,7 +100,13 @@ class InfiltrationCalculator(object):
             rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
             grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1}
 
-        land_values = grid_intersections(self.grid_lyr, self.land_lyr, self.saturation_fld, self.vc_fld, self.ia_fld, self.rtimpl_fld)
+        land_values = grid_intersections(
+            self.grid_lyr,
+            self.land_lyr,
+            self.saturation_fld,
+            self.vc_fld,
+            self.ia_fld,
+            self.rtimpl_fld)
         for gid, values in land_values:
             params = grid_params[gid]
             avg_xksat = params['hydc']
@@ -120,7 +130,10 @@ class InfiltrationCalculator(object):
 
     def scs_infiltration_single(self):
         grid_params = {}
-        curve_values = grid_intersections(self.grid_lyr, self.curve_lyr, self.curve_fld)
+        curve_values = grid_intersections(
+            self.grid_lyr,
+            self.curve_lyr,
+            self.curve_fld)
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
             grid_params[gid] = {'scsn': grid_cn}
@@ -130,7 +143,12 @@ class InfiltrationCalculator(object):
     def scs_infiltration_multi(self):
         grid_params = {}
         scs = SCPCurveNumber()
-        ground_values = grid_intersections(self.grid_lyr, self.combined_lyr, self.landsoil_fld, self.cd_fld, self.imp_fld)
+        ground_values = grid_intersections(
+            self.grid_lyr,
+            self.combined_lyr,
+            self.landsoil_fld,
+            self.cd_fld,
+            self.imp_fld)
         for gid, values in ground_values:
             grid_cn = scs.calculate_scs_cn(values)
             grid_params[gid] = {'scsn': grid_cn}
@@ -149,7 +167,7 @@ class GreenAmpt(object):
     @staticmethod
     def calculate_psif(avg_xksat):
         if 0.01 <= avg_xksat <= 1.2:
-            psif = exp(0.9813 - 0.439 * log(avg_xksat) + 0.0051 * (log(avg_xksat)) ** 2 + 0.0060 * (log(avg_xksat)) ** 3)
+            psif = exp(0.9813 - 0.439 * log(avg_xksat) + 0.0051 * (log(avg_xksat))**2 + 0.0060 * (log(avg_xksat))**3)
             return psif
         else:
             raise ValueError
@@ -275,11 +293,11 @@ class SCPCurveNumber(object):
     @staticmethod
     def calculate_mountain_brush(soil_group, cover_density):
         if soil_group == 'D':
-            cn = -0.0013 * cover_density ** 2 + -0.1737 * cover_density + 95
+            cn = -0.0013 * cover_density**2 + -0.1737 * cover_density + 95
         elif soil_group == 'C':
-            cn = -0.0014 * cover_density ** 2 + -0.2942 * cover_density + 90
+            cn = -0.0014 * cover_density**2 + -0.2942 * cover_density + 90
         elif soil_group == 'B':
-            cn = -0.0025 * cover_density ** 2 + -0.3522 * cover_density + 83
+            cn = -0.0025 * cover_density**2 + -0.3522 * cover_density + 83
         else:
             raise ValueError
         return cn
@@ -300,9 +318,9 @@ class SCPCurveNumber(object):
     def calculate_ponderosa_pine(soil_group, cover_density):
         if 0 < cover_density <= 10:
             if soil_group == 'C':
-                cn = -0.08 * cover_density ** 2 + -1.9 * cover_density + 91
+                cn = -0.08 * cover_density**2 + -1.9 * cover_density + 91
             elif soil_group == 'B':
-                cn = -0.1 * cover_density ** 2 + -2.4 * cover_density + 84
+                cn = -0.1 * cover_density**2 + -2.4 * cover_density + 84
             else:
                 raise ValueError
         elif 10 < cover_density <= 80:
