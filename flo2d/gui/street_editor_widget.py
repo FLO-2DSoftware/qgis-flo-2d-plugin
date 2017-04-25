@@ -25,8 +25,8 @@ uiDialog_pop, qtBaseClass_pop = load_ui('street_global')
 
 class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
+        qtBaseClass_pop.__init__(self)
+        uiDialog_pop.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)

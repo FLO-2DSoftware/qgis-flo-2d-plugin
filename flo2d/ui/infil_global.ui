@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
+    <width>490</width>
     <height>419</height>
    </rect>
   </property>
@@ -71,7 +71,7 @@
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Edit Infiltration</string>
+         <string>Channel Infiltration</string>
         </property>
        </widget>
       </item>

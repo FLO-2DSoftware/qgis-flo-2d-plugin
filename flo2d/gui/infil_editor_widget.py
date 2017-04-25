@@ -10,12 +10,14 @@
 
 import os
 import traceback
+from math import isnan
 from itertools import chain
 from collections import OrderedDict
 from PyQt4.QtCore import pyqtSignal, pyqtSlot
-from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog
+from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem
 from qgis.core import QGis, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas
+from flo2d.utils import m_fdata
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_tools.grid_tools import poly2grid
@@ -23,79 +25,9 @@ from flo2d.flo2d_tools.infiltration_tools import InfiltrationCalculator
 
 uiDialog, qtBaseClass = load_ui('infil_editor')
 uiDialog_glob, qtBaseClass_glob = load_ui('infil_global')
+uiDialog_chan, qtBaseClass_chan = load_ui('infil_chan')
 uiDialog_green, qtBaseClass_green = load_ui('infil_green_ampt')
 uiDialog_scs, qtBaseClass_scs = load_ui('infil_scs')
-
-
-class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
-
-    global_changed = pyqtSignal(int)
-
-    def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
-        self.iface = iface
-        self.lyrs = lyrs
-        self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
-        self.global_imethod = 0
-        self.current_imethod = 0
-        self.green_grp.toggled.connect(self.green_checked)
-        self.scs_grp.toggled.connect(self.scs_checked)
-        self.horton_grp.toggled.connect(self.horton_checked)
-        self.cb_infchan.stateChanged.connect(self.infchan_changed)
-
-    def save_imethod(self):
-        self.global_imethod = self.current_imethod
-        self.global_changed.emit(self.global_imethod)
-
-    def green_checked(self):
-        if self.green_grp.isChecked():
-            if self.horton_grp.isChecked():
-                self.horton_grp.setChecked(False)
-            if self.scs_grp.isChecked():
-                self.current_imethod = 3
-            else:
-                self.current_imethod = 1
-        else:
-            if self.scs_grp.isChecked():
-                self.current_imethod = 2
-            else:
-                self.current_imethod = 0
-
-    def scs_checked(self):
-        if self.scs_grp.isChecked():
-            if self.horton_grp.isChecked():
-                self.horton_grp.setChecked(False)
-            if self.green_grp.isChecked():
-                self.current_imethod = 3
-            else:
-                self.current_imethod = 2
-        else:
-            if self.green_grp.isChecked():
-                self.current_imethod = 1
-            else:
-                self.current_imethod = 0
-
-    def horton_checked(self):
-        if self.horton_grp.isChecked():
-            if self.green_grp.isChecked():
-                self.green_grp.setChecked(False)
-            if self.scs_grp.isChecked():
-                self.scs_grp.setChecked(False)
-            self.current_imethod = 4
-        else:
-            self.current_imethod = 0
-
-    def infchan_changed(self):
-        if self.cb_infchan.isChecked():
-            self.label_hydcxx.setEnabled(True)
-            self.spin_hydcxx.setEnabled(True)
-            self.chan_btn.setEnabled(True)
-        else:
-            self.label_hydcxx.setDisabled(True)
-            self.spin_hydcxx.setDisabled(True)
-            self.chan_btn.setDisabled(True)
 
 
 class InfilEditorWidget(qtBaseClass, uiDialog):
@@ -111,6 +43,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.grid_lyr = None
         self.infil_lyr = None
+        self.schema_green = None
+        self.schema_scs = None
+        self.schema_horton = None
+        self.schema_chan = None
+        self.all_schema = []
         self.infil_idx = 0
         self.iglobal = InfilGlobal(self.iface, self.lyrs)
         self.infmethod = self.iglobal.global_imethod
@@ -178,11 +115,20 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.read_global_params()
             self.grid_lyr = self.lyrs.data['grid']['qlyr']
             self.infil_lyr = self.lyrs.data['user_infiltration']['qlyr']
+            self.schema_green = self.lyrs.data['infil_areas_green']['qlyr']
+            self.schema_scs = self.lyrs.data['infil_areas_scs']['qlyr']
+            self.schema_horton = self.lyrs.data['infil_areas_horton']['qlyr']
+            self.schema_chan = self.lyrs.data['infil_areas_chan']['qlyr']
+            self.all_schema += [self.schema_green, self.schema_scs, self.schema_horton, self.schema_chan]
+            self.read_global_params()
             self.infil_lyr.editingStopped.connect(self.populate_infiltration)
             self.infil_name_cbo.activated.connect(self.infiltration_changed)
+
+    def repaint_schema(self):
+        for lyr in self.all_schema:
+            lyr.triggerRepaint()
 
     @connection_required
     def create_infil_polygon(self):
@@ -323,8 +269,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.infiltration_changed()
 
     def fill_green_char(self):
-        qry = '''UPDATE user_infiltration SET green_char = 'F' WHERE green_char != 'F' AND green_char != 'C';'''
+        qry = '''UPDATE user_infiltration SET green_char = 'F' WHERE green_char NOT IN ('C', 'F');'''
         self.con.execute(qry)
+        self.infil_lyr.triggerRepaint()
 
     def infiltration_changed(self):
         imethod = self.infmethod
@@ -441,33 +388,40 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         imethod = self.infmethod
         if imethod == 0:
             return
-
-        sl = self.slices[imethod]
-        columns = self.infil_columns[sl]
-        infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, *columns))
-        cur = self.con.cursor()
-        if imethod == 1 or imethod == 3:
-            for grid_row in infiltration_grids:
-                row = list(grid_row)
-                gid = row.pop()
-                char = row.pop(0)
-                if char == 'F':
-                    val = (gid,) + tuple(row[:6])
-                    cur.execute(qry_green, val)
-                elif char == 'C':
-                    val = (gid, row[6])
-                    cur.execute(qry_chan, val)
-                else:
-                    val = (gid, row[7])
-                    cur.execute(qry_scs, val)
-        else:
-            qry = qry_scs if imethod == 2 else qry_horton
-            for grid_row in infiltration_grids:
-                row = list(grid_row)
-                gid = row.pop()
-                val = (gid,) + tuple(row)
-                cur.execute(qry, val)
-        self.con.commit()
+        try:
+            sl = self.slices[imethod]
+            columns = self.infil_columns[sl]
+            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, *columns))
+            self.gutils.clear_tables(
+                              'infil_areas_green', 'infil_areas_scs', 'infil_areas_horton ', 'infil_areas_chan')
+            cur = self.con.cursor()
+            if imethod == 1 or imethod == 3:
+                for grid_row in infiltration_grids:
+                    row = list(grid_row)
+                    gid = row.pop()
+                    char = row.pop(0)
+                    if char == 'F':
+                        val = (gid,) + tuple(row[:6])
+                        cur.execute(qry_green, val)
+                    elif char == 'C':
+                        val = (gid, row[6])
+                        cur.execute(qry_chan, val)
+                    else:
+                        val = (gid, row[7])
+                        cur.execute(qry_scs, val)
+            else:
+                qry = qry_scs if imethod == 2 else qry_horton
+                for grid_row in infiltration_grids:
+                    row = list(grid_row)
+                    gid = row.pop()
+                    val = (gid,) + tuple(row)
+                    cur.execute(qry, val)
+            self.con.commit()
+            self.repaint_schema()
+            self.uc.bar_info('Schematizing of infiltration finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn('Schematizing of infiltration failed! Please check user infiltration layers.')
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
@@ -487,7 +441,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 values = (gid, params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'])
                 cur.execute(qry, values)
             self.con.commit()
-            self.lyrs.data['infil_areas_green']['qlyr'].triggerRepaint()
+            self.schema_green.triggerRepaint()
             self.uc.show_info('Calculating Green-Ampt parameters finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -514,18 +468,152 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 values = (gid, params['scsn'])
                 cur.execute(qry, values)
             self.con.commit()
-            self.lyrs.data['infil_areas_scs']['qlyr'].triggerRepaint()
+            self.schema_scs.triggerRepaint()
             self.uc.show_info('Calculating SCS Curve Number parameters finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Calculating SCS Curve Number parameters failed! Please check data in your input layers.')
 
 
+class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
+
+    global_changed = pyqtSignal(int)
+
+    def __init__(self, iface, lyrs):
+        qtBaseClass_glob.__init__(self)
+        uiDialog_glob.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.chan_dlg = ChannelDialog(self.iface, self.lyrs)
+        self.global_imethod = 0
+        self.current_imethod = 0
+        self.green_grp.toggled.connect(self.green_checked)
+        self.scs_grp.toggled.connect(self.scs_checked)
+        self.horton_grp.toggled.connect(self.horton_checked)
+        self.cb_infchan.stateChanged.connect(self.infchan_changed)
+        self.chan_btn.clicked.connect(self.show_channel_dialog)
+
+    def show_channel_dialog(self):
+        hydcxx = self.spin_hydcxx.value()
+        self.chan_dlg.set_chan_model(hydcxx)
+        ok = self.chan_dlg.exec_()
+        if not ok:
+            return
+        self.chan_dlg.save_channel_params()
+
+    def save_imethod(self):
+        self.global_imethod = self.current_imethod
+        self.global_changed.emit(self.global_imethod)
+
+    def green_checked(self):
+        if self.green_grp.isChecked():
+            if self.horton_grp.isChecked():
+                self.horton_grp.setChecked(False)
+            if self.scs_grp.isChecked():
+                self.current_imethod = 3
+            else:
+                self.current_imethod = 1
+        else:
+            if self.scs_grp.isChecked():
+                self.current_imethod = 2
+            else:
+                self.current_imethod = 0
+
+    def scs_checked(self):
+        if self.scs_grp.isChecked():
+            if self.horton_grp.isChecked():
+                self.horton_grp.setChecked(False)
+            if self.green_grp.isChecked():
+                self.current_imethod = 3
+            else:
+                self.current_imethod = 2
+        else:
+            if self.green_grp.isChecked():
+                self.current_imethod = 1
+            else:
+                self.current_imethod = 0
+
+    def horton_checked(self):
+        if self.horton_grp.isChecked():
+            if self.green_grp.isChecked():
+                self.green_grp.setChecked(False)
+            if self.scs_grp.isChecked():
+                self.scs_grp.setChecked(False)
+            self.current_imethod = 4
+        else:
+            self.current_imethod = 0
+
+    def infchan_changed(self):
+        if self.cb_infchan.isChecked():
+            self.label_hydcxx.setEnabled(True)
+            self.spin_hydcxx.setEnabled(True)
+            self.chan_btn.setEnabled(True)
+        else:
+            self.label_hydcxx.setDisabled(True)
+            self.spin_hydcxx.setDisabled(True)
+            self.chan_btn.setDisabled(True)
+
+
+class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
+
+    def __init__(self, iface, lyrs):
+        qtBaseClass_chan.__init__(self)
+        uiDialog_chan.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.con = self.iface.f2d['con']
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        model = QStandardItemModel()
+        self.tview.setModel(model)
+
+    def set_chan_model(self, hydcxx):
+        str_hydcxx = str(hydcxx)
+        qry = '''
+        SELECT c.name, c.fid, i.hydcx, i.hydcxfinal, i.soildepthcx
+        FROM chan AS c
+        LEFT OUTER JOIN infil_chan_seg AS i
+        ON c.fid = i.chan_seg_fid;'''
+        headers = ['Channel Name', 'Channel FID', 'Initial hyd. cond.', 'Final hyd. cond.', 'Max. Soil Depth']
+        tab_data = self.con.execute(qry).fetchall()
+        model = QStandardItemModel()
+        for i, head in enumerate(headers):
+            model.setHorizontalHeaderItem(i, QStandardItem(head))
+        for row in tab_data:
+            model_row = []
+            for i, col in enumerate(row):
+                if col is None:
+                    str_col = str_hydcxx if i == 2 else ''
+                else:
+                    str_col = str(col)
+                item = QStandardItem(str_col)
+                if i < 2:
+                    item.setEditable(False)
+                model_row.append(item)
+            model.appendRow(model_row)
+        self.tview.setModel(model)
+
+    def save_channel_params(self):
+        qry = 'INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES (?,?,?,?);'
+        data_model = self.tview.model()
+        data_rows = []
+        for i in range(data_model.rowCount()):
+            row = [m_fdata(data_model, i, j) for j in range(1, 5)]
+            row = ['' if isnan(r) else r for r in row]
+            data_rows.append(row)
+        if data_rows:
+            self.gutils.clear_tables('infil_chan_seg')
+            self.con.executemany(qry, data_rows)
+
+
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
+        qtBaseClass_green.__init__(self)
+        uiDialog_green.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
@@ -549,8 +637,6 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     lyr_name = l.name()
                     self.soil_cbo.addItem(lyr_name, l)
                     self.land_cbo.addItem(lyr_name, l)
-                else:
-                    pass
         except Exception as e:
             pass
 
@@ -581,8 +667,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
 
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
+        qtBaseClass_scs.__init__(self)
+        uiDialog_scs.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
