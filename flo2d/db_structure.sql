@@ -862,7 +862,7 @@ CREATE TRIGGER "find_infil_cells_green_insert"
        DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
            SELECT NEW.fid, g.fid FROM grid as g
-           WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+           WHERE ST_Intersects(CastAutomagic(g.geom), ST_Centroid(CastAutomagic(NEW.geom)));
    END;
 
 INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_green_update', 1);
@@ -873,7 +873,7 @@ CREATE TRIGGER "find_infil_cells_green_update"
        DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
        SELECT NEW.fid, g.fid FROM grid as g
-       WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+       WHERE ST_Intersects(CastAutomagic(g.geom), ST_Centroid(CastAutomagic(NEW.geom)));
    END;
 
 INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_green_delete', 1);

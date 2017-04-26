@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from collections import defaultdict
 from flo2d.geopackage_utils import GeoPackageUtils
 from qgis.core import QgsFeature, QgsGeometry
 
@@ -263,3 +264,83 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr.updateExtents()
         self.user_boundary_lyr.triggerRepaint()
 
+
+class SchemaInfiltrationConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaInfiltrationConverter, self).__init__(con, iface, lyrs)
+
+        self.user_infil_tab = 'user_infiltration'
+        self.schema_green_tab = 'infil_areas_green'
+        self.schema_scs_tab = 'infil_areas_scs'
+        self.schema_horton_tab = 'infil_areas_horton'
+        self.schema_chan_tab = 'infil_areas_chan'
+
+        self.user_infil_lyr = lyrs.data[self.user_infil_tab]['qlyr']
+        self.schema_green_lyr = lyrs.data[self.schema_green_tab]['qlyr']
+        self.schema_scs_lyr = lyrs.data[self.schema_scs_tab]['qlyr']
+        self.schema_horton_lyr = lyrs.data[self.schema_horton_tab]['qlyr']
+        self.schema_chan_lyr = lyrs.data[self.schema_chan_tab]['qlyr']
+
+        self.green_columns = ['hydc', 'soils', 'dtheta', 'abstrinf', 'rtimpf', 'soil_depth']
+        self.scs_columns = ['scsn']
+        self.horton_columns = ['fhorti', 'fhortf', 'deca']
+        self.chan_columns = ['hydconch']
+
+        self.lyrs_cols = [
+            (self.schema_green_lyr, self.green_columns),
+            (self.schema_scs_lyr, self.scs_columns),
+            (self.schema_horton_lyr, self.horton_columns),
+            (self.schema_chan_lyr, self.chan_columns)
+        ]
+        self.ui_fields = self.user_infil_lyr.fields()
+
+    @staticmethod
+    def cluster_infil_areas(schema_lyr, columns):
+        clusters = defaultdict(list)
+        for feat in schema_lyr.getFeatures():
+            geom_poly = feat.geometry().asPolygon()
+            attrs = tuple(feat[col] for col in columns)
+            clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
+        return clusters
+
+    def user_infil_features(self, schema_lyr, columns):
+        if 'hydc' in columns:
+            char = 'F'
+        elif 'hydconch' in columns:
+            char = 'C'
+        else:
+            char = ''
+        fields = self.ui_fields
+        new_features = []
+        clusters = self.cluster_infil_areas(schema_lyr, columns)
+        for attrs, geom_list in clusters.iteritems():
+            if len(geom_list) > 1:
+                geom = QgsGeometry.unaryUnion(geom_list)
+                if geom.isMultipart():
+                    infil_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
+                else:
+                    infil_geoms = [geom]
+            else:
+                infil_geoms = geom_list
+
+            for igeom in infil_geoms:
+                ifeat = QgsFeature()
+                ifeat.setGeometry(igeom)
+                ifeat.setFields(fields)
+                for col, val in zip(columns, attrs):
+                    ifeat.setAttribute(col, val)
+                ifeat.setAttribute('green_char', char)
+                new_features.append(ifeat)
+        return new_features
+
+    def create_user_infiltration(self):
+        remove_features(self.user_infil_lyr)
+        self.user_infil_lyr.startEditing()
+        for lyr, cols in self.lyrs_cols:
+            new_features = self.user_infil_features(lyr, cols)
+            self.user_infil_lyr.addFeatures(new_features)
+        self.user_infil_lyr.commitChanges()
+        self.user_infil_lyr.updateExtents()
+        self.user_infil_lyr.triggerRepaint()
+        self.user_infil_lyr.removeSelection()

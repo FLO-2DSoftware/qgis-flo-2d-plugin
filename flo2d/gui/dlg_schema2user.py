@@ -14,7 +14,8 @@ from flo2d.flo2d_tools.schematic_conversion import (
     SchemaDomainConverter,
     SchemaLeveesConverter,
     SchemaFPXSECConverter,
-    ModelBoundaryConverter
+    ModelBoundaryConverter,
+    SchemaInfiltrationConverter
 )
 from ui_utils import load_ui
 
@@ -39,6 +40,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_grid.stateChanged.connect(self.convert_grid_checked)
+        self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
 
     def convert_bc_checked(self):
         if self.ckbox_bc.isChecked():
@@ -69,6 +71,12 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.methods[5] = self.convert_grid
         else:
             self.methods.pop(5)
+
+    def convert_infil_checked(self):
+        if self.ckbox_infil.isChecked():
+            self.methods[6] = self.convert_infil
+        else:
+            self.methods.pop(6)
 
     def convert_bc(self):
         try:
@@ -110,3 +118,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating user layers failed on Grid conversion!")
+
+    def convert_infil(self):
+        try:
+            infil_converter = SchemaInfiltrationConverter(self.con, self.iface, self.lyrs)
+            infil_converter.create_user_infiltration()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Infiltration conversion!")
