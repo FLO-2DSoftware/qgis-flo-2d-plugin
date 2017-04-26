@@ -2294,7 +2294,7 @@ SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
 CREATE TABLE "user_infiltration" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "green_char" TEXT, --CHECK("green_char" = 'F' OR "green_char" = 'C')
+    "green_char" TEXT DEFAULT 'F', --CHECK("green_char" = 'F' OR "green_char" = 'C')
     "hydc" REAL DEFAULT 0,
     "soils" REAL DEFAULT 0,
     "dtheta" REAL DEFAULT 0,
@@ -2313,6 +2313,13 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_infiltra
 SELECT gpkgAddGeometryColumn('user_infiltration', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_infiltration', 'geom');
 
+CREATE TRIGGER "default_infiltration_name"
+    AFTER INSERT ON "user_infiltration"
+    BEGIN
+        UPDATE "user_infiltration"
+        SET name = ('Infiltration ' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
 
 CREATE VIEW struct_types AS
 SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves

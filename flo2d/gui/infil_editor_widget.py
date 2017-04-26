@@ -66,12 +66,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             3: {self.iglobal.green_grp, self.iglobal.scs_grp},
             4: {self.iglobal.horton_grp}
         }
-        self.imethod_groups = {
-            1: {self.iglobal.green_grp},
-            2: {self.iglobal.scs_grp},
-            3: {self.iglobal.green_grp, self.iglobal.scs_grp},
-            4: {self.iglobal.horton_grp}
-        }
+
         self.single_groups = {
             1: {self.single_green_grp},
             2: {self.single_scs_grp},
@@ -123,6 +118,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.schema_chan = self.lyrs.data['infil_areas_chan']['qlyr']
             self.all_schema += [self.schema_green, self.schema_scs, self.schema_horton, self.schema_chan]
             self.read_global_params()
+            #self.iglobal.save_imethod()
             self.infil_lyr.editingStopped.connect(self.populate_infiltration)
             self.infil_name_cbo.activated.connect(self.infiltration_changed)
 
@@ -258,9 +254,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         sl = self.slices[imethod]
         columns = self.infil_columns[sl]
         qry = '''SELECT fid, name, {0} FROM user_infiltration ORDER BY fid;'''
-        qry = qry.format(' ,'.join(columns))
+        qry = qry.format(', '.join(columns))
         columns = ['fid', 'name'] + columns
-        rows = self.gutils.execute(qry)
+        rows = self.gutils.execute(qry).fetchall()
         for row in rows:
             infil_dict = OrderedDict(zip(columns, row))
             name = infil_dict['name']
@@ -270,7 +266,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def fill_green_char(self):
         qry = '''UPDATE user_infiltration SET green_char = 'F' WHERE green_char NOT IN ('C', 'F');'''
-        self.con.execute(qry)
+        cur = self.con.cursor()
+        cur.execute(qry)
+        self.con.commit()
         self.infil_lyr.triggerRepaint()
 
     def infiltration_changed(self):
@@ -606,7 +604,9 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
             data_rows.append(row)
         if data_rows:
             self.gutils.clear_tables('infil_chan_seg')
-            self.con.executemany(qry, data_rows)
+            cur = self.con.cursor()
+            cur.executemany(qry, data_rows)
+            self.con.commit()
 
 
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):

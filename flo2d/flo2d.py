@@ -554,6 +554,7 @@ class Flo2D(object):
         self.gutils.enable_geom_triggers()
         # self.show_bc_editor()
         self.gutils.update_rbank()
+        self.setup_dock_widgets()
 
     @connection_required
     def export_gds(self):
