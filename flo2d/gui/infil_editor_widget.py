@@ -13,8 +13,8 @@ import traceback
 from math import isnan
 from itertools import chain
 from collections import OrderedDict
-from PyQt4.QtCore import pyqtSignal, pyqtSlot
-from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem
+from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
+from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
 from qgis.core import QGis, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas
 from flo2d.utils import m_fdata
@@ -118,13 +118,122 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.schema_chan = self.lyrs.data['infil_areas_chan']['qlyr']
             self.all_schema += [self.schema_green, self.schema_scs, self.schema_horton, self.schema_chan]
             self.read_global_params()
-            #self.iglobal.save_imethod()
             self.infil_lyr.editingStopped.connect(self.populate_infiltration)
             self.infil_name_cbo.activated.connect(self.infiltration_changed)
 
     def repaint_schema(self):
         for lyr in self.all_schema:
             lyr.triggerRepaint()
+
+    def fill_green_char(self):
+        qry = '''UPDATE user_infiltration SET green_char = 'F' WHERE green_char NOT IN ('C', 'F');'''
+        cur = self.con.cursor()
+        cur.execute(qry)
+        self.con.commit()
+        self.infil_lyr.triggerRepaint()
+
+    @connection_required
+    def show_global_params(self):
+        ok = self.iglobal.exec_()
+        if ok:
+            self.iglobal.save_imethod()
+            self.write_global_params()
+        else:
+            self.read_global_params()
+
+    @pyqtSlot(int)
+    def show_groups(self, imethod):
+        if imethod == 0:
+            self.single_green_grp.setHidden(True)
+            self.single_scs_grp.setHidden(True)
+            self.single_horton_grp.setHidden(True)
+        elif imethod == 1:
+            self.single_green_grp.setHidden(False)
+            self.single_scs_grp.setHidden(True)
+            self.single_horton_grp.setHidden(True)
+            self.fill_green_char()
+        elif imethod == 2:
+            self.single_green_grp.setHidden(True)
+            self.single_scs_grp.setHidden(False)
+            self.single_horton_grp.setHidden(True)
+        elif imethod == 3:
+            self.single_green_grp.setHidden(False)
+            self.single_scs_grp.setHidden(False)
+            self.single_horton_grp.setHidden(True)
+        elif imethod == 4:
+            self.single_green_grp.setHidden(True)
+            self.single_scs_grp.setHidden(True)
+            self.single_horton_grp.setHidden(False)
+
+        self.infmethod = imethod
+        self.populate_infiltration()
+
+    @connection_required
+    def read_global_params(self):
+        qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
+        glob = self.gutils.execute(qry).fetchone()
+        if glob is None:
+            self.show_groups(0)
+            return
+        row = OrderedDict(zip(self.params, glob))
+        try:
+            method = row['infmethod']
+            self.groups = self.imethod_groups[method]
+        except KeyError:
+            self.groups = set()
+        for grp in self.groups:
+            grp.setChecked(True)
+            for obj in grp.children():
+                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                    continue
+                obj_name = obj.objectName()
+                name = obj_name.split('_', 1)[-1]
+                val = row[name]
+                if isinstance(obj, QCheckBox):
+                    obj.setChecked(bool(val))
+                else:
+                    obj.setValue(val)
+        self.iglobal.save_imethod()
+
+    @connection_required
+    def write_global_params(self):
+        qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
+        method = self.iglobal.global_imethod
+        names = ['infmethod']
+        vals = [method]
+        try:
+            self.groups = self.imethod_groups[method]
+        except KeyError:
+            self.groups = set()
+        for grp in self.groups:
+            for obj in grp.children():
+                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                    continue
+                obj_name = obj.objectName()
+                name = obj_name.split('_', 1)[-1]
+                if isinstance(obj, QCheckBox):
+                    val = int(obj.isChecked())
+                    obj.setChecked(bool(val))
+                else:
+                    val = obj.value()
+                    obj.setValue(val)
+                names.append(name)
+                vals.append(val)
+        self.gutils.clear_tables('infil')
+        names_str = ', '.join(names)
+        vals_str = ', '.join(['?'] * len(vals))
+        qry = qry.format(names_str, vals_str)
+        self.gutils.execute(qry, vals)
+
+    def floodplain_checked(self):
+        if self.fplain_grp.isChecked():
+            if self.chan_grp.isChecked():
+                self.chan_grp.setChecked(False)
+
+    def channel_checked(self):
+        if self.chan_grp.isChecked():
+            if self.fplain_grp.isChecked():
+                self.fplain_grp.setChecked(False)
 
     @connection_required
     def create_infil_polygon(self):
@@ -210,42 +319,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         update_qry = '''UPDATE user_infiltration SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
-    @connection_required
-    def show_global_params(self):
-        ok = self.iglobal.exec_()
-        if ok:
-            self.iglobal.save_imethod()
-            self.write_global_params()
-        else:
-            self.read_global_params()
-
-    @pyqtSlot(int)
-    def show_groups(self, imethod):
-        if imethod == 0:
-            self.single_green_grp.setHidden(True)
-            self.single_scs_grp.setHidden(True)
-            self.single_horton_grp.setHidden(True)
-        elif imethod == 1:
-            self.single_green_grp.setHidden(False)
-            self.single_scs_grp.setHidden(True)
-            self.single_horton_grp.setHidden(True)
-            self.fill_green_char()
-        elif imethod == 2:
-            self.single_green_grp.setHidden(True)
-            self.single_scs_grp.setHidden(False)
-            self.single_horton_grp.setHidden(True)
-        elif imethod == 3:
-            self.single_green_grp.setHidden(False)
-            self.single_scs_grp.setHidden(False)
-            self.single_horton_grp.setHidden(True)
-        elif imethod == 4:
-            self.single_green_grp.setHidden(True)
-            self.single_scs_grp.setHidden(True)
-            self.single_horton_grp.setHidden(False)
-
-        self.infmethod = imethod
-        self.populate_infiltration()
-
     def populate_infiltration(self):
         self.infil_name_cbo.clear()
         imethod = self.infmethod
@@ -263,13 +336,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.infil_name_cbo.addItem(name, infil_dict)
         self.infil_name_cbo.setCurrentIndex(self.infil_idx)
         self.infiltration_changed()
-
-    def fill_green_char(self):
-        qry = '''UPDATE user_infiltration SET green_char = 'F' WHERE green_char NOT IN ('C', 'F');'''
-        cur = self.con.cursor()
-        cur.execute(qry)
-        self.con.commit()
-        self.infil_lyr.triggerRepaint()
 
     def infiltration_changed(self):
         imethod = self.infmethod
@@ -306,73 +372,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
-    @connection_required
-    def read_global_params(self):
-        qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
-        glob = self.gutils.execute(qry).fetchone()
-        if glob is None:
-            self.show_groups(0)
-            return
-        row = OrderedDict(zip(self.params, glob))
-        try:
-            method = row['infmethod']
-            self.groups = self.imethod_groups[method]
-        except KeyError:
-            self.groups = set()
-        for grp in self.groups:
-            grp.setChecked(True)
-            for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
-                    continue
-                obj_name = obj.objectName()
-                name = obj_name.split('_', 1)[-1]
-                val = row[name]
-                if isinstance(obj, QCheckBox):
-                    obj.setChecked(bool(val))
-                else:
-                    obj.setValue(val)
-        self.iglobal.save_imethod()
-
-    @connection_required
-    def write_global_params(self):
-        qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
-        method = self.iglobal.global_imethod
-        names = ['infmethod']
-        vals = [method]
-        try:
-            self.groups = self.imethod_groups[method]
-        except KeyError:
-            self.groups = set()
-        for grp in self.groups:
-            for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
-                    continue
-                obj_name = obj.objectName()
-                name = obj_name.split('_', 1)[-1]
-                if isinstance(obj, QCheckBox):
-                    val = int(obj.isChecked())
-                    obj.setChecked(bool(val))
-                else:
-                    val = obj.value()
-                    obj.setValue(val)
-                names.append(name)
-                vals.append(val)
-        self.gutils.clear_tables('infil')
-        names_str = ', '.join(names)
-        vals_str = ', '.join(['?'] * len(vals))
-        qry = qry.format(names_str, vals_str)
-        self.gutils.execute(qry, vals)
-
-    def floodplain_checked(self):
-        if self.fplain_grp.isChecked():
-            if self.chan_grp.isChecked():
-                self.chan_grp.setChecked(False)
-
-    def channel_checked(self):
-        if self.chan_grp.isChecked():
-            if self.fplain_grp.isChecked():
-                self.fplain_grp.setChecked(False)
-
     def schematize_infiltration(self):
         qry_green = '''
         INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
@@ -390,8 +389,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
             infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, *columns))
-            self.gutils.clear_tables(
-                              'infil_areas_green', 'infil_areas_scs', 'infil_areas_horton ', 'infil_areas_chan')
+            self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton ', 'infil_areas_chan')
             cur = self.con.cursor()
             if imethod == 1 or imethod == 3:
                 for grid_row in infiltration_grids:
@@ -427,22 +425,27 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok:
             return
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             soil_lyr, land_lyr, fields = dlg.green_ampt_parameters()
             inf_calc = InfiltrationCalculator(self.grid_lyr)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
+            self.gutils.clear_tables('infil_areas_green')
             qry = '''
             INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf)
             VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?);'''
             cur = self.con.cursor()
             for gid, params in grid_params.iteritems():
-                values = (gid, params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'])
+                par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'])
+                values = (gid,) + tuple(round(p, 3) for p in par)
                 cur.execute(qry, values)
             self.con.commit()
             self.schema_green.triggerRepaint()
+            QApplication.restoreOverrideCursor()
             self.uc.show_info('Calculating Green-Ampt parameters finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn('Calculating Green-Ampt parameters failed! Please check data in your input layers.')
 
     def calculate_scs(self):
@@ -451,6 +454,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok:
             return
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             inf_calc = InfiltrationCalculator(self.grid_lyr)
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
@@ -460,16 +464,19 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 multi_lyr, multi_fields = dlg.multi_scs_parameters()
                 inf_calc.setup_scs_multi(multi_lyr, *multi_fields)
                 grid_params = inf_calc.scs_infiltration_multi()
+            self.gutils.clear_tables('infil_areas_scs')
             qry = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?),?);'''
             cur = self.con.cursor()
             for gid, params in grid_params.iteritems():
-                values = (gid, params['scsn'])
+                values = (gid, round(params['scsn'], 3))
                 cur.execute(qry, values)
             self.con.commit()
             self.schema_scs.triggerRepaint()
+            QApplication.restoreOverrideCursor()
             self.uc.show_info('Calculating SCS Curve Number parameters finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn('Calculating SCS Curve Number parameters failed! Please check data in your input layers.')
 
 
@@ -694,8 +701,6 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
                     lyr_name = l.name()
                     self.single_lyr_cbo.addItem(lyr_name, l)
                     self.multi_lyr_cbo.addItem(lyr_name, l)
-                else:
-                    pass
         except Exception as e:
             pass
 
