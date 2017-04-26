@@ -366,8 +366,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     obj.setValue(infil_dict[obj_name])
                 else:
                     continue
-
+        self.lyrs.clear_rubber()
         if self.center_chbox.isChecked():
+            self.lyrs.show_feat_rubber(self.infil_lyr.id(), infil_dict['fid'])
             feat = self.infil_lyr.getFeatures(QgsFeatureRequest(infil_dict['fid'])).next()
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
