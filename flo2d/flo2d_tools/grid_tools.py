@@ -236,6 +236,40 @@ def poly2grid(grid, polygons, request, *columns):
                 pass
 
 
+def grid_intersections(grid, polygons, *columns):
+    """
+    Generator which calculates grid cells intersections with polygon layer.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    for poly in polygons.getFeatures():
+        allfeatures[poly.id()] = poly
+        index.insertFeature(poly)
+
+    features = grid.getFeatures()
+    first = next(features)
+    grid_area = first.geometry().area()
+    features.rewind()
+    for feat in features:
+        geom = feat.geometry()
+        fids = index.intersects(geom.boundingBox())
+        if not fids:
+            continue
+        gid = feat['fid']
+        grid_areas = []
+        for fid in fids:
+            f = allfeatures[fid]
+            fgeom = f.geometry()
+            inter = fgeom.intersects(geom)
+            if inter is False:
+                continue
+            intersection_geom = fgeom.intersection(geom)
+            subarea = intersection_geom.area() / grid_area
+            values = tuple(f[col] for col in columns) + (subarea,)
+            grid_areas.append(values)
+        yield gid, grid_areas
+
+
 def calculate_arfwrf(grid, areas):
     """
     Generator which calculates ARF and WRF values based on polygons representing blocked areas.

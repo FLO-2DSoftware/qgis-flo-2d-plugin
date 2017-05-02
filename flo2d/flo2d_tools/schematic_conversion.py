@@ -8,8 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from collections import defaultdict
 from flo2d.geopackage_utils import GeoPackageUtils
 from qgis.core import QgsFeature, QgsGeometry
+
+
+def remove_features(lyr):
+    ids = lyr.allFeatureIds()
+    lyr.startEditing()
+    lyr.deleteFeatures(ids)
+    lyr.commitChanges()
 
 
 class SchemaConverter(GeoPackageUtils):
@@ -59,13 +67,6 @@ class SchemaConverter(GeoPackageUtils):
             user_feat.setAttribute(user_fname, schema_feat[schema_fname])
         return user_feat
 
-    @staticmethod
-    def remove_features(lyr):
-        ids = lyr.allFeatureIds()
-        lyr.startEditing()
-        lyr.deleteFeatures(ids)
-        lyr.commitChanges()
-
     def schema2user(self, schema_lyr, user_lyr, geometry_type, **name_map):
         schema_fields = schema_lyr.fields()
         user_fields = user_lyr.fields()
@@ -83,9 +84,11 @@ class SchemaConverter(GeoPackageUtils):
         fn = self.geom_functions[geometry_type]
         new_features = []
         for feat in schema_lyr.getFeatures():
+            if feat.geometry() is None:
+                continue
             new_feat = self.set_feature(feat, user_fields, common_fnames, fn)
             new_features.append(new_feat)
-        self.remove_features(user_lyr)
+        remove_features(user_lyr)
         user_lyr.startEditing()
         user_lyr.addFeatures(new_features)
         user_lyr.commitChanges()
@@ -131,11 +134,11 @@ class SchemaDomainConverter(SchemaConverter):
         feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
-        self.remove_features(self.user_lbank_lyr)
+        remove_features(self.user_lbank_lyr)
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, 'polyline')
 
     def create_user_xs(self):
-        self.remove_features(self.user_xs_lyr)
+        remove_features(self.user_xs_lyr)
         fields = self.user_xs_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type', 'fcn': 'fcn'}
         geom_fn = self.geom_functions['polyline']
@@ -171,7 +174,7 @@ class SchemaLeveesConverter(SchemaConverter):
         self.execute('UPDATE levee_data SET user_line_fid = fid;')
 
     def create_user_levees(self):
-        self.remove_features(self.user_levee_lyr)
+        remove_features(self.user_levee_lyr)
         self.set_user_fids()
         self.schema2user(self.schema_levee_lyr, self.user_levee_lyr, 'polyline', levcrest='elev')
 
@@ -195,7 +198,7 @@ class SchemaBCConverter(SchemaConverter):
 
     def create_user_bc(self):
         self.disable_geom_triggers()
-        self.remove_features(self.user_bc_lyr)
+        remove_features(self.user_bc_lyr)
         fields = self.user_bc_lyr.fields()
         common_fnames = {'fid': 'fid', 'type': 'type'}
         geom_fn = self.geom_functions['centroid']
@@ -215,6 +218,22 @@ class SchemaBCConverter(SchemaConverter):
         self.enable_geom_triggers()
 
 
+class SchemaFPXSECConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaFPXSECConverter, self).__init__(con, iface, lyrs)
+
+        self.schema_fpxsec_tab = 'fpxsec'
+        self.user_fpxsec_tab = 'user_fpxsec'
+
+        self.schema_fpxsec_lyr = lyrs.data[self.schema_fpxsec_tab]['qlyr']
+        self.user_fpxsec_lyr = lyrs.data[self.user_fpxsec_tab]['qlyr']
+
+    def create_user_fpxsec(self):
+        remove_features(self.user_fpxsec_lyr)
+        self.schema2user(self.schema_fpxsec_lyr, self.user_fpxsec_lyr, 'polyline')
+
+
 class ModelBoundaryConverter(SchemaConverter):
 
     def __init__(self, con, iface, lyrs):
@@ -227,7 +246,7 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
 
     def boundary_from_grid(self):
-        self.remove_features(self.user_boundary_lyr)
+        remove_features(self.user_boundary_lyr)
         cellsize = self.get_cont_par('CELLSIZE')
         fields = self.user_boundary_lyr.fields()
         geom_list = []
@@ -244,3 +263,84 @@ class ModelBoundaryConverter(SchemaConverter):
         self.user_boundary_lyr.commitChanges()
         self.user_boundary_lyr.updateExtents()
         self.user_boundary_lyr.triggerRepaint()
+
+
+class SchemaInfiltrationConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaInfiltrationConverter, self).__init__(con, iface, lyrs)
+
+        self.user_infil_tab = 'user_infiltration'
+        self.schema_green_tab = 'infil_areas_green'
+        self.schema_scs_tab = 'infil_areas_scs'
+        self.schema_horton_tab = 'infil_areas_horton'
+        self.schema_chan_tab = 'infil_areas_chan'
+
+        self.user_infil_lyr = lyrs.data[self.user_infil_tab]['qlyr']
+        self.schema_green_lyr = lyrs.data[self.schema_green_tab]['qlyr']
+        self.schema_scs_lyr = lyrs.data[self.schema_scs_tab]['qlyr']
+        self.schema_horton_lyr = lyrs.data[self.schema_horton_tab]['qlyr']
+        self.schema_chan_lyr = lyrs.data[self.schema_chan_tab]['qlyr']
+
+        self.green_columns = ['hydc', 'soils', 'dtheta', 'abstrinf', 'rtimpf', 'soil_depth']
+        self.scs_columns = ['scsn']
+        self.horton_columns = ['fhorti', 'fhortf', 'deca']
+        self.chan_columns = ['hydconch']
+
+        self.lyrs_cols = [
+            (self.schema_green_lyr, self.green_columns),
+            (self.schema_scs_lyr, self.scs_columns),
+            (self.schema_horton_lyr, self.horton_columns),
+            (self.schema_chan_lyr, self.chan_columns)
+        ]
+        self.ui_fields = self.user_infil_lyr.fields()
+
+    @staticmethod
+    def cluster_infil_areas(schema_lyr, columns):
+        clusters = defaultdict(list)
+        for feat in schema_lyr.getFeatures():
+            geom_poly = feat.geometry().asPolygon()
+            attrs = tuple(feat[col] for col in columns)
+            clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
+        return clusters
+
+    def user_infil_features(self, schema_lyr, columns):
+        if 'hydc' in columns:
+            char = 'F'
+        elif 'hydconch' in columns:
+            char = 'C'
+        else:
+            char = ''
+        fields = self.ui_fields
+        new_features = []
+        clusters = self.cluster_infil_areas(schema_lyr, columns)
+        for attrs, geom_list in clusters.iteritems():
+            if len(geom_list) > 1:
+                geom = QgsGeometry.unaryUnion(geom_list)
+                if geom.isMultipart():
+                    infil_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
+                else:
+                    infil_geoms = [geom]
+            else:
+                infil_geoms = geom_list
+
+            for igeom in infil_geoms:
+                ifeat = QgsFeature()
+                ifeat.setGeometry(igeom)
+                ifeat.setFields(fields)
+                for col, val in zip(columns, attrs):
+                    ifeat.setAttribute(col, val)
+                ifeat.setAttribute('green_char', char)
+                new_features.append(ifeat)
+        return new_features
+
+    def create_user_infiltration(self):
+        remove_features(self.user_infil_lyr)
+        self.user_infil_lyr.startEditing()
+        for lyr, cols in self.lyrs_cols:
+            new_features = self.user_infil_features(lyr, cols)
+            self.user_infil_lyr.addFeatures(new_features)
+        self.user_infil_lyr.commitChanges()
+        self.user_infil_lyr.updateExtents()
+        self.user_infil_lyr.triggerRepaint()
+        self.user_infil_lyr.removeSelection()

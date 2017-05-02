@@ -25,8 +25,8 @@ uiDialog_pop, qtBaseClass_pop = load_ui('street_global')
 
 class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
     def __init__(self, iface, lyrs):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
+        qtBaseClass_pop.__init__(self)
+        uiDialog_pop.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
@@ -46,6 +46,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.street_lyr = None
         self.street_idx = 0
+        self.street_name_cbo = QComboBox(self)
         self.set_combo()
         self.set_icon(self.create_street, 'mActionCaptureLine.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
@@ -80,7 +81,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
     def set_combo(self):
         sp = QSizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
-        self.street_name_cbo = QComboBox(self)
         self.street_name_cbo.setEditable(False)
         self.street_name_cbo.setSizePolicy(sp)
         self.street_name_cbo_layout.addWidget(self.street_name_cbo)

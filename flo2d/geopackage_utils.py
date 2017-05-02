@@ -198,25 +198,33 @@ class GeoPackageUtils(object):
         """
         Execute a prepared SQL statement on this geopackage database.
         """
-        cursor = self.con.cursor()
-        if inputs is not None:
-            result_cursor = cursor.execute(statement, inputs)
-        else:
-            result_cursor = cursor.execute(statement)
-        rowid = cursor.lastrowid
-        self.con.commit()
-        if get_rowid:
-            return rowid
-        else:
-            return result_cursor
+        try:
+            cursor = self.con.cursor()
+            if inputs is not None:
+                result_cursor = cursor.execute(statement, inputs)
+            else:
+                result_cursor = cursor.execute(statement)
+            rowid = cursor.lastrowid
+            self.con.commit()
+            if get_rowid:
+                return rowid
+            else:
+                return result_cursor
+        except Exception as e:
+            self.con.rollback()
+            raise
 
     def execute_many(self, sql, data):
-        cursor = self.con.cursor()
-        if sql is not None:
-            cursor.executemany(sql, data)
-        else:
-            return
-        self.con.commit()
+        try:
+            cursor = self.con.cursor()
+            if sql is not None:
+                cursor.executemany(sql, data)
+            else:
+                return
+            self.con.commit()
+        except Exception as e:
+            self.con.rollback()
+            raise
 
     def batch_execute(self, *sqls):
         for sql in sqls:
@@ -236,6 +244,7 @@ class GeoPackageUtils(object):
                 del sql[:]
                 sql += [qry, row_len]
             except Exception as e:
+                self.con.rollback()
                 self.uc.log_info(qry)
                 self.uc.log_info(traceback.format_exc())
 
@@ -557,6 +566,10 @@ class GeoPackageUtils(object):
             ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
         '''
         qry = qry.format(x, y)
+        # cur = self.con.cursor()
+        # cur.execute(qry)
+        #
+        # print(cur)
         gid = self.execute(qry).fetchone()[0]
         return gid
 

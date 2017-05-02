@@ -8,9 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from flo2d.flo2d_tools.elevation_correctors import LeveesElevation
+import os
+import traceback
+from PyQt4.QtCore import QSettings
+from PyQt4.QtGui import QFileDialog
 from ui_utils import load_ui
+from flo2d.flo2d_tools.elevation_correctors import LeveesElevation
 from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.user_communication import UserCommunication
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')
 
@@ -24,6 +30,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.con = con
         self.lyrs = lyrs
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = GeoPackageUtils(con, iface)
         self.corrector = LeveesElevation(self.gutils, self.lyrs)
         self.corrector.setup_layers()
@@ -37,6 +44,83 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.elev_polygons_chbox.setChecked(True)
         self.elev_points_chbox.setChecked(True)
         self.elev_lines_chbox.setChecked(True)
+
+        self.browse_btn.clicked.connect(self.get_xyz_file)
+        self.xyz_line.textChanged.connect(self.activate_import)
+        self.import_btn.clicked.connect(self.run_import_z)
+
+    def get_xyz_file(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastXYZDir', '')
+        xyz_file = QFileDialog.getOpenFileName(
+            None,
+            'Select 3D levee lines file',
+            directory=last_dir,
+            filter='*.xyz')
+        if not xyz_file:
+            return
+        self.xyz_line.setText(xyz_file)
+        s.setValue('FLO-2D/lastXYZDir', os.path.dirname(xyz_file))
+
+    def activate_import(self):
+        if self.xyz_line.text():
+            self.import_btn.setEnabled(True)
+        else:
+            self.import_btn.setDisabled(True)
+
+    def run_import_z(self):
+        try:
+            self.import_z_data()
+            self.uc.bar_info('3D levee lines data imported!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn('Could not import 3D levee lines data!')
+
+    def import_z_data(self):
+        elev_points_lyr = self.lyrs.data['user_elevation_points']['qlyr']
+        levee_line_lyr = self.lyrs.data['user_levee_lines']['qlyr']
+
+        elev_fields = elev_points_lyr.fields()
+        levee_fields = levee_line_lyr.fields()
+
+        elev_points_lyr.startEditing()
+        levee_line_lyr.startEditing()
+
+        fpath = self.xyz_line.text()
+        with open(fpath, 'r') as xyz_file:
+            polyline = []
+            while True:
+                try:
+                    row = next(xyz_file)
+                    values = row.split()
+                    x, y, z = [float(i) for i in values]
+                    point_feat = QgsFeature()
+                    pnt = QgsPoint(x, y)
+                    point_geom = QgsGeometry().fromPoint(pnt)
+                    point_feat.setGeometry(point_geom)
+                    point_feat.setFields(elev_fields)
+                    point_feat.setAttribute('elev', z)
+                    point_feat.setAttribute('membership', 'levees')
+                    elev_points_lyr.addFeature(point_feat)
+                    polyline.append(pnt)
+                except (ValueError, StopIteration) as e:
+                    if not polyline:
+                        break
+                    line_feat = QgsFeature()
+                    line_geom = QgsGeometry().fromPolyline(polyline)
+                    line_feat.setGeometry(line_geom)
+                    line_feat.setFields(levee_fields)
+                    levee_line_lyr.addFeature(line_feat)
+                    del polyline[:]
+        elev_points_lyr.commitChanges()
+        elev_points_lyr.updateExtents()
+        elev_points_lyr.triggerRepaint()
+        elev_points_lyr.removeSelection()
+
+        levee_line_lyr.commitChanges()
+        levee_line_lyr.updateExtents()
+        levee_line_lyr.triggerRepaint()
+        levee_line_lyr.removeSelection()
 
     def points_checked(self):
         if self.elev_points_chbox.isChecked():

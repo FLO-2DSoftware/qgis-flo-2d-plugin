@@ -43,6 +43,7 @@ from gui.grid_info_widget import GridInfoWidget
 from gui.plot_widget import PlotWidget
 from gui.table_editor_widget import TableEditorWidget
 from gui.dlg_schema2user import Schema2UserDialog
+from gui.dlg_ras_import import RasImportDialog
 
 
 class Flo2D(object):
@@ -127,6 +128,7 @@ class Flo2D(object):
         self.f2d_widget.xs_editor.populate_xsec_cbo()
         self.f2d_widget.fpxsec_editor.setup_connection()
         self.f2d_widget.fpxsec_editor.populate_cbos()
+        self.f2d_widget.infil_editor.setup_connection()
 
     def add_action(
             self,
@@ -189,6 +191,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
             callback=lambda: self.export_gds(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/import_ras.svg'),
+            text=self.tr(u'Import RAS geometry'),
+            callback=lambda: self.import_from_ras(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -546,6 +554,7 @@ class Flo2D(object):
         self.gutils.enable_geom_triggers()
         # self.show_bc_editor()
         self.gutils.update_rbank()
+        self.setup_dock_widgets()
 
     @connection_required
     def export_gds(self):
@@ -605,6 +614,24 @@ class Flo2D(object):
             self.gutils.copy_from_other(attached_gpkg)
             self.load_layers()
             self.setup_dock_widgets()
+
+    @connection_required
+    def import_from_ras(self):
+        dlg = RasImportDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            dlg.import_geometry()
+            self.setup_dock_widgets()
+            self.uc.bar_info('HEC-RAS geometry data imported!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn('Could not read HEC-RAS file!')
+        QApplication.restoreOverrideCursor()
 
     def load_layers(self):
         self.lyrs.load_all_layers(self.gutils)
@@ -949,7 +976,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_levee_lines'):
-            self.uc.bar_warn("No levee line in the database! Please create them before running tool.")
+            self.uc.bar_warn("There is no any user levee lines! Please create them before running tool.")
             return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)

@@ -6,81 +6,62 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>764</width>
-    <height>599</height>
+    <width>604</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Set control and tolerance parameters</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>560</x>
-     <y>550</y>
-     <width>181</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
-   </property>
-  </widget>
-  <widget class="QTabWidget" name="tab_widget">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>721</width>
-     <height>531</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <widget class="QWidget" name="tab">
-    <attribute name="title">
-     <string>CONT</string>
-    </attribute>
-    <widget class="QWidget" name="gridLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>671</width>
-       <height>471</height>
-      </rect>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="1" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <layout class="QGridLayout" name="cont_lout">
-      <property name="horizontalSpacing">
-       <number>30</number>
-      </property>
-      <property name="verticalSpacing">
-       <number>10</number>
-      </property>
-     </layout>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="tab_2">
-    <attribute name="title">
-     <string>TOLER</string>
-    </attribute>
-    <widget class="QWidget" name="gridLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>361</width>
-       <height>251</height>
-      </rect>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
      </property>
-     <layout class="QGridLayout" name="toler_lout"/>
     </widget>
-   </widget>
-  </widget>
+   </item>
+   <item row="0" column="0" colspan="2">
+    <widget class="QTabWidget" name="tab_widget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tab1">
+      <attribute name="title">
+       <string>CONT</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="cont_lout"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab2">
+      <property name="maximumSize">
+       <size>
+        <width>350</width>
+        <height>250</height>
+       </size>
+      </property>
+      <attribute name="title">
+       <string>TOLER</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="toler_lout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections>
