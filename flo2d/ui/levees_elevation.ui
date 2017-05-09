@@ -32,7 +32,7 @@
       <item>
        <widget class="QCheckBox" name="elev_polygons_chbox">
         <property name="text">
-         <string>Levee user polygons</string>
+         <string>User elevation polygons</string>
         </property>
        </widget>
       </item>
@@ -50,7 +50,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Levee user points within search radius</string>
+           <string>User elevation points within search radius</string>
           </property>
           <property name="checked">
            <bool>false</bool>

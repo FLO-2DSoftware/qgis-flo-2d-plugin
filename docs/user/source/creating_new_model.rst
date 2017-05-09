@@ -172,15 +172,19 @@ To generate the factors and apply them to the grid, you can use |awfarf| **Evalu
 
 Adjusting grid elevation
 ------------------------
-Often users need to adjust elevation of the grids by lowering or raising the DTM over an area. In the example below, we are going to lower the elevation of the grid, by 3 feet to provide extra storage within the floodplain. To do that:
+Often users need to adjust elevation of the grids by lowering or raising the DTM over an area. There are 2 ways to do that in Flo2D plugin.
 
-- Toggle Editing for **Grid Elevation** layer under User Layers
+First example shows how to lower the elevation of the grid, by 3 feet to provide extra storage within the elevation polygons areas. To do that:
+
+- Toggle Editing for **Elevation Polygons** layer under User Layers
 - Digitize a polygon where you want to lower the elevation
 - For the attribute table, type **-3** for the **correction** value
+- For membership choose **grid** or **all** (which is default) value. This attribute will be used to distinguish if elevation correction can be done for grids, levees or grids and levees lying within polygon area.
 - Save the edits for the layer
-- Run |AssignElevationFromPolygon| **Assign elevation from polygon** tool
+- Run |AssignElevationFromPolygon| **Correct grid elevation** tool with checked **Elevation polygons** option
 
 .. |AssignElevationFromPolygon| image:: ../../../flo2d/img/sample_elev_polygon.png
+
 
 Note that in the attribute table, you can either assign the exact **elevation**, or shift the existing values by the **correction**.
 
@@ -192,10 +196,15 @@ Note that in the attribute table, you can either assign the exact **elevation**,
 
 .. figure:: img/GridElevationAttrib.png
 	:align: center
-	:alt: Assigning correction value
+	:alt: Assigning correction value for polygon
 
 	Assigning correction value
 
+.. figure:: img/ElevationTool1.png
+	:align: center
+	:alt: Adjusting grid elevation using elevation polygons
+
+	Running grid elevation tool using elevation polygons
 
 .. figure:: img/GridElevationBefore.png
 	:align: center
@@ -209,15 +218,32 @@ Note that in the attribute table, you can either assign the exact **elevation**,
 
 	Grid elevations after running the tool
 
+Grid elevation correction can be also done using TIN interpolation.
+
+This method requires combination of elevation polygons (as TIN interpolation and sampling boundary) and elevation points digitized within or imported into **Elevation points** user layer.
+Similar to elevation polygons from previous example all points need to have defined **elev**/**correction** attributes and **membership** set to **grid** or **all**.
+
+.. figure:: img/PointElevationAttrib.png
+	:align: center
+	:alt: Creating elevation points for TIN interpolation
+
+	Assigning correction value for points
+
+.. figure:: img/ElevationTool2.png
+	:align: center
+	:alt: Adjusting grid elevation using TIN interpolation
+
+	Running grid elevation tool in TIN interpolation mode
+
 Adding levees
 -------------
 Levees can be added to model in various forms. The plugin supports the following formats:
 
 - Levee lines only: the levee geometry shape will be used to schematize the levee shape. Value from the attribute table will be used to adjust the schematized levees. This option is ideal for representing a levee with constant value.
-- Levee lines and levee points: Ideally, levee points should be snapped to the levee lines. The module will use levee lines to schematize levee shapes. Values from levee point's table of attribute will be used for interpolation along the levee line. This feature allow users to represent levees with sloped profile.
-- Levee polygon: functions as a selection polygon and assign the polygon values to the levees falling inside its area
+- Levee lines and elevation points (with **membership** set to **levees** or **all**): Ideally, elevation points should be snapped to the levee lines. The module will use levee lines to schematize levee shapes. Values from elevation point's table of attribute will be used for interpolation along the levee line. This feature allow users to represent levees with sloped profile.
+- Elevation polygon (with **membership** set to **levees** or **all**): functions as a selection polygon and assign the polygon values to the levees falling inside its area
 
-In this example, we are going to digitize a levee with sloped profile (i.e. levee lines and levee points). To start with, we can adjust **Snapping options** in QGIS, to ensure levee points are snapped to the lines:
+In this example, we are going to digitize a levee with sloped profile (i.e. levee lines and elevation points). To start with, we can adjust **Snapping options** in QGIS, to ensure elevation points are snapped to the lines:
 
 - In QGIS, from the main menu, select **Settings** > **Snapping Options ...**
 - A new window will appear:
@@ -226,7 +252,7 @@ In this example, we are going to digitize a levee with sloped profile (i.e. leve
 	- Set **Tolerance** to **10 pixels**
 	- Click **OK**
 
-Now that the snapping is set, we can turn off the unwanted vector layers and start digitizing **levee points** first:
+Now that the snapping is set, we can turn off the unwanted vector layers and start digitizing **elevation points** first:
 
 .. figure:: img/LeveePointsUserLayer.png
 	:align: center
@@ -242,7 +268,7 @@ Now we can connect the points with line, digitized within the **levee line** und
 
 	Levee line in user layer
 
-Note that levee line does not require any additional data, as the elevation source is from the snapped levee points.
+Note that levee line does not require any additional data, as the elevation source is from the snapped levee elevation points.
 
 We can now run |set_levee_elev| to schematize levees:
 
@@ -466,3 +492,78 @@ To schematize the floodplain sections, click on |schematize_fpxs| from the panel
 	:alt: FpUserSchematicLayers
 
 	User floodplain cross section and schematized floodplain layers
+
+Infiltration parameters
+-------------------
+Before digitizing user infiltration you need to first choose infiltration method available after clicking **Global Infiltration** button under Infiltration Editor.
+
+.. |schematize_infil| image:: ../../../flo2d/img/schematize_res.png
+
+.. figure:: img/InfilEditor.png
+	:align: center
+	:alt: infiltration_editor
+
+	Infiltration Editor before choosing infiltration method
+
+.. figure:: img/InfilGlobal.png
+	:align: center
+	:alt: global_infiltration
+
+	Global infiltration parameters
+
+To add a infiltration areas, click on |mActionCapturePolygon| from the **Infiltration Editor** panel and digitize a polygon. Click on |mActionSaveAllEdits| save button and then modify infiltration parameters. To apply changes also click |mActionSaveAllEdits| button.
+
+To schematize infiltration areas, click on |schematize_infil| from the panel. You should be able to see the schematized infiltration cells under **Infiltration layers** group.
+
+For Green-Ampt and SCS Curve Number infiltration parameters there is alternative way to calculate them using soil, land use and impervious areas layers. Detailed description of required input data and calculation formulas can be found in **"GDS Manual Pro" (pages 76-88)**.
+
+- To perform Green-Ampt calculation you need to first check **Global Green Ampt** option in **Global Infiltration Parameters** dialog and follow steps below:
+	- Add **Soil** and **Land Use** layers into QGIS map canvas
+	- If there are corresponding standalone tables (like **SoilTable.tbl**, **LandUseTable.tbl**) with additional parameters you need to join them with spatial layers first to populate all necessary data within **Soil** and **Land Use** layers. You can use QGIS built-in table joins mechanism described here_.
+	- Click **Calculate Green-Ampt** button placed in Infiltration Editor dock to set **Soil** and **Land Use** layers and choose columns for all needed parameters.
+	- Click **OK** and wait for calculations to be finished
+
+.. _here: http://www.qgistutorials.com/en/docs/performing_table_joins.html
+
+.. figure:: img/GALayers.png
+	:align: center
+	:alt: ga_lyr
+
+	Input *Soil* and *Land Use* layers
+
+.. figure:: img/TabJoin.png
+	:align: center
+	:alt: tab_join
+
+	Joining *LandUseTable.tbl* with *Land* shapefile
+
+.. figure:: img/GACompute.png
+	:align: center
+	:alt: ga_compute
+
+	*Compute Green-Ampt* tool dialog
+
+- To perform SCS Curve Number calculation you need to first check **Global SCS** option in **Global Infiltration Parameters** dialog and follow steps below:
+	- Add **LandSoil** layer into QGIS map canvas
+	- Click **Calculate SCS CN** button placed in Infiltration Editor dock and choose one of the calculation methods:
+		- **Assign SCS Curve Number** and choose layer and field with already calculated SCS Curve Number value
+		- **Compute SCS Curve Number** and choose layer with combined land, soil and impervious areas geometry and point each parameter fields (intersecting and joining layers may be needed)
+	- Click **OK** and wait for calculations to be finished
+
+.. figure:: img/SCSLayers.png
+	:align: center
+	:alt: scs_lyr
+
+	Combined *LandSoil* layer
+
+.. figure:: img/SCSSingle.png
+	:align: center
+	:alt: single_scs
+
+	*Calculate SCS CN* dialog with *Assign SCS Curve Number* option checked
+
+.. figure:: img/SCSMulti.png
+	:align: center
+	:alt: multi_scs
+
+	*Calculate SCS CN* dialog with *Compute SCS Curve Number* option checked

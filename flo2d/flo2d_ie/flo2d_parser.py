@@ -77,7 +77,7 @@ class ParseDAT(object):
             else:
                 pass
 
-    def calculate_cellsize(self):
+    def _calculate_cellsize(self):
         fplain = self.dat_files['FPLAIN.DAT']
         cadpts = self.dat_files['CADPTS.DAT']
         neighbour = None
@@ -101,6 +101,24 @@ class ParseDAT(object):
         dtx = abs(float(x1) - float(x2))
         dty = abs(float(y1) - float(y2))
         cell_size = dty if side % 2 == 0 else dtx
+        return cell_size
+
+    def calculate_cellsize(self):
+        cell_size = 0
+        topo = self.dat_files['TOPO.DAT']
+        with open(topo) as top:
+            first_coord = top.readline().split()[:2]
+            first_x = float(first_coord[0])
+            first_y = float(first_coord[1])
+            top.seek(0)
+            dx_coords = (abs(first_x - float(row.split()[0])) for row in top)
+            try:
+                size = min(dx for dx in dx_coords if dx > 0)
+            except ValueError:
+                top.seek(0)
+                dy_coords = (abs(first_y - float(row.split()[1])) for row in top)
+                size = min(dy for dy in dy_coords if dy > 0)
+            cell_size += size
         return cell_size
 
     @staticmethod

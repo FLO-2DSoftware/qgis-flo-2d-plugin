@@ -189,6 +189,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 obj_name = obj.objectName()
                 name = obj_name.split('_', 1)[-1]
                 val = row[name]
+                if val is None:
+                    continue
                 if isinstance(obj, QCheckBox):
                     obj.setChecked(bool(val))
                 else:
@@ -237,11 +239,17 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def create_infil_polygon(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration method first!')
+            return
         if not self.lyrs.enter_edit_mode('user_infiltration'):
             return
 
     @connection_required
     def rename_infil(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration method first!')
+            return
         if not self.infil_name_cbo.count():
             return
         new_name, ok = QInputDialog.getText(None, 'Change name', 'New name:')
@@ -257,12 +265,18 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def revert_infil_lyr_edits(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration parameters first!')
+            return
         user_infil_edited = self.lyrs.rollback_lyrs_edits('user_infiltration')
         if user_infil_edited:
             self.populate_infiltration()
 
     @connection_required
     def delete_cur_infil(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration method first!')
+            return
         if not self.infil_name_cbo.count():
             return
         q = 'Are you sure, you want delete the current infiltration?'
@@ -287,6 +301,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.populate_infiltration()
 
     def save_attrs(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration method first!')
+            return
         infil_dict = self.infil_name_cbo.itemData(self.infil_idx)
         fid = infil_dict['fid']
         name = self.infil_name_cbo.currentText()
@@ -375,6 +392,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
 
     def schematize_infiltration(self):
+        if self.iglobal.global_imethod == 0:
+            self.uc.bar_warn('Please define global infiltration method first!')
+            return
         qry_green = '''
         INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
         VALUES ((SELECT geom FROM grid WHERE fid=?),?,?,?,?,?,?);'''
@@ -391,7 +411,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
             infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, *columns))
-            self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton ', 'infil_areas_chan')
+            self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan')
             cur = self.con.cursor()
             if imethod == 1 or imethod == 3:
                 for grid_row in infiltration_grids:
