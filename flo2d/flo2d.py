@@ -521,40 +521,42 @@ class Flo2D(object):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
-        if fname:
-            s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
+        if not fname:
+            return
+        s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
+        try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bname = os.path.basename(fname)
             self.f2g.set_parser(fname)
-            if bname in self.f2g.parser.dat_files:
-                empty = self.f2g.is_table_empty('grid')
-                # check if a grid exists in the grid table
-                if not empty:
-                    q = 'There is a grid already defined in GeoPackage. Overwrite it?'
-                    if self.uc.question(q):
-                        pass
-                    else:
-                        self.uc.bar_info('Import cancelled', dur=3)
-                        return
-                else:
+            topo = self.f2g.parser.dat_files['TOPO.DAT']
+            if topo is None:
+                self.uc.bar_warn('Could not find TOPO.DAT file! Importing GDS files aborted!', dur=3)
+                return
+            if bname not in self.f2g.parser.dat_files:
+                return
+            empty = self.f2g.is_table_empty('grid')
+            # check if a grid exists in the grid table
+            if not empty:
+                q = 'There is a grid already defined in GeoPackage. Overwrite it?'
+                if self.uc.question(q):
                     pass
-                self.call_methods(import_calls, True)
+                else:
+                    self.uc.bar_info('Import cancelled', dur=3)
+                    return
+            self.call_methods(import_calls, True)
 
-                # save CRS to table cont
-                self.gutils.set_cont_par('PROJ', self.crs.toProj4())
+            # save CRS to table cont
+            self.gutils.set_cont_par('PROJ', self.crs.toProj4())
 
-                # load layers and tables
-                self.load_layers()
-                self.uc.bar_info('Flo2D model imported', dur=3)
-            else:
-                pass
+            # load layers and tables
+            self.load_layers()
+            self.uc.bar_info('Flo2D model imported', dur=3)
+            self.gutils.enable_geom_triggers()
+            # self.show_bc_editor()
+            self.gutils.update_rbank()
+            self.setup_dock_widgets()
+        finally:
             QApplication.restoreOverrideCursor()
-        else:
-            pass
-        self.gutils.enable_geom_triggers()
-        # self.show_bc_editor()
-        self.gutils.update_rbank()
-        self.setup_dock_widgets()
 
     @connection_required
     def export_gds(self):
@@ -609,11 +611,16 @@ class Flo2D(object):
             'Select GeoPackage with data to import',
             directory=last_dir,
             filter='*.gpkg')
-        if attached_gpkg:
+        if not attached_gpkg:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(attached_gpkg))
             self.gutils.copy_from_other(attached_gpkg)
             self.load_layers()
             self.setup_dock_widgets()
+        finally:
+            QApplication.restoreOverrideCursor()
 
     @connection_required
     def import_from_ras(self):

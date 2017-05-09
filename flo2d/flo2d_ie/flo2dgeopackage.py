@@ -271,7 +271,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if len(data[k]) > 0:
                 for i, row in enumerate(data[k], 1):
                     gid = row[0]
-                    geom = self.build_square(cells[gid], self.shrink)
+                    geom = self.build_square(cells[gid], self.cell_size)
                     sqls[k][0] += [(geom,) + tuple(row[1:])]
                     sqls[k][-1] += [(i, gid)]
             else:
