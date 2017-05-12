@@ -10,6 +10,7 @@
 
 from collections import defaultdict
 from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
 
 
@@ -234,35 +235,61 @@ class SchemaFPXSECConverter(SchemaConverter):
         self.schema2user(self.schema_fpxsec_lyr, self.user_fpxsec_lyr, 'polyline')
 
 
-class ModelBoundaryConverter(SchemaConverter):
+class SchemaGridConverter(SchemaConverter):
 
     def __init__(self, con, iface, lyrs):
-        super(ModelBoundaryConverter, self).__init__(con, iface, lyrs)
+        super(SchemaGridConverter, self).__init__(con, iface, lyrs)
 
         self.schema_grid_tab = 'grid'
         self.user_boundary_tab = 'user_model_boundary'
+        self.user_roughness_tab = 'user_roughness'
+        self.user_elevation_tab = 'user_elevation_polygons'
 
         self.schema_grid_lyr = lyrs.data[self.schema_grid_tab]['qlyr']
         self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
+        self.user_roughness_lyr = lyrs.data[self.user_roughness_tab]['qlyr']
+        self.user_elevation_lyr = lyrs.data[self.user_elevation_tab]['qlyr']
 
     def boundary_from_grid(self):
         remove_features(self.user_boundary_lyr)
         cellsize = self.get_cont_par('CELLSIZE')
         fields = self.user_boundary_lyr.fields()
-        geom_list = []
-        for feat in self.schema_grid_lyr.getFeatures():
-            geom_poly = feat.geometry().asPolygon()
-            geom_list.append(QgsGeometry.fromPolygon(geom_poly))
-        bfeat = QgsFeature()
-        bgeom = QgsGeometry.unaryUnion(geom_list)
-        bfeat.setGeometry(bgeom)
-        bfeat.setFields(fields)
+        biter = clustered_features(self.schema_grid_lyr, fields)
+        bfeat = next(biter)
         bfeat.setAttribute('cell_size', cellsize)
         self.user_boundary_lyr.startEditing()
         self.user_boundary_lyr.addFeature(bfeat)
         self.user_boundary_lyr.commitChanges()
         self.user_boundary_lyr.updateExtents()
         self.user_boundary_lyr.triggerRepaint()
+        self.user_boundary_lyr.removeSelection()
+
+    def roughness_from_grid(self):
+        remove_features(self.user_roughness_lyr)
+        new_features = []
+        fields = self.user_roughness_lyr.fields()
+        for feat in clustered_features(self.schema_grid_lyr, fields, 'n_value', n_value='n'):
+            new_features.append(feat)
+        self.user_roughness_lyr.startEditing()
+        self.user_roughness_lyr.addFeatures(new_features)
+        self.user_roughness_lyr.commitChanges()
+        self.user_roughness_lyr.updateExtents()
+        self.user_roughness_lyr.triggerRepaint()
+        self.user_roughness_lyr.removeSelection()
+
+    def elevation_from_grid(self):
+        remove_features(self.user_elevation_lyr)
+        new_features = []
+        fields = self.user_elevation_lyr.fields()
+        for feat in clustered_features(self.schema_grid_lyr, fields, 'elevation', elevation='elev'):
+            feat.setAttribute('membership', 'grid')
+            new_features.append(feat)
+        self.user_elevation_lyr.startEditing()
+        self.user_elevation_lyr.addFeatures(new_features)
+        self.user_elevation_lyr.commitChanges()
+        self.user_elevation_lyr.updateExtents()
+        self.user_elevation_lyr.triggerRepaint()
+        self.user_elevation_lyr.removeSelection()
 
 
 class SchemaInfiltrationConverter(SchemaConverter):
@@ -295,15 +322,6 @@ class SchemaInfiltrationConverter(SchemaConverter):
         ]
         self.ui_fields = self.user_infil_lyr.fields()
 
-    @staticmethod
-    def cluster_infil_areas(schema_lyr, columns):
-        clusters = defaultdict(list)
-        for feat in schema_lyr.getFeatures():
-            geom_poly = feat.geometry().asPolygon()
-            attrs = tuple(feat[col] for col in columns)
-            clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
-        return clusters
-
     def user_infil_features(self, schema_lyr, columns):
         if 'hydc' in columns:
             char = 'F'
@@ -311,27 +329,11 @@ class SchemaInfiltrationConverter(SchemaConverter):
             char = 'C'
         else:
             char = ''
-        fields = self.ui_fields
         new_features = []
-        clusters = self.cluster_infil_areas(schema_lyr, columns)
-        for attrs, geom_list in clusters.iteritems():
-            if len(geom_list) > 1:
-                geom = QgsGeometry.unaryUnion(geom_list)
-                if geom.isMultipart():
-                    infil_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
-                else:
-                    infil_geoms = [geom]
-            else:
-                infil_geoms = geom_list
-
-            for igeom in infil_geoms:
-                ifeat = QgsFeature()
-                ifeat.setGeometry(igeom)
-                ifeat.setFields(fields)
-                for col, val in zip(columns, attrs):
-                    ifeat.setAttribute(col, val)
-                ifeat.setAttribute('green_char', char)
-                new_features.append(ifeat)
+        fields = self.ui_fields
+        for ifeat in clustered_features(schema_lyr, fields, *columns):
+            ifeat.setAttribute('green_char', char)
+            new_features.append(ifeat)
         return new_features
 
     def create_user_infiltration(self):

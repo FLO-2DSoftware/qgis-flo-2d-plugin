@@ -50,7 +50,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_infil_editor()
 
         self.cgroups = [
-            self.bc_editor_grp, self.evap_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
+            self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
             self.ic_editor_grp, self.street_editor_grp, self.rain_editor_grp, self.struct_editor_grp,
             self.xs_editor_grp, self.profile_tool_grp
         ]

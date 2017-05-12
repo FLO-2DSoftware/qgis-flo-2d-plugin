@@ -49,10 +49,6 @@ CREATE TABLE "trigger_control" (
 
 CREATE TABLE "grid" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "cell_north" INTEGER,
-    "cell_east" INTEGER,
-    "cell_south" INTEGER,
-    "cell_west" INTEGER,
     "n_value" REAL DEFAULT 0.05,
     "elevation" REAL DEFAULT -9999
 );

@@ -11,7 +11,7 @@
 import re
 import bisect
 from collections import OrderedDict
-from itertools import izip_longest
+from itertools import izip_longest, chain
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2d_tools.schematic_conversion import remove_features
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint
@@ -33,13 +33,13 @@ class RASProject(GeoPackageUtils):
         fname = self.project_path[:-3]
         with open(self.project_path, 'r') as project:
             project_text = project.read()
-            plan_regex = re.compile(r'(?P<head>Current Plan=)(?P<geom>[^\r\n]+)')
+            plan_regex = re.compile(r'(?P<head>Current Plan=)(?P<geom>[^\n]+)')
             plan_result = re.search(plan_regex, project_text)
             plandict = plan_result.groupdict()
             self.ras_plan = '{}{}'.format(fname, plandict['geom'])
         with open(self.ras_plan, 'r') as plan:
             plan_text = plan.read()
-            geom_regex = re.compile(r'(?P<head>Geom File=)(?P<geom>[^\r\n]+)')
+            geom_regex = re.compile(r'(?P<head>Geom File=)(?P<geom>[^\n]+)')
             geom_result = re.search(geom_regex, plan_text)
             geomdict = geom_result.groupdict()
             self.ras_geom = '{}{}'.format(fname, geomdict['geom'])
@@ -175,15 +175,17 @@ class RASGeometry(object):
         text = xs_data['extra']
         elev = xs_data['elev']
         stations = [x[0] for x in elev]
-        regex = re.compile(r'Bank Sta=(?P<stations>[^\r\n]+)')
+        regex = re.compile(r'Bank Sta=(?P<stations>[^\n]+)')
         result = re.search(regex, text)
         if not result:
             return None, None, None
         banksdict = result.groupdict()
         banks = banksdict['stations']
         lbank_station, rbank_station = [float(b) for b in banks.split(',')]
-
-        lidx = stations.index(lbank_station)
+        try:
+            lidx = stations.index(lbank_station)
+        except ValueError:
+            lidx = 0
         ridx = stations.index(rbank_station) + 1
         new_elev = [(round(s - lbank_station, 3), e) for s, e in elev[lidx:ridx]]
         return lbank_station, rbank_station, new_elev
@@ -193,7 +195,7 @@ class RASGeometry(object):
         text = xs_data['extra']
         elev = xs_data['elev']
         stations = [x[0] for x in elev]
-        regex = re.compile(r'Levee=(?P<stations>[^\r\n]+)')
+        regex = re.compile(r'Levee=(?P<stations>[^\n]+)')
         result = re.search(regex, text)
         if not result:
             return None, None, None
@@ -209,14 +211,14 @@ class RASGeometry(object):
             trim_elev = trim_elev[lidx:]
             trim_elev.insert(0, (llevee_station, llevee_value))
             shift = lidx - 1
-        except ValueError as e:
+        except ValueError:
             pass
         try:
             rlevee_station, rlevee_value = [float(l) for l in levees[4:6]]
             ridx = bisect.bisect(stations, rlevee_station) - shift
             trim_elev = trim_elev[:ridx]
             trim_elev.append((rlevee_station, rlevee_value))
-        except ValueError as e:
+        except ValueError:
             pass
         first_station = trim_elev[0][0]
         new_elev = [(round(s - first_station, 3), e) for s, e in trim_elev]
@@ -227,8 +229,8 @@ class RASGeometry(object):
         return self.ras_geometry
 
     def extract_rivers(self):
-        river_pattern = r'River Reach=(?P<river>[^,]+),(?P<reach>[^\r\n]+)[\r\n]' \
-                        r'Reach XY=\s*(?P<length>\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)'
+        river_pattern = r'River Reach=(?P<river>[^,]+),(?P<reach>[^\n]+)[\n]' \
+                        r'Reach XY=\s*(?P<length>\d+)[^\n]*(?P<points>[^a-zA-Z]+)'
         re_river = re.compile(river_pattern, re.M | re.S)
         river_results = re.finditer(re_river, self.geom_txt)
         endings = []
@@ -242,15 +244,15 @@ class RASGeometry(object):
             points_txt = river_groups['points']
             points_split = self.split_txt_data(points_txt, 64, 16)
 
-            river = river_txt.strip()
-            reach = reach_txt.strip()
+            river = river_txt.strip().replace(' ', '_')
+            reach = reach_txt.strip().replace(' ', '_')
             length = int(length_txt)
             points = list(izip_longest(*(iter(points_split),) * 2))
             if length == len(points):
                 valid = True
             else:
                 valid = False
-            key = '{} {}'.format(river, reach)
+            key = '{}_{}'.format(river, reach)
             values = {'river': river, 'reach': reach, 'points': points, 'valid': valid}
             self.ras_geometry[key] = values
             endings.append(river_end)
@@ -261,19 +263,21 @@ class RASGeometry(object):
 
     def extract_xsections(self):
         self.extract_rivers()
-        xs_pattern = r'Type RM[^,]+,(?P<rm>[^,]+),.+?' \
-                     r'XS GIS Cut Line=(?P<length>\d+)[^\r\n]*(?P<points>[^a-zA-Z]+)[^#]+' \
-                     r'#Sta/Elev=\s*(?P<sta>\d+)[^\r\n]*(?P<elev>[^a-zA-Z#]+)' \
+        xs_pattern = r'Type RM[^,]+,(?P<rm>[^,*]+)(?P<asterix>[*]?),.+?' \
+                     r'XS GIS Cut Line=(?P<length>\d+)[^\n]*(?P<points>[^a-zA-Z]+)[^#]+' \
+                     r'#Sta/Elev=\s*(?P<sta>\d+)[^\n]*(?P<elev>[^a-zA-Z#]+)' \
                      r'#Mann=(?P<man>[^a-zA-Z#]+)(?P<extra>[^/]+)'
         re_xs = re.compile(xs_pattern, re.M | re.S)
         for key, values in self.ras_geometry.iteritems():
             s = values['slice']
-            xs_results = re.finditer(re_xs, self.geom_txt[s])
             xs_data = OrderedDict()
+            river_text = self.geom_txt[s]
+            xs_results = chain(*(re.finditer(re_xs, txt) for txt in river_text.split('\n\n')))
 
             for xs_res in xs_results:
                 xs_groups = xs_res.groupdict()
-
+                if '*' in xs_groups['asterix']:
+                    continue
                 rm_txt = xs_groups['rm']
                 length_txt = xs_groups['length']
                 points_txt = xs_groups['points']
@@ -293,6 +297,7 @@ class RASGeometry(object):
                 man = [float(n) for n in man_txt.replace(',', ' ').split()]
                 if length != len(points):
                     continue
-                xs_key = '{} {}'.format(key, rm)
+                xs_key = '{}_{}'.format(key, rm)
                 xs_data[xs_key] = {'rm': rm, 'points': points, 'sta': sta, 'elev': elev, 'man': man, 'extra': extra_txt}
+
             self.ras_geometry[key]['xs_data'] = xs_data

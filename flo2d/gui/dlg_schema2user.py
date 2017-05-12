@@ -14,7 +14,7 @@ from flo2d.flo2d_tools.schematic_conversion import (
     SchemaDomainConverter,
     SchemaLeveesConverter,
     SchemaFPXSECConverter,
-    ModelBoundaryConverter,
+    SchemaGridConverter,
     SchemaInfiltrationConverter
 )
 from ui_utils import load_ui
@@ -35,40 +35,40 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.methods = {}
 
         # connections
+        self.ckbox_grid.stateChanged.connect(self.convert_grid_checked)
         self.ckbox_bc.stateChanged.connect(self.convert_bc_checked)
         self.ckbox_1d.stateChanged.connect(self.convert_1d_checked)
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
-        self.ckbox_grid.stateChanged.connect(self.convert_grid_checked)
         self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
-
-    def convert_bc_checked(self):
-        if self.ckbox_bc.isChecked():
-            self.methods[1] = self.convert_bc
-        else:
-            self.methods.pop(1)
-
-    def convert_1d_checked(self):
-        if self.ckbox_1d.isChecked():
-            self.methods[2] = self.convert_1d
-        else:
-            self.methods.pop(2)
-
-    def convert_levees_checked(self):
-        if self.ckbox_levees.isChecked():
-            self.methods[3] = self.convert_levees
-        else:
-            self.methods.pop(3)
-
-    def convert_fpxsec_checked(self):
-        if self.ckbox_fpxsec.isChecked():
-            self.methods[4] = self.convert_fpxsec
-        else:
-            self.methods.pop(4)
 
     def convert_grid_checked(self):
         if self.ckbox_grid.isChecked():
-            self.methods[5] = self.convert_grid
+            self.methods[1] = self.convert_grid
+        else:
+            self.methods.pop(1)
+
+    def convert_bc_checked(self):
+        if self.ckbox_bc.isChecked():
+            self.methods[2] = self.convert_bc
+        else:
+            self.methods.pop(2)
+
+    def convert_1d_checked(self):
+        if self.ckbox_1d.isChecked():
+            self.methods[3] = self.convert_1d
+        else:
+            self.methods.pop(3)
+
+    def convert_levees_checked(self):
+        if self.ckbox_levees.isChecked():
+            self.methods[4] = self.convert_levees
+        else:
+            self.methods.pop(4)
+
+    def convert_fpxsec_checked(self):
+        if self.ckbox_fpxsec.isChecked():
+            self.methods[5] = self.convert_fpxsec
         else:
             self.methods.pop(5)
 
@@ -77,6 +77,16 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.methods[6] = self.convert_infil
         else:
             self.methods.pop(6)
+
+    def convert_grid(self):
+        try:
+            grid_converter = SchemaGridConverter(self.con, self.iface, self.lyrs)
+            grid_converter.boundary_from_grid()
+            grid_converter.roughness_from_grid()
+            # grid_converter.elevation_from_grid()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Grid conversion!")
 
     def convert_bc(self):
         try:
@@ -110,14 +120,6 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating user layers failed on Floodplain cross-sections conversion!")
-
-    def convert_grid(self):
-        try:
-            grid_converter = ModelBoundaryConverter(self.con, self.iface, self.lyrs)
-            grid_converter.boundary_from_grid()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Grid conversion!")
 
     def convert_infil(self):
         try:

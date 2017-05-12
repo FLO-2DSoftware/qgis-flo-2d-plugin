@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from math import log, exp
-from grid_tools import grid_intersections
+from grid_tools import poly2poly
 
 
 class InfiltrationCalculator(object):
@@ -86,7 +86,7 @@ class InfiltrationCalculator(object):
         grid_params = {}
         green_ampt = GreenAmpt()
 
-        soil_values = grid_intersections(
+        soil_values = poly2poly(
             self.grid_lyr,
             self.soil_lyr,
             self.xksat_fld,
@@ -100,7 +100,7 @@ class InfiltrationCalculator(object):
             rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
             grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1}
 
-        land_values = grid_intersections(
+        land_values = poly2poly(
             self.grid_lyr,
             self.land_lyr,
             self.saturation_fld,
@@ -130,7 +130,7 @@ class InfiltrationCalculator(object):
 
     def scs_infiltration_single(self):
         grid_params = {}
-        curve_values = grid_intersections(
+        curve_values = poly2poly(
             self.grid_lyr,
             self.curve_lyr,
             self.curve_fld)
@@ -143,7 +143,7 @@ class InfiltrationCalculator(object):
     def scs_infiltration_multi(self):
         grid_params = {}
         scs = SCPCurveNumber()
-        ground_values = grid_intersections(
+        ground_values = poly2poly(
             self.grid_lyr,
             self.combined_lyr,
             self.landsoil_fld,
