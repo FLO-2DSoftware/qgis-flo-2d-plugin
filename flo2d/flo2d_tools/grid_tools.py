@@ -239,13 +239,15 @@ def poly2grid(grid, polygons, request, *columns):
                 pass
 
 
-def poly2poly(base_polygons, polygons, *columns):
+def poly2poly(base_polygons, polygons, request, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
     """
     poly_feats = polygons.getFeatures()
     allfeatures, index = spatial_index(poly_feats)
-    for feat in base_polygons.getFeatures():
+
+    base_features = base_polygons.getFeatures() if request else base_polygons.getFeatures(request)
+    for feat in base_features:
         base_geom = feat.geometry()
         base_area = base_geom.area()
         fids = index.intersects(base_geom.boundingBox())

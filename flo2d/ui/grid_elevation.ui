@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>371</width>
-    <height>141</height>
+    <width>385</width>
+    <height>206</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,21 +25,66 @@
      <property name="title">
       <string>Grid elevation source</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QGridLayout" name="gridLayout_2">
       <property name="margin">
        <number>6</number>
       </property>
-      <item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="elev_arf_chbox">
+        <property name="text">
+         <string>Grid statistics within blocked areas</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QComboBox" name="stats_cbx">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>Mean</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Max</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Min</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="2" column="0">
        <widget class="QCheckBox" name="elev_polygons_chbox">
         <property name="text">
          <string>Elevation polygons</string>
         </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
-      <item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Statistic type:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
        <widget class="QCheckBox" name="elev_tin_chbox">
         <property name="text">
          <string>TIN (based on elevation points and polygons)</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

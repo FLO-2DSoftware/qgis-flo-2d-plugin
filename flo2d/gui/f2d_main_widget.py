@@ -11,6 +11,7 @@
 from PyQt4.QtCore import QSize
 from PyQt4.QtGui import QIcon
 from ui_utils import load_ui
+from grid_tools_widget import GridToolsWidget
 from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
 from struct_editor_widget import StructEditorWidget
@@ -38,6 +39,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.table = table
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
+        self.setup_grid_tools()
         self.setup_bc_editor()
         # self.setup_struct_editor()
         self.setup_ic_editor()
@@ -84,6 +86,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         if self._sizehint is not None:
             return self._sizehint
         return super(FLO2DWidget, self).sizeHint()
+
+    def setup_grid_tools(self):
+        self.grid_tools = GridToolsWidget(self.iface, self.lyrs)
+        self.grid_tools_lout.addWidget(self.grid_tools)
 
     def setup_xsec_editor(self):
         self.xs_editor = XsecEditorWidget(self.iface, self.plot, self.table, self.lyrs)
