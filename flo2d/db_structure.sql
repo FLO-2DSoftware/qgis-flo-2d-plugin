@@ -1412,13 +1412,16 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'asp
 
 CREATE TABLE "swmmflo" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "swmmchar" TEXT, -- SWMMCHAR (D, N)
     "swmm_jt" INTEGER, -- SWMM_JT, fid of the grid element with storm drain inlet
+    "swmm_iden" TEXT, -- SWMM_IDEN
     "intype" INTEGER, -- INTYPE, inlet type (1-5)
     "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
-    "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
     "swmm_width" REAL, -- SWMMwidth
+    "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
     "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
+    "curbheight" REAL, -- CURBHEIGHT
     "name" TEXT -- optional inlet name
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);

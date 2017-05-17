@@ -516,7 +516,7 @@ class ParseDAT(object):
     def parse_swmmflo(self):
         swmmflo = self.dat_files['SWMMFLO.DAT']
         par = self.single_parser(swmmflo)
-        data = [row[1:] for row in par]
+        data = [row for row in par]
         return data
 
     def parse_swmmflort(self):
