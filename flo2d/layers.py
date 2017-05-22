@@ -210,6 +210,14 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
+            ('user_swmm', {
+                'name': 'Storm Drain Points',
+                'sgroup': 'User Layers',
+                'styles': ['user_swmm.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),
             ('fpxsec_cells', {
                 'name': 'Floodplain cross-sections cells',
                 'sgroup': 'Schematic Layers',
@@ -439,7 +447,7 @@ class Layers(QObject):
                 'sgroup': 'Storm Drain',
                 'styles': ['swmmflo.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
+                'visible': True,
                 'readonly': False
             }),
             ('swmmoutf', {
@@ -447,7 +455,7 @@ class Layers(QObject):
                 'sgroup': 'Storm Drain',
                 'styles': ['swmmoutf.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
+                'visible': True,
                 'readonly': False
             }),
             ('swmmflort', {

@@ -282,12 +282,30 @@
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_9">
+         <layout class="QGridLayout" name="gridLayout_10">
           <property name="margin">
            <number>6</number>
           </property>
           <item row="0" column="0">
            <layout class="QVBoxLayout" name="infil_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QgsCollapsibleGroupBox" name="swmm_editor_grp">
+         <property name="title">
+          <string>Storm Drain Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_11">
+          <property name="margin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="swmm_editor_lout"/>
           </item>
          </layout>
         </widget>

@@ -2320,6 +2320,25 @@ CREATE TRIGGER "default_infiltration_name"
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
+CREATE TABLE "user_swmm" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "type" TEXT DEFAULT 'I' CHECK("type" = 'I' OR "type" = 'O'),
+    "name" TEXT,
+    "intype" INTEGER DEFAULT 1,
+    "swmm_length" REAL DEFAULT 0,
+    "swmm_width" REAL DEFAULT 0,
+    "swmm_height" REAL DEFAULT 0,
+    "swmm_coeff" REAL DEFAULT 0,
+    "flapgate" INTEGER DEFAULT 0,
+    "curbheight" REAL DEFAULT 0,
+    "out_flo" INTEGER DEFAULT 0,
+    "notes" TEXT
+
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm', 'geom');
+
 CREATE VIEW struct_types AS
 SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
 UNION ALL

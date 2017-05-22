@@ -21,6 +21,7 @@ from rain_editor_widget import RainEditorWidget
 from profile_tool import ProfileTool
 from fpxsec_editor_widget import FPXsecEditorWidget
 from infil_editor_widget import InfilEditorWidget
+from swmm_editor_widget import SWMMEditorWidget
 from flo2d.user_communication import UserCommunication
 import os
 
@@ -41,7 +42,6 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.setup_grid_tools()
         self.setup_bc_editor()
-        # self.setup_struct_editor()
         self.setup_ic_editor()
         self.setup_street_editor()
         self.setup_struct_editor()
@@ -50,11 +50,12 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
+        self.setup_swmm_editor()
 
         self.cgroups = [
             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
-            self.ic_editor_grp, self.street_editor_grp, self.rain_editor_grp, self.struct_editor_grp,
-            self.xs_editor_grp, self.profile_tool_grp
+            self.swmm_editor_grp, self.ic_editor_grp, self.street_editor_grp, self.rain_editor_grp,
+            self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
         ]
         self.set_collapsible_groups()
 
@@ -126,6 +127,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_infil_editor(self):
         self.infil_editor = InfilEditorWidget(self.iface, self.lyrs)
         self.infil_editor_lout.addWidget(self.infil_editor)
+
+    def setup_swmm_editor(self):
+        self.swmm_editor = SWMMEditorWidget(self.iface, self.lyrs)
+        self.swmm_editor_lout.addWidget(self.swmm_editor)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:
