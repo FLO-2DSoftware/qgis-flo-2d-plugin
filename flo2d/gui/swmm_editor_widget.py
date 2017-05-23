@@ -14,7 +14,7 @@ from math import isnan
 from itertools import chain
 from collections import OrderedDict
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
+from PyQt4.QtGui import QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
 from qgis.core import QGis, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas
 from flo2d.utils import m_fdata
@@ -39,20 +39,16 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.grid_lyr = None
         self.swmm_lyr = None
-        self.schema_green = None
         self.schema_inlets = None
         self.schema_outlets = None
         self.all_schema = []
         self.swmm_idx = 0
-        self.groups = set()
 
         self.swmm_columns = [
-            'intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight', 'out_flo'
+            'sd_type', 'intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight',
+            'out_flo'
         ]
-        self.slices = {
-            1: slice(0, 7),
-            2: slice(7, 8),
-        }
+
         self.set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         self.set_icon(self.schema_btn, 'schematize_res.svg')
@@ -67,27 +63,18 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.change_name_btn.clicked.connect(lambda: self.rename_swmm())
         self.schema_btn.clicked.connect(lambda: self.schematize_swmm())
         self.import_inp.clicked.connect(lambda: self.import_swmm_input())
+        self.inlet_grp.toggled.connect(self.inlet_checked)
+        self.outlet_grp.toggled.connect(self.outlet_checked)
 
-    def create_swmm_point(self):
-        pass
+    def inlet_checked(self):
+        if self.inlet_grp.isChecked():
+            if self.outlet_grp.isChecked():
+                self.outlet_grp.setChecked(False)
 
-    def save_swmm_edits(self):
-        pass
-
-    def revert_swmm_lyr_edits(self):
-        pass
-
-    def delete_cur_swmm(self):
-        pass
-
-    def rename_swmm(self):
-        pass
-
-    def schematize_swmm(self):
-        pass
-
-    def import_swmm_input(self):
-        pass
+    def outlet_checked(self):
+        if self.outlet_grp.isChecked():
+            if self.inlet_grp.isChecked():
+                self.inlet_grp.setChecked(False)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -108,13 +95,146 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.all_schema += [self.schema_inlets, self.schema_outlets]
             self.swmm_lyr.editingStopped.connect(self.populate_swmm)
             self.swmm_name_cbo.activated.connect(self.swmm_changed)
+            self.populate_swmm()
 
     def repaint_schema(self):
         for lyr in self.all_schema:
             lyr.triggerRepaint()
 
+    @connection_required
+    def create_swmm_point(self):
+        if not self.lyrs.enter_edit_mode('user_swmm'):
+            return
+
+    @connection_required
+    def save_swmm_edits(self):
+        before = self.gutils.count('user_swmm')
+        self.lyrs.save_lyrs_edits('user_swmm')
+        after = self.gutils.count('user_swmm')
+        if after > before:
+            self.swmm_idx = after - 1
+        elif self.swmm_idx >= 0:
+            self.save_attrs()
+        else:
+            return
+        self.populate_swmm()
+
+    @connection_required
+    def revert_swmm_lyr_edits(self):
+        user_swmm_edited = self.lyrs.rollback_lyrs_edits('user_swmm')
+        if user_swmm_edited:
+            self.populate_swmm()
+
+    @connection_required
+    def delete_cur_swmm(self):
+        if not self.swmm_name_cbo.count():
+            return
+        q = 'Are you sure, you want delete the current Storm Drain point?'
+        if not self.uc.question(q):
+            return
+        swmm_fid = self.swmm_name_cbo.itemData(self.swmm_idx)['fid']
+        self.gutils.execute('DELETE FROM user_swmm WHERE fid = ?;', (swmm_fid,))
+        self.swmm_lyr.triggerRepaint()
+        self.populate_swmm()
+
+    @connection_required
+    def rename_swmm(self):
+        if not self.swmm_name_cbo.count():
+            return
+        new_name, ok = QInputDialog.getText(None, 'Change name', 'New name:')
+        if not ok or not new_name:
+            return
+        if not self.swmm_name_cbo.findText(new_name) == -1:
+            msg = 'Storm Drain point with name {} already exists in the database. Please, choose another name.'
+            msg = msg.format(new_name)
+            self.uc.show_warn(msg)
+            return
+        self.swmm_name_cbo.setItemText(self.swmm_name_cbo.currentIndex(), new_name)
+        self.save_swmm_edits()
+
     def populate_swmm(self):
-        pass
+        self.swmm_name_cbo.clear()
+        columns = self.swmm_columns[:]
+        qry = '''SELECT fid, name, {0} FROM user_swmm ORDER BY fid;'''
+        qry = qry.format(', '.join(columns))
+        columns = ['fid', 'name'] + columns
+        rows = self.gutils.execute(qry).fetchall()
+        for row in rows:
+            swmm_dict = OrderedDict(zip(columns, row))
+            name = swmm_dict['name']
+            self.swmm_name_cbo.addItem(name, swmm_dict)
+        self.swmm_name_cbo.setCurrentIndex(self.swmm_idx)
+        self.swmm_changed()
 
     def swmm_changed(self):
+        self.swmm_idx = self.swmm_name_cbo.currentIndex()
+        swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
+        if not swmm_dict:
+            return
+        sd_type = swmm_dict['sd_type']
+        if sd_type == 'I':
+            self.inlet_grp.setChecked(True)
+            grp = self.inlet_grp
+        elif sd_type == 'O':
+            self.outlet_grp.setChecked(True)
+            grp = self.outlet_grp
+        else:
+            return
+        for obj in grp.children():
+            if isinstance(obj, QDoubleSpinBox):
+                obj_name = obj.objectName().split('_', 1)[-1]
+                val = swmm_dict[obj_name]
+                obj.setValue(val)
+            elif isinstance(obj, QComboBox):
+                obj_name = obj.objectName().split('_', 1)[-1]
+                val = swmm_dict[obj_name]
+                obj.setCurrentIndex(val)
+            elif isinstance(obj, QCheckBox):
+                obj_name = obj.objectName().split('_', 1)[-1]
+                val = swmm_dict[obj_name]
+                obj.setChecked(val)
+            else:
+                continue
+        self.lyrs.clear_rubber()
+        if self.center_chbox.isChecked():
+            sfid = swmm_dict['fid']
+            self.lyrs.show_feat_rubber(self.swmm_lyr.id(), sfid)
+            feat = self.swmm_lyr.getFeatures(QgsFeatureRequest(sfid)).next()
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+
+    def save_attrs(self):
+        swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
+        fid = swmm_dict['fid']
+        name = self.swmm_name_cbo.currentText()
+        swmm_dict['name'] = name
+        if self.inlet_grp.isChecked():
+            swmm_dict['sd_type'] = 'I'
+            grp = self.inlet_grp
+        elif self.outlet_grp.isChecked():
+            swmm_dict['sd_type'] = 'O'
+            grp = self.outlet_grp
+        else:
+            return
+        for obj in grp.children():
+            obj_name = obj.objectName().split('_', 1)[-1]
+            if isinstance(obj, QDoubleSpinBox):
+                swmm_dict[obj_name] = obj.value()
+            elif isinstance(obj, QComboBox):
+                swmm_dict[obj_name] = obj.currentIndex()
+            elif isinstance(obj, QCheckBox):
+                swmm_dict[obj_name] = int(obj.isChecked())
+            else:
+                continue
+
+        col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
+        col_names = ', '.join(col_gen)
+        vals = swmm_dict.values() + [fid]
+        update_qry = '''UPDATE user_swmm SET {0} WHERE fid = ?;'''.format(col_names)
+        self.gutils.execute(update_qry, vals)
+
+    def schematize_swmm(self):
+        pass
+
+    def import_swmm_input(self):
         pass

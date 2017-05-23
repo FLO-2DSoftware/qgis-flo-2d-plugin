@@ -4,7 +4,7 @@
     <edittype widgetv2type="TextEdit" name="fid">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="ValueMap" name="type">
+    <edittype widgetv2type="ValueMap" name="sd_type">
       <widgetv2config fieldEditable="1" constraint="" labelOnTop="0" constraintDescription="" notNull="0">
         <value key="Inlet" value="I"/>
         <value key="Outlet" value="O"/>
@@ -41,7 +41,7 @@
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
   </edittypes>
-  <renderer-v2 attr="type" forceraster="0" symbollevels="0" type="categorizedSymbol" enableorderby="0">
+  <renderer-v2 attr="sd_type" forceraster="0" symbollevels="0" type="categorizedSymbol" enableorderby="0">
     <categories>
       <category render="true" symbol="0" value="I" label="Inlets"/>
       <category render="true" symbol="1" value="O" label="Outlets"/>
@@ -320,7 +320,7 @@
   <annotationform></annotationform>
   <aliases>
     <alias field="fid" index="0" name=""/>
-    <alias field="type" index="1" name=""/>
+    <alias field="sd_type" index="1" name=""/>
     <alias field="name" index="2" name=""/>
     <alias field="intype" index="3" name=""/>
     <alias field="swmm_length" index="4" name=""/>
@@ -339,7 +339,6 @@
     <columns>
       <column width="-1" hidden="0" type="field" name="fid"/>
       <column width="-1" hidden="1" type="actions"/>
-      <column width="-1" hidden="0" type="field" name="type"/>
       <column width="-1" hidden="0" type="field" name="name"/>
       <column width="-1" hidden="0" type="field" name="intype"/>
       <column width="-1" hidden="0" type="field" name="swmm_length"/>
@@ -350,6 +349,7 @@
       <column width="-1" hidden="0" type="field" name="curbheight"/>
       <column width="-1" hidden="0" type="field" name="out_flo"/>
       <column width="-1" hidden="0" type="field" name="notes"/>
+      <column width="-1" hidden="0" type="field" name="sd_type"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
@@ -382,7 +382,7 @@ def my_form_open(dialog, layer, feature):
   </conditionalstyles>
   <defaults>
     <default field="fid" expression=""/>
-    <default field="type" expression=""/>
+    <default field="sd_type" expression=""/>
     <default field="name" expression=""/>
     <default field="intype" expression=""/>
     <default field="swmm_length" expression=""/>
