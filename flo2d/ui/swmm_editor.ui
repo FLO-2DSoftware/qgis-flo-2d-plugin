@@ -170,7 +170,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>SWMM point name</string>
+        <string>Storm Drain name</string>
        </property>
       </widget>
      </item>
@@ -390,7 +390,7 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="0" column="0">
-       <widget class="QCheckBox" name="check_out_flo">
+       <widget class="QCheckBox" name="check_outf_flo">
         <property name="text">
          <string>Outfall discharge switch</string>
         </property>

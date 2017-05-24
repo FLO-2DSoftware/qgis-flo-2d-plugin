@@ -644,10 +644,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('swmmflo')
         data = self.parser.parse_swmmflo()
         gids = (x[1] for x in data)
-        cells = self.grid_centroids(gids)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[1]
-            geom = self.build_square(cells[gid], self.shrink)
+            geom = cells[gid]
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
@@ -672,10 +672,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('swmmoutf')
         data = self.parser.parse_swmmoutf()
         gids = (x[1] for x in data)
-        cells = self.grid_centroids(gids)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[1]
-            geom = self.build_square(cells[gid], self.shrink)
+            geom = cells[gid]
             swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)

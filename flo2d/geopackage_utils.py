@@ -566,10 +566,6 @@ class GeoPackageUtils(object):
             ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
         '''
         qry = qry.format(x, y)
-        # cur = self.con.cursor()
-        # cur.execute(qry)
-        #
-        # print(cur)
         gid = self.execute(qry).fetchone()[0]
         return gid
 

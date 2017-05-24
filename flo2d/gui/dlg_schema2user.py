@@ -15,7 +15,8 @@ from flo2d.flo2d_tools.schematic_conversion import (
     SchemaLeveesConverter,
     SchemaFPXSECConverter,
     SchemaGridConverter,
-    SchemaInfiltrationConverter
+    SchemaInfiltrationConverter,
+    SchemaSWMMConverter
 )
 from ui_utils import load_ui
 
@@ -41,6 +42,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
+        self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
 
     def convert_grid_checked(self):
         if self.ckbox_grid.isChecked():
@@ -77,6 +79,12 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.methods[6] = self.convert_infil
         else:
             self.methods.pop(6)
+
+    def convert_swmm_checked(self):
+        if self.ckbox_swmm.isChecked():
+            self.methods[7] = self.convert_swmm
+        else:
+            self.methods.pop(7)
 
     def convert_grid(self):
         try:
@@ -128,3 +136,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating user layers failed on Infiltration conversion!")
+
+    def convert_swmm(self):
+        try:
+            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+            swmm_converter.create_user_swmm()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.bar_warn("Creating user layers failed on Storm Drains conversion!")

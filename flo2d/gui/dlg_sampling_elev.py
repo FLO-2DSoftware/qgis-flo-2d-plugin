@@ -25,7 +25,15 @@ uiDialog, qtBaseClass = load_ui('sampling_elev')
 
 class SamplingElevDialog(qtBaseClass, uiDialog):
 
-    RTYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    RTYPE = {
+        1: 'Byte',
+        2: 'UInt16',
+        3: 'Int16',
+        4: 'UInt32',
+        5: 'Int32',
+        6: 'Float32',
+        7: 'Float64'
+    }
 
     def __init__(self, con, iface, lyrs, cell_size, parent=None):
         qtBaseClass.__init__(self)
@@ -178,7 +186,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
     def show_probing_result_info(self):
         null_nr = grid_has_empty_elev(self.gutils)
         if null_nr:
-            msg ='Sampling done.\n'
+            msg = 'Sampling done.\n'
             msg += 'Warning: There are {} grid elements that have no elevation value.'.format(null_nr)
             self.uc.show_info(msg)
         else:

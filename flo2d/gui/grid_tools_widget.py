@@ -143,9 +143,16 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             pass
         else:
             return
-        res = dlg.probe_elevation()
-        if res:
-            dlg.show_probing_result_info()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            res = dlg.probe_elevation()
+            if res:
+                dlg.show_probing_result_info()
+            QApplication.restoreOverrideCursor()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("Probing grid elevation failed! Please check your raster layer.")
 
     @connection_required
     def xyz_elevation(self):

@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from collections import defaultdict
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
@@ -346,3 +345,71 @@ class SchemaInfiltrationConverter(SchemaConverter):
         self.user_infil_lyr.updateExtents()
         self.user_infil_lyr.triggerRepaint()
         self.user_infil_lyr.removeSelection()
+
+
+class SchemaSWMMConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaSWMMConverter, self).__init__(con, iface, lyrs)
+
+        self.user_swmm_tab = 'user_swmm'
+        self.schema_inlet_tab = 'swmmflo'
+        self.schema_outlet_tab = 'swmmoutf'
+
+        self.user_swmm_lyr = lyrs.data[self.user_swmm_tab]['qlyr']
+        self.schema_inlet_lyr = lyrs.data[self.schema_inlet_tab]['qlyr']
+        self.schema_outlet_lyr = lyrs.data[self.schema_outlet_tab]['qlyr']
+
+        self.inlet_columns = [
+            ('swmm_iden', 'name'),
+            ('intype', 'intype'),
+            ('swmm_length', 'swmm_length'),
+            ('swmm_width', 'swmm_width'),
+            ('swmm_height', 'swmm_height'),
+            ('swmm_coeff', 'swmm_coeff'),
+            ('flapgate', 'flapgate'),
+            ('curbheight', 'curbheight')
+        ]
+
+        self.outlet_columns = [('name', 'name'), ('outf_flo', 'outf_flo')]
+
+        self.lyrs_cols = [
+            (self.schema_inlet_lyr, self.inlet_columns),
+            (self.schema_outlet_lyr, self.outlet_columns)
+        ]
+
+        self.ui_fields = self.user_swmm_lyr.fields()
+
+    def user_swmm_features(self, schema_lyr, columns):
+        col_no = len(columns)
+        if col_no == 8:
+            sd_type = 'I'
+        elif col_no == 2:
+            sd_type = 'O'
+        else:
+            sd_type = ''
+        new_features = []
+        fields = self.ui_fields
+        for feat in schema_lyr.getFeatures():
+            geom = feat.geometry()
+            point = geom.asPoint()
+            new_geom = QgsGeometry.fromPoint(point)
+            new_feat = QgsFeature()
+            new_feat.setFields(fields)
+            new_feat.setGeometry(new_geom)
+            new_feat.setAttribute('sd_type', sd_type)
+            for schema_col, user_col in columns:
+                new_feat.setAttribute(user_col, feat[schema_col])
+            new_features.append(new_feat)
+        return new_features
+
+    def create_user_swmm(self):
+        remove_features(self.user_swmm_lyr)
+        sd_feats = self.user_swmm_features(self.schema_inlet_lyr, self.inlet_columns)
+        sd_feats += self.user_swmm_features(self.schema_outlet_lyr, self.outlet_columns)
+        self.user_swmm_lyr.startEditing()
+        self.user_swmm_lyr.addFeatures(sd_feats)
+        self.user_swmm_lyr.commitChanges()
+        self.user_swmm_lyr.updateExtents()
+        self.user_swmm_lyr.triggerRepaint()
+        self.user_swmm_lyr.removeSelection()

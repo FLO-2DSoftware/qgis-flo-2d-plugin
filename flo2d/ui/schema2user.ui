@@ -98,6 +98,13 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="0">
+      <widget class="QCheckBox" name="ckbox_swmm">
+       <property name="text">
+        <string>Storm Drain</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

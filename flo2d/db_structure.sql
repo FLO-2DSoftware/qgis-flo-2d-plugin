@@ -1425,7 +1425,7 @@ CREATE TABLE "swmmflo" (
     "name" TEXT -- optional inlet name
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
-SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmflo', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
 
@@ -1457,7 +1457,7 @@ CREATE TABLE "swmmoutf" (
     "outf_flo" INTEGER -- OUTF_FLO2DVOL, switch, 0 for all discharge removed from strom drain system, 1 allows for the discharge to be returned to FLO-2D
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'features', 4326);
-SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
 
@@ -2331,7 +2331,7 @@ CREATE TABLE "user_swmm" (
     "swmm_coeff" REAL DEFAULT 0,
     "flapgate" INTEGER DEFAULT 0,
     "curbheight" REAL DEFAULT 0,
-    "out_flo" INTEGER DEFAULT 0,
+    "outf_flo" INTEGER DEFAULT 0,
     "notes" TEXT
 
 );
@@ -2343,7 +2343,7 @@ CREATE TRIGGER "default_swmm_name"
     AFTER INSERT ON "user_swmm"
     BEGIN
         UPDATE "user_swmm"
-        SET name = ('Storm Drain ' || cast(NEW."fid" AS TEXT))
+        SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT))
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 

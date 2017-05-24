@@ -50,7 +50,9 @@ class StormDrainProject(object):
             self.coordinates[node] = coord_dict
 
     def find_inlets(self):
-        sub_cols = ['subcatchment', 'raingage', 'outlet', 'total_area', 'imperv', 'width', 'slope', 'curb_length', 'snow_pack']
+        sub_cols = [
+            'subcatchment', 'raingage', 'outlet', 'total_area', 'imperv', 'width', 'slope', 'curb_length', 'snow_pack'
+        ]
         subcachments = self.select_by_tag('subc')
         for sub in subcachments:
             if not sub or sub[0] in self.ignore:
@@ -68,16 +70,3 @@ class StormDrainProject(object):
             out_dict = dict(izip_longest(out_cols, out.split()[:3]))
             outfall = out_dict.pop('outfall')
             self.coordinates[outfall].update(out_dict)
-
-
-if __name__ == '__main__':
-    pth = r'D:\GIS_DATA\UEFCC Baseline\swmm.inp'
-    sdp = StormDrainProject(pth)
-    sdp.split_by_tags()
-    sdp.find_coordinates()
-    sdp.find_inlets()
-    sdp.find_outlets()
-    coords = sdp.coordinates
-    for k, v in coords.items():
-        if 'out_type' in v:
-            print(k, v)

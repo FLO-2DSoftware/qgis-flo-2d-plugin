@@ -10,18 +10,15 @@
 
 import os
 import traceback
-from math import isnan
-from itertools import chain
 from collections import OrderedDict
-from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt4.QtGui import QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
-from qgis.core import QGis, QgsFeatureRequest
+from PyQt4.QtCore import QSettings, pyqtSignal, pyqtSlot, Qt
+from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, QStandardItemModel, QStandardItem
+from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas
-from flo2d.utils import m_fdata
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_tools.grid_tools import poly2grid
 from flo2d.flo2d_ie.swmm_import import StormDrainProject
+from flo2d.flo2d_tools.schematic_conversion import remove_features
 
 uiDialog, qtBaseClass = load_ui('swmm_editor')
 
@@ -46,7 +43,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
         self.swmm_columns = [
             'sd_type', 'intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight',
-            'out_flo'
+            'outf_flo'
         ]
 
         self.set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
@@ -234,7 +231,91 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.gutils.execute(update_qry, vals)
 
     def schematize_swmm(self):
-        pass
+        qry_inlet = '''
+        INSERT INTO swmmflo
+        (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate, curbheight)
+        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?);'''
+        qry_outlet = '''
+        INSERT INTO swmmoutf
+        (geom, grid_fid, name, outf_flo)
+        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
+        inlet_columns = self.swmm_columns[1:-1]
+        outlet_columns = self.swmm_columns[-1:]
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            inlets = []
+            outlets = []
+            for feat in self.swmm_lyr.getFeatures():
+                geom = feat.geometry()
+                point = geom.asPoint()
+                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                sd_type = feat['sd_type']
+                name = feat['name']
+                if sd_type == 'I':
+                    char = 'N' if feat['intype'] == 4 else 'D'
+                    row = [grid_fid, char, grid_fid, name] + [feat[col] for col in inlet_columns]
+                    inlets.append(row)
+                elif sd_type == 'O':
+                    row = [grid_fid, grid_fid, name] + [feat[col] for col in outlet_columns]
+                    outlets.append(row)
+                else:
+                    raise ValueError
+            self.gutils.clear_tables('swmmflo', 'swmmoutf')
+            cur = self.con.cursor()
+            cur.executemany(qry_inlet, inlets)
+            cur.executemany(qry_outlet, outlets)
+            self.con.commit()
+            self.repaint_schema()
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_info('Schematizing of Storm Drains finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Schematizing of Storm Drains failed! Please check user Storm Drains Points layer.')
 
     def import_swmm_input(self):
-        pass
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        swmm_file = QFileDialog.getOpenFileName(
+            None,
+            'Select SWMM input file to import data',
+            directory=last_dir,
+            filter='(*.inp *.INP*)')
+        if not swmm_file:
+            return
+        s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            sdp = StormDrainProject(swmm_file)
+            sdp.split_by_tags()
+            sdp.find_coordinates()
+            sdp.find_inlets()
+            sdp.find_outlets()
+            remove_features(self.swmm_lyr)
+            fields = self.swmm_lyr.fields()
+            self.swmm_lyr.startEditing()
+            for name, values in sdp.coordinates.items():
+                if 'subcatchment' in values:
+                    sd_type = 'I'
+                elif 'out_type' in values:
+                    sd_type = 'O'
+                else:
+                    continue
+                feat = QgsFeature()
+                x, y = float(values['x']), float(values['y'])
+                geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                feat.setGeometry(geom)
+                feat.setFields(fields)
+                feat.setAttribute('sd_type', sd_type)
+                feat.setAttribute('name', name)
+                self.swmm_lyr.addFeature(feat)
+            self.swmm_lyr.commitChanges()
+            self.swmm_lyr.updateExtents()
+            self.swmm_lyr.triggerRepaint()
+            self.swmm_lyr.removeSelection()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Importing SWMM input data finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Importing SWMM input data failed! Please check your SWMM input data.')
