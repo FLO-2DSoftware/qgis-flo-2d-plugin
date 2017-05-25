@@ -34,7 +34,7 @@
     <edittype widgetv2type="TextEdit" name="curbheight">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
-    <edittype widgetv2type="TextEdit" name="out_flo">
+    <edittype widgetv2type="TextEdit" name="outf_flo">
       <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
     </edittype>
     <edittype widgetv2type="TextEdit" name="notes">
@@ -45,6 +45,7 @@
     <categories>
       <category render="true" symbol="0" value="I" label="Inlets"/>
       <category render="true" symbol="1" value="O" label="Outlets"/>
+      <category render="true" symbol="2" value="" label=""/>
     </categories>
     <symbols>
       <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
@@ -73,6 +74,28 @@
         <layer pass="0" class="SimpleMarker" locked="0">
           <prop k="angle" v="0"/>
           <prop k="color" v="34,253,151,255"/>
+          <prop k="horizontal_anchor_point" v="1"/>
+          <prop k="joinstyle" v="bevel"/>
+          <prop k="name" v="diamond"/>
+          <prop k="offset" v="0,0"/>
+          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_unit" v="MM"/>
+          <prop k="outline_color" v="0,0,0,255"/>
+          <prop k="outline_style" v="solid"/>
+          <prop k="outline_width" v="0"/>
+          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="outline_width_unit" v="MM"/>
+          <prop k="scale_method" v="area"/>
+          <prop k="size" v="3"/>
+          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_unit" v="MM"/>
+          <prop k="vertical_anchor_point" v="1"/>
+        </layer>
+      </symbol>
+      <symbol alpha="1" clip_to_extent="1" type="marker" name="2">
+        <layer pass="0" class="SimpleMarker" locked="0">
+          <prop k="angle" v="0"/>
+          <prop k="color" v="178,223,138,0"/>
           <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="name" v="diamond"/>
@@ -329,7 +352,7 @@
     <alias field="swmm_coeff" index="7" name=""/>
     <alias field="flapgate" index="8" name=""/>
     <alias field="curbheight" index="9" name=""/>
-    <alias field="out_flo" index="10" name=""/>
+    <alias field="outf_flo" index="10" name=""/>
     <alias field="notes" index="11" name=""/>
   </aliases>
   <excludeAttributesWMS/>
@@ -347,9 +370,9 @@
       <column width="-1" hidden="0" type="field" name="swmm_coeff"/>
       <column width="-1" hidden="0" type="field" name="flapgate"/>
       <column width="-1" hidden="0" type="field" name="curbheight"/>
-      <column width="-1" hidden="0" type="field" name="out_flo"/>
       <column width="-1" hidden="0" type="field" name="notes"/>
       <column width="-1" hidden="0" type="field" name="sd_type"/>
+      <column width="-1" hidden="0" type="field" name="outf_flo"/>
     </columns>
   </attributetableconfig>
   <editform></editform>
@@ -391,7 +414,7 @@ def my_form_open(dialog, layer, feature):
     <default field="swmm_coeff" expression=""/>
     <default field="flapgate" expression=""/>
     <default field="curbheight" expression=""/>
-    <default field="out_flo" expression=""/>
+    <default field="outf_flo" expression=""/>
     <default field="notes" expression=""/>
   </defaults>
   <previewExpression></previewExpression>

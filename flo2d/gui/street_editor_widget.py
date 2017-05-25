@@ -46,8 +46,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.street_lyr = None
         self.street_idx = 0
-        self.street_name_cbo = QComboBox(self)
-        self.set_combo()
         self.set_icon(self.create_street, 'mActionCaptureLine.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         self.set_icon(self.schema_streets, 'schematize_streets.svg')
@@ -77,13 +75,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.street_lyr = self.lyrs.data['user_streets']['qlyr']
             self.street_lyr.editingStopped.connect(lambda: self.populate_streets())
-
-    def set_combo(self):
-        sp = QSizePolicy()
-        sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
-        self.street_name_cbo.setEditable(False)
-        self.street_name_cbo.setSizePolicy(sp)
-        self.street_name_cbo_layout.addWidget(self.street_name_cbo)
 
     @connection_required
     def populate_streets(self):
