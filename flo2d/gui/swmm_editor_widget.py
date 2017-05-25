@@ -11,26 +11,31 @@
 import os
 import traceback
 from collections import OrderedDict
-from PyQt4.QtCore import QSettings, pyqtSignal, pyqtSlot, Qt
-from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, QStandardItemModel, QStandardItem
+from PyQt4.QtCore import QSettings, Qt
+from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas
+from ui_utils import load_ui, center_canvas, try_disconnect
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_ie.swmm_import import StormDrainProject
 from flo2d.flo2d_tools.schematic_conversion import remove_features
+from flo2d.flo2dobjects import Inlet
+from flo2d.utils import is_number, m_fdata
+from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from math import isnan
 
 uiDialog, qtBaseClass = load_ui('swmm_editor')
 
 
 class SWMMEditorWidget(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, lyrs):
+    def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
+
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
         self.gutils = None
@@ -43,8 +48,17 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
         self.swmm_columns = [
             'sd_type', 'intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight',
-            'outf_flo'
+            'rt_fid', 'outf_flo'
         ]
+
+        self.inlet = None
+        self.plot = plot
+        self.table = table
+        self.tview = table.tview
+        self.inlet_data_model = StandardItemModel()
+        self.inlet_series_data = None
+        self.plot_item_name = None
+        self.d1, self.d2 = [[], []]
 
         self.set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
         self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
@@ -52,6 +66,11 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
         self.set_icon(self.change_name_btn, 'change_name.svg')
+
+        self.set_icon(self.show_table_btn, 'show_cont_table.svg')
+        self.set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
+        self.set_icon(self.add_rtable_btn, 'add_bc_data.svg')
+        self.set_icon(self.rename_rtable_btn, 'change_name.svg')
 
         self.create_point_btn.clicked.connect(lambda: self.create_swmm_point())
         self.save_changes_btn.clicked.connect(lambda: self.save_swmm_edits())
@@ -63,15 +82,27 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.inlet_grp.toggled.connect(self.inlet_checked)
         self.outlet_grp.toggled.connect(self.outlet_checked)
 
+        self.show_table_btn.clicked.connect(self.populate_rtables_data)
+        self.add_rtable_btn.clicked.connect(self.add_rtables)
+        self.remove_rtable_btn.clicked.connect(self.delete_rtables)
+        self.rename_rtable_btn.clicked.connect(self.rename_rtables)
+        self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
+        self.table.before_paste.connect(self.block_saving)
+        self.table.after_paste.connect(self.unblock_saving)
+        self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
+
     def inlet_checked(self):
         if self.inlet_grp.isChecked():
             if self.outlet_grp.isChecked():
                 self.outlet_grp.setChecked(False)
+            if self.cbo_intype.currentIndex() + 1 == 4:
+                self.rt_grp.setEnabled(False)
 
     def outlet_checked(self):
         if self.outlet_grp.isChecked():
             if self.inlet_grp.isChecked():
                 self.inlet_grp.setChecked(False)
+                self.rt_grp.setDisabled(True)
 
     @staticmethod
     def set_icon(btn, icon_file):
@@ -85,6 +116,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+            self.inlet = Inlet(self.con, self.iface)
             self.grid_lyr = self.lyrs.data['grid']['qlyr']
             self.swmm_lyr = self.lyrs.data['user_swmm']['qlyr']
             self.schema_inlets = self.lyrs.data['swmmflo']['qlyr']
@@ -93,6 +125,17 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.swmm_lyr.editingStopped.connect(self.populate_swmm)
             self.swmm_name_cbo.activated.connect(self.swmm_changed)
             self.populate_swmm()
+            self.populate_rtables()
+            self.populate_rtables_data()
+            self.cbo_rating_tables.activated.connect(self.populate_rtables_data)
+            self.cbo_intype.activated.connect(self.check_intype)
+
+    def check_intype(self):
+        intype = self.cbo_intype.currentIndex() + 1
+        if intype == 4:
+            self.rt_grp.setEnabled(True)
+        else:
+            self.rt_grp.setDisabled(True)
 
     def repaint_schema(self):
         for lyr in self.all_schema:
@@ -185,6 +228,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             elif isinstance(obj, QComboBox):
                 obj_name = obj.objectName().split('_', 1)[-1]
                 val = swmm_dict[obj_name]
+                if obj_name == 'intype':
+                    val -= 1
                 obj.setCurrentIndex(val)
             elif isinstance(obj, QCheckBox):
                 obj_name = obj.objectName().split('_', 1)[-1]
@@ -192,6 +237,13 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 obj.setChecked(val)
             else:
                 continue
+        if sd_type == 'I' and swmm_dict['intype'] == 4:
+            self.rt_grp.setEnabled(True)
+            rt_fid = swmm_dict['rt_fid']
+            rt_idx = self.cbo_rating_tables.findData(rt_fid)
+            self.cbo_rating_tables.setCurrentIndex(rt_idx)
+        else:
+            self.rt_grp.setDisabled(True)
         self.lyrs.clear_rubber()
         if self.center_chbox.isChecked():
             sfid = swmm_dict['fid']
@@ -218,11 +270,27 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             if isinstance(obj, QDoubleSpinBox):
                 swmm_dict[obj_name] = obj.value()
             elif isinstance(obj, QComboBox):
-                swmm_dict[obj_name] = obj.currentIndex()
+                val = obj.currentIndex()
+                if obj_name == 'intype':
+                    val += 1
+                swmm_dict[obj_name] = val
             elif isinstance(obj, QCheckBox):
                 swmm_dict[obj_name] = int(obj.isChecked())
             else:
                 continue
+
+        sd_type = swmm_dict['sd_type']
+        intype = swmm_dict['intype']
+        if sd_type == 'I' and intype != 4:
+            if swmm_dict['flapgate'] == 1:
+                inlet_type = self.cbo_intype.currentText()
+                self.uc.bar_warn('Vertical inlet opening is not allowed for {}!'.format(inlet_type))
+                return
+            swmm_dict['rt_fid'] = None
+        elif sd_type == 'I' and intype == 4:
+            swmm_dict['rt_fid'] = self.cbo_rating_tables.itemData(self.cbo_rating_tables.currentIndex())
+        else:
+            pass
 
         col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
         col_names = ', '.join(col_gen)
@@ -239,21 +307,26 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         INSERT INTO swmmoutf
         (geom, grid_fid, name, outf_flo)
         VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
-        inlet_columns = self.swmm_columns[1:-1]
+        qry_rt_update = '''UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;'''
+        inlet_columns = self.swmm_columns[1:8]
         outlet_columns = self.swmm_columns[-1:]
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             inlets = []
             outlets = []
+            rt_updates = []
             for feat in self.swmm_lyr.getFeatures():
                 geom = feat.geometry()
                 point = geom.asPoint()
                 grid_fid = self.gutils.grid_on_point(point.x(), point.y())
                 sd_type = feat['sd_type']
                 name = feat['name']
+                rt_fid = feat['rt_fid']
                 if sd_type == 'I':
-                    char = 'N' if feat['intype'] == 4 else 'D'
-                    row = [grid_fid, char, grid_fid, name] + [feat[col] for col in inlet_columns]
+                    intype = feat['intype']
+                    if intype == 4 and rt_fid is not None:
+                        rt_updates.append((grid_fid, rt_fid))
+                    row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in inlet_columns]
                     inlets.append(row)
                 elif sd_type == 'O':
                     row = [grid_fid, grid_fid, name] + [feat[col] for col in outlet_columns]
@@ -264,6 +337,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             cur = self.con.cursor()
             cur.executemany(qry_inlet, inlets)
             cur.executemany(qry_outlet, outlets)
+            cur.executemany(qry_rt_update, rt_updates)
             self.con.commit()
             self.repaint_schema()
             QApplication.restoreOverrideCursor()
@@ -319,3 +393,120 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Importing SWMM input data failed! Please check your SWMM input data.')
+
+    def block_saving(self):
+        try_disconnect(self.inlet_data_model.dataChanged, self.save_rtables_data)
+
+    def unblock_saving(self):
+        self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
+
+    def itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
+        if role == Qt.EditRole:
+            command = CommandItemEdit(self, item, old_value, new_value,
+                                      "Text changed from '{0}' to '{1}'".format(old_value, new_value))
+            self.tview.undoStack.push(command)
+            return True
+
+    def populate_rtables(self):
+        self.cbo_rating_tables.clear()
+        for row in self.inlet.get_rating_tables():
+            rt_fid, name = [x if x is not None else '' for x in row]
+            self.cbo_rating_tables.addItem(name, rt_fid)
+
+    def add_rtables(self):
+        if not self.inlet:
+            return
+        self.inlet.add_rating_table()
+        self.populate_rtables()
+
+    def delete_rtables(self):
+        if not self.inlet:
+            return
+        idx = self.cbo_rating_tables.currentIndex()
+        rt_fid = self.cbo_rating_tables.itemData(idx)
+        self.inlet.del_rating_table(rt_fid)
+        self.populate_rtables()
+
+    def rename_rtables(self):
+        if not self.inlet:
+            return
+        new_name, ok = QInputDialog.getText(None, 'Change rating table name', 'New name:')
+        if not ok or not new_name:
+            return
+        if not self.cbo_rating_tables.findText(new_name) == -1:
+            msg = 'Rating table with name {} already exists in the database. Please, choose another name.'.format(
+                new_name)
+            self.uc.show_warn(msg)
+            return
+        idx = self.cbo_rating_tables.currentIndex()
+        rt_fid = self.cbo_rating_tables.itemData(idx)
+        self.inlet.set_rating_table_data_name(rt_fid, new_name)
+        self.populate_rtables()
+
+    def populate_rtables_data(self):
+        idx = self.cbo_rating_tables.currentIndex()
+        rt_fid = self.cbo_rating_tables.itemData(idx)
+        self.inlet_series_data = self.inlet.get_rating_tables_data(rt_fid)
+        if not self.inlet_series_data:
+            return
+        self.create_plot()
+        self.tview.undoStack.clear()
+        self.tview.setModel(self.inlet_data_model)
+        self.inlet_data_model.clear()
+        self.inlet_data_model.setHorizontalHeaderLabels(['Depht', 'Q'])
+        self.d1, self.d1 = [[], []]
+        for row in self.inlet_series_data:
+            items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
+            self.inlet_data_model.appendRow(items)
+            self.d1.append(row[0] if not row[0] is None else float('NaN'))
+            self.d2.append(row[1] if not row[1] is None else float('NaN'))
+        rc = self.inlet_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [StandardItem(x) for x in ('',) * 2]
+                self.inlet_data_model.appendRow(items)
+        self.tview.horizontalHeader().setStretchLastSection(True)
+        for col in range(2):
+            self.tview.setColumnWidth(col, 100)
+        for i in range(self.inlet_data_model.rowCount()):
+            self.tview.setRowHeight(i, 20)
+        self.update_plot()
+
+    def save_rtables_data(self):
+        idx = self.cbo_rating_tables.currentIndex()
+        rt_fid = self.cbo_rating_tables.itemData(idx)
+        self.update_plot()
+        rt_data = []
+
+        for i in range(self.inlet_data_model.rowCount()):
+            # save only rows with a number in the first column
+            if is_number(m_fdata(self.inlet_data_model, i, 0)) and not isnan(m_fdata(self.inlet_data_model, i, 0)):
+                rt_data.append(
+                    (
+                        rt_fid,
+                        m_fdata(self.inlet_data_model, i, 0),
+                        m_fdata(self.inlet_data_model, i, 1)
+                    )
+                )
+            else:
+                pass
+        data_name = self.cbo_rating_tables.currentText()
+        self.inlet.set_rating_table_data(rt_fid, data_name, rt_data)
+
+    def create_plot(self):
+        self.plot.clear()
+        self.plot_item_name = 'Rating tables'
+        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+
+    def update_plot(self):
+
+        if not self.plot_item_name:
+            return
+        self.d1, self.d2 = [[], []]
+        for i in range(self.inlet_data_model.rowCount()):
+            self.d1.append(m_fdata(self.inlet_data_model, i, 0))
+            self.d2.append(m_fdata(self.inlet_data_model, i, 1))
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])

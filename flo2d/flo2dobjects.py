@@ -1284,3 +1284,69 @@ class Structure(GeoPackageUtils):
             self.execute_many(qry.format(self.fid), [row[:5] for row in data])
         else:
             pass
+
+
+class Inlet(GeoPackageUtils):
+    """
+    Inlet data representation.
+    """
+
+    def __init__(self, con, iface):
+        super(Inlet, self).__init__(con, iface)
+        self.name = None
+
+    def get_rating_tables(self, order_by='name'):
+        if order_by == 'name':
+            rt = self.execute('SELECT fid, name FROM swmmflort ORDER BY name COLLATE NOCASE;').fetchall()
+        else:
+            rt = self.execute('SELECT fid, name FROM swmmflort ORDER BY fid;').fetchall()
+        if not rt:
+            rt = self.add_rating_table(fetch=True)
+        return rt
+
+    def add_rating_table(self, name=None, fetch=False):
+        qry = '''INSERT INTO swmmflort (name) VALUES (?);'''
+        rowid = self.execute(qry, (name,), get_rowid=True)
+        name_qry = '''UPDATE swmmflort SET name =  'Rating table ' || cast(fid as text) WHERE fid = ?;'''
+        self.execute(name_qry, (rowid,))
+        if not name:
+            self.name = 'Rating table {}'.format(rowid)
+        if fetch:
+            return self.get_rating_tables()
+
+    def del_rating_table(self, rt_fid):
+        qry = 'UPDATE user_swmm SET rt_fid = ? WHERE rt_fid = ?;'
+        self.execute(qry, (None, rt_fid))
+        qry = 'DELETE FROM swmmflort WHERE fid = ?;'
+        self.execute(qry, (rt_fid,))
+        qry = 'DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;'
+        self.execute(qry, (rt_fid,))
+
+    def get_rating_tables_data(self, rt_fid):
+        qry = 'SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;'
+        rating_table_data = self.execute(qry, (rt_fid,)).fetchall()
+        if not rating_table_data:
+            # add a new time series
+            rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
+        return rating_table_data
+
+    def add_rating_table_data(self, rt_fid, rows=5, fetch=False):
+        """
+        Add new rows to swmmflort_data for a given rt_fid.
+        """
+        qry = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, NULL, NULL);'
+        self.execute_many(qry, ([rt_fid],) * rows)
+        if fetch:
+            return self.get_rating_tables_data(rt_fid)
+
+    def set_rating_table_data(self, rt_fid, name, data):
+        qry = 'UPDATE swmmflort SET name=? WHERE fid=?;'
+        self.execute(qry, (name, rt_fid,))
+        qry = 'DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;'
+        self.execute(qry, (rt_fid,))
+        qry = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);'
+        self.execute_many(qry, data)
+
+    def set_rating_table_data_name(self, rt_fid,  name):
+        qry = 'UPDATE swmmflort SET name=? WHERE fid=?;'
+        self.execute(qry, (name, rt_fid,))

@@ -129,7 +129,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.infil_editor_lout.addWidget(self.infil_editor)
 
     def setup_swmm_editor(self):
-        self.swmm_editor = SWMMEditorWidget(self.iface, self.lyrs)
+        self.swmm_editor = SWMMEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.swmm_editor_lout.addWidget(self.swmm_editor)
 
     def set_collapsible_groups(self):

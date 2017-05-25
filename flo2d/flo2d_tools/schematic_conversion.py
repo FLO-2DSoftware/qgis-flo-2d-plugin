@@ -379,6 +379,17 @@ class SchemaSWMMConverter(SchemaConverter):
         ]
 
         self.ui_fields = self.user_swmm_lyr.fields()
+        self.rt_grids = self.check_rating_tables()
+
+    def check_rating_tables(self):
+        rt_grids = {}
+        qry = 'SELECT grid_fid, fid FROM swmmflort;'
+        for grid_fid, fid in self.execute(qry):
+            if grid_fid is None:
+                continue
+            else:
+                rt_grids[grid_fid] = fid
+        return rt_grids
 
     def user_swmm_features(self, schema_lyr, columns):
         col_no = len(columns)
@@ -400,6 +411,10 @@ class SchemaSWMMConverter(SchemaConverter):
             new_feat.setAttribute('sd_type', sd_type)
             for schema_col, user_col in columns:
                 new_feat.setAttribute(user_col, feat[schema_col])
+            if sd_type == 'I':
+                grid_fid = feat['swmm_jt']
+                if grid_fid in self.rt_grids:
+                    new_feat.setAttribute('rt_fid', self.rt_grids[grid_fid])
             new_features.append(new_feat)
         return new_features
 

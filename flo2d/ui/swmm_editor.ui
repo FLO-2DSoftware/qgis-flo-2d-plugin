@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>388</width>
-    <height>368</height>
+    <height>439</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -241,6 +241,36 @@
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <item row="6" column="3">
+       <widget class="QDoubleSpinBox" name="spin_swmm_coeff"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Curb opening height</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QDoubleSpinBox" name="spin_swmm_height"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Curb opening length</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QDoubleSpinBox" name="spin_swmm_width"/>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Curb opening width</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1" colspan="3">
        <widget class="QComboBox" name="cbo_intype">
         <property name="minimumSize">
@@ -279,10 +309,13 @@
         </item>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_5">
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="spin_swmm_length"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Curb opening height</string>
+         <string>Flapgate</string>
         </property>
        </widget>
       </item>
@@ -296,22 +329,15 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
-       <widget class="QDoubleSpinBox" name="spin_swmm_length"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+      <item row="6" column="2">
+       <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Flapgate</string>
+         <string>Weir coefficient</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Curb opening length</string>
-        </property>
-       </widget>
+      <item row="8" column="3">
+       <widget class="QDoubleSpinBox" name="spin_curbheight"/>
       </item>
       <item row="1" column="1" colspan="3">
        <widget class="QComboBox" name="cbo_flapgate">
@@ -338,39 +364,93 @@
         </item>
        </widget>
       </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Weir coefficient</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="3">
-       <widget class="QDoubleSpinBox" name="spin_swmm_coeff"/>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Curb opening width</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="3">
-       <widget class="QDoubleSpinBox" name="spin_swmm_width"/>
-      </item>
-      <item row="3" column="3">
-       <widget class="QDoubleSpinBox" name="spin_swmm_height"/>
-      </item>
-      <item row="7" column="3">
-       <widget class="QDoubleSpinBox" name="spin_curbheight"/>
-      </item>
-      <item row="7" column="0" colspan="2">
+      <item row="8" column="2">
        <widget class="QLabel" name="label_7">
         <property name="text">
          <string>Curb height for discharge</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="rt_grp">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Rating Tables</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="2">
+       <widget class="QToolButton" name="show_table_btn">
+        <property name="toolTip">
+         <string>Show inlet rating table</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QToolButton" name="rename_rtable_btn">
+        <property name="toolTip">
+         <string>Rename inlet rating table</string>
+        </property>
+        <property name="text">
+         <string>Change name</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QToolButton" name="remove_rtable_btn">
+        <property name="toolTip">
+         <string>Remove inlet rating table</string>
+        </property>
+        <property name="text">
+         <string>Remove</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/delete_bc_data.svg</normaloff>../img/delete_bc_data.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QToolButton" name="add_rtable_btn">
+        <property name="toolTip">
+         <string>Add inlet rating table</string>
+        </property>
+        <property name="text">
+         <string>Add</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="cbo_rating_tables">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>20</height>
+         </size>
         </property>
        </widget>
       </item>
