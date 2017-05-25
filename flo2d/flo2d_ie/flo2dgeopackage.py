@@ -653,14 +653,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflort(self):
-        swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid) VALUES''', 1]
+        swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid, name) VALUES''', 2]
         data_sql = ['''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES''', 3]
 
         self.clear_tables('swmmflort', 'swmmflort_data')
         data = self.parser.parse_swmmflort()
         for i, row in enumerate(data, 1):
             gid, params = row
-            swmmflort_sql += [(gid,)]
+            name = 'Rating Table {}'.format(i)
+            swmmflort_sql += [(gid, name)]
             for n in params:
                 data_sql += [(i,) + tuple(n)]
 
