@@ -454,11 +454,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             grid_params = inf_calc.green_ampt_infiltration()
             self.gutils.clear_tables('infil_areas_green')
             qry = '''
-            INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf)
-            VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?);'''
+            INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
+            VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?,?);'''
             cur = self.con.cursor()
             for gid, params in grid_params.iteritems():
-                par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'])
+                par = (params['hydc'], params['soils'], params['dtheta'],
+                       params['abstrinf'], params['rtimpf'], params['soil_depth'])
                 values = (gid,) + tuple(round(p, 3) for p in par)
                 cur.execute(qry, values)
             self.con.commit()
@@ -647,7 +648,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
-        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.eff_cbo]
+        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.eff_cbo, self.soil_depth_cbo]
         self.land_combos = [self.saturation_cbo, self.vc_cbo, self.ia_cbo, self.rtimpl_cbo]
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)

@@ -114,7 +114,7 @@ class GridElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        request = '"calc_arf" = 1'
+        request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
         for fid, parts in poly2poly(self.blocked_areas, self.schematic, request, 'fid', 'elevation'):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:

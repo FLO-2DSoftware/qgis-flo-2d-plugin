@@ -25,6 +25,7 @@ class InfiltrationCalculator(object):
         self.xksat_fld = None
         self.rtimps_fld = None
         self.eff_fld = None
+        self.soil_depth_fld = None
 
         # Land use fields
         self.saturation_fld = None
@@ -47,6 +48,7 @@ class InfiltrationCalculator(object):
             xksat_fld='XKSAT',
             rtimps_fld='field_4',
             eff_fld='field_5',
+            soil_depth_fld='soil_depth',
             saturation_fld='field_6',
             vc_fld='field_5',
             ia_fld='field_3',
@@ -59,6 +61,7 @@ class InfiltrationCalculator(object):
         self.xksat_fld = xksat_fld
         self.rtimps_fld = rtimps_fld
         self.eff_fld = eff_fld
+        self.soil_depth_fld = soil_depth_fld
 
         # Land use fields
         self.saturation_fld = saturation_fld
@@ -92,14 +95,18 @@ class InfiltrationCalculator(object):
             None,
             self.xksat_fld,
             self.rtimps_fld,
-            self.eff_fld)
+            self.eff_fld,
+            self.soil_depth_fld
+        )
         for gid, values in soil_values:
             xksat_parts = [(row[0], row[-1]) for row in values]
             imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
+            avg_soil_depth = sum(row[3] * row[-1] for row in values)
             avg_xksat = green_ampt.calculate_xksat(xksat_parts)
             psif = green_ampt.calculate_psif(avg_xksat)
             rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
-            grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1}
+
+            grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
 
         land_values = poly2poly(
             self.grid_lyr,
@@ -108,7 +115,8 @@ class InfiltrationCalculator(object):
             self.saturation_fld,
             self.vc_fld,
             self.ia_fld,
-            self.rtimpl_fld)
+            self.rtimpl_fld
+        )
         for gid, values in land_values:
             params = grid_params[gid]
             avg_xksat = params['hydc']

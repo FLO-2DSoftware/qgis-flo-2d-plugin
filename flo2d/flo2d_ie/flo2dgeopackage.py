@@ -67,7 +67,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         coords = slice(2, 4)
         elev = slice(4, None)
         for row in data:
-            row = tuple(row)
+            try:
+                row = tuple(r.decode('ascii') for r in row)
+            except UnicodeDecodeError:
+                continue
             if c < self.chunksize:
                 geom = ' '.join(row[coords])
                 g = self.build_square(geom, self.cell_size)
