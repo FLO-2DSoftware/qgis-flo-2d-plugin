@@ -40,6 +40,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.tview = table.tview
         self.lyrs = lyrs
         self.con = None
+        self.gutils = None
+        self.user_xs_lyr = None
         self.xs = None
         self.cur_xs_fid = None
         self.setupUi(self)
@@ -90,6 +92,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+            self.user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
+            self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
 
     def schematize_xs(self):
         self.schematize_1d.emit()
@@ -140,7 +144,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(0)
-        qry = 'SELECT fid, name FROM user_xsections ORDER BY name COLLATE NOCASE;'
+        qry = 'SELECT fid, name FROM user_xsections ORDER BY fid COLLATE NOCASE;'
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             return
@@ -155,7 +159,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if show_last_edited:
             cur_idx = i
         self.xs_cbo.setCurrentIndex(cur_idx)
-        self.user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
         self.enable_widgets(False)
         if self.xs_cbo.count():
             self.enable_widgets()

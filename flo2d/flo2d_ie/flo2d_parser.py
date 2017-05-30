@@ -126,14 +126,16 @@ class ParseDAT(object):
         with open(file1, 'r') as f1:
             for line in f1:
                 row = line.split()
-                yield row
+                if row:
+                    yield row
 
     @staticmethod
     def double_parser(file1, file2):
         with open(file1, 'r') as f1, open(file2, 'r') as f2:
             for line1, line2 in izip(f1, f2):
                 row = line1.split() + line2.split()
-                yield row
+                if row:
+                    yield row
 
     @staticmethod
     def fix_row_size(row, fix_size, default=None, index=None):
@@ -514,7 +516,7 @@ class ParseDAT(object):
     def parse_swmmflo(self):
         swmmflo = self.dat_files['SWMMFLO.DAT']
         par = self.single_parser(swmmflo)
-        data = [row[1:] for row in par]
+        data = [row for row in par]
         return data
 
     def parse_swmmflort(self):

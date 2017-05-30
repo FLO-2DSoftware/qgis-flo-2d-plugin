@@ -11,13 +11,15 @@
 import os
 import math
 import uuid
+from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
+from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from qgis.analysis import QgsInterpolator, QgsTINInterpolator
 from PyQt4.QtCore import QPyNullVariant
 from flo2d.utils import is_number
 
 
+# GRID classes
 class TINInterpolator(object):
 
     def __init__(self, point_lyr, field_name, memory=True):
@@ -159,6 +161,7 @@ class ZonalStatistics(object):
         self.gutils.con.commit()
 
 
+# GRID functions
 def spatial_index(features):
     """
     Creating spatial index over collection of features.
@@ -236,38 +239,70 @@ def poly2grid(grid, polygons, request, *columns):
                 pass
 
 
-def grid_intersections(grid, polygons, *columns):
+def poly2poly(base_polygons, polygons, request, *columns):
     """
-    Generator which calculates grid cells intersections with polygon layer.
+    Generator which calculates base polygons intersections with another polygon layer.
     """
-    allfeatures = {}
-    index = QgsSpatialIndex()
-    for poly in polygons.getFeatures():
-        allfeatures[poly.id()] = poly
-        index.insertFeature(poly)
+    poly_feats = polygons.getFeatures()
+    allfeatures, index = spatial_index(poly_feats)
 
-    features = grid.getFeatures()
-    first = next(features)
-    grid_area = first.geometry().area()
-    features.rewind()
-    for feat in features:
-        geom = feat.geometry()
-        fids = index.intersects(geom.boundingBox())
+    base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
+    for feat in base_features:
+        base_geom = feat.geometry()
+        base_area = base_geom.area()
+        fids = index.intersects(base_geom.boundingBox())
         if not fids:
             continue
-        gid = feat['fid']
-        grid_areas = []
+        base_fid = feat['fid']
+        base_parts = []
         for fid in fids:
             f = allfeatures[fid]
             fgeom = f.geometry()
-            inter = fgeom.intersects(geom)
+            inter = fgeom.intersects(base_geom)
             if inter is False:
                 continue
-            intersection_geom = fgeom.intersection(geom)
-            subarea = intersection_geom.area() / grid_area
+            intersection_geom = fgeom.intersection(base_geom)
+            subarea = intersection_geom.area() / base_area
             values = tuple(f[col] for col in columns) + (subarea,)
-            grid_areas.append(values)
-        yield gid, grid_areas
+            base_parts.append(values)
+        yield base_fid, base_parts
+
+
+def cluster_polygons(polygons, *columns):
+    """
+    Functions for clustering polygons by common attributes.
+    """
+    clusters = defaultdict(list)
+    for feat in polygons.getFeatures():
+        geom_poly = feat.geometry().asPolygon()
+        attrs = tuple(feat[col] for col in columns)
+        clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
+    return clusters
+
+
+def clustered_features(polygons, fields, *columns, **columns_map):
+    """
+    Generator which returns features with clustered geometries.
+    """
+    clusters = cluster_polygons(polygons, *columns)
+    target_columns = [columns_map[c] if c in columns_map else c for c in columns]
+    for attrs, geom_list in clusters.items():
+
+        if len(geom_list) > 1:
+            geom = QgsGeometry.unaryUnion(geom_list)
+            if geom.isMultipart():
+                poly_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
+            else:
+                poly_geoms = [geom]
+        else:
+            poly_geoms = geom_list
+        for new_geom in poly_geoms:
+            new_feat = QgsFeature()
+            new_feat.setGeometry(new_geom)
+            new_feat.setFields(fields)
+            for col, val in zip(target_columns, attrs):
+                new_feat.setAttribute(col, val)
+            yield new_feat
 
 
 def calculate_arfwrf(grid, areas):
@@ -284,10 +319,8 @@ def calculate_arfwrf(grid, areas):
         (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     )
-    area_polys = areas.getFeatures()
-    allfeatures = {feature.id(): feature for feature in area_polys}
-    index = QgsSpatialIndex()
-    map(index.insertFeature, allfeatures.itervalues())
+    area_feats = areas.getFeatures()
+    allfeatures, index = spatial_index(area_feats)
     features = grid.getFeatures()
     first = next(features)
     grid_area = first.geometry().area()
@@ -297,7 +330,8 @@ def calculate_arfwrf(grid, areas):
     half_octagon = octagon_side * 0.5
     empty_wrf = (0,) * 8
     full_wrf = (1,) * 8
-    for feat in grid.getFeatures():
+    features.rewind()
+    for feat in features:
         geom = feat.geometry()
         fids = index.intersects(geom.boundingBox())
         for fid in fids:
@@ -328,6 +362,27 @@ def calculate_arfwrf(grid, areas):
                 pass
 
 
+def raster2grid(grid, out_raster, request=None):
+    """
+    Generator for probing raster data within 'grid' features.
+    """
+    probe_raster = QgsRasterLayer(out_raster)
+    if not probe_raster.isValid():
+        return
+
+    features = grid.getFeatures() if request is None else grid.getFeatures(request)
+    for feat in features:
+        center = feat.geometry().centroid().asPoint()
+        ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
+        if ident.isValid():
+            if is_number(ident.results()[1]):
+                val = round(ident.results()[1], 3)
+            else:
+                val = None
+            yield (val, feat.id())
+
+
+# Tools which use GeoPackageUtils instance
 def square_grid(gutils, boundary):
     """
     Function for calculating and writing square grid into 'grid' table.
@@ -393,26 +448,6 @@ def evaluate_arfwrf(gutils, grid, areas):
         gpb_qry = qry_cells.format(point)
         cur.execute(gpb_qry, row[1:])
     gutils.con.commit()
-
-
-def raster2grid(grid, out_raster, request=None):
-    """
-    Generator for probing raster data within 'grid' features.
-    """
-    probe_raster = QgsRasterLayer(out_raster)
-    if not probe_raster.isValid():
-        return
-
-    features = grid.getFeatures() if request is None else grid.getFeatures(request)
-    for feat in features:
-        center = feat.geometry().centroid().asPoint()
-        ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
-        if ident.isValid():
-            if is_number(ident.results()[1]):
-                val = round(ident.results()[1], 3)
-            else:
-                val = None
-            yield (val, feat.id())
 
 
 def grid_has_empty_elev(gutils):

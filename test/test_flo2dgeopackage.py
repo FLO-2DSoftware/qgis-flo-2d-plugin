@@ -192,7 +192,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
     def test_import_swmmflo(self):
         self.f2g.import_swmmflo()
         count = self.f2g.execute('''SELECT COUNT(fid) FROM swmmflo;''').fetchone()[0]
-        self.assertEqual(count, 6)
+        self.assertEqual(count, 5)
         length = self.f2g.execute('''SELECT MAX(swmm_length) FROM swmmflo;''').fetchone()[0]
         self.assertEqual(length, 20)
 

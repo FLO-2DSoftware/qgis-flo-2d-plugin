@@ -6,7 +6,7 @@ name=FLO-2D
 qgisMinimumVersion=2.18
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.2.9
+version=0.3.0
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
@@ -19,7 +19,13 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.2.9 New features:
+changelog=0.3.0 New features:
+ - Added Storm Drains Editor
+ - Added option for grid elevation correction within Blocked Areas
+ - Added Roughness and Storm Drains to schematic to user conversion tool
+ - Moved grid tools to dock window
+ - Minor improvements, bug fixes and code cleanups
+<p>changelog=0.2.9 New features:
  - Added option for import data from HEC-RAS 1D geometry files
  - Added extra options for conversion from schematic to user layers
  - Support for infiltration parameters

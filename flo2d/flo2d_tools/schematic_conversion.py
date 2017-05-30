@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from collections import defaultdict
 from flo2d.geopackage_utils import GeoPackageUtils
+from flo2d.flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
 
 
@@ -234,35 +234,61 @@ class SchemaFPXSECConverter(SchemaConverter):
         self.schema2user(self.schema_fpxsec_lyr, self.user_fpxsec_lyr, 'polyline')
 
 
-class ModelBoundaryConverter(SchemaConverter):
+class SchemaGridConverter(SchemaConverter):
 
     def __init__(self, con, iface, lyrs):
-        super(ModelBoundaryConverter, self).__init__(con, iface, lyrs)
+        super(SchemaGridConverter, self).__init__(con, iface, lyrs)
 
         self.schema_grid_tab = 'grid'
         self.user_boundary_tab = 'user_model_boundary'
+        self.user_roughness_tab = 'user_roughness'
+        self.user_elevation_tab = 'user_elevation_polygons'
 
         self.schema_grid_lyr = lyrs.data[self.schema_grid_tab]['qlyr']
         self.user_boundary_lyr = lyrs.data[self.user_boundary_tab]['qlyr']
+        self.user_roughness_lyr = lyrs.data[self.user_roughness_tab]['qlyr']
+        self.user_elevation_lyr = lyrs.data[self.user_elevation_tab]['qlyr']
 
     def boundary_from_grid(self):
         remove_features(self.user_boundary_lyr)
         cellsize = self.get_cont_par('CELLSIZE')
         fields = self.user_boundary_lyr.fields()
-        geom_list = []
-        for feat in self.schema_grid_lyr.getFeatures():
-            geom_poly = feat.geometry().asPolygon()
-            geom_list.append(QgsGeometry.fromPolygon(geom_poly))
-        bfeat = QgsFeature()
-        bgeom = QgsGeometry.unaryUnion(geom_list)
-        bfeat.setGeometry(bgeom)
-        bfeat.setFields(fields)
+        biter = clustered_features(self.schema_grid_lyr, fields)
+        bfeat = next(biter)
         bfeat.setAttribute('cell_size', cellsize)
         self.user_boundary_lyr.startEditing()
         self.user_boundary_lyr.addFeature(bfeat)
         self.user_boundary_lyr.commitChanges()
         self.user_boundary_lyr.updateExtents()
         self.user_boundary_lyr.triggerRepaint()
+        self.user_boundary_lyr.removeSelection()
+
+    def roughness_from_grid(self):
+        remove_features(self.user_roughness_lyr)
+        new_features = []
+        fields = self.user_roughness_lyr.fields()
+        for feat in clustered_features(self.schema_grid_lyr, fields, 'n_value', n_value='n'):
+            new_features.append(feat)
+        self.user_roughness_lyr.startEditing()
+        self.user_roughness_lyr.addFeatures(new_features)
+        self.user_roughness_lyr.commitChanges()
+        self.user_roughness_lyr.updateExtents()
+        self.user_roughness_lyr.triggerRepaint()
+        self.user_roughness_lyr.removeSelection()
+
+    def elevation_from_grid(self):
+        remove_features(self.user_elevation_lyr)
+        new_features = []
+        fields = self.user_elevation_lyr.fields()
+        for feat in clustered_features(self.schema_grid_lyr, fields, 'elevation', elevation='elev'):
+            feat.setAttribute('membership', 'grid')
+            new_features.append(feat)
+        self.user_elevation_lyr.startEditing()
+        self.user_elevation_lyr.addFeatures(new_features)
+        self.user_elevation_lyr.commitChanges()
+        self.user_elevation_lyr.updateExtents()
+        self.user_elevation_lyr.triggerRepaint()
+        self.user_elevation_lyr.removeSelection()
 
 
 class SchemaInfiltrationConverter(SchemaConverter):
@@ -295,15 +321,6 @@ class SchemaInfiltrationConverter(SchemaConverter):
         ]
         self.ui_fields = self.user_infil_lyr.fields()
 
-    @staticmethod
-    def cluster_infil_areas(schema_lyr, columns):
-        clusters = defaultdict(list)
-        for feat in schema_lyr.getFeatures():
-            geom_poly = feat.geometry().asPolygon()
-            attrs = tuple(feat[col] for col in columns)
-            clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
-        return clusters
-
     def user_infil_features(self, schema_lyr, columns):
         if 'hydc' in columns:
             char = 'F'
@@ -311,27 +328,11 @@ class SchemaInfiltrationConverter(SchemaConverter):
             char = 'C'
         else:
             char = ''
-        fields = self.ui_fields
         new_features = []
-        clusters = self.cluster_infil_areas(schema_lyr, columns)
-        for attrs, geom_list in clusters.iteritems():
-            if len(geom_list) > 1:
-                geom = QgsGeometry.unaryUnion(geom_list)
-                if geom.isMultipart():
-                    infil_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
-                else:
-                    infil_geoms = [geom]
-            else:
-                infil_geoms = geom_list
-
-            for igeom in infil_geoms:
-                ifeat = QgsFeature()
-                ifeat.setGeometry(igeom)
-                ifeat.setFields(fields)
-                for col, val in zip(columns, attrs):
-                    ifeat.setAttribute(col, val)
-                ifeat.setAttribute('green_char', char)
-                new_features.append(ifeat)
+        fields = self.ui_fields
+        for ifeat in clustered_features(schema_lyr, fields, *columns):
+            ifeat.setAttribute('green_char', char)
+            new_features.append(ifeat)
         return new_features
 
     def create_user_infiltration(self):
@@ -344,3 +345,86 @@ class SchemaInfiltrationConverter(SchemaConverter):
         self.user_infil_lyr.updateExtents()
         self.user_infil_lyr.triggerRepaint()
         self.user_infil_lyr.removeSelection()
+
+
+class SchemaSWMMConverter(SchemaConverter):
+
+    def __init__(self, con, iface, lyrs):
+        super(SchemaSWMMConverter, self).__init__(con, iface, lyrs)
+
+        self.user_swmm_tab = 'user_swmm'
+        self.schema_inlet_tab = 'swmmflo'
+        self.schema_outlet_tab = 'swmmoutf'
+
+        self.user_swmm_lyr = lyrs.data[self.user_swmm_tab]['qlyr']
+        self.schema_inlet_lyr = lyrs.data[self.schema_inlet_tab]['qlyr']
+        self.schema_outlet_lyr = lyrs.data[self.schema_outlet_tab]['qlyr']
+
+        self.inlet_columns = [
+            ('swmm_iden', 'name'),
+            ('intype', 'intype'),
+            ('swmm_length', 'swmm_length'),
+            ('swmm_width', 'swmm_width'),
+            ('swmm_height', 'swmm_height'),
+            ('swmm_coeff', 'swmm_coeff'),
+            ('flapgate', 'flapgate'),
+            ('curbheight', 'curbheight')
+        ]
+
+        self.outlet_columns = [('name', 'name'), ('outf_flo', 'outf_flo')]
+
+        self.lyrs_cols = [
+            (self.schema_inlet_lyr, self.inlet_columns),
+            (self.schema_outlet_lyr, self.outlet_columns)
+        ]
+
+        self.ui_fields = self.user_swmm_lyr.fields()
+        self.rt_grids = self.check_rating_tables()
+
+    def check_rating_tables(self):
+        rt_grids = {}
+        qry = 'SELECT grid_fid, fid FROM swmmflort;'
+        for grid_fid, fid in self.execute(qry):
+            if grid_fid is None:
+                continue
+            else:
+                rt_grids[grid_fid] = fid
+        return rt_grids
+
+    def user_swmm_features(self, schema_lyr, columns):
+        col_no = len(columns)
+        if col_no == 8:
+            sd_type = 'I'
+        elif col_no == 2:
+            sd_type = 'O'
+        else:
+            sd_type = ''
+        new_features = []
+        fields = self.ui_fields
+        for feat in schema_lyr.getFeatures():
+            geom = feat.geometry()
+            point = geom.asPoint()
+            new_geom = QgsGeometry.fromPoint(point)
+            new_feat = QgsFeature()
+            new_feat.setFields(fields)
+            new_feat.setGeometry(new_geom)
+            new_feat.setAttribute('sd_type', sd_type)
+            for schema_col, user_col in columns:
+                new_feat.setAttribute(user_col, feat[schema_col])
+            if sd_type == 'I':
+                grid_fid = feat['swmm_jt']
+                if grid_fid in self.rt_grids:
+                    new_feat.setAttribute('rt_fid', self.rt_grids[grid_fid])
+            new_features.append(new_feat)
+        return new_features
+
+    def create_user_swmm(self):
+        remove_features(self.user_swmm_lyr)
+        sd_feats = self.user_swmm_features(self.schema_inlet_lyr, self.inlet_columns)
+        sd_feats += self.user_swmm_features(self.schema_outlet_lyr, self.outlet_columns)
+        self.user_swmm_lyr.startEditing()
+        self.user_swmm_lyr.addFeatures(sd_feats)
+        self.user_swmm_lyr.commitChanges()
+        self.user_swmm_lyr.updateExtents()
+        self.user_swmm_lyr.triggerRepaint()
+        self.user_swmm_lyr.removeSelection()

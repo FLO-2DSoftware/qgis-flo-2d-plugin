@@ -32,11 +32,15 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         self.methods = {}
 
         # connections
-        self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
         self.elev_tin_chbox.stateChanged.connect(self.tin_checked)
+        self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
+        self.elev_arf_chbox.stateChanged.connect(self.arf_checked)
 
-        self.elev_polygons_chbox.setChecked(True)
-        self.elev_tin_chbox.setChecked(True)
+    def tin_checked(self):
+        if self.elev_tin_chbox.isChecked():
+            self.methods[1] = self.tin_method
+        else:
+            self.methods.pop(1)
 
     def polygons_checked(self):
         if self.elev_polygons_chbox.isChecked():
@@ -44,11 +48,20 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         else:
             self.methods.pop(2)
 
-    def tin_checked(self):
-        if self.elev_tin_chbox.isChecked():
-            self.methods[1] = self.tin_method
+    def arf_checked(self):
+        if self.elev_arf_chbox.isChecked():
+            self.stats_cbx.setEnabled(True)
+            self.methods[3] = self.arf_method
         else:
-            self.methods.pop(1)
+            self.methods.pop(3)
+            self.stats_cbx.setDisabled(True)
+
+    def tin_method(self):
+        try:
+            self.corrector.set_filter()
+            self.corrector.elevation_from_tin()
+        finally:
+            self.corrector.clear_filter()
 
     def polygon_method(self):
         try:
@@ -57,9 +70,5 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         finally:
             self.corrector.clear_filter()
 
-    def tin_method(self):
-        try:
-            self.corrector.set_filter()
-            self.corrector.elevation_from_tin()
-        finally:
-            self.corrector.clear_filter()
+    def arf_method(self):
+        self.corrector.elevation_within_arf(self.stats_cbx.currentText())

@@ -49,10 +49,6 @@ CREATE TABLE "trigger_control" (
 
 CREATE TABLE "grid" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "cell_north" INTEGER,
-    "cell_east" INTEGER,
-    "cell_south" INTEGER,
-    "cell_west" INTEGER,
     "n_value" REAL DEFAULT 0.05,
     "elevation" REAL DEFAULT -9999
 );
@@ -1416,17 +1412,20 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'asp
 
 CREATE TABLE "swmmflo" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "swmmchar" TEXT, -- SWMMCHAR (D, N)
     "swmm_jt" INTEGER, -- SWMM_JT, fid of the grid element with storm drain inlet
+    "swmm_iden" TEXT, -- SWMM_IDEN
     "intype" INTEGER, -- INTYPE, inlet type (1-5)
     "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
-    "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
     "swmm_width" REAL, -- SWMMwidth
+    "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
     "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
+    "curbheight" REAL, -- CURBHEIGHT
     "name" TEXT -- optional inlet name
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
-SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmflo', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmflo', 'geom');
 
@@ -1458,7 +1457,7 @@ CREATE TABLE "swmmoutf" (
     "outf_flo" INTEGER -- OUTF_FLO2DVOL, switch, 0 for all discharge removed from strom drain system, 1 allows for the discharge to be returned to FLO-2D
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'features', 4326);
-SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
 
@@ -2320,6 +2319,35 @@ CREATE TRIGGER "default_infiltration_name"
         SET name = ('Infiltration ' || cast(NEW."fid" AS TEXT))
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
+
+CREATE TABLE "user_swmm" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "sd_type" TEXT DEFAULT 'I' CHECK("sd_type" = 'I' OR "sd_type" = 'O'),
+    "name" TEXT,
+    "intype" INTEGER DEFAULT 1,
+    "swmm_length" REAL DEFAULT 0,
+    "swmm_width" REAL DEFAULT 0,
+    "swmm_height" REAL DEFAULT 0,
+    "swmm_coeff" REAL DEFAULT 0,
+    "flapgate" INTEGER DEFAULT 0,
+    "curbheight" REAL DEFAULT 0,
+    "rt_fid" INTEGER,
+    "outf_flo" INTEGER DEFAULT 0,
+    "notes" TEXT
+
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm', 'geom');
+
+CREATE TRIGGER "default_swmm_name"
+    AFTER INSERT ON "user_swmm"
+    BEGIN
+        UPDATE "user_swmm"
+        SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
 
 CREATE VIEW struct_types AS
 SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves

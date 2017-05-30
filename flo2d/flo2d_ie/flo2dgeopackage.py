@@ -67,7 +67,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         coords = slice(2, 4)
         elev = slice(4, None)
         for row in data:
-            row = tuple(row)
+            try:
+                row = tuple(r.decode('ascii') for r in row)
+            except UnicodeDecodeError:
+                continue
             if c < self.chunksize:
                 geom = ' '.join(row[coords])
                 g = self.build_square(geom, self.cell_size)
@@ -638,29 +641,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(fpfroude_sql, cells_sql)
 
     def import_swmmflo(self):
-        swmmflo_sql = ['''INSERT INTO swmmflo (geom, swmm_jt, intype, swmm_length,
-                                               swmm_width, swmm_height, swmm_coeff, flapgate) VALUES''', 8]
+        swmmflo_sql = ['''INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
+                                               swmm_width, swmm_height, swmm_coeff, flapgate, curbheight) VALUES''', 11]
 
         self.clear_tables('swmmflo')
         data = self.parser.parse_swmmflo()
-        gids = (x[0] for x in data)
-        cells = self.grid_centroids(gids)
+        gids = (x[1] for x in data)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
-            gid = row[0]
-            geom = self.build_square(cells[gid], self.shrink)
+            gid = row[1]
+            geom = cells[gid]
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflort(self):
-        swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid) VALUES''', 1]
+        swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid, name) VALUES''', 2]
         data_sql = ['''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES''', 3]
 
         self.clear_tables('swmmflort', 'swmmflort_data')
         data = self.parser.parse_swmmflort()
         for i, row in enumerate(data, 1):
             gid, params = row
-            swmmflort_sql += [(gid,)]
+            name = 'Rating Table {}'.format(i)
+            swmmflort_sql += [(gid, name)]
             for n in params:
                 data_sql += [(i,) + tuple(n)]
 
@@ -672,10 +676,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables('swmmoutf')
         data = self.parser.parse_swmmoutf()
         gids = (x[1] for x in data)
-        cells = self.grid_centroids(gids)
+        cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[1]
-            geom = self.build_square(cells[gid], self.shrink)
+            geom = cells[gid]
             swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)
@@ -1455,10 +1459,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # check if there is any SWMM data defined
         if self.is_table_empty('swmmflo'):
             return
-        swmmflo_sql = '''SELECT swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate
+        swmmflo_sql = '''SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate, curbheight
                          FROM swmmflo ORDER BY fid;'''
 
-        line1 = 'D  {0} {1} {2} {3} {4} {5} {6}\n'
+        line1 = '{0}  {1} {2} {3} {4} {5} {6} {7}\n'
 
         swmmflo_rows = self.execute(swmmflo_sql).fetchall()
         if not swmmflo_rows:

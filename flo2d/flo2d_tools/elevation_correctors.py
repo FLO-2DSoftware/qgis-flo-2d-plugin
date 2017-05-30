@@ -11,7 +11,7 @@
 from PyQt4.QtCore import QPyNullVariant, QVariant
 from qgis.core import QgsFeatureRequest, QgsField
 
-from grid_tools import TINInterpolator, poly2grid
+from grid_tools import TINInterpolator, poly2grid, poly2poly
 from schematic_tools import get_intervals, interpolate_along_line, polys2levees
 
 
@@ -60,10 +60,12 @@ class GridElevation(ElevationCorrector):
 
     def __init__(self, gutils, lyrs):
         super(GridElevation, self).__init__(gutils, lyrs)
+        self.blocked_areas = None
 
     def setup_layers(self):
         self.points = self.lyrs.data['user_elevation_points']['qlyr']
         self.polygons = self.lyrs.data['user_elevation_polygons']['qlyr']
+        self.blocked_areas = self.lyrs.data['blocked_areas']['qlyr']
         self.schematic = self.lyrs.data['grid']['qlyr']
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
 
@@ -100,6 +102,29 @@ class GridElevation(ElevationCorrector):
             cur.execute(qry, (round(value, 3), feat.id()))
         self.gutils.con.commit()
         self.remove_virtual_sum(self.points)
+
+    def elevation_within_arf(self, calculation_type):
+        if calculation_type == 'Mean':
+            def calculation_method(vals, weights): return sum(v * w for v, w in zip(vals, weights)) / sum(weights)
+        elif calculation_type == 'Max':
+            def calculation_method(vals, weights): return max(vals)
+        elif calculation_type == 'Min':
+            def calculation_method(vals, weights): return min(vals)
+        else:
+            raise ValueError
+        cur = self.gutils.con.cursor()
+        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
+        for fid, parts in poly2poly(self.blocked_areas, self.schematic, request, 'fid', 'elevation'):
+            gids, elevs, subareas = [], [], []
+            for gid, elev, area in parts:
+                gids.append(gid)
+                elevs.append(elev)
+                subareas.append(area)
+            elevation = round(calculation_method(elevs, subareas), 3)
+            for g in gids:
+                cur.execute(qry, (elevation, g))
+        self.gutils.con.commit()
 
 
 class LeveesElevation(ElevationCorrector):
