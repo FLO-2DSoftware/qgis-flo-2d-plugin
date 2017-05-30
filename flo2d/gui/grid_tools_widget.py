@@ -70,7 +70,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             - cont table
             - ask user
         """
-        bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
+        bl = self.lyrs.get_layer_by_name('Computational Domain', group=self.lyrs.group).layer()
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
@@ -87,7 +87,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
             return cs
         else:
-            r, ok = QInputDialog.getDouble(None, "Grid Cell Size", "Enter grid element cell size",
+            r, ok = QInputDialog.getDouble(None, 'Grid Cell Size', 'Enter grid element cell size',
                                            value=100, min=0.1, max=99999)
             if ok:
                 cs = r
@@ -97,10 +97,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def create_grid(self):
-        if not self.lyrs.save_edits_and_proceed("Computational Domain"):
+        if not self.lyrs.save_edits_and_proceed('Computational Domain'):
             return
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
+            self.uc.bar_warn('There is no Computational Domain! Please digitize it before running tool.')
             return
         if self.gutils.count('user_model_boundary') > 1:
             warn = 'There are multiple features created on Computational Domain layer.\n'
@@ -114,27 +114,27 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             self.uc.progress_bar('Creating grid...')
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            bl = self.lyrs.get_layer_by_name("Computational Domain", group=self.lyrs.group).layer()
+            bl = self.lyrs.get_layer_by_name('Computational Domain', group=self.lyrs.group).layer()
             square_grid(self.gutils, bl)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
             self.uc.clear_bar_messages()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Grid created!")
+            self.uc.show_info('Grid created!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("Creating grid aborted! Please check Computational Domain layer.")
+            self.uc.show_warn('Creating grid aborted! Please check Computational Domain layer.')
 
     @connection_required
     def raster_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
             return
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -152,12 +152,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Probing grid elevation failed! Please check your raster layer.")
+            self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
 
     @connection_required
     def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
@@ -186,23 +186,25 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             zs.set_elevation(null_elevation)
             zs.remove_rasters()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Calculating elevation finished!")
+            self.uc.show_info('Calculating elevation finished!')
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Calculating grid elevation aborted! Please check elevation points layer.")
+            self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
 
     @connection_required
     def correct_elevation(self):
-        if not self.lyrs.save_edits_and_proceed("Elevation Polygons"):
+        if not self.lyrs.save_edits_and_proceed('Elevation Polygons'):
             return
-        if self.gutils.is_table_empty('user_elevation_polygons'):
-            self.uc.bar_warn("There is no any elevation polygons! Please digitize them before running tool.")
+        if self.gutils.is_table_empty('user_elevation_polygons') and self.gutils.is_table_empty('blocked_areas'):
+            self.uc.bar_warn(
+                'There is no any elevation or blocked areas polygons! Please digitize them before running tool.'
+            )
             return
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
-        lyrs = ['Elevation Points', 'Elevation Polygons']
+        lyrs = ['Elevation Points', 'Elevation Polygons', 'Blocked areas']
         for lyr in lyrs:
             if not self.lyrs.save_edits_and_proceed(lyr):
                 return
@@ -212,7 +214,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if correct_dlg.methods:
                 pass
             else:
-                self.uc.show_warn("Please choose at least one elevation source!")
+                self.uc.show_warn('Please choose at least one elevation source!')
                 return
         else:
             return
@@ -221,18 +223,18 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             for no in sorted(correct_dlg.methods):
                 correct_dlg.methods[no]()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning grid elevation finished!")
+            self.uc.show_info('Assigning grid elevation finished!')
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning grid elevation aborted! Please check elevation polygons layer.")
+            self.uc.show_warn('Assigning grid elevation aborted! Please check your correction polygon layers.')
 
     @connection_required
     def get_roughness(self):
-        if not self.lyrs.save_edits_and_proceed("Roughness"):
+        if not self.lyrs.save_edits_and_proceed('Roughness'):
             return
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
         mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = mann_dlg.exec_()
@@ -250,20 +252,20 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             nfield = 'n'
             flag = False
             if self.gutils.is_table_empty('user_roughness'):
-                self.uc.show_warn("There is no roughness polygons! Please digitize them before running tool.")
+                self.uc.show_warn('There is no roughness polygons! Please digitize them before running tool.')
                 return
             else:
                 pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Assigning roughness finished!")
+            self.uc.show_info('Assigning roughness finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("Assigning roughness aborted! Please check roughness layer.")
+            self.uc.show_warn('Assigning roughness aborted! Please check roughness layer.')
 
     @connection_required
     def eval_arfwrf(self):
@@ -278,17 +280,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             q += 'Please, note that the new reduction factors will be evaluated for existing blocked ares ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed("Blocked areas"):
+        if not self.lyrs.save_edits_and_proceed('Blocked areas'):
             return
         if self.gutils.is_table_empty('blocked_areas'):
-            self.uc.bar_warn("There is no any blocking polygons! Please digitize them before running tool.")
+            self.uc.bar_warn('There is no any blocking polygons! Please digitize them before running tool.')
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            user_arf_lyr = self.lyrs.get_layer_by_name("Blocked areas", group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
+            user_arf_lyr = self.lyrs.get_layer_by_name('Blocked areas', group=self.lyrs.group).layer()
             evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-            arf_lyr = self.lyrs.get_layer_by_name("ARF_WRF", group=self.lyrs.group).layer()
+            arf_lyr = self.lyrs.get_layer_by_name('ARF_WRF', group=self.lyrs.group).layer()
             arf_lyr.reload()
             self.lyrs.update_layer_extents(arf_lyr)
 
@@ -296,9 +298,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.iface.mapCanvas().clearCache()
             user_arf_lyr.triggerRepaint()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ARF and WRF values calculated!")
+            self.uc.show_info('ARF and WRF values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Evaluation of ARFs and WRFs failed! Please check your blocked areas user layer.")
+            self.uc.show_warn('Evaluation of ARFs and WRFs failed! Please check your blocked areas user layer.')
             QApplication.restoreOverrideCursor()
-

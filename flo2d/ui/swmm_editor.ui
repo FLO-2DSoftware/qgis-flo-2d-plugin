@@ -242,7 +242,11 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="6" column="3">
-       <widget class="QDoubleSpinBox" name="spin_swmm_coeff"/>
+       <widget class="QDoubleSpinBox" name="spin_swmm_coeff">
+        <property name="maximum">
+         <double>3.300000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_5">
