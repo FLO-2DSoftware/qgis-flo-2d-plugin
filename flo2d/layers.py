@@ -180,28 +180,7 @@ class Layers(QObject):
                 'readonly': False,
                 'attrs_defaults': {'calc_arf': '1', 'calc_wrf': '1'}  #
             }),
-            ('mult_areas', {
-                'name': 'Multiple Channel Areas',
-                'sgroup': 'User Layers',
-                'styles': ['mult_areas.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_arf_areas', {
-                'name': 'Rain ARF Areas',
-                'sgroup': 'User Layers',
-                'styles': ['rain_arf_areas.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('tolspatial', {
-                'name': 'Tolerance Areas',
-                'sgroup': 'User Layers',
-                'styles': ['tolspatial.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
+
             ('user_infiltration', {
                 'name': 'Infiltration Areas',
                 'sgroup': 'User Layers',
@@ -328,15 +307,35 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': 'Schematic Layers',
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': 'Schematic Layers',
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('tolspatial', {
+                'name': 'Tolerance Areas',
+                'sgroup': 'Schematic Layers',
+                'styles': ['tolspatial.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
             ('fpfroude', {
                 'name': 'Froude numbers for grid elems',
-                'sgroup': 'User Layers',
+                'sgroup': 'Schematic Layers',
                 'styles': ['fpfroude.qml'],
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-
             ('sed_supply_areas', {
                 'name': 'Supply Areas',
                 'sgroup': 'Sediment Transport',

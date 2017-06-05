@@ -9,9 +9,10 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import QPyNullVariant, QVariant
-from qgis.core import QgsFeatureRequest, QgsField
-
-from grid_tools import TINInterpolator, poly2grid, poly2poly
+from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry
+from qgis.analysis import QgsZonalStatistics
+from collections import defaultdict
+from grid_tools import TINInterpolator, poly2grid, poly2poly, polygons_statistics
 from schematic_tools import get_intervals, interpolate_along_line, polys2levees
 
 
@@ -74,7 +75,7 @@ class GridElevation(ElevationCorrector):
         add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
         set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
         cur = self.gutils.con.cursor()
-        for el, cor, fid in poly2grid(self.schematic, self.polygons, None, self.ELEVATION_FIELD, self.CORRECTION_FIELD):
+        for el, cor, fid in poly2grid(self.schematic, self.polygons, None, True, self.ELEVATION_FIELD, self.CORRECTION_FIELD):
             if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
                 cur.execute(set_qry, (el, fid))
             elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
@@ -89,7 +90,7 @@ class GridElevation(ElevationCorrector):
         self.add_virtual_sum(self.points)
         self.tin = TINInterpolator(self.points, self.VIRTUAL_SUM)
         self.tin.setup_layer_data()
-        grid_fids = [val[0] for val in poly2grid(self.schematic, self.polygons, None)]
+        grid_fids = [val[0] for val in poly2grid(self.schematic, self.polygons, None, True)]
         cur = self.gutils.con.cursor()
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
@@ -105,11 +106,11 @@ class GridElevation(ElevationCorrector):
 
     def elevation_within_arf(self, calculation_type):
         if calculation_type == 'Mean':
-            def calculation_method(vals, weights): return sum(v * w for v, w in zip(vals, weights)) / sum(weights)
+            def calculation_method(vals): return sum(vals) / len(vals)
         elif calculation_type == 'Max':
-            def calculation_method(vals, weights): return max(vals)
+            def calculation_method(vals): return max(vals)
         elif calculation_type == 'Min':
-            def calculation_method(vals, weights): return min(vals)
+            def calculation_method(vals): return min(vals)
         else:
             raise ValueError
         cur = self.gutils.con.cursor()
@@ -118,10 +119,11 @@ class GridElevation(ElevationCorrector):
         for fid, parts in poly2poly(self.blocked_areas, self.schematic, request, 'fid', 'elevation'):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
+                if area < 1:
+                    continue
                 gids.append(gid)
                 elevs.append(elev)
-                subareas.append(area)
-            elevation = round(calculation_method(elevs, subareas), 3)
+            elevation = round(calculation_method(elevs), 3)
             for g in gids:
                 cur.execute(qry, (elevation, g))
         self.gutils.con.commit()
@@ -185,3 +187,139 @@ class LeveesElevation(ElevationCorrector):
             for elev, fid in poly_values:
                 cur.execute(qry, (round(elev, 3), fid))
         self.gutils.con.commit()
+
+
+class ExternalLayerElevation(object):
+
+    def __init__(self, gutils, lyrs):
+        self.gutils = gutils
+        self.lyrs = lyrs
+
+        self.grid = None
+        self.user_polygons = None
+        self.only_centroids = None
+
+        self.polygons = None
+        self.elevation_field = None
+        self.correction_field = None
+
+        self.statistics = None
+        self.raster = None
+
+        self.only_selected = None
+        self.copy_features = None
+        self.request = None
+
+    def setup_internal(self):
+        self.grid = self.lyrs.data['grid']['qlyr']
+        self.user_polygons = self.lyrs.data['user_elevation_polygons']['qlyr']
+
+    def setup_external(self, polygon_lyr, predicate, only_selected=False, copy_features=False):
+        self.polygons = polygon_lyr
+        self.only_centroids = True if predicate == 'centroids within polygons' else False
+        self.only_selected = only_selected
+        if self.only_selected is True:
+            self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeaturesIds())
+        self.copy_features = copy_features
+
+    def setup_attributes(self, elevation, correction):
+        self.elevation_field = elevation
+        self.correction_field = correction
+
+    def setup_statistics(self, statistics, raster=None):
+        self.statistics = statistics
+        self.raster = raster
+
+    def copy_features(self, fids_values):
+        copy_request = QgsFeatureRequest().setFilterFids(fids_values.keys())
+        fields = self.user_polygons.fields()
+        self.user_polygons.startEditting()
+        for feat in self.polygons.getFeatures(copy_request):
+            values = fids_values[feat['fid']]
+            new_feat = QgsFeature()
+            new_feat.setFields(fields)
+            poly_geom = feat.geometry().asPolygon()
+            new_geom = QgsGeometry.fromPolygon(poly_geom)
+            new_feat.setGeometry(new_geom)
+            for key, val in values:
+                new_feat.setAttribute(key, val)
+            new_feat.setAttribute('membership', 'grid')
+            self.user_polygons.addFeature(new_feat)
+        self.user_polygons.commitChanges()
+        self.user_polygons.updateExtents()
+        self.user_polygons.triggerRepaint()
+        self.user_polygons.removeSelection()
+
+    def elevation_attributes(self):
+        set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
+        set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
+        cur = self.gutils.con.cursor()
+        grid_gen = poly2grid(
+            self.grid,
+            self.polygons,
+            self.request,
+            self.only_centroids,
+            'fid',
+            self.elevation_field,
+            self.correction_field)
+        fids = {}
+        for fid, el, cor, gid in grid_gen:
+            fids[fid] = {'elev': el, 'correction': cor}
+            if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+                cur.execute(set_qry, (el, gid))
+            elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                cur.execute(add_qry, (cor, gid))
+            elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                cur.execute(set_add_qry, (el, cor, gid))
+            else:
+                pass
+        self.gutils.con.commit()
+        if self.copy_features is True:
+            self.copy_features(fids)
+
+    def elevation_grid_statistics(self):
+        if self.statistics == 'Mean':
+            def calculation_method(vals): return sum(vals) / len(vals)
+        elif self.statistics == 'Max':
+            def calculation_method(vals): return max(vals)
+        elif self.statistics == 'Min':
+            def calculation_method(vals): return min(vals)
+        else:
+            raise ValueError
+        cur = self.gutils.con.cursor()
+        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, 'fid')
+        fids_grids = defaultdict(list)
+        fids_elevs = {}
+        for fid, gid in grid_gen:
+            fids_grids[fid].append(gid)
+        for fid, grids_fids in fids_grids.items():
+            grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
+            elevs = []
+            for grid_feat in self.grid.getFeatures(grid_request):
+                elevs.append(grid_feat['elevation'])
+            elevation = round(calculation_method(elevs), 3)
+            fids_elevs[fid] = {'elev': elevation}
+            for g in grids_fids:
+                cur.execute(qry, (elevation, g))
+        self.gutils.con.commit()
+        if self.copy_features is True:
+            self.copy_features(fids_elevs)
+
+    def elevation_raster_statistics(self):
+        if self.statistics == 'Mean':
+            stats = QgsZonalStatistics.Mean
+        elif self.statistics == 'Max':
+            stats = QgsZonalStatistics.Max
+        elif self.statistics == 'Min':
+            stats = QgsZonalStatistics.Min
+        else:
+            raise ValueError
+        polygons_statistics(self.polygons, self.raster, stats)
+        self.elevation_field = self.statistics.lower()
+        self.correction_field = None
+        self.elevation_attributes()
+        stat_fld_idx = self.polygons.fieldNameIndex(self.elevation_field)
+        self.polygons.dataProvider().deleteAttributes([stat_fld_idx])
+        self.polygons.updateFields()

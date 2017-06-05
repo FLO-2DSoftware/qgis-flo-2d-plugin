@@ -410,7 +410,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         try:
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
-            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, *columns))
+            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, *columns))
             self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan')
             cur = self.con.cursor()
             if imethod == 1 or imethod == 3:

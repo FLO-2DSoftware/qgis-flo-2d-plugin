@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>385</width>
-    <height>206</height>
+    <width>444</width>
+    <height>538</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,78 +20,7 @@
    <string>Correct grid elevation</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QGroupBox" name="elev_src_frame">
-     <property name="title">
-      <string>Grid elevation source</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <property name="margin">
-       <number>6</number>
-      </property>
-      <item row="4" column="0">
-       <widget class="QCheckBox" name="elev_arf_chbox">
-        <property name="text">
-         <string>Grid statistics within blocked areas</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QComboBox" name="stats_cbx">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>Mean</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Max</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Min</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="elev_polygons_chbox">
-        <property name="text">
-         <string>Elevation polygons</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Statistic type:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="elev_tin_chbox">
-        <property name="text">
-         <string>TIN (based on elevation points and polygons)</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="6" column="0">
+   <item row="5" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -102,7 +31,7 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <spacer name="verticalSpacer">
+    <spacer name="verticalSpacer_4">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -113,6 +42,325 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="0" column="0">
+    <widget class="QTabWidget" name="correction_tab">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="user_tab">
+      <attribute name="title">
+       <string>User Layers Mode</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_6">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="user_grp">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Correction options</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="elev_tin_chbox">
+            <property name="text">
+             <string>TIN (based on elevation points and polygons)</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="elev_polygons_chbox">
+            <property name="text">
+             <string>Elevation polygons</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="elev_arf_chbox">
+            <property name="text">
+             <string>Grid statistics within blocked areas</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Statistics type:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QComboBox" name="stats_cbx">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <item>
+             <property name="text">
+              <string>Mean</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Max</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Min</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="external_tab">
+      <attribute name="title">
+       <string>External Layers Mode</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_7">
+       <item row="2" column="0">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="external_grp">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Correction options</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="10" column="0" colspan="2">
+           <widget class="QGroupBox" name="stats_grp">
+            <property name="title">
+             <string>Statistics within polygons</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_5">
+             <item row="2" column="2">
+              <widget class="QComboBox" name="raster_cbo">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QComboBox" name="estats_cbo">
+               <item>
+                <property name="text">
+                 <string>Mean</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Min</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Max</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="raster_chbox">
+               <property name="text">
+                <string>From raster layer</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Statistics type</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QCheckBox" name="grid_chbox">
+               <property name="text">
+                <string>From grid layer</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Polygon layer</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="vector_cbo"/>
+          </item>
+          <item row="11" column="0">
+           <widget class="QCheckBox" name="selected_chbox">
+            <property name="text">
+             <string>Use only selected features</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <spacer name="verticalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="9" column="0" colspan="2">
+           <widget class="QGroupBox" name="fields_grp">
+            <property name="sizeIncrement">
+             <size>
+              <width>0</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="title">
+             <string>Elevation from attributes</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="1">
+              <widget class="QComboBox" name="elev_cbo"/>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Elevation field</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Correction field</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="correction_cbo"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="12" column="0">
+           <widget class="QCheckBox" name="copy_chbox">
+            <property name="text">
+             <string>Copy features to Elevation Polygons layer</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="predicate_cbo">
+            <item>
+             <property name="text">
+              <string>grids within polygons</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>centroids within polygons</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Geometric predicate</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>

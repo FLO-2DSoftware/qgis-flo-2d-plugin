@@ -14,7 +14,7 @@ import uuid
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
-from qgis.analysis import QgsInterpolator, QgsTINInterpolator
+from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
 from PyQt4.QtCore import QPyNullVariant
 from flo2d.utils import is_number
 
@@ -161,6 +161,12 @@ class ZonalStatistics(object):
         self.gutils.con.commit()
 
 
+def polygons_statistics(vlayer, rlayer, *statistics):
+    rlayer_src = rlayer.source()
+    zonalstats = QgsZonalStatistics(vlayer, rlayer_src, *statistics)
+    zonalstats.calculateStatistics(None)
+
+
 # GRID functions
 def spatial_index(features):
     """
@@ -169,6 +175,19 @@ def spatial_index(features):
     allfeatures = {}
     index = QgsSpatialIndex()
     for feat in features:
+        allfeatures[feat.id()] = feat
+        index.insertFeature(feat)
+    return allfeatures, index
+
+
+def spatial_centroids_index(features):
+    """
+    Creating spatial index over collection of features centroids.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    for feat in features:
+        feat.setGeometry(feat.geometry().centroid())
         allfeatures[feat.id()] = feat
         index.insertFeature(feat)
     return allfeatures, index
@@ -212,16 +231,12 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, request, *columns):
+def poly2grid(grid, polygons, request, use_centroids, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
-    allfeatures = {}
-    index = QgsSpatialIndex()
-    for feature in grid.getFeatures():
-        feature.setGeometry(feature.geometry().centroid())
-        allfeatures[feature.id()] = feature
-        index.insertFeature(feature)
+    grid_feats = grid.getFeatures()
+    allfeatures, index = spatial_centroids_index(grid_feats) if use_centroids is True else spatial_index(grid_feats)
 
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
     for feat in polygon_features:
@@ -231,12 +246,19 @@ def poly2grid(grid, polygons, request, *columns):
         for fid in index.intersects(geom.boundingBox()):
             grid_feat = allfeatures[fid]
             other_geom = grid_feat.geometry()
-            isin = geos_geom.intersects(other_geom.geometry())
-            if isin is True:
-                values = tuple(feat[col] for col in columns) + (grid_feat.id(),)
-                yield values
-            else:
-                pass
+            isin = geos_geom.contains(other_geom.geometry())
+            if isin is not True:
+                continue
+            values = []
+            for col in columns:
+                try:
+                    val = feat[col]
+                except KeyError:
+                    val = None
+                values.append(val)
+            values.append(grid_feat.id())
+            values = tuple(values)
+            yield values
 
 
 def poly2poly(base_polygons, polygons, request, *columns):
@@ -409,7 +431,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, column_name))
     gutils.con.commit()
 
 
@@ -420,7 +442,7 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-    for el, cor, fid in poly2grid(grid, elev, None, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, True, 'elev', 'correction'):
         if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
             gutils.con.execute(set_qry, (el, fid))
         elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
