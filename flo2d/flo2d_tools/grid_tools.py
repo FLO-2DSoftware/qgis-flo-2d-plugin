@@ -62,7 +62,7 @@ class ZonalStatistics(object):
         self.setup_probing()
 
     def setup_probing(self):
-        self.points_feats, self.points_index = spatial_index(self.points.getFeatures())
+        self.points_feats, self.points_index = spatial_index(self.points)
         if self.calculation_type == 'Mean':
             self.calculation_method = lambda vals: sum(vals) / len(vals)
         elif self.calculation_type == 'Max':
@@ -161,35 +161,38 @@ class ZonalStatistics(object):
         self.gutils.con.commit()
 
 
-def polygons_statistics(vlayer, rlayer, *statistics):
+def polygons_statistics(vlayer, rlayer, statistics):
     rlayer_src = rlayer.source()
-    zonalstats = QgsZonalStatistics(vlayer, rlayer_src, *statistics)
-    zonalstats.calculateStatistics(None)
+    zonalstats = QgsZonalStatistics(vlayer, rlayer_src, '', 1, statistics)
+    res = zonalstats.calculateStatistics(None)
+    return res
 
 
 # GRID functions
-def spatial_index(features):
+def spatial_index(vlayer):
     """
     Creating spatial index over collection of features.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    for feat in features:
-        allfeatures[feat.id()] = feat
-        index.insertFeature(feat)
+    for feat in vlayer.getFeatures():
+        feat_copy = QgsFeature(feat)
+        allfeatures[feat.id()] = feat_copy
+        index.insertFeature(feat_copy)
     return allfeatures, index
 
 
-def spatial_centroids_index(features):
+def spatial_centroids_index(vlayer):
     """
     Creating spatial index over collection of features centroids.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    for feat in features:
-        feat.setGeometry(feat.geometry().centroid())
-        allfeatures[feat.id()] = feat
-        index.insertFeature(feat)
+    for feat in vlayer.getFeatures():
+        feat_copy = QgsFeature(feat)
+        feat_copy.setGeometry(feat_copy.geometry().centroid())
+        allfeatures[feat.id()] = feat_copy
+        index.insertFeature(feat_copy)
     return allfeatures, index
 
 
@@ -235,8 +238,7 @@ def poly2grid(grid, polygons, request, use_centroids, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
-    grid_feats = grid.getFeatures()
-    allfeatures, index = spatial_centroids_index(grid_feats) if use_centroids is True else spatial_index(grid_feats)
+    allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
 
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
     for feat in polygon_features:
@@ -254,7 +256,7 @@ def poly2grid(grid, polygons, request, use_centroids, *columns):
                 try:
                     val = feat[col]
                 except KeyError:
-                    val = None
+                    val = QPyNullVariant(float)
                 values.append(val)
             values.append(grid_feat.id())
             values = tuple(values)
@@ -265,8 +267,7 @@ def poly2poly(base_polygons, polygons, request, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
     """
-    poly_feats = polygons.getFeatures()
-    allfeatures, index = spatial_index(poly_feats)
+    allfeatures, index = spatial_index(polygons)
 
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
@@ -341,8 +342,7 @@ def calculate_arfwrf(grid, areas):
         (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     )
-    area_feats = areas.getFeatures()
-    allfeatures, index = spatial_index(area_feats)
+    allfeatures, index = spatial_index(areas)
     features = grid.getFeatures()
     first = next(features)
     grid_area = first.geometry().area()
