@@ -234,7 +234,7 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, request, use_centroids, *columns):
+def poly2grid(grid, polygons, request, use_centroids, get_fid, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
@@ -242,23 +242,24 @@ def poly2grid(grid, polygons, request, use_centroids, *columns):
 
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
     for feat in polygon_features:
+        fid = feat.id()
         geom = feat.geometry()
         geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
         geos_geom.prepareGeometry()
-        for fid in index.intersects(geom.boundingBox()):
-            grid_feat = allfeatures[fid]
+        for gid in index.intersects(geom.boundingBox()):
+            grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
             isin = geos_geom.contains(other_geom.geometry())
             if isin is not True:
                 continue
-            values = []
+            values = [fid] if get_fid is True else []
             for col in columns:
                 try:
                     val = feat[col]
                 except KeyError:
                     val = QPyNullVariant(float)
                 values.append(val)
-            values.append(grid_feat.id())
+            values.append(gid)
             values = tuple(values)
             yield values
 
@@ -276,7 +277,7 @@ def poly2poly(base_polygons, polygons, request, *columns):
         fids = index.intersects(base_geom.boundingBox())
         if not fids:
             continue
-        base_fid = feat['fid']
+        base_fid = feat.id()
         base_parts = []
         for fid in fids:
             f = allfeatures[fid]
@@ -431,7 +432,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, column_name))
     gutils.con.commit()
 
 
@@ -442,7 +443,7 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-    for el, cor, fid in poly2grid(grid, elev, None, True, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, True, False, 'elev', 'correction'):
         if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
             gutils.con.execute(set_qry, (el, fid))
         elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):

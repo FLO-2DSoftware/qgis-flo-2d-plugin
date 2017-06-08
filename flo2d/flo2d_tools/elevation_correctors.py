@@ -165,22 +165,29 @@ class GridElevation(ElevationCorrector):
         add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
         set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
         cur = self.gutils.con.cursor()
-        for el, cor, fid in poly2grid(self.grid, self.user_polygons, None, True, self.ELEVATION_FIELD, self.CORRECTION_FIELD):
-            if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+        for el, cor, fid in poly2grid(self.grid, self.user_polygons, None, True, False, self.ELEVATION_FIELD, self.CORRECTION_FIELD):
+
+            el_null = isinstance(el, QPyNullVariant)
+            cor_null = isinstance(cor, QPyNullVariant)
+            if not el_null:
+                el = round(el, 3)
+            if not cor_null:
+                cor = round(cor, 3)
+
+            if not el_null and cor_null:
                 cur.execute(set_qry, (el, fid))
-            elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif el_null and not cor_null:
                 cur.execute(add_qry, (cor, fid))
-            elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif not el_null and not cor_null:
                 cur.execute(set_add_qry, (el, cor, fid))
-            else:
-                pass
+
         self.gutils.con.commit()
 
     def elevation_from_tin(self):
         self.add_virtual_sum(self.user_points)
         self.tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         self.tin.setup_layer_data()
-        grid_fids = [val[0] for val in poly2grid(self.grid, self.user_polygons, None, True)]
+        grid_fids = [val[0] for val in poly2grid(self.grid, self.user_polygons, None, True, True)]
         cur = self.gutils.con.cursor()
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
@@ -261,7 +268,7 @@ class ExternalElevation(ElevationCorrector):
         fields = self.user_polygons.fields()
         self.user_polygons.startEditing()
         for feat in self.polygons.getFeatures(copy_request):
-            values = fids_values[feat['fid']]
+            values = fids_values[feat.id()]
             new_feat = QgsFeature()
             new_feat.setFields(fields)
             poly_geom = feat.geometry().asPolygon()
@@ -280,30 +287,37 @@ class ExternalElevation(ElevationCorrector):
         set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
         add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
         set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-        poly_gen = poly2grid(self.grid,
-                             self.polygons,
-                             self.request,
-                             self.only_centroids,
-                             'fid',
-                             self.elevation_field,
-                             self.correction_field)
+        poly_list = poly2grid(self.grid,
+                              self.polygons,
+                              self.request,
+                              self.only_centroids,
+                              True,
+                              self.elevation_field,
+                              self.correction_field)
         fids = {}
         qry_values = []
-        for fid, el, cor, gid in poly_gen:
-            fids[fid] = {'elev': el, 'correction': cor}
-            if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+        for fid, el, cor, gid in poly_list:
+
+            el_null = isinstance(el, QPyNullVariant)
+            cor_null = isinstance(cor, QPyNullVariant)
+            if not el_null:
+                el = round(el, 3)
+            if not cor_null:
+                cor = round(cor, 3)
+
+            if not el_null and cor_null:
                 qry_values.append((set_qry, (el, gid)))
-            elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif el_null and not cor_null:
                 qry_values.append((add_qry, (cor, gid)))
-            elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif not el_null and not cor_null:
                 qry_values.append((set_add_qry, (el, cor, gid)))
-            else:
-                pass
+
+            fids[fid] = {'elev': el, 'correction': cor}
+
         cur = self.gutils.con.cursor()
         for qry, vals in qry_values:
             cur.execute(qry, vals)
         self.gutils.con.commit()
-        self.grid.triggerRepaint()
         if self.copy_features is True:
             self.import_features(fids)
 
@@ -318,7 +332,7 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, 'fid')
+        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True)
         fids_grids = defaultdict(list)
         fids_elevs = {}
         for fid, gid in grid_gen:
@@ -351,5 +365,6 @@ class ExternalElevation(ElevationCorrector):
         polygons_statistics(self.polygons, self.raster, stats)
         self.elevation_field = self.statistics.lower()
         self.correction_field = None
+        self.request = None
         self.elevation_attributes()
         QgsMapLayerRegistry.instance().removeMapLayer(self.polygons)
