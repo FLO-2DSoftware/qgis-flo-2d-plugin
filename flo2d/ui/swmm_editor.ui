@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>388</width>
-    <height>498</height>
+    <height>467</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -127,6 +127,19 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="10">
+      <widget class="QPushButton" name="import_inp">
+       <property name="minimumSize">
+        <size>
+         <width>130</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Import SWMM input file</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="4">
       <widget class="QToolButton" name="delete_btn">
        <property name="toolTip">
@@ -147,29 +160,19 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="9">
+     <item row="1" column="10">
       <widget class="QToolButton" name="update_inp">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>130</width>
          <height>25</height>
         </size>
        </property>
-       <property name="text">
-        <string>Update INP file</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="10">
-      <widget class="QPushButton" name="import_inp">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>25</height>
-        </size>
+       <property name="focusPolicy">
+        <enum>Qt::StrongFocus</enum>
        </property>
        <property name="text">
-        <string>Import INP file</string>
+        <string>Update SWMM input file</string>
        </property>
       </widget>
      </item>
