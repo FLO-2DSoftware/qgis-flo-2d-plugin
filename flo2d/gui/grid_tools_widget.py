@@ -194,13 +194,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def correct_elevation(self):
-        # if not self.lyrs.save_edits_and_proceed('Elevation Polygons'):
-        #     return
-        # if self.gutils.is_table_empty('user_elevation_polygons') and self.gutils.is_table_empty('blocked_areas'):
-        #     self.uc.bar_warn(
-        #         'There is no any elevation or blocked areas polygons! Please digitize them before running tool.'
-        #     )
-        #     return
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return

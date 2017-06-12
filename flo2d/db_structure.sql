@@ -2331,6 +2331,8 @@ CREATE TABLE "user_swmm" (
     "swmm_coeff" REAL DEFAULT 0,
     "flapgate" INTEGER DEFAULT 0,
     "curbheight" REAL DEFAULT 0,
+    "max_depth" REAL DEFAULT NULL,
+    "invert_elev" REAL DEFAULT NULL,
     "rt_fid" INTEGER,
     "outf_flo" INTEGER DEFAULT 0,
     "notes" TEXT
