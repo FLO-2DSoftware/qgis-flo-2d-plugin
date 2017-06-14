@@ -109,7 +109,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.ic_editor_lout.addWidget(self.ic_editor)
 
     def setup_rain_editor(self):
-        self.rain_editor = RainEditorWidget(self.iface, self.plot, self.table)
+        self.rain_editor = RainEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.rain_editor_lout.addWidget(self.rain_editor)
 
     def setup_street_editor(self):

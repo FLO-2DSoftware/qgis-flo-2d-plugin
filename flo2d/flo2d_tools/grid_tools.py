@@ -405,6 +405,34 @@ def raster2grid(grid, out_raster, request=None):
             yield (val, feat.id())
 
 
+def rasters2centroids(vlayer, request, *raster_paths):
+    """
+    Generator for probing raster data by centroids.
+    """
+    features = vlayer.getFeatures() if request is None else vlayer.getFeatures(request)
+    centroids = []
+    for feat in features:
+        fid = feat.id()
+        center_point = feat.geometry().centroid().asPoint()
+        centroids.append((fid, center_point))
+
+    for pth in raster_paths:
+        raster_values = []
+        rlayer = QgsRasterLayer(pth)
+        if not rlayer.isValid():
+            continue
+        raster_provider = rlayer.dataProvider()
+        for fid, point in centroids:
+            ident = raster_provider.identify(point, QgsRaster.IdentifyFormatValue)
+            if ident.isValid():
+                if is_number(ident.results()[1]):
+                    val = round(ident.results()[1], 3)
+                else:
+                    val = None
+                raster_values.append((val, fid))
+        yield raster_values
+
+
 # Tools which use GeoPackageUtils instance
 def square_grid(gutils, boundary):
     """

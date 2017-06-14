@@ -299,7 +299,6 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),
-
             ('reservoirs', {
                 'name': 'Reservoirs',
                 'sgroup': 'Schematic Layers',
@@ -612,6 +611,20 @@ class Layers(QObject):
             }),
             ('rain_arf_cells', {
                 'name': 'Rain ARF Cells',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('raincell', {
+                'name': 'Realtime Rainfall',
+                'sgroup': "Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('raincell_data', {
+                'name': 'Realtime Rainfall Data',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},

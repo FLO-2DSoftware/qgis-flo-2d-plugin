@@ -13,7 +13,7 @@ import traceback
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
-from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsFeatureRequest
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
@@ -450,7 +450,12 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            depth_dict = {f['name']: {'invert_elev': f['invert_elev'], 'max_depth': f['max_depth']} for f in self.swmm_lyr.getFeatures()}
+            if self.swmm_lyr.selectedFeaturesCount() > 0:
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                features = self.swmm_lyr.getFeatures(request)
+            else:
+                features = self.swmm_lyr.getFeatures()
+            depth_dict = {f['name']: {'invert_elev': f['invert_elev'], 'max_depth': f['max_depth']} for f in features}
             sdp = StormDrainProject(swmm_file)
             sdp.split_by_tags()
             sdp.update_junctions(depth_dict)
