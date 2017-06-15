@@ -12,12 +12,12 @@ import os
 import traceback
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, QColor
-from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsFeatureRequest
+from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_ie.swmm_import import StormDrainProject
+from flo2d.flo2d_ie.swmm_io import StormDrainProject
 from flo2d.flo2d_tools.schematic_conversion import remove_features
 from flo2d.flo2dobjects import Inlet
 from flo2d.utils import is_number, m_fdata
@@ -48,8 +48,11 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
         self.swmm_columns = [
             'sd_type', 'intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight',
-            'rt_fid', 'outf_flo'
+            'max_depth', 'invert_elev', 'rt_fid', 'outf_flo'
         ]
+
+        self.inlet_columns = ['intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight']
+        self.outlet_columns = ['outf_flo']
 
         self.inlet = None
         self.plot = plot
@@ -79,6 +82,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.change_name_btn.clicked.connect(lambda: self.rename_swmm())
         self.schema_btn.clicked.connect(lambda: self.schematize_swmm())
         self.import_inp.clicked.connect(lambda: self.import_swmm_input())
+        self.update_inp.clicked.connect(lambda: self.update_swmm_input())
+        self.recalculate_btn.clicked.connect(self.recalculate_max_depth)
         self.inlet_grp.toggled.connect(self.inlet_checked)
         self.outlet_grp.toggled.connect(self.outlet_checked)
 
@@ -220,7 +225,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             grp = self.outlet_grp
         else:
             return
-        for obj in grp.children():
+        for obj in self.flatten(grp):
             if isinstance(obj, QDoubleSpinBox):
                 obj_name = obj.objectName().split('_', 1)[-1]
                 val = swmm_dict[obj_name]
@@ -252,6 +257,15 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
+    def flatten(self, grp):
+        objects = []
+        for obj in grp.children():
+            if isinstance(obj, QGroupBox):
+                objects += self.flatten(obj)
+            else:
+                objects.append(obj)
+        return objects
+
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
         fid = swmm_dict['fid']
@@ -265,7 +279,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             grp = self.outlet_grp
         else:
             return
-        for obj in grp.children():
+        for obj in self.flatten(grp):
             obj_name = obj.objectName().split('_', 1)[-1]
             if isinstance(obj, QDoubleSpinBox):
                 swmm_dict[obj_name] = obj.value()
@@ -308,8 +322,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         (geom, grid_fid, name, outf_flo)
         VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
         qry_rt_update = '''UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;'''
-        inlet_columns = self.swmm_columns[1:8]
-        outlet_columns = self.swmm_columns[-1:]
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             inlets = []
@@ -326,10 +338,10 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                     intype = feat['intype']
                     if intype == 4 and rt_fid is not None:
                         rt_updates.append((grid_fid, rt_fid))
-                    row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in inlet_columns]
+                    row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
                     inlets.append(row)
                 elif sd_type == 'O':
-                    row = [grid_fid, grid_fid, name] + [feat[col] for col in outlet_columns]
+                    row = [grid_fid, grid_fid, name] + [feat[col] for col in self.outlet_columns]
                     outlets.append(row)
                 else:
                     raise ValueError
@@ -346,6 +358,23 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Schematizing of Storm Drains failed! Please check user Storm Drains Points layer.')
+
+    def recalculate_max_depth(self):
+        qry = 'SELECT elevation - ? FROM grid WHERE fid = ?;'
+        qry_update = 'UPDATE user_swmm SET max_depth=? WHERE fid=?;'
+        vals = {}
+        for feat in self.swmm_lyr.getFeatures():
+            invert_elev = feat['invert_elev']
+            geom = feat.geometry()
+            point = geom.asPoint()
+            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+            max_depth = self.gutils.execute(qry, (invert_elev, grid_fid)).fetchone()[0]
+            vals[feat['fid']] = max_depth
+        cur = self.gutils.con.cursor()
+        for k, v in vals.items():
+            cur.execute(qry_update, (v, k))
+        self.gutils.con.commit()
+        self.populate_swmm()
 
     def import_swmm_input(self):
         s = QSettings()
@@ -365,6 +394,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             sdp.find_coordinates()
             sdp.find_inlets()
             sdp.find_outlets()
+            sdp.find_junctions()
             remove_features(self.swmm_lyr)
             fields = self.swmm_lyr.fields()
             self.swmm_lyr.startEditing()
@@ -377,11 +407,15 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                     continue
                 feat = QgsFeature()
                 x, y = float(values['x']), float(values['y'])
+                max_depth = float(values['max_depth']) if 'max_depth' in values else None
+                invert_elev = float(values['invert_elev']) if 'invert_elev' in values else None
                 geom = QgsGeometry.fromPoint(QgsPoint(x, y))
                 feat.setGeometry(geom)
                 feat.setFields(fields)
                 feat.setAttribute('sd_type', sd_type)
                 feat.setAttribute('name', name)
+                feat.setAttribute('max_depth', max_depth)
+                feat.setAttribute('invert_elev', invert_elev)
                 self.swmm_lyr.addFeature(feat)
             self.swmm_lyr.commitChanges()
             self.swmm_lyr.updateExtents()
@@ -393,6 +427,36 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Importing SWMM input data failed! Please check your SWMM input data.')
+
+    def update_swmm_input(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        swmm_file = QFileDialog.getOpenFileName(
+            None,
+            'Select SWMM input file to update',
+            directory=last_dir,
+            filter='(*.inp *.INP*)')
+        if not swmm_file:
+            return
+        s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.swmm_lyr.selectedFeaturesCount() > 0:
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                features = self.swmm_lyr.getFeatures(request)
+            else:
+                features = self.swmm_lyr.getFeatures()
+            depth_dict = {f['name']: {'invert_elev': f['invert_elev'], 'max_depth': f['max_depth']} for f in features}
+            sdp = StormDrainProject(swmm_file)
+            sdp.split_by_tags()
+            sdp.update_junctions(depth_dict)
+            sdp.reassemble_inp()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Updating SWMM input data finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Updating SWMM input data failed! Please check Storm Drain data.')
 
     def block_saving(self):
         try_disconnect(self.inlet_data_model.dataChanged, self.save_rtables_data)

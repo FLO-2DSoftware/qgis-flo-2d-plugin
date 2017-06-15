@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
-from flo2d.flo2d_ie.ras_import import RASProject
+from flo2d.flo2d_ie.ras_io import RASProject
 from ui_utils import load_ui
 from flo2d.user_communication import UserCommunication
 from PyQt4.QtCore import QSettings

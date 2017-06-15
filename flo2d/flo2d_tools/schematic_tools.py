@@ -105,8 +105,8 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_
     """
     lgeom = line_feature.geometry()
     lid = line_feature[id_col]
-    polys = poly_lyr.getFeatures()
-    allfeatures, index = spatial_index(polys)
+    #polys = poly_lyr.getFeatures()
+    allfeatures, index = spatial_index(poly_lyr)
     fids = index.intersects(lgeom.boundingBox())
     sel_polys = [allfeatures[fid] for fid in fids if allfeatures[fid].geometry().intersects(lgeom)]
     for feat in levees_lyr.getFeatures():
@@ -575,7 +575,7 @@ class DomainSchematizer(GeoPackageUtils):
         """
         Setting features and spatial indexes.
         """
-        self.xsections_feats, self.xs_index = spatial_index(self.xsections_lyr.getFeatures())
+        self.xsections_feats, self.xs_index = spatial_index(self.xsections_lyr)
 
     def get_sorted_xs(self, line_feat):
         """

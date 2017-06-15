@@ -8,28 +8,31 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QInputDialog
+import os
+import traceback
+from PyQt4.QtCore import Qt, QSettings
+from PyQt4.QtGui import QColor, QIcon, QInputDialog, QFileDialog, QApplication
 from ui_utils import load_ui, try_disconnect
+from flo2d.flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from flo2d.utils import is_number, m_fdata
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from flo2d.flo2dobjects import Rain
 from flo2d.user_communication import UserCommunication
 from math import isnan
-import os
 
 uiDialog, qtBaseClass = load_ui('rain_editor')
 
 
 class RainEditorWidget(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, plot, table):
+    def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.con = None
         self.setupUi(self)
+        self.lyrs = lyrs
         self.plot = plot
         self.table = table
         self.tview = table.tview
@@ -68,6 +71,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def connect_signals(self):
+        self.asc_btn.clicked.connect(self.import_rainfall)
+        self.hdf_btn.clicked.connect(self.export_rainfall)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_chbox.stateChanged.connect(self.set_rain)
         self.real_time_chbox.stateChanged.connect(self.set_realtime)
@@ -97,6 +102,61 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.simulate_rain_chbox.setChecked(True)
         self.rain = Rain(self.con, self.iface)
         self.create_plot()
+
+    def import_rainfall(self):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastASC', '')
+        asc_dir = QFileDialog.getExistingDirectory(
+            None,
+            'Select directory with Rainfall ASCII grid files',
+            directory=last_dir)
+        if not asc_dir:
+            return
+        s.setValue('FLO-2D/lastASC', asc_dir)
+        try:
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            asc_processor = ASCProcessor(grid_lyr, asc_dir)
+            head_qry = 'INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);'
+            data_qry = 'INSERT INTO raincell_data (raincell_fid, time_interval, rrgrid, iraindum) VALUES (?,?,?,?);'
+            header = asc_processor.parse_rfc()
+            time_step = float(header[0])
+            self.gutils.execute(head_qry, header)
+            raincell_fid = self.gutils.get_max('raincell')
+            time_interval = 0
+            for rain_series in asc_processor.rainfall_sampling():
+                cur = self.gutils.con.cursor()
+                for val, gid in rain_series:
+                    cur.execute(data_qry, (raincell_fid, time_interval, gid, val))
+                self.gutils.con.commit()
+                time_interval += time_step
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Importing Rainfall Data finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Importing Rainfall Data failed! Please check your input data.')
+
+    def export_rainfall(self):
+        return
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastHDF', '')
+        hdf_file = QFileDialog.getOpenFileName(
+            None,
+            'Export Rainfall to HDF file',
+            directory=last_dir,
+            filter='(*.hdf5 *.HDF5*)')
+        if not hdf_file:
+            return
+        s.setValue('FLO-2D/lastHDF', os.path.dirname(hdf_file))
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Exporting Rainfall Data finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Exporting Rainfall Data failed! Please check your input data.')
 
     def create_plot(self):
         """

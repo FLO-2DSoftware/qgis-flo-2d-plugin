@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>385</width>
-    <height>214</height>
+    <height>199</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,11 +15,44 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <widget class="QCheckBox" name="simulate_rain_chbox">
-     <property name="text">
-      <string>Simulate rain</string>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="bottomMargin">
+      <number>0</number>
      </property>
-    </widget>
+     <item>
+      <widget class="QCheckBox" name="simulate_rain_chbox">
+       <property name="text">
+        <string>Simulate rain</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="asc_btn">
+       <property name="minimumSize">
+        <size>
+         <width>115</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Import Rainfall ASCII</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="hdf_btn">
+       <property name="minimumSize">
+        <size>
+         <width>115</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Export Rainfall HDF</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QFrame" name="rain_frame">

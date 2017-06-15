@@ -14,7 +14,7 @@ import uuid
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
-from qgis.analysis import QgsInterpolator, QgsTINInterpolator
+from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
 from PyQt4.QtCore import QPyNullVariant
 from flo2d.utils import is_number
 
@@ -62,7 +62,7 @@ class ZonalStatistics(object):
         self.setup_probing()
 
     def setup_probing(self):
-        self.points_feats, self.points_index = spatial_index(self.points.getFeatures())
+        self.points_feats, self.points_index = spatial_index(self.points)
         if self.calculation_type == 'Mean':
             self.calculation_method = lambda vals: sum(vals) / len(vals)
         elif self.calculation_type == 'Max':
@@ -161,16 +161,38 @@ class ZonalStatistics(object):
         self.gutils.con.commit()
 
 
+def polygons_statistics(vlayer, rlayer, statistics):
+    rlayer_src = rlayer.source()
+    zonalstats = QgsZonalStatistics(vlayer, rlayer_src, '', 1, statistics)
+    res = zonalstats.calculateStatistics(None)
+    return res
+
+
 # GRID functions
-def spatial_index(features):
+def spatial_index(vlayer):
     """
     Creating spatial index over collection of features.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    for feat in features:
-        allfeatures[feat.id()] = feat
-        index.insertFeature(feat)
+    for feat in vlayer.getFeatures():
+        feat_copy = QgsFeature(feat)
+        allfeatures[feat.id()] = feat_copy
+        index.insertFeature(feat_copy)
+    return allfeatures, index
+
+
+def spatial_centroids_index(vlayer):
+    """
+    Creating spatial index over collection of features centroids.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    for feat in vlayer.getFeatures():
+        feat_copy = QgsFeature(feat)
+        feat_copy.setGeometry(feat_copy.geometry().centroid())
+        allfeatures[feat.id()] = feat_copy
+        index.insertFeature(feat_copy)
     return allfeatures, index
 
 
@@ -212,39 +234,41 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, request, *columns):
+def poly2grid(grid, polygons, request, use_centroids, get_fid, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
-    allfeatures = {}
-    index = QgsSpatialIndex()
-    for feature in grid.getFeatures():
-        feature.setGeometry(feature.geometry().centroid())
-        allfeatures[feature.id()] = feature
-        index.insertFeature(feature)
+    allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
 
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
     for feat in polygon_features:
+        fid = feat.id()
         geom = feat.geometry()
         geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
         geos_geom.prepareGeometry()
-        for fid in index.intersects(geom.boundingBox()):
-            grid_feat = allfeatures[fid]
+        for gid in index.intersects(geom.boundingBox()):
+            grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            isin = geos_geom.intersects(other_geom.geometry())
-            if isin is True:
-                values = tuple(feat[col] for col in columns) + (grid_feat.id(),)
-                yield values
-            else:
-                pass
+            isin = geos_geom.contains(other_geom.geometry())
+            if isin is not True:
+                continue
+            values = [fid] if get_fid is True else []
+            for col in columns:
+                try:
+                    val = feat[col]
+                except KeyError:
+                    val = QPyNullVariant(float)
+                values.append(val)
+            values.append(gid)
+            values = tuple(values)
+            yield values
 
 
-def poly2poly(base_polygons, polygons, request, *columns):
+def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
     """
-    poly_feats = polygons.getFeatures()
-    allfeatures, index = spatial_index(poly_feats)
+    allfeatures, index = spatial_index(polygons)
 
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
@@ -253,7 +277,7 @@ def poly2poly(base_polygons, polygons, request, *columns):
         fids = index.intersects(base_geom.boundingBox())
         if not fids:
             continue
-        base_fid = feat['fid']
+        base_fid = feat.id()
         base_parts = []
         for fid in fids:
             f = allfeatures[fid]
@@ -262,7 +286,7 @@ def poly2poly(base_polygons, polygons, request, *columns):
             if inter is False:
                 continue
             intersection_geom = fgeom.intersection(base_geom)
-            subarea = intersection_geom.area() / base_area
+            subarea = intersection_geom.area() if area_percent is False else intersection_geom.area() / base_area
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)
         yield base_fid, base_parts
@@ -319,8 +343,7 @@ def calculate_arfwrf(grid, areas):
         (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
         (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
     )
-    area_feats = areas.getFeatures()
-    allfeatures, index = spatial_index(area_feats)
+    allfeatures, index = spatial_index(areas)
     features = grid.getFeatures()
     first = next(features)
     grid_area = first.geometry().area()
@@ -382,6 +405,34 @@ def raster2grid(grid, out_raster, request=None):
             yield (val, feat.id())
 
 
+def rasters2centroids(vlayer, request, *raster_paths):
+    """
+    Generator for probing raster data by centroids.
+    """
+    features = vlayer.getFeatures() if request is None else vlayer.getFeatures(request)
+    centroids = []
+    for feat in features:
+        fid = feat.id()
+        center_point = feat.geometry().centroid().asPoint()
+        centroids.append((fid, center_point))
+
+    for pth in raster_paths:
+        raster_values = []
+        rlayer = QgsRasterLayer(pth)
+        if not rlayer.isValid():
+            continue
+        raster_provider = rlayer.dataProvider()
+        for fid, point in centroids:
+            ident = raster_provider.identify(point, QgsRaster.IdentifyFormatValue)
+            if ident.isValid():
+                if is_number(ident.results()[1]):
+                    val = round(ident.results()[1], 3)
+                else:
+                    val = None
+                raster_values.append((val, fid))
+        yield raster_values
+
+
 # Tools which use GeoPackageUtils instance
 def square_grid(gutils, boundary):
     """
@@ -409,7 +460,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, column_name))
     gutils.con.commit()
 
 
@@ -420,7 +471,7 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-    for el, cor, fid in poly2grid(grid, elev, None, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, True, False, 'elev', 'correction'):
         if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
             gutils.con.execute(set_qry, (el, fid))
         elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):

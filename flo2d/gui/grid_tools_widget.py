@@ -194,13 +194,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     @connection_required
     def correct_elevation(self):
-        if not self.lyrs.save_edits_and_proceed('Elevation Polygons'):
-            return
-        if self.gutils.is_table_empty('user_elevation_polygons') and self.gutils.is_table_empty('blocked_areas'):
-            self.uc.bar_warn(
-                'There is no any elevation or blocked areas polygons! Please digitize them before running tool.'
-            )
-            return
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
@@ -210,24 +203,29 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
         correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
         ok = correct_dlg.exec_()
-        if ok:
-            if correct_dlg.methods:
-                pass
-            else:
+        if not ok:
+            return
+        tab = correct_dlg.correction_tab.currentIndex()
+        if tab == 0:
+            if not correct_dlg.internal_methods:
                 self.uc.show_warn('Please choose at least one elevation source!')
                 return
+            method = correct_dlg.run_internal
         else:
-            return
+            correct_dlg.setup_external_method()
+            if correct_dlg.external_method is None:
+                self.uc.show_warn('Please choose at least one elevation source!')
+                return
+            method = correct_dlg.run_external
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            for no in sorted(correct_dlg.methods):
-                correct_dlg.methods[no]()
+            method()
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Assigning grid elevation finished!')
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Assigning grid elevation aborted! Please check your correction polygon layers.')
+            self.uc.show_warn('Assigning grid elevation aborted! Please check your input layers.')
 
     @connection_required
     def get_roughness(self):

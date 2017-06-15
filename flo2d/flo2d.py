@@ -299,10 +299,10 @@ class Flo2D(object):
 
     def add_docks_to_iface(self):
         s = QSettings('FLO2D')
-        ma = s.value('dock/area', Qt.RightDockWidgetArea)
-        ta = s.value('table_dock/area', Qt.BottomDockWidgetArea)
-        pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea)
-        ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea)
+        ma = s.value('dock/area', Qt.RightDockWidgetArea, type=int)
+        ta = s.value('table_dock/area', Qt.BottomDockWidgetArea, type=int)
+        pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea, type=int)
+        ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea, type=int)
         self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
         self.iface.addDockWidget(ma, self.f2d_dock)
         self.iface.addDockWidget(pa, self.f2d_plot_dock)

@@ -1105,6 +1105,18 @@ CREATE TABLE "storm_drains" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('storm_drains', 'aspatial');
 
 
+CREATE VIEW struct_types AS
+SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
+UNION ALL
+SELECT DISTINCT 'R' as type, struct_fid FROM repl_rat_curves
+UNION ALL
+SELECT DISTINCT 'T' as type, struct_fid FROM rat_table
+UNION ALL
+SELECT DISTINCT 'F' as type, struct_fid FROM culvert_equations
+UNION ALL
+SELECT DISTINCT 'D' as type, struct_fid FROM storm_drains;
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');
+
 -- STREET.DAT
 
 CREATE TABLE "street_general" (
@@ -2331,6 +2343,8 @@ CREATE TABLE "user_swmm" (
     "swmm_coeff" REAL DEFAULT 0,
     "flapgate" INTEGER DEFAULT 0,
     "curbheight" REAL DEFAULT 0,
+    "max_depth" REAL DEFAULT 0,
+    "invert_elev" REAL DEFAULT 0,
     "rt_fid" INTEGER,
     "outf_flo" INTEGER DEFAULT 0,
     "notes" TEXT
@@ -2348,15 +2362,21 @@ CREATE TRIGGER "default_swmm_name"
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
+-- RAINCELL
+CREATE TABLE "raincell" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "rainintime" REAL,
+    "irinters" INTEGER,
+    "timestamp" TEXT,
+    "name" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell', 'aspatial');
 
-CREATE VIEW struct_types AS
-SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves
-UNION ALL
-SELECT DISTINCT 'R' as type, struct_fid FROM repl_rat_curves
-UNION ALL
-SELECT DISTINCT 'T' as type, struct_fid FROM rat_table
-UNION ALL
-SELECT DISTINCT 'F' as type, struct_fid FROM culvert_equations
-UNION ALL
-SELECT DISTINCT 'D' as type, struct_fid FROM storm_drains;
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');
+CREATE TABLE "raincell_data" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "raincell_fid" INTEGER, -- fid of storm
+    "rrgrid" INTEGER, -- GRID fid
+    "time_interval" REAL,
+    "iraindum" REAL -- Cumulative rainfall in inches or mm over the time interval.
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell_data', 'aspatial');
