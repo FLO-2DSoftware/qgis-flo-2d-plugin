@@ -219,7 +219,6 @@ class GridElevation(ElevationCorrector):
         for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, 'fid', 'elevation'):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
-                print(cell_size, area)
                 if area / cell_size < 0.95:
                     continue
                 gids.append(gid)
