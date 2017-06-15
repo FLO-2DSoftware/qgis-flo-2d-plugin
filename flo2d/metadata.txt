@@ -6,7 +6,7 @@ name=FLO-2D
 qgisMinimumVersion=2.18
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.3.1
+version=0.3.2
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
@@ -19,7 +19,12 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.3.1 New features:
+changelog=0.3.2 New features:
+ - rebuild Elevation Correction tool
+ - added depth editing options in Storm Drains Editor
+ - added import data function for Rainfall ASCII files
+ - minor bug fixes and code changes
+<p>changelog=0.3.1 New features:
  - minor bug fixes and code changes
 <p>changelog=0.3.0 New features:
  - Added Storm Drains Editor
