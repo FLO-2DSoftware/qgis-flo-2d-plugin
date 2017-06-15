@@ -17,7 +17,7 @@ from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_ie.swmm_import import StormDrainProject
+from flo2d.flo2d_ie.swmm_io import StormDrainProject
 from flo2d.flo2d_tools.schematic_conversion import remove_features
 from flo2d.flo2dobjects import Inlet
 from flo2d.utils import is_number, m_fdata
@@ -374,15 +374,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         for k, v in vals.items():
             cur.execute(qry_update, (v, k))
         self.gutils.con.commit()
-        # request = QgsFeatureRequest().setFilterFids(vals.keys())
-        # self.swmm_lyr.startEditing()
-        # for feat in self.swmm_lyr.getFeatures(request):
-        #     fid = feat.id()
-        #     feat.setAttribute('max_depth', vals[fid])
-        # self.swmm_lyr.commitChanges()
-        # self.swmm_lyr.updateExtents()
-        # self.swmm_lyr.triggerRepaint()
-        # self.swmm_lyr.removeSelection()
         self.populate_swmm()
 
     def import_swmm_input(self):

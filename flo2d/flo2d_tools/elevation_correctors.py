@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import QPyNullVariant, QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsMapLayerRegistry, QGis
+from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QGis
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
 from grid_tools import TINInterpolator, poly2grid, poly2poly, polygons_statistics
@@ -210,12 +210,18 @@ class GridElevation(ElevationCorrector):
             def calculation_method(vals): return min(vals)
         else:
             raise ValueError
+        feats = self.grid.getFeatures()
+        feat = next(feats)
+        cell_size = feat.geometry().area()
         cur = self.gutils.con.cursor()
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
         request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
-        for fid, parts in poly2poly(self.blocked_areas, self.grid, request, 'fid', 'elevation'):
+        for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, 'fid', 'elevation'):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
+                print(cell_size, area)
+                if area / cell_size < 0.95:
+                    continue
                 gids.append(gid)
                 elevs.append(elev)
             elevation = round(calculation_method(elevs), 3)
@@ -361,10 +367,8 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
 
         self.polygons = self.duplicate_layer(self.polygons, self.request)
-        QgsMapLayerRegistry.instance().addMapLayer(self.polygons)
         polygons_statistics(self.polygons, self.raster, stats)
         self.elevation_field = self.statistics.lower()
         self.correction_field = None
         self.request = None
         self.elevation_attributes()
-        QgsMapLayerRegistry.instance().removeMapLayer(self.polygons)

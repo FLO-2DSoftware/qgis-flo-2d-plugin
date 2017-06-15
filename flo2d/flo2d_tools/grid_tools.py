@@ -264,7 +264,7 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, *columns):
             yield values
 
 
-def poly2poly(base_polygons, polygons, request, *columns):
+def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
     """
@@ -286,7 +286,7 @@ def poly2poly(base_polygons, polygons, request, *columns):
             if inter is False:
                 continue
             intersection_geom = fgeom.intersection(base_geom)
-            subarea = intersection_geom.area() / base_area
+            subarea = intersection_geom.area() if area_percent is False else intersection_geom.area() / base_area
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)
         yield base_fid, base_parts

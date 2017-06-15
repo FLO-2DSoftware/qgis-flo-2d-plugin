@@ -44,3 +44,11 @@ class ASCProcessor(object):
     def rainfall_sampling(self):
         for raster_values in rasters2centroids(self.vlayer, None, *self.asc_files):
             yield raster_values
+
+
+class HDFProcessor(object):
+
+    def __init__(self, header, data, hdf_path):
+        self.header = header
+        self.data = data
+        self.hdf_path = hdf_path

@@ -30,12 +30,25 @@
       <widget class="QToolButton" name="asc_btn">
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>115</width>
          <height>25</height>
         </size>
        </property>
        <property name="text">
         <string>Import Rainfall ASCII</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="hdf_btn">
+       <property name="minimumSize">
+        <size>
+         <width>115</width>
+         <height>25</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Export Rainfall HDF</string>
        </property>
       </widget>
      </item>

@@ -93,6 +93,7 @@ class InfiltrationCalculator(object):
             self.grid_lyr,
             self.soil_lyr,
             None,
+            True,
             self.xksat_fld,
             self.rtimps_fld,
             self.eff_fld,
@@ -112,6 +113,7 @@ class InfiltrationCalculator(object):
             self.grid_lyr,
             self.land_lyr,
             None,
+            True,
             self.saturation_fld,
             self.vc_fld,
             self.ia_fld,
@@ -144,6 +146,7 @@ class InfiltrationCalculator(object):
             self.grid_lyr,
             self.curve_lyr,
             None,
+            True,
             self.curve_fld)
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
@@ -158,6 +161,7 @@ class InfiltrationCalculator(object):
             self.grid_lyr,
             self.combined_lyr,
             None,
+            True,
             self.landsoil_fld,
             self.cd_fld,
             self.imp_fld)
