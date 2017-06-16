@@ -138,19 +138,32 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('Importing Rainfall Data failed! Please check your input data.')
 
     def export_rainfall(self):
-        return
+        try:
+            import h5py
+        except ImportError:
+            self.uc.bar_warn('There is no h5py module installed! Please install it to run export tool.')
+            return
         s = QSettings()
         last_dir = s.value('FLO-2D/lastHDF', '')
-        hdf_file = QFileDialog.getOpenFileName(
+        hdf_file = QFileDialog.getSaveFileName(
             None,
             'Export Rainfall to HDF file',
             directory=last_dir,
-            filter='(*.hdf5 *.HDF5*)')
+            filter='*.hdf5')
         if not hdf_file:
             return
         s.setValue('FLO-2D/lastHDF', os.path.dirname(hdf_file))
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            qry_header = 'SELECT fid, rainintime, irinters, timestamp FROM raincell;'
+            header = self.gutils.execute(qry_header).fetchone()
+            fid, rainintime, irinters, timestamp = header
+            header_data = [rainintime, irinters, timestamp]
+            qry_data = 'SELECT iraindum FROM raincell_data WHERE raincell_fid=? ORDER BY rrgrid, time_interval;'
+            data = self.gutils.execute(qry_data, (fid,)).fetchall()
+            data = [data[i:i+irinters] for i in xrange(0, len(data), irinters)]
+            hdf_processor = HDFProcessor(hdf_file)
+            hdf_processor.export_rainfall(header_data, data)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Exporting Rainfall Data finished!')
         except Exception as e:

@@ -9,7 +9,14 @@
 # of the License, or (at your option) any later version
 
 import os
+import numpy as np
 from flo2d.flo2d_tools.grid_tools import rasters2centroids
+try:
+    import h5py
+except ImportError:
+    pass
+
+__version__ = '0.3.3'
 
 
 class ASCProcessor(object):
@@ -48,7 +55,28 @@ class ASCProcessor(object):
 
 class HDFProcessor(object):
 
-    def __init__(self, header, data, hdf_path):
-        self.header = header
-        self.data = data
+    def __init__(self, hdf_path):
         self.hdf_path = hdf_path
+
+    def export_rainfall(self, header, data):
+        hdf_file = h5py.File(self.hdf_path, 'w')
+        rainintime, irinters, timestamp = header
+        general_grp = hdf_file.create_group('general')
+        general_grp.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)
+        general_grp.attrs['plugin'] = np.str_('FLO-2D')
+        general_grp.attrs['plugin_version'] = np.str_(__version__)
+        grp = hdf_file.create_group('raincell')
+        datasets = [
+            ('RAININTIME', np.int(rainintime)),
+            ('IRINTERS', np.int(irinters)),
+            ('TIMESTAMP', np.str_(timestamp)),
+            ('IRAINDUM', np.array(data))
+            ]
+        for name, value in datasets:
+            grp.create_dataset(name, data=value)
+
+        hdf_file.close()
+
+
+if __name__ == '__main__':
+    proc = HDFProcessor(r'D:\GIS_DATA\FLO-2D PRO Documentation\#368\rainfall.hdf5')
