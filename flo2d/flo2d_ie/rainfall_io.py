@@ -59,23 +59,22 @@ class HDFProcessor(object):
         self.hdf_path = hdf_path
 
     def export_rainfall(self, header, data):
-        hdf_file = h5py.File(self.hdf_path, 'w')
-        rainintime, irinters, timestamp = header
-        general_grp = hdf_file.create_group('general')
-        general_grp.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)
-        general_grp.attrs['plugin'] = np.str_('FLO-2D')
-        general_grp.attrs['plugin_version'] = np.str_(__version__)
-        grp = hdf_file.create_group('raincell')
-        datasets = [
-            ('RAININTIME', np.int(rainintime)),
-            ('IRINTERS', np.int(irinters)),
-            ('TIMESTAMP', np.str_(timestamp)),
-            ('IRAINDUM', np.array(data))
-            ]
-        for name, value in datasets:
-            grp.create_dataset(name, data=value)
-
-        hdf_file.close()
+        with h5py.File(self.hdf_path, 'w') as hdf_file:
+            rainintime, irinters, timestamp = header
+            general_grp = hdf_file.create_group('general')
+            general_grp.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)
+            general_grp.attrs['plugin'] = np.str_('FLO-2D')
+            general_grp.attrs['plugin_version'] = np.str_(__version__)
+            grp = hdf_file.create_group('raincell')
+            datasets = [
+                ('RAININTIME', np.int(rainintime), 'Time interval in minutes of the realtime rainfall data.'),
+                ('IRINTERS', np.int(irinters), 'Number of intervals in the dataset.'),
+                ('TIMESTAMP', np.str_(timestamp), 'Timestamp indicates the start and end time of the storm.'),
+                ('IRAINDUM', np.array(data), 'Cumulative rainfall in inches or mm over the time interval.')
+                ]
+            for name, value, description in datasets:
+                dts = grp.create_dataset(name, data=value)
+                dts.attrs['description'] = np.str_(description)
 
 
 if __name__ == '__main__':
