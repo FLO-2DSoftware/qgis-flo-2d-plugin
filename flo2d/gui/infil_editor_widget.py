@@ -408,6 +408,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if imethod == 0:
             return
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
             infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, *columns))
@@ -436,9 +437,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     cur.execute(qry, val)
             self.con.commit()
             self.repaint_schema()
+            QApplication.restoreOverrideCursor()
             self.uc.bar_info('Schematizing of infiltration finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Schematizing of infiltration failed! Please check user infiltration layers.')
 
     def calculate_green_ampt(self):

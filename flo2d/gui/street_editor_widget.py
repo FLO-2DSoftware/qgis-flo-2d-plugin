@@ -11,7 +11,7 @@
 import os
 import traceback
 
-from PyQt4.QtGui import QIcon, QComboBox, QSizePolicy, QInputDialog
+from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 
 from flo2d.flo2d_tools.schematic_tools import schematize_streets

@@ -287,7 +287,7 @@ class Flo2D(object):
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
         self.f2d_grid_info_dock.setWindowTitle(u'FLO-2D Grid Info')
-        self.f2d_grid_info = GridInfoWidget(self.iface, self.lyrs)
+        self.f2d_grid_info = GridInfoWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
@@ -640,6 +640,7 @@ class Flo2D(object):
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par('MANNING')
+            self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn('There is no grid layer to identify.')

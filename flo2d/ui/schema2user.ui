@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>412</width>
-    <height>269</height>
+    <width>380</width>
+    <height>223</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,6 +56,27 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="ckbox_1d">
+       <property name="text">
+        <string>1D elements</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="ckbox_bc">
+       <property name="text">
+        <string>Boundary conditions</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ckbox_swmm">
+       <property name="text">
+        <string>Storm Drains</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="0">
       <widget class="QCheckBox" name="ckbox_grid">
        <property name="text">
@@ -63,45 +84,24 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="ckbox_levees">
-       <property name="text">
-        <string>Levees</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="ckbox_1d">
-       <property name="text">
-        <string>1D elements (left bank, cross sections)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QCheckBox" name="ckbox_bc">
-       <property name="text">
-        <string>Boundary conditions (inflows, outflows)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
+     <item row="0" column="1">
       <widget class="QCheckBox" name="ckbox_fpxsec">
        <property name="text">
         <string>Floodplain cross-sections</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="1" column="1">
       <widget class="QCheckBox" name="ckbox_infil">
        <property name="text">
         <string>Infiltration</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
-      <widget class="QCheckBox" name="ckbox_swmm">
+     <item row="3" column="0">
+      <widget class="QCheckBox" name="ckbox_levees">
        <property name="text">
-        <string>Storm Drain</string>
+        <string>Levees</string>
        </property>
       </widget>
      </item>

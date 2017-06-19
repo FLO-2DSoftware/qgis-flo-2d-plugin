@@ -2374,7 +2374,6 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell', 'aspatial'
 
 CREATE TABLE "raincell_data" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "raincell_fid" INTEGER, -- fid of storm
     "rrgrid" INTEGER, -- GRID fid
     "time_interval" REAL,
     "iraindum" REAL -- Cumulative rainfall in inches or mm over the time interval.

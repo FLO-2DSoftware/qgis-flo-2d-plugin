@@ -197,6 +197,48 @@ class Layers(QObject):
                 'module': ['all'],
                 'readonly': False
             }),
+            ('chan', {
+                'name': 'Channel segments (left bank)',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['chan'],
+                'readonly': False
+            }),
+            ('chan_elems', {
+                'name': 'Cross sections',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan_elems.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'module': ['chan'],
+                'readonly': True
+            }),
+            ('rbank', {
+                'name': 'Right Bank',
+                'sgroup': 'Schematic Layers',
+                'styles': ['rbank.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'module': ['chan'],
+                'readonly': True
+            }),
+            ('chan_confluences', {
+                'name': 'Channel confluences',
+                'sgroup': 'Schematic Layers',
+                'styles': ['chan_confluences.qml'],
+                'attrs_edit_widgets': {
+                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
+                },
+                'readonly': True
+            }),
+            ('fpxsec', {
+                'name': 'Floodplain cross-sections',
+                'sgroup': 'Schematic Layers',
+                'styles': ['fpxsec.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('fpxsec_cells', {
                 'name': 'Floodplain cross-sections cells',
                 'sgroup': 'Schematic Layers',
@@ -236,48 +278,6 @@ class Layers(QObject):
                 'module': ['struct'],
                 'readonly': True
             }),
-            ('chan', {
-                'name': 'Channel segments (left bank)',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['chan'],
-                'readonly': False
-            }),
-            ('chan_elems', {
-                'name': 'Cross sections',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan_elems.qml'],
-                'attrs_edit_widgets': {},
-                'visible': True,
-                'module': ['chan'],
-                'readonly': True
-            }),
-            ('rbank', {
-                'name': 'Right Bank',
-                'sgroup': 'Schematic Layers',
-                'styles': ['rbank.qml'],
-                'attrs_edit_widgets': {},
-                'visible': True,
-                'module': ['chan'],
-                'readonly': True
-            }),
-            ('fpxsec', {
-                'name': 'Floodplain cross-sections',
-                'sgroup': 'Schematic Layers',
-                'styles': ['fpxsec.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': True
-            }),
-            ('chan_confluences', {
-                'name': 'Channel confluences',
-                'sgroup': 'Schematic Layers',
-                'styles': ['chan_confluences.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
-                },
-                'readonly': True
-            }),
             ('all_schem_bc', {
                 'name': 'BC cells',
                 'sgroup': 'Schematic Layers',
@@ -299,6 +299,13 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),
+            ('rain_arf_areas', {
+                'name': 'Rain ARF Areas',
+                'sgroup': 'Schematic Layers',
+                'styles': ['rain_arf_areas.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
             ('reservoirs', {
                 'name': 'Reservoirs',
                 'sgroup': 'Schematic Layers',
@@ -311,131 +318,13 @@ class Layers(QObject):
                 'sgroup': 'Schematic Layers',
                 'styles': ['mult_areas.qml'],
                 'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('rain_arf_areas', {
-                'name': 'Rain ARF Areas',
-                'sgroup': 'Schematic Layers',
-                'styles': ['rain_arf_areas.qml'],
-                'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': False
             }),
             ('tolspatial', {
                 'name': 'Tolerance Areas',
                 'sgroup': 'Schematic Layers',
                 'styles': ['tolspatial.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('fpfroude', {
-                'name': 'Froude numbers for grid elems',
-                'sgroup': 'Schematic Layers',
-                'styles': ['fpfroude.qml'],
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('sed_supply_areas', {
-                'name': 'Supply Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_supply_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_group_areas', {
-                'name': 'Group Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_group_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_rigid_areas', {
-                'name': 'Rigid Bed Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['sed_rigid_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('mud_areas', {
-                'name': 'Mud Areas',
-                'sgroup': 'Sediment Transport',
-                'styles': ['mud_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_groups', {
-                'name': 'Sediment Groups',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('sed_group_cells', {
-                'name': 'Group Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('sed_supply_cells', {
-                'name': 'Supply Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('sed_rigid_cells', {
-                'name': 'Rigid Bed Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('mud_cells', {
-                'name': 'Mud Cells',
-                'sgroup': 'Sediment Transport Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': True
-            }),
-            ('infil_areas_green', {
-                'name': 'Areas Green Ampt',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('infil_areas_scs', {
-                'name': 'Areas SCS',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('infil_areas_horton', {
-                'name': 'Areas Horton',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            })
-            ,
-            ('infil_areas_chan', {
-                'name': 'Areas for Channels',
-                'sgroup': 'Infiltration layers',
-                'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
@@ -470,29 +359,72 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-
+            ('infil_areas_green', {
+                'name': 'Areas Green Ampt',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_areas_scs', {
+                'name': 'Areas SCS',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_areas_horton', {
+                'name': 'Areas Horton',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_areas_chan', {
+                'name': 'Areas for Channels',
+                'sgroup': 'Infiltration layers',
+                'styles': ['infil_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('infil_cells_green', {
+                'name': 'Cells Green Ampt',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_cells_scs', {
+                'name': 'Cells SCS',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_cells_horton', {
+                'name': 'Cells Horton',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
+            ('infil_chan_elems', {
+                'name': 'Channel elements',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('tolspatial_cells', {
                 'name': 'Tolerance Cells',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),
-            ('wstime', {
-                'name': 'Water Surface in Time',
-                'sgroup': 'Calibration Data',
-                'styles': ['wstime.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),
-            ('wsurf', {
-                'name': 'Water Surface',
-                'sgroup': 'Calibration Data',
-                'styles': ['wsurf.qml'],
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
             }),
             ('cont', {
                 'name': 'Control',
@@ -644,6 +576,22 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),
+            ('wstime', {
+                'name': 'Water Surface in Time',
+                'sgroup': 'Calibration Data',
+                'styles': ['wstime.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('wsurf', {
+                'name': 'Water Surface',
+                'sgroup': 'Calibration Data',
+                'styles': ['wsurf.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
             ('evapor', {
                 'name': 'Evaporation',
                 'sgroup': 'Evaporation Tables',
@@ -665,32 +613,76 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-            ('infil_cells_green', {
-                'name': 'Cells Green Ampt',
-                'sgroup': "Infiltration Tables",
+            ('sed_supply_areas', {
+                'name': 'Supply Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_supply_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_group_areas', {
+                'name': 'Group Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_group_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_rigid_areas', {
+                'name': 'Rigid Bed Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['sed_rigid_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('mud_areas', {
+                'name': 'Mud Areas',
+                'sgroup': 'Sediment Transport',
+                'styles': ['mud_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_groups', {
+                'name': 'Sediment Groups',
+                'sgroup': 'Sediment Transport Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('sed_group_cells', {
+                'name': 'Group Cells',
+                'sgroup': 'Sediment Transport Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': True
             }),
-            ('infil_cells_scs', {
-                'name': 'Cells SCS',
-                'sgroup': "Infiltration Tables",
+            ('sed_supply_cells', {
+                'name': 'Supply Cells',
+                'sgroup': 'Sediment Transport Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': True
             }),
-            ('infil_cells_horton', {
-                'name': 'Cells Horton',
-                'sgroup': "Infiltration Tables",
+            ('sed_rigid_cells', {
+                'name': 'Rigid Bed Cells',
+                'sgroup': 'Sediment Transport Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': True
             }),
-            ('infil_chan_elems', {
-                'name': 'Channel elements',
-                'sgroup': "Infiltration Tables",
+            ('mud_cells', {
+                'name': 'Mud Cells',
+                'sgroup': 'Sediment Transport Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': True
             })
         ])

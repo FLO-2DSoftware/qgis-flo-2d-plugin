@@ -118,16 +118,16 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             asc_processor = ASCProcessor(grid_lyr, asc_dir)
             head_qry = 'INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);'
-            data_qry = 'INSERT INTO raincell_data (raincell_fid, time_interval, rrgrid, iraindum) VALUES (?,?,?,?);'
+            data_qry = 'INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);'
+            self.gutils.clear_tables('raincell', 'raincell_data')
             header = asc_processor.parse_rfc()
             time_step = float(header[0])
             self.gutils.execute(head_qry, header)
-            raincell_fid = self.gutils.get_max('raincell')
             time_interval = 0
             for rain_series in asc_processor.rainfall_sampling():
                 cur = self.gutils.con.cursor()
                 for val, gid in rain_series:
-                    cur.execute(data_qry, (raincell_fid, time_interval, gid, val))
+                    cur.execute(data_qry, (time_interval, gid, val))
                 self.gutils.con.commit()
                 time_interval += time_step
             QApplication.restoreOverrideCursor()
@@ -155,12 +155,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         s.setValue('FLO-2D/lastHDF', os.path.dirname(hdf_file))
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            qry_header = 'SELECT fid, rainintime, irinters, timestamp FROM raincell;'
+            qry_header = 'SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;'
             header = self.gutils.execute(qry_header).fetchone()
-            fid, rainintime, irinters, timestamp = header
+            rainintime, irinters, timestamp = header
             header_data = [rainintime, irinters, timestamp]
-            qry_data = 'SELECT iraindum FROM raincell_data WHERE raincell_fid=? ORDER BY rrgrid, time_interval;'
-            data = self.gutils.execute(qry_data, (fid,)).fetchall()
+            qry_data = 'SELECT iraindum FROM raincell_data ORDER BY rrgrid, time_interval;'
+            data = self.gutils.execute(qry_data).fetchall()
             data = [data[i:i+irinters] for i in xrange(0, len(data), irinters)]
             hdf_processor = HDFProcessor(hdf_file)
             hdf_processor.export_rainfall(header_data, data)
