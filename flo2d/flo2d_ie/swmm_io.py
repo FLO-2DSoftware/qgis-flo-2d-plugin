@@ -125,11 +125,9 @@ if __name__ == '__main__':
     sd.find_inlets()
     sd.find_outlets()
     sd.find_junctions()
-    nd = {}
-    for k, v in sd.coordinates.items():
-        if 'subcatchment' in v and 'invert_elev' in v:
-            nd[k] = {'invert_elev': 1000, 'max_depth': 5.555}
-    sd.update_junctions(nd)
-    sd.reassemble_inp()
-    for v in sd.parts['JUNCTIONS']:
-        print(v)
+    # nd = {}
+    # for k, v in sd.coordinates.items():
+    #     if 'subcatchment' in v and 'invert_elev' in v:
+    #         nd[k] = {'invert_elev': 1000, 'max_depth': 5.555}
+    # sd.update_junctions(nd)
+    # sd.reassemble_inp()

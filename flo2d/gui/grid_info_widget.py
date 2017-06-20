@@ -72,6 +72,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.cellEdit.setText('')
 
     def plot_grid_rainfall(self, feat):
+        si = 'inches' if self.gutils.get_cont_par('METRIC') == '0' else 'mm'
         qry = 'SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;'
         fid = feat['fid']
         rainfall = self.gutils.execute(qry, (fid,))
@@ -97,7 +98,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.tview.setRowHeight(i, 20)
         self.plot.plot.setTitle('GRID FID: {}'.format(fid))
         self.plot.plot.setLabel('bottom', text='Time (minutes)')
-        self.plot.plot.setLabel('left', text='Rainfall (mm)')
+        self.plot.plot.setLabel('left', text='Rainfall ({})'.format(si))
         self.update_plot()
 
     def create_plot(self):

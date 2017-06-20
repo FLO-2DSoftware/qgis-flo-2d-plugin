@@ -360,21 +360,34 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('Schematizing of Storm Drains failed! Please check user Storm Drains Points layer.')
 
     def recalculate_max_depth(self):
-        qry = 'SELECT elevation - ? FROM grid WHERE fid = ?;'
-        qry_update = 'UPDATE user_swmm SET max_depth=? WHERE fid=?;'
-        vals = {}
-        for feat in self.swmm_lyr.getFeatures():
-            invert_elev = feat['invert_elev']
-            geom = feat.geometry()
-            point = geom.asPoint()
-            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-            max_depth = self.gutils.execute(qry, (invert_elev, grid_fid)).fetchone()[0]
-            vals[feat['fid']] = max_depth
-        cur = self.gutils.con.cursor()
-        for k, v in vals.items():
-            cur.execute(qry_update, (v, k))
-        self.gutils.con.commit()
-        self.populate_swmm()
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            qry = 'SELECT elevation - ? FROM grid WHERE fid = ?;'
+            qry_update = 'UPDATE user_swmm SET max_depth=? WHERE fid=?;'
+            vals = {}
+            if self.swmm_lyr.selectedFeatureCount() > 0:
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                features = self.swmm_lyr.getFeatures(request)
+            else:
+                features = self.swmm_lyr.getFeatures()
+            for feat in features:
+                invert_elev = feat['invert_elev']
+                geom = feat.geometry()
+                point = geom.asPoint()
+                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                max_depth = self.gutils.execute(qry, (invert_elev, grid_fid)).fetchone()[0]
+                vals[feat['fid']] = max_depth
+            cur = self.gutils.con.cursor()
+            for k, v in vals.items():
+                cur.execute(qry_update, (v, k))
+            self.gutils.con.commit()
+            self.populate_swmm()
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_info('Recalculation of Max Depth finished!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('Recalculation of Max Depth failed!')
 
     def import_swmm_input(self):
         s = QSettings()
@@ -441,7 +454,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if self.swmm_lyr.selectedFeaturesCount() > 0:
+            if self.swmm_lyr.selectedFeatureCount() > 0:
                 request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
