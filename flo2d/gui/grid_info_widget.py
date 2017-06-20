@@ -95,6 +95,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.tview.setColumnWidth(col, 100)
         for i in range(self.data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
+        self.plot.plot.setTitle('GRID FID: {}'.format(fid))
+        self.plot.plot.setLabel('bottom', text='Time (minutes)')
+        self.plot.plot.setLabel('left', text='Rainfall (mm)')
         self.update_plot()
 
     def create_plot(self):

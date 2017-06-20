@@ -70,7 +70,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             - cont table
             - ask user
         """
-        bl = self.lyrs.get_layer_by_name('Computational Domain', group=self.lyrs.group).layer()
+        bl = self.lyrs.data['user_model_boundary']['qlyr']
         bfeat = bl.getFeatures().next()
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
@@ -114,9 +114,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             self.uc.progress_bar('Creating grid...')
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            bl = self.lyrs.get_layer_by_name('Computational Domain', group=self.lyrs.group).layer()
+            bl = self.lyrs.data['user_model_boundary']['qlyr']
             square_grid(self.gutils, bl)
-            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.data['grid']['qlyr']
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
@@ -172,7 +172,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.data['grid']['qlyr']
             zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
             points_elevation = zs.points_elevation()
             zs.set_elevation(points_elevation)
@@ -256,7 +256,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 pass
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.data['grid']['qlyr']
             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Assigning roughness finished!')
@@ -285,10 +285,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
-            user_arf_lyr = self.lyrs.get_layer_by_name('Blocked areas', group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_arf_lyr = self.lyrs.data['blocked_areas']['qlyr']
             evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-            arf_lyr = self.lyrs.get_layer_by_name('ARF_WRF', group=self.lyrs.group).layer()
+            arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
             arf_lyr.reload()
             self.lyrs.update_layer_extents(arf_lyr)
 

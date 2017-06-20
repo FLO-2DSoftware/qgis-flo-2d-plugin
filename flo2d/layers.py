@@ -364,7 +364,6 @@ class Layers(QObject):
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
                 'readonly': False
             }),
             ('infil_areas_scs', {
@@ -372,7 +371,6 @@ class Layers(QObject):
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
                 'readonly': False
             }),
             ('infil_areas_horton', {
@@ -380,7 +378,6 @@ class Layers(QObject):
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
                 'readonly': False
             }),
             ('infil_areas_chan', {
@@ -388,7 +385,6 @@ class Layers(QObject):
                 'sgroup': 'Infiltration layers',
                 'styles': ['infil_areas.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
                 'readonly': False
             }),
             ('infil_cells_green', {
@@ -597,6 +593,7 @@ class Layers(QObject):
                 'sgroup': 'Evaporation Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': False
             }),
             ('evapor_hourly', {
@@ -604,6 +601,7 @@ class Layers(QObject):
                 'sgroup': "Evaporation Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': False
             }),
             ('evapor_monthly', {
@@ -611,6 +609,7 @@ class Layers(QObject):
                 'sgroup': "Evaporation Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
+                'visible': False,
                 'readonly': False
             }),
             ('sed_supply_areas', {
