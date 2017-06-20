@@ -21,6 +21,7 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Uncomment the following line and add your changelog:
 changelog=0.3.3 New features:
  - added Export Rainfall to HDF5 format function
+ - minor bug fixes and code changes
 <p>changelog=0.3.2 New features:
  - rebuild Elevation Correction tool
  - added depth editing options in Storm Drains Editor
