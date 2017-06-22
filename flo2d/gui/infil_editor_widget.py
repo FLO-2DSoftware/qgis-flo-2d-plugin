@@ -8,15 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
 import traceback
 from math import isnan
 from itertools import chain
 from collections import OrderedDict
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt4.QtGui import QIcon, QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
+from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
 from qgis.core import QGis, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas
+from ui_utils import load_ui, center_canvas, set_icon
 from flo2d.utils import m_fdata
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
@@ -79,12 +78,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             3: slice(0, 9),
             4: slice(9, 12)
         }
-        self.set_icon(self.create_polygon_btn, 'mActionCapturePolygon.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.schema_btn, 'schematize_res.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.change_name_btn, 'change_name.svg')
+        set_icon(self.create_polygon_btn, 'mActionCapturePolygon.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.schema_btn, 'schematize_res.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.change_name_btn, 'change_name.svg')
         self.create_polygon_btn.clicked.connect(lambda: self.create_infil_polygon())
         self.save_changes_btn.clicked.connect(lambda: self.save_infil_edits())
         self.revert_changes_btn.clicked.connect(lambda: self.revert_infil_lyr_edits())
@@ -97,11 +96,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.chan_grp.toggled.connect(self.channel_checked)
         self.green_ampt_btn.clicked.connect(self.calculate_green_ampt)
         self.scs_btn.clicked.connect(self.calculate_scs)
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup_connection(self):
         con = self.iface.f2d['con']

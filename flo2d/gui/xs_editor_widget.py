@@ -9,16 +9,15 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QStandardItem, QIcon, QColor, QInputDialog
+from PyQt4.QtGui import QStandardItem, QColor, QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas,try_disconnect
+from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from flo2d.utils import m_fdata, is_number
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.flo2dobjects import UserCrossSection, ChannelSegment
 from flo2d.user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from plot_widget import PlotWidget
-import os
 from collections import OrderedDict
 from math import isnan
 
@@ -51,13 +50,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_data_model = StandardItemModel()
         self.tview.setModel(self.xs_data_model)
         self.uc = UserCommunication(iface, 'FLO-2D')
-        self.set_icon(self.digitize_btn, 'mActionCaptureLine.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
-        self.set_icon(self.confluences_btn, 'schematize_confluence.svg')
-        self.set_icon(self.rename_xs_btn, 'change_name.svg')
+        set_icon(self.digitize_btn, 'mActionCaptureLine.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
+        set_icon(self.confluences_btn, 'schematize_confluence.svg')
+        set_icon(self.rename_xs_btn, 'change_name.svg')
         # connections
         self.digitize_btn.clicked.connect(self.digitize_xsec)
         self.save_changes_btn.clicked.connect(self.save_user_lyr_edits)
@@ -79,11 +78,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def unblock_saving(self):
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup_connection(self):
         con = self.iface.f2d['con']

@@ -8,13 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
 import traceback
-from ui_utils import load_ui
+from ui_utils import load_ui, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QIcon, QInputDialog
+from PyQt4.QtGui import QApplication, QInputDialog
 from flo2d.flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, ZonalStatistics
 from flo2d.gui.dlg_grid_elev import GridCorrectionDialog
 from flo2d.gui.dlg_sampling_elev import SamplingElevDialog
@@ -36,12 +35,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
 
-        self.set_icon(self.create_grid_btn, 'create_grid.svg')
-        self.set_icon(self.raster_elevation_btn, 'sample_elev.svg')
-        self.set_icon(self.xyz_elevation_btn, 'sample_elev_xyz.svg')
-        self.set_icon(self.polygon_elevation_btn, 'sample_elev_polygon.svg')
-        self.set_icon(self.roughness_btn, 'sample_manning.svg')
-        self.set_icon(self.arfwrf_btn, 'eval_arfwrf.svg')
+        set_icon(self.create_grid_btn, 'create_grid.svg')
+        set_icon(self.raster_elevation_btn, 'sample_elev.svg')
+        set_icon(self.xyz_elevation_btn, 'sample_elev_xyz.svg')
+        set_icon(self.polygon_elevation_btn, 'sample_elev_polygon.svg')
+        set_icon(self.roughness_btn, 'sample_manning.svg')
+        set_icon(self.arfwrf_btn, 'eval_arfwrf.svg')
 
         self.create_grid_btn.clicked.connect(lambda: self.create_grid())
         self.raster_elevation_btn.clicked.connect(lambda: self.raster_elevation())
@@ -49,11 +48,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.polygon_elevation_btn.clicked.connect(lambda: self.correct_elevation())
         self.roughness_btn.clicked.connect(lambda: self.get_roughness())
         self.arfwrf_btn.clicked.connect(lambda: self.eval_arfwrf())
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup_connection(self):
         con = self.iface.f2d['con']

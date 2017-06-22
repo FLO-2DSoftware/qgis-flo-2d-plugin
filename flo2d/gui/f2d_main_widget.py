@@ -9,8 +9,7 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import QSize
-from PyQt4.QtGui import QIcon
-from ui_utils import load_ui
+from ui_utils import load_ui, set_icon
 from grid_tools_widget import GridToolsWidget
 from xs_editor_widget import XsecEditorWidget
 from bc_editor_widget import BCEditorWidget
@@ -23,7 +22,6 @@ from fpxsec_editor_widget import FPXsecEditorWidget
 from infil_editor_widget import InfilEditorWidget
 from swmm_editor_widget import SWMMEditorWidget
 from flo2d.user_communication import UserCommunication
-import os
 
 uiDialog, qtBaseClass = load_ui('f2d_widget')
 
@@ -64,13 +62,8 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.expand_groups_btn.clicked.connect(self.expand_all_groups)
 
         # set icons
-        self.set_icon(self.collapse_groups_btn, 'collapse_groups.svg')
-        self.set_icon(self.expand_groups_btn, 'expand_groups.svg')
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
+        set_icon(self.collapse_groups_btn, 'collapse_groups.svg')
+        set_icon(self.expand_groups_btn, 'expand_groups.svg')
 
     def collapse_all_groups(self):
         for grp in self.cgroups:

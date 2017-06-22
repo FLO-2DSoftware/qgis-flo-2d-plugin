@@ -10,6 +10,7 @@
 
 import os
 from PyQt4 import uic
+from PyQt4.QtGui import QIcon
 from qgis.core import QgsRectangle
 
 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -43,3 +44,9 @@ def try_disconnect(signal, met):
         signal.disconnect(met)
     except TypeError:
         pass
+
+
+def set_icon(btn, icon_file):
+    parent_dir = os.path.dirname(os.path.abspath(__file__))
+    idir = os.path.join(os.path.dirname(parent_dir), 'img')
+    btn.setIcon(QIcon(os.path.join(idir, icon_file)))

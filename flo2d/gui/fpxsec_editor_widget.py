@@ -15,7 +15,7 @@ from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 
 from flo2d.flo2d_tools.schematic_tools import FloodplainXS
-from ui_utils import load_ui, center_canvas
+from ui_utils import load_ui, center_canvas, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
 
@@ -36,13 +36,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
 
         # set button icons
-        self.set_icon(self.add_user_fpxs_btn, 'add_fpxs.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_fpxs_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.schem_fpxs_btn, 'schematize_fpxs.svg')
-        self.set_icon(self.rename_fpxs_btn, 'change_name.svg')
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
+        set_icon(self.add_user_fpxs_btn, 'add_fpxs.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_fpxs_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.schem_fpxs_btn, 'schematize_fpxs.svg')
+        set_icon(self.rename_fpxs_btn, 'change_name.svg')
+        parent_dir = os.path.dirname(os.path.abspath(__file__))
+        idir = os.path.join(os.path.dirname(parent_dir), 'img')
         for i in range(8):
             icon_file = 'arrow_{}.svg'.format(i+1)
             self.flow_dir_cbo.setItemIcon(i, QIcon(os.path.join(idir, icon_file)))
@@ -56,11 +57,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.rename_fpxs_btn.clicked.connect(lambda: self.rename_fpxs())
         self.fpxs_cbo.activated.connect(lambda: self.cur_fpxs_changed())
         self.flow_dir_cbo.activated.connect(lambda: self.save_fpxs())
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup_connection(self):
         con = self.iface.f2d['con']

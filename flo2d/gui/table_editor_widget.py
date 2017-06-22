@@ -9,14 +9,12 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
-from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QApplication, QIcon, QTableView, QUndoCommand, QUndoStack
+from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QApplication, QTableView, QUndoCommand, QUndoStack
 from ui_utils import load_ui
 from flo2d.utils import is_number
 from flo2d.user_communication import UserCommunication
 import StringIO
 import csv
-import os
-
 
 uiDialog, qtBaseClass = load_ui('table_editor')
 
@@ -59,10 +57,6 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         if self._sizehint is not None:
             return self._sizehint
         return super(TableEditorWidget, self).sizeHint()
-
-    def set_icon(self, btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def copy_selection(self):
         selection = self.tview.selectedIndexes()

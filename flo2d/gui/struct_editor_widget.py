@@ -8,17 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QIcon, QInputDialog
+from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
-from ui_utils import load_ui, center_canvas
+from ui_utils import load_ui, center_canvas, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2dobjects import Structure
 from flo2d.user_communication import UserCommunication
 from flo2d.utils import m_fdata, is_number
 from table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
-import os
 
 
 uiDialog, qtBaseClass = load_ui('struct_editor')
@@ -43,12 +42,12 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.data_model = StandardItemModel()
 
         # set button icons
-        self.set_icon(self.create_struct_btn, 'mActionCaptureLine.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_struct_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.schem_struct_btn, 'schematize_struct.svg')
-        self.set_icon(self.change_struct_name_btn, 'change_name.svg')
+        set_icon(self.create_struct_btn, 'mActionCaptureLine.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_struct_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.schem_struct_btn, 'schematize_struct.svg')
+        set_icon(self.change_struct_name_btn, 'change_name.svg')
 
         # connections
         self.data_model.dataChanged.connect(self.save_data)
@@ -93,11 +92,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             cur_name_idx = i
         self.struct_cbo.setCurrentIndex(cur_name_idx)
         self.struct_changed()
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def struct_changed(self):
         cur_struct_idx = self.struct_cbo.currentIndex()

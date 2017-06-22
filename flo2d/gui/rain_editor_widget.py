@@ -11,8 +11,8 @@
 import os
 import traceback
 from PyQt4.QtCore import Qt, QSettings
-from PyQt4.QtGui import QColor, QIcon, QInputDialog, QFileDialog, QApplication
-from ui_utils import load_ui, try_disconnect
+from PyQt4.QtGui import QColor, QInputDialog, QFileDialog, QApplication
+from ui_utils import load_ui, try_disconnect, set_icon
 from flo2d.flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from flo2d.utils import is_number, m_fdata
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
@@ -44,10 +44,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = None
         self.d1, self.d2 = [[], []]
 
-        self.set_icon(self.show_table_btn, 'show_cont_table.svg')
-        self.set_icon(self.remove_tseries_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.add_tseries_btn, 'add_bc_data.svg')
-        self.set_icon(self.rename_tseries_btn, 'change_name.svg')
+        set_icon(self.show_table_btn, 'show_cont_table.svg')
+        set_icon(self.remove_tseries_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.add_tseries_btn, 'add_bc_data.svg')
+        set_icon(self.rename_tseries_btn, 'change_name.svg')
 
     def block_saving(self):
         try_disconnect(self.rain_data_model.dataChanged, self.save_tseries_data)
@@ -64,11 +64,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                                       "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
             self.tview.undoStack.push(command)
             return True
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def connect_signals(self):
         self.asc_btn.clicked.connect(self.import_rainfall)

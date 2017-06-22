@@ -8,15 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QIcon, QInputDialog
+from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas
+from ui_utils import load_ui, center_canvas, set_icon
 from flo2d.flo2dobjects import Reservoir
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from flo2d.utils import is_number
-import os
-
 
 uiDialog, qtBaseClass = load_ui('ic_editor')
 
@@ -34,12 +32,12 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
 
         # set button icons
-        self.set_icon(self.add_user_res_btn, 'add_reservoir.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_res_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.schem_res_btn, 'schematize_res.svg')
-        self.set_icon(self.rename_res_btn, 'change_name.svg')
+        set_icon(self.add_user_res_btn, 'add_reservoir.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_res_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.schem_res_btn, 'schematize_res.svg')
+        set_icon(self.rename_res_btn, 'change_name.svg')
 
         # connections
         self.add_user_res_btn.clicked.connect(self.create_user_res)
@@ -52,11 +50,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
         self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def populate_cbos(self, fid=None, show_last_edited=False):
         if not self.iface.f2d['con']:

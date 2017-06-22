@@ -12,9 +12,9 @@ import os
 import traceback
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QApplication, QIcon, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
+from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect
+from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_ie.swmm_io import StormDrainProject
@@ -63,17 +63,17 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = None
         self.d1, self.d2 = [[], []]
 
-        self.set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.schema_btn, 'schematize_res.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.change_name_btn, 'change_name.svg')
+        set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.schema_btn, 'schematize_res.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.change_name_btn, 'change_name.svg')
 
-        self.set_icon(self.show_table_btn, 'show_cont_table.svg')
-        self.set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.add_rtable_btn, 'add_bc_data.svg')
-        self.set_icon(self.rename_rtable_btn, 'change_name.svg')
+        set_icon(self.show_table_btn, 'show_cont_table.svg')
+        set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.add_rtable_btn, 'add_bc_data.svg')
+        set_icon(self.rename_rtable_btn, 'change_name.svg')
 
         self.create_point_btn.clicked.connect(lambda: self.create_swmm_point())
         self.save_changes_btn.clicked.connect(lambda: self.save_swmm_edits())
@@ -108,11 +108,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             if self.inlet_grp.isChecked():
                 self.inlet_grp.setChecked(False)
                 self.rt_grp.setDisabled(True)
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup_connection(self):
         con = self.iface.f2d['con']

@@ -9,16 +9,15 @@
 # of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QIcon, QComboBox, QSizePolicy, QInputDialog
+from PyQt4.QtGui import QColor, QComboBox, QSizePolicy, QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect
+from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2dobjects import Inflow, Outflow
 from flo2d.user_communication import UserCommunication
 from flo2d.utils import m_fdata, is_number
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
-import os
 
 
 uiDialog, qtBaseClass = load_ui('bc_editor')
@@ -57,17 +56,17 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # outflow plot data variables
         self.d1, self.d2 = [[], []]
         # set button icons
-        self.set_icon(self.create_point_bc_btn, 'mActionCapturePoint.svg')
-        self.set_icon(self.create_line_bc_btn, 'mActionCaptureLine.svg')
-        self.set_icon(self.create_polygon_bc_btn, 'mActionCapturePolygon.svg')
-        self.set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        self.set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        self.set_icon(self.delete_bc_btn, 'mActionDeleteSelected.svg')
-        self.set_icon(self.add_data_btn, 'add_bc_data.svg')
-        self.set_icon(self.schem_bc_btn, 'schematize_bc.svg')
-        self.set_icon(self.change_bc_name_btn, 'change_name.svg')
-        self.set_icon(self.change_inflow_data_name_btn, 'change_name.svg')
-        self.set_icon(self.change_outflow_data_name_btn, 'change_name.svg')
+        set_icon(self.create_point_bc_btn, 'mActionCapturePoint.svg')
+        set_icon(self.create_line_bc_btn, 'mActionCaptureLine.svg')
+        set_icon(self.create_polygon_bc_btn, 'mActionCapturePolygon.svg')
+        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
+        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
+        set_icon(self.delete_bc_btn, 'mActionDeleteSelected.svg')
+        set_icon(self.add_data_btn, 'add_bc_data.svg')
+        set_icon(self.schem_bc_btn, 'schematize_bc.svg')
+        set_icon(self.change_bc_name_btn, 'change_name.svg')
+        set_icon(self.change_inflow_data_name_btn, 'change_name.svg')
+        set_icon(self.change_outflow_data_name_btn, 'change_name.svg')
 
         # connections
         self.create_point_bc_btn.clicked.connect(self.create_point_bc)
@@ -144,11 +143,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             combo.setEditable(False)
             combo.setSizePolicy(sp)
             layout.addWidget(combo)
-
-    @staticmethod
-    def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
-        btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def show_editor(self, user_bc_table=None, bc_fid=None):
         typ = 'inflow'
