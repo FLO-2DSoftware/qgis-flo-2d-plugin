@@ -12,6 +12,7 @@
 # pylint: disable=W0108
 
 import os
+import sys
 import time
 import traceback
 
@@ -29,6 +30,7 @@ from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.channel_profile_tool import ChannelProfile
 from flo2d_tools.grid_tools import grid_has_empty_elev
 from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
+from flo2d_tools.flopro_tools import FLOPROExecutor
 from gui.dlg_cont_toler import ContTolerDialog
 from gui.dlg_evap_editor import EvapEditorDialog
 from gui.dlg_levee_elev import LeveesToolDialog
@@ -40,6 +42,7 @@ from gui.plot_widget import PlotWidget
 from gui.table_editor_widget import TableEditorWidget
 from gui.dlg_schema2user import Schema2UserDialog
 from gui.dlg_ras_import import RasImportDialog
+from gui.dlg_flopro import SimulationDialog
 
 
 class Flo2D(object):
@@ -171,6 +174,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/settings.svg'),
             text=self.tr(u'Settings'),
             callback=self.show_settings,
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/run_flopro.png'),
+            text=self.tr(u'Run Simulation'),
+            callback=self.run_flopro,
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -406,6 +415,23 @@ class Flo2D(object):
             self.crs = dlg_settings.crs
             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
             self.setup_dock_widgets()
+
+    def run_flopro(self):
+        dlg = SimulationDialog(self.iface)
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
+        if sys.platform != 'win32':
+            self.uc.bar_warn('Could not run simulation under this operation system!')
+            return
+        try:
+            simulation = FLOPROExecutor(flo2d_dir, project_dir)
+            simulation.run()
+            self.uc.bar_info('Simulation completed!', dur=3)
+        except Exception as e:
+            self.uc.log_info(repr(e))
+            self.uc.bar_warn('Running simulation failed!')
 
     def load_gpkg_from_proj(self):
         """
