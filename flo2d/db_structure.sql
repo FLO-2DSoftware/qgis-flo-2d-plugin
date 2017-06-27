@@ -189,8 +189,8 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_time_series', 'a
 CREATE TABLE "rain_time_series_data" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "series_fid" INTEGER,
-    "time" REAL,
-    "value" REAL
+    "time" REAL DEFAULT 0,
+    "value" REAL DEFAULT 0
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_time_series_data', 'aspatial');
 
@@ -421,15 +421,15 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs_cells
 CREATE TABLE "rain" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, -- name of rain
-    "irainreal" INTEGER, -- IRAINREAL switch for real-time rainfall (NEXRAD)
-    "irainbuilding" INTEGER, -- IRAINBUILDING, switch, if 1 rainfall on ARF portion of grid will be contributed to surface runoff
-    "time_series_fid" INTEGER, -- id of time series used for rain cumulative distribution (in time)
-    "tot_rainfall" REAL, -- RTT, total storm rainfall [inch or mm]
-    "rainabs" REAL, -- RAINABS, rain interception or abstraction
-    "irainarf" INTEGER, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
-    "movingstrom" INTEGER, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
-    "rainspeed" REAL, -- RAINSPEED, speed of moving storm
-    "iraindir" INTEGER, -- IRAINDIR, direction of moving storm
+    "irainreal" INTEGER DEFAULT 0, -- IRAINREAL switch for real-time rainfall (NEXRAD)
+    "irainbuilding" INTEGER DEFAULT 0, -- IRAINBUILDING, switch, if 1 rainfall on ARF portion of grid will be contributed to surface runoff
+    "time_series_fid" INTEGER DEFAULT 0, -- id of time series used for rain cumulative distribution (in time)
+    "tot_rainfall" REAL DEFAULT 0, -- RTT, total storm rainfall [inch or mm]
+    "rainabs" REAL DEFAULT 0, -- RAINABS, rain interception or abstraction
+    "irainarf" INTEGER DEFAULT 0, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
+    "movingstrom" INTEGER DEFAULT 0, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
+    "rainspeed" REAL DEFAULT 0, -- RAINSPEED, speed of moving storm
+    "iraindir" INTEGER DEFAULT 0, -- IRAINDIR, direction of moving storm
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain', 'aspatial');

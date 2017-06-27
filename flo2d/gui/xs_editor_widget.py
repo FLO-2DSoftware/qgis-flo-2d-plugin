@@ -43,6 +43,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.user_xs_lyr = None
         self.xs = None
         self.cur_xs_fid = None
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.setupUi(self)
         self.populate_xsec_type_cbo()
         self.xi, self.yi = [[], []]
@@ -97,7 +98,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         fids = self.gutils.execute(qry).fetchall()
         for fid in fids:
             seg = ChannelSegment(int(fid[0]), self.con, self.iface)
-            if not seg.interpolate_bed():
+            res, msg = seg.interpolate_bed()
+            if not res:
+                self.uc.log_info(msg)
                 return False
         return True
 

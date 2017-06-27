@@ -604,7 +604,7 @@ class DomainSchematizer(GeoPackageUtils):
         """
         Schematizing left bank.
         """
-        # Creating spatial index on domain polygons and finding proper one for each river center line
+        # Creating spatial index on cross sections and finding proper one for each river center line
         self.set_xs_features()
         feat_xs = []
         for feat in self.user_lbank_lyr.getFeatures():
@@ -615,7 +615,7 @@ class DomainSchematizer(GeoPackageUtils):
         for feat, sorted_xs in feat_xs:
             lbank_fid = feat.id()
             lbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
-            # Getting left and right edge
+            # Getting left edge
             self.schematize_banks(feat)
             self.banks_data.append((lbank_fid, lbank_geom, sorted_xs))
         self.left_bank_lyr.triggerRepaint()
@@ -642,7 +642,7 @@ class DomainSchematizer(GeoPackageUtils):
                 move = lnode - xs.geometry().vertexAt(0)
                 self.shift_line_geom(xs, move)
             # Rotating and schematizing user cross sections
-            self.schematize_xs(sorted_xs)
+            self.schematize_xs(sorted_xs) # HERE IS OK!!!
             # Interpolating cross sections
             inter_xs = self.interpolate_xs(lsegment_points, sorted_xs, vertex_idx)
             # Clipping cross sections between each other
@@ -837,6 +837,13 @@ class DomainSchematizer(GeoPackageUtils):
             end_point = end_geom.asPoint()
         else:
             pass
+        return end_point
+
+    @staticmethod
+    def apply_rotation(start_point, end_point, rotation):
+        end_geom = QgsGeometry.fromPoint(end_point)
+        end_geom.rotate(rotation, start_point)
+        end_point = end_geom.asPoint()
         return end_point
 
     @staticmethod

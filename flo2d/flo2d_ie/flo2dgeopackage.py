@@ -235,6 +235,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
         name_qry = '''UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) '''
         self.execute(name_qry)
 
+    def import_raincell(self):
+        head_sql = ['''INSERT INTO raincell (rainintime, irinters, timestamp) VALUES''', 3]
+        data_sql = ['''INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES''', 3]
+
+        self.clear_tables('raincell', 'raincell_data')
+
+        header, data = self.parser.parse_raincell()
+        head_sql += [tuple(header)]
+
+        time_step = float(header[0])
+        irinters = int(header[1])
+        data_len = len(data)
+        grid_count = data_len / irinters
+        data_gen = (data[i:i + grid_count] for i in xrange(0, data_len, grid_count))
+        time_interval = 0
+        for data_series in data_gen:
+            for row in data_series:
+                data_sql += [(time_interval,) + tuple(row)]
+            time_interval += time_step
+        self.batch_execute(head_sql, data_sql)
+
     def import_infil(self):
         infil_params = ['infmethod', 'abstr', 'sati', 'satf', 'poros', 'soild', 'infchan', 'hydcall',
                         'soilall', 'hydcadj', 'hydcxx', 'scsnall', 'abstr1', 'fhortoni', 'fhortonf', 'decaya']
@@ -921,6 +942,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             for row in self.execute(rain_cells_sql):
                 r.write(cell_line.format(*row))
+
+    def export_raincell(self, outdir):
+        if self.is_table_empty('raincell'):
+            return
+        head_sql = '''SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;'''
+        data_sql = '''SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;'''
+
+        line1 = '{0} {1} {2}\n'
+        line2 = '{0} {1}\n'
+
+        raincell_head = self.execute(head_sql).fetchone()
+        raincell_rows = self.execute(data_sql)
+
+        raincell = os.path.join(outdir, 'RAINCELL.DAT')
+        with open(raincell, 'w') as r:
+            r.write(line1.format(*raincell_head))
+            for row in raincell_rows:
+                r.write(line2.format(*row))
 
     def export_infil(self, outdir):
         # check if there is any infiltration defined

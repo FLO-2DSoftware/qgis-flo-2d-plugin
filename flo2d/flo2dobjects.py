@@ -239,8 +239,9 @@ class UserCrossSection(GeoPackageUtils):
         self.clear_unused_user_chan_x_rows()
 
     def set_nxsecnum(self):
-        qry_xsecnum = '''UPDATE user_chan_n SET nxsecnum = fid, xsecname = 'Cross section ' || cast(fid as text);'''
-        self.execute(qry_xsecnum)
+        # qry_xsecnum = '''UPDATE user_chan_n SET nxsecnum = fid, xsecname = 'Cross section ' || cast(fid as text);'''
+        qry_xsecnum = '''UPDATE user_chan_n SET nxsecnum=?, xsecname=? WHERE user_xs_fid=?;'''
+        self.execute(qry_xsecnum, (self.fid, self.name, self.fid))
 
     def set_n(self, n):
         qry = '''UPDATE user_xsections SET fcn = ? WHERE fid = ?;'''
@@ -354,8 +355,8 @@ class ChannelSegment(GeoPackageUtils):
                     xsi.profile_data['rbank_elev'] = xsup.profile_data['rbank_elev'] + icoef * d_rbank_elev
                     xsi.profile_data['fcd'] = xsup.profile_data['fcd'] + icoef * d_fcd
                     xsi.set_profile_data()
-                except Flo2dError:
-                    return False
+                except Flo2dError as e:
+                    return False, repr(e)
             else:
                 # this is natural cross-section
                 try:
@@ -365,9 +366,12 @@ class ChannelSegment(GeoPackageUtils):
                     d_bed = xslo.profile_data['bed_elev'] - xsup.profile_data['bed_elev']
                     dh = icoef * d_bed
                     xsi.shift_nxsec(dh)
-                except Flo2dError:
-                    return False
-        return True
+                except Flo2dError as e:
+                    return False, repr(e)
+                except KeyError:
+                    msg = 'Interpolation failed on cross-sections with \'fid\': {}!'.format(xsi.row['user_xs_fid'])
+                    return False, msg
+        return True, 'Interpolation successful!'
 
 
 class Inflow(GeoPackageUtils):

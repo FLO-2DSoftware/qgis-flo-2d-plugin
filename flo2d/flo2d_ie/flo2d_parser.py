@@ -262,6 +262,15 @@ class ParseDAT(object):
                 pass
         return data, time_series, rain_arf
 
+    def parse_raincell(self):
+        rain = self.dat_files['RAINCELL.DAT']
+        par = self.single_parser(rain)
+        line1 = next(par)
+        head = line1[:2]
+        head.append(' '.join(line1[2:]))
+        data = [row for row in par]
+        return head, data
+
     def parse_infil(self):
         infil = self.dat_files['INFIL.DAT']
         line1 = ['INFMETHOD']
