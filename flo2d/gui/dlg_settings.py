@@ -55,11 +55,27 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgOpenBtn.clicked.connect(self.connect)
 
     def set_default_controls(self, con):
-        qry = '''INSERT INTO cont (name, note) VALUES (?,?);'''
+        defaults = {
+            'COURCHAR_C': 'C',
+            'COURCHAR_T': 'T',
+            'COURANTC': 0.6,
+            'COURANTFP': 0.6,
+            'COURANTST': 0.6,
+            'NOPRTC': 2,
+            'NOPRTFP': 2
+        }
+        qry = '''INSERT INTO cont (name, value, note) VALUES (?,?,?);'''
         cont_rows = self.parser.cont_rows
         toler_rows = self.parser.toler_rows
         parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
-        values = ((param, GeoPackageUtils.PARAMETER_DESCRIPTION[param]) for param in parameters)
+        values = []
+        for param in parameters:
+            if param in defaults:
+                val = defaults[param]
+            else:
+                val = None
+            row = (param, val, GeoPackageUtils.PARAMETER_DESCRIPTION[param])
+            values.append(row)
         con.executemany(qry, values)
 
     def read(self):

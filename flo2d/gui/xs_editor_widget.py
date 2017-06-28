@@ -11,7 +11,7 @@
 from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QStandardItem, QColor, QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
+from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from flo2d.utils import m_fdata, is_number
 from flo2d.geopackage_utils import GeoPackageUtils, connection_required
 from flo2d.flo2dobjects import UserCrossSection, ChannelSegment
@@ -89,6 +89,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
             self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
+            self.user_xs_lyr.selectionChanged.connect(self.switch_to_selected_xs)
+
+    def switch_to_selected_xs(self):
+        switch_to_selected(self.user_xs_lyr, self.xs_cbo)
+        self.cur_xsec_changed(self.xs_cbo.currentIndex())
 
     def schematize_xs(self):
         self.schematize_1d.emit()

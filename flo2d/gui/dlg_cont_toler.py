@@ -46,7 +46,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
         ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
         ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
-        ['SUPER', {'label': 'Super', 'type': 's', 'dat': 'CONT'}],
+        ['DepressDepth', {'label': 'Depress Depth', 'type': 's', 'dat': 'CONT'}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
         ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 1}],
         ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],

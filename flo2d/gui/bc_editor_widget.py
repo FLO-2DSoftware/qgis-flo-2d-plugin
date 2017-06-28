@@ -42,6 +42,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.define_outflow_types()
         self.populate_outflow_type_cbo()
         self.populate_hydrograph_cbo()
+        self.con = None
         self.gutils = None
         self.twidget = table
         self.bc_data_model = StandardItemModel()
@@ -104,6 +105,25 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def unblock_saving(self):
         self.bc_data_model.dataChanged.connect(self.save_bc_data)
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            interval = self.gutils.get_cont_par('IHOURDAILY')
+            if interval is None:
+                interval = 0
+            else:
+                interval = int(interval)
+            self.interval_ckbx.setChecked(interval)
+            self.interval_ckbx.stateChanged.connect(self.set_interval)
+
+    def set_interval(self):
+        state = str(int(self.interval_ckbx.isChecked()))
+        self.gutils.set_cont_par('IHOURDAILY', state)
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
         """
@@ -252,10 +272,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         Read inflow and inflow_time_series tables, populate proper combo boxes.
         """
-        if not self.iface.f2d['con']:
-            return
         self.reset_inflow_gui()
-        self.gutils = GeoPackageUtils(self.iface.f2d['con'], self.iface)
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows:
             # self.uc.bar_info('There is no inflow defined in the database...')
@@ -509,7 +526,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def populate_outflows(self, outflow_fid=None, show_last_edited=False):
         """
-        Read outflow table, populate the cbo and set apropriate outflow.
+        Read outflow table, populate the cbo and set proper outflow.
         """
         if not self.iface.f2d['con']:
             return

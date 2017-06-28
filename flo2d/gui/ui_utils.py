@@ -50,3 +50,11 @@ def set_icon(btn, icon_file):
     parent_dir = os.path.dirname(os.path.abspath(__file__))
     idir = os.path.join(os.path.dirname(parent_dir), 'img')
     btn.setIcon(QIcon(os.path.join(idir, icon_file)))
+
+
+def switch_to_selected(vlayer, combo_box, field='name'):
+    if vlayer.selectedFeatureCount() == 1:
+        feat = vlayer.selectedFeatures()[0]
+        text = feat[field]
+        idx = combo_box.findText(text)
+        combo_box.setCurrentIndex(idx)

@@ -117,6 +117,7 @@ class Flo2D(object):
 
         self.f2d_widget.grid_tools.setup_connection()
         self.f2d_widget.profile_tool.setup_connection()
+        self.f2d_widget.bc_editor.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs()
         self.f2d_widget.ic_editor.populate_cbos()
         self.f2d_widget.street_editor.setup_connection()

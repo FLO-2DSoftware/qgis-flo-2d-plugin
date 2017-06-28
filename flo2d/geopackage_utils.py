@@ -158,7 +158,7 @@ class GeoPackageUtils(object):
         ['ENCROACH', 'Encroachment Analysis Depth'],
         ['IEVAP', 'Evaporation Switch'],
         ['IMODFLOW', 'Modflow Switch'],
-        ['SUPER', 'Super'],
+        ['DepressDepth', 'Depress Depth'],
         ['CELLSIZE', 'Cellsize'],
         ['MANNING', 'Global n Value Adjustment'],
         ['IDEPLT', 'Plot Hydrograph'],

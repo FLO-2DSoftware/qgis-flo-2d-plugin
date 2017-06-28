@@ -57,7 +57,7 @@ class ParseDAT(object):
             ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
             ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
             ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
-            ['NOPRTFP', 'SUPER'],
+            ['NOPRTFP', 'DepressDepth'],
             ['NOPRTC'],
             ['ITIMTEP', 'TIMTEP'],
             ['GRAPTIM']

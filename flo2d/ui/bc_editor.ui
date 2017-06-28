@@ -207,6 +207,13 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QCheckBox" name="interval_ckbx">
+       <property name="text">
+        <string>Daily intervals</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
