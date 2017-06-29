@@ -1054,7 +1054,6 @@ class Layers(QObject):
             raise Flo2dNotString(msg)
 
     def load_all_layers(self, gutils):
-
         self.gutils = gutils
         self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))

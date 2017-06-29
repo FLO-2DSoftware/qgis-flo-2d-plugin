@@ -753,6 +753,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         parser = ParseDAT()
         sql = '''SELECT name, value FROM cont;'''
         options = {o: v if v is not None else '' for o, v in self.execute(sql).fetchall()}
+        if options['IFLOODWAY'] == '0':
+            del options['ENCROACH']
+        if options['ICHANNEL'] == '0':
+            del options['NOPRTC']
+            del options['COURANTC']
+        if options['LGPLOT'] == '0':
+            del options['GRAPTIM']
+        if options['MSTREET'] == '0':
+            del options['COURANTST']
+
         cont = os.path.join(outdir, 'CONT.DAT')
         toler = os.path.join(outdir, 'TOLER.DAT')
         rline = ' {0}'
@@ -760,6 +770,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for row in parser.cont_rows:
                 lst = ''
                 for o in row:
+                    if o not in options:
+                        continue
                     val = options[o]
                     lst += rline.format(val)
                 lst += '\n'
@@ -772,6 +784,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for row in parser.toler_rows:
                 lst = ''
                 for o in row:
+                    if o not in options:
+                        continue
                     val = options[o]
                     lst += rline.format(val)
                 lst += '\n'
@@ -935,7 +949,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             r.write(rain_line1.format(*rain_row[1:3]))
             r.write(rain_line2.format(*rain_row[3:7]))
             for row in self.execute(ts_data_sql, (fid,)):
-                r.write(tsd_line.format(*row))
+                if None not in row:
+                    r.write(tsd_line.format(*row))
             if rain_row[-1] is not None:
                 r.write(rain_line4.format(*rain_row[-2:]))
             else:

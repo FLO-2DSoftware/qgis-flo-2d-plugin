@@ -35,7 +35,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         ['INFIL', {'label': 'Infiltration Switch', 'type': 's', 'dat': 'CONT'}],
         ['IRAIN', {'label': 'Rain Switch', 'type': 's', 'dat': 'CONT'}],
         ['ISED', {'label': 'Sediment Transport Switch', 'type': 's', 'dat': 'CONT'}],
-        ['ITIMTEP', {'label': 'Time Series Selection Switch', 'type': 's4', 'dat': 'CONT'}],
+        ['ITIMTEP', {'label': 'Time Series Selection Switch', 'type': 's5', 'dat': 'CONT'}],
         ['IWRFS', {'label': 'Building Switch', 'type': 's', 'dat': 'CONT'}],
         ['LEVEE', {'label': 'Levee Switch', 'type': 's', 'dat': 'CONT'}],
         ['LGPLOT', {'label': 'Graphic Mode', 'type': 's2', 'dat': 'CONT'}],
@@ -46,7 +46,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
         ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
         ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
-        ['DepressDepth', {'label': 'Depress Depth', 'type': 's', 'dat': 'CONT'}],
+        ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 's', 'dat': 'CONT'}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
         ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 1}],
         ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],
@@ -66,7 +66,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
 
     COMBO_KEYS = {
             'IBACKUP': ['OFF', 'ON [1]', 'ON [2]'],
-            'ITIMTEP': ['OFF', 'ON [1]', 'ON [2]', 'ON [3]', 'ON [4]'],
+            'ITIMTEP': ['OFF', 'ON [1]', 'ON [2]', 'ON [3]', 'ON [4]', 'ON [5]'],
             'LGPLOT': ['TEXT', 'BATCH', 'GRAPHIC'],
             'NOPRTC': ['data is reported', 'data is not reported', 'none is reported'],
             'NOPRTFP': ['data is reported', 'data is not reported', 'none is reported']

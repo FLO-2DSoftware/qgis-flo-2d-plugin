@@ -56,6 +56,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def set_default_controls(self, con):
         defaults = {
+            'build': None,
             'COURCHAR_C': 'C',
             'COURCHAR_T': 'T',
             'COURANTC': 0.6,
@@ -73,7 +74,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             if param in defaults:
                 val = defaults[param]
             else:
-                val = None
+                val = 0
             row = (param, val, GeoPackageUtils.PARAMETER_DESCRIPTION[param])
             values.append(row)
         con.executemany(qry, values)

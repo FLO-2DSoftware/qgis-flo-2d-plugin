@@ -542,7 +542,6 @@ class Flo2D(object):
             self.load_layers()
             self.uc.bar_info('Flo2D model imported', dur=3)
             self.gutils.enable_geom_triggers()
-            # self.show_bc_editor()
             self.gutils.update_rbank()
             self.setup_dock_widgets()
         finally:
@@ -554,6 +553,8 @@ class Flo2D(object):
         Export traditional GDS files into FLO-2D database (GeoPackage).
         """
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        sql = '''SELECT name, value FROM cont;'''
+        options = {o: v if v is not None else '' for o, v in self.f2g.execute(sql).fetchall()}
         export_calls = [
             'export_cont_toler',
             'export_mannings_n_topo',
@@ -581,6 +582,34 @@ class Flo2D(object):
             'export_wsurf',
             'export_wstime'
         ]
+
+        if options['ICHANNEL'] == '0':
+            export_calls.remove('export_chan')
+            export_calls.remove('export_xsec')
+        if options['IEVAP'] == '0':
+            export_calls.remove('export_evapor')
+        if options['IHYDRSTRUCT'] == '0':
+            export_calls.remove('export_hystruc')
+        if options['IMULTC'] == '0':
+            export_calls.remove('export_mult')
+        if options['INFIL'] == '0':
+            export_calls.remove('export_infil')
+        if options['IRAIN'] == '0':
+            export_calls.remove('export_rain')
+            export_calls.remove('export_raincell')
+        if options['ISED'] == '0' and options['MUD'] == '0':
+            export_calls.remove('export_sed')
+        if options['IWRFS'] == '0':
+            export_calls.remove('export_arf')
+        if options['LEVEE'] == '0':
+            export_calls.remove('export_levee')
+        if options['MSTREET'] == '0':
+            export_calls.remove('export_street')
+        if options['SWMM'] == '0':
+            export_calls.remove('export_swmmflo')
+            export_calls.remove('export_swmmflort')
+            export_calls.remove('export_swmmoutf')
+
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         outdir = QFileDialog.getExistingDirectory(None,
