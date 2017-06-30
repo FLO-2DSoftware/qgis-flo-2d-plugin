@@ -13,7 +13,7 @@ from PyQt4.QtGui import QStandardItem, QColor, QInputDialog
 from qgis.core import QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from flo2d.utils import m_fdata, is_number
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2dobjects import UserCrossSection, ChannelSegment
 from flo2d.user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
@@ -89,9 +89,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
             self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
-            self.user_xs_lyr.selectionChanged.connect(self.switch_to_selected_xs)
+            self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
-    def switch_to_selected_xs(self):
+    def switch2selected(self):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo)
         self.cur_xsec_changed(self.xs_cbo.currentIndex())
 
@@ -139,7 +139,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
 
-    @connection_required
     def populate_xsec_cbo(self, fid=None, show_last_edited=False):
         """
         Populate xsection cbo.
@@ -166,7 +165,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.enable_widgets()
             self.cur_xsec_changed(cur_idx)
 
-    @connection_required
     def digitize_xsec(self, i):
         def_attr_exp = self.lyrs.data['user_xsections']['attrs_defaults']
         if not self.lyrs.enter_edit_mode('user_xsections', def_attr_exp):
@@ -180,13 +178,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_center_chbox.setEnabled(enable)
         self.n_sbox.setEnabled(enable)
 
-    @connection_required
     def cancel_user_lyr_edits(self, i):
         user_lyr_edited = self.lyrs.rollback_lyrs_edits('user_xsections')
         if user_lyr_edited:
             self.populate_xsec_cbo()
 
-    @connection_required
     def save_user_lyr_edits(self, i):
         if not self.gutils or not self.lyrs.any_lyr_in_edit('user_xsections'):
             return
@@ -205,7 +201,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         ]
         self.lyrs.repaint_layers()
 
-    @connection_required
     def cur_xsec_changed(self, idx=0):
         """
         User changed current xsection in the xsections list.
@@ -215,10 +210,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         fid = self.xs_cbo.itemData(idx)
-        self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
+        self.lyrs.clear_rubber()
         if self.xs_center_chbox.isChecked():
+            self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
             feat = self.user_xs_lyr.getFeatures(QgsFeatureRequest(int(self.xs.fid))).next()
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -265,7 +261,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.create_plot()
             self.update_plot()
 
-    @connection_required
     def cur_xsec_type_changed(self, idx):
         # print 'type idx', idx
         if not self.xs_cbo.count():
@@ -282,7 +277,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.clear()
         self.plot.add_item('Cross-section', [self.xi, self.yi], col=QColor("#0018d4"))
 
-    @connection_required
     def update_plot(self):
         """
         When time series data for plot change, update the plot.
@@ -293,13 +287,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.yi.append(m_fdata(self.xs_data_model, i, 1))
         self.plot.update_item('Cross-section', [self.xi, self.yi])
 
-    @connection_required
     def save_n(self, n_val):
         if not self.xs_cbo.count():
             return
         self.xs.set_n(n_val)
 
-    @connection_required
     def change_xs_name(self, i):
         if not self.xs_cbo.count():
             return
@@ -341,7 +333,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     )
             self.xs.set_chan_data(data)
 
-    @connection_required
     def delete_xs(self, i):
         """
         Delete the current cross-section from user layer.
@@ -364,6 +355,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # try to set current xs to the last before the deleted one
         try:
             self.populate_xsec_cbo(fid=fid-1)
-        except:
+        except Exception as e:
             self.populate_xsec_cbo()
         self.repaint_xs()

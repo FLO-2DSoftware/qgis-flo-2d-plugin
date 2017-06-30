@@ -10,7 +10,7 @@
 
 import traceback
 from ui_utils import load_ui, set_icon
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication, QInputDialog
@@ -42,12 +42,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         set_icon(self.roughness_btn, 'sample_manning.svg')
         set_icon(self.arfwrf_btn, 'eval_arfwrf.svg')
 
-        self.create_grid_btn.clicked.connect(lambda: self.create_grid())
-        self.raster_elevation_btn.clicked.connect(lambda: self.raster_elevation())
-        self.xyz_elevation_btn.clicked.connect(lambda: self.xyz_elevation())
-        self.polygon_elevation_btn.clicked.connect(lambda: self.correct_elevation())
-        self.roughness_btn.clicked.connect(lambda: self.get_roughness())
-        self.arfwrf_btn.clicked.connect(lambda: self.eval_arfwrf())
+        self.create_grid_btn.clicked.connect(self.create_grid)
+        self.raster_elevation_btn.clicked.connect(self.raster_elevation)
+        self.xyz_elevation_btn.clicked.connect(self.xyz_elevation)
+        self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
+        self.roughness_btn.clicked.connect(self.get_roughness)
+        self.arfwrf_btn.clicked.connect(self.eval_arfwrf)
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -89,7 +89,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             else:
                 return None
 
-    @connection_required
     def create_grid(self):
         if not self.lyrs.save_edits_and_proceed('Computational Domain'):
             return
@@ -122,7 +121,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Creating grid aborted! Please check Computational Domain layer.')
 
-    @connection_required
     def raster_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
@@ -148,7 +146,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
 
-    @connection_required
     def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
@@ -186,7 +183,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
 
-    @connection_required
     def correct_elevation(self):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
@@ -221,7 +217,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Assigning grid elevation aborted! Please check your input layers.')
 
-    @connection_required
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed('Roughness'):
             return
@@ -259,7 +254,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Assigning roughness aborted! Please check roughness layer.')
 
-    @connection_required
     def eval_arfwrf(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:

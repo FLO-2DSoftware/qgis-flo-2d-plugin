@@ -12,8 +12,8 @@ import traceback
 from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
 from flo2d.flo2d_tools.schematic_tools import schematize_streets
-from ui_utils import load_ui, center_canvas, set_icon
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
+from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('street_editor')
@@ -49,13 +49,13 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_street_btn, 'mActionDeleteSelected.svg')
         set_icon(self.change_street_name_btn, 'change_name.svg')
-        self.create_street.clicked.connect(lambda: self.create_street_line())
-        self.global_params.clicked.connect(lambda: self.set_general_params())
-        self.save_changes_btn.clicked.connect(lambda: self.save_street_edits())
-        self.revert_changes_btn.clicked.connect(lambda: self.revert_edits())
-        self.delete_street_btn.clicked.connect(lambda: self.delete_street())
-        self.schema_streets.clicked.connect(lambda: self.schematize_street_lines())
-        self.change_street_name_btn.clicked.connect(lambda: self.change_street_name())
+        self.create_street.clicked.connect(self.create_street_line)
+        self.global_params.clicked.connect(self.set_general_params)
+        self.save_changes_btn.clicked.connect(self.save_street_edits)
+        self.revert_changes_btn.clicked.connect(self.revert_edits)
+        self.delete_street_btn.clicked.connect(self.delete_street)
+        self.schema_streets.clicked.connect(self.schematize_street_lines)
+        self.change_street_name_btn.clicked.connect(self.change_street_name)
         self.street_name_cbo.activated.connect(self.street_changed)
 
     def setup_connection(self):
@@ -66,9 +66,13 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.street_lyr = self.lyrs.data['user_streets']['qlyr']
-            self.street_lyr.editingStopped.connect(lambda: self.populate_streets())
+            self.street_lyr.editingStopped.connect(self.populate_streets)
+            self.street_lyr.selectionChanged.connect(self.switch2selected)
 
-    @connection_required
+    def switch2selected(self):
+        switch_to_selected(self.street_lyr, self.street_name_cbo)
+        self.street_changed()
+
     def populate_streets(self):
         self.street_name_cbo.clear()
         qry = '''SELECT fid, name, n_value, elevation, curb_height, street_width FROM user_streets ORDER BY fid;'''
@@ -89,17 +93,17 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.spin_w.setValue(street_width)
         else:
             return
+        self.lyrs.clear_rubber()
         if self.street_center_chbox.isChecked():
+            self.lyrs.show_feat_rubber(self.street_lyr.id(), fid)
             feat = self.street_lyr.getFeatures(QgsFeatureRequest(fid)).next()
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
-    @connection_required
     def create_street_line(self):
         if not self.lyrs.enter_edit_mode('user_streets'):
             return
 
-    @connection_required
     def save_street_edits(self):
         """
         Save changes of user street layer.
@@ -115,7 +119,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             return
         self.populate_streets()
 
-    @connection_required
     def revert_edits(self):
         self.lyrs.rollback_lyrs_edits('user_streets')
         self.populate_streets()
@@ -138,7 +141,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         width = self.spin_w.value()
         self.gutils.execute(update_qry, (name, n, elev, curb, width, fid))
 
-    @connection_required
     def delete_street(self):
         """
         Delete the current street from user layer.
@@ -160,7 +162,6 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.street_idx -= 1
         self.populate_streets()
 
-    @connection_required
     def schematize_street_lines(self):
         if not self.lyrs.save_edits_and_proceed("Street Lines"):
             return
@@ -181,14 +182,12 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_warn("Schematizing of streets aborted! Please check Street Lines layer.")
             self.uc.log_info(traceback.format_exc())
 
-    @connection_required
     def change_street_name(self):
         new_name, ok = QInputDialog.getText(None, 'Change street name', 'New name:')
         if not ok or not new_name:
             return
         self.street_name_cbo.setItemText(self.street_idx, new_name)
 
-    @connection_required
     def set_general_params(self):
         qry = '''SELECT strfno, strman, depx, widst, istrflo FROM street_general;'''
         gen = self.gutils.execute(qry).fetchone()

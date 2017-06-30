@@ -15,9 +15,9 @@ from collections import OrderedDict
 from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
 from qgis.core import QGis, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, set_icon
+from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from flo2d.utils import m_fdata
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_tools.grid_tools import poly2grid
 from flo2d.flo2d_tools.infiltration_tools import InfiltrationCalculator
@@ -84,13 +84,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
         set_icon(self.change_name_btn, 'change_name.svg')
-        self.create_polygon_btn.clicked.connect(lambda: self.create_infil_polygon())
-        self.save_changes_btn.clicked.connect(lambda: self.save_infil_edits())
-        self.revert_changes_btn.clicked.connect(lambda: self.revert_infil_lyr_edits())
-        self.delete_btn.clicked.connect(lambda: self.delete_cur_infil())
-        self.change_name_btn.clicked.connect(lambda: self.rename_infil())
-        self.schema_btn.clicked.connect(lambda: self.schematize_infiltration())
-        self.global_params.clicked.connect(lambda: self.show_global_params())
+        self.create_polygon_btn.clicked.connect(self.create_infil_polygon)
+        self.save_changes_btn.clicked.connect(self.save_infil_edits)
+        self.revert_changes_btn.clicked.connect(self.revert_infil_lyr_edits)
+        self.delete_btn.clicked.connect(self.delete_cur_infil)
+        self.change_name_btn.clicked.connect(self.rename_infil)
+        self.schema_btn.clicked.connect(self.schematize_infiltration)
+        self.global_params.clicked.connect(self.show_global_params)
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
         self.chan_grp.toggled.connect(self.channel_checked)
@@ -113,7 +113,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.all_schema += [self.schema_green, self.schema_scs, self.schema_horton, self.schema_chan]
             self.read_global_params()
             self.infil_lyr.editingStopped.connect(self.populate_infiltration)
+            self.infil_lyr.selectionChanged.connect(self.switch2selected)
             self.infil_name_cbo.activated.connect(self.infiltration_changed)
+
+    def switch2selected(self):
+        switch_to_selected(self.infil_lyr, self.infil_name_cbo)
+        self.infiltration_changed()
 
     def repaint_schema(self):
         for lyr in self.all_schema:
@@ -126,7 +131,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.con.commit()
         self.infil_lyr.triggerRepaint()
 
-    @connection_required
     def show_global_params(self):
         ok = self.iglobal.exec_()
         if ok:
@@ -162,7 +166,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.infmethod = imethod
         self.populate_infiltration()
 
-    @connection_required
     def read_global_params(self):
         qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
         glob = self.gutils.execute(qry).fetchone()
@@ -191,7 +194,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     obj.setValue(val)
         self.iglobal.save_imethod()
 
-    @connection_required
     def write_global_params(self):
         qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
         method = self.iglobal.global_imethod
@@ -231,7 +233,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             if self.fplain_grp.isChecked():
                 self.fplain_grp.setChecked(False)
 
-    @connection_required
     def create_infil_polygon(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn('Please define global infiltration method first!')
@@ -239,7 +240,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not self.lyrs.enter_edit_mode('user_infiltration'):
             return
 
-    @connection_required
     def rename_infil(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn('Please define global infiltration method first!')
@@ -257,7 +257,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.infil_name_cbo.setItemText(self.infil_name_cbo.currentIndex(), new_name)
         self.save_infil_edits()
 
-    @connection_required
     def revert_infil_lyr_edits(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn('Please define global infiltration parameters first!')
@@ -266,7 +265,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if user_infil_edited:
             self.populate_infiltration()
 
-    @connection_required
     def delete_cur_infil(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn('Please define global infiltration method first!')
@@ -281,7 +279,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.infil_lyr.triggerRepaint()
         self.populate_infiltration()
 
-    @connection_required
     def save_infil_edits(self):
         before = self.gutils.count('user_infiltration')
         self.lyrs.save_lyrs_edits('user_infiltration')

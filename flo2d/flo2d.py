@@ -208,15 +208,15 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
-            os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
-            text=self.tr(u'Convert schematic layers to user layers'),
-            callback=lambda: self.schematic2user(),
-            parent=self.iface.mainWindow())
-
-        self.add_action(
             os.path.join(self.plugin_dir, 'img/show_cont_table.svg'),
             text=self.tr(u'Set Control Parameters'),
             callback=lambda: self.show_cont_toler(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
+            text=self.tr(u'Convert schematic layers to user layers'),
+            callback=lambda: self.schematic2user(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -819,7 +819,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
+            self.uc.bar_warn("There is no any user left bank lines! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_xsections'):
             self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
@@ -867,7 +867,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn("There is no any river center lines! Please digitize them before running the tool.")
+            self.uc.bar_warn("There is no any user left bank lines! Please digitize them before running the tool.")
             return
         if self.gutils.is_table_empty('user_xsections'):
             self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")

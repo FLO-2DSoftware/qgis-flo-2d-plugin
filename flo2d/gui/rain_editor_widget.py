@@ -15,7 +15,7 @@ from PyQt4.QtGui import QColor, QInputDialog, QFileDialog, QApplication
 from ui_utils import load_ui, try_disconnect, set_icon
 from flo2d.flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from flo2d.utils import is_number, m_fdata
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from flo2d.geopackage_utils import GeoPackageUtils
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from flo2d.flo2dobjects import Rain
 from flo2d.user_communication import UserCommunication
@@ -174,7 +174,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = 'Rain timeseries'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
-    @connection_required
     def rain_properties(self):
         if not self.rain:
             return

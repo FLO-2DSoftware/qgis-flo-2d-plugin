@@ -14,8 +14,8 @@ from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
-from flo2d.geopackage_utils import GeoPackageUtils, connection_required
+from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
+from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_ie.swmm_io import StormDrainProject
 from flo2d.flo2d_tools.schematic_conversion import remove_features
@@ -75,14 +75,14 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.add_rtable_btn, 'add_bc_data.svg')
         set_icon(self.rename_rtable_btn, 'change_name.svg')
 
-        self.create_point_btn.clicked.connect(lambda: self.create_swmm_point())
-        self.save_changes_btn.clicked.connect(lambda: self.save_swmm_edits())
-        self.revert_changes_btn.clicked.connect(lambda: self.revert_swmm_lyr_edits())
-        self.delete_btn.clicked.connect(lambda: self.delete_cur_swmm())
-        self.change_name_btn.clicked.connect(lambda: self.rename_swmm())
-        self.schema_btn.clicked.connect(lambda: self.schematize_swmm())
-        self.import_inp.clicked.connect(lambda: self.import_swmm_input())
-        self.update_inp.clicked.connect(lambda: self.update_swmm_input())
+        self.create_point_btn.clicked.connect(self.create_swmm_point)
+        self.save_changes_btn.clicked.connect(self.save_swmm_edits)
+        self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
+        self.delete_btn.clicked.connect(self.delete_cur_swmm)
+        self.change_name_btn.clicked.connect(self.rename_swmm)
+        self.schema_btn.clicked.connect(self.schematize_swmm)
+        self.import_inp.clicked.connect(self.import_swmm_input)
+        self.update_inp.clicked.connect(self.update_swmm_input)
         self.recalculate_btn.clicked.connect(self.recalculate_max_depth)
         self.inlet_grp.toggled.connect(self.inlet_checked)
         self.outlet_grp.toggled.connect(self.outlet_checked)
@@ -123,12 +123,17 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.schema_outlets = self.lyrs.data['swmmoutf']['qlyr']
             self.all_schema += [self.schema_inlets, self.schema_outlets]
             self.swmm_lyr.editingStopped.connect(self.populate_swmm)
+            self.swmm_lyr.selectionChanged.connect(self.switch2selected)
             self.swmm_name_cbo.activated.connect(self.swmm_changed)
             self.populate_swmm()
             self.populate_rtables()
             self.populate_rtables_data()
             self.cbo_rating_tables.activated.connect(self.populate_rtables_data)
             self.cbo_intype.activated.connect(self.check_intype)
+
+    def switch2selected(self):
+        switch_to_selected(self.swmm_lyr, self.swmm_name_cbo)
+        self.swmm_changed()
 
     def check_intype(self):
         intype = self.cbo_intype.currentIndex() + 1
@@ -141,12 +146,10 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         for lyr in self.all_schema:
             lyr.triggerRepaint()
 
-    @connection_required
     def create_swmm_point(self):
         if not self.lyrs.enter_edit_mode('user_swmm'):
             return
 
-    @connection_required
     def save_swmm_edits(self):
         before = self.gutils.count('user_swmm')
         self.lyrs.save_lyrs_edits('user_swmm')
@@ -159,13 +162,11 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             return
         self.populate_swmm()
 
-    @connection_required
     def revert_swmm_lyr_edits(self):
         user_swmm_edited = self.lyrs.rollback_lyrs_edits('user_swmm')
         if user_swmm_edited:
             self.populate_swmm()
 
-    @connection_required
     def delete_cur_swmm(self):
         if not self.swmm_name_cbo.count():
             return
@@ -177,7 +178,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.swmm_lyr.triggerRepaint()
         self.populate_swmm()
 
-    @connection_required
     def rename_swmm(self):
         if not self.swmm_name_cbo.count():
             return

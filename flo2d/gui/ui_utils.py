@@ -11,6 +11,7 @@
 import os
 from PyQt4 import uic
 from PyQt4.QtGui import QIcon
+from PyQt4.QtCore import QPyNullVariant
 from qgis.core import QgsRectangle
 
 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -56,5 +57,7 @@ def switch_to_selected(vlayer, combo_box, field='name'):
     if vlayer.selectedFeatureCount() == 1:
         feat = vlayer.selectedFeatures()[0]
         text = feat[field]
+        if isinstance(text, QPyNullVariant):
+            text = ''
         idx = combo_box.findText(text)
         combo_box.setCurrentIndex(idx)
