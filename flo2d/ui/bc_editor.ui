@@ -210,10 +210,14 @@
      <item>
       <widget class="QCheckBox" name="interval_ckbx">
        <property name="toolTip">
-        <string>Hourly intervals if unchecked</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
        </property>
        <property name="text">
-        <string>Daily intervals</string>
+        <string>Inflow hydrograph
+intervals (hours/days)</string>
        </property>
       </widget>
      </item>
