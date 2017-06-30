@@ -492,6 +492,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="selected_ckbox">
+       <property name="text">
+        <string>Apply selected</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

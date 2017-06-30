@@ -357,10 +357,10 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def recalculate_max_depth(self):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            qry = 'SELECT elevation - ? FROM grid WHERE fid = ?;'
-            qry_update = 'UPDATE user_swmm SET max_depth=? WHERE fid=?;'
+            qry = 'SELECT elevation FROM grid WHERE fid = ?;'
+            qry_update = 'UPDATE user_swmm SET max_depth=?, rim_elev=?, ge_elev=?, difference=? WHERE fid=?;'
             vals = {}
-            if self.swmm_lyr.selectedFeatureCount() > 0:
+            if self.selected_ckbox.isChecked():
                 request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
@@ -370,11 +370,14 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 geom = feat.geometry()
                 point = geom.asPoint()
                 grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-                max_depth = self.gutils.execute(qry, (invert_elev, grid_fid)).fetchone()[0]
-                vals[feat['fid']] = max_depth
+                elev = self.gutils.execute(qry, (grid_fid,)).fetchone()[0]
+                max_depth = elev - invert_elev
+                rim_elev = invert_elev + max_depth
+                difference = elev - rim_elev
+                vals[feat['fid']] = (max_depth, rim_elev, elev, difference)
             cur = self.gutils.con.cursor()
             for k, v in vals.items():
-                cur.execute(qry_update, (v, k))
+                cur.execute(qry_update, v + (k,))
             self.gutils.con.commit()
             self.populate_swmm()
             QApplication.restoreOverrideCursor()
@@ -405,7 +408,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             sdp.find_junctions()
             remove_features(self.swmm_lyr)
             fields = self.swmm_lyr.fields()
-            self.swmm_lyr.startEditing()
+            new_feats = []
             for name, values in sdp.coordinates.items():
                 if 'subcatchment' in values:
                     sd_type = 'I'
@@ -417,6 +420,9 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 x, y = float(values['x']), float(values['y'])
                 max_depth = float(values['max_depth']) if 'max_depth' in values else None
                 invert_elev = float(values['invert_elev']) if 'invert_elev' in values else None
+                rim_elev = invert_elev + max_depth if invert_elev and max_depth else None
+                gid = self.gutils.grid_on_point(x, y)
+                elev = self.gutils.grid_value(gid, 'elevation')
                 geom = QgsGeometry.fromPoint(QgsPoint(x, y))
                 feat.setGeometry(geom)
                 feat.setFields(fields)
@@ -424,7 +430,18 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 feat.setAttribute('name', name)
                 feat.setAttribute('max_depth', max_depth)
                 feat.setAttribute('invert_elev', invert_elev)
-                self.swmm_lyr.addFeature(feat)
+                feat.setAttribute('rim_elev', rim_elev)
+
+                feat.setAttribute('max_depth_inp', max_depth)
+                feat.setAttribute('invert_elev_inp', invert_elev)
+                feat.setAttribute('rim_elev_inp', rim_elev)
+                feat.setAttribute('ge_elev', elev)
+                difference = elev - rim_elev if elev and rim_elev else None
+                feat.setAttribute('difference', difference)
+                new_feats.append(feat)
+
+            self.swmm_lyr.startEditing()
+            self.swmm_lyr.addFeatures(new_feats)
             self.swmm_lyr.commitChanges()
             self.swmm_lyr.updateExtents()
             self.swmm_lyr.triggerRepaint()
@@ -449,7 +466,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if self.swmm_lyr.selectedFeatureCount() > 0:
+            if self.selected_ckbox.isChecked():
                 request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:

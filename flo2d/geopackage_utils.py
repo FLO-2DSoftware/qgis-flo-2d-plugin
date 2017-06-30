@@ -569,6 +569,11 @@ class GeoPackageUtils(object):
         gid = self.execute(qry).fetchone()[0]
         return gid
 
+    def grid_value(self, gid, field):
+        qry = 'SELECT "{}" FROM grid WHERE fid=?;'.format(field)
+        value = self.execute(qry, (gid,)).fetchone()[0]
+        return value
+
     def update_xs_type(self):
         """
         Updating parameters values specific for each cross section type.

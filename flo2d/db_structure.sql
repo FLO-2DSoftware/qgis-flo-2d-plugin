@@ -2347,6 +2347,14 @@ CREATE TABLE "user_swmm" (
     "invert_elev" REAL DEFAULT 0,
     "rt_fid" INTEGER,
     "outf_flo" INTEGER DEFAULT 0,
+
+    "invert_elev_inp" REAL DEFAULT 0,
+    "max_depth_inp" REAL DEFAULT 0,
+    "rim_elev_inp" REAL DEFAULT 0,
+    "rim_elev" REAL DEFAULT 0,
+    "ge_elev" REAL DEFAULT 0,
+    "difference" REAL DEFAULT 0,
+
     "notes" TEXT
 
 );

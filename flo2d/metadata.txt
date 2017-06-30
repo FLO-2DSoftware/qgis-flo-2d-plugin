@@ -6,7 +6,7 @@ name=FLO-2D
 qgisMinimumVersion=2.18
 qgisMaximumVersion=2.99
 description=FLO-2D tools for QGIS
-version=0.3.4
+version=0.3.5
 author=Lutra Consulting for FLO-2D
 email=info@lutraconsulting.co.uk
 
@@ -19,7 +19,10 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 # Recommended items:
 
 # Uncomment the following line and add your changelog:
-changelog=0.3.4 New features:
+changelog=0.3.5 New features:
+ - Added export rainfall to ASCII DAT files function
+ - Bug fixes and minor improvements
+<p>changelog=0.3.4 New features:
  - Added Run Simulation function
  - Minor improvements, bug fixes and code cleanups
 <p>changelog=0.3.3 New features:
