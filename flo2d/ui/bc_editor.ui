@@ -209,6 +209,9 @@
      </item>
      <item>
       <widget class="QCheckBox" name="interval_ckbx">
+       <property name="toolTip">
+        <string>Hourly intervals if unchecked</string>
+       </property>
        <property name="text">
         <string>Daily intervals</string>
        </property>
