@@ -368,7 +368,7 @@ def calculate_arfwrf(grid, areas):
                 arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                 centroid = geom.centroid()
                 centroid_wkt = centroid.exportToWkt()
-                if arf > 0.95:
+                if arf >= 0.9:
                     yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf)
                     continue
                 else:

@@ -137,12 +137,14 @@ class LeveesElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_from_polygons(self):
+        qry_values = []
         qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
-        cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
             poly_values = polys2levees(feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD)
             for elev, fid in poly_values:
-                cur.execute(qry, (round(elev, 3), fid))
+                qry_values.append((round(elev, 3), fid))
+        cur = self.gutils.con.cursor()
+        cur.executemany(qry, qry_values)
         self.gutils.con.commit()
 
 
@@ -187,9 +189,9 @@ class GridElevation(ElevationCorrector):
         self.add_virtual_sum(self.user_points)
         self.tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         self.tin.setup_layer_data()
-        grid_fids = [val[0] for val in poly2grid(self.grid, self.user_polygons, None, True, True)]
-        cur = self.gutils.con.cursor()
+        grid_fids = [val[-1] for val in poly2grid(self.grid, self.user_polygons, None, True, True)]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
+        qry_values = []
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
         for feat in self.grid.getFeatures(request):
             geom = feat.geometry()
@@ -197,7 +199,9 @@ class GridElevation(ElevationCorrector):
             succes, value = self.tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            cur.execute(qry, (round(value, 3), feat.id()))
+            qry_values.append((round(value, 3), feat.id()))
+        cur = self.gutils.con.cursor()
+        cur.executemany(qry, qry_values)
         self.gutils.con.commit()
         self.remove_virtual_sum(self.user_points)
 
@@ -213,19 +217,23 @@ class GridElevation(ElevationCorrector):
         feats = self.grid.getFeatures()
         feat = next(feats)
         cell_size = feat.geometry().area()
-        cur = self.gutils.con.cursor()
+        qry_values = []
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
         request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
         for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, 'fid', 'elevation'):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
-                if area / cell_size < 0.95:
+                if area / cell_size < 0.9:
                     continue
                 gids.append(gid)
                 elevs.append(elev)
+            if not elevs:
+                continue
             elevation = round(calculation_method(elevs), 3)
             for g in gids:
-                cur.execute(qry, (elevation, g))
+                qry_values.append((elevation, g))
+        cur = self.gutils.con.cursor()
+        cur.executemany(qry, qry_values)
         self.gutils.con.commit()
 
 
