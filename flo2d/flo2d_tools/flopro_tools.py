@@ -9,9 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
-import shutil
-import subprocess
-from itertools import chain
+from subprocess import Popen
 from contextlib import contextmanager
 
 
@@ -32,17 +30,11 @@ class FLOPROExecutor(object):
     def __init__(self, flo2d_dir, project_dir):
         self.flo2d_dir = flo2d_dir
         self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
-        self.flo2d_dlls = [os.path.join(flo2d_dir, x) for x in os.listdir(flo2d_dir) if x.lower().endswith('.dll')]
         self.project_dir = project_dir
-
-    def copy_executables(self):
-        for f in chain([self.flo2d_exe], self.flo2d_dlls):
-            shutil.copy(f, self.project_dir)
 
     def execute_flopro(self):
         with cd(self.project_dir):
-            subprocess.call(self.FLOPRO_EXE)
+            Popen(self.flo2d_exe)
 
     def run(self):
-        self.copy_executables()
         self.execute_flopro()

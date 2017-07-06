@@ -424,12 +424,12 @@ class Flo2D(object):
             return
         flo2d_dir, project_dir = dlg.get_parameters()
         if sys.platform != 'win32':
-            self.uc.bar_warn('Could not run simulation under this operation system!')
+            self.uc.bar_warn('Could not run simulation under current operation system!')
             return
         try:
             simulation = FLOPROExecutor(flo2d_dir, project_dir)
             simulation.run()
-            self.uc.bar_info('Simulation completed!', dur=3)
+            self.uc.bar_info('Simulation started!', dur=3)
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn('Running simulation failed!')
