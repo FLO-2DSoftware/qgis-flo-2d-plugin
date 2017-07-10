@@ -77,13 +77,13 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.set_report()
             self.report_chbox.stateChanged.connect(self.set_report)
             self.fpxsec_lyr.selectionChanged.connect(self.switch2selected)
-            self.fpxsec_lyr.editingStopped.connect(lambda: self.populate_cbos(show_last_edited=True))
+            self.fpxsec_lyr.editingStopped.connect(self.populate_cbos)
 
     def switch2selected(self):
         switch_to_selected(self.fpxsec_lyr, self.fpxs_cbo)
         self.cur_fpxs_changed()
 
-    def populate_cbos(self, fid=None, show_last_edited=False):
+    def populate_cbos(self, fid=None, show_last_edited=True):
         self.fpxs_cbo.clear()
         qry = '''SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE'''
         rows = self.gutils.execute(qry).fetchall()

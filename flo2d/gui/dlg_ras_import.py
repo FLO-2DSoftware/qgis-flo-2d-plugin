@@ -46,12 +46,13 @@ class RasImportDialog(qtBaseClass, uiDialog):
 
     def import_geometry(self):
         ras_file = self.ras_line.text()
+        interpolated_xs = True if self.interpolated.isChecked() else False
         if ras_file.lower().endswith('.prj'):
-            project = RASProject(self.con, self.iface, self.lyrs, ras_file)
+            project = RASProject(self.con, self.iface, self.lyrs, prj_path=ras_file, interpolated=interpolated_xs)
             project.find_geometry()
             ras_geom = project.get_geometry()
         else:
-            project = RASProject(self.con, self.iface, self.lyrs)
+            project = RASProject(self.con, self.iface, self.lyrs, interpolated=interpolated_xs)
             ras_geom = project.get_geometry(ras_file)
         if self.bank_radio.isChecked():
             limit = 1

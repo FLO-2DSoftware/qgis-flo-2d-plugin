@@ -19,10 +19,11 @@ from qgis.core import QgsFeature, QgsGeometry, QgsPoint
 
 class RASProject(GeoPackageUtils):
 
-    def __init__(self, con, iface, lyrs, prj_path=None):
+    def __init__(self, con, iface, lyrs, prj_path=None, interpolated=False):
         super(RASProject, self).__init__(con, iface)
         self.lyrs = lyrs
         self.project_path = prj_path
+        self.interpolated = interpolated
         self.ras_geom = None
         self.ras_plan = None
         self.ras_flow = None
@@ -47,7 +48,7 @@ class RASProject(GeoPackageUtils):
     def get_geometry(self, geom_pth=None):
         if geom_pth is None:
             geom_pth = self.ras_geom
-        geometry = RASGeometry(geom_pth)
+        geometry = RASGeometry(geom_pth, self.interpolated)
         ras_geometry = geometry.get_ras_geometry()
         if ras_geometry:
             first_val = next(ras_geometry.itervalues())
@@ -137,8 +138,9 @@ class RASProject(GeoPackageUtils):
 
 class RASGeometry(object):
 
-    def __init__(self, geom_path):
+    def __init__(self, geom_path, interpolated=False):
         self.geom_path = geom_path
+        self.interpolated = interpolated
         self.geom_txt = self.read_geom()
         self.ras_geometry = OrderedDict()
 
@@ -263,7 +265,7 @@ class RASGeometry(object):
 
     def extract_xsections(self):
         self.extract_rivers()
-        xs_pattern = r'Type RM[^,]+,(?P<rm>[^,*]+)(?P<asterix>[*]?),.+?' \
+        xs_pattern = r'Type RM[^,]+,(?P<rm>[^,*]+)(?P<asterix>[*]?)\s*,.+?' \
                      r'XS GIS Cut Line=(?P<length>\d+)[^\n]*(?P<points>[^a-zA-Z]+)[^#]+' \
                      r'#Sta/Elev=\s*(?P<sta>\d+)[^\n]*(?P<elev>[^a-zA-Z#]+)' \
                      r'#Mann=(?P<man>[^a-zA-Z#]+)(?P<extra>[^/]+)'
@@ -276,7 +278,7 @@ class RASGeometry(object):
 
             for xs_res in xs_results:
                 xs_groups = xs_res.groupdict()
-                if '*' in xs_groups['asterix']:
+                if '*' in xs_groups['asterix'] and self.interpolated is False:
                     continue
                 rm_txt = xs_groups['rm']
                 length_txt = xs_groups['length']
