@@ -90,7 +90,7 @@
       <item>
        <widget class="QCheckBox" name="elev_lines_chbox">
         <property name="text">
-         <string>Leeve user lines</string>
+         <string>Levee user lines</string>
         </property>
         <property name="checked">
          <bool>false</bool>

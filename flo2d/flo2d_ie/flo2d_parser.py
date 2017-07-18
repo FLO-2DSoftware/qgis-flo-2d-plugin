@@ -365,13 +365,14 @@ class ParseDAT(object):
     def parse_xsec(self):
         xsec = self.dat_files['XSEC.DAT']
         par = self.single_parser(xsec)
-        data = []
+        key = ()
+        data = OrderedDict()
         for row in par:
             if row[0] == 'X':
-                vals = [row[1], []]
-                data.append(vals)
+                key = (row[1], row[2])
+                data[key] = []
             else:
-                data[-1][-1].append(row)
+                data[key].append(row)
         return data
 
     def parse_hystruct(self):

@@ -402,7 +402,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
-            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, *columns))
+            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, 1, *columns))
             self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan')
             cur = self.con.cursor()
             if imethod == 1 or imethod == 3:

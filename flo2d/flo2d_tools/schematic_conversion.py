@@ -107,6 +107,7 @@ class SchemaDomainConverter(SchemaConverter):
         self.schema_xs_tab = 'chan_elems'
         self.user_xs_tab = 'user_xsections'
 
+        self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
         self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]['qlyr']
         self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]['qlyr']
         self.schema_xs_lyr = lyrs.data[self.schema_xs_tab]['qlyr']
@@ -123,7 +124,10 @@ class SchemaDomainConverter(SchemaConverter):
     def copy_xs_tables(self):
         self.clear_tables(*self.xs_tables.keys())
         for user_tab, schema_tab in self.xs_tables.items():
-            self.execute('''INSERT INTO {0} SELECT * FROM {1};'''.format(user_tab, schema_tab))
+            if user_tab == 'user_chan_n':
+                self.execute('''INSERT INTO user_chan_n (fid, user_xs_fid, nxsecnum, xsecname) SELECT fid, fid, nxsecnum, xsecname FROM chan_n;''')
+            else:
+                self.execute('''INSERT INTO {0} SELECT * FROM {1};'''.format(user_tab, schema_tab))
 
     def set_geomless_xs(self, feat):
         fid = feat['fid']
@@ -138,9 +142,10 @@ class SchemaDomainConverter(SchemaConverter):
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, 'polyline')
 
     def create_user_xs(self):
+        self.copy_xs_tables()
         remove_features(self.user_xs_lyr)
         fields = self.user_xs_lyr.fields()
-        common_fnames = {'fid': 'fid', 'type': 'type', 'fcn': 'fcn'}
+        common_fnames = {'fid': 'id', 'type': 'type', 'fcn': 'fcn'}
         geom_fn = self.geom_functions['polyline']
         new_features = []
         for i, feat in enumerate(self.schema_xs_lyr.getFeatures(), start=1):
@@ -150,6 +155,7 @@ class SchemaDomainConverter(SchemaConverter):
 
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
             new_feat['name'] = 'Cross-section {}'.format(i)
+            # new_feat['name'] = 'Cross-section {}'.format(i) if feat['type'] != 'N' else self.xsecnames[feat['fid']]
             new_features.append(new_feat)
         self.user_xs_lyr.startEditing()
         self.user_xs_lyr.addFeatures(new_features)
@@ -157,7 +163,6 @@ class SchemaDomainConverter(SchemaConverter):
         self.user_xs_lyr.updateExtents()
         self.user_xs_lyr.triggerRepaint()
         self.user_xs_lyr.removeSelection()
-        self.copy_xs_tables()
 
 
 class SchemaLeveesConverter(SchemaConverter):

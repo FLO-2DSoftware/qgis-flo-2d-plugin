@@ -545,7 +545,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.tview.undoStack.clear()
         self.tview.setModel(self.inlet_data_model)
         self.inlet_data_model.clear()
-        self.inlet_data_model.setHorizontalHeaderLabels(['Depht', 'Q'])
+        self.inlet_data_model.setHorizontalHeaderLabels(['Depth', 'Q'])
         self.d1, self.d1 = [[], []]
         for row in self.inlet_series_data:
             items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]

@@ -262,7 +262,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.update_plot()
 
     def cur_xsec_type_changed(self, idx):
-        # print 'type idx', idx
         if not self.xs_cbo.count():
             return
         typ = self.xs_type_cbo.itemData(idx)

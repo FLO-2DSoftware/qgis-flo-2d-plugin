@@ -244,6 +244,7 @@ class ExternalElevation(ElevationCorrector):
 
         self.grid = None
         self.only_centroids = None
+        self.threshold = 0.90
 
         self.polygons = None
         self.elevation_field = None
@@ -305,6 +306,7 @@ class ExternalElevation(ElevationCorrector):
                               self.request,
                               self.only_centroids,
                               True,
+                              self.threshold,
                               self.elevation_field,
                               self.correction_field)
         fids = {}
@@ -345,7 +347,7 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True)
+        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True, self.threshold)
         fids_grids = defaultdict(list)
         fids_elevs = {}
         for fid, gid in grid_gen:

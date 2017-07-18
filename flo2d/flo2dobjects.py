@@ -157,7 +157,6 @@ class UserCrossSection(GeoPackageUtils):
         return self.row
 
     def get_chan_x_row(self):
-        # print 'in get_chan_x_row'
         if self.row is not None:
             pass
         else:
@@ -181,6 +180,10 @@ class UserCrossSection(GeoPackageUtils):
         if fetch:
             qry = 'SELECT * FROM {0} WHERE user_xs_fid = ?;'.format(tab)
             return self.execute(qry, (self.fid,)).fetchone()
+
+    def get_nxsecnum(self):
+        nxsecnum = self.execute('SELECT nxsecnum FROM user_chan_n WHERE user_xs_fid = ?', (self.fid,)).fetchone()[0]
+        return nxsecnum
 
     def get_chan_natural_data(self):
         if self.row is not None and self.type == 'N':
@@ -226,7 +229,7 @@ class UserCrossSection(GeoPackageUtils):
 
     def set_chan_natural_data(self, data):
         self.get_chan_x_row()
-        qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum = ?'''
+        qry = '''DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum = ?;'''
         self.execute(qry, (self.fid, ))
         qry = '''INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);'''
         self.execute_many(qry, data)

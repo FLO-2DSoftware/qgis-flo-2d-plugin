@@ -61,16 +61,29 @@ class ZonalStatistics(object):
         self.tmp = os.environ['TMP']
         self.setup_probing()
 
+    @staticmethod
+    def calculate_mean(vals):
+        result = sum(vals) / len(vals)
+        return result
+
+    @staticmethod
+    def calculate_max(vals):
+        result = max(vals)
+        return result
+
+    @staticmethod
+    def calculate_min(vals):
+        result = min(vals)
+        return result
+
     def setup_probing(self):
         self.points_feats, self.points_index = spatial_index(self.points)
         if self.calculation_type == 'Mean':
-            self.calculation_method = lambda vals: sum(vals) / len(vals)
+            self.calculation_method = self.calculate_mean
         elif self.calculation_type == 'Max':
-            self.calculation_method = lambda vals: max(vals)
+            self.calculation_method = self.calculate_max
         elif self.calculation_type == 'Min':
-            self.calculation_method = lambda vals: min(vals)
-        else:
-            pass
+            self.calculation_method = self.calculate_min
         self.gap_raster = os.path.join(self.tmp, 'gap_raster_{0}.tif'.format(self.uid))
         self.filled_raster = os.path.join(self.tmp, 'filled_raster_{0}.tif'.format(self.uid))
         self.gutils.execute('UPDATE grid SET elevation = NULL;')
@@ -234,13 +247,38 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, request, use_centroids, get_fid, *columns):
+def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
-    allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
+    try:
+        grid_feats = grid.getFeatures()
+        first = next(grid_feats)
+        grid_area = first.geometry().area()
+    except StopIteration:
+        return
 
+    if use_centroids is True:
+        def geos_compare(geos1, geos2):
+            return True
+    else:
+        def geos_compare(geos1, geos2):
+            inter_area = geos1.intersection(geos2).area()
+            if inter_area / grid_area < threshold:
+                return False
+            else:
+                return True
+
+    if get_fid is True:
+        def default_value(feat_id):
+            return [feat_id]
+    else:
+        def default_value(feat_id):
+            return []
+
+    allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
+
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
@@ -249,10 +287,11 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, *columns):
         for gid in index.intersects(geom.boundingBox()):
             grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            isin = geos_geom.contains(other_geom.geometry())
-            if isin is not True:
+            other_geom_geos = other_geom.geometry()
+            isin = geos_geom.intersects(other_geom_geos)
+            if isin is not True or geos_compare(geos_geom, other_geom_geos) is False:
                 continue
-            values = [fid] if get_fid is True else []
+            values = default_value(fid)
             for col in columns:
                 try:
                     val = feat[col]
@@ -460,7 +499,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, 1, column_name))
     gutils.con.commit()
 
 
@@ -471,7 +510,7 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-    for el, cor, fid in poly2grid(grid, elev, None, True, False, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
         if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
             gutils.con.execute(set_qry, (el, fid))
         elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):

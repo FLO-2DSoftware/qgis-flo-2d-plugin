@@ -530,11 +530,11 @@ class GeoPackageUtils(object):
         return self.execute(qry).fetchall()
 
     def disable_geom_triggers(self):
-        qry = 'UPDATE trigger_control set enabled = 0;'
+        qry = 'UPDATE trigger_control SET enabled = 0;'
         self.execute(qry)
 
     def enable_geom_triggers(self):
-        qry = 'UPDATE trigger_control set enabled = 1;'
+        qry = 'UPDATE trigger_control SET enabled = 1;'
         self.execute(qry)
 
     def calculate_offset(self, cell_size):

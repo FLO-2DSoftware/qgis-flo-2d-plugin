@@ -389,10 +389,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''', 3]
         self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
-        for xsec in data:
-            nr, nodes = xsec
+        for key in data.keys():
+            xsec_no, xsec_name = key
+            nodes = data[key]
             for row in nodes:
-                xsec_sql += [(nr,) + tuple(row)]
+                xsec_sql += [(xsec_no,) + tuple(row)]
 
         self.batch_execute(xsec_sql)
 
