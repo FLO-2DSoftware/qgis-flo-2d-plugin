@@ -13,7 +13,7 @@ import math
 import uuid
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsFeature,  QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
+from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
 from PyQt4.QtCore import QPyNullVariant
 from flo2d.utils import is_number
@@ -209,6 +209,82 @@ def spatial_centroids_index(vlayer):
     return allfeatures, index
 
 
+def intersection_spatial_index(vlayer):
+    """
+    Creating optimized for intersections spatial index over collection of features.
+    """
+    allfeatures = {}
+    index = QgsSpatialIndex()
+    max_fid = max(vlayer.allFeatureIds()) + 1
+    for feat in vlayer.getFeatures():
+        geom = feat.geometry()
+        new_geoms = divide_geom(geom)
+        new_fid = True if len(new_geoms) > 1 else False
+        for g in new_geoms:
+            engine = QgsGeometry.createGeometryEngine(g.geometry())
+            engine.prepareGeometry()
+            feat_copy = QgsFeature(feat)
+            feat_copy.setGeometry(g)
+            if new_fid is True:
+                fid = max_fid
+                feat_copy.setFeatureId(fid)
+                max_fid += 1
+            else:
+                fid = feat.id()
+            allfeatures[fid] = (feat_copy, engine)
+            index.insertFeature(feat_copy)
+
+    return allfeatures, index
+
+
+def count_polygon_vertices(geom):
+    """
+    Function for counting polygon vertices.
+    """
+    c = 0
+    for part in geom.asPolygon():
+        c += len(part)
+    return c
+
+
+def divide_geom(geom, threshold=1000):
+    """
+    Recursive function for dividing complex polygons into smaller chunks using geometry bounding box.
+    """
+    if count_polygon_vertices(geom) <= threshold:
+        return [geom]
+    bbox = geom.boundingBox()
+    center_x, center_y = bbox.center()
+    xmin, ymin = bbox.xMinimum(), bbox.yMinimum()
+    xmax, ymax = bbox.xMaximum(), bbox.yMaximum()
+    center_point = QgsPoint(center_x, center_y)
+    s1 = QgsGeometry.fromPolygon(
+        [[center_point, QgsPoint(center_x, ymin), QgsPoint(xmin, ymin), QgsPoint(xmin, center_y), center_point]])
+    s2 = QgsGeometry.fromPolygon(
+        [[center_point, QgsPoint(xmin, center_y), QgsPoint(xmin, ymax), QgsPoint(center_x, ymax), center_point]])
+    s3 = QgsGeometry.fromPolygon(
+        [[center_point, QgsPoint(center_x, ymax), QgsPoint(xmax, ymax), QgsPoint(xmax, center_y), center_point]])
+    s4 = QgsGeometry.fromPolygon(
+        [[center_point, QgsPoint(xmax, center_y), QgsPoint(xmax, ymin), QgsPoint(center_x, ymin), center_point]])
+
+    new_geoms = []
+    for s in [s1, s2, s3, s4]:
+        part = geom.intersection(s)
+        if part.isEmpty():
+            continue
+        if part.isMultipart():
+            single_geoms = [QgsGeometry.fromPolygon(g) for g in part.asMultiPolygon()]
+            for sg in single_geoms:
+                new_geoms += divide_geom(sg, threshold)
+            continue
+        count = count_polygon_vertices(part)
+        if count <= threshold:
+            new_geoms.append(part)
+        else:
+            new_geoms += divide_geom(part, threshold)
+    return new_geoms
+
+
 def build_grid(boundary, cell_size):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
@@ -226,13 +302,13 @@ def build_grid(boundary, cell_size):
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
     y = ymax - half_size
-    geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
-    geos_geom.prepareGeometry()
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+    geos_geom_engine.prepareGeometry()
     for col in xrange(cols):
         y_tmp = y
         for row in xrange(rows):
             pnt = QgsGeometry.fromPoint(QgsPoint(x, y_tmp))
-            if geos_geom.intersects(pnt.geometry()):
+            if geos_geom_engine.intersects(pnt.geometry()):
                 poly = (
                     x - half_size, y_tmp - half_size,
                     x + half_size, y_tmp - half_size,
@@ -282,14 +358,14 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
-        geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
-        geos_geom.prepareGeometry()
+        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+        geos_geom_engine.prepareGeometry()
         for gid in index.intersects(geom.boundingBox()):
             grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
             other_geom_geos = other_geom.geometry()
-            isin = geos_geom.intersects(other_geom_geos)
-            if isin is not True or geos_compare(geos_geom, other_geom_geos) is False:
+            isin = geos_geom_engine.intersects(other_geom_geos)
+            if isin is not True or geos_compare(geos_geom_engine, other_geom_geos) is False:
                 continue
             values = default_value(fid)
             for col in columns:
@@ -329,6 +405,84 @@ def poly2poly(base_polygons, polygons, request, area_percent, *columns):
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)
         yield base_fid, base_parts
+
+
+def poly2poly_geos(base_polygons, polygons, request, *columns):
+    """
+    Generator which calculates base polygons intersections with another polygon layer.
+    """
+    allfeatures, index = intersection_spatial_index(polygons)
+
+    base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
+    for feat in base_features:
+        base_geom = feat.geometry()
+        fids = index.intersects(base_geom.boundingBox())
+        if not fids:
+            continue
+        base_fid = feat.id()
+        base_area = base_geom.area()
+        base_geom_geos = base_geom.geometry()
+        base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
+        base_geom_engine.prepareGeometry()
+        base_parts = []
+        for fid in fids:
+            f, other_geom_engine = allfeatures[fid]
+            inter = other_geom_engine.intersects(base_geom_geos)
+            if inter is False:
+                continue
+            if other_geom_engine.contains(base_geom_geos):
+                subarea = 1
+            elif base_geom_engine.contains(f.geometry().geometry()):
+                subarea = other_geom_engine.area() / base_area
+            else:
+                intersection_geom = other_geom_engine.intersection(base_geom_geos)
+                subarea = intersection_geom.area() / base_area
+            values = tuple(f[col] for col in columns) + (subarea,)
+            base_parts.append(values)
+        yield base_fid, base_parts
+
+
+def grid_sections(grid, polygons, request, *columns):
+    """
+    Function for finding intersections of polygon layer within grid layer.
+    """
+    try:
+        grid_feats = grid.getFeatures()
+        first = next(grid_feats)
+        grid_area = first.geometry().area()
+    except StopIteration:
+        return
+
+    allfeatures, index = intersection_spatial_index(grid)
+    polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
+
+    grid_parts = defaultdict(list)
+    for feat in polygon_features:
+        geom = feat.geometry()
+        ids = index.intersects(geom.boundingBox())
+        if not ids:
+            continue
+        geos_geom = geom.geometry()
+        geom_engine = QgsGeometry.createGeometryEngine(geos_geom)
+        geom_engine.prepareGeometry()
+        attributes = tuple(feat[col] for col in columns)
+
+        for gid in ids:
+            grid_feat, other_geom_engine = allfeatures[gid]
+            other_geom = grid_feat.geometry()
+            other_geom_geos = other_geom.geometry()
+            if geom_engine.contains(other_geom_geos):
+                subarea = 1
+            elif other_geom_engine.contains(geos_geom):
+                subarea = other_geom_geos.area() / grid_area
+            elif geom_engine.intersects(other_geom_geos):
+                subarea = geom_engine.intersection(other_geom_geos).area() / grid_area
+            else:
+                continue
+            values = attributes + (subarea,)
+            grid_parts[gid].append(values)
+
+    return grid_parts
 
 
 def cluster_polygons(polygons, *columns):

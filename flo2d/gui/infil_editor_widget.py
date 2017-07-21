@@ -450,12 +450,14 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             qry = '''
             INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
             VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?,?);'''
-            cur = self.con.cursor()
+            all_values = []
             for gid, params in grid_params.iteritems():
                 par = (params['hydc'], params['soils'], params['dtheta'],
                        params['abstrinf'], params['rtimpf'], params['soil_depth'])
                 values = (gid,) + tuple(round(p, 3) for p in par)
-                cur.execute(qry, values)
+                all_values.append(values)
+            cur = self.con.cursor()
+            cur.executemany(qry, all_values)
             self.con.commit()
             self.schema_green.triggerRepaint()
             QApplication.restoreOverrideCursor()
@@ -483,10 +485,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 grid_params = inf_calc.scs_infiltration_multi()
             self.gutils.clear_tables('infil_areas_scs')
             qry = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?),?);'''
-            cur = self.con.cursor()
+            all_values = []
             for gid, params in grid_params.iteritems():
                 values = (gid, round(params['scsn'], 3))
-                cur.execute(qry, values)
+                all_values.append(values)
+            cur = self.con.cursor()
+            cur.executemany(qry, all_values)
             self.con.commit()
             self.schema_scs.triggerRepaint()
             QApplication.restoreOverrideCursor()

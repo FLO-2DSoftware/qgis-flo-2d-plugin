@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from math import log, exp
-from grid_tools import poly2poly
+from grid_tools import poly2poly_geos
 
 
 class InfiltrationCalculator(object):
@@ -89,16 +89,16 @@ class InfiltrationCalculator(object):
         grid_params = {}
         green_ampt = GreenAmpt()
 
-        soil_values = poly2poly(
+        soil_values = poly2poly_geos(
             self.grid_lyr,
             self.soil_lyr,
             None,
-            True,
             self.xksat_fld,
             self.rtimps_fld,
             self.eff_fld,
             self.soil_depth_fld
         )
+
         for gid, values in soil_values:
             xksat_parts = [(row[0], row[-1]) for row in values]
             imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
@@ -109,16 +109,16 @@ class InfiltrationCalculator(object):
 
             grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
 
-        land_values = poly2poly(
+        land_values = poly2poly_geos(
             self.grid_lyr,
             self.land_lyr,
             None,
-            True,
             self.saturation_fld,
             self.vc_fld,
             self.ia_fld,
             self.rtimpl_fld
         )
+
         for gid, values in land_values:
             params = grid_params[gid]
             avg_xksat = params['hydc']
@@ -142,11 +142,10 @@ class InfiltrationCalculator(object):
 
     def scs_infiltration_single(self):
         grid_params = {}
-        curve_values = poly2poly(
+        curve_values = poly2poly_geos(
             self.grid_lyr,
             self.curve_lyr,
             None,
-            True,
             self.curve_fld)
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
@@ -157,11 +156,10 @@ class InfiltrationCalculator(object):
     def scs_infiltration_multi(self):
         grid_params = {}
         scs = SCPCurveNumber()
-        ground_values = poly2poly(
+        ground_values = poly2poly_geos(
             self.grid_lyr,
             self.combined_lyr,
             None,
-            True,
             self.landsoil_fld,
             self.cd_fld,
             self.imp_fld)
@@ -177,7 +175,7 @@ class GreenAmpt(object):
     @staticmethod
     def calculate_xksat(parts):
         xksat_gen = (area * log(xksat) for xksat, area in parts if xksat > 0)
-        avg_xksat = exp(sum(xksat_gen))
+        avg_xksat = round(exp(sum(xksat_gen)), 2)
         return avg_xksat
 
     @staticmethod
@@ -223,7 +221,7 @@ class GreenAmpt(object):
     @staticmethod
     def calculate_xksatc(avg_xksat, parts):
         if avg_xksat < 0.4:
-            pc_gen = (((vc - 10) / 90 + 1) * area for vc, area in parts)
+            pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
             xksatc = avg_xksat * sum(pc_gen)
         else:
             xksatc = avg_xksat
@@ -231,19 +229,19 @@ class GreenAmpt(object):
 
     @staticmethod
     def calculate_iabstr(parts):
-        iabstr_gen = (area * ia for ia, area in parts)
+        iabstr_gen = (area * float(ia) for ia, area in parts)
         iabstr = sum(iabstr_gen)
         return iabstr
 
     @staticmethod
     def calculate_rtimp_1(parts):
-        rtimp_gen_1 = (area * (rtimps * eff) for rtimps, eff, area in parts)
+        rtimp_gen_1 = (area * (float(rtimps) * float(eff)) for rtimps, eff, area in parts)
         rtimp_1 = sum(rtimp_gen_1)
         return rtimp_1
 
     @staticmethod
     def calculate_rtimp(rtimp_1, parts):
-        rtimp_gen = (area * rtimpl for rtimpl, area in parts)
+        rtimp_gen = (area * float(rtimpl) for rtimpl, area in parts)
         rtimp = rtimp_1 + sum(rtimp_gen)
         return rtimp
 
