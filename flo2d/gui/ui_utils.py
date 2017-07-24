@@ -53,11 +53,16 @@ def set_icon(btn, icon_file):
     btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
 
-def switch_to_selected(vlayer, combo_box, field='name'):
+def switch_to_selected(vlayer, combo_box, field='name', use_fid=False):
     if vlayer.selectedFeatureCount() == 1:
         feat = vlayer.selectedFeatures()[0]
-        text = feat[field]
-        if isinstance(text, QPyNullVariant):
-            text = ''
-        idx = combo_box.findText(text)
-        combo_box.setCurrentIndex(idx)
+        if use_fid is True:
+            text = str(feat['fid'])
+            idx = combo_box.findData(text)
+            combo_box.setCurrentIndex(idx)
+        else:
+            text = feat[field]
+            if isinstance(text, QPyNullVariant):
+                text = ''
+            idx = combo_box.findText(text)
+            combo_box.setCurrentIndex(idx)

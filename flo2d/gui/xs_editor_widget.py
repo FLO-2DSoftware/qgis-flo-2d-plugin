@@ -93,7 +93,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def switch2selected(self):
-        switch_to_selected(self.user_xs_lyr, self.xs_cbo)
+        switch_to_selected(self.user_xs_lyr, self.xs_cbo, use_fid=True)
         self.cur_xsec_changed(self.xs_cbo.currentIndex())
 
     def interp_bed_and_banks(self):

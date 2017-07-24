@@ -107,7 +107,7 @@ class Schema1DConverter(SchemaConverter):
         self.schema_xs_tab = 'chan_elems'
         self.user_xs_tab = 'user_xsections'
 
-        # self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
+        self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
         self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]['qlyr']
         self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]['qlyr']
         self.schema_xs_lyr = lyrs.data[self.schema_xs_tab]['qlyr']
@@ -155,7 +155,7 @@ class Schema1DConverter(SchemaConverter):
 
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
             new_feat['name'] = 'Cross-section {}'.format(i)
-            # new_feat['name'] = 'Cross-section {}'.format(i) if feat['type'] != 'N' else self.xsecnames[feat['fid']]
+            new_feat['name'] = 'Cross-section {}'.format(i) if feat['type'] != 'N' else self.xsecnames[feat['fid']]
             new_features.append(new_feat)
         self.user_xs_lyr.startEditing()
         self.user_xs_lyr.addFeatures(new_features)
