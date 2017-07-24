@@ -521,13 +521,13 @@ def schematize_reservoirs(gutils):
     gutils.execute(ins_qry)
 
 
-class DomainSchematizer(GeoPackageUtils):
+class ChannelsSchematizer(GeoPackageUtils):
     """
     Class for handling 1D Domain schematizing processes.
     """
 
     def __init__(self, con, iface, lyrs):
-        super(DomainSchematizer, self).__init__(con, iface)
+        super(ChannelsSchematizer, self).__init__(con, iface)
         self.lyrs = lyrs
         self.cell_size = float(self.get_cont_par('CELLSIZE'))
         self.x_offset, self.y_offset = self.calculate_offset(self.cell_size)
@@ -744,7 +744,7 @@ class DomainSchematizer(GeoPackageUtils):
         nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in bank_points]
         return nodes
 
-    def schematize_xs(self, shifted_xs):
+    def schematize_xs_with_rotation(self, shifted_xs):
         """
         Rotating and schematizing (sorted and shifted) cross sections using Bresenham's Line Algorithm.
         """
@@ -764,7 +764,22 @@ class DomainSchematizer(GeoPackageUtils):
             new_geom = QgsGeometry.fromPolyline([QgsPoint(*xs_schema[0]), QgsPoint(*xs_schema[-1])])
             xs_feat.setGeometry(new_geom)
 
-    def interpolate_xs(self, left_segment, xs_features, idx):
+    def schematize_xs(self, shifted_xs):
+        """
+        Rotating and schematizing (sorted and shifted) cross sections using Bresenham's Line Algorithm.
+        """
+        for xs_feat in shifted_xs:
+            geom_poly = xs_feat.geometry().asPolyline()
+            start, end = geom_poly[0], geom_poly[-1]
+            end_geom = QgsGeometry.fromPoint(end)
+            end_point = end_geom.asPoint()
+            points = [start, end_point]
+            xs_schema = self.schematize_points(points)
+            new_geom = QgsGeometry.fromPolyline([QgsPoint(*xs_schema[0]), QgsPoint(*xs_schema[-1])])
+            xs_feat.setGeometry(new_geom)
+
+    @staticmethod
+    def interpolate_xs(left_segment, xs_features, idx):
         """
         Interpolating cross sections.
         """
@@ -813,7 +828,7 @@ class DomainSchematizer(GeoPackageUtils):
                     start_point += shift
                     end_point += shift
                     interpolated = 1
-                end_point = self.fix_angle(left_segment, start_point, end_point)
+                # end_point = self.fix_angle(left_segment, start_point, end_point)
                 yield [start_point.x(), start_point.y(), end_point.x(), end_point.y(), xs_fid, interpolated]
                 i += 1
                 previous_vertex = current_vertex

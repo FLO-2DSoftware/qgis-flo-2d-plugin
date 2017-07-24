@@ -56,13 +56,6 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="ckbox_1d">
-       <property name="text">
-        <string>1D elements</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QCheckBox" name="ckbox_bc">
        <property name="text">
@@ -70,31 +63,10 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="ckbox_swmm">
-       <property name="text">
-        <string>Storm Drains</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0">
-      <widget class="QCheckBox" name="ckbox_grid">
+      <widget class="QCheckBox" name="ckbox_domain">
        <property name="text">
-        <string>Grid</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QCheckBox" name="ckbox_fpxsec">
-       <property name="text">
-        <string>Floodplain cross-sections</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="ckbox_infil">
-       <property name="text">
-        <string>Infiltration</string>
+        <string>Computational Domain</string>
        </property>
       </widget>
      </item>
@@ -102,6 +74,41 @@
       <widget class="QCheckBox" name="ckbox_levees">
        <property name="text">
         <string>Levees</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="ckbox_1d">
+       <property name="text">
+        <string>1D stream- river network</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QCheckBox" name="ckbox_swmm">
+       <property name="text">
+        <string>Storm Drains</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ckbox_infil">
+       <property name="text">
+        <string>Infiltration</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="ckbox_fpxsec">
+       <property name="text">
+        <string>Floodplain cross-sections</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="ckbox_roughness">
+       <property name="text">
+        <string>Roughness</string>
        </property>
       </widget>
      </item>

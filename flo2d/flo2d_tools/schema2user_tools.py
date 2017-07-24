@@ -97,17 +97,17 @@ class SchemaConverter(GeoPackageUtils):
         user_lyr.removeSelection()
 
 
-class SchemaDomainConverter(SchemaConverter):
+class Schema1DConverter(SchemaConverter):
 
     def __init__(self, con, iface, lyrs):
-        super(SchemaDomainConverter, self).__init__(con, iface, lyrs)
+        super(Schema1DConverter, self).__init__(con, iface, lyrs)
 
         self.schema_lbank_tab = 'chan'
         self.user_lbank_tab = 'user_left_bank'
         self.schema_xs_tab = 'chan_elems'
         self.user_xs_tab = 'user_xsections'
 
-        self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
+        # self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
         self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]['qlyr']
         self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]['qlyr']
         self.schema_xs_lyr = lyrs.data[self.schema_xs_tab]['qlyr']

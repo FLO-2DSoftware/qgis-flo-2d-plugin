@@ -8,13 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt, pyqtSignal
+import traceback
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QStandardItem, QColor, QInputDialog
 from qgis.core import QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from flo2d.utils import m_fdata, is_number
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.flo2dobjects import UserCrossSection, ChannelSegment
+from flo2d.flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from flo2d.user_communication import UserCommunication
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from plot_widget import PlotWidget
@@ -26,9 +28,6 @@ uiDialog, qtBaseClass = load_ui('xs_editor')
 
 
 class XsecEditorWidget(qtBaseClass, uiDialog):
-
-    schematize_1d = pyqtSignal()
-    find_confluences = pyqtSignal()
 
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -56,6 +55,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.schematize_xs_btn, 'schematize_xsec.svg')
+        set_icon(self.interpolate_xs_btn, 'interpolate_xsec.svg')
         set_icon(self.confluences_btn, 'schematize_confluence.svg')
         set_icon(self.rename_xs_btn, 'change_name.svg')
         # connections
@@ -66,7 +66,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.activated.connect(self.cur_xsec_changed)
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
-        self.schematize_xs_btn.clicked.connect(self.schematize_xs)
+        self.schematize_xs_btn.clicked.connect(self.schematize_1d_domain)
+        self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
         self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
@@ -95,9 +96,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo)
         self.cur_xsec_changed(self.xs_cbo.currentIndex())
 
-    def schematize_xs(self):
-        self.schematize_1d.emit()
-
     def interp_bed_and_banks(self):
         qry = 'SELECT fid FROM chan;'
         fids = self.gutils.execute(qry).fetchall()
@@ -108,9 +106,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 self.uc.log_info(msg)
                 return False
         return True
-
-    def schematize_confluences(self):
-        self.find_confluences.emit()
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
         """
@@ -357,3 +352,80 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.populate_xsec_cbo()
         self.repaint_xs()
+
+    def schematize_1d_domain(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
+        if self.gutils.is_table_empty('user_left_bank'):
+            self.uc.bar_warn('There is no any user left bank lines! Please digitize them before running the tool.')
+            return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn('There is no any user cross sections! Please digitize them before running the tool.')
+            return
+        cs = ChannelsSchematizer(self.con, self.iface, self.lyrs)
+        try:
+            cs.process_bank_lines()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Schematizing failed on creating bank lines! '
+                              'Please check your user layers.')
+            return
+        try:
+            cs.process_xsections()
+            cs.process_attributes()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Schematizing failed on creating cross-sections! '
+                              'Please check your user layers.')
+            return
+        try:
+            cs.make_distance_table()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Schematizing failed on preparing interpolation table! '
+                              'Please check your user layers.')
+            return
+        chan_schem = self.lyrs.data['chan']['qlyr']
+        chan_elems = self.lyrs.data['chan_elems']['qlyr']
+        rbank = self.lyrs.data['rbank']['qlyr']
+        confluences = self.lyrs.data['chan_confluences']['qlyr']
+        self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+        self.lyrs.repaint_layers()
+        idx = self.xs_cbo.currentIndex()
+        self.cur_xsec_changed(idx)
+        self.uc.show_info('1D Domain schematized!')
+
+    def interpolate_xs_values(self):
+        if not self.interp_bed_and_banks():
+            self.uc.show_warn('Interpolation of cross-sections values failed! '
+                              'Please check your user layers.')
+            return
+        else:
+            idx = self.xs_cbo.currentIndex()
+            self.cur_xsec_changed(idx)
+            self.uc.show_info('Interpolation of cross-sections values finished!')
+
+    def schematize_confluences(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
+        if self.gutils.is_table_empty('user_left_bank'):
+            self.uc.bar_warn('There is no any user left bank lines! Please digitize them before running the tool.')
+            return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn('There is no any user cross sections! Please digitize them before running the tool.')
+            return
+        try:
+            conf = Confluences(self.con, self.iface, self.lyrs)
+            conf.calculate_confluences()
+            chan_schem = self.lyrs.data['chan']['qlyr']
+            chan_elems = self.lyrs.data['chan_elems']['qlyr']
+            rbank = self.lyrs.data['rbank']['qlyr']
+            confluences = self.lyrs.data['chan_confluences']['qlyr']
+            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+            self.lyrs.repaint_layers()
+            self.uc.show_info('Confluences schematized!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Schematizing aborted! Please check your 1D user layers.')

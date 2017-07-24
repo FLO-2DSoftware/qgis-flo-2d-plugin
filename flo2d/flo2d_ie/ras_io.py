@@ -13,7 +13,7 @@ import bisect
 from collections import OrderedDict
 from itertools import izip_longest, chain
 from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.flo2d_tools.schematic_conversion import remove_features
+from flo2d.flo2d_tools.schema2user_tools import remove_features
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint
 
 

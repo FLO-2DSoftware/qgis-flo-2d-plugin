@@ -18,7 +18,7 @@ from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from flo2d.flo2d_ie.swmm_io import StormDrainProject
-from flo2d.flo2d_tools.schematic_conversion import remove_features
+from flo2d.flo2d_tools.schema2user_tools import remove_features
 from flo2d.flo2dobjects import Inlet
 from flo2d.utils import is_number, m_fdata
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit

@@ -29,7 +29,7 @@ from flo2d_tools.grid_info_tool import GridInfoTool
 from flo2d_tools.info_tool import InfoTool
 from flo2d_tools.channel_profile_tool import ChannelProfile
 from flo2d_tools.grid_tools import grid_has_empty_elev
-from flo2d_tools.schematic_tools import generate_schematic_levees, DomainSchematizer, Confluences
+from flo2d_tools.schematic_tools import generate_schematic_levees
 from flo2d_tools.flopro_tools import FLOPROExecutor
 from gui.dlg_cont_toler import ContTolerDialog
 from gui.dlg_evap_editor import EvapEditorDialog
@@ -111,9 +111,6 @@ class Flo2D(object):
         self.info_tool.feature_picked.connect(self.get_feature_info)
         self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
-
-        self.f2d_widget.xs_editor.schematize_1d.connect(self.schematize_channels)
-        self.f2d_widget.xs_editor.find_confluences.connect(self.schematize_confluences)
 
         self.f2d_widget.grid_tools.setup_connection()
         self.f2d_widget.profile_tool.setup_connection()
@@ -812,79 +809,6 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Assigning values aborted! Please check your crest elevation source layers.")
-
-    @connection_required
-    def schematize_channels(self):
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn("There is no any user left bank lines! Please digitize them before running the tool.")
-            return
-        if self.gutils.is_table_empty('user_xsections'):
-            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
-            return
-        ds = DomainSchematizer(self.con, self.iface, self.lyrs)
-        try:
-            ds.process_bank_lines()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing failed on bank lines! "
-                              "Please check your user layers.")
-            return
-        try:
-            ds.process_xsections()
-            ds.process_attributes()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing failed on cross-sections! "
-                              "Please check your user layers.")
-            return
-        try:
-            ds.make_distance_table()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing failed on preparing interpolation table! "
-                              "Please check your user layers.")
-            return
-        chan_schem = self.lyrs.data['chan']['qlyr']
-        chan_elems = self.lyrs.data['chan_elems']['qlyr']
-        rbank = self.lyrs.data['rbank']['qlyr']
-        confluences = self.lyrs.data['chan_confluences']['qlyr']
-        self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
-        self.lyrs.repaint_layers()
-        if not self.f2d_widget.xs_editor.interp_bed_and_banks():
-            self.uc.show_warn("Schematizing failed on interpolating cross-sections values! "
-                              "Please check your user layers.")
-            return
-        idx = self.f2d_widget.xs_editor.xs_cbo.currentIndex()
-        self.f2d_widget.xs_editor.cur_xsec_changed(idx)
-        self.uc.show_info("1D Domain schematized!")
-
-    @connection_required
-    def schematize_confluences(self):
-        if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn("There is no any user left bank lines! Please digitize them before running the tool.")
-            return
-        if self.gutils.is_table_empty('user_xsections'):
-            self.uc.bar_warn("There is no any user cross sections! Please digitize them before running the tool.")
-            return
-        try:
-            conf = Confluences(self.con, self.iface, self.lyrs)
-            conf.calculate_confluences()
-            chan_schem = self.lyrs.data['chan']['qlyr']
-            chan_elems = self.lyrs.data['chan_elems']['qlyr']
-            rbank = self.lyrs.data['rbank']['qlyr']
-            confluences = self.lyrs.data['chan_confluences']['qlyr']
-            self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
-            self.lyrs.repaint_layers()
-            self.uc.show_info("Confluences schematized!")
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Schematizing aborted! Please check your 1D user layers.")
 
     def schematize_levees(self):
         """
