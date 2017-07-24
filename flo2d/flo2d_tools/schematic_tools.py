@@ -7,6 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
 import traceback
 from collections import defaultdict, OrderedDict
 from itertools import izip
@@ -641,7 +642,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 move = lnode - xs.geometry().vertexAt(0)
                 self.shift_line_geom(xs, move)
             # Rotating and schematizing user cross sections
-            self.schematize_xs(sorted_xs) # HERE IS OK!!!
+            self.schematize_xs(sorted_xs)
             # Interpolating cross sections
             inter_xs = self.interpolate_xs(lsegment_points, sorted_xs, vertex_idx)
             # Clipping cross sections between each other
