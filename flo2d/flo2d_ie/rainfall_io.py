@@ -16,8 +16,6 @@ try:
 except ImportError:
     pass
 
-__version__ = '0.3.3'
-
 
 class ASCProcessor(object):
 
@@ -63,7 +61,6 @@ class HDFProcessor(object):
             rainintime, irinters, timestamp = header
             hdf_file.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)
             hdf_file.attrs['plugin'] = np.str_('FLO-2D')
-            hdf_file.attrs['plugin_version'] = np.str_(__version__)
             grp = hdf_file.create_group('raincell')
             datasets = [
                 ('RAININTIME', np.int(rainintime), 'Time interval in minutes of the realtime rainfall data.'),
@@ -74,7 +71,3 @@ class HDFProcessor(object):
             for name, value, description in datasets:
                 dts = grp.create_dataset(name, data=value)
                 dts.attrs['description'] = np.str_(description)
-
-
-if __name__ == '__main__':
-    proc = HDFProcessor(r'D:\GIS_DATA\FLO-2D PRO Documentation\#368\rainfall.hdf5')
