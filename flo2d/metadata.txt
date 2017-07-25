@@ -20,7 +20,7 @@ repository=https://github.com/lutraconsulting/qgis-flo-2d-plugin
 
 # Uncomment the following line and add your changelog:
 changelog=0.4.1 New features:
- - Added TIN inside polygons option
+ - Added option for TIN correction within elevation polygons boundaries
 <p>changelog=0.4 New features:
  - Improved infiltration calculation performance
  - Improved channels schematizing tool
