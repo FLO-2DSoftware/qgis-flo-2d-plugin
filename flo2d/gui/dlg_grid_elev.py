@@ -28,6 +28,7 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.gutils = GeoPackageUtils(con, iface)
         self.internal_corrector = GridElevation(self.gutils, self.lyrs)
+        self.selection_switch()
         self.internal_corrector.setup_layers()
         self.external_corrector = ExternalElevation(self.gutils, self.lyrs)
 
@@ -36,8 +37,10 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
 
         # connections
         self.elev_tin_chbox.stateChanged.connect(self.tin_checked)
+        self.elev_tin_poly_chbox.stateChanged.connect(self.tin_poly_checked)
         self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
         self.elev_arf_chbox.stateChanged.connect(self.arf_checked)
+        self.internal_selected_chbox.stateChanged.connect(self.selection_switch)
 
         self.vector_cbo.currentIndexChanged.connect(self.populate_fields)
         self.populate_vectors()
@@ -47,30 +50,49 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         self.grid_chbox.toggled.connect(self.from_grid_checked)
         self.raster_chbox.toggled.connect(self.from_raster_checked)
 
+    def selection_switch(self):
+        if self.internal_selected_chbox.isChecked():
+            self.internal_corrector.only_selected = True
+        else:
+            self.internal_corrector.only_selected = False
+
     def tin_checked(self):
         if self.elev_tin_chbox.isChecked():
             self.internal_methods[1] = self.tin_method
         else:
             self.internal_methods.pop(1)
 
-    def polygons_checked(self):
-        if self.elev_polygons_chbox.isChecked():
-            self.internal_methods[2] = self.polygon_method
+    def tin_poly_checked(self):
+        if self.elev_tin_poly_chbox.isChecked():
+            self.internal_methods[2] = self.tin_poly_method
         else:
             self.internal_methods.pop(2)
+
+    def polygons_checked(self):
+        if self.elev_polygons_chbox.isChecked():
+            self.internal_methods[3] = self.polygon_method
+        else:
+            self.internal_methods.pop(3)
 
     def arf_checked(self):
         if self.elev_arf_chbox.isChecked():
             self.stats_cbx.setEnabled(True)
-            self.internal_methods[3] = self.arf_method
+            self.internal_methods[4] = self.arf_method
         else:
-            self.internal_methods.pop(3)
+            self.internal_methods.pop(4)
             self.stats_cbx.setDisabled(True)
 
     def tin_method(self):
         try:
             self.internal_corrector.set_filter()
             self.internal_corrector.elevation_from_tin()
+        finally:
+            self.internal_corrector.clear_filter()
+
+    def tin_poly_method(self):
+        try:
+            self.internal_corrector.set_filter()
+            self.internal_corrector.tin_elevation_within_polygons()
         finally:
             self.internal_corrector.clear_filter()
 

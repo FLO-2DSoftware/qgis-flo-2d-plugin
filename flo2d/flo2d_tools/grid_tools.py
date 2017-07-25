@@ -22,10 +22,9 @@ from flo2d.utils import is_number
 # GRID classes
 class TINInterpolator(object):
 
-    def __init__(self, point_lyr, field_name, memory=True):
+    def __init__(self, point_lyr, field_name):
         self.lyr = point_lyr
         self.field_name = field_name
-        self.memory = memory
         self.lyr_data = None
         self.interpolator = None
 

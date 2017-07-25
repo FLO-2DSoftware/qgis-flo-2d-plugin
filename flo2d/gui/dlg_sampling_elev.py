@@ -190,4 +190,4 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             msg += 'Warning: There are {} grid elements that have no elevation value.'.format(null_nr)
             self.uc.show_info(msg)
         else:
-            self.uc.show_info("Sampling done.")
+            self.uc.show_info('Sampling done.')

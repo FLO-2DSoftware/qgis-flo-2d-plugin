@@ -138,9 +138,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             res = dlg.probe_elevation()
+            QApplication.restoreOverrideCursor()
             if res:
                 dlg.show_probing_result_info()
-            QApplication.restoreOverrideCursor()
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
