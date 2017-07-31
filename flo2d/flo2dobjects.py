@@ -919,8 +919,10 @@ class Rain(GeoPackageUtils):
         qry = 'SELECT * FROM rain;'
         data = self.execute(qry).fetchone()
         if not data:
-            values = [''] * len(self.columns)
+            values = [0] * len(self.columns)
             values[0] = 1
+            values[1] = ''
+            values[-1] = ''
         else:
             values = [x if x is not None else '' for x in data]
         self.row = OrderedDict(zip(self.columns, values))

@@ -80,7 +80,7 @@
      <item row="2" column="0">
       <widget class="QCheckBox" name="ckbox_1d">
        <property name="text">
-        <string>1D stream- river network</string>
+        <string>1D stream - river network</string>
        </property>
       </widget>
      </item>
