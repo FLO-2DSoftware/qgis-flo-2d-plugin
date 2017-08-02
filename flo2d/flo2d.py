@@ -665,7 +665,7 @@ class Flo2D(object):
     @connection_required
     def show_control_table(self):
         try:
-            cont_table = self.lyrs.get_layer_by_name("Control", group=self.lyrs.group).layer()
+            cont_table = self.lyrs.get_layer_by_name('Control', group=self.lyrs.group).layer()
             index = cont_table.fieldNameIndex('note')
             tab_conf = cont_table.attributeTableConfig()
             tab_conf.setSortExpression('"name"')
@@ -682,9 +682,9 @@ class Flo2D(object):
         if save:
             try:
                 dlg.save_parameters()
-                self.uc.bar_info("Parameters saved!", dur=3)
+                self.uc.bar_info('Parameters saved!', dur=3)
             except Exception as e:
-                self.uc.bar_warn("Could not save parameters! Please check if they are correct.")
+                self.uc.bar_warn('Could not save parameters! Please check if they are correct.')
                 return
 
     @connection_required
@@ -768,15 +768,13 @@ class Flo2D(object):
         Show levee elevation tool.
         """
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty('user_levee_lines'):
-            self.uc.bar_warn("There is no any user levee lines! Please create them before running tool.")
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
-            msg = 'The grid has {} elements with null elevation.\nLevee elevation tool requires that all grid elements have elevation defined.'
+            msg = 'The grid has {} elements with null elevation.\n' \
+                  'Levee elevation tool requires that all grid elements have elevation defined.'
             self.uc.show_warn(msg.format(null_elev_nr))
             return
         else:
@@ -794,7 +792,7 @@ class Flo2D(object):
             if dlg_levee_elev.methods:
                 pass
             else:
-                self.uc.show_warn("Please choose at least one crest elevation source!")
+                self.uc.show_warn('Please choose at least one crest elevation source!')
                 return
         else:
             return
@@ -804,20 +802,20 @@ class Flo2D(object):
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Values assigned!")
+            self.uc.show_info('Values assigned!')
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Assigning values aborted! Please check your crest elevation source layers.")
+            self.uc.show_warn('Assigning values aborted! Please check your crest elevation source layers.')
 
     def schematize_levees(self):
         """
         Generate schematic lines for user defined levee lines.
         """
-        levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
-        grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
+        levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
+        grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
         generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
-        levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
+        levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
         if levee_schem:
             levee_schem.triggerRepaint()
 
@@ -829,7 +827,7 @@ class Flo2D(object):
             if converter_dlg.methods:
                 pass
             else:
-                self.uc.show_warn("Please choose at least one conversion source!")
+                self.uc.show_warn('Please choose at least one conversion source!')
                 return
         else:
             return
@@ -855,7 +853,7 @@ class Flo2D(object):
             show_editor = self.editors_map[table]
             self.cur_info_table = table
         except KeyError:
-            self.uc.bar_info("Not implemented.....")
+            self.uc.bar_info('Not implemented...')
             return
         show_editor(fid)
 
@@ -867,7 +865,7 @@ class Flo2D(object):
         try:
             self.cur_profile_table = table
         except KeyError:
-            self.uc.bar_info("Not implemented.....")
+            self.uc.bar_info('Not implemented...')
             return
         self.show_profile(fid)
 
