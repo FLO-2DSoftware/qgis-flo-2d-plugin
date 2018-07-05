@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="24"
+   height="24"
+   id="svg5692"
+   version="1.1"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   sodipodi:docname="hazus.svg"
+   inkscape:export-filename="/media/home1/robert/svn/graphics/trunk/toolbar-icons/32x32/layer-vector.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <title
+     id="title2829">GIS icon theme 0.2</title>
+  <defs
+     id="defs5694">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 16 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="32 : 16 : 1"
+       inkscape:persp3d-origin="16 : 10.666667 : 1"
+       id="perspective3486" />
+    <inkscape:perspective
+       id="perspective3496"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3600"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective7871"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective8710"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective9811"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective4762"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       id="linearGradient2831">
+      <stop
+         id="stop2833"
+         offset="0"
+         style="stop-color:#264976;stop-opacity:1;" />
+      <stop
+         style="stop-color:#3f689d;stop-opacity:1;"
+         offset="0.33333334"
+         id="stop2855" />
+      <stop
+         id="stop2835"
+         offset="1"
+         style="stop-color:#5689ca;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2380">
+      <stop
+         id="stop2382"
+         offset="0"
+         style="stop-color:#8cb0d8;stop-opacity:1;" />
+      <stop
+         id="stop2384"
+         offset="1"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2682">
+      <stop
+         id="stop2684"
+         offset="0"
+         style="stop-color:#2b5b95;stop-opacity:1;" />
+      <stop
+         id="stop2686"
+         offset="1"
+         style="stop-color:#5c8fce;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2402">
+      <stop
+         id="stop2404"
+         offset="0"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+      <stop
+         id="stop2406"
+         offset="1"
+         style="stop-color:#376da5;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="22.627418"
+     inkscape:cx="20.149353"
+     inkscape:cy="9.7160808"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     borderlayer="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1147"
+     inkscape:window-x="1432"
+     inkscape:window-y="858"
+     inkscape:window-maximized="1"
+     inkscape:snap-global="false"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-grids="false"
+     inkscape:snap-others="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid5700"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       dotted="true"
+       originx="2.5"
+       originy="2.5"
+       spacingx="1"
+       spacingy="1" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5697">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>GIS icon theme 0.2</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>GIS icons</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:coverage>GIS icons</dc:coverage>
+        <dc:description />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer"
+     style="display:inline"
+     transform="translate(0,-8)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.33333333px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#d92626;fill-opacity:1;stroke:none;"
+       x="3.2261746"
+       y="14.720079"
+       id="text5095"><tspan
+         sodipodi:role="line"
+         id="tspan5093"
+         x="3.2261746"
+         y="25.668043" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.33333349px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#e13b3b;fill-opacity:1;stroke:none;"
+       x="7.8665624"
+       y="16.266876"
+       id="text5099"><tspan
+         sodipodi:role="line"
+         id="tspan5097"
+         x="7.8665624"
+         y="21.132639" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-opacity:1;"
+       x="2.3422911"
+       y="19.448856"
+       id="text5103"><tspan
+         sodipodi:role="line"
+         id="tspan5101"
+         x="2.3422911"
+         y="26.747499" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.28151035px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.74028337"
+       x="0.48470485"
+       y="17.579216"
+       id="text5107"
+       transform="scale(0.72386408,1.3814748)"><tspan
+         sodipodi:role="line"
+         id="tspan5105"
+         x="0.48470485"
+         y="17.579216"
+         style="stroke-width:1.74028337">HAZUS</tspan></text>
+    <path
+       style="fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-width:0.04419417;stroke-opacity:1"
+       d="M 1.0132764,11.632269 V 6.9918808 H 1.3226356 1.6319948 V 8.825939 10.659997 H 2.8694316 4.1068685 V 8.825939 6.9918808 h 0.3093592 0.3093592 v 4.6403882 4.640388 H 4.4162277 4.1068685 v -2.276 -2.276 H 2.8694316 1.6319948 v 2.276 2.276 H 1.3226356 1.0132764 Z"
+       id="path5119"
+       inkscape:connector-curvature="0"
+       transform="translate(0,8)" />
+    <path
+       style="fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-width:0.04419417;stroke-opacity:1"
+       d="m 5.5393154,16.151123 c 0.013891,-0.06684 0.4032306,-2.110272 0.8651993,-4.540951 0.4619686,-2.4306797 0.8503099,-4.464164 0.8629805,-4.5188543 0.021863,-0.094365 0.04406,-0.099437 0.4352185,-0.099437 H 8.1148945 L 8.2385107,7.6437448 C 8.3064997,8.00227 8.7033122,10.085473 9.1203165,12.273084 l 0.7581897,3.977476 -0.305782,0.01309 c -0.1681801,0.0072 -0.3126416,0.0062 -0.3210257,-0.0022 -0.00838,-0.0084 -0.121562,-0.591009 -0.2515066,-1.294723 l -0.2362629,-1.279479 -1.0803681,-0.0118 -1.0803681,-0.0118 -0.078681,0.431642 c -0.043275,0.237403 -0.150977,0.824418 -0.2393382,1.304477 l -0.160657,0.87289 H 5.8192878 5.514059 Z M 8.5553812,12.571395 C 8.5438011,12.528858 8.3506303,11.499686 8.1261128,10.284347 7.9015954,9.0690069 7.7054617,8.0602943 7.6902602,8.0427631 7.6750587,8.0252318 7.4775089,8.9997133 7.2512606,10.208277 7.0250122,11.416842 6.8292145,12.460357 6.8161544,12.527201 l -0.023746,0.121534 H 7.684422 c 0.8280949,0 0.8905049,-0.0055 0.8709592,-0.07734 z"
+       id="path5121"
+       inkscape:connector-curvature="0"
+       transform="translate(0,8)" />
+    <path
+       style="fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-width:0.04419417;stroke-opacity:1"
+       d="m 10.426635,15.717549 v -0.555107 l 1.484441,-3.499708 c 0.816442,-1.9248391 1.49474,-3.5245668 1.50733,-3.5549503 0.01804,-0.043533 -0.282573,-0.055243 -1.41815,-0.055243 H 10.559218 V 7.5222109 6.9918808 h 1.789864 1.789863 v 0.523874 0.523874 L 12.632388,11.57057 c -0.828606,1.942018 -1.516848,3.555801 -1.529427,3.586184 -0.01804,0.04358 0.3047,0.05524 1.528654,0.05524 h 1.551525 v 0.53033 0.53033 h -1.878253 -1.878252 z"
+       id="path5123"
+       inkscape:connector-curvature="0"
+       transform="translate(0,8)" />
+    <path
+       style="fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-width:0.04419417;stroke-opacity:1"
+       d="M 16.547528,16.36232 C 16.106818,16.18725 15.779876,15.796993 15.554031,15.176426 15.241725,14.318284 15.199848,13.70222 15.199713,9.9639389 l -1.07e-4,-2.9720581 h 0.309359 0.309359 v 3.1941882 c 0,3.292675 0.01715,3.694661 0.181443,4.25253 0.185852,0.631077 0.48829,0.939137 0.964377,0.982308 0.624165,0.0566 1.009812,-0.322605 1.224477,-1.204013 0.06667,-0.273738 0.07708,-0.69954 0.09211,-3.766819 l 0.01694,-3.4581942 h 0.310241 0.310241 l -0.01874,3.4360972 c -0.01779,3.260259 -0.02349,3.461131 -0.111433,3.925296 -0.196555,1.037403 -0.534282,1.646023 -1.077431,1.941642 -0.313042,0.170379 -0.828574,0.200257 -1.163011,0.0674 z"
+       id="path5125"
+       inkscape:connector-curvature="0"
+       transform="translate(0,8)" />
+    <path
+       style="fill:#d61b1b;fill-opacity:1;stroke:#c13e3e;stroke-width:0.04419417;stroke-opacity:1"
+       d="M 21.519372,16.419667 C 21.097866,16.3771 20.705818,16.21351 20.24879,15.889493 l -0.276214,-0.195826 0.0023,-0.760117 c 0.0022,-0.72837 0.0055,-0.755595 0.07734,-0.651859 0.289418,0.417634 0.64549,0.73814 1.046633,0.942091 0.346117,0.175975 0.84355,0.217972 1.158245,0.09779 0.281474,-0.107496 0.553655,-0.391675 0.680321,-0.710312 0.09053,-0.227724 0.103956,-0.337211 0.105205,-0.85767 0.0012,-0.514814 -0.01126,-0.62389 -0.09116,-0.795495 -0.184014,-0.395227 -0.426701,-0.553764 -1.265683,-0.82682 -1.015803,-0.330604 -1.419859,-0.803697 -1.608362,-1.883167 -0.09392,-0.5378101 -0.06117,-1.3751192 0.07203,-1.8416982 0.189928,-0.6652939 0.582153,-1.2049096 1.04443,-1.436909 0.232985,-0.1169265 0.301625,-0.129994 0.67903,-0.1292712 0.50441,9.66e-4 0.887536,0.12079 1.342386,0.4198365 l 0.292798,0.1925038 -0.0014,0.7087821 c -0.0013,0.6370363 -0.008,0.6998351 -0.06698,0.6203938 C 23.28407,8.5719472 22.921837,8.2406684 22.704586,8.1094307 21.866808,7.6033408 21.038405,7.839157 20.747411,8.666567 c -0.160176,0.4554427 -0.122057,1.2429346 0.07936,1.639472 0.141001,0.277594 0.351003,0.407133 1.112447,0.686209 0.938923,0.344123 1.247115,0.577781 1.504965,1.141 0.195489,0.427003 0.25108,0.812181 0.22748,1.576147 -0.02415,0.781824 -0.08784,1.082888 -0.341244,1.613087 -0.189592,0.396688 -0.558229,0.803668 -0.860485,0.949988 -0.180075,0.08717 -0.589852,0.183253 -0.724573,0.169891 -0.03922,-0.0039 -0.140914,-0.0141 -0.225988,-0.02269 z"
+       id="path5127"
+       inkscape:connector-curvature="0"
+       transform="translate(0,8)" />
+  </g>
+</svg>
