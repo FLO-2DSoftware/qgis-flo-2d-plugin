@@ -110,7 +110,7 @@ class Schema1DConverter(SchemaConverter):
         self.xsecnames = dict(self.execute('SELECT elem_fid, xsecname FROM chan_n;'))
         self.schema_lbank_lyr = lyrs.data[self.schema_lbank_tab]['qlyr']
         self.user_lbank_lyr = lyrs.data[self.user_lbank_tab]['qlyr']
-        self.schema_xs_lyr = lyrs.data[self.schema_xs_tab]['qlyr']
+        self.schematized_xsections_lyr = lyrs.data[self.schema_xs_tab]['qlyr']
         self.user_xs_lyr = lyrs.data[self.user_xs_tab]['qlyr']
 
         self.xs_tables = {
@@ -148,14 +148,14 @@ class Schema1DConverter(SchemaConverter):
         common_fnames = {'fid': 'id', 'type': 'type', 'fcn': 'fcn'}
         geom_fn = self.geom_functions['polyline']
         new_features = []
-        for i, feat in enumerate(self.schema_xs_lyr.getFeatures(), start=1):
+        for i, feat in enumerate(self.schematized_xsections_lyr.getFeatures(), start=1):
 
             if feat.geometry() is None:
                 self.set_geomless_xs(feat)
 
             new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
-            new_feat['name'] = 'Cross-section {}'.format(i)
-            new_feat['name'] = 'Cross-section {}'.format(i) if feat['type'] != 'N' else self.xsecnames[feat['fid']]
+            new_feat['name'] = 'Cross-section-{}'.format(i)
+            new_feat['name'] = 'Cross-section-{}'.format(i) if feat['type'] != 'N' else self.xsecnames[feat['fid']]
             new_features.append(new_feat)
         self.user_xs_lyr.startEditing()
         self.user_xs_lyr.addFeatures(new_features)
@@ -357,11 +357,11 @@ class SchemaSWMMConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaSWMMConverter, self).__init__(con, iface, lyrs)
 
-        self.user_swmm_tab = 'user_swmm'
+        self.user_swmm_nodes_tab = 'user_swmm_nodes'
         self.schema_inlet_tab = 'swmmflo'
         self.schema_outlet_tab = 'swmmoutf'
 
-        self.user_swmm_lyr = lyrs.data[self.user_swmm_tab]['qlyr']
+        self.user_swmm_nodes_lyr = lyrs.data[self.user_swmm_nodes_tab]['qlyr']
         self.schema_inlet_lyr = lyrs.data[self.schema_inlet_tab]['qlyr']
         self.schema_outlet_lyr = lyrs.data[self.schema_outlet_tab]['qlyr']
 
@@ -383,7 +383,7 @@ class SchemaSWMMConverter(SchemaConverter):
             (self.schema_outlet_lyr, self.outlet_columns)
         ]
 
-        self.ui_fields = self.user_swmm_lyr.fields()
+        self.ui_fields = self.user_swmm_nodes_lyr.fields()
         self.rt_grids = self.check_rating_tables()
 
     def check_rating_tables(self):
@@ -396,7 +396,7 @@ class SchemaSWMMConverter(SchemaConverter):
                 rt_grids[grid_fid] = fid
         return rt_grids
 
-    def user_swmm_features(self, schema_lyr, columns):
+    def user_swmm_nodes_features(self, schema_lyr, columns):
         col_no = len(columns)
         if col_no == 8:
             sd_type = 'I'
@@ -423,13 +423,13 @@ class SchemaSWMMConverter(SchemaConverter):
             new_features.append(new_feat)
         return new_features
 
-    def create_user_swmm(self):
-        remove_features(self.user_swmm_lyr)
-        sd_feats = self.user_swmm_features(self.schema_inlet_lyr, self.inlet_columns)
-        sd_feats += self.user_swmm_features(self.schema_outlet_lyr, self.outlet_columns)
-        self.user_swmm_lyr.startEditing()
-        self.user_swmm_lyr.addFeatures(sd_feats)
-        self.user_swmm_lyr.commitChanges()
-        self.user_swmm_lyr.updateExtents()
-        self.user_swmm_lyr.triggerRepaint()
-        self.user_swmm_lyr.removeSelection()
+    def create_user_swmm_nodes(self):
+        remove_features(self.user_swmm_nodes_lyr)
+        sd_feats = self.user_swmm_nodes_features(self.schema_inlet_lyr, self.inlet_columns)
+        sd_feats += self.user_swmm_nodes_features(self.schema_outlet_lyr, self.outlet_columns)
+        self.user_swmm_nodes_lyr.startEditing()
+        self.user_swmm_nodes_lyr.addFeatures(sd_feats)
+        self.user_swmm_nodes_lyr.commitChanges()
+        self.user_swmm_nodes_lyr.updateExtents()
+        self.user_swmm_nodes_lyr.triggerRepaint()
+        self.user_swmm_nodes_lyr.removeSelection()

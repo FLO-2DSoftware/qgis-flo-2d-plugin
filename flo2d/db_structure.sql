@@ -50,14 +50,14 @@ CREATE TABLE "trigger_control" (
 CREATE TABLE "grid" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "n_value" REAL DEFAULT 0.05,
-    "elevation" REAL DEFAULT -9999
+    "elevation" REAL DEFAULT -9999,
+    "water_elevation" REAL DEFAULT -9999,
+    "flow_depth" REAL DEFAULT -9999
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('grid', 'geom');
 SELECT gpkgAddSpatialIndex('grid', 'geom');
-
-
 
 -- Inflow - INFLOW.DAT
 
@@ -427,7 +427,7 @@ CREATE TABLE "rain" (
     "tot_rainfall" REAL DEFAULT 0, -- RTT, total storm rainfall [inch or mm]
     "rainabs" REAL DEFAULT 0, -- RAINABS, rain interception or abstraction
     "irainarf" INTEGER DEFAULT 0, -- IRAINARF, switch for individual grid elements rain area reduction factor (1 is ON)
-    "movingstrom" INTEGER DEFAULT 0, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
+    "movingstorm" INTEGER DEFAULT 0, -- MOVINGSTORM, switch for moving storm simulation (1 is ON)
     "rainspeed" REAL DEFAULT 0, -- RAINSPEED, speed of moving storm
     "iraindir" INTEGER DEFAULT 0, -- IRAINDIR, direction of moving storm
     "notes" TEXT
@@ -504,14 +504,15 @@ CREATE TABLE "chan_elems" (
     "fid" INTEGER NOT NULL, -- ICHANGRID, grid element number for left bank
     "seg_fid" INTEGER, -- fid of cross-section's segment
     "nr_in_seg" INTEGER, -- cross-section number in segment
-    "rbankgrid" INTEGER, -- RIGHTBANK, right bank grid element fid
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
-    "xlen" REAL, -- channel length contained within the grid element ICHANGRID
+    "rbankgrid" INTEGER DEFAULT 0, -- RIGHTBANK, right bank grid element fid
+    "fcn" REAL DEFAULT 0, -- FCN, average Manning's n in the grid element
+    "xlen" REAL DEFAULT 0, -- channel length contained within the grid element ICHANGRID
     "type" TEXT, -- SHAPE, type of cross-section shape definition
     "notes" TEXT,
     "user_xs_fid" INTEGER,
-    "interpolated" INTEGER
-
+    "interpolated" INTEGER,
+    "max_water_elev" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "peak_discharge" REAL DEFAULT 0 -- output from HYCHAN.OUT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
@@ -529,52 +530,51 @@ SELECT gpkgAddGeometryTriggers('rbank', 'geom');
 CREATE TABLE "chan_r" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "elem_fid" INTEGER, -- fid of cross-section's element
-    "bankell" REAL, -- BANKELL, left bank elevation
-    "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcw" REAL, -- FCW, channel width
-    "fcd" REAL -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    
+    "bankell" REAL DEFAULT 0, -- BANKELL, left bank elevation
+    "bankelr" REAL DEFAULT 0, -- BANKELR, right bank elevation
+    "fcw" REAL DEFAULT 0, -- FCW, channel width
+    "fcd" REAL DEFAULT 0 -- channel channel thalweg depth (deepest part measured from the lowest bank)
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_r', 'aspatial');
 
 CREATE TABLE "chan_v" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "elem_fid" INTEGER, -- fid of cross-section's element
-    "bankell" REAL, -- BANKELL, left bank elevation
-    "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    "a1" REAL, -- A1,
-    "a2" REAL, -- A2,
-    "b1" REAL, -- B1,
-    "b2" REAL, -- B2,
-    "c1" REAL, -- C1,
-    "c2" REAL, -- C2,
-    "excdep" REAL, -- EXCDEP, channel depth above which second variable area relationship will be applied
-    "a11" REAL, -- A11,
-    "a22" REAL, -- A22,
-    "b11" REAL, -- B11,
-    "b22" REAL, -- B22,
-    "c11" REAL, -- C11,
-    "c22" REAL -- C22,
+    "bankell" REAL  DEFAULT 0, -- BANKELL, left bank elevation
+    "bankelr" REAL DEFAULT 0, -- BANKELR, right bank elevation
+    "fcd" REAL DEFAULT 0, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "a1" REAL DEFAULT 0, -- A1,
+    "a2" REAL DEFAULT 0, -- A2,
+    "b1" REAL DEFAULT 0, -- B1,
+    "b2" REAL DEFAULT 0, -- B2,
+    "c1" REAL DEFAULT 0, -- C1,
+    "c2" REAL DEFAULT 0, -- C2,
+    "excdep" REAL DEFAULT 0, -- EXCDEP, channel depth above which second variable area relationship will be applied
+    "a11" REAL DEFAULT 0, -- A11,
+    "a22" REAL DEFAULT 0, -- A22,
+    "b11" REAL DEFAULT 0, -- B11,
+    "b22" REAL DEFAULT 0, -- B22,
+    "c11" REAL DEFAULT 0, -- C11,
+    "c22" REAL DEFAULT 0 -- C22
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_v', 'aspatial');
 
 CREATE TABLE "chan_t" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "elem_fid" INTEGER, -- fid of cross-section's element
-    "bankell" REAL, -- BANKELL, left bank elevation
-    "bankelr" REAL, -- BANKELR, right bank elevation
-    "fcw" REAL, -- FCW, channel width
-    "fcd" REAL, -- channel channel thalweg depth (deepest part measured from the lowest bank)
-    "zl" REAL, -- ZL left side slope
-    "zr" REAL --ZR right side slope
+    "bankell" REAL  DEFAULT 0, -- BANKELL, left bank elevation
+    "bankelr" REAL DEFAULT 0, -- BANKELR, right bank elevation
+    "fcw" REAL DEFAULT 0, -- FCW, channel width
+    "fcd" REAL DEFAULT 0, -- channel channel thalweg depth (deepest part measured from the lowest bank)
+    "zl" REAL DEFAULT 0, -- ZL left side slope
+    "zr" REAL DEFAULT 0 --ZR right side slope
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_t', 'aspatial');
 
 CREATE TABLE "chan_n" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "elem_fid" INTEGER, -- fid of cross-section's element
-    "nxsecnum" INTEGER, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
+    "nxsecnum" INTEGER  DEFAULT 0, -- NXSECNUM, surveyed cross section number assigned in XSEC.DAT
     "xsecname" TEXT -- xsection name
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
@@ -586,9 +586,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 --     AFTER INSERT ON "chan_n"
 --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
 --     BEGIN
---         UPDATE "chan_n" 
+--         UPDATE "chan_n"
 --             SET geom = (
---                 SELECT 
+--                 SELECT
 --                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
 --                     (ST_Centroid(CastAutomagic(g2.geom)))))
 --                 FROM grid AS g1, grid AS g2
@@ -612,9 +612,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 --     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
 -- --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
 --     BEGIN
---         UPDATE "chan_n" 
+--         UPDATE "chan_n"
 --             SET geom = (
---                 SELECT 
+--                 SELECT
 --                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
 --                     (ST_Centroid(CastAutomagic(g2.geom)))))
 --                 FROM grid AS g1, grid AS g2
@@ -677,7 +677,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "conf_fid" INTEGER, -- confluence fid
-    "type" INTEGER, -- switch, tributary (0 if ICONFLO1) or main channel (1 if ICONFLO2) 
+    "type" INTEGER, -- switch, tributary (0 if ICONFLO1) or main channel (1 if ICONFLO2)
     "chan_elem_fid" INTEGER, -- ICONFLO1 or ICONFLO2, tributary or main channel element fid
     "notes" TEXT
 );
@@ -705,47 +705,57 @@ SELECT gpkgAddGeometryTriggers('chan_confluences', 'geom');
 --        -- TODO: set also seg_fid
 --    END;
 
-CREATE TABLE "noexchange_chan_areas" (
+CREATE TABLE "user_noexchange_chan_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "notes" TEXT
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('noexchange_chan_areas', 'features', 4326);
-SELECT gpkgAddGeometryColumn('noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('noexchange_chan_areas', 'geom');
--- SELECT gpkgAddSpatialIndex('noexchange_chan_areas', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_noexchange_chan_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_noexchange_chan_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_noexchange_chan_areas', 'geom');
 
-CREATE TABLE "noexchange_chan_elems" (
+CREATE TABLE "noexchange_chan_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "noex_area_fid" INTEGER, -- fid of noexchange_chan_area polygon
-    "chan_elem_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
+    "area_fid" INTEGER, -- fid of noexchange_chan_area polygon
+    "grid_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_elems', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells', 'aspatial');
 
 --CREATE TRIGGER "find_noexchange_cells_insert"
---    AFTER INSERT ON "noexchange_chan_areas"
+--    AFTER INSERT ON "user_noexchange_chan_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --    BEGIN
---        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
---        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid)
+--        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+--        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid)
 --        SELECT NEW.fid, g.fid FROM grid as g
 --        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
 --    END;
 --
 --CREATE TRIGGER "find_noexchange_cells_update"
---    AFTER UPDATE ON "noexchange_chan_areas"
+--    AFTER UPDATE ON "user_noexchange_chan_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --    BEGIN
---        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
---        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid)
+--        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+--        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid)
 --        SELECT NEW.fid, g.fid FROM grid as g
 --        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
 --    END;
 --
 --CREATE TRIGGER "find_noexchange_cells_delete"
---    AFTER DELETE ON "noexchange_chan_areas"
+--    AFTER DELETE ON "user_noexchange_chan_areas"
 --    BEGIN
---        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = OLD."fid";
+--        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = OLD."fid";
 --    END;
+
+--CREATE TABLE "user_noexchange_chan_areas" (
+--    "fid" INTEGER PRIMARY KEY NOT NULL,
+--    "chan_seg_fid" INTEGER,
+--    "note" TEXT
+--);
+--INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_noexchange_chan_areas', 'features', 4326);
+--SELECT gpkgAddGeometryColumn('user_noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
+--SELECT gpkgAddGeometryTriggers('user_noexchange_chan_areas', 'geom');
+
 
 CREATE TABLE "chan_wsel" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1169,7 +1179,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 -- SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
 -- SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
 -- -- SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
--- 
+--
 -- CREATE TABLE "blocked_cells_tot" (
 --     "fid" INTEGER NOT NULL PRIMARY KEY,
 --     "grid_fid" INTEGER, -- equal to fid from grid table
@@ -1203,21 +1213,21 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 --        DELETE FROM "blocked_cells_tot" WHERE area_fid = OLD."fid";
 --    END;
 
-CREATE TABLE "blocked_areas" (
+CREATE TABLE "user_blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "collapse" INTEGER, -- collapse option for blocking object
     "calc_arf" INTEGER, -- flag for calculating ARFs
     "calc_wrf" INTEGER -- flag for calculating WRFs
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas', 'features', 4326);
-SELECT gpkgAddGeometryColumn('blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('blocked_areas', 'geom');
--- SELECT gpkgAddSpatialIndex('blocked_areas', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_blocked_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_blocked_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_blocked_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_blocked_areas', 'geom');
 
 CREATE TABLE "blocked_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- equal to fid from grid table
-    "area_fid" INTEGER, -- fid of area from blocked_areas table
+    "area_fid" INTEGER, -- fid of area from user_blocked_areas table
     "arf" REAL, -- ARF, area reduction factor for cells
     "wrf1" REAL, -- WRF(I,J), width reduction factor for the North direction
     "wrf2" REAL, -- WRF(I,J), width reduction factor for the East direction
@@ -1247,7 +1257,7 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('arf', 'featur
 INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('arf', 'geom', 'POLYGON', 4326, 0, 0);
 
 --CREATE TRIGGER "find_cells_arf_insert"
---    AFTER INSERT ON "blocked_areas"
+--    AFTER INSERT ON "user_blocked_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --    BEGIN
 --        DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
@@ -1257,7 +1267,7 @@ INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, 
 --    END;
 --
 --CREATE TRIGGER "find_cells_arf_update"
---    AFTER UPDATE ON "blocked_areas"
+--    AFTER UPDATE ON "user_blocked_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
 --    BEGIN
 --        DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
@@ -1267,7 +1277,7 @@ INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, 
 --    END;
 --
 --CREATE TRIGGER "find_cells_arf_delete"
---    AFTER DELETE ON "blocked_areas"
+--    AFTER DELETE ON "user_blocked_areas"
 --    BEGIN
 --        DELETE FROM "blocked_cells" WHERE area_fid = OLD."fid";
 --    END;
@@ -1434,7 +1444,8 @@ CREATE TABLE "swmmflo" (
     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
     "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
     "curbheight" REAL, -- CURBHEIGHT
-    "name" TEXT -- optional inlet name
+    "name" TEXT, -- optional inlet name
+    "swmm_feature" INTEGER  -- maybe used as flapgate !!! carefull!!
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmflo', 'features', 4326);
 SELECT gpkgAddGeometryColumn('swmmflo', 'geom', 'POINT', 0, 0, 0);
@@ -1473,12 +1484,59 @@ SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
 
+-- SHALLOW_SPATIAL.DAT
+
+CREATE TABLE "spatialshallow" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "shallow_n" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('spatialshallow', 'features', 4326);
+SELECT gpkgAddGeometryColumn('spatialshallow', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('spatialshallow', 'geom');
+-- SELECT gpkgAddSpatialIndex('spatialshallow', 'geom')
+
+CREATE TABLE "spatialshallow_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "area_fid" INTEGER, -- fid of area from spatialshallow table
+    "grid_fid" INTEGER -- grid element fid that has an individual shallow number
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells', 'aspatial');
+
+
+-- GUTTER.DAT
+
+CREATE TABLE "gutter_globals" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "height" REAL, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
+    "width" REAL, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
+    "n_value" REAL -- STREET_n-VALUE, global assignment of the street gutter n-value
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_globals', 'aspatial');
+
+CREATE TABLE "gutter_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "width" REAL, -- WIDSTR, channel width for individual grid elements
+    "height" REAL, -- CURBHT, maximum depth of multiple channels
+    "n_value" REAL, -- XNSTR, number of multiple channels assigned in a grid element
+    "direction" INTEGER -- ICURBDIR, channel n-values for individual grid elements
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('gutter_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('gutter_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('gutter_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('gutter_areas', 'geom')
+
+CREATE TABLE "gutter_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "area_fid" INTEGER, -- fid of area from gutter_areas table
+    "grid_fid" INTEGER -- equal to fid from grid table
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_cells', 'aspatial');
 
 -- TOLSPATIAL.DAT
 
 CREATE TABLE "tolspatial" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "tol" REAL -- TOL, tollerance for grid cells contained in the polygon. A grid cell is considered contained in a polygon if its centroid is contained in it.
+    "tol" REAL -- TOL, tolerance for grid cells contained in the polygon. A grid cell is considered contained in a polygon if its centroid is contained in it.
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('tolspatial', 'features', 4326);
 SELECT gpkgAddGeometryColumn('tolspatial', 'geom', 'POLYGON', 0, 0, 0);
@@ -1491,7 +1549,6 @@ CREATE TABLE "tolspatial_cells" (
     "grid_fid" INTEGER -- IDUM, fid of grid cell contained in a fpxsection
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
-
 
 -- WSURF.DAT
 
@@ -1787,12 +1844,31 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_left_ban
 SELECT gpkgAddGeometryColumn('user_left_bank', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_left_bank', 'geom');
 
+CREATE TRIGGER "default_channel_segment_name"
+    AFTER INSERT ON "user_left_bank"
+    BEGIN
+        UPDATE "user_left_bank"
+        SET name = ('Channel ' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
+--  USER RIGHT BANK
+
+CREATE TABLE "user_right_bank" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "chan_seg_fid" INTEGER,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_right_bank', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_right_bank', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_right_bank', 'geom');
+
 -- USER XSECTIONS
 
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "fcn" REAL, -- FCN, average Manning's n in the grid element
-    "type" TEXT, -- SHAPE, type of cross-section shape definition
+    "type" TEXT DEFAULT 'N', -- SHAPE, type of cross-section shape definition
     "name" TEXT,
     "notes" TEXT
 );
@@ -1800,6 +1876,21 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_xsection
 SELECT gpkgAddGeometryColumn('user_xsections', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_xsections', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_xsections', 'geom');
+
+CREATE TRIGGER "default_user_xsections"
+    AFTER INSERT ON "user_xsections"
+    BEGIN
+        UPDATE "user_xsections"
+        SET name = ('Cross-Section-' || cast(NEW."fid" AS TEXT)), fcn = 0.05, type = 'N'
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
+
+CREATE TRIGGER IF NOT EXISTS "find_user_chan_n_delete"
+    AFTER DELETE ON "user_xsections"
+    BEGIN
+        DELETE FROM "user_chan_n" WHERE user_xs_fid = OLD."fid";
+    END;
 
 CREATE TABLE chan_elems_interp (
     "id" INTEGER PRIMARY KEY,
@@ -1875,6 +1966,21 @@ CREATE TABLE "user_xsec_n_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('user_xsec_n_data', 'aspatial');
 
+CREATE TRIGGER IF NOT EXISTS "update_user_chan_n_insert"
+    AFTER INSERT ON "user_xsections"
+    BEGIN
+        INSERT INTO "user_chan_n" (user_xs_fid, nxsecnum, xsecname)
+        VALUES (NEW."fid", NEW."fid", NEW."name");
+    END;
+
+CREATE TRIGGER "default_user_chan_n"
+    AFTER INSERT ON "user_chan_n"
+    BEGIN
+        UPDATE "user_chan_n"
+        SET xsecname = ('Cross-Section-' || cast("user_xs_fid" AS TEXT))
+        WHERE NEW."xsecname" IS NULL;
+    END;
+
 -- USER LEVEES
 
 CREATE TABLE "user_elevation_points" (
@@ -1935,6 +2041,36 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_roughnes
 SELECT gpkgAddGeometryColumn('user_roughness', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_roughness', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_roughness', 'geom');
+
+CREATE TABLE "user_spatial_tolerance" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "tolerance" REAL,
+    "code" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_spatial_tolerance', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_spatial_tolerance', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_spatial_tolerance', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_spatial_tolerance', 'geom');
+
+CREATE TABLE "user_spatial_froude" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "froude" REAL,
+    "code" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_spatial_froude', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_spatial_froude', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_spatial_froude', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_spatial_froude', 'geom')
+
+CREATE TABLE "user_spatial_shallow_n" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "shallow_n" REAL,
+    "code" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_spatial_shallow_n', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_spatial_shallow_n', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_spatial_shallow_n', 'geom');
+-- SELECT gpkgAddSpatialIndex('user_spatial_shallow_n', 'geom')
 
 CREATE TABLE "user_elevation_polygons" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -2332,41 +2468,122 @@ CREATE TRIGGER "default_infiltration_name"
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
-CREATE TABLE "user_swmm" (
+CREATE TABLE "user_swmm_nodes" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "sd_type" TEXT DEFAULT 'I' CHECK("sd_type" = 'I' OR "sd_type" = 'O'),
+    "grid" INTEGER DEFAULT 0,
+    "sd_type" TEXT DEFAULT 'I' CHECK("sd_type" = 'I' OR "sd_type" = 'O'), --Inlet or Outfall
     "name" TEXT,
-    "intype" INTEGER DEFAULT 1,
-    "swmm_length" REAL DEFAULT 0,
-    "swmm_width" REAL DEFAULT 0,
-    "swmm_height" REAL DEFAULT 0,
-    "swmm_coeff" REAL DEFAULT 0,
-    "flapgate" INTEGER DEFAULT 0,
-    "curbheight" REAL DEFAULT 0,
-    "max_depth" REAL DEFAULT 0,
-    "invert_elev" REAL DEFAULT 0,
+    "intype" INTEGER DEFAULT 1, --FLO-2D Drain Type
+
+    --VARIABLES FROM .INP [JUNCTIONS]:
+	    "junction_invert_elev" REAL DEFAULT 0,
+	    "max_depth" REAL DEFAULT 0,
+	    "init_depth" REAL DEFAULT 0,
+	    "surcharge_depth" REAL DEFAULT 0,
+	    "ponded_area" REAL DEFAULT 0,
+    -----------------------------------
+
+    --VARIABLES FROM .INP [OUTFALLS]:
+    	"outfall_invert_elev" REAL DEFAULT 0,
+		"outfall_type" TEXT DEFAULT 'Normal',
+		"tidal_curve" TEXT DEFAULT '...',
+		"time_series" TEXT DEFAULT '...',
+	    "flapgate" TEXT DEFAULT 'False',
+    -------------------------------------
+
+	--VARIABLES FOR SWMMFLO.DAT
+	    "swmm_length" REAL DEFAULT 0,
+	    "swmm_width" REAL DEFAULT 0,
+	    "swmm_height" REAL DEFAULT 0,
+	    "swmm_coeff" REAL DEFAULT 0,
+	    "swmm_feature" INTEGER DEFAULT 0,
+	    "curbheight" REAL DEFAULT 0,
+	    "swmm_clogging_factor" REAL DEFAULT 0,
+	    "swmm_time_for_clogging" REAL DEFAULT 0,
+	    "swmm_allow_discharge" TEXT DEFAULT 'False',
+	------------------------------------
+
+	"water_depth" REAL DEFAULT 0,
     "rt_fid" INTEGER,
     "outf_flo" INTEGER DEFAULT 0,
-
     "invert_elev_inp" REAL DEFAULT 0,
     "max_depth_inp" REAL DEFAULT 0,
     "rim_elev_inp" REAL DEFAULT 0,
     "rim_elev" REAL DEFAULT 0,
     "ge_elev" REAL DEFAULT 0,
     "difference" REAL DEFAULT 0,
-
     "notes" TEXT
 
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_swmm', 'geom', 'POINT', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_swmm', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_nodes', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_nodes', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_nodes', 'geom');
+
+
+CREATE TABLE "user_swmm_conduits" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+--VARIABLES FROM .INP [CONDUITS]:
+	"conduit_name" TEXT,
+	"conduit_inlet" TEXT,
+	"conduit_outlet" TEXT,
+	"conduit_length" REAL DEFAULT 0,
+	"conduit_manning" REAL DEFAULT 0,
+	"conduit_inlet_offset" REAL DEFAULT 0,
+	"conduit_outlet_offset" REAL DEFAULT 0,
+	"conduit_init_flow" REAL DEFAULT 0,
+	"conduit_max_flow" REAL DEFAULT 0,
+	"losses_inlet" REAL DEFAULT 0,
+	"losses_outlet" REAL DEFAULT 0,
+	"losses_average" REAL DEFAULT 0,
+	"losses_flapgate" TEXT DEFAULT 'False',
+	"xsections_shape" TEXT DEFAULT 'CIRCULAR',
+	"xsections_max_depth" REAL DEFAULT 0,
+	"xsections_geom2"REAL DEFAULT 0,
+    "xsections_geom3"REAL DEFAULT 0,
+    "xsections_geom4"REAL DEFAULT 0,
+	"xsections_barrels" INTEGER DEFAULT 0,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_conduits', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_conduits', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
 
 CREATE TRIGGER "default_swmm_name"
-    AFTER INSERT ON "user_swmm"
+    AFTER INSERT ON "user_swmm_nodes"
     BEGIN
-        UPDATE "user_swmm"
-        SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT))
+        UPDATE "user_swmm_nodes"
+        SET grid = 0,
+            sd_type = 'I',
+            name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT)),
+            intype = 1,
+            junction_invert_elev = 0,
+            max_depth = 0,
+            init_depth = 0,
+            surcharge_depth = 0,
+            ponded_area = 0,
+            outfall_invert_elev = 0,
+            outfall_type = 'Normal',
+            tidal_curve = '...',
+            time_series = '...',
+            flapgate = 'False',
+            swmm_length = 0,
+            swmm_width = 0,
+            swmm_height = 0,
+            swmm_coeff = 0,
+            swmm_feature = 0,
+            curbheight = 0,
+            swmm_clogging_factor = 0,
+            swmm_time_for_clogging = 0,
+            swmm_allow_discharge = 'False',
+            water_depth = 0,
+            rt_fid = 0,
+            outf_flo = 0,
+            invert_elev_inp = 0,
+            max_depth_inp = 0,
+            rim_elev_inp = 0,
+            rim_elev = 0,
+            ge_elev = 0,
+            difference = 0
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
@@ -2387,3 +2604,40 @@ CREATE TABLE "raincell_data" (
     "iraindum" REAL -- Cumulative rainfall in inches or mm over the time interval.
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell_data', 'aspatial');
+
+CREATE TABLE "buildings_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "adjustment_factor" REAL
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('buildings_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('buildings_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('buildings_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('buildings_areas', 'geom');
+
+CREATE TABLE "buildings_stats" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "building_ID" INTEGER DEFAULT 0,
+    "grnd_elev_avg" REAL DEFAULT 0,
+    "grnd_elev_min" REAL DEFAULT 0,
+    "grnd_elev_max" REAL DEFAULT 0,
+    "floor_avg" REAL DEFAULT 0,
+    "floor_min" REAL DEFAULT 0,
+    "floor_max" REAL DEFAULT 0,
+    "water_elev_avg" REAL DEFAULT 0,
+    "water_elev_min" REAL DEFAULT 0,
+    "water_elev_max" REAL DEFAULT 0,
+    "depth_avg" REAL DEFAULT 0,
+    "depth_min" REAL DEFAULT 0,
+    "depth_max" REAL DEFAULT 0
+);
+--INSERT INTO gpkg_contents (table_name, data_type) VALUES ('buildings_stats', 'aspatial');
+
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('buildings_stats', 'features', 4326);
+SELECT gpkgAddGeometryColumn('buildings_stats', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('buildings_stats', 'geom');
+SELECT gpkgAddSpatialIndex('buildings_stats', 'geom');
+
+
+
+
+

@@ -35,7 +35,7 @@ CREATE TRIGGER IF NOT EXISTS "find_outflow_cells_insert"
     WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom") AND NEW."ident" = 'N')
     BEGIN
         DELETE FROM "outflow_cells" WHERE outflow_fid = NEW."fid";
-        INSERT INTO "outflow_cells" (outflow_fid, grid_fid, area_factor) 
+        INSERT INTO "outflow_cells" (outflow_fid, grid_fid, area_factor)
         SELECT NEW.fid, g.fid, ST_Area(ST_Intersection(CastAutomagic(g.geom), CastAutomagic(NEW.geom)))/ST_Area(NEW.geom) FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -89,7 +89,7 @@ CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_insert"
     WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
-        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf) 
+        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
         SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -99,7 +99,7 @@ CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_update"
     WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
-        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf) 
+        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
         SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -113,16 +113,23 @@ CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_delete"
 
 -- CHAN.DAT
 
+CREATE TRIGGER IF NOT EXISTS "find_user_chan_n_delete"
+    AFTER DELETE ON "user_xsections"
+    BEGIN
+        DELETE FROM "user_chan_n" WHERE user_xs_fid = OLD."fid";
+    END;
+
 -- TODO: create triggers for geometry INSERT and UPDATE
 -- use notes column to flag features created by user!
+
 -- -- create geometry when rightbank and leftbank are given
 -- CREATE TRIGGER IF NOT EXISTS "chan_n_geom_insert"
 --     AFTER INSERT ON "chan_n"
 --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
 --     BEGIN
---         UPDATE "chan_n" 
+--         UPDATE "chan_n"
 --             SET geom = (
---                 SELECT 
+--                 SELECT
 --                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
 --                     (ST_Centroid(CastAutomagic(g2.geom)))))
 --                 FROM grid AS g1, grid AS g2
@@ -146,9 +153,9 @@ CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_delete"
 --     AFTER UPDATE OF ichangrid, rbankgrid ON "chan_n"
 -- --     WHEN (NEW."ichangrid" NOT NULL AND NEW."rbankgrid" NOT NULL)
 --     BEGIN
---         UPDATE "chan_n" 
+--         UPDATE "chan_n"
 --             SET geom = (
---                 SELECT 
+--                 SELECT
 --                     AsGPB(MakeLine((ST_Centroid(CastAutomagic(g1.geom))),
 --                     (ST_Centroid(CastAutomagic(g2.geom)))))
 --                 FROM grid AS g1, grid AS g2
@@ -196,7 +203,7 @@ CREATE TRIGGER IF NOT EXISTS "confluence_geom_insert"
     AFTER INSERT ON "chan_confluences"
     WHEN (NEW."chan_elem_fid" NOT NULL)
     BEGIN
-        UPDATE "chan_confluences" 
+        UPDATE "chan_confluences"
             SET geom = (SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
         -- TODO: set also seg_fid
     END;
@@ -205,35 +212,35 @@ CREATE TRIGGER IF NOT EXISTS "confluence_geom_update"
     AFTER UPDATE ON "chan_confluences"
     WHEN (NEW."chan_elem_fid" NOT NULL)
     BEGIN
-        UPDATE "chan_confluences" 
+        UPDATE "chan_confluences"
             SET geom = (SELECT AsGPB(ST_Centroid(CastAutomagic(g.geom))) FROM grid AS g WHERE g.fid = chan_elem_fid);
         -- TODO: set also seg_fid
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_insert"
-    AFTER INSERT ON "noexchange_chan_areas"
+    AFTER INSERT ON "user_noexchange_chan_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
-        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_update"
-    AFTER UPDATE ON "noexchange_chan_areas"
+    AFTER UPDATE ON "user_noexchange_chan_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
-        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_delete"
-    AFTER DELETE ON "noexchange_chan_areas"
+    AFTER DELETE ON "user_noexchange_chan_areas"
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = OLD."fid";
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = OLD."fid";
     END;
 
 
@@ -246,7 +253,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_green_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -256,7 +263,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_green_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -274,7 +281,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_scs_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_scs" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -284,7 +291,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_scs_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_scs" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -309,7 +316,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_horton_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_horton" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -319,7 +326,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_cells_horton_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_cells_horton" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -337,7 +344,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_chan_elems_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_chan_elems" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -347,7 +354,7 @@ CREATE TRIGGER IF NOT EXISTS "find_infil_chan_elems_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "infil_chan_elems" WHERE infil_area_fid = NEW."fid";
-        INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid) 
+        INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -377,7 +384,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_tot_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -387,7 +394,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_tot_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -400,27 +407,27 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_tot_delete"
 
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_insert"
-    AFTER INSERT ON "blocked_areas"
+    AFTER INSERT ON "user_blocked_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells" (area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_update"
-    AFTER UPDATE ON "blocked_areas"
+    AFTER UPDATE ON "user_blocked_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "blocked_cells" (area_fid, grid_fid) 
+        INSERT INTO "blocked_cells" (area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_delete"
-    AFTER DELETE ON "blocked_areas"
+    AFTER DELETE ON "user_blocked_areas"
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = OLD."fid";
     END;
@@ -433,7 +440,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid) 
+        INSERT INTO "mult_cells" (area_fid, grid_fid)
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
@@ -443,7 +450,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid) 
+        INSERT INTO "mult_cells" (area_fid, grid_fid)
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;

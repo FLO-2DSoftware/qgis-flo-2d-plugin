@@ -150,11 +150,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
             pass
 
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+#         QApplication.setOverrideCursor(Qt.WaitCursor)
         start_time = time.time()
         con = database_create(gpkg_path)
         self.uc.log_info('{0:.3f} seconds => database create'.format(time.time() - start_time))
         if not con:
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
             return
         else:
@@ -241,6 +242,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
         QApplication.restoreOverrideCursor()
+#         QApplication.setOverrideCursor(Qt.ArrowCursor)
         self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
 
     def connect(self, gpkg_path=None):
@@ -283,6 +285,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgPathEdit.setText(self.gutils.path)
         self.read()
         QApplication.restoreOverrideCursor()
+
+#         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def write(self):
         for name, wid in self.widget_map.iteritems():

@@ -17,10 +17,12 @@ from struct_editor_widget import StructEditorWidget
 from ic_editor_widget import ICEditorWidget
 from street_editor_widget import StreetEditorWidget
 from rain_editor_widget import RainEditorWidget
+from channels_editor_widget import ChannelsEditorWidget
 from profile_tool import ProfileTool
 from fpxsec_editor_widget import FPXsecEditorWidget
 from infil_editor_widget import InfilEditorWidget
 from swmm_editor_widget import SWMMEditorWidget
+from storm_drain_editor_widget import StormDrainEditorWidget
 from flo2d.user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('f2d_widget')
@@ -44,7 +46,9 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_street_editor()
         self.setup_struct_editor()
         self.setup_rain_editor()
+        self.setup_channels_editor()
         self.setup_xsec_editor()
+        self.setup_storm_drain_editor()
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
@@ -52,8 +56,8 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
         self.cgroups = [
             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
-            self.swmm_editor_grp, self.ic_editor_grp, self.street_editor_grp, self.rain_editor_grp,
-            self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
+            self.swmm_editor_grp, self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
+            self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
         ]
         self.set_collapsible_groups()
 
@@ -105,6 +109,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.rain_editor = RainEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.rain_editor_lout.addWidget(self.rain_editor)
 
+    def setup_channels_editor(self):
+        self.channels_editor= ChannelsEditorWidget(self.iface, self.lyrs)
+        self.channels_editor_lout.addWidget(self.channels_editor)
+
     def setup_street_editor(self):
         self.street_editor = StreetEditorWidget(self.iface, self.lyrs)
         self.street_editor_lout.addWidget(self.street_editor)
@@ -124,6 +132,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_swmm_editor(self):
         self.swmm_editor = SWMMEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.swmm_editor_lout.addWidget(self.swmm_editor)
+
+    def setup_storm_drain_editor(self):
+        self.storm_drain_editor = StormDrainEditorWidget(self.iface,  self.plot, self.table, self.lyrs)
+        self.storm_drain_editor_lout.addWidget(self.storm_drain_editor)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:

@@ -13,7 +13,7 @@
    height="24"
    id="svg5692"
    version="1.1"
-   inkscape:version="0.91 r"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    sodipodi:docname="import_gds.svg"
    inkscape:export-filename="/media/home1/robert/svn/graphics/trunk/toolbar-icons/32x32/layer-vector.png"
    inkscape:export-xdpi="90"
@@ -128,17 +128,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="22.627417"
-     inkscape:cx="9.3648043"
-     inkscape:cy="8.4745136"
+     inkscape:cx="2.1832511"
+     inkscape:cy="8.0988631"
      inkscape:current-layer="layer2"
      showgrid="false"
      inkscape:grid-bbox="true"
      inkscape:document-units="px"
      borderlayer="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1028"
-     inkscape:window-x="870"
-     inkscape:window-y="1200"
+     inkscape:window-height="1147"
+     inkscape:window-x="1432"
+     inkscape:window-y="858"
      inkscape:window-maximized="1"
      inkscape:snap-global="false"
      showguides="false"
@@ -154,8 +154,10 @@
        enabled="true"
        snapvisiblegridlinesonly="true"
        dotted="true"
-       originx="2.5px"
-       originy="2.5px" />
+       originx="2.5"
+       originy="2.5"
+       spacingx="1"
+       spacingy="1" />
   </sodipodi:namedview>
   <metadata
      id="metadata5697">
@@ -251,7 +253,7 @@
     <g
        style="display:inline"
        id="g4168"
-       transform="matrix(0.91117861,0,0,0.91160434,10.613144,11.291731)">
+       transform="matrix(-0.91117861,0,0,-0.91160434,23.404138,38.540731)">
       <path
          inkscape:connector-curvature="0"
          id="path4252-3-3"

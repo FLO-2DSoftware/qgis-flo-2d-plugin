@@ -310,7 +310,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 'Culvert entrance loss coefficient',
                 'Flow width of box culvert for TYPEC=1. For a circular culvert, CUBASE=0']
         }
-        
+
     def show_table_data(self):
         if not self.struct:
             return
