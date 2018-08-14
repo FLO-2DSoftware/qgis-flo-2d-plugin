@@ -210,6 +210,7 @@ class GeoPackageUtils(object):
                 return rowid
             else:
                 return result_cursor
+
         except Exception as e:
             self.con.rollback()
             raise
@@ -355,18 +356,22 @@ class GeoPackageUtils(object):
         gpb = '''SELECT AsGPB(ST_GeomFromText('MULTILINESTRING('''
         gpb_part = '''({0} {1}, {2} {3})'''
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''.format(table, field)
-        wkt_geom = self.execute(qry, (gid,)).fetchone()[0]
-        x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()]
+        wkt_geom = self.execute(qry, (gid,)).fetchone()[0] # "wkt_geom" is POINT. Centroid of cell "gid"
+        x1, y1 = [float(i) for i in wkt_geom.strip('POINT()').split()] # Coordinates x1, y1 of centriod of cell "gid".
         half_cell = cellsize * 0.5
         parts = []
         for d in directions:
-            x2, y2 = functions[d](x1, y1, half_cell)
+            x2, y2 = functions[d](x1, y1, half_cell) # Coords x2,y2 of end point of subline,  half_cell apart from x1,y1, in direction.
             parts.append(gpb_part.format(x1, y1, x2, y2))
         gpb = gpb + ','.join(parts) + ')\'))'
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
     def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
+        '''
+        Builds a single line in cell "gid" according to "direction" (1 to 8)
+
+        '''
         functions = {
             '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
             '2': (lambda x, y, s: (x + s, y + s/2.414, x + s, y - s/2.414)),
@@ -378,10 +383,17 @@ class GeoPackageUtils(object):
             '8': (lambda x, y, s: (x - s, y + s/2.414, x - s/2.414, y + s))
         }
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''.format(table, field)
-        wkt_geom = self.execute(qry, (gid,)).fetchone()[0]
+            # "qry" ends up as '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "grid" WHERE "fid" = ?;'''
+
+        wkt_geom = self.execute(qry, (gid,)).fetchone()[0] # Centriod POINT (x,y) of cell "gid".
+
         xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
-        x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.48)
+        x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.48)  # Get 2 points of a line from "functions" dictionary.
+
+
         gpb = '''SELECT AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))'''.format(x1, y1, x2, y2)
+            # "gpb" gets a value with actual points, e.g.
+            # SELECT AsGPB(ST_GeomFromText('LINESTRING(366961.647995 1185707.0, 366981.532005 1185707.0)'))
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
@@ -493,7 +505,7 @@ class GeoPackageUtils(object):
         self.execute(qry)
 
     def fill_empty_user_xsec_names(self):
-        qry = '''UPDATE user_xsections SET name = 'Cross-section ' ||  cast(fid as text) WHERE name IS NULL;'''
+        qry = '''UPDATE user_xsections SET name = 'Cross-section-' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
 
     def fill_empty_struct_names(self):
@@ -566,7 +578,11 @@ class GeoPackageUtils(object):
             ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
         '''
         qry = qry.format(x, y)
-        gid = self.execute(qry).fetchone()[0]
+        data =  self.execute(qry).fetchone()
+        if data is not  None:
+            gid = data[0]
+        else:
+            gid = None
         return gid
 
     def grid_value(self, gid, field):
@@ -574,32 +590,33 @@ class GeoPackageUtils(object):
         value = self.execute(qry, (gid,)).fetchone()[0]
         return value
 
-    def update_xs_type(self):
+    def create_xs_type_n_r_t_v_tables(self):
         """
-        Updating parameters values specific for each cross section type.
+        Creates parameters values specific for each cross section type.
         """
-        self.clear_tables('chan_n', 'chan_r', 'chan_t', 'chan_v')
-        chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+        self.clear_tables('chan_r', 'chan_v', 'chan_t', 'chan_n' )
         chan_r = '''INSERT INTO chan_r (elem_fid) VALUES (?);'''
-        chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
         chan_v = '''INSERT INTO chan_v (elem_fid) VALUES (?);'''
+        chan_t = '''INSERT INTO chan_t (elem_fid) VALUES (?);'''
+        chan_n = '''INSERT INTO chan_n (elem_fid) VALUES (?);'''
+
         xs_sql = '''SELECT fid, type FROM chan_elems;'''
         cross_sections = self.execute(xs_sql).fetchall()
         cur = self.con.cursor()
         for fid, typ in cross_sections:
-            if typ == 'N':
-                cur.execute(chan_n, (fid,))
-            elif typ == 'R':
+            if typ == 'R':
                 cur.execute(chan_r, (fid,))
-            elif typ == 'T':
-                cur.execute(chan_t, (fid,))
             elif typ == 'V':
                 cur.execute(chan_v, (fid,))
+            elif typ == 'T':
+                cur.execute(chan_t, (fid,))
+            elif typ == 'N':
+                cur.execute(chan_n, (fid,))
             else:
                 pass
         self.con.commit()
 
-    def update_rbank(self):
+    def create_schematized_rbank_lines_from_xs_tips(self):
         """
         Create right bank lines.
         """
