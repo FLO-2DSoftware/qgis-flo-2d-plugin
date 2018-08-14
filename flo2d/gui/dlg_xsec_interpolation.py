@@ -31,8 +31,8 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         self.non_surveyed_lbl.setText(str(xs_survey[1]))
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
         s = QSettings()
-        outdir =  s.value('FLO-2D/lastGdsDir', '')       
-        self.directory_lbl.setText("(directory: " + outdir + ")") 
+        outdir =  s.value('FLO-2D/lastGdsDir', '')
+        self.directory_lbl.setText("(directory: " + outdir + ")")
 
     def set_previous_paths(self):
         s = QSettings()

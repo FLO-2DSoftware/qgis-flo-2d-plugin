@@ -181,7 +181,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Process failed on schematizing floodplain cross-sections! "
-                              "Please check your user layers.")
+                              "Please check your User Layers.")
             return
         self.uc.show_info("Floodplain cross-sections schematized!")
 

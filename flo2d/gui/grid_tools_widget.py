@@ -13,15 +13,20 @@ from ui_utils import load_ui, set_icon
 from flo2d.geopackage_utils import GeoPackageUtils
 from flo2d.user_communication import UserCommunication
 from PyQt4.QtCore import Qt
+from qgis.core import QGis, QgsFeature, QgsGeometry, QgsPoint
 from PyQt4.QtGui import QApplication, QInputDialog
-from flo2d.flo2d_tools.grid_tools import square_grid, update_roughness, evaluate_arfwrf, ZonalStatistics
+from flo2d.flo2d_tools.grid_tools import (square_grid, update_roughness, evaluate_arfwrf,
+                                          evaluate_spatial_tolerance, evaluate_spatial_froude,
+                                          evaluate_spatial_shallow, evaluate_spatial_gutter,
+                                          evaluate_spatial_noexchange, ZonalStatistics, ZonalStatisticsOther)
 from flo2d.gui.dlg_grid_elev import GridCorrectionDialog
 from flo2d.gui.dlg_sampling_elev import SamplingElevDialog
 from flo2d.gui.dlg_sampling_mann import SamplingManningDialog
+from flo2d.gui.dlg_sampling_tolerance import SamplingToleranceDialog
 from flo2d.gui.dlg_sampling_xyz import SamplingXYZDialog
+from flo2d.gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 
 uiDialog, qtBaseClass = load_ui('grid_tools_widget')
-
 
 class GridToolsWidget(qtBaseClass, uiDialog):
 
@@ -41,6 +46,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         set_icon(self.polygon_elevation_btn, 'sample_elev_polygon.svg')
         set_icon(self.roughness_btn, 'sample_manning.svg')
         set_icon(self.arfwrf_btn, 'eval_arfwrf.svg')
+        set_icon(self.froude_btn,'sample_froude.svg')
+        set_icon(self.tolerance_btn,'sample_tolerance.svg')
+        set_icon(self.shallow_n_btn,'sample_shallow_n.svg')
+        set_icon(self.gutter_btn,'sample_gutter.svg')
+        set_icon(self.noexchange_btn,'sample_noexchange.svg')
+        set_icon(self.other_variable_btn, 'sample_grid_variable.svg')
 
         self.create_grid_btn.clicked.connect(self.create_grid)
         self.raster_elevation_btn.clicked.connect(self.raster_elevation)
@@ -48,6 +59,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
         self.roughness_btn.clicked.connect(self.get_roughness)
         self.arfwrf_btn.clicked.connect(self.eval_arfwrf)
+        self.froude_btn.clicked.connect(self.eval_froude)
+        self.tolerance_btn.clicked.connect(self.eval_tolerance)
+        self.shallow_n_btn.clicked.connect(self.eval_shallow_n)
+        self.gutter_btn.clicked.connect(self.eval_gutter)
+        self.noexchange_btn.clicked.connect(self.eval_noexchange)
+        self.other_variable_btn.clicked.connect(self.other_variable)
+
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -181,33 +199,91 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
+            self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.\n\n' +  repr(e))
 
-    def correct_elevation(self):
+
+    def other_variable(self):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
-        lyrs = ['Elevation Points', 'Elevation Polygons', 'Blocked areas']
-        for lyr in lyrs:
-            if not self.lyrs.save_edits_and_proceed(lyr):
-                return
-        correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
-        ok = correct_dlg.exec_()
-        if not ok:
+
+        n_point_layers = False
+        layers = self.lyrs.list_group_vlayers()
+        for l in layers:
+            if l.geometryType() == QGis.Point:
+                if l.featureCount() != 0:
+                   n_point_layers = True
+                   break
+
+        if not n_point_layers:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn('There are not any point layers selected (or visible)')
             return
-        tab = correct_dlg.correction_tab.currentIndex()
-        if tab == 0:
-            if not correct_dlg.internal_methods:
-                self.uc.show_warn('Please choose at least one elevation source!')
-                return
-            method = correct_dlg.run_internal
         else:
-            correct_dlg.setup_external_method()
-            if correct_dlg.external_method is None:
-                self.uc.show_warn('Please choose at least one elevation source!')
+            dlg = SamplingOtherVariableDialog(self.con, self.iface, self.lyrs)
+            ok = dlg.exec_()
+            if ok:
+                pass
+            else:
                 return
-            method = correct_dlg.run_external
+            points_lyr = dlg.current_lyr
+            zfield = dlg.points_layer_fields_cbo.currentText()
+            grid_field = dlg.grid_fields_cbo.currentText()
+            calc_type = dlg.calc_cbo.currentText()
+            search_distance = dlg.search_spin_box.value()
+
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                grid_lyr = self.lyrs.data['grid']['qlyr']
+                zs = ZonalStatisticsOther(self.gutils, grid_lyr, grid_field, points_lyr, zfield, calc_type, search_distance)
+                points_elevation = zs.points_elevation()
+                zs.set_other(points_elevation)
+                cmd, out = zs.rasterize_grid()
+                self.uc.log_info(cmd)
+                self.uc.log_info(out)
+                cmd, out = zs.fill_nodata()
+                self.uc.log_info(cmd)
+                self.uc.log_info(out)
+                null_elevation = zs.null_elevation()
+                zs.set_other(null_elevation)
+                zs.remove_rasters()
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("Sampling of grid field '" + grid_field + "' finished!")
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_warn("Calculating sampling of grid field '" + grid_field + "' aborted!\n\nPlease check grid layer or input points layer.\n\n" +  repr(e))
+
+
+    def correct_elevation(self):
         try:
+            if self.gutils.is_table_empty('grid'):
+                self.uc.bar_warn('There is no grid! Please create it before running tool.')
+                return
+            lyrs = ['Elevation Points', 'Elevation Polygons', 'Blocked Areas']
+            for lyr in lyrs:
+                if lyr is None:
+                    continue
+                else:
+                    if not self.lyrs.save_edits_and_proceed(lyr):
+                        return
+            correct_dlg = GridCorrectionDialog(self.con, self.iface, self.lyrs)
+            ok = correct_dlg.exec_()
+            if not ok:
+                return
+            tab = correct_dlg.correction_tab.currentIndex()
+            if tab == 0:
+                if not correct_dlg.internal_methods:
+                    self.uc.show_warn('Please choose at least one elevation source!')
+                    return
+                method = correct_dlg.run_internal
+            else:
+                correct_dlg.setup_external_method()
+                if correct_dlg.external_method is None:
+                    self.uc.show_warn('Please choose at least one elevation source!')
+                    return
+                method = correct_dlg.run_external
+
             QApplication.setOverrideCursor(Qt.WaitCursor)
             method()
             QApplication.restoreOverrideCursor()
@@ -215,7 +291,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Assigning grid elevation aborted! Please check your input layers.')
+            self.uc.show_error('Assigning grid elevation aborted! Please check your input layers.'
+                               +'\n___________________________________________________', e)
 
     def get_roughness(self):
         if not self.lyrs.save_edits_and_proceed('Roughness'):
@@ -229,6 +306,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             pass
         else:
             return
+
         if mann_dlg.allGridElemsRadio.isChecked():
             rough_lyr = mann_dlg.current_lyr
             nfield = mann_dlg.srcFieldCbo.currentText()
@@ -243,6 +321,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
             else:
                 pass
+#       #Assig values:
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
@@ -254,38 +333,345 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Assigning roughness aborted! Please check roughness layer.')
 
+#    def get_froude(self):
+#         if not self.lyrs.save_edits_and_proceed('Froude'):
+#             return
+#         if self.gutils.is_table_empty('grid'):
+#             self.uc.bar_warn('There is no grid! Please create it before running tool.')
+#             return
+
     def eval_arfwrf(self):
+        try:
+            grid_empty = self.gutils.is_table_empty('grid')
+            if grid_empty:
+                self.uc.bar_warn('There is no grid. Please, create it before evaluating the reduction factors.')
+                return
+            else:
+                pass
+            if not self.gutils.is_table_empty('arfwrf'):
+                q = 'There are some ARFs and WRFs already defined in the database. Overwrite them?\n\n'
+                q += 'Please, note that the new reduction factors will be evaluated for existing blocked areas ONLY.'
+                if not self.uc.question(q):
+                    return
+            if not self.lyrs.save_edits_and_proceed('Blocked Areas'):
+                return
+            if self.gutils.is_table_empty('user_blocked_areas'):
+                self.uc.bar_warn('There is no any blocking polygons! Please digitize them before running tool.')
+                return
+
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_arf_lyr = self.lyrs.data['user_blocked_areas']['qlyr']
+            evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
+            if self.replace_ARF_WRF_duplicates():
+                arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
+                arf_lyr.reload()
+                self.lyrs.update_layer_extents(arf_lyr)
+
+                self.lyrs.update_style_blocked(arf_lyr.id())
+                self.iface.mapCanvas().clearCache()
+                user_arf_lyr.triggerRepaint()
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info('ARF and WRF values calculated!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+                               '________________________________________________________________', e)
+            QApplication.restoreOverrideCursor()
+
+
+    def replace_ARF_WRF_duplicates(self):
+        try:
+            new_feats = []
+            arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
+            fields = arf_lyr.fields()
+            arf_feats = arf_lyr.getFeatures()
+            # get first 'blocked_cells' (ARF_WRF layer) feature.
+            f0 = arf_feats.next()
+            grid0 = f0['grid_fid']
+
+            # Assign initial values for variables to accumulate duplicate cell.
+            area_fid = f0['area_fid']
+            arf = f0['arf']
+            wrf1 = f0['wrf1']
+            wrf2 = f0['wrf2']
+            wrf3 = f0['wrf3']
+            wrf4 = f0['wrf4']
+            wrf5 = f0['wrf5']
+            wrf6 = f0['wrf6']
+            wrf7 = f0['wrf7']
+            wrf8 = f0['wrf8']
+
+            try:
+                while True:
+                    f1 = arf_feats.next()
+                    grid1 = f1['grid_fid']
+                    if grid1 == grid0:
+                        # Accumulate values for all fields of this duplicate cell.
+                        area_fid += f1['area_fid']
+                        arf += f1['arf']
+                        wrf1 += f1['wrf1']
+                        wrf2 += f1['wrf2']
+                        wrf3 += f1['wrf3']
+                        wrf4 += f1['wrf4']
+                        wrf5 += f1['wrf5']
+                        wrf6 += f1['wrf6']
+                        wrf7 += f1['wrf7']
+                        wrf8 += f1['wrf8']
+                    else:
+                        # Create feature with the accumulated values of duplicated cell.
+                        new_feat = QgsFeature()
+                        new_feat.setFields(fields)
+
+                        geom0 = f0.geometry()
+                        point0 = geom0.asPoint()
+                        new_geom0 = QgsGeometry.fromPoint(point0)
+                        new_feat.setGeometry(new_geom0)
+
+
+                        new_feat['grid_fid'] = grid0
+                        new_feat['area_fid'] = area_fid
+                        new_feat['arf'] = arf if arf <= 1 else 1
+                        new_feat['wrf1'] = wrf1 if wrf1 <= 1 else 1
+                        new_feat['wrf2'] = wrf2 if wrf2 <= 1 else 1
+                        new_feat['wrf3'] = wrf3 if wrf3 <= 1 else 1
+                        new_feat['wrf4'] = wrf4 if wrf4 <= 1 else 1
+                        new_feat['wrf5'] = wrf5 if wrf5 <= 1 else 1
+                        new_feat['wrf6'] = wrf6 if wrf6 <= 1 else 1
+                        new_feat['wrf7'] = wrf7 if wrf7 <= 1 else 1
+                        new_feat['wrf8'] = wrf8 if wrf7 <= 1 else 1
+                        new_feats.append(new_feat)
+
+                        # Make f1 feature the next f0:
+                        f0 =  f1
+                        grid0 = f0['grid_fid']
+                        area_fid = f0['area_fid']
+                        arf = f0['arf']
+                        wrf1 = f0['wrf1']
+                        wrf2 = f0['wrf2']
+                        wrf3 = f0['wrf3']
+                        wrf4 = f0['wrf4']
+                        wrf5 = f0['wrf5']
+                        wrf6 = f0['wrf6']
+                        wrf7 = f0['wrf7']
+                        wrf8 = f0['wrf8']
+            except StopIteration:
+                new_feat = QgsFeature()
+                new_feat.setFields(fields)
+
+                geom0 = f0.geometry()
+                point0 = geom0.asPoint()
+                new_geom0 = QgsGeometry.fromPoint(point0)
+                new_feat.setGeometry(new_geom0)
+
+
+                new_feat['grid_fid'] = grid0
+                new_feat['area_fid'] = area_fid
+                new_feat['arf'] = arf
+                new_feat['wrf1'] = wrf1
+                new_feat['wrf2'] = wrf2
+                new_feat['wrf3'] = wrf3
+                new_feat['wrf4'] = wrf4
+                new_feat['wrf5'] = wrf5
+                new_feat['wrf6'] = wrf6
+                new_feat['wrf7'] = wrf7
+                new_feat['wrf8'] = wrf8
+                new_feats.append(new_feat)
+
+            # Clear 'blocked_cells' and add all features with values accumulated.
+            self.gutils.clear_tables('blocked_cells')
+            arf_lyr.startEditing()
+            arf_lyr.addFeatures(new_feats)
+            arf_lyr.commitChanges()
+            arf_lyr.updateExtents()
+            arf_lyr.triggerRepaint()
+            arf_lyr.removeSelection()
+
+            return True
+
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error('Replacing duplicated ARFs and WRFs failed!.\n'
+                               '________________________________________________________________', e)
+            return False
+
+    def eval_tolerance(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:
-            self.uc.bar_warn('There is no grid. Please, create it before evaluating the reduction factors.')
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the tolerance values.')
             return
         else:
             pass
-        if not self.gutils.is_table_empty('arfwrf'):
-            q = 'There are some ARFs and WRFs already defined in the database. Overwrite it?\n\n'
-            q += 'Please, note that the new reduction factors will be evaluated for existing blocked ares ONLY.'
+        if not self.gutils.is_table_empty('tolspatial_cells'):
+            q = 'There are some spatial tolerance cells already defined in the database. Overwrite them?\n\n'
+            q += 'Please, note that the new spatial tolerance will be evaluated for existing tolerance polygons ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed('Blocked areas'):
+        if not self.lyrs.save_edits_and_proceed('Tolerance Cells'):
             return
-        if self.gutils.is_table_empty('blocked_areas'):
-            self.uc.bar_warn('There is no any blocking polygons! Please digitize them before running tool.')
+        if self.gutils.is_table_empty('tolspatial'):
+            w = 'There are no tolerance polygons in Tolerance Areas (Schematic Layers)!.\n\n'
+            w +=  'Please digitize them before running tool.'
+            self.uc.bar_warn(w)
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
-            user_arf_lyr = self.lyrs.data['blocked_areas']['qlyr']
-            evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-            arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
-            arf_lyr.reload()
-            self.lyrs.update_layer_extents(arf_lyr)
-
-            self.lyrs.update_style_blocked(arf_lyr.id())
-            self.iface.mapCanvas().clearCache()
-            user_arf_lyr.triggerRepaint()
+            user_tol_lyr = self.lyrs.data['tolspatial']['qlyr']
+            evaluate_spatial_tolerance(self.gutils, grid_lyr, user_tol_lyr)
+            tol_lyr = self.lyrs.data['tolspatial']['qlyr']
+            tol_lyr.reload()
+            self.lyrs.update_layer_extents(tol_lyr)
             QApplication.restoreOverrideCursor()
-            self.uc.show_info('ARF and WRF values calculated!')
+            self.uc.show_info('Spatial tolerance values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of ARFs and WRFs failed! Please check your blocked areas user layer.')
+            self.uc.show_warn('Evaluation of spatial tolerance failed! Please check your Tolerance Areas (Schematic layer).')
+            QApplication.restoreOverrideCursor()
+
+    def eval_froude(self):
+        grid_empty = self.gutils.is_table_empty('grid')
+        if grid_empty:
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the Froude values.')
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty('fpfroude_cells'):
+            q = 'There are some spatial Froude cells already defined in the database. Overwrite them?\n\n'
+            q += 'Please, note that the new Froude values will be evaluated for existing Froude polygons ONLY.'
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed('Froude Cells'):
+            return
+        if self.gutils.is_table_empty('fpfroude'):
+            w = 'There are no Froude polygons in Froude Areas (Schematic Layers)!.\n\n'
+            w +=  'Please digitize them before running tool.'
+            self.uc.bar_warn(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_froude_lyr = self.lyrs.data['fpfroude']['qlyr']
+            evaluate_spatial_froude(self.gutils, grid_lyr, user_froude_lyr)
+            froude_lyr = self.lyrs.data['fpfroude']['qlyr']
+            froude_lyr.reload()
+            self.lyrs.update_layer_extents(froude_lyr)
+#             self.lyrs.update_style_blocked(froude_lyr.id())
+#             self.iface.mapCanvas().clearCache()
+#             user_tol_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Spatial Froude values calculated!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Evaluation of spatial Froude failed! Please check your Froude Areas (Schematic layer).')
+            QApplication.restoreOverrideCursor()
+
+    def eval_shallow_n(self):
+        grid_empty = self.gutils.is_table_empty('grid')
+        if grid_empty:
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the shallow-n values.')
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty('spatialshallow_cells'):
+            q = 'There are some spatial shallow-n cells already defined in the database. Overwrite them?\n\n'
+            q += 'Please, note that the new shallow-n values will be evaluated for existing shallow-n polygons ONLY.'
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed('Shallow-n Cells'):
+            return
+        if self.gutils.is_table_empty('spatialshallow'):
+            w = 'There are no shallow polygons in Shallow-n Areas (Schematic Layers)!.\n\n'
+            w +=  'Please digitize them before running tool.'
+            self.uc.bar_warn(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_shallow_lyr = self.lyrs.data['spatialshallow']['qlyr']
+            evaluate_spatial_shallow(self.gutils, grid_lyr, user_shallow_lyr)
+            shallow_lyr = self.lyrs.data['spatialshallow']['qlyr']
+            shallow_lyr.reload()
+            self.lyrs.update_layer_extents(shallow_lyr)
+#             self.lyrs.update_style_blocked(shallow_lyr.id())
+#             self.iface.mapCanvas().clearCache()
+#             user_tol_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Spatial shallow-n values calculated!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Evaluation of spatial shallow-n failed! Please check your Shallow-n Areas (Schematic layer).')
+            QApplication.restoreOverrideCursor()
+
+
+    def eval_gutter(self):
+        grid_empty = self.gutils.is_table_empty('grid')
+        if grid_empty:
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the shallow-n values.')
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty('gutter_cells'):
+            q = 'There are some spatial gutter cells already defined in the database. Overwrite them?\n\n'
+            q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons ONLY.'
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed('Gutter Cells'):
+            return
+        if self.gutils.is_table_empty('gutter_areas'):
+            w = 'There are no gutter polygons in Gutter Areas (Schematic Layers)!.\n\n'
+            w +=  'Please digitize them before running tool.'
+            self.uc.bar_warn(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
+            evaluate_spatial_gutter(self.gutils, grid_lyr, user_gutter_lyr)
+            gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
+            gutter_lyr.reload()
+            self.lyrs.update_layer_extents(gutter_lyr)
+#             self.lyrs.update_style_blocked(shallow_lyr.id())
+#             self.iface.mapCanvas().clearCache()
+#             user_tol_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('Spatial gutter values calculated!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
+            QApplication.restoreOverrideCursor()
+
+    def eval_noexchange(self):
+        grid_empty = self.gutils.is_table_empty('grid')
+        if grid_empty:
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the no-exchange cells.')
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty('noexchange_chan_cells'):
+            q = 'There are some no-exchange cells already defined in the database. Overwrite them?\n\n'
+            q += 'Please, note that the new no-exchange cells will be evaluated for existing no-exchange polygons ONLY.'
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed('No-Exchange Channel Cells'):
+            return
+        if self.gutils.is_table_empty('user_noexchange_chan_areas'):
+            w = 'There are no "no-exchange" polygons in No-Exchange Channel Areas (User Layers)!.\n\n'
+            w +=  'Please digitize them before running tool.'
+            self.uc.bar_warn(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            user_tol_lyr = self.lyrs.data['user_noexchange_chan_areas']['qlyr']
+            evaluate_spatial_noexchange(self.gutils, grid_lyr, user_tol_lyr)
+            tol_lyr = self.lyrs.data['user_noexchange_chan_areas']['qlyr']
+            tol_lyr.reload()
+            self.lyrs.update_layer_extents(tol_lyr)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info('No-exchange areas selected!')
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer).')
             QApplication.restoreOverrideCursor()

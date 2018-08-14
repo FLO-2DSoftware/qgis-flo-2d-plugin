@@ -167,32 +167,39 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.populate_infiltration()
 
     def read_global_params(self):
-        qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
-        glob = self.gutils.execute(qry).fetchone()
-        if glob is None:
-            self.show_groups(0)
-            return
-        row = OrderedDict(zip(self.params, glob))
         try:
-            method = row['infmethod']
-            self.groups = self.imethod_groups[method]
-        except KeyError:
-            self.groups = set()
-        for grp in self.groups:
-            grp.setChecked(True)
-            for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
-                    continue
-                obj_name = obj.objectName()
-                name = obj_name.split('_', 1)[-1]
-                val = row[name]
-                if val is None:
-                    continue
-                if isinstance(obj, QCheckBox):
-                    obj.setChecked(bool(val))
-                else:
-                    obj.setValue(val)
-        self.iglobal.save_imethod()
+            qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
+            glob = self.gutils.execute(qry).fetchone()
+            if glob is None:
+                self.show_groups(0)
+                return
+            row = OrderedDict(zip(self.params, glob))
+            try:
+                method = row['infmethod']
+                self.groups = self.imethod_groups[method]
+            except KeyError:
+                self.groups = set()
+            for grp in self.groups:
+                grp.setChecked(True)
+                for obj in grp.children():
+                    if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                        continue
+                    obj_name = obj.objectName()
+                    name = obj_name.split('_', 1)[-1]
+                    val = row[name]
+                    if val is None:
+                        continue
+                    if isinstance(obj, QCheckBox):
+                        obj.setChecked(bool(val))
+                    else:
+
+                        obj.setValue(val)
+            self.iglobal.save_imethod()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 110618.1818: Could not read infiltration global parameters!", e)
+
 
     def write_global_params(self):
         qry = '''INSERT INTO infil ({0}) VALUES ({1});'''

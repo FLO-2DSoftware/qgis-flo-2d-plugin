@@ -51,28 +51,33 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.grid = lyr
 
     def update_fields(self, fid):
-        if not fid == -1:
-            feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
-            cell_size = sqrt(feat.geometry().area())
-            gid = str(fid)
-            elev = str(feat['elevation'])
-            n = feat['n_value']
-            cell = '{}'.format(cell_size)
-            if not n:
-                n = '{} (default)'.format(self.mann_default)
+        try:
+            if not fid == -1:
+                feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
+                cell_size = sqrt(feat.geometry().area())
+                gid = str(fid)
+                elev = str(feat['elevation'])
+                n = feat['n_value']
+                cell = '{}'.format(cell_size)
+                if not n:
+                    n = '{} (default)'.format(self.mann_default)
+                else:
+                    pass
+                self.idEdit.setText(gid)
+                self.elevEdit.setText(elev)
+                self.mannEdit.setText(str(n))
+                self.cellEdit.setText(cell)
+                if self.plot_ckbox.isChecked():
+                    self.plot_grid_rainfall(feat)
             else:
-                pass
-            self.idEdit.setText(gid)
-            self.elevEdit.setText(elev)
-            self.mannEdit.setText(str(n))
-            self.cellEdit.setText(cell)
-            if self.plot_ckbox.isChecked():
-                self.plot_grid_rainfall(feat)
-        else:
-            self.idEdit.setText('')
-            self.elevEdit.setText('')
-            self.mannEdit.setText('')
-            self.cellEdit.setText('')
+                self.idEdit.setText('')
+                self.elevEdit.setText('')
+                self.mannEdit.setText('')
+                self.cellEdit.setText('')
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error('ERROR 290718.1934: error while displaying elevation of cell ' + fid
+                               +'\n____________________________________________', e)
 
     def plot_grid_rainfall(self, feat):
         si = 'inches' if self.gutils.get_cont_par('METRIC') == '0' else 'mm'

@@ -67,7 +67,7 @@ class SamplingBuildingsElevationsDialog(qtBaseClass, uiDialog):
 
 
 
-# 
+#
 #     def setup_layer_combos(self):
 #         """
 #         Filter layer and fields combo boxes for polygons and connect fields cbo.
@@ -83,11 +83,11 @@ class SamplingBuildingsElevationsDialog(qtBaseClass, uiDialog):
 #                     self.land_cbo.addItem(lyr_name, l)
 #         except Exception as e:
 #             pass
-# 
+#
 #     def populate_soil_fields(self, idx):
 #         lyr = self.soil_cbo.itemData(idx)
 #         fields = [f.name() for f in lyr.fields()]
-# 
+#
 #         for c in self.soil_combos:
 #             c.clear()
 #             c.addItems(fields)
