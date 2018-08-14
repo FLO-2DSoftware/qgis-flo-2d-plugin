@@ -45,12 +45,12 @@ class ChannelProfile(QgsMapToolIdentify):
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
         lyrs_found = OrderedDict()
         for i, item in enumerate(res):
-            lyr_name = item.mLayer.name()
+            lyr_name = item.mLayer.name()  # Channel Segments (left Banks) (when debugging August 04)).
             lyr_id = item.mLayer.id()
-            table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]
+            table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]  # 'chan': the name of  DB table.
             if not table in self.profile_tabs:
                 continue
-            fid = item.mFeature.id()
+            fid = item.mFeature.id()  # fid of the selected feature of 'Chan'
             if lyr_name not in lyrs_found.keys():
                 lyrs_found[lyr_name] = {'lid': lyr_id, 'table': table, 'fids': []}
             else:
@@ -78,7 +78,7 @@ class ChannelProfile(QgsMapToolIdentify):
                     actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
                     sm[i].addAction(actions[i][j])
                 popup.addMenu(sm[i])
-        popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x()+30, e.pos().y()+30)))
+        popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x()+30, e.pos().y()+30)))  # Shows popup menu with list of selected channel left bank (shematized) (selected from table 'Chan')
 
     def pass_res(self, table, fid):
         self.feature_picked.emit(table, fid)
@@ -103,8 +103,8 @@ class ChannelProfile(QgsMapToolIdentify):
 
     def activate(self):
         self.canvas.setCursor(QCursor(QPixmap(os.path.join(
-            os.path.dirname(__file__), 'img/profile_tool_icon.svg'))))
-        self.update_lyrs_list()
+            os.path.dirname(__file__), 'img/profile_tool_icon.svg'))))  # Apparently set a particular cursor pointer, but it doesn't!
+        self.update_lyrs_list()  # self.lyrs_list gets current data from 'chan' layer (schematic left bank).
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 
     def deactivate(self):

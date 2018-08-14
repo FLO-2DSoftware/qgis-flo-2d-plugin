@@ -31,9 +31,9 @@ class ElevationCorrector(object):
 
         self.filter_expression = ''
         self.field_expression = '''
-        CASE 
-        WHEN ("{0}" IS NOT NULL AND "{1}" IS NULL) THEN "{0}" 
-        WHEN ("{0}" IS NULL AND "{1}" IS NOT NULL) THEN "{1}" 
+        CASE
+        WHEN ("{0}" IS NOT NULL AND "{1}" IS NULL) THEN "{0}"
+        WHEN ("{0}" IS NULL AND "{1}" IS NOT NULL) THEN "{1}"
         WHEN ("{0}" is NOT NULL AND "{1}" IS NOT NULL) THEN "{0}" + "{1}"
         END
         '''
@@ -182,7 +182,7 @@ class GridElevation(ElevationCorrector):
         self.setup_elevation_layers()
         self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeaturesIds())
         self.grid = self.lyrs.data['grid']['qlyr']
-        self.blocked_areas = self.lyrs.data['blocked_areas']['qlyr']
+        self.blocked_areas = self.lyrs.data['user_blocked_areas']['qlyr']
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
 
     def elevation_from_polygons(self):
