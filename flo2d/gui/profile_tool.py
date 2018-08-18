@@ -104,7 +104,8 @@ class ProfileTool(qtBaseClass, uiDialog):
 
     def show_channel(self, table, fid):
         self.chan_seg = ChannelSegment(fid, self.iface.f2d['con'], self.iface)
-        self.chan_seg.get_row()
+        self.chan_seg.get_row() # Assigns to self.chan_seg all field values of the selected schematized channel:
+                                # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
         if self.chan_seg.get_profiles():
             self.plot_channel_data()
 
@@ -112,16 +113,20 @@ class ProfileTool(qtBaseClass, uiDialog):
         if not self.chan_seg:
             return
         self.plot.clear()
-        sta, lb, rb, bed = [], [], [], []
+        sta, lb, rb, bed, water, peak = [], [], [], [], [], []
         for st, data in self.chan_seg.profiles.iteritems():
             sta.append(data['station'])
             lb.append(data['lbank_elev'])
             rb.append(data['rbank_elev'])
             bed.append(data['bed_elev'])
+            water.append(data['water'])
+            peak.append(data['peak']+data['bed_elev'])
         self.plot.clear()
-        self.plot.add_item('Bed elevation', [sta, bed], col=QColor("#000000"), sty=Qt.SolidLine)
-        self.plot.add_item('Left bank', [sta, lb], col=QColor("#0000aa"), sty=Qt.SolidLine)
-        self.plot.add_item('Right bank', [sta, rb], col=QColor("#00aa00"), sty=Qt.SolidLine)
+        self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+        self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+        self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
         self.plot.plot.setLabel('bottom', text='Channel length')
         self.plot.plot.setLabel('left', text='Elevation')
