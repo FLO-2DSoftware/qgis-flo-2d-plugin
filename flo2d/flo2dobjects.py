@@ -44,7 +44,7 @@ class CrossSection(GeoPackageUtils):
 
     def get_profile_data(self):
         self.profile_data = {}
-        self.get_row()
+        self.get_row() # Gets values of 'fid', 'xlen', and 'type' of 
         self.get_chan_table()
         if not self.type == 'N':
             par_to_check = ['bankell', 'bankelr', 'fcd']
@@ -104,7 +104,7 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return
-        tab = self.chan_x_tabs[self.type]
+        tab = self.chan_x_tabs[self.type]  
         args = self.table_info(tab, only_columns=True)
         qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -303,10 +303,15 @@ class ChannelSegment(GeoPackageUtils):
         return self.row
 
     def get_profiles(self, sta_start=0):
+        # Gets all features of cross sections associated with the selected channel segment,
+        # identified in chan_elems by ´seg_fid'.
         self.profiles = OrderedDict()
         qry = 'SELECT * FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
-        rows = self.execute(qry, (self.fid, )).fetchall()
-        self.profiles = OrderedDict()
+        rows = self.execute(qry, (self.fid, )).fetchall()  # self.fid is the channel segment fid.
+                                                           # 'rows' stores a list of all chan_elems features values of 
+                                                           # the selected channel segment.
+        self.profiles = OrderedDict()   # Dictionary of dictionaries keyed by ´lbank_grid'. Example value:
+                                        # (1067, {'bed_elev': 4711.2, 'station': 0, 'fcd': 4.800000000000182, 'lbank_elev': 4717.1, 'rbank_elev': 4716.0})
         sta = sta_start
         for row in rows:
             lbank_grid = row[1]
@@ -316,6 +321,8 @@ class ChannelSegment(GeoPackageUtils):
             except Flo2dError:
                 return False
             self.profiles[lbank_grid]['station'] = sta
+            self.profiles[lbank_grid]['water'] = row[11]
+            self.profiles[lbank_grid]['peak'] = row[12]
             sta += xs.xlen
             del xs
         return True
@@ -325,6 +332,8 @@ class ChannelSegment(GeoPackageUtils):
                 'up_dist_right']
         qry = 'SELECT * FROM chan_elems_interp ORDER BY seg_fid, up_fid, up_dist_left;'
         rows = self.execute(qry).fetchall()
+        if not rows:
+            return False, "Interpolation failed! 'chan_elems_interp' table is empty."
         for row in rows:
             values = [x if x is not None else '' for x in row]
             ipars = OrderedDict(zip(cols, values))
@@ -372,8 +381,9 @@ class ChannelSegment(GeoPackageUtils):
                 except Flo2dError as e:
                     return False, repr(e)
                 except KeyError:
-                    msg = 'Interpolation failed on cross-sections with \'fid\': {}!'.format(xsi.row['user_xs_fid'])
+                    msg = 'Interpolation failed on cross sections with \'fid\': {}!'.format(xsi.row['user_xs_fid'])
                     return False, msg
+                
         return True, 'Interpolation successful!'
 
 
@@ -895,7 +905,7 @@ class Rain(GeoPackageUtils):
     Rain data representation.
     """
     columns = ['fid', 'name', 'irainreal', 'irainbuilding', 'time_series_fid', 'tot_rainfall',
-               'rainabs', 'irainarf', 'movingstrom', 'rainspeed', 'iraindir', 'notes']
+               'rainabs', 'irainarf', 'movingstorm', 'rainspeed', 'iraindir', 'notes']
 
     def __init__(self, con, iface):
         super(Rain, self).__init__(con, iface)
@@ -910,7 +920,7 @@ class Rain(GeoPackageUtils):
         self.tot_rainfall = None
         self.rainabs = None
         self.irainarf = None
-        self.movingstrom = None
+        self.movingstorm = None
         self.rainspeed = None
         self.iraindir = None
         self.notes = None
@@ -933,7 +943,7 @@ class Rain(GeoPackageUtils):
         self.tot_rainfall = self.row['tot_rainfall']
         self.rainabs = self.row['rainabs']
         self.irainarf = self.row['irainarf']
-        self.movingstrom = self.row['movingstrom']
+        self.movingstorm = self.row['movingstorm']
         self.rainspeed = self.row['rainspeed']
         self.iraindir = self.row['iraindir']
         self.notes = self.row['notes']
@@ -942,7 +952,7 @@ class Rain(GeoPackageUtils):
     def set_row(self):
         qry = '''INSERT OR REPLACE INTO rain (
             fid, name, irainreal, irainbuilding, time_series_fid, tot_rainfall, rainabs, irainarf,
-            movingstrom, rainspeed, iraindir, notes)
+            movingstorm, rainspeed, iraindir, notes)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'''
         data = (
             1,
@@ -953,7 +963,7 @@ class Rain(GeoPackageUtils):
             self.tot_rainfall,
             self.rainabs,
             self.irainarf,
-            self.movingstrom,
+            self.movingstorm,
             self.rainspeed,
             self.iraindir,
             self.notes
@@ -972,23 +982,31 @@ class Rain(GeoPackageUtils):
     def add_time_series(self, name=None, fetch=False):
         qry = '''INSERT INTO rain_time_series (name) VALUES (?);'''
         rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE rain_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;'''
-        self.execute(name_qry, (rowid,))
+        if not name:
+            name_qry = '''UPDATE rain_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;'''
+            self.execute(name_qry, (rowid,))
+        else:
+            name_qry = '''UPDATE rain_time_series SET name = ? WHERE fid = ?;'''   
+            self.execute(name_qry, (name, rowid,))
+            
         self.series_fid = rowid
         if not name:
             self.name = 'Time series {}'.format(rowid)
+        else:
+            self.name = name.format(rowid)   
+             
         if fetch:
             return self.get_time_series()
 
     def del_time_series(self):
+        qry = 'DELETE FROM rain_time_series_data WHERE series_fid = ?;'
+        self.execute(qry, (self.series_fid,))
         qry = 'DELETE FROM rain_time_series WHERE fid = ?;'
-        self.execute(qry, (self.series_fid,))
-        qry = 'DELETE FROM rain_time_series_data WHERE fid = ?;'
-        self.execute(qry, (self.series_fid,))
+        self.execute(qry, (self.series_fid,))        
 
     def get_time_series_data(self):
         if not self.series_fid:
-            self.uc.bar_warn('No time series fid for rain defined.')
+#             self.uc.bar_warn('No time series fid for rain defined.')
             return
         qry = 'SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY time;'
         self.time_series_data = self.execute(qry, (self.series_fid,)).fetchall()
@@ -1295,13 +1313,13 @@ class Structure(GeoPackageUtils):
             pass
 
 
-class Inlet(GeoPackageUtils):
+class InletRatingTable(GeoPackageUtils):
     """
     Inlet data representation.
     """
 
     def __init__(self, con, iface):
-        super(Inlet, self).__init__(con, iface)
+        super(InletRatingTable, self).__init__(con, iface)
         self.name = None
 
     def get_rating_tables(self, order_by='name'):
@@ -1324,7 +1342,7 @@ class Inlet(GeoPackageUtils):
             return self.get_rating_tables()
 
     def del_rating_table(self, rt_fid):
-        qry = 'UPDATE user_swmm SET rt_fid = ? WHERE rt_fid = ?;'
+        qry = 'UPDATE user_swmm_nodes SET rt_fid = ? WHERE rt_fid = ?;'
         self.execute(qry, (None, rt_fid))
         qry = 'DELETE FROM swmmflort WHERE fid = ?;'
         self.execute(qry, (rt_fid,))
