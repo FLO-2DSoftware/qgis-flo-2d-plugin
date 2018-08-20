@@ -9,21 +9,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
-    <height>102</height>
+    <width>377</width>
+    <height>164</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Cross-section Editor</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2">
-   <property name="spacing">
-    <number>3</number>
-   </property>
-   <property name="margin">
-    <number>3</number>
-   </property>
-   <item>
+  <layout class="QGridLayout" name="gridLayout_3">
+   <item row="1" column="0">
     <widget class="QFrame" name="xsecParFrame">
      <property name="minimumSize">
       <size>
@@ -40,19 +34,13 @@
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>
      </property>
-     <layout class="QVBoxLayout" name="xsecParamsLayout">
-      <property name="spacing">
-       <number>3</number>
-      </property>
-      <property name="margin">
-       <number>3</number>
-      </property>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
          <widget class="QToolButton" name="digitize_btn">
           <property name="toolTip">
-           <string>Add cross section lines</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add &amp;quot;Cross-sections&amp;quot;  lines  (Users Layer)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -69,56 +57,13 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QToolButton" name="save_changes_btn">
-          <property name="toolTip">
-           <string>Save current cross-section</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="revert_changes_btn">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Revert unsaved changes for current cross-section</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
+        <item row="0" column="3">
          <widget class="QToolButton" name="delete_btn">
+          <property name="focusPolicy">
+           <enum>Qt::StrongFocus</enum>
+          </property>
           <property name="toolTip">
-           <string>Delete current cross-section</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current cross-section (Users Layers)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -135,10 +80,60 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
+         <widget class="QToolButton" name="save_xs_changes_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current cross-section (Users Layers)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QToolButton" name="revert_changes_btn">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Revert unsaved changes for current cross-section (Users Layers)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
          <widget class="QToolButton" name="schematize_xs_btn">
           <property name="toolTip">
-           <string>Schematize cross-sections</string>
+           <string>Schematize left banks and cross sections</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -147,9 +142,104 @@
            <iconset>
             <normaloff>../img/schematize_xsec.svg</normaloff>../img/schematize_xsec.svg</iconset>
           </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
+         <widget class="QToolButton" name="schematize_right_bank_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize user right bank&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/schematize_right_bank.svg</normaloff>../img/schematize_right_bank.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QToolButton" name="save_channel_DAT_files_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create CHAN.DAT XSEC.DAT, and CHANBANK.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Create CHAN.DAT XSEC.DAT, and CHANBANK.DAT</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/export_channels.svg</normaloff>../img/export_channels.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QToolButton" name="reassign_rightbanks_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import right banks (CHANBANK.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Import right banks (CHANBANK.DAT)</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/import_right_banks.svg</normaloff>../img/import_right_banks.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <widget class="QToolButton" name="import_HYCHAN_OUT_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import channel peaks (HYCHAN.OUT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Import channel peaks (HYCHAN.OUT))</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/import_channel_peaks.svg</normaloff>../img/import_channel_peaks.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="5">
          <widget class="QToolButton" name="interpolate_xs_btn">
           <property name="toolTip">
            <string>Interpolate bed elevation data</string>
@@ -161,9 +251,15 @@
            <iconset>
             <normaloff>../img/interpolate_xsec.svg</normaloff>../img/interpolate_xsec.svg</iconset>
           </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="6">
          <widget class="QToolButton" name="confluences_btn">
           <property name="toolTip">
            <string>Find confluences</string>
@@ -175,24 +271,17 @@
            <iconset>
             <normaloff>../img/schematize_confluence.svg</normaloff>../img/schematize_confluence.svg</iconset>
           </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
+          <property name="iconSize">
            <size>
-            <width>40</width>
-            <height>20</height>
+            <width>24</width>
+            <height>24</height>
            </size>
           </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
-      <item>
+      <item row="2" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="bottomMargin">
          <number>0</number>
@@ -246,12 +335,12 @@
         </item>
        </layout>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item row="3" column="0">
+       <layout class="QGridLayout" name="gridLayout_4">
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
+        <item row="0" column="0">
          <widget class="QLabel" name="label_6">
           <property name="minimumSize">
            <size>
@@ -270,7 +359,7 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
          <widget class="QComboBox" name="xs_type_cbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -286,7 +375,7 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="2">
          <widget class="QLabel" name="label_5">
           <property name="maximumSize">
            <size>
@@ -299,7 +388,7 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="3">
          <widget class="QDoubleSpinBox" name="n_sbox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">

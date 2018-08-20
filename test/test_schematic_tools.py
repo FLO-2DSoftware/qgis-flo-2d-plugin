@@ -12,7 +12,7 @@ import os
 import unittest
 from qgis.core import *
 from utilities import get_qgis_app
-from flo2d.flo2d_tools.schematic_tools import *
+from ..flo2d_tools.schematic_tools import *
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))

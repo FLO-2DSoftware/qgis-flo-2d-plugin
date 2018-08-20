@@ -16,11 +16,11 @@ from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
 from qgis.core import QGis, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
-from flo2d.utils import m_fdata
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_tools.grid_tools import poly2grid
-from flo2d.flo2d_tools.infiltration_tools import InfiltrationCalculator
+from ..utils import m_fdata
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..flo2d_tools.grid_tools import poly2grid
+from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 
 uiDialog, qtBaseClass = load_ui('infil_editor')
 uiDialog_glob, qtBaseClass_glob = load_ui('infil_global')
@@ -167,33 +167,40 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.populate_infiltration()
 
     def read_global_params(self):
-        qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
-        glob = self.gutils.execute(qry).fetchone()
-        if glob is None:
-            self.show_groups(0)
-            return
-        row = OrderedDict(zip(self.params, glob))
         try:
-            method = row['infmethod']
-            self.groups = self.imethod_groups[method]
-        except KeyError:
-            self.groups = set()
-        for grp in self.groups:
-            grp.setChecked(True)
-            for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
-                    continue
-                obj_name = obj.objectName()
-                name = obj_name.split('_', 1)[-1]
-                val = row[name]
-                if val is None:
-                    continue
-                if isinstance(obj, QCheckBox):
-                    obj.setChecked(bool(val))
-                else:
-                    obj.setValue(val)
-        self.iglobal.save_imethod()
-
+            qry = '''SELECT {} FROM infil;'''.format(','.join(self.params))
+            glob = self.gutils.execute(qry).fetchone()
+            if glob is None:
+                self.show_groups(0)
+                return
+            row = OrderedDict(zip(self.params, glob))
+            try:
+                method = row['infmethod']
+                self.groups = self.imethod_groups[method]
+            except KeyError:
+                self.groups = set()
+            for grp in self.groups:
+                grp.setChecked(True)
+                for obj in grp.children():
+                    if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                        continue
+                    obj_name = obj.objectName()
+                    name = obj_name.split('_', 1)[-1]
+                    val = row[name]
+                    if val is None:
+                        continue
+                    if isinstance(obj, QCheckBox):
+                        obj.setChecked(bool(val))
+                    else:
+                        
+                        obj.setValue(val)
+            self.iglobal.save_imethod()
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 110618.1818: Could not read infiltration global parameters!", e)
+            
+            
     def write_global_params(self):
         qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
         method = self.iglobal.global_imethod

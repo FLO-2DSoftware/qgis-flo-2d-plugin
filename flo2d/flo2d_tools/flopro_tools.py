@@ -38,3 +38,41 @@ class FLOPROExecutor(object):
 
     def run(self):
         self.execute_flopro()
+
+
+class XSECInterpolatorExecutor(object):
+
+    INTERPOLATOR_EXE = 'INTERPOLATE.EXE'
+
+    def __init__(self, interpolator_dir, project_dir):
+        self.interpolator_dir = interpolator_dir
+        self.interpolator_exe = os.path.join(interpolator_dir, self.INTERPOLATOR_EXE)
+        self.project_dir = project_dir
+
+    def execute_interpolator(self):
+        with cd(self.project_dir):
+            proc = Popen(self.interpolator_exe)
+            proc.wait()
+            return proc.returncode
+
+    def run(self):
+        return self.execute_interpolator()
+        
+
+class ChanRightBankExecutor(object):
+
+    CHANRIGHTBANK_EXE = 'CHANRIGHTBANK.EXE'
+
+    def __init__(self, chanrightbank_dir, project_dir):
+        self.chanrightbank_dir = chanrightbank_dir
+        self.chanrightbank_exe = os.path.join(chanrightbank_dir, self.CHANRIGHTBANK_EXE)
+        self.project_dir = project_dir
+
+    def execute_chanrightbank(self):
+        with cd(self.project_dir):
+            proc = Popen(self.chanrightbank_exe)
+            proc.wait()
+            return proc.returncode
+        
+    def run(self):
+        return self.execute_chanrightbank()

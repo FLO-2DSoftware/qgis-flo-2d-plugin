@@ -182,7 +182,7 @@ class GridElevation(ElevationCorrector):
         self.setup_elevation_layers()
         self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeaturesIds())
         self.grid = self.lyrs.data['grid']['qlyr']
-        self.blocked_areas = self.lyrs.data['blocked_areas']['qlyr']
+        self.blocked_areas = self.lyrs.data['user_blocked_areas']['qlyr']
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
 
     def elevation_from_polygons(self):

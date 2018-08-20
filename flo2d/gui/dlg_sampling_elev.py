@@ -15,10 +15,10 @@ from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QFileDialog
 from qgis.core import QgsRasterLayer
 
-from flo2d.flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
+from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
 from ui_utils import load_ui
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('sampling_elev')
 
@@ -132,7 +132,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
         """
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
-        self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4])
+        self.out_raster = '{}_interp.tif'.format(self.src_raster[:-4]) # Raster name with suffix '_interp.tif'
         try:
             if os.path.isfile(self.out_raster):
                 os.remove(self.out_raster)

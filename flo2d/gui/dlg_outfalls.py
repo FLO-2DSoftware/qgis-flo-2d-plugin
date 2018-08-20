@@ -2,7 +2,7 @@ import os
 import traceback
 
 from ui_utils import load_ui
-from flo2d.utils import is_true
+from ..utils import is_true
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt, SIGNAL, pyqtSignal
 from PyQt4.QtGui import (
@@ -19,8 +19,8 @@ from PyQt4.QtGui import (
     QDialogButtonBox )
 
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('outfalls')
 

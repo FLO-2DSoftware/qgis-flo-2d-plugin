@@ -62,3 +62,7 @@ def frange(start, stop=None, step=1):
         # yield results
         for i in indices:
             yield start + step * i
+
+
+def is_true(s):
+    return s in ['True', 'true', '1', 'T', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']

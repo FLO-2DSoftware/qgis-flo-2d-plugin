@@ -15,12 +15,12 @@ from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_ie.swmm_io import StormDrainProject
-from flo2d.flo2d_tools.schema2user_tools import remove_features
-from flo2d.flo2dobjects import Inlet
-from flo2d.utils import is_number, m_fdata
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..flo2d_ie.swmm_io import StormDrainProject
+from ..flo2d_tools.schema2user_tools import remove_features
+from ..flo2dobjects import InletRatingTable
+from ..utils import is_number, m_fdata
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
@@ -35,10 +35,9 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
-        self.gutils = None
+        self.gutils = None       
         self.grid_lyr = None
         self.swmm_lyr = None
         self.schema_inlets = None
@@ -54,7 +53,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.inlet_columns = ['intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'flapgate', 'curbheight']
         self.outlet_columns = ['outf_flo']
 
-        self.inlet = None
+        self.inletRT = None
         self.plot = plot
         self.table = table
         self.tview = table.tview
@@ -68,8 +67,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schema_btn, 'schematize_res.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
+        
         set_icon(self.change_name_btn, 'change_name.svg')
-
         set_icon(self.show_table_btn, 'show_cont_table.svg')
         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
         set_icon(self.add_rtable_btn, 'add_bc_data.svg')
@@ -81,8 +80,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_cur_swmm)
         self.change_name_btn.clicked.connect(self.rename_swmm)
         self.schema_btn.clicked.connect(self.schematize_swmm)
-        self.import_inp.clicked.connect(self.import_swmm_input)
-        self.update_inp.clicked.connect(self.update_swmm_input)
+        self.import_inp.clicked.connect(self.import_swmm_INP_file)
+        self.update_inp.clicked.connect(self.update_swmm_INP_file)
         self.recalculate_btn.clicked.connect(self.recalculate_max_depth)
         self.inlet_grp.toggled.connect(self.inlet_checked)
         self.outlet_grp.toggled.connect(self.outlet_checked)
@@ -101,7 +100,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             if self.outlet_grp.isChecked():
                 self.outlet_grp.setChecked(False)
             if self.cbo_intype.currentIndex() + 1 == 4:
-                self.rt_grp.setEnabled(False)
+                self.rt_grp.setEnabled(True)
 
     def outlet_checked(self):
         if self.outlet_grp.isChecked():
@@ -114,11 +113,12 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if con is None:
             return
         else:
+            return
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.inlet = Inlet(self.con, self.iface)
+            self.inletRT = InletRatingTable(self.con, self.iface)
             self.grid_lyr = self.lyrs.data['grid']['qlyr']
-            self.swmm_lyr = self.lyrs.data['user_swmm']['qlyr']
+            self.swmm_lyr = self.lyrs.data['user_swmm_nodes']['qlyr']
             self.schema_inlets = self.lyrs.data['swmmflo']['qlyr']
             self.schema_outlets = self.lyrs.data['swmmoutf']['qlyr']
             self.all_schema += [self.schema_inlets, self.schema_outlets]
@@ -147,13 +147,13 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             lyr.triggerRepaint()
 
     def create_swmm_point(self):
-        if not self.lyrs.enter_edit_mode('user_swmm'):
+        if not self.lyrs.enter_edit_mode('user_swmm_nodes'):
             return
 
     def save_swmm_edits(self):
-        before = self.gutils.count('user_swmm')
-        self.lyrs.save_lyrs_edits('user_swmm')
-        after = self.gutils.count('user_swmm')
+        before = self.gutils.count('user_swmm_nodes')
+        self.lyrs.save_lyrs_edits('user_swmm_nodes')
+        after = self.gutils.count('user_swmm_nodes')
         if after > before:
             self.swmm_idx = after - 1
         elif self.swmm_idx >= 0:
@@ -163,8 +163,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.populate_swmm()
 
     def revert_swmm_lyr_edits(self):
-        user_swmm_edited = self.lyrs.rollback_lyrs_edits('user_swmm')
-        if user_swmm_edited:
+        user_swmm_nodes_edited = self.lyrs.rollback_lyrs_edits('user_swmm_nodes')
+        if user_swmm_nodes_edited:
             self.populate_swmm()
 
     def delete_cur_swmm(self):
@@ -174,7 +174,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if not self.uc.question(q):
             return
         swmm_fid = self.swmm_name_cbo.itemData(self.swmm_idx)['fid']
-        self.gutils.execute('DELETE FROM user_swmm WHERE fid = ?;', (swmm_fid,))
+        self.gutils.execute('DELETE FROM user_swmm_nodes WHERE fid = ?;', (swmm_fid,))
         self.swmm_lyr.triggerRepaint()
         self.populate_swmm()
 
@@ -195,7 +195,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def populate_swmm(self):
         self.swmm_name_cbo.clear()
         columns = self.swmm_columns[:]
-        qry = '''SELECT fid, name, {0} FROM user_swmm ORDER BY fid;'''
+        qry = '''SELECT fid, name, {0} FROM user_swmm_nodes ORDER BY fid;'''
         qry = qry.format(', '.join(columns))
         columns = ['fid', 'name'] + columns
         rows = self.gutils.execute(qry).fetchall()
@@ -304,7 +304,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
         col_names = ', '.join(col_gen)
         vals = swmm_dict.values() + [fid]
-        update_qry = '''UPDATE user_swmm SET {0} WHERE fid = ?;'''.format(col_names)
+        update_qry = '''UPDATE user_swmm_nodes SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
     def schematize_swmm(self):
@@ -358,7 +358,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             qry = 'SELECT elevation FROM grid WHERE fid = ?;'
-            qry_update = 'UPDATE user_swmm SET max_depth=?, rim_elev=?, ge_elev=?, difference=? WHERE fid=?;'
+            qry_update = 'UPDATE user_swmm_nodes SET max_depth=?, rim_elev=?, ge_elev=?, difference=? WHERE fid=?;'
             vals = {}
             if self.selected_ckbox.isChecked():
                 request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
@@ -387,9 +387,10 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Recalculation of Max Depth failed!')
 
-    def import_swmm_input(self):
+    def import_swmm_INP_file(self):
         s = QSettings()
-        last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        last_dir = s.value('FLO-2D/lastGdsDir', '')
+#         last_dir = s.value('FLO-2D/lastSWMMDir', '')
         swmm_file = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',
@@ -401,15 +402,15 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             sdp = StormDrainProject(swmm_file)
-            sdp.split_by_tags()
-            sdp.find_coordinates()
-            sdp.find_inlets()
-            sdp.find_outlets()
-            sdp.find_junctions()
+            sdp.split_INP_groups_dictionary_by_tags()
+            sdp.add_coords_to_INP_nodes_dictionary()
+            sdp.add_subcatchments_to_INP_nodes_dictionary()
+            sdp.add_outfalls_to_INP_nodes_dictionary()
+            sdp.add_junctions_to_INP_nodes_dictionary()
             remove_features(self.swmm_lyr)
             fields = self.swmm_lyr.fields()
             new_feats = []
-            for name, values in sdp.coordinates.items():
+            for name, values in sdp.INP_nodes.items():
                 if 'subcatchment' in values:
                     sd_type = 'I'
                 elif 'out_type' in values:
@@ -453,7 +454,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Importing SWMM input data failed! Please check your SWMM input data.')
 
-    def update_swmm_input(self):
+    def update_swmm_INP_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastSWMMDir', '')
         swmm_file = QFileDialog.getOpenFileName(
@@ -473,9 +474,9 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 features = self.swmm_lyr.getFeatures()
             depth_dict = {f['name']: {'invert_elev': f['invert_elev'], 'max_depth': f['max_depth']} for f in features}
             sdp = StormDrainProject(swmm_file)
-            sdp.split_by_tags()
-            sdp.update_junctions(depth_dict)
-            sdp.reassemble_inp()
+            sdp.split_INP_groups_dictionary_by_tags()
+            sdp.update_junctions_in_INP_groups_dictionary(depth_dict)
+            sdp.write_INP()
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Updating SWMM input data finished!')
         except Exception as e:
@@ -501,26 +502,26 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
     def populate_rtables(self):
         self.cbo_rating_tables.clear()
-        for row in self.inlet.get_rating_tables():
+        for row in self.inletRT.get_rating_tables():
             rt_fid, name = [x if x is not None else '' for x in row]
             self.cbo_rating_tables.addItem(name, rt_fid)
 
     def add_rtables(self):
-        if not self.inlet:
+        if not self.inletRT:
             return
-        self.inlet.add_rating_table()
+        self.inletRT.add_rating_table()
         self.populate_rtables()
 
     def delete_rtables(self):
-        if not self.inlet:
+        if not self.inletRT:
             return
         idx = self.cbo_rating_tables.currentIndex()
         rt_fid = self.cbo_rating_tables.itemData(idx)
-        self.inlet.del_rating_table(rt_fid)
+        self.inletRT.del_rating_table(rt_fid)
         self.populate_rtables()
 
     def rename_rtables(self):
-        if not self.inlet:
+        if not self.inletRT:
             return
         new_name, ok = QInputDialog.getText(None, 'Change rating table name', 'New name:')
         if not ok or not new_name:
@@ -532,13 +533,17 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             return
         idx = self.cbo_rating_tables.currentIndex()
         rt_fid = self.cbo_rating_tables.itemData(idx)
-        self.inlet.set_rating_table_data_name(rt_fid, new_name)
+        self.inletRT.set_rating_table_data_name(rt_fid, new_name)
         self.populate_rtables()
 
     def populate_rtables_data(self):
         idx = self.cbo_rating_tables.currentIndex()
         rt_fid = self.cbo_rating_tables.itemData(idx)
-        self.inlet_series_data = self.inlet.get_rating_tables_data(rt_fid)
+        if (rt_fid is None):
+            self.uc.bar_warn("No rating table defined!")
+            return
+            
+        self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
         if not self.inlet_series_data:
             return
         self.create_plot()
@@ -583,7 +588,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             else:
                 pass
         data_name = self.cbo_rating_tables.currentText()
-        self.inlet.set_rating_table_data(rt_fid, data_name, rt_data)
+        self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
 
     def create_plot(self):
         self.plot.clear()

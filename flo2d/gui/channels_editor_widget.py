@@ -15,13 +15,13 @@ from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_tools.schema2user_tools import remove_features
-from flo2d.utils import is_number, m_fdata, is_true
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..flo2d_tools.schema2user_tools import remove_features
+from ..utils import is_number, m_fdata, is_true
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
-from flo2d.gui.dlg_channel_geometry import ChannelGeometryDialog
+from ..gui.dlg_channel_geometry import ChannelGeometryDialog
 
 uiDialog, qtBaseClass = load_ui('channels_editor')
 

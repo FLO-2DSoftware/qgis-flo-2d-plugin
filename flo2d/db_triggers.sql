@@ -113,8 +113,15 @@ CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_delete"
 
 -- CHAN.DAT
 
+CREATE TRIGGER IF NOT EXISTS "find_user_chan_n_delete"
+    AFTER DELETE ON "user_xsections"
+    BEGIN
+        DELETE FROM "user_chan_n" WHERE user_xs_fid = OLD."fid";
+    END;    
+    
 -- TODO: create triggers for geometry INSERT and UPDATE
 -- use notes column to flag features created by user!
+
 -- -- create geometry when rightbank and leftbank are given
 -- CREATE TRIGGER IF NOT EXISTS "chan_n_geom_insert"
 --     AFTER INSERT ON "chan_n"
@@ -211,29 +218,29 @@ CREATE TRIGGER IF NOT EXISTS "confluence_geom_update"
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_insert"
-    AFTER INSERT ON "noexchange_chan_areas"
+    AFTER INSERT ON "user_noexchange_chan_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
-        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid) 
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_update"
-    AFTER UPDATE ON "noexchange_chan_areas"
+    AFTER UPDATE ON "user_noexchange_chan_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = NEW."fid";
-        INSERT INTO "noexchange_chan_elems" (noex_fid, grid_fid) 
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = NEW."fid";
+        INSERT INTO "noexchange_chan_cells" (noex_fid, grid_fid) 
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_noexchange_cells_delete"
-    AFTER DELETE ON "noexchange_chan_areas"
+    AFTER DELETE ON "user_noexchange_chan_areas"
     BEGIN
-        DELETE FROM "noexchange_chan_elems" WHERE noex_fid = OLD."fid";
+        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = OLD."fid";
     END;
 
 
@@ -400,7 +407,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_tot_delete"
 
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_insert"
-    AFTER INSERT ON "blocked_areas"
+    AFTER INSERT ON "user_blocked_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
@@ -410,7 +417,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_insert"
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_update"
-    AFTER UPDATE ON "blocked_areas"
+    AFTER UPDATE ON "user_blocked_areas"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = NEW."fid";
@@ -420,7 +427,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_update"
     END;
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_arf_delete"
-    AFTER DELETE ON "blocked_areas"
+    AFTER DELETE ON "user_blocked_areas"
     BEGIN
         DELETE FROM "blocked_cells" WHERE area_fid = OLD."fid";
     END;

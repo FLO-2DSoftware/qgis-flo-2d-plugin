@@ -15,19 +15,19 @@ from PyQt4.QtCore import QSettings, Qt
 from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.flo2d_ie.swmm_io import StormDrainProject
-from flo2d.flo2d_tools.schema2user_tools import remove_features
-from flo2d.flo2dobjects import InletRatingTable
-from flo2d.utils import is_number, m_fdata, is_true
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..flo2d_ie.swmm_io import StormDrainProject
+from ..flo2d_tools.schema2user_tools import remove_features
+from ..flo2dobjects import InletRatingTable
+from ..utils import is_number, m_fdata, is_true
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
-from flo2d.gui.dlg_outfalls import OutfallNodesDialog
-from flo2d.gui.dlg_inlets import InletNodesDialog
-from flo2d.gui.dlg_conduits import ConduitsDialog
-from flo2d.gui.dlg_stormdrain_shapefile import StormDrainShapefile
+from ..gui.dlg_outfalls import OutfallNodesDialog
+from ..gui.dlg_inlets import InletNodesDialog
+from ..gui.dlg_conduits import ConduitsDialog
+from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 
 uiDialog, qtBaseClass = load_ui('storm_drain_editor')
 
@@ -659,163 +659,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error('ERROR 050618.1804: creation of Storm Drain Conduits layer failed!', e)
             
-#     def export_swmm_INP_file(self):
-#         """
-#         Writes to a selected SWMM .INP file.
-#           
-#         Writes a .INP file with the changes to the attributes, 
-#         (changes performed in the Storm Drain Editor). 
-#         The groups affected are [SUBCATCHMENTS], [JUNCTIONS], [OUTFALLS], [CONDUITS], 
-#         [LOSSES], and [XSECTIONS].
-#           
-#         """        
-#         s = QSettings()
-#         last_dir = s.value('FLO-2D/lastSWMMDir', '')
-#         swmm_file = QFileDialog.getOpenFileName(
-#             None,
-#             'Select SWMM input file to update',
-#             directory=last_dir,
-#             filter='(*.inp *.INP*)')
-#         if not swmm_file:
-#             return
-#         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
-#           
-#         try:
-#             QApplication.setOverrideCursor(Qt.WaitCursor)
-#               
-#             storm_drain_out = StormDrainProject(swmm_file) # Create instance of class StormDrainProject
-#             storm_drain_out.split_INP_groups_dictionary_by_tags()   # Creates INP_groups dictionary with keys JUNCTIONS, COORDINATES, OUTFALL, etc
-#                                                                     # read from .INP file.                
-# #             if self.selected_ckbox.isChecked():
-# #                 request = QgsFeatureRequest().setFilterFids(self.user_swmm_nodes_lyr.selectedFeaturesIds())
-# #                 features = self.user_swmm_nodes_lyr.getFeatures(request)
-# #             else:
-# #                 features = self.user_swmm_nodes_lyr.getFeatures()
-#   
-#               
-#              
-#             try: 
-#                 """ 
-#                 Update junctions group in .INP_groups.
-#                   
-#                 junctions_dict will be a dictionary of dictionaries containing only 'name' (the key), 'junction_invert_elev', 'max_depth',
-#                 'init_depth', 'surcharge_depth', and 'ponded_area' from user_swmm_nodes layer features
-#                 """      
-#                 node_features = self.user_swmm_nodes_lyr.getFeatures()        
-#                 junctions_dict =     {junction_feat['name']: 
-#                                             {'junction_invert_elev': junction_feat['junction_invert_elev'], 
-#                                              'max_depth': junction_feat['max_depth'],
-#                                              'init_depth': junction_feat['init_depth'],
-#                                              'surcharge_depth': junction_feat['surcharge_depth'],
-#                                              'ponded_area': junction_feat['ponded_area']
-#                                              } for junction_feat in node_features}   
-#                                                                      
-#                 storm_drain_out.update_junctions_in_INP_groups_dictionary(junctions_dict)
-#             except:   
-#                 pass        
-#                   
-#             try:
-#                 """ 
-#                 Update outfalls group in .INP_groups.
-#                    
-#                 outfalls_dict will be a dictionary of dictionaries containing only 'name' (the key), 'outfall_invert_elev', 'outfall_type',
-#                 'tidal_curve', and 'time_series' from user_swmm_nodes layer features. 
-#                 """   
-#                 node_features = self.user_swmm_nodes_lyr.getFeatures()         
-#                 outfalls_dict = {outfall_feat['name']: 
-#                                             {'outfall_invert_elev': outfall_feat['outfall_invert_elev'], 
-#                                              'outfall_type': outfall_feat['outfall_type'],
-#                                              'tidal_curve': outfall_feat['tidal_curve'],
-#                                              'flapgate': outfall_feat['flapgate']
-#                                              } for outfall_feat in node_features}                                                                      
-#                 storm_drain_out.update_outfalls_in_INP_groups_dictionary(outfalls_dict)
-#             except:
-#                  pass   
-#   
-#             try:
-#                 """ 
-#                 Update conduits group in .INP_groups.
-#                    
-#                 conduits_dict will be a dictionary of dictionaries containing only 'name' (the key), 'outfall_invert_elev', 'outfall_type',
-#                 'tidal_curve', and 'time_series' from user_swmm_nodes layer features. 
-#                 """   
-#                 conduit_features = self.user_swmm_conduits_lyr.getFeatures()         
-#                 conduits_dict = {conduit_feat['conduit_name']: 
-#                                             {'conduit_inlet': conduit_feat['conduit_inlet'], 
-#                                              'conduit_outlet': conduit_feat['conduit_outlet'],
-#                                              'conduit_length': conduit_feat['conduit_length'],
-#                                              'conduit_manning': conduit_feat['conduit_manning'],
-#                                              'conduit_inlet_offset': conduit_feat['conduit_inlet_offset'],
-#                                              'conduit_outlet_offset': conduit_feat['conduit_outlet_offset'],                                                                                                                                       
-#                                              'conduit_init_flow': conduit_feat['conduit_init_flow'],                                             
-#                                              'conduit_max_flow': conduit_feat['conduit_max_flow']                                           
-#                                             } for conduit_feat in conduit_features}                                                                      
-#                 storm_drain_out.update_conduits_in_INP_groups_dictionary(conduits_dict)
-#             except:
-#                  pass  
-#           
-#             try:
-#                 """ 
-#                 Update losses group in .INP_groups.
-#                    
-#                 losses_dict will be a dictionary of dictionaries containing only 'conduit_name' (the key), 'losses_inlet', 'losses_outlet',...
-#                 from conduits_swmm_nodes layer features. 
-#                 """   
-#                 losses_features = self.user_swmm_conduits_lyr.getFeatures()         
-#                 losses_dict = {losses_feat['conduit_name']: 
-#                                             {'losses_inlet': losses_feat['losses_inlet'], 
-#                                              'losses_outlet': losses_feat['losses_outlet'],
-#                                              'losses_average': losses_feat['losses_average'],
-#                                              'losses_flapgate': losses_feat['losses_flapgate']
-#                                             } for losses_feat in losses_features}                                                                      
-#                 storm_drain_out.update_losses_in_INP_groups_dictionary(losses_dict)
-#             except:
-#                  pass   
-#   
-#             try:
-#                 """ 
-#                 Update xsections group in .INP_groups.
-#                    
-#                 xsections_dict will be a dictionary of dictionaries containing only 'conduit_name' (the key), 'xsections_shape', 'xsections_barrels',...
-#                 from conduits_swmm_nodes layer features. 
-#                 """   
-#                 xsections_features = self.user_swmm_conduits_lyr.getFeatures()         
-#                 xsections_dict = {xsections_feat['conduit_name']: 
-#                                             {'xsections_shape': xsections_feat['xsections_shape'], 
-#                                              'xsections_barrels': xsections_feat['xsections_barrels'],
-#                                              'xsections_max_depth': xsections_feat['xsections_max_depth'],
-#                                              'xsections_geom2': xsections_feat['xsections_geom2'],
-#                                              'xsections_geom3': xsections_feat['xsections_geom3'],
-#                                              'xsections_geom4': xsections_feat['xsections_geom4']
-#                                             } for xsections_feat in xsections_features}                                                                      
-#                 storm_drain_out.update_XSECTIONS_in_INP_groups_dictionary(xsections_dict)
-#             except:
-#                  pass 
-#   
-#   
-#             storm_drain_out.write_INP()
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_info(swmm_file + '\n\nupdated!')
-#               
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             QApplication.restoreOverrideCursor()
-#             self.uc.bar_warn('Updating SWMM input data failed! Please check Storm Drain data.')
 
     def export_storm_drain_INP_file(self):
+        """
+        Writes <name>.INP file 
+        (<name> exists or is given by user in nitial file dialog).
+        
+        The following groups are are always written with the data of the current project: 
+            [JUNCTIONS] [OUTFALLS] [CONDUITS] [XSECTIONS] [LOSSES] [COORDINATES]
+        All other groups are written from data of .INP file if they exists.
+        """
+        
         try:
             self.uc.clear_bar_messages()
             
-    #         if self.gutils.is_table_empty('user_model_boundary'):
-    #             self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
-    #             return
-    #         if self.gutils.is_table_empty('grid'):
-    #             self.uc.bar_warn('There is no grid! Please create it before running tool.')
-    #             return     
-            
-            INP_groups = OrderedDict() # ".INP_groups" will contain all groups [xxxx] in .INP file,
-                                        # ordered as entered.
-    
+            INP_groups = OrderedDict() 
+                
             s = QSettings()
             last_dir = s.value('FLO-2D/lastSWMMDir', '')
             swmm_file = QFileDialog.getSaveFileName(

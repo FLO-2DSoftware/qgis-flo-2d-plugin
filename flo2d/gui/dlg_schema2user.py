@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from flo2d.flo2d_tools.schema2user_tools import (
+from ..flo2d_tools.schema2user_tools import (
     SchemaBCConverter,
     Schema1DConverter,
     SchemaLeveesConverter,
@@ -98,7 +98,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             grid_converter.boundary_from_grid()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Grid to Computational Domain conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Grid to Computational Domain conversion!")
 
     def convert_roughness(self):
         try:
@@ -106,7 +106,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             grid_converter.roughness_from_grid()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Grid to Roughness conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Grid to Roughness conversion!")
 
     def convert_bc(self):
         try:
@@ -114,7 +114,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             bc_converter.create_user_bc()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Boundary Conditions conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Boundary Conditions conversion!")
 
     def convert_1d(self):
         try:
@@ -123,7 +123,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             domain_converter.create_user_xs()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on 1D Domain elements conversion!")
+            self.uc.bar_warn("Creating User Layers failed on 1D Domain elements conversion!")
 
     def convert_levees(self):
         try:
@@ -131,7 +131,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             levee_converter.create_user_levees()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Levees conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Levees conversion!")
 
     def convert_fpxsec(self):
         try:
@@ -139,7 +139,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             fpxsec_converter.create_user_fpxsec()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Floodplain cross-sections conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Floodplain cross-sections conversion!")
 
     def convert_infil(self):
         try:
@@ -147,12 +147,12 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             infil_converter.create_user_infiltration()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Infiltration conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Infiltration conversion!")
 
     def convert_swmm(self):
         try:
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-            swmm_converter.create_user_swmm()
+            swmm_converter.create_user_swmm_nodes()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating user layers failed on Storm Drains conversion!")
+            self.uc.bar_warn("Creating User Layers failed on Storm Drains conversion!")

@@ -12,10 +12,10 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QColor, QComboBox, QSizePolicy, QInputDialog
 from qgis.core import QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.flo2dobjects import Inflow, Outflow
-from flo2d.user_communication import UserCommunication
-from flo2d.utils import m_fdata, is_number
+from ..geopackage_utils import GeoPackageUtils
+from ..flo2dobjects import Inflow, Outflow
+from ..user_communication import UserCommunication
+from ..utils import m_fdata, is_number
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 

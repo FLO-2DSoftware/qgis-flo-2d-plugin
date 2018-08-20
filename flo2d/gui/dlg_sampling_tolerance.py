@@ -10,8 +10,8 @@
 
 from qgis.core import QGis
 from ui_utils import load_ui
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('sampling_tolerance')
 

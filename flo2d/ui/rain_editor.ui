@@ -1,286 +1,809 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>f2d_widget</class>
+ <widget class="QWidget" name="f2d_widget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>385</width>
-    <height>199</height>
+    <width>395</width>
+    <height>493</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Rain Editor</string>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="bottomMargin">
-      <number>0</number>
+  <property name="minimumSize">
+   <size>
+    <width>250</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>FLO-2D Widget</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_10">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="simulate_rain_grp">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <item>
-      <widget class="QCheckBox" name="simulate_rain_chbox">
-       <property name="text">
-        <string>Simulate rain</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="asc_btn">
-       <property name="minimumSize">
-        <size>
-         <width>115</width>
-         <height>25</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Import Rainfall ASCII</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="hdf_btn">
-       <property name="minimumSize">
-        <size>
-         <width>115</width>
-         <height>25</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Export Rainfall HDF</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QFrame" name="rain_frame">
-     <property name="enabled">
-      <bool>false</bool>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set this checkbox to simulate rain on the grid system. &lt;/p&gt;&lt;p&gt;The IRAIN variable in the CONT.DAT file will be set to 1. If this switch is not checked, the RAIN.DAT file file will be ommited when using the &amp;quot;Export GDS files&amp;quot; icon in the FLO-2D toolbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+     <property name="whatsThis">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set this checkbox to simulate rain on the grid system. &lt;/p&gt;&lt;p&gt;The IRAIN variable in the CONT.DAT file will be set to 1. If this switch is not checked, the RAIN.DAT file file will be omitted when using the &amp;quot;Export GDS files&amp;quot; icon in the FLO-2D toolbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+     <property name="title">
+      <string>Simulate Rainfall  (RAIN.DAT)</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="margin">
-       <number>0</number>
-      </property>
-      <item>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="1" column="1">
-         <widget class="QCheckBox" name="building_chbox">
-          <property name="text">
-           <string>Building Rain</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="real_time_chbox">
-          <property name="text">
-           <string>Real-Time Rainfall</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QCheckBox" name="arf_chbox">
-          <property name="text">
-           <string>Depth-Area Reduction Values</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QCheckBox" name="moving_storm_chbox">
-          <property name="text">
-           <string>Moving Storm</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_8">
+      <item row="0" column="0">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item row="0" column="1">
+       <layout class="QVBoxLayout" name="verticalLayout_5">
         <property name="spacing">
-         <number>15</number>
+         <number>0</number>
         </property>
         <property name="rightMargin">
          <number>0</number>
         </property>
-        <property name="bottomMargin">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Total Storm Rainfall</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="total_rainfall_sbox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Total storm rainfall (inches or mm).&lt;/p&gt;&lt;p&gt;FLO-2D variable : RTT (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::UpDownArrows</enum>
+          </property>
+          <property name="decimals">
+           <number>2</number>
+          </property>
+          <property name="maximum">
+           <double>9999999.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="2">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>5</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="3">
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
          <number>0</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Total Storm Rainfall</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="total_rainfall_sbox">
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
-            </property>
-            <property name="decimals">
-             <number>4</number>
-            </property>
-            <property name="maximum">
-             <double>9999999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>Rainfall Abstraction</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="rainfall_abst_sbox">
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
-            </property>
-            <property name="decimals">
-             <number>4</number>
-            </property>
-            <property name="maximum">
-             <double>99999999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="maximumSize">
-           <size>
-            <width>99999</width>
-            <height>16777215</height>
-           </size>
+         <widget class="QLabel" name="label_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
           <property name="text">
-           <string>Time series</string>
+           <string>Rainfall Abstraction</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="show_table_btn">
+         <widget class="QDoubleSpinBox" name="rainfall_abst_sbox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="toolTip">
-           <string>Show timeseries table</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rainfall interception and abstraction (inches or mm) if infiltration is not being modeled.&lt;/p&gt;&lt;p&gt;FLO-2D variable: RAINABS (RAIN.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
-          <property name="text">
-           <string>...</string>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="add_tseries_btn">
-          <property name="toolTip">
-           <string>Add rain timeseries</string>
+          <property name="decimals">
+           <number>2</number>
           </property>
-          <property name="text">
-           <string>Add</string>
+          <property name="maximum">
+           <double>99999999.000000000000000</double>
           </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="remove_tseries_btn">
-          <property name="toolTip">
-           <string>Remove rain timeseries</string>
-          </property>
-          <property name="text">
-           <string>Remove</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/delete_bc_data.svg</normaloff>../img/delete_bc_data.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="rename_tseries_btn">
-          <property name="toolTip">
-           <string>Rename rain timeseries</string>
-          </property>
-          <property name="text">
-           <string>Change name</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
           </property>
          </widget>
         </item>
        </layout>
       </item>
-      <item>
-       <widget class="QComboBox" name="tseries_cbo">
+      <item row="0" column="4">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="5">
+       <widget class="QCheckBox" name="building_chbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Indicates that individual grid element depth area reduction values will be assigned.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINBUILDING (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Building Rain</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="6">
+       <widget class="QGroupBox" name="rainfall_time_distribution_grp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>83</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;quot;Rainfall Time Distribution&amp;quot; selects a time series from the list provided.&lt;/p&gt;&lt;p&gt;Check this switch and select a time series. When checked, the selected time series is writen in the RAIN.DAT FLO-2D file (lines starting with &amp;quot;R&amp;quot; (lines 3)). Otherwise, no &amp;quot;R&amp;quot; lines are included.&lt;/p&gt;&lt;p&gt;A time series can be created from scratch using the &amp;quot;Add rain time series&amp;quot; button. The &amp;quot;FLO-2D Table Editor&amp;quot; panel allows editing of the table.&lt;/p&gt;&lt;p&gt;The &amp;quot;Add predefined rain time series&amp;quot; button is used to load one or more time series: ASCII files with 2 colums (time and % of total storm).&lt;/p&gt;&lt;p&gt;The list of time series available are stored ín the &amp;quot;Rain Time Series&amp;quot; layer, and the pairs of values (time, % of total storm) are stored in the &amp;quot;Rain Time Series Data&amp;quot; layer.&lt;/p&gt;&lt;p&gt;The rainfall distribution has to be related to the overall flood simulation time. The rainfall may occur for only a portion of the total flood simulation and may start after the flood simulation begins. For most rain storms, the start of the simulation correlates with the start of the rainfall. In those cases where the rainfall and the simulation time are not correlated, it may be necessary to use 0.0 cumulative rainfall at the beginning of the flood simulation for a period of time and/or similarly 1.0 (100%) cumulative rainfall near the end of the simulation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="title">
+         <string>Rainfall Time Distribution</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <widget class="QToolButton" name="show_table_btn">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>25</y>
+           <width>25</width>
+           <height>19</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Show timeseries table</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_2">
+         <property name="geometry">
+          <rect>
+           <x>42</x>
+           <y>24</y>
+           <width>153</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>99999</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Time vs % of Total Storm Series</string>
+         </property>
+        </widget>
+        <widget class="QToolButton" name="add_tseries_btn">
+         <property name="geometry">
+          <rect>
+           <x>200</x>
+           <y>16</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Add rain time series</string>
+         </property>
+         <property name="text">
+          <string>Add</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/mActionAddRainTimeSeries.svg</normaloff>../img/mActionAddRainTimeSeries.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+        </widget>
+        <widget class="QToolButton" name="add_predefined_tseries_btn">
+         <property name="geometry">
+          <rect>
+           <x>240</x>
+           <y>16</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rain time series.&lt;/p&gt;&lt;p&gt;Select one or more files. Each file must be a list of pairs (time, distribution).&lt;/p&gt;&lt;p&gt;The distribution is a % of the total storm.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>Add</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/mActionOpenFile.svg</normaloff>../img/mActionOpenFile.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+        </widget>
+        <widget class="QToolButton" name="remove_tseries_btn">
+         <property name="geometry">
+          <rect>
+           <x>280</x>
+           <y>16</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Remove rain time series</string>
+         </property>
+         <property name="text">
+          <string>Remove</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+        </widget>
+        <widget class="QToolButton" name="rename_tseries_btn">
+         <property name="geometry">
+          <rect>
+           <x>320</x>
+           <y>16</y>
+           <width>31</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Rename rain time series</string>
+         </property>
+         <property name="text">
+          <string>Change name</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+        </widget>
+        <widget class="QComboBox" name="tseries_cbo">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>52</y>
+           <width>337</width>
+           <height>20</height>
+          </rect>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;List of distribution time series names defined in the Rain Time Series layer. The actual data (time, value) is stored in layer Rain Time Series Data. The index of the selected time series is also updated in field time_series_fid of  Rain layer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>Maricopa County 2-Hour Storm</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Maricopa County 6-Hour Pattern 1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Maricopa County 6-Hour Pattern 2</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Maricopa County 6-Hour Pattern 3</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Maricopa County 6-Hour Pattern 4</string>
+          </property>
+         </item>
+        </widget>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="6">
+       <widget class="QGroupBox" name="moving_storm_grp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check this swith if moving storm is to be simulated.&lt;/p&gt;&lt;p&gt;FLO-2D variable: MOVINGSTORM (RAIN.DAT):&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="title">
+         <string>Moving Storm</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0" rowspan="2">
+          <widget class="QGroupBox" name="moving_storm_direction_grp">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Direction of the moving storm. Directions are as follows:&lt;/p&gt;&lt;p&gt;1 = N 5 = NE&lt;/p&gt;&lt;p&gt;2 = E 6 = SE&lt;/p&gt;&lt;p&gt;3 = S 7 = SW&lt;/p&gt;&lt;p&gt;4 = W 8 = NW&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINDIR (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="title">
+            <string>Direction of Moving Storm</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QRadioButton" name="nw_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>NW</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QRadioButton" name="n_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>N</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QRadioButton" name="ne_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>NE</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QRadioButton" name="w_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>W</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QRadioButton" name="e_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>E</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QRadioButton" name="sw_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>SW</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QRadioButton" name="s_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>S</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QRadioButton" name="se_radio">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>SE</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="1" colspan="2">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>158</width>
+             <height>61</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="2">
+          <widget class="QDoubleSpinBox" name="moving_storm_speed_dbox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Storm speed (mph or kph).&lt;/p&gt;&lt;p&gt;FLO-2D variable: RAINSPEED (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="singleStep">
+            <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="moving_storm_speed_lbl">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Moving Storm Speed:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="6">
+       <widget class="QGroupBox" name="spatial_variation_grp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>56</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into each intersected cell.&lt;/p&gt;&lt;p&gt;Data will be stored in QGIS in the &amp;quot;Rain ARF Cells&amp;quot; layer.&lt;/p&gt;&lt;p&gt;When exporting the FLO-2D files using the FLO-2D tool bar, the RAIN.DAT file will have the rainfall area reduction values stored as lines 5: pairs of (cell number, reduction value), (IRGRID, RAINARF).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="title">
+         <string>Spatial Variation (Depth Area Reduction)</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_9">
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QToolButton" name="raster_rain_btn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>../img/sample_rain.svg</normaloff>../img/sample_rain.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="6">
+       <widget class="QGroupBox" name="realtime_rainfall_grp">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If real-time rainfall is to be simulated, the &amp;quot;Real-Time Rainfall&amp;quot; checkbox should be selected.&lt;/p&gt;&lt;p&gt;Use the button below to import Realtime Rainfall data from .ASC files defined in a .RFC file catalog. Locally stores pairs (rainfall, grid element) for each interval in the &amp;quot;Realtime Rainfall Data&amp;quot; layer, and the number of files, time interval, and time stamp in the &amp;quot;Realtime Rainfall&amp;quot; layern.&lt;/p&gt;&lt;p&gt;The FLO-2D tool &amp;quot;Export GDS files&amp;quot; stores the above data in file RAINCELL.DAT.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINREAL (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="title">
+         <string>Realtime Rainfall</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="title">
+            <string>(RAINCELL.DAT)</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="0" column="0">
+             <widget class="QToolButton" name="asc_btn">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>115</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Imports Realtime Rainfall data from .ASC files using a .RFC file catalog of selected ASCII files.&lt;/p&gt;&lt;p&gt;Locally stores pairs (rainfall, grid element) for each interval in the &amp;quot;Realtime Rainfall Data&amp;quot; layer, and the number of files, time interval, and time stamp in the &amp;quot;Realtime Rainfall&amp;quot; layer.&lt;/p&gt;&lt;p&gt;The FLO-2D tool &amp;quot;Export GDS files&amp;quot; stores the above data in file RAINCELL.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Import Realtime Rainfall
+ASCII files</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QToolButton" name="hdf_btn">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>115</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Export RealTime Rainfall
+to binary HDF</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
+     <zorder>building_chbox</zorder>
+     <zorder>rainfall_time_distribution_grp</zorder>
+     <zorder>realtime_rainfall_grp</zorder>
+     <zorder>moving_storm_grp</zorder>
+     <zorder>spatial_variation_grp</zorder>
+     <zorder>horizontalSpacer</zorder>
+     <zorder>horizontalSpacer_2</zorder>
+     <zorder>horizontalSpacer_3</zorder>
     </widget>
    </item>
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>simulate_rain_chbox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>rain_frame</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>72</x>
-     <y>23</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>188</x>
-     <y>146</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

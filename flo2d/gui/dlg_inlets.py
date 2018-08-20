@@ -4,7 +4,7 @@ import traceback
 from ui_utils import load_ui
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt, SIGNAL, pyqtSignal
-from flo2d.flo2dobjects import InletRatingTable
+from ..flo2dobjects import InletRatingTable
 
 from PyQt4.QtGui import (
     QApplication, 
@@ -20,9 +20,9 @@ from PyQt4.QtGui import (
     QDialogButtonBox )
 
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.utils import is_number, m_fdata
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import is_number, m_fdata
 from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 
 

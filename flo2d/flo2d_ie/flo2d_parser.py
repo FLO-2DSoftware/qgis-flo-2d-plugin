@@ -48,6 +48,7 @@ class ParseDAT(object):
             'SWMMFLORT.DAT': None,
             'SWMMOUTF.DAT': None,
             'TOLSPATIAL.DAT': None,
+            'SHALLOWN_SPATIAL.DAT':None,
             'WSURF.DAT': None,
             'WSTIME.DAT': None
         }
@@ -106,6 +107,12 @@ class ParseDAT(object):
     def calculate_cellsize(self):
         cell_size = 0
         topo = self.dat_files['TOPO.DAT']
+        if topo is None:
+            return 0
+        if not os.path.isfile(topo):
+            return 0
+        if not os.path.getsize(topo) > 0:
+            return 0
         with open(topo) as top:
             first_coord = top.readline().split()[:2]
             first_x = float(first_coord[0])
@@ -324,8 +331,8 @@ class ParseDAT(object):
         chan = self.dat_files['CHAN.DAT']
         bank = self.dat_files['CHANBANK.DAT']
         xsec = self.dat_files['XSEC.DAT']
-        par = self.single_parser(chan)
-        parbank = self.single_parser(bank)
+        par = self.single_parser(chan)  # Iterator to deliver lines of CHAN.DAT one by one.
+        parbank = self.single_parser(bank)  
         if xsec is not None:
             parxs = (['{0}'.format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
         else:
@@ -342,7 +349,7 @@ class ParseDAT(object):
             if char not in shape and char not in chanchar and len(row) > 2:
                 self.fix_row_size(row, 4)
                 segments.append(row)
-                segments[-1].append([])
+                segments[-1].append([]) # Appends an empty list at end of 'segments' list.
             elif char in shape:
                 fix_index = 2 if char == 'T' else None
                 self.fix_row_size(row, shape[char], index=fix_index)

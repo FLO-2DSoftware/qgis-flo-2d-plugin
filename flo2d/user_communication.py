@@ -11,6 +11,7 @@
 # Unnecessary parens after u'print' keyword
 #pylint: disable=C0325
 
+import sys
 from PyQt4.QtGui import QMessageBox, QProgressBar
 from PyQt4.QtCore import Qt
 from qgis.gui import QgsMessageBar
@@ -37,6 +38,26 @@ class UserCommunication(object):
             QMessageBox.warning(self.iface.mainWindow(), self.context, msg)
         else:
             print(msg)
+
+    def show_critical(self, msg):
+        if self.iface is not None:
+            QMessageBox.critical(self.iface.mainWindow(), self.context, msg)
+        else:
+            print(msg)
+    
+    def show_error(self, msg, e):
+        if self.iface is not None:
+            exc_type, exc_obj, exc_tb = sys.exc_info() 
+            filename = exc_tb.tb_frame.f_code.co_filename          
+            function = exc_tb.tb_frame.f_code.co_name
+            line = str(exc_tb.tb_lineno)        
+            QMessageBox.critical(self.iface.mainWindow(), self.context, msg  + "\n\n" +
+                                 "Error:\n   " + str(exc_obj) + "\n\n" +
+                                 "In file:\n   " + filename + "\n\n" +
+                                 "In function:\n   " +  function  + "\n\n" +
+                                 "On line " + line)
+        else:
+            print(msg)        
 
     def log(self, msg, level):
         if self.iface is not None:
@@ -77,7 +98,7 @@ class UserCommunication(object):
             m.setWindowTitle(self.context)
             m.setText(msg)
             m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
-            m.setDefaultButton(QMessageBox.No)
+            m.setDefaultButton(QMessageBox.Yes)
             return True if m.exec_() == QMessageBox.Yes else False
         else:
             print(msg)

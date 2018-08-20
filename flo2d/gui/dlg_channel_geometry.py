@@ -4,7 +4,7 @@ import traceback
 from ui_utils import load_ui
 from collections import OrderedDict
 from PyQt4.QtCore import QSettings, Qt, SIGNAL, pyqtSignal
-from flo2d.flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
+from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
 
 from PyQt4.QtGui import (
     QApplication, 
@@ -19,8 +19,8 @@ from PyQt4.QtGui import (
     QKeyEvent )
 
 from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 from future.backports.test.pystone import FALSE
 
 uiDialog, qtBaseClass = load_ui('channel_geometry')

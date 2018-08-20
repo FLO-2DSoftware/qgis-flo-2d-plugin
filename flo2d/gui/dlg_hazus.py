@@ -8,21 +8,17 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
 import traceback
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsMapLayerRegistry, QGis
-from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QFileDialog, QApplication, QComboBox, QDialogButtonBox
+from qgis.core import QGis
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QApplication, QDialogButtonBox, QInputDialog
 from ui_utils import load_ui, set_icon
-from flo2d.flo2d_tools.elevation_correctors import LeveesElevation
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
-from flo2d.gui.dlg_sampling_xyz import SamplingXYZDialog
-from flo2d.gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
-from flo2d.flo2d_tools.grid_tools import grid_has_empty_elev
-
-from flo2d.flo2d_tools.grid_tools import (evaluate_spatial_tolerance)
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..gui.dlg_sampling_xyz import SamplingXYZDialog
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
+from ..flo2d_tools.grid_tools import grid_has_empty_elev
 
 uiDialog, qtBaseClass = load_ui('hazus')
 
@@ -44,8 +40,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         
         self.setup_layers_comboxes()
         self.setup_statistics()
-        
-        
+
         set_icon(self.buildings_raster_elevation_btn, 'sample_elev.svg')
         set_icon(self.buildings_xyz_elevation_btn, 'sample_elev_xyz.svg')
         set_icon(self.buildings_adjust_factor_from_polygons_btn, 'sample_tolerance.svg')
@@ -60,22 +55,22 @@ class HazusDialog(qtBaseClass, uiDialog):
         self.buildings_xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.buildings_adjust_factor_from_polygons_btn.clicked.connect(self.eval_buildings_adjustment_factor)
 
-        #Buildings ground elevations group:
+        # Buildings ground elevations group:
         self.elevation_from_shapefile_radio.clicked.connect(self.enable_elevation_from_shapefile_radio)
         self.intercept_grid_radio.clicked.connect(self.disable_all_buildings_extras)
         self.sample_from_raster_radio.clicked.connect(self.enable_sample_from_raster_radio)
         self.interpolate_from_DTM_points_radio.clicked.connect(self.enable_interpolate_from_DTM_points_radio)
         self.area_reduction_factors_radio.clicked.connect(self.disable_all_buildings_extras)
  
-         #Finished floor adjustment group:
+        # Finished floor adjustment group:
         self.global_radio.clicked.connect(self.enable_global_radio)
         self.adjust_factor_from_building_radio.clicked.connect(self.enable_adjust_factor_from_building_radio)
         self.adjust_factor__ID_from_building_radio.clicked.connect(self.enable_adjust_factor__ID_from_building_radio)
         self.adjust_factor_from_user_polygon_radio.clicked.connect(self.enable_adjust_factor_from_user_polygon_radio)
         self.none_radio.clicked.connect(self.disable_all_adjustments_extras)
         self.hazus_buttonBox.accepted.connect(self.compute_hazus)  
-#         self.buttonBox.clicked.connect(self.check_selections) 
-#         self.accepted.connect(self.check_selections) 
+        # self.buttonBox.clicked.connect(self.check_selections)
+        # self.accepted.connect(self.check_selections)
 
         self.setFixedSize(self.size())
         
@@ -169,16 +164,15 @@ class HazusDialog(qtBaseClass, uiDialog):
             return
         try:
             pass
-#                 QApplication.setOverrideCursor(Qt.WaitCursor)
-#                 res = dlg.probe_elevation()
-#                 QApplication.restoreOverrideCursor()
-#                 if res:
-#                     dlg.show_probing_result_info()
+                # QApplication.setOverrideCursor(Qt.WaitCursor)
+                # res = dlg.probe_elevation()
+                # QApplication.restoreOverrideCursor()
+                # if res:
+                #     dlg.show_probing_result_info()
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
-
 
     def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
@@ -190,32 +184,32 @@ class HazusDialog(qtBaseClass, uiDialog):
             pass
         else:
             return
-#         points_lyr = dlg.current_lyr
-#         zfield = dlg.fields_cbo.currentText()
-#         calc_type = dlg.calc_cbo.currentText()
-#         search_distance = dlg.search_spin_box.value()
-# 
-#         try:
-#             QApplication.setOverrideCursor(Qt.WaitCursor)
-#             grid_lyr = self.lyrs.data['grid']['qlyr']
-#             zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
-#             points_elevation = zs.points_elevation()
-#             zs.set_elevation(points_elevation)
-#             cmd, out = zs.rasterize_grid()
-#             self.uc.log_info(cmd)
-#             self.uc.log_info(out)
-#             cmd, out = zs.fill_nodata()
-#             self.uc.log_info(cmd)
-#             self.uc.log_info(out)
-#             null_elevation = zs.null_elevation()
-#             zs.set_elevation(null_elevation)
-#             zs.remove_rasters()
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_info('Calculating elevation finished!')
-#         except Exception as e:
-#             QApplication.restoreOverrideCursor()
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
+        # points_lyr = dlg.current_lyr
+        # zfield = dlg.fields_cbo.currentText()
+        # calc_type = dlg.calc_cbo.currentText()
+        # search_distance = dlg.search_spin_box.value()
+        #
+        # try:
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
+        #     grid_lyr = self.lyrs.data['grid']['qlyr']
+        #     zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+        #     points_elevation = zs.points_elevation()
+        #     zs.set_elevation(points_elevation)
+        #     cmd, out = zs.rasterize_grid()
+        #     self.uc.log_info(cmd)
+        #     self.uc.log_info(out)
+        #     cmd, out = zs.fill_nodata()
+        #     self.uc.log_info(cmd)
+        #     self.uc.log_info(out)
+        #     null_elevation = zs.null_elevation()
+        #     zs.set_elevation(null_elevation)
+        #     zs.remove_rasters()
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_info('Calculating elevation finished!')
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
 
     def get_cell_size(self):
         """
@@ -248,9 +242,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                 self.gutils.set_cont_par('CELLSIZE', cs)
             else:
                 return None
-            
-            
-               
+
     def eval_buildings_adjustment_factor(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:
@@ -259,8 +251,8 @@ class HazusDialog(qtBaseClass, uiDialog):
         else:
             pass
 
-#         if not self.lyrs.save_edits_and_proceed('Tolerance Cells'):
-#             return
+        # if not self.lyrs.save_edits_and_proceed('Tolerance Cells'):
+        #     return
         if self.gutils.is_table_empty('buildings_areas'):
             w = 'There are no buildings areas polygons in Buildings Areas (Schematic Layers)!.\n\n'
             w +=  'Please digitize them before running tool.'
@@ -268,15 +260,15 @@ class HazusDialog(qtBaseClass, uiDialog):
             return
         try:
             self.uc.show_warn('Assignment of building areas to building polygons. Not implemented yet!')
-#             QApplication.setOverrideCursor(Qt.WaitCursor)
-#             grid_lyr = self.lyrs.data['grid']['qlyr']
-#             user_building_areas_lyr = self.lyrs.data['buildings_areas']['qlyr']
-#             evaluate_spatial_buildings_adjustment_factor(self.gutils, grid_lyr, user_building_areas_lyr)
-#             tol_lyr = self.lyrs.data['tolspatial']['qlyr']
-#             tol_lyr.reload()
-#             self.lyrs.update_layer_extents(tol_lyr)
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_info('Spatial tolerance values calculated!')
+            # QApplication.setOverrideCursor(Qt.WaitCursor)
+            # grid_lyr = self.lyrs.data['grid']['qlyr']
+            # user_building_areas_lyr = self.lyrs.data['buildings_areas']['qlyr']
+            # evaluate_spatial_buildings_adjustment_factor(self.gutils, grid_lyr, user_building_areas_lyr)
+            # tol_lyr = self.lyrs.data['tolspatial']['qlyr']
+            # tol_lyr.reload()
+            # self.lyrs.update_layer_extents(tol_lyr)
+            # QApplication.restoreOverrideCursor()
+            # self.uc.show_info('Spatial tolerance values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Evaluation of buildings adjustment factor failed! Please check your Building Areas (Schematic layer).')
@@ -319,8 +311,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     def enable_adjust_factor_from_user_polygon_radio(self):
         self.disable_all_adjustments_extras()
         self.buildings_adjust_factor_from_polygons_btn.setEnabled(True)
-        
-                        
+
     def disable_all_adjustments_extras(self,):
         self.global_adjust_factor_dbox.setEnabled(False)
         self.adjust_factor_buildings_field_FieldCbo.setEnabled(False)
@@ -462,7 +453,6 @@ class HazusDialog(qtBaseClass, uiDialog):
                         building = building_fts.next()
                         i += 1
                         id1 = building[ID_field]
-#                         val = building[field_to_uniformize]
                         elev =  building["elevation"]
                         if id1 == id0:
                             n += 1
@@ -493,8 +483,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                         final_val = max 
                     else:
                         final_val = -999
-                    
-                    
+
                     if first_loop:
                         if field_to_uniformize == "water_elev":
                             cur.execute(insert_water_elev_statistics, (current_id, elev_sum/n, elev_min, elev_max, avg, min, max))
@@ -506,8 +495,8 @@ class HazusDialog(qtBaseClass, uiDialog):
                         elif field_to_uniformize == "flow_depth":              
                             cur.execute(update_flow_depth_statistics, (avg, min, max, current_id,))                               
                     
-#                     'UPDATE user_fpxsec SET name = ?, iflo = ? WHERE fid = ?;'  
-#                         self.gutils.execute(qry, (name, iflo, fid,))
+                    # 'UPDATE user_fpxsec SET name = ?, iflo = ? WHERE fid = ?;'
+                    #     self.gutils.execute(qry, (name, iflo, fid,))
               
                     if self.global_radio.isChecked(): 
                         final_val += self.global_adjust_factor_dbox.value()   
@@ -524,19 +513,22 @@ class HazusDialog(qtBaseClass, uiDialog):
                 index_val = 0        
                 f0 = building_fts.next()
                 id0 = f0[ID_field]
-                lyr.changeAttributeValue(f0.id(),lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])     
+                lyr.changeAttributeValue(f0.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
                 while index_lyr < n_features:
                     f1 = building_fts.next()
                     id1 = f1[ID_field]
                     index_lyr += 1
                     if id1 == id0:
-                        lyr.changeAttributeValue(f1.id(),lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
                     else:
                         index_val += 1
-                        lyr.changeAttributeValue(f1.id(),lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
                         id0 = id1
                
                 lyr.commitChanges()
+                lyr.updateExtents()
+                lyr.triggerRepaint()
+                lyr.removeSelection()
                 
                 uniformizedFields.append(field_to_uniformize)
                 
@@ -553,9 +545,8 @@ class HazusDialog(qtBaseClass, uiDialog):
             lyr.rollBack() 
             return False, ""
 
-
     def compute_flow_depths(self):
-#         try:
+        # try:
             building_name = 'Intersection'
             QApplication.setOverrideCursor(Qt.WaitCursor)
             lyr = self.lyrs.get_layer_by_name(building_name, group=self.lyrs.group).layer()
@@ -568,12 +559,16 @@ class HazusDialog(qtBaseClass, uiDialog):
                 lyr.changeAttributeValue(f.id(),lyr.fieldNameIndex('flow_depth'), flowDepth)
 
             lyr.commitChanges()
+            lyr.updateExtents()
+            lyr.triggerRepaint()
+            lyr.removeSelection()            
+
             QApplication.restoreOverrideCursor()      
   
-#         except Exception as e:
-#             QApplication.restoreOverrideCursor() 
-#             lyr.rollBack() 
-#             self.uc.show_warn('Evaluation of flow depths failed!\n\n'+ repr(e))
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     lyr.rollBack()
+        #     self.uc.show_warn('Evaluation of flow depths failed!\n\n'+ repr(e))
 
     def buildings_statistics(self):
         try:
@@ -599,13 +594,10 @@ class HazusDialog(qtBaseClass, uiDialog):
                     self.iface.setActiveLayer(stats_table)
                     self.iface.showAttributeTable(self.iface.activeLayer())
 
-                 
-                  
         except Exception as e:
             QApplication.restoreOverrideCursor() 
             self.uc.show_error("ERROR 150618.0235: Error while computing buildings statistics!", e)                                           
 
-                      
     def compute_and_show_buildings_statistics(self):
        
         del_statistics = 'DELETE FROM buildings_stats;'
@@ -626,29 +618,29 @@ class HazusDialog(qtBaseClass, uiDialog):
                                     )  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
                                 '''
 
-#         insert_flow_depth_statistics = '''INSERT INTO buildings_stats 
-#                                     (   building_ID, 
-#                                         avg_grnd_elev, 
-#                                         min_grnd_elev,
-#                                         max_grnd_elev,
-# 
-#                                     )  VALUES (?,?,?,?,?,?,?);
-#                                 '''      
-#         
-#         
-#         update_water_elev_statistics = '''UPDATE buildings_stats 
-#                                         SET avg_water_elev = ?,
-#                                             min_water_elev = ?, 
-#                                             max_water_elev = ?
-#                                         WHERE building_ID = ?;
-#                                     '''
-# 
-#         update_flow_depth_statistics = '''UPDATE buildings_stats 
-#                                         SET avg_depth = ?,
-#                                             min_depth = ?, 
-#                                             max_depth = ?
-#                                         WHERE building_ID = ?;
-#                                     '''   
+        # insert_flow_depth_statistics = '''INSERT INTO buildings_stats
+        #                             (   building_ID,
+        #                                 avg_grnd_elev,
+        #                                 min_grnd_elev,
+        #                                 max_grnd_elev,
+        #
+        #                             )  VALUES (?,?,?,?,?,?,?);
+        #                         '''
+        #
+        #
+        # update_water_elev_statistics = '''UPDATE buildings_stats
+        #                                 SET avg_water_elev = ?,
+        #                                     min_water_elev = ?,
+        #                                     max_water_elev = ?
+        #                                 WHERE building_ID = ?;
+        #                             '''
+        #
+        # update_flow_depth_statistics = '''UPDATE buildings_stats
+        #                                 SET avg_depth = ?,
+        #                                     min_depth = ?,
+        #                                     max_depth = ?
+        #                                 WHERE building_ID = ?;
+        #                             '''
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor) 
             
@@ -670,8 +662,8 @@ class HazusDialog(qtBaseClass, uiDialog):
             i = 1     
                
             building = building_fts.next()
-#             geo = building.geometry().asPolygon()
-#             poly = QgsGeometry.fromPolygon (geo)
+            # geo = building.geometry().asPolygon()
+            # poly = QgsGeometry.fromPolygon (geo)
             
             id0 = building[ID_field]
             elev = building[elev_field]   
@@ -694,13 +686,13 @@ class HazusDialog(qtBaseClass, uiDialog):
                 while i < n_features:
                     
                     building = building_fts.next()
-#                     geo = building.geometry().asPolygon()
-# #                     poly = geo.asPolygon()
-#                     poly = QgsGeometry.fromPolygon (geo)
+                    # geo = building.geometry().asPolygon()
+                    # poly = geo.asPolygon()
+                    # poly = QgsGeometry.fromPolygon (geo)
                     
                     i += 1
                     id1 = building[ID_field]
-                    elev =  building[elev_field]
+                    elev = building[elev_field]
                     water = building[water_field]
                     flow = building[flow_field]
                     if id1 == id0:
@@ -723,8 +715,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                             flow_min = flow  
                         if flow > flow_max:
                             flow_max = flow 
-                                                            
-                             
+
                     else:
                         current_id = id0
                         id0 = id1                         
@@ -746,13 +737,12 @@ class HazusDialog(qtBaseClass, uiDialog):
                                                 "{:7.2f}".format(floor_avg), "{:7.2f}".format(floor_min), "{:7.2f}".format(floor_max), 
                                                 "{:7.2f}".format(water_sum/n), "{:7.2f}".format(water_min), "{:7.2f}".format(water_max), 
                                                 "{:7.2f}".format(flow_sum/n), "{:7.2f}".format(flow_min), "{:7.2f}".format(flow_max)
-#                                                 , poly
+                                                # , poly
                                                 ))
             
             # Insert attributes in buildings_stats:
             self.gutils.con.commit()
 
-                         
             QApplication.restoreOverrideCursor()  
             return True, (building_name, ID_field, elev_field, water_field, flow_field, adjust)
          
@@ -761,37 +751,3 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 080618.0456: Uniformization of field values failed!", e)             
             lyr.rollBack() 
             return False, ""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                     
