@@ -44,20 +44,20 @@ class UserCommunication(object):
             QMessageBox.critical(self.iface.mainWindow(), self.context, msg)
         else:
             print(msg)
-    
+
     def show_error(self, msg, e):
         if self.iface is not None:
-            exc_type, exc_obj, exc_tb = sys.exc_info() 
-            filename = exc_tb.tb_frame.f_code.co_filename          
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            filename = exc_tb.tb_frame.f_code.co_filename
             function = exc_tb.tb_frame.f_code.co_name
-            line = str(exc_tb.tb_lineno)        
+            line = str(exc_tb.tb_lineno)
             QMessageBox.critical(self.iface.mainWindow(), self.context, msg  + "\n\n" +
                                  "Error:\n   " + str(exc_obj) + "\n\n" +
                                  "In file:\n   " + filename + "\n\n" +
                                  "In function:\n   " +  function  + "\n\n" +
                                  "On line " + line)
         else:
-            print(msg)        
+            print(msg)
 
     def log(self, msg, level):
         if self.iface is not None:

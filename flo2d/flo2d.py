@@ -103,7 +103,7 @@ class Flo2D(object):
         self.project.readProject.connect(self.load_gpkg_from_proj)
 
         self.uc.clear_bar_messages()
-        
+
     def tr(self, message):
         """
         Get the translation for a string using Qt translation API.
@@ -125,34 +125,34 @@ class Flo2D(object):
 
         self.f2d_widget.grid_tools.setup_connection()
         self.f2d_widget.profile_tool.setup_connection()
-        
+
         self.f2d_widget.bc_editor.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs()
-        
+
         self.f2d_widget.ic_editor.populate_cbos()
-        
+
         self.f2d_widget.street_editor.setup_connection()
         self.f2d_widget.street_editor.populate_streets()
-        
+
         self.f2d_widget.struct_editor.populate_structs()
-        
+
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
-        
+
         self.f2d_widget.channels_editor.setup_connection()
-#         self.f2d_widget.channels_editor.rain_properties()  
-     
+#         self.f2d_widget.channels_editor.rain_properties()
+
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()
-        
+
         self.f2d_widget.fpxsec_editor.setup_connection()
-        
+
         self.f2d_widget.storm_drain_editor.setup_connection()
-        
+
         self.f2d_widget.fpxsec_editor.populate_cbos()
-        
+
         self.f2d_widget.infil_editor.setup_connection()
-        
+
         self.f2d_widget.swmm_editor.setup_connection()
 
     def add_action(
@@ -199,31 +199,31 @@ class Flo2D(object):
             text=self.tr(u'Settings'),
             callback=self.show_settings,
             parent=self.iface.mainWindow())
-  
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/run_flopro.png'),
             text=self.tr(u'Run Simulation'),
             callback=self.run_flopro,
             parent=self.iface.mainWindow())
-  
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
             text=self.tr(u'Import from GeoPackage'),
             callback=lambda: self.import_from_gpkg(),
             parent=self.iface.mainWindow())
-  
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/import_gds.svg'),
             text=self.tr(u'Import GDS files'),
             callback=lambda: self.import_gds(),
             parent=self.iface.mainWindow())
-  
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
             callback=lambda: self.export_gds(),
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/import_ras.svg'),
             text=self.tr(u'Import RAS geometry'),
@@ -241,31 +241,31 @@ class Flo2D(object):
             text=self.tr(u'Convert Schematic Layers to User Layers'),
             callback=lambda: self.schematic2user(),
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
             text=self.tr(u'Channel Profile'),
             callback=self.channel_profile,    # Connects to 'channel_profile' method, via QAction triggered.connect(callback)
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/info_tool.svg'),
             text=self.tr(u'Info Tool'),
             callback=self.identify,
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/grid_info_tool.svg'),
             text=self.tr(u'Grid Info Tool'),
             callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/evaporation_editor.svg'),
             text=self.tr(u'Evaporation Editor'),
             callback=lambda: self.show_evap_editor(),
             parent=self.iface.mainWindow())
- 
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/set_levee_elev.svg'),
             text=self.tr(u'Levee Elevation Tool'),
@@ -277,13 +277,13 @@ class Flo2D(object):
             text=self.tr(u'HAZUS'),
             callback=lambda: self.show_hazus_dialog(),
             parent=self.iface.mainWindow())
-         
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/help_contents.svg'),
             text=self.tr(u'FlO-2D Help'),
             callback=self.show_help,
-            parent=self.iface.mainWindow()) 
-        
+            parent=self.iface.mainWindow())
+
         self.iface.mainWindow().setWindowTitle("No project selected")
 
     def create_f2d_dock(self):
@@ -293,21 +293,21 @@ class Flo2D(object):
         self.f2d_widget.setSizeHint(350, 600)
         self.f2d_dock.setWidget(self.f2d_widget)
         self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
-        
+
     @staticmethod
     def f2d_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('dock/area', area)
-        
+
     def create_f2d_plot_dock(self):
-        self.f2d_plot_dock = QgsDockWidget()    # The QDockWidget class provides a widget that can be docked inside 
+        self.f2d_plot_dock = QgsDockWidget()    # The QDockWidget class provides a widget that can be docked inside
                                                 # a QMainWindow or floated as a top-level window on the desktop.
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
         self.f2d_plot.setSizeHint(500, 200)
         self.f2d_plot_dock.setWidget(self.f2d_plot)  # Sets 'f2d_plot_dock' as wrapper its child 'f2d_plot'
-        self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)         
-        
+        self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
+
     @staticmethod
     def f2d_table_dock_save_area(area):
         s = QSettings('FLO2D')
@@ -325,7 +325,7 @@ class Flo2D(object):
     def f2d_plot_dock_save_area(area):
         s = QSettings('FLO2D')
         s.setValue('plot_dock/area', area)
-   
+
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
         self.f2d_grid_info_dock.setWindowTitle(u'FLO-2D Grid Info')
@@ -333,7 +333,7 @@ class Flo2D(object):
         self.f2d_grid_info.setSizeHint(350, 30)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
-        
+
     @staticmethod
     def f2d_grid_info_dock_save_area(area):
         s = QSettings('FLO2D')
@@ -388,15 +388,15 @@ class Flo2D(object):
             if self.f2d_widget.ic_editor is not None:
                 self.f2d_widget.ic_editor.close()
                 del self.f2d_widget.ic_editor
-                
+
             if self.f2d_widget.rain_editor is not None:
                 self.f2d_widget.rain_editor.close()
                 del self.f2d_widget.rain_editor
-                
+
             if self.f2d_widget.channels_editor is not None:
                 self.f2d_widget.channels_editor.close()
-                del self.f2d_widget.channels_editor 
-              
+                del self.f2d_widget.channels_editor
+
             if self.f2d_widget.fpxsec_editor is not None:
                 self.f2d_widget.fpxsec_editor.close()
                 del self.f2d_widget.fpxsec_editor
@@ -420,7 +420,7 @@ class Flo2D(object):
                 del self.f2d_widget.storm_drain_editor
             if self.f2d_widget.grid_tools is not None:
                 self.f2d_widget.grid_tools.close()
-                del self.f2d_widget.grid_tools        
+                del self.f2d_widget.grid_tools
 
             self.f2d_widget.save_collapsible_groups()
             self.f2d_widget.close()
@@ -489,8 +489,8 @@ class Flo2D(object):
 #             self.gutils = dlg_settings.gutils
 #             self.crs = dlg_settings.crs
 #             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-#             self.setup_dock_widgets() 
-            
+#             self.setup_dock_widgets()
+
     def run_flopro(self):
         dlg = SimulationDialog(self.iface)
         ok = dlg.exec_()
@@ -528,7 +528,7 @@ class Flo2D(object):
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
-            
+
         # old_gpkg = self.read_proj_entry('gpkg')
         # if old_gpkg:
         #     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
@@ -544,7 +544,7 @@ class Flo2D(object):
         n_found = 0
         self.files_not_imported = ""
         n_not_found = 0
-        
+
         for call in calls:
             dat = call.split('_')[-1].upper() + '.DAT'
             if call.startswith('import') and self.f2g.parser.dat_files[dat] is None:
@@ -554,7 +554,7 @@ class Flo2D(object):
             else:
                 self.files_imported += dat + '\n'
                 pass
-            
+
             try:
                 start_time = time.time()
                 method = getattr(self.f2g, call)
@@ -565,7 +565,7 @@ class Flo2D(object):
                     self.uc.log_info(traceback.format_exc())
                 else:
                     raise
-       
+
     @connection_required
     def import_gds(self):
         """
@@ -623,67 +623,67 @@ class Flo2D(object):
                 else:
                     self.uc.bar_info('Import cancelled', dur=3)
                     return
-                
+
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs)
-            ok = dlg_components.exec_()   
+            ok = dlg_components.exec_()
             if ok:
                 try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)    
-                    
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
                     if 'Channels' not in dlg_components.components:
                         import_calls.remove('import_chan')
                         import_calls.remove('import_xsec')
-                        
+
                     if 'Reduction Factors' not in dlg_components.components:
-                        import_calls.remove('import_arf')            
-                              
+                        import_calls.remove('import_arf')
+
                     if 'Streets' not in dlg_components.components:
-                        import_calls.remove('import_street')  
-                         
+                        import_calls.remove('import_street')
+
                     if 'Outflow Elements' not in dlg_components.components:
-                        import_calls.remove('import_outflow')  
-                         
+                        import_calls.remove('import_outflow')
+
                     if 'Inflow Elements' not in dlg_components.components:
-                        import_calls.remove('import_inflow') 
-                          
+                        import_calls.remove('import_inflow')
+
                     if 'Levees' not in dlg_components.components:
-                        import_calls.remove('import_levee')  
-                         
+                        import_calls.remove('import_levee')
+
                     if 'Multiple Channels' not in dlg_components.components:
-                        import_calls.remove('import_mult')  
-                         
+                        import_calls.remove('import_mult')
+
                     if 'Breach' not in dlg_components.components:
-                        import_calls.remove('import_breach')  
-                         
+                        import_calls.remove('import_breach')
+
                     # if 'Gutters' not in dlg_components.components:
                     #     import_calls.remove('')
-                         
+
                     if 'Infiltration' not in dlg_components.components:
-                        import_calls.remove('import_infil')  
-                         
+                        import_calls.remove('import_infil')
+
                     if 'Floodplain Cross Sections' not in dlg_components.components:
-                        import_calls.remove('import_fpxsec')  
-                         
+                        import_calls.remove('import_fpxsec')
+
                     if 'Mudflow and Sediment Transport' not in dlg_components.components:
-                        import_calls.remove('import_sed')  
-                         
+                        import_calls.remove('import_sed')
+
                     if 'Evaporation' not in dlg_components.components:
-                        import_calls.remove('import_evapor')  
-                         
+                        import_calls.remove('import_evapor')
+
                     if 'Hydraulic  Structures' not in dlg_components.components:
-                        import_calls.remove('import_hystruc')  
-                         
+                        import_calls.remove('import_hystruc')
+
                     # if 'MODFLO-2D' not in dlg_components.components:
                     #     import_calls.remove('')
-                         
+
                     if 'Rain' not in dlg_components.components:
-                        import_calls.remove('import_rain') 
+                        import_calls.remove('import_rain')
                         import_calls.remove('import_raincell')
-                          
+
                     if 'Storm Drain' not in dlg_components.components:
-                        import_calls.remove('import_swmmflo')  
-                        import_calls.remove('import_swmmflort')  
-                        import_calls.remove('import_swmmoutf')  
+                        import_calls.remove('import_swmmflo')
+                        import_calls.remove('import_swmmflort')
+                        import_calls.remove('import_swmmoutf')
 
                     tables = [
                                 'all_schem_bc',
@@ -763,14 +763,14 @@ class Flo2D(object):
                                 'repl_rat_curves',
                                 'reservoirs',
                                 'sed_group_areas',
-                                'sed_group_cells', 
-                                'sed_groups', 
-                                'sed_rigid_areas', 
-                                'sed_rigid_cells', 
-                                'sed_supply_areas', 
-                                'sed_supply_cells', 
-                                'spatialshallow', 
-                                'spatialshallow_cells', 
+                                'sed_group_cells',
+                                'sed_groups',
+                                'sed_rigid_areas',
+                                'sed_rigid_cells',
+                                'sed_supply_areas',
+                                'sed_supply_cells',
+                                'spatialshallow',
+                                'spatialshallow_cells',
                                 'storm_drains',
                                 'street_elems',
                                 'street_general',
@@ -787,11 +787,11 @@ class Flo2D(object):
                                 'user_bc_points',
                                 'user_bc_polygons',
                                 'user_blocked_areas',
-                                'user_chan_n',            
-                                'user_chan_r', 
-                                'user_chan_t', 
+                                'user_chan_n',
+                                'user_chan_r',
+                                'user_chan_t',
                                 'user_chan_v',
-                                'user_elevation_points', 
+                                'user_elevation_points',
                                 'user_elevation_polygons',
                                 'user_fpxsec',
                                 'user_infiltration',
@@ -810,27 +810,27 @@ class Flo2D(object):
                                 'user_xsections',
                                 'wstime',
                                 'wsurf',
-                                'xsec_n_data'                                       
-                            ]                        
-                    
-                    for table in tables: 
-                        self.gutils.clear_tables(table)   
-                        
+                                'xsec_n_data'
+                            ]
+
+                    for table in tables:
+                        self.gutils.clear_tables(table)
+
                     self.call_methods(import_calls, True)   # The strings list 'export_calls', contains the names of
                                                             # the methods in the class Flo2dGeoPackage to import (read) the
                                                             # FLO-2D .DAT files
-           
+
                     # save CRS to table cont
                     self.gutils.set_cont_par('PROJ', self.crs.toProj4())
-           
+
                     # load layers and tables
                     self.load_layers()
                     self.uc.bar_info('Flo2D model imported', dur=3)
                     self.gutils.enable_geom_triggers()
                     if 'import_chan' in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
-                    self.setup_dock_widgets()  
-                    
+                    self.setup_dock_widgets()
+
                     # self.lyrs.repaint_layers()
                     #
                     # for layer in self.iface.mapCanvas().layers():
@@ -838,8 +838,8 @@ class Flo2D(object):
                     #
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
-                    
-              
+
+
 
 # def refresh_layers(self):
 #     for layer in qgis.utils.iface.mapCanvas().layers():
@@ -850,7 +850,7 @@ class Flo2D(object):
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_imported != '' or self.files_not_imported != '':
-                        self.uc.show_info("Files used by this project:\n\n" + self.files_imported + "\n\nProject doesn't contain the following files:\n\n" + self.files_not_imported)              
+                        self.uc.show_info("Files used by this project:\n\n" + self.files_imported + "\n\nProject doesn't contain the following files:\n\n" + self.files_not_imported)
 
     @connection_required
     def export_gds(self):
@@ -862,7 +862,7 @@ class Flo2D(object):
         options = {o: v if v is not None else '' for o, v in self.f2g.execute(sql).fetchall()}
         export_calls = [
             'export_cont_toler',
-            'export_tolspatial',            
+            'export_tolspatial',
             'export_mannings_n_topo',
             'export_inflow',
             'export_outflow',
@@ -991,18 +991,18 @@ class Flo2D(object):
     def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface)
-            save = dlg_control.exec_()   
+            save = dlg_control.exec_()
             if save:
                 try:
                     dlg_control.save_parameters_JJ()
                     self.uc.bar_info('Parameters saved!', dur=3)
                 except Exception as e:
-                    self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)    
-                    return                 
+                    self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
+                    return
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)     
-              
+            self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
+
     @connection_required
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
@@ -1128,14 +1128,14 @@ class Flo2D(object):
     def show_hazus_dialog(self):
         if self.gutils.is_table_empty('grid'):
            self.uc.bar_warn('There is no grid! Please create it before running tool.')
-           return  
-       
+           return
+
         s = QSettings()
         project_dir = s.value('FLO-2D/last_flopro_project', '')
         if not os.path.isfile(project_dir + '\DEPFP.OUT'):
             self.uc.show_warn("File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"+ project_dir)
-            pass   
-        
+            pass
+
         lyrs = self.lyrs.list_group_vlayers()
         n_polys = 0
         for l in lyrs:
@@ -1143,19 +1143,19 @@ class Flo2D(object):
                 n_polys += 1
         if n_polys == 0:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn('There are not any polygon layers selected (or visible)!') 
+            self.uc.bar_warn('There are not any polygon layers selected (or visible)!')
             return
 
         self.iface.mainWindow().setWindowTitle( s.value('FLO-2D/lastGpkgDir', '') )
-                
+
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
-        save = dlg_hazus.exec_()   
+        save = dlg_hazus.exec_()
         if save:
             try:
                  self.uc.bar_info("Hazus Flooding Analysis performed!")
             except Exception as e:
                 self.uc.bar_warn("Could not compute Hazus Flooding Analysis!")
-                return  
+                return
 
     def schematize_levees(self):
         """
@@ -1210,7 +1210,7 @@ class Flo2D(object):
         self.canvas.setMapTool(self.channel_profile_tool)  # 'channel_profile_tool' is an instance of ChannelProfile class,
                                                            # created on loading the plugin, and to be used to plot channel
                                                            # profiles using a subtool in the FLO-2D tool bar.
-                                                           # The plots are based from data from the 'chan', 'cham_elems'      
+                                                           # The plots are based from data from the 'chan', 'cham_elems'
                                                            # schematic layers.
         self.channel_profile_tool.update_lyrs_list()
 

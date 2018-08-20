@@ -25,7 +25,6 @@ from qgis.core import (
 )
 
 from qgis.gui import QgsRubberBand
-
 from utils import is_number, get_file_path
 from errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
 from user_communication import UserCommunication
@@ -419,11 +418,11 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-            
+
 
           # Infiltration Layers
 
-            
+
             ('infil_areas_green', {
                 'name': 'Areas Green Ampt',
                 'sgroup': 'Infiltration layers',
@@ -480,7 +479,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'readonly': True
             }),
-            
+
 
           # Tables:
 
@@ -490,7 +489,7 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
-            }),                     
+            }),
             ('tolspatial_cells', {
                 'name': 'Tolerance Cells',
                 'sgroup': 'Tables',
@@ -504,28 +503,28 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),   
+            }),
             ('spatialshallow_cells', {
                 'name': 'Shallow-n Cells',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),    
+            }),
             ('gutter_cells', {
                 'name': 'Gutter Cells',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),  
+            }),
             ('gutter_globals', {
                 'name': 'Gutter Globals',
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }), 
+            }),
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': 'Tables',
@@ -612,14 +611,14 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
-            }),   
+            }),
             ('buildings_stats', {
                 'name': 'Buildings Statistics',
                 'sgroup': 'Tables',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
-            }),  
+            }),
 
           # Rain Tables:
 
@@ -664,7 +663,7 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),       
+            }),
 
           # Calibration Data:
 
@@ -711,7 +710,7 @@ class Layers(QObject):
                 'visible': False,
                 'readonly': False
             }),
-            
+
 
           # Sediment Transport:
 
@@ -797,8 +796,8 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }), 
-            
+            }),
+
             ('user_chan_v', {
                 'name': 'User Cross Sections (user_chan_v)',
                 'sgroup': 'Channel Tables',
@@ -806,8 +805,8 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }), 
-                                    
+            }),
+
             ('user_chan_t', {
                 'name': 'User Cross Sections (user_chan_t)',
                 'sgroup': 'Channel Tables',
@@ -815,9 +814,9 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),             
-            
-            
+            }),
+
+
             ('user_chan_n', {
                 'name': 'User Cross Sections (user_chan_n)',
                 'sgroup': 'Channel Tables',
@@ -825,7 +824,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }), 
+            }),
             ('user_xsec_n_data', {
                 'name': 'User Cross Sections Data (user_xsec_n_data)',
                 'sgroup': 'Channel Tables',
@@ -833,7 +832,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),  
+            }),
             ('chan_r', {
                 'name': ' Cross Sections (chan-r) Schematized',
                 'sgroup': 'Channel Tables',
@@ -841,7 +840,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),             
+            }),
              ('chan_v', {
                 'name': ' Cross Sections (chan_v) Schematized',
                 'sgroup': 'Channel Tables',
@@ -849,7 +848,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),  
+            }),
             ('chan_t', {
                 'name': ' Cross Sections (chan_t) Schematized',
                 'sgroup': 'Channel Tables',
@@ -857,7 +856,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),                                
+            }),
             ('chan_n', {
                 'name': ' Cross Sections (chan_n) Schematized',
                 'sgroup': 'Channel Tables',
@@ -865,7 +864,7 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),               
+            }),
             ('xsec_n_data', {
                 'name': 'Schematized Cross Sections Data (xsec_n_data)',
                 'sgroup': 'Channel Tables',
@@ -873,14 +872,14 @@ class Layers(QObject):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),  
+            }),
             ('chan_wsel', {
                 'name': 'Channel Initial Flow Depths (chan_wsel)',
                 'sgroup': "Channel Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            }),             
+            }),
             ('noexchange_chan_cells', {
                 'name': 'No-Exchange Channel Cells',
                 'sgroup': "Channel Tables",
@@ -894,8 +893,8 @@ class Layers(QObject):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            })            
-            
+            })
+
         ])
         # set QGIS layer (qlyr) to None for each table
         for lyr in self.data:
@@ -912,7 +911,7 @@ class Layers(QObject):
                 msg = 'Unable to load layer {}'.format(name)
                 self.uc.show_warn(msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool.")
                 raise Flo2dLayerInvalid(msg)
-                
+
             start_time = time.time()
             QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
             self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
@@ -1066,7 +1065,7 @@ class Layers(QObject):
             layeritem = None
             if gr and name:
                 layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
-    
+
                 for layer in layers:
                     layeritem = gr.findLayer(layer.id())
                     if not layeritem:
@@ -1077,7 +1076,7 @@ class Layers(QObject):
                 pass
             return layeritem
         except TypeError:
-            self.uc.bar_warn('ERROR 12117.0602')        
+            self.uc.bar_warn('ERROR 12117.0602')
 
     def list_group_vlayers(self, group=None, only_visible=True, skip_views=False):
         if not group:
@@ -1119,10 +1118,10 @@ class Layers(QObject):
             lyr.triggerRepaint()
         self.lyrs_to_repaint = []
 
-    def refresh_layers(self):            
+    def refresh_layers(self):
         for layer in self.iface.mapCanvas().layers():
-            layer.triggerRepaint()            
-    
+            layer.triggerRepaint()
+
     def connect_lyrs_reload(self, layer1, layer2):
         """
         Reload layer1 and update its extent when layer2 modifications are saved.

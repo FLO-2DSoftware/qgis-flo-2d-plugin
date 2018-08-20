@@ -48,7 +48,7 @@ class ASCProcessor(object):
         return self.header
 
     def rainfall_sampling(self):
-        
+
         for raster_values in rasters2centroids(self.vlayer, None, *self.asc_files):
             yield raster_values
 

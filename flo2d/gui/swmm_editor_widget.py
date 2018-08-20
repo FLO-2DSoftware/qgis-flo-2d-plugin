@@ -37,7 +37,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
-        self.gutils = None       
+        self.gutils = None
         self.grid_lyr = None
         self.swmm_lyr = None
         self.schema_inlets = None
@@ -67,7 +67,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schema_btn, 'schematize_res.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
-        
+
         set_icon(self.change_name_btn, 'change_name.svg')
         set_icon(self.show_table_btn, 'show_cont_table.svg')
         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
@@ -542,7 +542,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if (rt_fid is None):
             self.uc.bar_warn("No rating table defined!")
             return
-            
+
         self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
         if not self.inlet_series_data:
             return

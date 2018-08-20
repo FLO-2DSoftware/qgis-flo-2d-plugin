@@ -20,9 +20,7 @@ from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from ..flo2dobjects import Rain
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from qgis.gui import QgsDockWidget
 from math import isnan
-from PyQt4.Qt import QDockWidget
 
 uiDialog, qtBaseClass = load_ui('rain_editor')
 
@@ -53,7 +51,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.add_tseries_btn, 'mActionAddRainTimeSeries.svg')
         set_icon(self.add_predefined_tseries_btn, 'mActionOpenFile.svg')
         set_icon(self.rename_tseries_btn, 'change_name.svg')
-        
+
     def block_saving(self):
         try_disconnect(self.rain_data_model.dataChanged, self.save_tseries_data)
 
@@ -81,7 +79,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.moving_storm_grp.toggled.connect(self.set_moving_storm)
         self.moving_storm_speed_dbox.editingFinished.connect(self.set_moving_storm_speed)
         self.rainfall_time_distribution_grp.toggled.connect(self.set_time_series_fid)
-        
+
         self.n_radio.clicked.connect(self.set_n_radio)
         self.e_radio.clicked.connect(self.set_e_radio)
         self.s_radio.clicked.connect(self.set_s_radio)
@@ -97,7 +95,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rainfall_abst_sbox.editingFinished.connect(self.set_rainfall_abst)
         self.show_table_btn.clicked.connect(self.populate_tseries_data)
         self.add_tseries_btn.clicked.connect(self.add_tseries)
-        self.add_predefined_tseries_btn.clicked.connect(self.add_predefined_tseries)  
+        self.add_predefined_tseries_btn.clicked.connect(self.add_predefined_tseries)
         self.remove_tseries_btn.clicked.connect(self.delete_tseries)
         self.rename_tseries_btn.clicked.connect(self.rename_tseries)
         self.rain_data_model.dataChanged.connect(self.save_tseries_data)
@@ -111,28 +109,27 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.con = con
         self.gutils = GeoPackageUtils(self.con, self.iface)
-        
-#         qry = '''SELECT movingstorm FROM rain;'''
-#         row = self.gutils.execute(qry).fetchone()
-#         if is_number(row[0]):
-#             if row[0] == '0':
-#                 self.moving_storm_chbox.setChecked(False)  
-#             else:
-#                 self.moving_storm_chbox.setChecked(True) 
-                         
+
+        # qry = '''SELECT movingstorm FROM rain;'''
+        # row = self.gutils.execute(qry).fetchone()
+        # if is_number(row[0]):
+        #     if row[0] == '0':
+        #         self.moving_storm_chbox.setChecked(False)
+        #     else:
+        #         self.moving_storm_chbox.setChecked(True)
+
         qry = '''SELECT value FROM cont WHERE name = 'IRAIN';'''
         row = self.gutils.execute(qry).fetchone()
         if is_number(row[0]):
             if row[0] == '0':
                 self.simulate_rain_grp.setChecked(False)
-            else: 
-                self.simulate_rain_grp.setChecked(True)   
-          
+            else:
+                self.simulate_rain_grp.setChecked(True)
+
         self.rain = Rain(self.con, self.iface)
         self.create_plot()
 
     def import_rainfall(self):
-
         try:
             s = QSettings()
             last_dir = s.value('FLO-2D/lastASC', '')
@@ -142,12 +139,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 directory=last_dir)
             if not asc_dir:
                 return
-            s.setValue('FLO-2D/lastASC', asc_dir)  
+            s.setValue('FLO-2D/lastASC', asc_dir)
 
             try:
                 grid_lyr = self.lyrs.data['grid']['qlyr']
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                asc_processor = ASCProcessor(grid_lyr, asc_dir) # as_processor, an instance of the ASCProcessor class, 
+                asc_processor = ASCProcessor(grid_lyr, asc_dir) # as_processor, an instance of the ASCProcessor class,
                 head_qry = 'INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);'
                 data_qry = 'INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);'
                 self.gutils.clear_tables('raincell', 'raincell_data')
@@ -166,13 +163,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn('Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file missing?')            
+                self.uc.bar_warn('Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file missing?')
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Importing Rainfall Data failed! ({0}) : {1}".format(e.errno, e.strerror))
-
 
     def export_rainfall_to_binary_hdf5(self):
         try:
@@ -219,49 +215,49 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def rain_properties(self):
         if not self.rain:
             return
-        
-        row = self.rain.get_row()  
-              
+
+        row = self.rain.get_row()
+
         if row['movingstorm'] == 1:
             self.moving_storm_grp.setChecked(True)
         else:
-            self.moving_storm_grp.setChecked(False)        
-        
+            self.moving_storm_grp.setChecked(False)
+
         if self.gutils.get_cont_par('IRAIN') == '1':
             self.simulate_rain_grp.setChecked(True)
         else:
             self.simulate_rain_grp.setChecked(False)
-            
+
         if row['irainreal'] == 1:
             self.realtime_rainfall_grp.setChecked(True)
         else:
             self.realtime_rainfall_grp.setChecked(False)
-            
+
         if row['irainbuilding'] == 1:
             self.building_chbox.setChecked(True)
         else:
             self.building_chbox.setChecked(False)
-        
+
         if row['irainarf'] == 1:
             self.spatial_variation_grp.setChecked(True)
         else:
             self.spatial_variation_grp.setChecked(False)
-            
+
         if is_number(row['tot_rainfall']):
             self.total_rainfall_sbox.setValue(float((row['tot_rainfall'])))
         else:
             self.total_rainfall_sbox.setValue(0)
-            
+
         if is_number(row['rainabs']):
             self.rainfall_abst_sbox.setValue(float(row['rainabs']))
         else:
             self.rainfall_abst_sbox.setValue(0)
-            
+
         if is_number(row['rainspeed']):
             self.moving_storm_speed_dbox.setValue(float((row['rainspeed'])))
         else:
-            self.moving_storm_speed_dbox.setValue(0)              
-            
+            self.moving_storm_speed_dbox.setValue(0)
+
         self.populate_tseries()
         idx = self.tseries_cbo.findData(self.rain.series_fid)
         self.tseries_cbo.setCurrentIndex(idx)
@@ -277,10 +273,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def add_tseries(self):
         if not self.rain:
             return
-        self.rain.add_time_series()         
+        self.rain.add_time_series()
         self.populate_tseries()
-#         self.tseries_cbo.setCurrentIndex(len(self.tseries_cbo)-1)   
-        
+        # self.tseries_cbo.setCurrentIndex(len(self.tseries_cbo)-1)
 
     def add_predefined_tseries(self):
         self.uc.clear_bar_messages()
@@ -302,8 +297,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 tail = os.path.splitext(os.path.basename(file))[0]
                 self.rain.add_time_series(tail, True)
                 self.read_predefined_tseries_data(file)
-                self.populate_tseries()                 
-                         
+                self.populate_tseries()
+
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Importing predefined time series finished!')
         except Exception as e:
@@ -322,14 +317,14 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         par = self.single_parser(filename)
         data = [row for row in par]
         return data
- 
+
     def single_parser(self, file):
         with open(file, 'r') as f1:
             for line in f1:
                 row = line.split()
                 if row:
-                    yield row     
-                     
+                    yield row
+
     def delete_tseries(self):
         if not self.rain:
             return
@@ -381,8 +376,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.tview.setColumnWidth(col, 100)
         for i in range(self.rain_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
-        self.rain.set_row() # Inserts or replaces values in table 'rain'  
-        self.update_plot()      
+        self.rain.set_row() # Inserts or replaces values in table 'rain'
+        self.update_plot()
 
     def save_tseries_data(self):
         """
@@ -418,15 +413,14 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.d2.append(m_fdata(self.rain_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
-
     def raster_rain(self):
         if self.gutils.is_table_empty('user_model_boundary'):
             self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
             return
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
-            return      
-        
+            return
+
         cell_size = self.get_cell_size()
         dlg = SamplingRainDialog(self.con, self.iface, self.lyrs, cell_size)
         ok = dlg.exec_()
@@ -438,23 +432,23 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             if not self.gutils.is_table_empty('rain_arf_cells'):
                 q = 'There are some Rain ARF cells already defined in the database. Overwrite them?'
                 if not self.uc.question(q):
-                    return        
+                    return
                 del_cells = 'DELETE FROM rain_arf_cells;'
-                self.gutils.execute(del_cells)             
+                self.gutils.execute(del_cells)
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             res = dlg.probe_rain()
-            
-            delete_null = '''DELETE FROM rain_arf_cells WHERE arf IS NULL;''' 
-            self.gutils.execute(delete_null)             
+
+            delete_null = '''DELETE FROM rain_arf_cells WHERE arf IS NULL;'''
+            self.gutils.execute(delete_null)
             QApplication.restoreOverrideCursor()
-            msg = 'Rain ARF sampling performed!.\n\n' 
+            msg = 'Rain ARF sampling performed!.\n\n'
             msg += 'Data was stored in the "Rain ARF Cells" layer.\n'
             msg += 'Each sampled cell was assigned a rainfall depth area reduction value.\n'
             msg += 'They will be saved in the RAIN.DAT FLO-2D file as lines 5 if the\n'
             msg += '"Spatial Variation (Depth Area Reduction)" checkbox is toggled.'
             self.uc.show_info(msg)
-            
+
 #             if res:
 #                 dlg.show_probing_result_info()
         except Exception as e:
@@ -528,21 +522,20 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         else:
             cur_ts_idx = self.tseries_cbo.currentIndex()
             cur_ts_fid = self.tseries_cbo.itemData(cur_ts_idx)
-            self.rain.series_fid = cur_ts_fid 
+            self.rain.series_fid = cur_ts_fid
         self.rain.set_row()
-        
+
     def set_moving_storm(self):
         if not self.rain:
             return
         self.rain.movingstorm = self.moving_storm_grp.isChecked()
         self.rain.set_row()
-        
+
     def set_moving_storm_speed(self):
         if not self.rain:
             return
         self.rain.rainspeed = self.moving_storm_speed_dbox.value()
         self.rain.set_row()
-
 
     def set_n_radio(self):
         if not self.rain:

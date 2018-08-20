@@ -332,7 +332,7 @@ class ParseDAT(object):
         bank = self.dat_files['CHANBANK.DAT']
         xsec = self.dat_files['XSEC.DAT']
         par = self.single_parser(chan)  # Iterator to deliver lines of CHAN.DAT one by one.
-        parbank = self.single_parser(bank)  
+        parbank = self.single_parser(bank)
         if xsec is not None:
             parxs = (['{0}'.format(xs[-1])] for xs in self.single_parser(xsec) if xs[0] == 'X')
         else:

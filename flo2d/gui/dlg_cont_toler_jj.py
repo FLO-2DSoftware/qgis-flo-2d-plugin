@@ -20,11 +20,13 @@ uiDialog, qtBaseClass = load_ui('cont_toler_jj')
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+
     def _fromUtf8(s):
         return s
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig, _encoding)
 except AttributeError:
@@ -101,7 +103,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             for key, values in self.PARAMS.items():
                 if key ==  'COURCHAR_C' or key == 'COURCHAR_T':
                     continue
-              
+
                 db_val = self.gutils.get_cont_par(key)
                 if db_val is None:
                     db_val = 0
@@ -109,14 +111,14 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     db_val = 1
                 else:
                     db_val = float(db_val)
-                    
-                if key == 'MUD': 
+
+                if key == 'MUD':
                     _mud = True if db_val == 1 else False
                     continue
-                if key ==  'ISED':
+                if key == 'ISED':
                     _sed = True if db_val == 1 else False
                     continue
-                
+
                 widget = getattr(self, key)
                 if isinstance(widget, QCheckBox):
                     if db_val == 1:
@@ -128,19 +130,19 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     widget.setValue(db_val)
                 else:
                     widget.setCurrentIndex(db_val)
-                      
-            widget = getattr(self, 'ISED')               
+
+            widget = getattr(self, 'ISED')
             if _mud and not _sed:
                 widget.setCurrentIndex(0)
             elif not _mud and _sed:
-                widget.setCurrentIndex(1)  
-            else:               
-                widget.setCurrentIndex(2)  
-                
+                widget.setCurrentIndex(1)
+            else:
+                widget.setCurrentIndex(2)
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error('ERROR 310718.1942: error populating control variables dialog.'
-                               +'\n__________________________________________________', e)     
+                               +'\n__________________________________________________', e)
 
     def save_parameters_JJ(self):
         try:
@@ -152,18 +154,18 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             if val == 0:
                 _mud = 1
             elif val == 1:
-                _sed = 1  
-            
+                _sed = 1
+
             for key in self.PARAMS.keys():
                 if key ==  'COURCHAR_C':
                     val = 'C'
                 elif key == 'COURCHAR_T':
-                    val = 'T'  
+                    val = 'T'
                 elif key == 'MUD':
                     val = _mud
                 elif key == 'ISED':
                     val = _sed
-                else:                      
+                else:
                     widget = getattr(self, key)
                     if isinstance(widget, QCheckBox):
                         if key == 'COURCHAR_C':
@@ -172,12 +174,12 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                             val = 'T' if widget.isChecked() else None
                         else:
                             val = 1 if widget.isChecked() else 0
-        
+
                     elif isinstance(widget, QDoubleSpinBox):
                         val = widget.value()
                     else:
                         val = widget.currentIndex()
-           
+
                 self.gutils.set_cont_par(key, val)
 
         except Exception as e:

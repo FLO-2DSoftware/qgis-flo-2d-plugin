@@ -57,7 +57,7 @@ class XSECInterpolatorExecutor(object):
 
     def run(self):
         return self.execute_interpolator()
-        
+
 
 class ChanRightBankExecutor(object):
 
@@ -73,6 +73,6 @@ class ChanRightBankExecutor(object):
             proc = Popen(self.chanrightbank_exe)
             proc.wait()
             return proc.returncode
-        
+
     def run(self):
         return self.execute_chanrightbank()

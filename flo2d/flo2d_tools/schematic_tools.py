@@ -334,8 +334,8 @@ def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get
     """
     Generator for finding grid centroids coordinates for each schematized line segment.
     Calculations are done using Bresenham's Line Algorithm.
-    
-    Wikipedia: Bresenham's line algorithm is an algorithm that determines the points of an n-dimensional raster 
+
+    Wikipedia: Bresenham's line algorithm is an algorithm that determines the points of an n-dimensional raster
     that should be selected in order to form a close approximation to a straight line between two points.
     """
     line_features = lines.getFeatures() if feats_only is False else lines
@@ -614,20 +614,20 @@ class ChannelsSchematizer(GeoPackageUtils):
         feat_xs = []
         for feat in self.user_lbank_lyr.getFeatures():  # For each channel segment.
             # Getting sorted cross section
-            sorted_xs = self.get_sorted_xs(feat) # Selects XSs than intersect this channel segment, orders them from 
-                                                # beginning of segment, checks than there are more than 2 CS, and 
+            sorted_xs = self.get_sorted_xs(feat) # Selects XSs than intersect this channel segment, orders them from
+                                                # beginning of segment, checks than there are more than 2 CS, and
                                                 # the first one intersects the line.
             feat_xs.append((feat, sorted_xs))
-            
+
         self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
         for feat, sorted_xs in feat_xs: # For each channel segment and the XSs that intersect them.
             lbank_fid = feat.id()
             lbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
-            # Getting left edge. 
-            self.schematize_leftbanks(feat) # Created schematized geometric 'chan' table, with a polyline of all the 
+            # Getting left edge.
+            self.schematize_leftbanks(feat) # Created schematized geometric 'chan' table, with a polyline of all the
                                             # centroids of the cells that intersect this channel segment line.
-            self.banks_data.append((lbank_fid, lbank_geom, sorted_xs)) # 'banks_data' contains for each channel segment (lbank_fid): 
-                                                                    # the polyline of centroids of cells and the list of XSs that 
+            self.banks_data.append((lbank_fid, lbank_geom, sorted_xs)) # 'banks_data' contains for each channel segment (lbank_fid):
+                                                                    # the polyline of centroids of cells and the list of XSs that
                                                                     # intersect the channel segment.
         self.schematized_lbank_lyr.triggerRepaint() # Remember to repaint. Will be repainted by QGIS when needed to force the update.
 
@@ -639,8 +639,8 @@ class ChannelsSchematizer(GeoPackageUtils):
         for feat in self.user_rbank_lyr.getFeatures():  # For each user right bank segment.
             rbank_fid = feat.id()
             rbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
-            # Getting left edge. 
-            self.schematize_rightbanks(feat) # Created schematized geometric 'rbank' table, with a polyline of all the 
+            # Getting left edge.
+            self.schematize_rightbanks(feat) # Created schematized geometric 'rbank' table, with a polyline of all the
                                              # centroids of the cells that intersect this right segment line.
 
         self.schematized_rbank_lyr.triggerRepaint() # Remember to repaint. Will be repainted by QGIS when needed to force the update.
@@ -652,18 +652,18 @@ class ChannelsSchematizer(GeoPackageUtils):
         insert_chan = '''
         INSERT INTO chan_elems (geom, fid, rbankgrid, seg_fid, nr_in_seg, user_xs_fid, interpolated) VALUES
         (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
-        for lbank_fid, lbank_geom, sorted_xs in self.banks_data: # For each channel segment get its id (lbanl_fid), 
-                                                                # polyline of centroids of cells, and user cross sections 
+        for lbank_fid, lbank_geom, sorted_xs in self.banks_data: # For each channel segment get its id (lbanl_fid),
+                                                                # polyline of centroids of cells, and user cross sections
                                                                 # that intersect channel segment.
             req = QgsFeatureRequest().setFilterExpression('"user_lbank_fid" = {}'.format(lbank_fid))
-            lsegment_feat = next(self.schematized_lbank_lyr.getFeatures(req)) # 
-            lsegment_points = lsegment_feat.geometry().asPolyline() # List of the coordinates (x,y) of the vertices of the 
-                                                                    # polyline of the schematized left bank line 
+            lsegment_feat = next(self.schematized_lbank_lyr.getFeatures(req)) #
+            lsegment_points = lsegment_feat.geometry().asPolyline() # List of the coordinates (x,y) of the vertices of the
+                                                                    # polyline of the schematized left bank line
                                                                     # (where the tip of the arrow is).
             # Finding left crossing points
             left_points = self.bank_stations(sorted_xs, lbank_geom)
             # Finding closest points to channel segment
-            left_nodes = self.closest_nodes(lsegment_points, left_points) # Coordinates (x,y) of centroid of cells intersecting 
+            left_nodes = self.closest_nodes(lsegment_points, left_points) # Coordinates (x,y) of centroid of cells intersecting
                                                                           # nearest point to XS intersection with schematized left bank line.
             vertex_idx = []
             # Snapping user cross sections to channel segment
@@ -671,7 +671,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 vertex_idx.append(idx)
                 move = lnode - xs.geometry().vertexAt(0)
                 end = xs.geometry().vertexAt(1)
-                self.shift_line_geom(xs, move) # Each user cross section 'xs' is moved (shifted) to begin at the 
+                self.shift_line_geom(xs, move) # Each user cross section 'xs' is moved (shifted) to begin at the
                                                # centroid of nearest cell of schematiced left bank.
 
                 geom = xs.geometry()
@@ -717,14 +717,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                 (geom, user_lbank_fid, depinitial, froudc, roughadj, isedn) VALUES 
                 (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?,?,?,?,?);'''
 
-            left_segment = self.centroids_of_cells_intersecting_polyline(left_line.asPolyline()) # Creates list of pairs of coordinates of the cells that 
+            left_segment = self.centroids_of_cells_intersecting_polyline(left_line.asPolyline()) # Creates list of pairs of coordinates of the cells that
                                                                                                 # intersect this left bank line (this channel segment).
             vertices = ','.join(('{0} {1}'.format(*xy) for xy in left_segment))
-            self.execute(insert_left_sql.format(vertices), (fid,0,0,0,0,)) # Initializes this schematized channel segment with a polyline from 
+            self.execute(insert_left_sql.format(vertices), (fid,0,0,0,0,)) # Initializes this schematized channel segment with a polyline from
                                                                            # the vertices calculated from the intersected centroids of cells.
-            qry = '''UPDATE chan SET depinitial = ?, froudc = ?, roughadj = ?, isedn = ? WHERE user_lbank_fid= fid;'''    
+            qry = '''UPDATE chan SET depinitial = ?, froudc = ?, roughadj = ?, isedn = ? WHERE user_lbank_fid= fid;'''
             self.execute(qry, (0,0,0,0)) # Is this necessary? Was not initialized to zeros in previous statement?
-             
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('Error while creating schematic Left banks!.')
@@ -740,11 +740,11 @@ class ChannelsSchematizer(GeoPackageUtils):
             INSERT INTO rbank 
                 (geom, chan_seg_fid) VALUES 
                 (AsGPB(ST_GeomFromText('LINESTRING({0})')), ?);'''
-            right_segment = self.centroids_of_cells_intersecting_polyline(right_line.asPolyline()) # Creates list of pairs of coordinates of the cells that 
+            right_segment = self.centroids_of_cells_intersecting_polyline(right_line.asPolyline()) # Creates list of pairs of coordinates of the cells that
                                                                                                 # intersect this right bank line (this channel segment).
             vertices = ','.join(('{0} {1}'.format(*xy) for xy in right_segment))
-            self.execute(insert_right_sql.format(vertices), (fid,)) # Initializes this schematized right segment with a polyline from 
-                                                                    # the vertices calculated from the intersected centroids of cells.                                                                   
+            self.execute(insert_right_sql.format(vertices), (fid,)) # Initializes this schematized right segment with a polyline from
+                                                                    # the vertices calculated from the intersected centroids of cells.
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('ERROR 220718.0741: Error while creating schematic Right banks!.')
@@ -1004,7 +1004,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             rank = (SELECT rank FROM user_left_bank WHERE fid = chan.user_lbank_fid);
         '''
         self.execute(update_chan)
- 
+
     def copy_features_from_user_xsections_layer_to_schematized_xsections_layer(self):
         """
         Assigning properties from user layers.
@@ -1074,7 +1074,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         fcw = (SELECT ucx.fcw FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
         fcd = (SELECT ucx.fcd FROM user_chan_r AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);'''
         self.execute(qry_copy_r)
-        
+
         qry_copy_t = '''UPDATE chan_t SET
         bankell = (SELECT ucx.bankell FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
         bankelr = (SELECT ucx.bankelr FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
@@ -1084,7 +1084,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         zr = (SELECT ucx.zr FROM user_chan_t AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);
         '''
         self.execute(qry_copy_t)
-        
+
         qry_copy_v = '''UPDATE chan_v SET
                 bankell = (SELECT ucx.bankell FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
                 bankelr = (SELECT ucx.bankelr FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
@@ -1104,12 +1104,12 @@ class ChannelsSchematizer(GeoPackageUtils):
                 c22 = (SELECT ucx.c22 FROM user_chan_v AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);
                 '''
         self.execute(qry_copy_v)
-        
+
         qry_copy_n = '''UPDATE chan_n SET
                 nxsecnum = (SELECT ucx.nxsecnum FROM user_chan_n AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid),
                 xsecname = (SELECT ucx.xsecname FROM user_chan_n AS ucx, user_xsections AS ux, chan_elems AS ce WHERE ucx.user_xs_fid = ux.fid AND ce.fid = elem_fid AND ce.user_xs_fid = ucx.user_xs_fid);     '''
         self.execute(qry_copy_n)
-        
+
         self.clear_tables('xsec_n_data')
         qry_copy_n_data = '''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi)
             SELECT

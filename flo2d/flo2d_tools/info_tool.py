@@ -14,7 +14,6 @@
 from collections import OrderedDict
 import functools
 import os
-
 from PyQt4.QtCore import pyqtSignal, QPoint
 from PyQt4.QtGui import QMenu, QAction, QColor, QCursor, QPixmap
 from qgis.core import QgsFeatureRequest

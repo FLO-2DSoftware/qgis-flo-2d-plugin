@@ -77,7 +77,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error('ERROR 290718.1934: error while displaying elevation of cell ' + fid
-                               +'\n____________________________________________', e)                
+                               +'\n____________________________________________', e)
 
     def plot_grid_rainfall(self, feat):
         si = 'inches' if self.gutils.get_cont_par('METRIC') == '0' else 'mm'

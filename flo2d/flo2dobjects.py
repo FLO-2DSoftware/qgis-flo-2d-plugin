@@ -104,7 +104,7 @@ class CrossSection(GeoPackageUtils):
             pass
         else:
             return
-        tab = self.chan_x_tabs[self.type]  
+        tab = self.chan_x_tabs[self.type]
         args = self.table_info(tab, only_columns=True)
         qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
@@ -306,7 +306,7 @@ class ChannelSegment(GeoPackageUtils):
         self.profiles = OrderedDict()
         qry = 'SELECT * FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
         rows = self.execute(qry, (self.fid, )).fetchall()  # self.fid is the segment fid.
-                                                           # 'rows' is a list of all chan_elems features values of 
+                                                           # 'rows' is a list of all chan_elems features values of
                                                            # the selected channel segment.
         self.profiles = OrderedDict()
         sta = sta_start
@@ -378,7 +378,7 @@ class ChannelSegment(GeoPackageUtils):
                 except KeyError:
                     msg = 'Interpolation failed on cross sections with \'fid\': {}!'.format(xsi.row['user_xs_fid'])
                     return False, msg
-                
+
         return True, 'Interpolation successful!'
 
 
@@ -981,15 +981,15 @@ class Rain(GeoPackageUtils):
             name_qry = '''UPDATE rain_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;'''
             self.execute(name_qry, (rowid,))
         else:
-            name_qry = '''UPDATE rain_time_series SET name = ? WHERE fid = ?;'''   
+            name_qry = '''UPDATE rain_time_series SET name = ? WHERE fid = ?;'''
             self.execute(name_qry, (name, rowid,))
-            
+
         self.series_fid = rowid
         if not name:
             self.name = 'Time series {}'.format(rowid)
         else:
-            self.name = name.format(rowid)   
-             
+            self.name = name.format(rowid)
+
         if fetch:
             return self.get_time_series()
 
@@ -997,7 +997,7 @@ class Rain(GeoPackageUtils):
         qry = 'DELETE FROM rain_time_series_data WHERE series_fid = ?;'
         self.execute(qry, (self.series_fid,))
         qry = 'DELETE FROM rain_time_series WHERE fid = ?;'
-        self.execute(qry, (self.series_fid,))        
+        self.execute(qry, (self.series_fid,))
 
     def get_time_series_data(self):
         if not self.series_fid:

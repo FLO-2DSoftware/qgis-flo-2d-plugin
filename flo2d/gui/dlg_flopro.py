@@ -32,7 +32,7 @@ class SimulationDialog(qtBaseClass, uiDialog):
         s = QSettings()
         flo2d_dir = s.value('FLO-2D/last_flopro', '')
         project_dir = s.value('FLO-2D/last_flopro_project', '')
-        self.flo2d_le.setText(flo2d_dir)  
+        self.flo2d_le.setText(flo2d_dir)
         self.project_le.setText(project_dir)
 
     def get_flo2d_dir(self):

@@ -192,15 +192,14 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     if isinstance(obj, QCheckBox):
                         obj.setChecked(bool(val))
                     else:
-                        
+
                         obj.setValue(val)
             self.iglobal.save_imethod()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1818: Could not read infiltration global parameters!", e)
-            
-            
+
     def write_global_params(self):
         qry = '''INSERT INTO infil ({0}) VALUES ({1});'''
         method = self.iglobal.global_imethod

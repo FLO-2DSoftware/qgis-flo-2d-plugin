@@ -11,7 +11,6 @@
 import os
 import math
 import uuid
-
 from PyQt4.QtGui import QMessageBox
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
@@ -219,10 +218,10 @@ class ZonalStatisticsOther(object):
             self.calculation_method = self.calculate_min
         self.gap_raster = os.path.join(self.tmp, 'gap_raster_{0}.tif'.format(self.uid))
         self.filled_raster = os.path.join(self.tmp, 'filled_raster_{0}.tif'.format(self.uid))
-        
+
         if self.grid_field == 'water_elevation':
             self.gutils.execute('UPDATE grid SET water_elevation = NULL;')
-        elif self.grid_field == 'flow_depth':    
+        elif self.grid_field == 'flow_depth':
             self.gutils.execute('UPDATE grid SET flow_depth = NULL;')
 
     def remove_rasters(self):
@@ -303,10 +302,10 @@ class ZonalStatisticsOther(object):
     def set_other(self, elev_fid):
         """
         Setting values inside 'grid' table.
-        """       
+        """
         if self.grid_field == 'water_elevation':
             set_qry = 'UPDATE grid SET water_elevation = ? WHERE fid = ?;'
-        elif self.grid_field == 'flow_depth':       
+        elif self.grid_field == 'flow_depth':
             set_qry = 'UPDATE grid SET flow_depth = ? WHERE fid = ?;'
 
         cur = self.gutils.con.cursor()
@@ -315,7 +314,7 @@ class ZonalStatisticsOther(object):
         self.gutils.con.commit()
 
 
-def debugMsg(msg_string):   
+def debugMsg(msg_string):
     msgBox = QMessageBox()
     msgBox.setText(msg_string)
     msgBox.exec_()
@@ -735,7 +734,7 @@ def calculate_spatial_variable(grid, areas):
     for feat in features:  #for each grid feature
         geom = feat.geometry() #cell square (a polygon)
         fids = index.intersects(geom.boundingBox()) #c
-        for fid in fids:  
+        for fid in fids:
             f = allfeatures[fid]
             fgeom = f.geometry()
             inter = fgeom.intersects(geom)
@@ -760,8 +759,8 @@ def raster2grid(grid, out_raster, request=None):
     for feat in features:
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
-        # ident is the value of the query provided by the identify method of the dataProvider. 
-        if ident.isValid(): 
+        # ident is the value of the query provided by the identify method of the dataProvider.
+        if ident.isValid():
             if is_number(ident.results()[1]):
                 val = round(ident.results()[1], 3)
             else:
@@ -772,13 +771,13 @@ def raster2grid(grid, out_raster, request=None):
 def rasters2centroids(vlayer, request, *raster_paths):
     """
     Generator for probing raster data by centroids.
-    
+
     Parameters:
     -----------
         vlayer: usually the grid layer.
         request:
-        *raster_pathts: list of ASCII files (with path). 
-        
+        *raster_pathts: list of ASCII files (with path).
+
     """
     features = vlayer.getFeatures() if request is None else vlayer.getFeatures(request)
     centroids = []
@@ -786,20 +785,20 @@ def rasters2centroids(vlayer, request, *raster_paths):
         fid = feat.id()
         center_point = feat.geometry().centroid().asPoint()
         centroids.append((fid, center_point))
-    
+
     # 'centroids' has the coordinates (x,y) of the centroids of all features of vlayer (ususlly the grid layer)
     for pth in raster_paths:
         raster_values = []
         rlayer = QgsRasterLayer(pth) # rlayer is an instance of the layer constructed from file pth (from list raster_paths).
                                      # Loads (or assigns a raster style), populates its bands, calculates its extend,
-                                     # determines if the layers is gray, paletted, or multiband, assign sensible 
+                                     # determines if the layers is gray, paletted, or multiband, assign sensible
                                      # defaults for the red, green, blue and gray bands.
         if not rlayer.isValid():
             continue
         raster_provider = rlayer.dataProvider()
         for fid, point in centroids:
             ident = raster_provider.identify(point, QgsRaster.IdentifyFormatValue)
-            # ident is the value of the query provided by the identify method of the dataProvider. 
+            # ident is the value of the query provided by the identify method of the dataProvider.
             if ident.isValid():
                 if is_number(ident.results()[1]):
                     val = round(ident.results()[1], 3)
@@ -862,20 +861,20 @@ def modify_elevation(gutils, grid, elev):
 def evaluate_arfwrf(gutils, grid, areas):
     """
     Calculating and inserting ARF and WRF values into 'blocked_cells' table.
-    
+
     Parameters
     ----------
-    
-    gutils: 
+
+    gutils:
         the GeoPackageUtils class for the database handling:
         creation on cursor objects, their execution, commits to the tables, etc.
-    
+
     grid:
         the grid layer.
-        
+
     areas:
         the user blocked areas.
-        
+
     """
     del_cells = 'DELETE FROM blocked_cells;'
     qry_cells = '''
@@ -884,32 +883,32 @@ def evaluate_arfwrf(gutils, grid, areas):
                 (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
     gutils.execute(del_cells)
     cur = gutils.con.cursor()
-    for row in calculate_arfwrf(grid, areas): 
+    for row in calculate_arfwrf(grid, areas):
         # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
         # with a POINT and the values of arf and wrfs for a single cell
-        
+
         point = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
-        
+
         gpb_qry = qry_cells.format(point)   # This new database command (operation not query) includes the actual point:
                                             #     INSERT INTO blocked_cells
                                             #     (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
                                             #     (AsGPB(ST_GeomFromText('Point (368257 1185486)')),?,?,?,?,?,?,?,?,?,?,?);
-                                            
+
         cur.execute(gpb_qry, row[1:])       # Applies the INSERT command with the data from the "row[1:]" tuple.
-        
+
         gutils.con.commit()                 # Commits operation performed to the table "blocked_cells" using cursor "cur",
-                                            # which means creating (INSERT) a row to the table with the values calculated in "calculate_arfwrf". 
+                                            # which means creating (INSERT) a row to the table with the values calculated in "calculate_arfwrf".
 
 
 def evaluate_spatial_tolerance(gutils, grid, areas):
     """
     Calculating and inserting tolerance values into 'tolspatial_cells' table.
-    """   
+    """
     del_cells = 'DELETE FROM tolspatial_cells;'
     qry_cells = '''
     INSERT INTO tolspatial_cells (area_fid, grid_fid)  VALUES (?,?);'''
-       
-    gutils.execute(del_cells) 
+
+    gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
@@ -923,57 +922,57 @@ def evaluate_spatial_buildings_adjustment_factor(gutils, grid, areas):
 def evaluate_spatial_froude(gutils, grid, areas):
     """
     Calculating and inserting fraude values into 'fpfroude_cells' table.
-    """   
+    """
     del_cells = 'DELETE FROM fpfroude_cells;'
     qry_cells = '''
     INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES (?,?);'''
-    
-    gutils.execute(del_cells) 
+
+    gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
     gutils.con.commit()
- 
- 
+
+
 def evaluate_spatial_shallow(gutils, grid, areas):
     """
     Calculating and inserting shallow-n values into 'spatialshallow_cells' table.
-    """   
+    """
     del_cells = 'DELETE FROM spatialshallow_cells;'
     qry_cells = '''
     INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES (?,?);'''
-    
-    gutils.execute(del_cells) 
+
+    gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
-    gutils.con.commit()     
+    gutils.con.commit()
 
 
 def evaluate_spatial_gutter(gutils, grid, areas):
     """
     Calculating and inserting gutter values into 'gutter_cells' table.
-    """   
+    """
     del_cells = 'DELETE FROM gutter_cells;'
     qry_cells = '''
     INSERT INTO gutter_cells (area_fid, grid_fid)  VALUES (?,?);'''
-    
-    gutils.execute(del_cells) 
+
+    gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
-    gutils.con.commit() 
+    gutils.con.commit()
 
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
     """
     Calculating and inserting noexchange values into 'noexchange_chan_cells' table.
-    """   
+    """
     del_cells = 'DELETE FROM noexchange_chan_cells;'
     qry_cells = '''
     INSERT INTO noexchange_chan_cells (area_fid, grid_fid)  VALUES (?,?);'''
-       
-    gutils.execute(del_cells) 
+
+    gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
@@ -1031,31 +1030,31 @@ def highlight_selected_segment(layer, id):
     for feature in layer.getFeatures():
         if feature.id() == id:
             feat_selection.append(feature.id())
-            break 
-    layer.setSelectedFeatures(feat_selection)  
+            break
+    layer.setSelectedFeatures(feat_selection)
 
 
-def highlight_selected_xsection_a(gutils, layer, xs_id):   
+def highlight_selected_xsection_a(gutils, layer, xs_id):
     qry = '''SELECT id FROM chan_elems WHERE fid = ?;'''
     xs = gutils.execute(qry, (xs_id,)).fetchone()
     feat_selection=[]
     for feature in layer.getFeatures():
         if feature.id() == xs[0]:
             feat_selection.append(feature.id())
-            break 
-    layer.setSelectedFeatures(feat_selection) 
+            break
+    layer.setSelectedFeatures(feat_selection)
 
 
-def highlight_selected_xsection_b(layer, xs_id):   
+def highlight_selected_xsection_b(layer, xs_id):
     feat_selection=[]
     for feature in layer.getFeatures():
         if feature.id() == xs_id:
             feat_selection.append(feature.id())
-            break 
-    layer.setSelectedFeatures(feat_selection) 
+            break
+    layer.setSelectedFeatures(feat_selection)
 
-    
-# def highlight_selected_xsection(layer, xs_id):   
+
+# def highlight_selected_xsection(layer, xs_id):
 #     self.chan_elems = self.lyrs.data['chan_elems']['qlyr']
 #     qry = '''SELECT id FROM chan_elems WHERE fid = ?;'''
 #     xs = self.gutils.execute(qry, (xs_id,)).fetchone()
@@ -1063,8 +1062,8 @@ def highlight_selected_xsection_b(layer, xs_id):
 #     for feature in self.chan_elems.getFeatures():
 #         if feature.id() == xs[0]:
 #             self.feat_selection.append(feature.id())
-#             break 
-#     self.chan_elems.setSelectedFeatures(self.feat_selection) 
+#             break
+#     self.chan_elems.setSelectedFeatures(self.feat_selection)
 
 
 

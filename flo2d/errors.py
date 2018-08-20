@@ -29,7 +29,7 @@ class Flo2dNotString(Flo2dError):
     """
     pass
 
-    
+
 class Flo2dLayerInvalid(Flo2dError):
     """
     Raise when a layer is invalid.

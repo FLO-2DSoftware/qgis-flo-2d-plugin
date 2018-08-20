@@ -58,36 +58,3 @@ class SamplingBuildingsElevationsDialog(qtBaseClass, uiDialog):
         self.field_to_uniformize_cbo.setCurrentIndex(0)
         self.ID_field_cbo.setLayer(self.current_lyr)
         self.ID_field_cbo.setCurrentIndex(0)
-
-
-
-
-
-
-
-
-
-# 
-#     def setup_layer_combos(self):
-#         """
-#         Filter layer and fields combo boxes for polygons and connect fields cbo.
-#         """
-#         self.soil_cbo.clear()
-#         self.land_cbo.clear()
-#         try:
-#             lyrs = self.lyrs.list_group_vlayers()
-#             for l in lyrs:
-#                 if l.geometryType() == QGis.Polygon:
-#                     lyr_name = l.name()
-#                     self.soil_cbo.addItem(lyr_name, l)
-#                     self.land_cbo.addItem(lyr_name, l)
-#         except Exception as e:
-#             pass
-# 
-#     def populate_soil_fields(self, idx):
-#         lyr = self.soil_cbo.itemData(idx)
-#         fields = [f.name() for f in lyr.fields()]
-# 
-#         for c in self.soil_combos:
-#             c.clear()
-#             c.addItems(fields)

@@ -18,7 +18,6 @@ from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt4.QtCore import Qt
 from ..flo2dobjects import ChannelSegment
 
-
 uiDialog, qtBaseClass = load_ui('profile_tool')
 
 

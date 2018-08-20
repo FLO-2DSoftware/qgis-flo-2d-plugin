@@ -56,7 +56,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
         self.cgroups = [
             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
-            self.swmm_editor_grp, self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp, 
+            self.swmm_editor_grp, self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
             self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
         ]
         self.set_collapsible_groups()
@@ -135,7 +135,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
     def setup_storm_drain_editor(self):
         self.storm_drain_editor = StormDrainEditorWidget(self.iface,  self.plot, self.table, self.lyrs)
-        self.storm_drain_editor_lout.addWidget(self.storm_drain_editor)        
+        self.storm_drain_editor_lout.addWidget(self.storm_drain_editor)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:

@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
 import os
 import traceback
 from functools import wraps
@@ -370,7 +369,7 @@ class GeoPackageUtils(object):
     def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
         '''
         Builds a single line in cell "gid" according to "direction" (1 to 8)
-        
+
         '''
         functions = {
             '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
@@ -384,9 +383,9 @@ class GeoPackageUtils(object):
         }
         qry = '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;'''.format(table, field)
         # "qry" ends up as '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "grid" WHERE "fid" = ?;'''
-        
+
         wkt_geom = self.execute(qry, (gid,)).fetchone()[0] # Centriod POINT (x,y) of cell "gid".
-        
+
         xc, yc = [float(i) for i in wkt_geom.strip('POINT()').split()]
         x1, y1, x2, y2 = functions[direction](xc, yc, cellsize*0.48)  # Get 2 points of a line from "functions" dictionary.
 
@@ -581,7 +580,7 @@ class GeoPackageUtils(object):
         if data is not  None:
             gid = data[0]
         else:
-            gid = None    
+            gid = None
         return gid
 
     def grid_value(self, gid, field):
@@ -608,7 +607,7 @@ class GeoPackageUtils(object):
             elif typ == 'V':
                 cur.execute(chan_v, (fid,))
             elif typ == 'T':
-                cur.execute(chan_t, (fid,))    
+                cur.execute(chan_t, (fid,))
             elif typ == 'N':
                 cur.execute(chan_n, (fid,))
             else:
