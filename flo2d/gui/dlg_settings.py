@@ -16,12 +16,12 @@ from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDia
 from qgis.core import QgsCoordinateReferenceSystem, QGis
 from qgis.gui import QgsProjectionSelectionWidget
 
-from flo2d.flo2d_ie.flo2d_parser import ParseDAT
+from ..flo2d_ie.flo2d_parser import ParseDAT
 from ui_utils import load_ui
-from flo2d.errors import Flo2dQueryResultNull
-from flo2d.geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
-from flo2d.user_communication import UserCommunication
-from flo2d.utils import is_number
+from ..errors import Flo2dQueryResultNull
+from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
+from ..user_communication import UserCommunication
+from ..utils import is_number
 
 uiDialog, qtBaseClass = load_ui('settings')
 
@@ -150,11 +150,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
             pass
 
         s.setValue('FLO-2D/lastGpkgDir', os.path.dirname(gpkg_path))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+#         QApplication.setOverrideCursor(Qt.WaitCursor)
         start_time = time.time()
         con = database_create(gpkg_path)
         self.uc.log_info('{0:.3f} seconds => database create'.format(time.time() - start_time))
         if not con:
+            QApplication.restoreOverrideCursor()
             self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
             return
         else:
@@ -241,6 +242,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
         QApplication.restoreOverrideCursor()
+#         QApplication.setOverrideCursor(Qt.ArrowCursor)
         self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
 
     def connect(self, gpkg_path=None):
@@ -283,6 +285,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgPathEdit.setText(self.gutils.path)
         self.read()
         QApplication.restoreOverrideCursor()
+
+#         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def write(self):
         for name, wid in self.widget_map.iteritems():

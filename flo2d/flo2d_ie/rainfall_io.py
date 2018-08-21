@@ -10,7 +10,8 @@
 
 import os
 import numpy as np
-from flo2d.flo2d_tools.grid_tools import rasters2centroids
+from ..flo2d_tools.grid_tools import rasters2centroids
+
 try:
     import h5py
 except ImportError:
@@ -28,9 +29,9 @@ class ASCProcessor(object):
         for f in sorted(os.listdir(asc_dir)):
             fpath = os.path.join(asc_dir, f)
             fpath_lower = fpath.lower()
-            if fpath_lower.endswith('.asc'):
+            if fpath_lower.endswith('.asc'): # Sees if this is a file ending in .asc.
                 self.asc_files.append(fpath)
-            elif fpath_lower.endswith('.rfc'):
+            elif fpath_lower.endswith('.rfc'): # Sees if this is a file ending in .rfc (RainFall Catalogue).
                 self.rfc = fpath
             else:
                 continue
@@ -47,6 +48,7 @@ class ASCProcessor(object):
         return self.header
 
     def rainfall_sampling(self):
+
         for raster_values in rasters2centroids(self.vlayer, None, *self.asc_files):
             yield raster_values
 
@@ -56,7 +58,7 @@ class HDFProcessor(object):
     def __init__(self, hdf_path):
         self.hdf_path = hdf_path
 
-    def export_rainfall(self, header, data):
+    def export_rainfall_to_binary_hdf5(self, header, data):
         with h5py.File(self.hdf_path, 'w') as hdf_file:
             rainintime, irinters, timestamp = header
             hdf_file.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)

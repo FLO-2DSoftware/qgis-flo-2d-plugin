@@ -10,10 +10,10 @@
 
 from qgis.core import QGis
 from ui_utils import load_ui
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 from PyQt4.QtGui import QApplication
-from PyQt4.QtGui import QFileDialog, QDialogButtonBox
+from PyQt4.QtGui import QDialogButtonBox
 
 uiDialog, qtBaseClass = load_ui('sampling_variable_into_grid')
 
@@ -49,20 +49,20 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
                         self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
                     pass
-            
+
             if self.points_cbo.count():
                 grid_lyr = self.lyrs.data['grid']['qlyr']
                 fields = [f.name() for f in grid_lyr.fields()]
                 self.grid_fields_cbo.clear()
                 for f in fields:
                     if f in ["water_elevation", "flow_depth"]:
-                        self.grid_fields_cbo.addItem(f)            
-                self.grid_fields_cbo.setCurrentIndex(0)                 
-    
-                self.populate_fields_cbo(self.points_cbo.currentIndex())                
-            else:    
+                        self.grid_fields_cbo.addItem(f)
+                self.grid_fields_cbo.setCurrentIndex(0)
+
+                self.populate_fields_cbo(self.points_cbo.currentIndex())
+            else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn('There are not any point layers selected (or visible)')             
+                self.uc.bar_warn('There are not any point layers selected (or visible)')
 
         except Exception as e:
             pass

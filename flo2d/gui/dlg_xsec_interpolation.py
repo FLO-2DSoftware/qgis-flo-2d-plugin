@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 from ui_utils import load_ui
-from flo2d.user_communication import UserCommunication
+from ..user_communication import UserCommunication
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QFileDialog, QDialogButtonBox
 
@@ -31,13 +31,13 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         self.non_surveyed_lbl.setText(str(xs_survey[1]))
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
         s = QSettings()
-        outdir =  s.value('FLO-2D/lastGdsDir', '')       
-        self.directory_lbl.setText("(directory: " + outdir + ")") 
+        outdir = s.value('FLO-2D/lastGdsDir', '')
+        self.directory_lbl.setText("(directory: " + outdir + ")")
 
     def set_previous_paths(self):
         s = QSettings()
         interpolation_dir = s.value('FLO-2D/last_flopro', '')
-#         interpolation_dir = s.value('FLO-2D/last_interpolation', '')
+        # interpolation_dir = s.value('FLO-2D/last_interpolation', '')
         project_dir = s.value('FLO-2D/lastGdsDir', '')
         self.interpolation_le.setText(interpolation_dir)
         self.project_le.setText(project_dir)

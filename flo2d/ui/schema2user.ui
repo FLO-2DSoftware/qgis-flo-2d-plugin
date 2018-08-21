@@ -27,7 +27,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff5500;&quot;&gt;WARNING: Running this tool will overwrite data in user layers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff5500;&quot;&gt;WARNING: Running this tool will overwrite data in User Layers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -80,7 +80,7 @@
      <item row="2" column="0">
       <widget class="QCheckBox" name="ckbox_1d">
        <property name="text">
-        <string>1D stream - river network</string>
+        <string>Channel Banks and Cross-Sections</string>
        </property>
       </widget>
      </item>

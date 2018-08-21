@@ -11,10 +11,10 @@
 from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
 from ui_utils import load_ui, center_canvas, set_icon
-from flo2d.flo2dobjects import Reservoir
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
-from flo2d.utils import is_number
+from ..flo2dobjects import Reservoir
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import is_number
 
 uiDialog, qtBaseClass = load_ui('ic_editor')
 

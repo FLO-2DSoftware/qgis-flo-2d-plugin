@@ -10,8 +10,8 @@
 
 from PyQt4.QtGui import QIcon
 from qgis.core import QgsFeatureRequest
-from flo2d.user_communication import UserCommunication
-from flo2d.flo2dobjects import CrossSection
+from ..user_communication import UserCommunication
+from ..flo2dobjects import CrossSection
 from ui_utils import load_ui, center_canvas
 import os
 

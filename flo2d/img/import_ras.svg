@@ -13,7 +13,7 @@
    height="24"
    id="svg5692"
    version="1.1"
-   inkscape:version="0.92.1 r15371"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    sodipodi:docname="import_ras.svg"
    inkscape:export-filename="/media/home1/robert/svn/graphics/trunk/toolbar-icons/32x32/layer-vector.png"
    inkscape:export-xdpi="90"
@@ -88,9 +88,9 @@
      inkscape:document-units="px"
      borderlayer="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1018"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-height="1147"
+     inkscape:window-x="1432"
+     inkscape:window-y="858"
      inkscape:window-maximized="1"
      inkscape:snap-global="true"
      showguides="false"
@@ -166,7 +166,7 @@
     <g
        style="display:inline"
        id="g4168"
-       transform="matrix(0.91117861,0,0,0.91160434,10.460459,11.182316)">
+       transform="matrix(-0.91117861,0,0,-0.91160434,23.251453,38.431316)">
       <path
          inkscape:connector-curvature="0"
          id="path4252-3-3"

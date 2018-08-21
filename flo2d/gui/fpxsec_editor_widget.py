@@ -14,10 +14,10 @@ import traceback
 from PyQt4.QtGui import QIcon, QInputDialog
 from qgis.core import QgsFeatureRequest
 
-from flo2d.flo2d_tools.schematic_tools import FloodplainXS
+from ..flo2d_tools.schematic_tools import FloodplainXS
 from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('fpxsec_editor')
 
@@ -181,7 +181,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("Process failed on schematizing floodplain cross-sections! "
-                              "Please check your user layers.")
+                              "Please check your User Layers.")
             return
         self.uc.show_info("Floodplain cross-sections schematized!")
 

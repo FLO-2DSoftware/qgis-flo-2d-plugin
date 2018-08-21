@@ -7,13 +7,14 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
+import traceback
 from itertools import chain, groupby, izip
 from operator import itemgetter
-
+from PyQt4.QtCore import QSettings
 from flo2d_parser import ParseDAT
-from flo2d.geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils
+from PyQt4.QtGui import QApplication
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -33,11 +34,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
         if self.cell_size == 0:
-            self.uc.bar_error('Cell size is 0 - something went wrong!')
+            self.uc.bar_error('Cell size is 0 - something went wrong! Does TOPO.DAT file exists or is empty?')
+            return False
         else:
             pass
         self.buffer = self.cell_size * 0.4
         self.shrink = self.cell_size * 0.95
+        return True
 
     def import_cont_toler(self):
         sql = ['''INSERT OR REPLACE INTO cont (name, value, note) VALUES''', 3]
@@ -205,7 +208,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_rain(self):
         rain_sql = ['''INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
-                                         rainabs, irainarf, movingstrom, rainspeed, iraindir) VALUES''', 9]
+                                         rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES''', 9]
         ts_sql = ['''INSERT INTO rain_time_series (fid) VALUES''', 1]
         tsd_sql = ['''INSERT INTO rain_time_series_data (series_fid, time, value) VALUES''', 3]
         rain_arf_sql = ['''INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES''', 3]
@@ -322,68 +325,84 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
-        chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''', 5]
-        chan_elems_sql = ['''INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES''', 8]
-        chan_r_sql = ['''INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES''', 5]
-        chan_v_sql = ['''INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
-                                             excdep, a11, a22, b11, b22, c11, c22) VALUES''', 17]
-        chan_t_sql = ['''INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES''', 7]
-        chan_n_sql = ['''INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES''', 3]
-        chan_wsel_sql = ['''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES''', 4]
-        chan_conf_sql = ['''INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES''', 4]
-        chan_e_sql = ['''INSERT INTO noexchange_chan_areas (geom) VALUES''', 1]
-        elems_e_sql = ['''INSERT INTO noexchange_chan_elems (noex_area_fid, chan_elem_fid) VALUES''', 2]
+            s = QSettings()
+            last_dir = s.value('FLO-2D/lastGdsDir', '')
+            if not os.path.isfile(last_dir + '\CHAN.DAT'):
+                self.uc.show_warn("Can't import channels!.\nCHAN.DAT doesn't exist.")
+                return
+            if not os.path.isfile(last_dir + '\CHANBANK.DAT'):
+                self.uc.show_warn("Can't import channels!.\nCHANBANK.DAT doesn't exist.")
+                return
 
-        sqls = {
-            'R': [chan_r_sql, 4, 7],
-            'V': [chan_v_sql, 4, 6],
-            'T': [chan_t_sql, 4, 7],
-            'N': [chan_n_sql, 2, 3]
-        }
+            chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''', 5]
+            chan_elems_sql = ['''INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES''', 8]
+            chan_r_sql = ['''INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES''', 5]
+            chan_v_sql = ['''INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+                                                 excdep, a11, a22, b11, b22, c11, c22) VALUES''', 17]
+            chan_t_sql = ['''INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES''', 7]
+            chan_n_sql = ['''INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES''', 3]
+            chan_wsel_sql = ['''INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES''', 4]
+            chan_conf_sql = ['''INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES''', 4]
+            chan_e_sql = ['''INSERT INTO user_noexchange_chan_areas (geom) VALUES''', 1]
+            elems_e_sql = ['''INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES''', 2]
 
-        self.clear_tables('chan', 'chan_elems', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
-                          'chan_confluences', 'noexchange_chan_areas', 'noexchange_chan_elems', 'chan_wsel')
-        segments, wsel, confluence, noexchange = self.parser.parse_chan()
-        for i, seg in enumerate(segments, 1):
-            xs = seg[-1]
-            gids = []
-            for ii, row in enumerate(xs, 1):
-                char = row[0]
-                gid = row[1]
-                rbank = row[-1]
-                geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
-                sql, fcn_idx, xlen_idx = sqls[char]
-                xlen = row.pop(xlen_idx)
-                fcn = row.pop(fcn_idx)
-                params = row[1:-1]
-                gids.append(gid)
-                chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
-                sql += [tuple(params)]
-            options = seg[:-1]
-            geom = self.build_linestring(gids)
-            chan_sql += [(geom,) + tuple(options)]
+            sqls = {
+                'R': [chan_r_sql, 4, 7],
+                'V': [chan_v_sql, 4, 6],
+                'T': [chan_t_sql, 4, 7],
+                'N': [chan_n_sql, 2, 3]
+            }
 
-        for row in wsel:
-            chan_wsel_sql += [tuple(row)]
+            try:
+                self.clear_tables('chan', 'chan_elems', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
+                                  'chan_confluences', 'user_noexchange_chan_areas', 'noexchange_chan_cells', 'chan_wsel')
 
-        for i, row in enumerate(confluence, 1):
-            gid1, gid2 = row[1], row[2]
-            cells = self.grid_centroids([gid1, gid2], buffers=True)
+                segments, wsel, confluence, noexchange = self.parser.parse_chan()
+                for i, seg in enumerate(segments, 1):
+                    xs = seg[-1]   # Last element from segment. [-1] means count from right, last from right.
+                    gids = []
+                    for ii, row in enumerate(xs, 1): # Adds counter ii to iterable.
+                        char = row[0]   #" R", "V", "T", or "N"
+                        gid = row[1]    # Grid element number (no matter what 'char' is).
+                        rbank = row[-1]
+                        geom = self.build_linestring([gid, rbank]) if int(rbank) > 0 else self.build_linestring([gid, gid])
+                        sql, fcn_idx, xlen_idx = sqls[char]
+                        xlen = row.pop(xlen_idx)
+                        fcn = row.pop(fcn_idx)
+                        params = row[1:-1]
+                        gids.append(gid)
+                        chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
+                        sql += [tuple(params)]
+                    options = seg[:-1]
+                    geom = self.build_linestring(gids)
+                    chan_sql += [(geom,) + tuple(options)]
 
-            geom1, geom2 = cells[gid1], cells[gid2]
-            chan_conf_sql += [(geom1, i, 0, gid1)]
-            chan_conf_sql += [(geom2, i, 1, gid2)]
+                for row in wsel:
+                    chan_wsel_sql += [tuple(row)]
 
-        for i, row in enumerate(noexchange, 1):
-            gid = row[-1]
-            geom = self.grid_centroids([gid])[0]
-            chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
-            elems_e_sql += [(i, gid)]
+                for i, row in enumerate(confluence, 1):
+                    gid1, gid2 = row[1], row[2]
+                    cells = self.grid_centroids([gid1, gid2], buffers=True)
 
-        self.batch_execute(chan_sql, chan_elems_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
-                           chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql)
-        qry = '''UPDATE chan SET name = 'Channel ' ||  cast(fid as text);'''
-        self.execute(qry)
+                    geom1, geom2 = cells[gid1], cells[gid2]
+                    chan_conf_sql += [(geom1, i, 0, gid1)]
+                    chan_conf_sql += [(geom2, i, 1, gid2)]
+
+                for i, row in enumerate(noexchange, 1):
+                    gid = row[-1]
+                    geom = self.grid_centroids([gid])[0]
+                    chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
+                    elems_e_sql += [(i, gid)]
+
+                self.batch_execute(chan_sql, chan_elems_sql, chan_r_sql, chan_v_sql, chan_t_sql, chan_n_sql,
+                                   chan_conf_sql, chan_e_sql, elems_e_sql, chan_wsel_sql)
+                qry = '''UPDATE chan SET name = 'Channel ' ||  cast(fid as text);'''
+                self.execute(qry)
+
+            except Exception:
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_warn('Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files.')
+                #self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
 
     def import_xsec(self):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''', 3]
@@ -459,8 +478,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     d = w[0]
                     directions.append(d)
                     sqls['W'] += [(seg_fid,) + tuple(w)]
+                '''
+                "build_multilinestring" builds a line inside cell "gid".
+                Parameter "directions" has 1 or 2 values. The beginning-cell and end-cell of the street segment,
+                has only one direction. All other cells have 2 directions. All lines include the centroid of cell.
+                '''
                 geom = self.build_multilinestring(gid, directions, self.cell_size)
-                sqls['S'] += [(geom, i) + tuple(s_params)]
+                sqls['S'] += [(geom, i) + tuple(s_params)]  # Add
                 seg_fid += 1
 
         self.batch_execute(general_sql, streets_sql, seg_sql, elem_sql)
@@ -580,11 +604,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head, data = self.parser.parse_levee()
 
         lgeneral_sql += [tuple(head)]
+
         for gid, directions in data['L']:
             for row in directions:
                 ldir, levcrest = row
                 geom = self.build_levee(gid, ldir, self.cell_size)
                 ldata_sql += [(geom, gid, ldir, levcrest)]
+
         for gid, directions in data['F']:
             for row in directions:
                 lfailure_sql += [(gid,) + tuple(row)]
@@ -788,7 +814,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if o not in options:
                         continue
                     val = options[o]
-                    lst += rline.format(val)
+                    lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
+                                              # if channels and/or streets are simulated
                 lst += '\n'
                 if lst.isspace() is False:
                     t.write(lst)
@@ -928,36 +955,53 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty('rain'):
             return
         rain_sql = '''SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall,
-                             rainabs, irainarf, movingstrom, rainspeed, iraindir
+                             rainabs, irainarf, movingstorm, rainspeed, iraindir
                       FROM rain;'''
-        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;'''
+
         ts_data_sql = '''SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;'''
+        rain_cells_sql = '''SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;'''
 
         rain_line1 = '{0}  {1}\n'
         rain_line2 = '{0}   {1}  {2}  {3}\n'
+        tsd_line3 = 'R {0}   {1}\n'         # Rainfall Time series distribution
         rain_line4 = '{0}   {1}\n'
-        tsd_line = 'R {0}   {1}\n'
-        cell_line = '{0: <10} {1}\n'
 
-        rain_row = self.execute(rain_sql).fetchone()
+        cell_line5 = '{0: <10} {1}\n'
+
+        rain_row = self.execute(rain_sql).fetchone()    # Returns a single feature with all the singlevalues of the rain table:
+                                                        # time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs,
+                                                        # irainarf, movingstorm, rainspeed, iraindir.
         if rain_row is None:
             return
         else:
             pass
+
+        max_arf = self.get_max('rain_arf_cells', 'arf')
         rain = os.path.join(outdir, 'RAIN.DAT')
         with open(rain, 'w') as r:
-            fid = rain_row[0]
-            r.write(rain_line1.format(*rain_row[1:3]))
-            r.write(rain_line2.format(*rain_row[3:7]))
+
+            r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
+            r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
+
+            fid = rain_row[0]   # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
             for row in self.execute(ts_data_sql, (fid,)):
-                if None not in row:
-                    r.write(tsd_line.format(*row))
-            if rain_row[-1] is not None:
-                r.write(rain_line4.format(*rain_row[-2:]))
+                if None not in row: # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
+                    r.write(tsd_line3.format(*row)) # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
+                                                    # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                                                    # selected from a list
+
+            if  rain_row[6] == 1:   # if movingstorm from rain = 0, omit this line.
+                if rain_row[-1] is not None:    # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                                                # rainabs, irainarf, movingstorm, rainspeed, iraindir).
+                    r.write(rain_line4.format(*rain_row[-2:])) # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
+                else:
+                    pass
             else:
                 pass
-            for row in self.execute(rain_cells_sql):
-                r.write(cell_line.format(*row))
+
+            if rain_row[5] == 1:    # if irainarf from rain = 0, omit this line.
+                for row in self.execute(rain_cells_sql):
+                    r.write(cell_line5.format(row[0], '{0:.3f}'.format(row[1] /max_arf)))
 
     def export_raincell(self, outdir):
         if self.is_table_empty('raincell'):
@@ -975,7 +1019,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(raincell, 'w') as r:
             r.write(line1.format(*raincell_head))
             for row in raincell_rows:
-                r.write(line2.format(*row))
+                if row[1] is None:
+                    r.write(line2.format(row[0], "0"))
+                else:
+                    # r.write(line2.format(*row))
+                    r.write(line2.format(row[0], '{0:.6f}'.format(float(row[1]))))
+                    # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
 
     def export_infil(self, outdir):
         # check if there is any infiltration defined
@@ -1084,7 +1133,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         chan_wsel_sql = '''SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;'''
         chan_conf_sql = '''SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;'''
-        chan_e_sql = '''SELECT chan_elem_fid FROM noexchange_chan_elems ORDER BY fid;'''
+        chan_e_sql = '''SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;'''
 
         segment = '   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n'
         chan_r = 'R' + '  {}' * 7 + '\n'
@@ -1108,21 +1157,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return
         else:
             pass
+
         chan = os.path.join(outdir, 'CHAN.DAT')
         bank = os.path.join(outdir, 'CHANBANK.DAT')
 
         with open(chan, 'w') as c, open(bank, 'w') as b:
             for row in chan_rows:
-                row = [x if x is not None else '' for x in row]
+                row = [x if x is not None else '0' for x in row]
                 fid = row[0]
-                c.write(segment.format(*row[1:]))
-                for elems in self.execute(chan_elems_sql, (fid,)):
-                    elems = [x if x is not None else '' for x in elems]
-                    eid, rbank, fcn, xlen, typ = elems
-                    sql, line, fcn_idx, xlen_idx = sqls[typ]
-                    res = [x if x is not None else '' for x in self.execute(sql, (eid,)).fetchone()]
-                    res.insert(fcn_idx, fcn)
-                    res.insert(xlen_idx, xlen)
+                c.write(segment.format(*row[1:5]))  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                                                    # A single line for each channel segment. The next lines will be the grid elements of
+                                                    # this channel segment.
+                for elems in self.execute(chan_elems_sql, (fid,)):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                                                                    # 'chan_elems' table (the cross sections in the schematic layer),
+                                                                    #  that has the 'fid' value indicated (the channel segment id).
+                    elems = [x if x is not None else '' for x in elems] # If 'elems' has a None in any of above values of list, replace it by ''
+                    eid, rbank, fcn, xlen, typ = elems  # Separates values of list into individual variables.
+                    sql, line, fcn_idx, xlen_idx = sqls[typ]    # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                                                                # line (format to write), fcn_idx (?), and xlen_idx (?)
+                    res = [x if x is not None else '' for x in self.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                    res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                    res.insert(xlen_idx, xlen)  # Add ´xlen' (comming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                     c.write(line.format(*res))
                     b.write(chanbank.format(eid, rbank))
 
@@ -1290,6 +1345,91 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(mult_area_sql, (aid,)):
                     vals = [x if x is not None else '' for x in row]
                     m.write(line2.format(gid, *vals))
+
+    def export_tolspatial(self, outdir):
+        # check if there is any tolerance data defined
+        if self.is_table_empty('tolspatial'):
+            return
+        tol_poly_sql = '''SELECT fid, tol FROM tolspatial ORDER BY fid;'''
+        tol_cells_sql = '''SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;'''
+
+        line1 = '{0}  {1}\n'
+
+        tol_poly_rows = self.execute(tol_poly_sql).fetchall()   # A list of pairs (fid number, tolerance value),
+                                                                # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
+        if not tol_poly_rows:
+            return
+        else:
+            pass
+        tolspatial_dat = os.path.join(outdir, 'TOLSPATIAL.DAT') #path and name of file to write
+        with open(tolspatial_dat, 'w') as t:
+            for fid, tol in tol_poly_rows:
+                for row in self.execute(tol_cells_sql, (fid,)):
+                    gid = row[0]
+                    t.write(line1.format(gid, tol))
+
+    def export_gutter(self, outdir):
+        try:
+            # check if there is any gutters defined
+            if self.is_table_empty('gutter_cells'):
+                return
+            if self.is_table_empty('gutter_globals'):
+                self.uc.show_info('gutter globals is empty')
+                # update_qry = '''INSERT INTO gutter_globals (global_gutter_width,global_gutter_height, global_gutter_n_value) VALUES (?,?,?);'''
+                # self.gutils.execute(update_qry, ('9.9', '8.8', '7.7'))
+                qry = '''UPDATE gutter_globals SET width = 0.99, height = 0.88, n_value = 0.77;'''
+                self.execute(qry)
+                self.uc.show_info('gutter globals filled')
+
+            gutter_globals_sql = '''SELECT * FROM gutter_globals LIMIT 1;'''
+            gutter_poly_sql = '''SELECT fid, width, height, n_value, direction FROM gutter_areas ORDER BY fid;'''
+            gutter_cells_sql = '''SELECT grid_fid FROM gutter_cells WHERE area_fid = ? ORDER BY grid_fid;'''
+
+            line1 = '{0} {1} {2}\n'
+            line2 = 'G  ' +  '   {}' * 5 + '\n'
+
+            head = self.execute(gutter_globals_sql).fetchone()
+            # self.uc.show_info('head')
+            # r.write(line1.format(*raincell_head))
+            # self.uc.show_info('globals width: %, height: %, n_value: %'  %  (head[0], head[1], head[2] ))
+            #
+            # if head is None:
+            #     return
+            # else:
+            #     pass
+            #
+            # Global gutter width or height must be greater than 0:
+            # if head[0]>0 or head[1]> 0:
+            #     pass
+            # else:
+            #     return
+            #
+            # A list of tuples (areafid,  width, height, n_value
+            # direction) for each gutter polygon:
+
+            gutter_poly_rows = self.execute(gutter_poly_sql).fetchall()
+            if not gutter_poly_rows:
+                return
+            else:
+                pass
+            # self.uc.show_info('after rows')
+
+            gutter_dat = os.path.join(outdir, 'GUTTER.DAT')
+
+            with open(gutter_dat,'w') as g:
+                # self.uc.show_info('opened')
+                g.write(line1.format(*head[1:]))
+                for fid, width, height, n_value, direction in gutter_poly_rows: # One tuple for each polygon.
+                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
+                    for row in self.execute(gutter_cells_sql, (fid,)): # Gets each cell number that pairs with area_fid.
+                        # self.uc.show_info('next line')
+                        grid_ID = row[0]
+                        g.write(line2.format(grid_ID, width, height, n_value, direction))
+
+        except Exception:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('Export to "GUTTER.DAT" failed!.')
+            QApplication.restoreOverrideCursor()
 
     def export_sed(self, outdir):
         # check if there is any sedimentation data defined
@@ -1504,20 +1644,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return
         else:
             pass
-        fpfroude = os.path.join(outdir, 'FPFROUDE.DAT')
-        with open(fpfroude, 'w') as f:
+        fpfroude_dat = os.path.join(outdir, 'FPFROUDE.DAT')
+        with open(fpfroude_dat, 'w') as f:
             for fid, froudefp in fpfroude_rows:
-                gid = self.execute(cell_sql, (fid,)).fetchone()[0]
-                f.write(line1.format(gid, froudefp))
+                for row in self.execute(cell_sql, (fid,)):
+                    gid = row[0]
+                    f.write(line1.format(gid, froudefp))
+
+    def export_shallow_n(self, outdir):
+        # check if there is any shallow-n defined
+        if self.is_table_empty('spatialshallow'):
+            return
+        shallow_sql = '''SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;'''
+        cell_sql = '''SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;'''
+
+        line1 = '{0} {1}\n'
+
+        shallow_rows = self.execute(shallow_sql).fetchall()
+        if not shallow_rows:
+            return
+        else:
+            pass
+        shallow_dat = os.path.join(outdir, 'SHALLOWN_SPATIAL.DAT')
+        with open(shallow_dat, 'w') as s:
+            for fid, shallow_n in shallow_rows:
+                for row in self.execute(cell_sql, (fid,)):
+                    gid = row[0]
+                    s.write(line1.format(gid, shallow_n))
 
     def export_swmmflo(self, outdir):
         # check if there is any SWMM data defined
         if self.is_table_empty('swmmflo'):
             return
-        swmmflo_sql = '''SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate, curbheight
-                         FROM swmmflo ORDER BY fid;'''
+        # swmmflo_sql = '''SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate, curbheight
+        #                  FROM swmmflo ORDER BY fid;'''
 
-        line1 = '{0}  {1} {2} {3} {4} {5} {6} {7}\n'
+        swmmflo_sql = '''SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+                                swmm_height, swmm_coeff, swmm_feature, curbheight
+                         FROM swmmflo ORDER BY fid;'''
+        line1 = '{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n'
 
         swmmflo_rows = self.execute(swmmflo_sql).fetchall()
         if not swmmflo_rows:
@@ -1568,27 +1733,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         with open(swmmoutf, 'w') as s:
             for row in swmmoutf_rows:
                 s.write(line1.format(*row))
-
-    def export_tolspatial(self, outdir):
-        # check if there is any tolerance data defined
-        if self.is_table_empty('tolspatial'):
-            return
-        tolspatial_sql = '''SELECT fid, tol FROM tolspatial ORDER BY fid;'''
-        cell_sql = '''SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;'''
-
-        line1 = '{0}  {1}\n'
-
-        tolspatial_rows = self.execute(tolspatial_sql).fetchall()
-        if not tolspatial_rows:
-            return
-        else:
-            pass
-        tolspatial = os.path.join(outdir, 'TOLSPATIAL.DAT')
-        with open(tolspatial, 'w') as t:
-            for fid, tol in tolspatial_rows:
-                for row in self.execute(cell_sql, (fid,)):
-                    gid = row[0]
-                    t.write(line1.format(gid, tol))
 
     def export_wsurf(self, outdir):
         # check if there is any water surface data defined

@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from flo2d.geopackage_utils import *
-from flo2d.flo2dobjects import *
+from flo2d.geopackage_utils import database_create
+from flo2d.flo2dobjects import CrossSection, Inflow, Outflow, Rain, Evaporation
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 import os
 import unittest

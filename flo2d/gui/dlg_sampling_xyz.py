@@ -10,8 +10,8 @@
 
 from qgis.core import QGis
 from ui_utils import load_ui
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('sampling_xyz')
 
@@ -41,7 +41,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QGis.Point:
-                    self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                    if l.featureCount() != 0:
+                        self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
                     pass
             self.populate_fields_cbo(self.points_cbo.currentIndex())

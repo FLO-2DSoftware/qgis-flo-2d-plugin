@@ -11,10 +11,10 @@
 import traceback
 from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
-from flo2d.flo2d_tools.schematic_tools import schematize_streets
+from ..flo2d_tools.schematic_tools import schematize_streets
 from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('street_editor')
 uiDialog_pop, qtBaseClass_pop = load_ui('street_global')
@@ -43,12 +43,16 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.street_lyr = None
         self.street_idx = 0
+
+        # Icons:
         set_icon(self.create_street, 'mActionCaptureLine.svg')
         set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         set_icon(self.schema_streets, 'schematize_streets.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_street_btn, 'mActionDeleteSelected.svg')
         set_icon(self.change_street_name_btn, 'change_name.svg')
+
+        # Connections:
         self.create_street.clicked.connect(self.create_street_line)
         self.global_params.clicked.connect(self.set_general_params)
         self.save_changes_btn.clicked.connect(self.save_street_edits)

@@ -13,9 +13,9 @@ import traceback
 from PyQt4.QtCore import QSettings
 from PyQt4.QtGui import QFileDialog
 from ui_utils import load_ui
-from flo2d.flo2d_tools.elevation_correctors import LeveesElevation
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.user_communication import UserCommunication
+from ..flo2d_tools.elevation_correctors import LeveesElevation
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')

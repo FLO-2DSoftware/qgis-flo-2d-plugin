@@ -11,8 +11,8 @@
 from PyQt4.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
 from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QApplication, QTableView, QUndoCommand, QUndoStack
 from ui_utils import load_ui
-from flo2d.utils import is_number
-from flo2d.user_communication import UserCommunication
+from ..utils import is_number
+from ..user_communication import UserCommunication
 import StringIO
 import csv
 

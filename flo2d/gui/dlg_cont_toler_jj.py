@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'dlg_cont_toler_jj.ui'
-#
-# Created: Tue Nov 07 14:35:40 2017
-#      by: PyQt4 UI code generator 4.10.2
-#
-# WARNING! All changes made in this file will be lost!
+# FLO-2D Preprocessor tools for QGIS
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version
 
 from PyQt4 import QtCore, QtGui
 from ui_utils import load_ui
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.flo2dobjects import Evaporation
-from plot_widget import PlotWidget
-from flo2d.user_communication import UserCommunication
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
 from collections import OrderedDict
-from PyQt4.QtGui import QLabel, QComboBox, QCheckBox, QDoubleSpinBox, QApplication
+from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QApplication
 
 
 uiDialog, qtBaseClass = load_ui('cont_toler_jj')
@@ -22,18 +20,21 @@ uiDialog, qtBaseClass = load_ui('cont_toler_jj')
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
+
     def _fromUtf8(s):
         return s
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig, _encoding)
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
 
-class ContToler_JJ(qtBaseClass, uiDialog):   
+
+class ContToler_JJ(qtBaseClass, uiDialog):
 
     PARAMS = OrderedDict([
         ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT', 'min': -99, 'max': float('inf'), 'dec': 1}],
@@ -63,9 +64,9 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
         ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
         ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
-        ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 's', 'dat': 'CONT'}],
+        ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
-        ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 1}],
+        ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 2}],
         ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],
         ['XARF', {'label': 'Global Area Reduction', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
         ['XCONC', {'label': 'Global Sediment Concentration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.50, 'dec': 2}],
@@ -94,50 +95,55 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         values = self.PARAMS[key]
         spin.setDecimals(values['dec'])
         spin.setRange(values['min'], values['max'])
-                
+
     def polulate_values_JJ(self):
-        _mud = False
-        _sed = False
-        for key, values in self.PARAMS.items():
-            if key ==  'COURCHAR_C' or key == 'COURCHAR_T':
-                continue
-          
-            db_val = self.gutils.get_cont_par(key)
-            if db_val is None:
-                db_val = 0
-            elif db_val in ['C', 'T']:
-                db_val = 1
-            else:
-                db_val = float(db_val)
-                
-            if key == 'MUD': 
-                _mud = True if db_val == 1 else False
-                continue
-            if key ==  'ISED':
-                _sed = True if db_val == 1 else False
-                continue
-            
-            widget = getattr(self, key)
-            if isinstance(widget, QCheckBox):
-                if db_val == 1:
-                    widget.setChecked(True)
+        try:
+            _mud = False
+            _sed = False
+            for key, values in self.PARAMS.items():
+                if key ==  'COURCHAR_C' or key == 'COURCHAR_T':
+                    continue
+
+                db_val = self.gutils.get_cont_par(key)
+                if db_val is None:
+                    db_val = 0
+                elif db_val in ['C', 'T']:
+                    db_val = 1
                 else:
-                    widget.setChecked(False)
-            elif isinstance(widget, QDoubleSpinBox):
-                self.set_spinbox_JJ(key, widget)
-                widget.setValue(db_val)
+                    db_val = float(db_val)
+
+                if key == 'MUD':
+                    _mud = True if db_val == 1 else False
+                    continue
+                if key == 'ISED':
+                    _sed = True if db_val == 1 else False
+                    continue
+
+                widget = getattr(self, key)
+                if isinstance(widget, QCheckBox):
+                    if db_val == 1:
+                        widget.setChecked(True)
+                    else:
+                        widget.setChecked(False)
+                elif isinstance(widget, QDoubleSpinBox):
+                    self.set_spinbox_JJ(key, widget)
+                    widget.setValue(db_val)
+                else:
+                    widget.setCurrentIndex(db_val)
+
+            widget = getattr(self, 'ISED')
+            if _mud and not _sed:
+                widget.setCurrentIndex(0)
+            elif not _mud and _sed:
+                widget.setCurrentIndex(1)
             else:
-                widget.setCurrentIndex(db_val)
-                  
-        widget = getattr(self, 'ISED')               
-        if _mud and not _sed:
-            widget.setCurrentIndex(0)
-        elif not _mud and _sed:
-            widget.setCurrentIndex(1)  
-        else:               
-            widget.setCurrentIndex(2)  
-   
-            
+                widget.setCurrentIndex(2)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error('ERROR 310718.1942: error populating control variables dialog.'
+                               +'\n__________________________________________________', e)
+
     def save_parameters_JJ(self):
         try:
             # See value of combobox 'ISED' for later set parameters MUD and ISED in 'for key...' loop.
@@ -148,18 +154,18 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             if val == 0:
                 _mud = 1
             elif val == 1:
-                _sed = 1  
-            
+                _sed = 1
+
             for key in self.PARAMS.keys():
                 if key ==  'COURCHAR_C':
                     val = 'C'
                 elif key == 'COURCHAR_T':
-                    val = 'T'  
+                    val = 'T'
                 elif key == 'MUD':
                     val = _mud
                 elif key == 'ISED':
                     val = _sed
-                else:                      
+                else:
                     widget = getattr(self, key)
                     if isinstance(widget, QCheckBox):
                         if key == 'COURCHAR_C':
@@ -168,34 +174,14 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                             val = 'T' if widget.isChecked() else None
                         else:
                             val = 1 if widget.isChecked() else 0
-        
+
                     elif isinstance(widget, QDoubleSpinBox):
                         val = widget.value()
                     else:
                         val = widget.currentIndex()
-           
+
                 self.gutils.set_cont_par(key, val)
-                
-                
-                
-#                 if key == 'SWMM':
-#                     if val == 0:
-#                         Flo2D.f2d_widget.storm_drain_editor.simulate_stormdrain_chbox.setChecked(False)
-#                         
-#                         
-#                     else: 
-#                         Flo2D.f2d_widget.storm_drain_editor.simulate_stormdrain_chbox.setChecked(True)                
-# #                     FLO2DWidget
-#                     self.uc.show_info(str(val)) 
 
-
-#             Flo2D.FLO2DWidget.storm_drain_editor.simulate_stormdrain_chbox.setChecked(False)  
-              
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1806: Could not save FLO-2D parameters!!", e)
-    
-                
-                 
-                
-                

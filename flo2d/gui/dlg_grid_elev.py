@@ -9,10 +9,10 @@
 # of the License, or (at your option) any later version
 
 
-from flo2d.flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
+from ..flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
 from ui_utils import load_ui
 from qgis.core import QGis
-from flo2d.geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('grid_elevation')
 

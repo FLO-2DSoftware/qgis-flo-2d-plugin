@@ -12,10 +12,10 @@ from PyQt4.QtGui import QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
 from ui_utils import load_ui, center_canvas, set_icon
-from flo2d.geopackage_utils import GeoPackageUtils
-from flo2d.flo2dobjects import Structure
-from flo2d.user_communication import UserCommunication
-from flo2d.utils import m_fdata, is_number
+from ..geopackage_utils import GeoPackageUtils
+from ..flo2dobjects import Structure
+from ..user_communication import UserCommunication
+from ..utils import m_fdata, is_number
 from table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
 
@@ -310,7 +310,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 'Culvert entrance loss coefficient',
                 'Flow width of box culvert for TYPEC=1. For a circular culvert, CUBASE=0']
         }
-        
+
     def show_table_data(self):
         if not self.struct:
             return
