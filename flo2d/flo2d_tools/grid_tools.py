@@ -28,7 +28,7 @@ class TINInterpolator(object):
         self.interpolator = None
 
     def setup_layer_data(self):
-        index = self.lyr.fieldNameIndex(self.field_name)
+        index = self.lyr.fields().lookupField(self.field_name)
         self.lyr_data = QgsInterpolator.LayerData()
         self.lyr_data.interpolationAttribute = index
         self.lyr_data.vectorLayer = self.lyr

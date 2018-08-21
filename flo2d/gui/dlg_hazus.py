@@ -511,16 +511,16 @@ class HazusDialog(qtBaseClass, uiDialog):
                 index_val = 0
                 f0 = next(building_fts)
                 id0 = f0[ID_field]
-                lyr.changeAttributeValue(f0.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                lyr.changeAttributeValue(f0.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                 while index_lyr < n_features:
                     f1 = next(building_fts)
                     id1 = f1[ID_field]
                     index_lyr += 1
                     if id1 == id0:
-                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                     else:
                         index_val += 1
-                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                         id0 = id1
 
                 lyr.commitChanges()
@@ -554,7 +554,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                 flowDepth = f['water_elev'] - f['elevation']
                 if flowDepth < 0:
                     flowdepth = 0
-                lyr.changeAttributeValue(f.id(),lyr.fieldNameIndex('flow_depth'), flowDepth)
+                lyr.changeAttributeValue(f.id(),lyr.fields().lookupField('flow_depth'), flowDepth)
 
             lyr.commitChanges()
             lyr.updateExtents()

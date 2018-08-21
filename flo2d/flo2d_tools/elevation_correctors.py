@@ -55,7 +55,7 @@ class ElevationCorrector(object):
         layer.addExpressionField(expr, field)
 
     def remove_virtual_sum(self, layer):
-        index = layer.fieldNameIndex(self.VIRTUAL_SUM)
+        index = layer.fields().lookupField(self.VIRTUAL_SUM)
         layer.removeExpressionField(index)
 
     @staticmethod

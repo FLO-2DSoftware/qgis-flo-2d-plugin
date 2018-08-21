@@ -13,8 +13,7 @@
 import sys
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from qgis.PyQt.QtCore import Qt
-from qgis.gui import QgsMessageBar
-from qgis.core import QgsMessageLog
+from qgis.core import QgsMessageLog, Qgis
 
 
 class UserCommunication(object):
@@ -67,27 +66,27 @@ class UserCommunication(object):
     def log_info(self, msg):
         if self.iface is not None:
             try:
-                QgsMessageLog.logMessage(msg, self.context, QgsMessageLog.INFO)
+                QgsMessageLog.logMessage(msg, self.context, Qgis.Info)
             except TypeError:
-                QgsMessageLog.logMessage(repr(msg), self.context, QgsMessageLog.INFO)
+                QgsMessageLog.logMessage(repr(msg), self.context, Qgis.Info)
         else:
             print(msg)
 
     def bar_error(self, msg):
         if self.iface is not None:
-            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.CRITICAL)
+            self.iface.messageBar().pushMessage(self.context, msg, level=Qgis.Critical)
         else:
             print(msg)
 
     def bar_warn(self, msg, dur=5):
         if self.iface is not None:
-            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.WARNING, duration=dur)
+            self.iface.messageBar().pushMessage(self.context, msg, level=Qgis.Warning, duration=dur)
         else:
             print(msg)
 
     def bar_info(self, msg, dur=5):
         if self.iface is not None:
-            self.iface.messageBar().pushMessage(self.context, msg, level=QgsMessageBar.INFO, duration=dur)
+            self.iface.messageBar().pushMessage(self.context, msg, level=Qgis.Info, duration=dur)
         else:
             print(msg)
 
@@ -110,7 +109,7 @@ class UserCommunication(object):
         pb.setValue(init_value)
         pb.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         pmb.layout().addWidget(pb)
-        self.iface.messageBar().pushWidget(pmb, self.iface.messageBar().INFO)
+        self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
 
     def clear_bar_messages(self):

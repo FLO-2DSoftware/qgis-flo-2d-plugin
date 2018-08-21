@@ -19,7 +19,8 @@ from qgis.core import (
     QgsFeatureRequest,
     QgsVectorLayer,
     QgsRectangle,
-    QgsLayerTreeGroup
+    QgsLayerTreeGroup,
+    QgsDefaultValue
 )
 
 from qgis.gui import QgsRubberBand
@@ -938,7 +939,7 @@ class Layers(QObject):
             vis = Qt.Checked
         else:
             vis = Qt.Unchecked
-        tree_lyr.setVisible(vis)
+        tree_lyr.setItemVisibilityChecked(vis)
         tree_lyr.setExpanded(False)
 
         # set style
@@ -986,7 +987,7 @@ class Layers(QObject):
                     lyr.setDefaultValueExpression(idx, '')
             else:
                 for attr, exp in default_attr_exp.items():
-                    idx = lyr.fieldNameIndex(attr)
+                    idx = lyr.fields().lookupField(attr)
                     lyr.setDefaultValueExpression(idx, exp)
             lyr.startEditing()
             self.iface.actionAddFeature().trigger()
@@ -1155,7 +1156,7 @@ class Layers(QObject):
         return subgrp
 
     def get_flo2d_groups(self):
-        all_groups = self.iface.legendInterface().groups()
+        all_groups = [c.name() for c in self.root.children() if isinstance(c, QgsLayerTreeGroup)]
         f2d_groups = []
         for g in all_groups:
             if g.startswith('FLO-2D_'):
@@ -1187,7 +1188,7 @@ class Layers(QObject):
             group.setExpanded(True)
             first_lyr = self.get_layer_by_name('Computational Domain', group=group_name).layer()
             if first_lyr:
-                self.iface.legendInterface().setCurrentLayer(first_lyr)
+                self.iface.layerTreeView().setCurrentLayer(first_lyr)
         else:
             pass
 
@@ -1209,9 +1210,9 @@ class Layers(QObject):
         group = self.get_group(group_name, create=False)
 
     def clear_legend_selection(self):
-        sel_lyrs = self.iface.legendInterface().selectedLayers()
+        sel_lyrs = self.iface.layerTreeView().selectedLayers()
         if sel_lyrs:
-            self.iface.legendInterface().setCurrentLayer(sel_lyrs[0])
+            self.iface.layerTreeView().setCurrentLayer(sel_lyrs[0])
 
     def layer_exists_in_group(self, uri, group=None):
         grp = self.root.findGroup(group) if group is not None else self.root
@@ -1304,9 +1305,9 @@ class Layers(QObject):
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                c = l.editFormConfig()
+                c = l.editorWidgetSetup()
                 for attr, widget_data in data['attrs_edit_widgets'].items():
-                    attr_idx = l.fieldNameIndex(attr)
+                    attr_idx = l.fields().lookupField(attr)
                     c.setWidgetType(attr_idx, widget_data['name'])
                     c.setWidgetConfig(attr_idx, widget_data['config'])
             else:
@@ -1318,8 +1319,10 @@ class Layers(QObject):
                 dvs = None
             if dvs:
                 for attr, val in dvs.items():
-                    idx = l.fieldNameIndex(attr)
-                    l.setDefaultValueExpression(idx, val)
+                    field = l.fields().field(attr)
+                    field.setDefaultValueDefinition(QgsDefaultValue(val))
+                    # idx = l.fields().lookupField(attr)
+                    # l.setDefaultValueExpression(idx, val)
             else:
                 pass
             self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
@@ -1347,7 +1350,7 @@ class Layers(QObject):
             8: (-s, s/2.414, -s/2.414, s)
         }
         lyr = self.get_layer_tree_item(lyr_id).layer()
-        sym = lyr.rendererV2().symbol()
+        sym = lyr.renderer().symbol()
         for nr in range(1, sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr]))

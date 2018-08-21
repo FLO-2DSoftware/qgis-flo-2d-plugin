@@ -978,7 +978,7 @@ class Flo2D(object):
     def show_control_table(self):
         try:
             cont_table = self.lyrs.get_layer_by_name('Control', group=self.lyrs.group).layer()
-            index = cont_table.fieldNameIndex('note')
+            index = cont_table.fields().lookupField('note')
             tab_conf = cont_table.attributeTableConfig()
             tab_conf.setSortExpression('"name"')
             tab_conf.setColumnWidth(index, 250)
