@@ -8,12 +8,17 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
-from PyQt4.QtGui import QKeySequence, QStandardItemModel, QStandardItem, QApplication, QTableView, QUndoCommand, QUndoStack
-from ui_utils import load_ui
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
+from qgis.PyQt.QtGui import QKeySequence, QStandardItemModel, QStandardItem
+from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
+from .ui_utils import load_ui
 from ..utils import is_number
 from ..user_communication import UserCommunication
-import StringIO
+import io
 import csv
 
 uiDialog, qtBaseClass = load_ui('table_editor')
@@ -69,8 +74,8 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             for index in selection:
                 row = index.row() - rows[0]
                 column = index.column() - columns[0]
-                table[row][column] = unicode(index.data())
-            stream = StringIO.StringIO()
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
             csv.writer(stream, delimiter='\t').writerows(table)
             QApplication.clipboard().setText(stream.getvalue())
 
@@ -92,14 +97,14 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 self.tview.model().insertRows(self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row))
                 for i in range(self.tview.model().rowCount()):
                     self.tview.setRowHeight(i, 20)
-            for row in xrange(num_rows):
+            for row in range(num_rows):
                 columns = rows[row].split('\t')
                 for i, col in enumerate(columns):
                     if not is_number(col):
                         columns[i] = ''
                 [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()
-                    ) for col in xrange(len(columns))]
-                for col in xrange(len(columns)):
+                    ) for col in range(len(columns))]
+                for col in range(len(columns)):
                     self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
             self.after_paste.emit()
             self.tview.model().dataChanged.emit(top_left_idx, self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))

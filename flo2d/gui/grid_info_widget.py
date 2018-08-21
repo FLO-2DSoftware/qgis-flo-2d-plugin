@@ -8,11 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import str
+from builtins import range
 from math import sqrt
 from qgis.core import QgsFeatureRequest
-from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor, QApplication
-from PyQt4.QtCore import QSize
-from ui_utils import load_ui
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QSize
+from .ui_utils import load_ui
 from ..utils import m_fdata
 
 uiDialog, qtBaseClass = load_ui('grid_info_widget')
@@ -53,7 +56,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
     def update_fields(self, fid):
         try:
             if not fid == -1:
-                feat = self.grid.getFeatures(QgsFeatureRequest(fid)).next()
+                feat = next(self.grid.getFeatures(QgsFeatureRequest(fid)))
                 cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
                 elev = str(feat['elevation'])

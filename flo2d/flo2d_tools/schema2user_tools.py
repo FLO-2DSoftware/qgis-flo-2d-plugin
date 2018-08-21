@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import next
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
@@ -63,7 +64,7 @@ class SchemaConverter(GeoPackageUtils):
         new_geom = geom_function(geom)
         user_feat.setGeometry(new_geom)
         user_feat.setFields(user_fields)
-        for user_fname, schema_fname in common_fnames.items():
+        for user_fname, schema_fname in list(common_fnames.items()):
             user_feat.setAttribute(user_fname, schema_feat[schema_fname])
         return user_feat
 
@@ -122,8 +123,8 @@ class Schema1DConverter(SchemaConverter):
         }
 
     def copy_xs_tables(self):
-        self.clear_tables(*self.xs_tables.keys())
-        for user_tab, schema_tab in self.xs_tables.items():
+        self.clear_tables(*list(self.xs_tables.keys()))
+        for user_tab, schema_tab in list(self.xs_tables.items()):
             if user_tab == 'user_chan_n':
                 self.execute('''INSERT INTO user_chan_n (fid, user_xs_fid, nxsecnum, xsecname) SELECT fid, fid, nxsecnum, xsecname FROM chan_n;''')
             else:

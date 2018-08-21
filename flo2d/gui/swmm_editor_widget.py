@@ -8,20 +8,24 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
+from builtins import zip
+from builtins import range
 import os
 import traceback
 from collections import OrderedDict
-from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog
+from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
+from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2dobjects import InletRatingTable
 from ..utils import is_number, m_fdata
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
 uiDialog, qtBaseClass = load_ui('swmm_editor')
@@ -200,7 +204,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         columns = ['fid', 'name'] + columns
         rows = self.gutils.execute(qry).fetchall()
         for row in rows:
-            swmm_dict = OrderedDict(zip(columns, row))
+            swmm_dict = OrderedDict(list(zip(columns, row)))
             name = swmm_dict['name']
             self.swmm_name_cbo.addItem(name, swmm_dict)
         self.swmm_name_cbo.setCurrentIndex(self.swmm_idx)
@@ -248,7 +252,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if self.center_chbox.isChecked():
             sfid = swmm_dict['fid']
             self.lyrs.show_feat_rubber(self.swmm_lyr.id(), sfid)
-            feat = self.swmm_lyr.getFeatures(QgsFeatureRequest(sfid)).next()
+            feat = next(self.swmm_lyr.getFeatures(QgsFeatureRequest(sfid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
@@ -301,9 +305,9 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
-        col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
+        col_gen = ('{}=?'.format(c) for c in list(swmm_dict.keys()))
         col_names = ', '.join(col_gen)
-        vals = swmm_dict.values() + [fid]
+        vals = list(swmm_dict.values()) + [fid]
         update_qry = '''UPDATE user_swmm_nodes SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
@@ -376,7 +380,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 difference = elev - rim_elev
                 vals[feat['fid']] = (max_depth, rim_elev, elev, difference)
             cur = self.gutils.con.cursor()
-            for k, v in vals.items():
+            for k, v in list(vals.items()):
                 cur.execute(qry_update, v + (k,))
             self.gutils.con.commit()
             self.populate_swmm()
@@ -391,7 +395,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
 #         last_dir = s.value('FLO-2D/lastSWMMDir', '')
-        swmm_file = QFileDialog.getOpenFileName(
+        swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',
             directory=last_dir,
@@ -410,7 +414,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.swmm_lyr)
             fields = self.swmm_lyr.fields()
             new_feats = []
-            for name, values in sdp.INP_nodes.items():
+            for name, values in list(sdp.INP_nodes.items()):
                 if 'subcatchment' in values:
                     sd_type = 'I'
                 elif 'out_type' in values:
@@ -457,7 +461,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def update_swmm_INP_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastSWMMDir', '')
-        swmm_file = QFileDialog.getOpenFileName(
+        swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to update',
             directory=last_dir,

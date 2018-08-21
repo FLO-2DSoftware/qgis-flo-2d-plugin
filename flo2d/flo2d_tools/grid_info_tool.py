@@ -12,8 +12,8 @@
 #pylint: disable=no-self-use
 
 import os
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QCursor, QPixmap
+from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtGui import QCursor, QPixmap
 from qgis.gui import QgsMapToolIdentify
 
 

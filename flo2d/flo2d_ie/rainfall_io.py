@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import object
 import os
 import numpy as np
 from ..flo2d_tools.grid_tools import rasters2centroids

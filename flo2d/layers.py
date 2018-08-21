@@ -8,13 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
+from builtins import range
 import os
 import time
 from collections import OrderedDict
 
-from PyQt4.QtCore import QObject
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor
+from qgis.PyQt.QtCore import QObject
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     QgsProject,
     QgsMapLayerRegistry,
@@ -25,9 +27,9 @@ from qgis.core import (
 )
 
 from qgis.gui import QgsRubberBand
-from utils import is_number, get_file_path
-from errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
-from user_communication import UserCommunication
+from .utils import is_number, get_file_path
+from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
+from .user_communication import UserCommunication
 
 
 class Layers(QObject):
@@ -987,7 +989,7 @@ class Layers(QObject):
                 for idx in lyr.pendingAllAttributesList():
                     lyr.setDefaultValueExpression(idx, '')
             else:
-                for attr, exp in default_attr_exp.iteritems():
+                for attr, exp in default_attr_exp.items():
                     idx = lyr.fieldNameIndex(attr)
                     lyr.setDefaultValueExpression(idx, exp)
             lyr.startEditing()
@@ -1129,7 +1131,7 @@ class Layers(QObject):
         layer2.editingStopped.connect(layer1.reload)
 
     def new_group(self, name):
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, str):
             self.root.addGroup(name)
         else:
             raise Flo2dNotString('{} is not a string or unicode'.format(repr(name)))
@@ -1267,7 +1269,7 @@ class Layers(QObject):
 
     @staticmethod
     def is_str(name):
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, str):
             return True
         else:
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
@@ -1307,7 +1309,7 @@ class Layers(QObject):
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
                 c = l.editFormConfig()
-                for attr, widget_data in data['attrs_edit_widgets'].iteritems():
+                for attr, widget_data in data['attrs_edit_widgets'].items():
                     attr_idx = l.fieldNameIndex(attr)
                     c.setWidgetType(attr_idx, widget_data['name'])
                     c.setWidgetConfig(attr_idx, widget_data['config'])
@@ -1319,7 +1321,7 @@ class Layers(QObject):
             except Exception as e:
                 dvs = None
             if dvs:
-                for attr, val in dvs.iteritems():
+                for attr, val in dvs.items():
                     idx = l.fieldNameIndex(attr)
                     l.setDefaultValueExpression(idx, val)
             else:
@@ -1375,7 +1377,7 @@ class Layers(QObject):
             self.rb.setFillColor(fill_color)
         self.rb.setWidth(3)
         try:
-            feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+            feat = next(lyr.getFeatures(QgsFeatureRequest(fid)))
         except StopIteration:
             return
         self.rb.setToGeometry(feat.geometry(), lyr)

@@ -8,9 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import object
 from collections import OrderedDict
-from itertools import izip_longest
-from PyQt4.QtGui import QApplication
+from itertools import zip_longest
+from qgis.PyQt.QtWidgets import QApplication
 from ..user_communication import UserCommunication
 
 
@@ -77,7 +78,7 @@ class StormDrainProject(object):
 
         """
         part = None
-        for tag in self.INP_groups.keys():
+        for tag in list(self.INP_groups.keys()):
             low_tag = tag.lower()
             if low_tag.startswith(chars):
                 part = self.INP_groups[tag]
@@ -90,7 +91,7 @@ class StormDrainProject(object):
         """
         Find group 'tag_to_update' in INP_groups, and replace it with new_part list.
         """
-        for tag in self.INP_groups.keys():  # Go thru all groups
+        for tag in list(self.INP_groups.keys()):  # Go thru all groups
             low_tag = tag.lower()
             if low_tag.startswith(tag_to_update):
                 self.INP_groups[tag] = new_part
@@ -100,7 +101,7 @@ class StormDrainProject(object):
 
     def write_INP(self):
         with open(self.inp_file, 'w') as swmm_inp_file:
-            for tag, part in self.INP_groups.items(): # The iterator self.INP_groups.items() contains all groups of .INP file
+            for tag, part in list(self.INP_groups.items()): # The iterator self.INP_groups.items() contains all groups of .INP file
                 part[0] = '[{}]'.format(tag)
                 swmm_inp_file.write('\n'.join(part))
 
@@ -324,7 +325,7 @@ class StormDrainProject(object):
                 for coord in coord_list:
                     if not coord or coord[0] in self.ignore:
                         continue
-                    coord_dict = dict(izip_longest(coord_cols, coord.split())) # Creates one dictionary element {'node', x, y}
+                    coord_dict = dict(zip_longest(coord_cols, coord.split())) # Creates one dictionary element {'node', x, y}
                     node = coord_dict.pop('node')
                     self.INP_nodes[node] = coord_dict  # Inserts one new element to dictionary with key "node".
                                                        # At the end, it will have all elements from the [COORDINATES] group in .INP file.
@@ -348,7 +349,7 @@ class StormDrainProject(object):
             for cond in conduits:
                 if not cond or cond[0] in self.ignore:
                     continue
-                conduit_dict = dict(izip_longest(conduit_cols, cond.split()))
+                conduit_dict = dict(zip_longest(conduit_cols, cond.split()))
                 conduit = conduit_dict.pop('conduit_name')
                 self.INP_conduits[conduit] = conduit_dict
         except Exception as e:
@@ -362,7 +363,7 @@ class StormDrainProject(object):
                 for lo in losses:
                     if not lo or lo[0] in self.ignore:
                         continue
-                    losses_dict = dict(izip_longest(losses_cols, lo.split()))
+                    losses_dict = dict(zip_longest(losses_cols, lo.split()))
                     loss = losses_dict.pop('conduit_name')
                     self.INP_conduits[loss].update(losses_dict)  # Adds new values (from "losses_dict" , that include the "losses_cols") to
                                                                  # an already existing key in dictionary INP_conduits.
@@ -377,7 +378,7 @@ class StormDrainProject(object):
                 for xs in xsections:
                     if not xs or xs[0] in self.ignore:
                         continue
-                    xsections_dict = dict(izip_longest(xsections_cols, xs.split()))
+                    xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
                     xsec = xsections_dict.pop('conduit_name')
                     self.INP_conduits[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
                                                                  # an already existing key in dictionary INP_conduits.
@@ -392,7 +393,7 @@ class StormDrainProject(object):
                 for sub in subcatchments:
                     if not sub or sub[0] in self.ignore:
                         continue
-                    sub_dict = dict(izip_longest(sub_cols, sub.split())) # creates dictionary 'sub_dict' with column names defined in 'sub_cols'
+                    sub_dict = dict(zip_longest(sub_cols, sub.split())) # creates dictionary 'sub_dict' with column names defined in 'sub_cols'
                     out = sub_dict.pop('outlet')   # out is the value of the key, i.e. "I37CP1WTRADL"
                     self.INP_nodes[out].update(sub_dict)  # Adds new values (from "sub_dict" , that include the "sub_cols") to an already existing key in dictionary INP_nodes.
         except Exception as e:
@@ -407,7 +408,7 @@ class StormDrainProject(object):
                 for out in outfalls:
                     if not out or out[0] in self.ignore:
                         continue
-                    out_dict = dict(izip_longest(out_cols, out.split()))
+                    out_dict = dict(zip_longest(out_cols, out.split()))
                     outfall = out_dict.pop('outfall')
                     self.INP_nodes[outfall].update(out_dict)
         except Exception as e:
@@ -421,7 +422,7 @@ class StormDrainProject(object):
                 for jun in jnctns:
                     if not jun or jun[0] in self.ignore:
                         continue
-                    jun_dict = dict(izip_longest(jun_cols, jun.split()))
+                    jun_dict = dict(zip_longest(jun_cols, jun.split()))
                     junction = jun_dict.pop('junction')
                     self.INP_nodes[junction].update(jun_dict) # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
         except Exception as e:

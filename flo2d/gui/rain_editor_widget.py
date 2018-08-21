@@ -8,15 +8,18 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
+from builtins import range
 import os
 import traceback
-from PyQt4.QtCore import Qt, QSettings
-from PyQt4.QtGui import QColor, QInputDialog, QFileDialog, QApplication, QWidget
-from ui_utils import load_ui, try_disconnect, set_icon
+from qgis.PyQt.QtCore import Qt, QSettings
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QWidget
+from .ui_utils import load_ui, try_disconnect, set_icon
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from ..utils import is_number, m_fdata
 from ..geopackage_utils import GeoPackageUtils
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from ..flo2dobjects import Rain
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
@@ -178,7 +181,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         s = QSettings()
         last_dir = s.value('FLO-2D/lastHDF', '')
-        hdf_file = QFileDialog.getSaveFileName(
+        hdf_file, __ = QFileDialog.getSaveFileName(
             None,
             'Export Rainfall to HDF file',
             directory=last_dir,
@@ -194,7 +197,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             header_data = [rainintime, irinters, timestamp]
             qry_data = 'SELECT iraindum FROM raincell_data ORDER BY rrgrid, time_interval;'
             data = self.gutils.execute(qry_data).fetchall()
-            data = [data[i:i+irinters] for i in xrange(0, len(data), irinters)]
+            data = [data[i:i+irinters] for i in range(0, len(data), irinters)]
             hdf_processor = HDFProcessor(hdf_file)
             hdf_processor.export_rainfall_to_binary_hdf5(header_data, data)
             QApplication.restoreOverrideCursor()
@@ -281,7 +284,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
         s = QSettings()
         last_dir = s.value('FLO-2D/lastPredefinedSeriesDir', '')
-        predefined_files = QFileDialog.getOpenFileNames(
+        predefined_files, __ = QFileDialog.getOpenFileNames(
             None,
             'Select time series files to import data',
             directory=last_dir,
@@ -464,7 +467,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             - ask user
         """
         bl = self.lyrs.data['user_model_boundary']['qlyr']
-        bfeat = bl.getFeatures().next()
+        bfeat = next(bl.getFeatures())
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:

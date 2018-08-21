@@ -8,14 +8,18 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import str
+from builtins import zip
+from builtins import range
 import traceback
 from math import isnan
 from itertools import chain
 from collections import OrderedDict
-from PyQt4.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QInputDialog, QStandardItemModel, QStandardItem, QApplication
+from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt
+from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QInputDialog, QApplication
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QGis, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
+from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..utils import m_fdata
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -173,7 +177,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             if glob is None:
                 self.show_groups(0)
                 return
-            row = OrderedDict(zip(self.params, glob))
+            row = OrderedDict(list(zip(self.params, glob)))
             try:
                 method = row['infmethod']
                 self.groups = self.imethod_groups[method]
@@ -327,9 +331,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 else:
                     continue
 
-        col_gen = ('{}=?'.format(c) for c in infil_dict.keys()[1:])
+        col_gen = ('{}=?'.format(c) for c in list(infil_dict.keys())[1:])
         col_names = ', '.join(col_gen)
-        vals = [name] + infil_dict.values()[2:] + [fid]
+        vals = [name] + list(infil_dict.values())[2:] + [fid]
         update_qry = '''UPDATE user_infiltration SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
@@ -345,7 +349,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         columns = ['fid', 'name'] + columns
         rows = self.gutils.execute(qry).fetchall()
         for row in rows:
-            infil_dict = OrderedDict(zip(columns, row))
+            infil_dict = OrderedDict(list(zip(columns, row)))
             name = infil_dict['name']
             self.infil_name_cbo.addItem(name, infil_dict)
         self.infil_name_cbo.setCurrentIndex(self.infil_idx)
@@ -384,7 +388,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if self.center_chbox.isChecked():
             ifid = infil_dict['fid']
             self.lyrs.show_feat_rubber(self.infil_lyr.id(), ifid)
-            feat = self.infil_lyr.getFeatures(QgsFeatureRequest(ifid)).next()
+            feat = next(self.infil_lyr.getFeatures(QgsFeatureRequest(ifid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
@@ -457,7 +461,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
             VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?,?);'''
             all_values = []
-            for gid, params in grid_params.iteritems():
+            for gid, params in grid_params.items():
                 par = (params['hydc'], params['soils'], params['dtheta'],
                        params['abstrinf'], params['rtimpf'], params['soil_depth'])
                 values = (gid,) + tuple(round(p, 3) for p in par)
@@ -492,7 +496,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.clear_tables('infil_areas_scs')
             qry = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?),?);'''
             all_values = []
-            for gid, params in grid_params.iteritems():
+            for gid, params in grid_params.items():
                 values = (gid, round(params['scsn'], 3))
                 all_values.append(values)
             cur = self.con.cursor()

@@ -8,15 +8,19 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import next
+from builtins import zip
+from builtins import range
+from builtins import object
 import os
 import math
 import uuid
-from PyQt4.QtGui import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
 from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
-from PyQt4.QtCore import QPyNullVariant
+from qgis.PyQt.QtCore import QPyNullVariant
 from ..utils import is_number
 
 
@@ -450,9 +454,9 @@ def build_grid(boundary, cell_size):
     y = ymax - half_size
     geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
     geos_geom_engine.prepareGeometry()
-    for col in xrange(cols):
+    for col in range(cols):
         y_tmp = y
-        for row in xrange(rows):
+        for row in range(rows):
             pnt = QgsGeometry.fromPoint(QgsPoint(x, y_tmp))
             if geos_geom_engine.intersects(pnt.geometry()):
                 poly = (
@@ -649,7 +653,7 @@ def clustered_features(polygons, fields, *columns, **columns_map):
     """
     clusters = cluster_polygons(polygons, *columns)
     target_columns = [columns_map[c] if c in columns_map else c for c in columns]
-    for attrs, geom_list in clusters.items():
+    for attrs, geom_list in list(clusters.items()):
 
         if len(geom_list) > 1:
             geom = QgsGeometry.unaryUnion(geom_list)
@@ -986,7 +990,7 @@ def grid_has_empty_elev(gutils):
     qry = '''SELECT count(*) FROM grid WHERE elevation IS NULL;'''
     res = gutils.execute(qry)
     try:
-        n = res.next()
+        n = next(res)
         return n[0]
     except StopIteration:
         return None

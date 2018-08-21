@@ -8,11 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import next
 import os
 import traceback
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QFileDialog
-from ui_utils import load_ui
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
+from .ui_utils import load_ui
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -52,7 +53,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
     def get_xyz_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastXYZDir', '')
-        xyz_file = QFileDialog.getOpenFileName(
+        xyz_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select 3D levee lines file',
             directory=last_dir,

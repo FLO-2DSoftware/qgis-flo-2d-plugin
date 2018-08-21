@@ -11,41 +11,44 @@
 # Lambda may not be necessary
 # pylint: disable=W0108
 
+from __future__ import absolute_import
+from builtins import object
 import os
 import sys
 import time
 import traceback
 
-from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from PyQt4.QtGui import QIcon, QAction, QFileDialog, QApplication, QDesktopServices
+from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
+from qgis.PyQt.QtGui import QIcon, QDesktopServices
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication
 from qgis.core import QgsProject, QGis
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 
-from layers import Layers
-from user_communication import UserCommunication
-from geopackage_utils import connection_required, database_disconnect
-from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from flo2d_tools.grid_info_tool import GridInfoTool
-from flo2d_tools.info_tool import InfoTool
-from flo2d_tools.channel_profile_tool import ChannelProfile
-from flo2d_tools.grid_tools import grid_has_empty_elev
-from flo2d_tools.schematic_tools import generate_schematic_levees
-from flo2d_tools.flopro_tools import FLOPROExecutor
-from gui.dlg_cont_toler_jj import ContToler_JJ
-from gui.dlg_hazus import HazusDialog
-from gui.dlg_evap_editor import EvapEditorDialog
-from gui.dlg_levee_elev import LeveesToolDialog
-from gui.dlg_schem_xs_info import SchemXsecEditorDialog
-from gui.dlg_settings import SettingsDialog
-from gui.f2d_main_widget import FLO2DWidget
-from gui.grid_info_widget import GridInfoWidget
-from gui.plot_widget import PlotWidget
-from gui.table_editor_widget import TableEditorWidget
-from gui.dlg_schema2user import Schema2UserDialog
-from gui.dlg_ras_import import RasImportDialog
-from gui.dlg_flopro import SimulationDialog
-from gui.dlg_components import ComponentsDialog
+from .layers import Layers
+from .user_communication import UserCommunication
+from .geopackage_utils import connection_required, database_disconnect
+from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from .flo2d_tools.grid_info_tool import GridInfoTool
+from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.channel_profile_tool import ChannelProfile
+from .flo2d_tools.grid_tools import grid_has_empty_elev
+from .flo2d_tools.schematic_tools import generate_schematic_levees
+from .flo2d_tools.flopro_tools import FLOPROExecutor
+from .gui.dlg_cont_toler_jj import ContToler_JJ
+from .gui.dlg_hazus import HazusDialog
+from .gui.dlg_evap_editor import EvapEditorDialog
+from .gui.dlg_levee_elev import LeveesToolDialog
+from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from .gui.dlg_settings import SettingsDialog
+from .gui.f2d_main_widget import FLO2DWidget
+from .gui.grid_info_widget import GridInfoWidget
+from .gui.plot_widget import PlotWidget
+from .gui.table_editor_widget import TableEditorWidget
+from .gui.dlg_schema2user import Schema2UserDialog
+from .gui.dlg_ras_import import RasImportDialog
+from .gui.dlg_flopro import SimulationDialog
+from .gui.dlg_components import ComponentsDialog
 # from gui.dlg_gutterimport SamplingGutter
 
 
@@ -602,7 +605,7 @@ class Flo2D(object):
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
+        fname, __, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if not fname:
             return
         s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
@@ -935,7 +938,7 @@ class Flo2D(object):
     def import_from_gpkg(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGpkgDir', '')
-        attached_gpkg = QFileDialog.getOpenFileName(
+        attached_gpkg, __, __ = QFileDialog.getOpenFileName(
             None,
             'Select GeoPackage with data to import',
             directory=last_dir,

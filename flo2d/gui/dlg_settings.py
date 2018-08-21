@@ -7,17 +7,18 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+from builtins import str
 import os
 import time
 from itertools import chain
 
-from PyQt4.QtCore import Qt, QSettings
-from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
+from qgis.PyQt.QtCore import Qt, QSettings
+from qgis.PyQt.QtWidgets import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QGis
 from qgis.gui import QgsProjectionSelectionWidget
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..errors import Flo2dQueryResultNull
 from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
 from ..user_communication import UserCommunication
@@ -80,7 +81,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         con.executemany(qry, values)
 
     def read(self):
-        for name, wid in self.widget_map.iteritems():
+        for name, wid in self.widget_map.items():
             qry = '''SELECT value FROM cont WHERE name = ?;'''
             row = self.gutils.execute(qry, (name,)).fetchone()
             if not row:
@@ -141,7 +142,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_path = QFileDialog.getSaveFileName(None,
+        gpkg_path, __ = QFileDialog.getSaveFileName(None,
                                                 'Create GeoPackage As...',
                                                 directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
@@ -252,7 +253,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         if not gpkg_path:
-            gpkg_path = QFileDialog.getOpenFileName(None,
+            gpkg_path, __ = QFileDialog.getOpenFileName(None,
                                                     'Select GeoPackage to connect',
                                                     directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
@@ -289,7 +290,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 #         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def write(self):
-        for name, wid in self.widget_map.iteritems():
+        for name, wid in self.widget_map.items():
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()

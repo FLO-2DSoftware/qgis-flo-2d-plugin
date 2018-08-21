@@ -9,11 +9,11 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import QGis
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from PyQt4.QtGui import QApplication
-from PyQt4.QtGui import QDialogButtonBox
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QDialogButtonBox
 
 uiDialog, qtBaseClass = load_ui('sampling_variable_into_grid')
 

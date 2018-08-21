@@ -1,109 +1,100 @@
-# This file contains metadata for your plugin.
-
-# Mandatory items:
 [general]
 name=FLO-2D
-qgisMinimumVersion=2.18
-qgisMaximumVersion=2.99
+version=0.8
+qgisMinimumVersion=3.0
+qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
-version=0.8.0
 author=FLO-2D
 email=jj@flo-2d.com
-
 about=QGIS tools for FLO-2D
 
-tracker=
-repository=
-# End of mandatory metadata
-
-# Recommended items:
-
-# Uncomment the following line and add your changelog:
-changelog=0.8.0:
+changelog=<p>
+ <p>0.8
+ - porting to QGIS3
  - code consolidation + fixes
-<p>changelog=0.7.0
+ <p>0.7
  - Storm drain editor
  - Channels segments editor
  - Rain Editor
-<p>changelog=0.5.0 New features:
+ <p>0.5 New features:
  - FLO-2D takeover
  - Improved FLO-2D variables
  - Dialogs for Froude, Shallow-n, Tolerance, Gutter
-<p>changelog=0.4.3 New features:
+ <p>0.4.3 New features:
  - Fixed Levees elevation tool
-<p>changelog=0.4.2 New features:
+ <p>0.4.2 New features:
  - Fixed #406
-<p>changelog=0.4.1 New features:
+ <p>0.4.1 New features:
  - Added option for TIN correction within elevation polygons boundaries
-<p>changelog=0.4 New features:
+ <p>0.4 New features:
  - Improved infiltration calculation performance
  - Improved channels schematizing tool
  - Separation of schema to user conversion options for Computational Domain and Roughness
-<p>changelog=0.3.9 New features:
+ <p>0.3.9 New features:
  - Added option for importing HEC-RAS interpolated cross sections
  - Fixed floodplain cross section combobox bug
-<p>changelog=0.3.8 New features:
+ <p>0.3.8 New features:
  - Done #402
-<p>changelog=0.3.7 New features:
+ <p>0.3.7 New features:
  - Fixed internal methods for grid elevation correction
-<p>changelog=0.3.6 New features:
+ <p>0.3.6 New features:
  - Minor improvements, bug fixes and code cleanups
-<p>changelog=0.3.5 New features:
+ <p>0.3.5 New features:
  - Added export rainfall to ASCII DAT files function
  - Bug fixes and minor improvements
-<p>changelog=0.3.4 New features:
+ <p>0.3.4 New features:
  - Added Run Simulation function
  - Minor improvements, bug fixes and code cleanups
-<p>changelog=0.3.3 New features:
+ <p>0.3.3 New features:
  - Added Export Rainfall to HDF5 format function
  - Minor bug fixes and code changes
-<p>changelog=0.3.2 New features:
+ <p>0.3.2 New features:
  - Rebuild Elevation Correction tool
  - Added depth editing options in Storm Drains Editor
  - Added import data function for Rainfall ASCII files
  - Minor bug fixes and code changes
-<p>changelog=0.3.1 New features:
+ <p>0.3.1 New features:
  - Minor bug fixes and code changes
-<p>changelog=0.3.0 New features:
+ <p>0.3.0 New features:
  - Added Storm Drains Editor
  - Added option for grid elevation correction within Blocked Areas
  - Added Roughness and Storm Drains to schematic to user conversion tool
  - Moved grid tools to dock window
  - Minor improvements, bug fixes and code cleanups
-<p>changelog=0.2.9 New features:
+ <p>0.2.9 New features:
  - Added option for import data from HEC-RAS 1D geometry files
  - Added extra options for conversion from schematic to user layers
  - Support for infiltration parameters
  - Minor improvements, bug fixes, code cleanups and documentation updates
-<p>changelog=0.2.8 New features:
+ <p>0.2.8 New features:
  - Added partial conversion from schematic to user layers
  - Added option for import data from external geopackage
  - Minor improvements, bug fixes and code cleanups
-<p>changelog=0.2.7 New features:
+ <p>0.2.7 New features:
  - Support for elevation probing based on point layer
  - Added elevation correction by TIN
  - Descriptions for control parameters
  - Minor improvements and bug fixes
-<p>changelog=0.2.6 New features:
+ <p>0.2.6 New features:
  - Support for structures
  - Support for floodplain cross section
  - Support for initial condition
  - Finalizing channel schematization
  - Refactoring profile tool
-<p>changelog=0.2.5 New features:
+ <p>0.2.5 New features:
  - Initial support for channel schematization
  - Finalizing boundary condition
  - Profile tool
-<p>changelog=0.2.4 New features:
+ <p>0.2.4 New features:
  - Initial support for schematizing Boundary Condition
  - Refactoring the plugin lay-out
  - Schematizing Streets
-<p>changelog=0.2.3 New features:
-  - Schematizing levees
-  - Improving Z probe: filling NULL values through interpolation
-  - Improving N probe: to apply roughness from external sources
-  - Levee tools: adding levee with constant/sloped elevation
-  - Topo tools: Amending grid elevation using polygon correction
+ <p>0.2.3 New features:
+ - Schematizing levees
+ - Improving Z probe: filling NULL values through interpolation
+ - Improving N probe: to apply roughness from external sources
+ - Levee tools: adding levee with constant/sloped elevation
+ - Topo tools: Amending grid elevation using polygon correction
  <p>0.2.2 New features:
  - Model generation tools
  - Added User Layers for boundary, roughness, blocked areas
@@ -112,7 +103,7 @@ changelog=0.8.0:
  - Added algorithms to probe elevation data
  - Added roughness probing function
  - Database restructuring
- <p> 0.2.1 Import/Export tools
+ <p>0.2.1 Import/Export tools
 
 # Tags are comma separated with spaces allowed
 tags=flow, 2d, grid, preprocess, geopackage

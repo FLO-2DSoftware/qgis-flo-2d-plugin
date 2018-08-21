@@ -8,12 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
 import os
 import sys
 import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
 from qgis.core import QgsVectorLayer
-from utilities import get_qgis_app
+from .utilities import get_qgis_app
 from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
 
 QGIS_APP = get_qgis_app()
@@ -62,7 +63,7 @@ class TestGridTools(unittest.TestCase):
         for row in calculate_arfwrf(glayer, blayer):
             awrf = [True if i <= 1 else False for i in row[-9:]]
             self.assertTrue(all(awrf))
-        self.assertTupleEqual(row[1:], (153L, 4L, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
+        self.assertTupleEqual(row[1:], (153, 4, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
 
 
 # Running tests:

@@ -8,14 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import range
 import os
 import traceback
 
-from PyQt4.QtGui import QIcon, QInputDialog
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
 
 from ..flo2d_tools.schematic_tools import FloodplainXS
-from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
+from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -109,7 +111,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
         if self.center_fpxs_chbox.isChecked():
             self.show_fpxs_rb()
-            feat = self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)).next()
+            feat = next(self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 

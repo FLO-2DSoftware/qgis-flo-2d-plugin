@@ -8,9 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import zip
+from builtins import next
+from builtins import range
+from builtins import object
 import os
 from collections import OrderedDict, defaultdict
-from itertools import izip, izip_longest, chain, repeat
+from itertools import zip_longest, chain, repeat
 
 
 class ParseDAT(object):
@@ -95,7 +99,7 @@ class ParseDAT(object):
 
         with open(cadpts) as cad:
             x1, y1 = cad.readline().split()[1:]
-            for dummy in xrange(neighbour-2):
+            for dummy in range(neighbour-2):
                 cad.readline()
             x2, y2 = cad.readline().split()[1:]
 
@@ -139,7 +143,7 @@ class ParseDAT(object):
     @staticmethod
     def double_parser(file1, file2):
         with open(file1, 'r') as f1, open(file2, 'r') as f2:
-            for line1, line2 in izip(f1, f2):
+            for line1, line2 in zip(f1, f2):
                 row = line1.split() + line2.split()
                 if row:
                     yield row
@@ -160,13 +164,13 @@ class ParseDAT(object):
         with open(cont, 'r') as f:
             for c, row in enumerate(self.cont_rows):
                 if c == 0:
-                    results.update(dict(izip_longest(row, f.readline().rstrip().split(None, 5))))
+                    results.update(dict(zip_longest(row, f.readline().rstrip().split(None, 5))))
                 elif c == 6 and results['ICHANNEL'] == '0':
                     results['NOPRTC'] = None
                 elif c == 8 and results['LGPLOT'] == '0':
                     results['GRAPTIM'] = None
                 else:
-                    results.update(dict(izip_longest(row, f.readline().split())))
+                    results.update(dict(zip_longest(row, f.readline().split())))
         return results
 
     def parse_toler(self):
@@ -174,7 +178,7 @@ class ParseDAT(object):
         toler = self.dat_files['TOLER.DAT']
         with open(toler, 'r') as f:
             for row in self.toler_rows:
-                results.update(dict(izip_longest(row, f.readline().split())))
+                results.update(dict(zip_longest(row, f.readline().split())))
         return results
 
     def parse_fplain_cadpts(self):
@@ -192,7 +196,7 @@ class ParseDAT(object):
     def parse_inflow(self):
         inflow = self.dat_files['INFLOW.DAT']
         par = self.single_parser(inflow)
-        head = dict(zip(['IHOURDAILY', 'IDEPLT'], next(par)))
+        head = dict(list(zip(['IHOURDAILY', 'IDEPLT'], next(par))))
         inf = OrderedDict()
         res = OrderedDict()
         gid = None
@@ -249,7 +253,7 @@ class ParseDAT(object):
         par = self.single_parser(rain)
         line1 = next(par)
         line2 = next(par)
-        data = OrderedDict(zip(head, chain(line1, line2)))
+        data = OrderedDict(list(zip(head, chain(line1, line2))))
         time_series = []
         rain_arf = []
         for row in par:
@@ -285,11 +289,11 @@ class ParseDAT(object):
         line3 = ['HYDCALL', 'SOILALL', 'HYDCADJ']
         line5 = ['SCSNALL', 'ABSTR1']
         par = self.single_parser(infil)
-        data = OrderedDict(zip(line1, next(par)))
+        data = OrderedDict(list(zip(line1, next(par))))
         method = data['INFMETHOD']
         if method == '1' or method == '3':
-            data.update(zip(line2, next(par)))
-            data.update(zip(line3, next(par)))
+            data.update(list(zip(line2, next(par))))
+            data.update(list(zip(line3, next(par))))
             if data['INFCHAN'] == '1':
                 data['HYDCXX'] = next(par)[0]
             else:
@@ -310,7 +314,7 @@ class ParseDAT(object):
                 data['FHORTONF'] = row[2]
                 data['DECAYA'] = row[3]
             else:
-                data.update(zip(line5, row))
+                data.update(list(zip(line5, row)))
         return data
 
     def parse_evapor(self):
@@ -519,7 +523,7 @@ class ParseDAT(object):
             else:
                 data['F'].append(row[1:])
         chars = {'G': 32, 'D': 33, 'F': 3}
-        for k in data.iterkeys():
+        for k in data.keys():
             for row in data[k]:
                 self.fix_row_size(row, chars[k])
         return data

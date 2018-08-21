@@ -8,10 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import zip
+from builtins import next
+from builtins import range
+from builtins import object
 import re
 import bisect
 from collections import OrderedDict
-from itertools import izip_longest, chain
+from itertools import zip_longest, chain
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.schema2user_tools import remove_features
 from qgis.core import QgsFeature, QgsGeometry, QgsPoint
@@ -51,7 +55,7 @@ class RASProject(GeoPackageUtils):
         geometry = RASGeometry(geom_pth, self.interpolated)
         ras_geometry = geometry.get_ras_geometry()
         if ras_geometry:
-            first_val = next(ras_geometry.itervalues())
+            first_val = next(iter(ras_geometry.values()))
             if not first_val['xs_data']:
                 raise Exception
             return ras_geometry
@@ -96,11 +100,11 @@ class RASProject(GeoPackageUtils):
         uxsec_n_rows = []
         user_lbank_lyr.startEditing()
         user_xs_lyr.startEditing()
-        for river_name, data in ras_geometry.iteritems():
+        for river_name, data in ras_geometry.items():
             river_polyline = []
             river_feat = QgsFeature()
             river_feat.setFields(river_fields)
-            for xs_key, xs_data in data['xs_data'].iteritems():
+            for xs_key, xs_data in data['xs_data'].items():
                 xs_geom = self.create_xs_geometry(xs_data, limit)
                 river_polyline.append(xs_geom.vertexAt(0))
                 xs_feat = QgsFeature()
@@ -249,7 +253,7 @@ class RASGeometry(object):
             river = river_txt.strip().replace(' ', '_')
             reach = reach_txt.strip().replace(' ', '_')
             length = int(length_txt)
-            points = list(izip_longest(*(iter(points_split),) * 2))
+            points = list(zip_longest(*(iter(points_split),) * 2))
             if length == len(points):
                 valid = True
             else:
@@ -260,7 +264,7 @@ class RASGeometry(object):
             endings.append(river_end)
 
         indices = self.find_slices(endings)
-        for key, (start, end) in zip(self.ras_geometry.keys(), indices):
+        for key, (start, end) in zip(list(self.ras_geometry.keys()), indices):
             self.ras_geometry[key]['slice'] = slice(start, end)
 
     def extract_xsections(self):
@@ -270,7 +274,7 @@ class RASGeometry(object):
                      r'#Sta/Elev=\s*(?P<sta>\d+)[^\n]*(?P<elev>[^a-zA-Z#]+)' \
                      r'#Mann=(?P<man>[^a-zA-Z#]+)(?P<extra>[^/]+)'
         re_xs = re.compile(xs_pattern, re.M | re.S)
-        for key, values in self.ras_geometry.iteritems():
+        for key, values in self.ras_geometry.items():
             s = values['slice']
             xs_data = OrderedDict()
             river_text = self.geom_txt[s]
@@ -293,9 +297,9 @@ class RASGeometry(object):
 
                 rm = float(rm_txt)
                 length = int(length_txt)
-                points = list(izip_longest(*(iter(points_split),) * 2))
+                points = list(zip_longest(*(iter(points_split),) * 2))
                 sta = int(sta_txt)
-                elev = list(izip_longest(*(iter(elev_split),) * 2))
+                elev = list(zip_longest(*(iter(elev_split),) * 2))
                 man = [float(n) for n in man_txt.replace(',', ' ').split()]
                 if length != len(points):
                     continue

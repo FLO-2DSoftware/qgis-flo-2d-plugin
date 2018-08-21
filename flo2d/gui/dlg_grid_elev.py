@@ -10,7 +10,7 @@
 
 
 from ..flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from qgis.core import QGis
 from ..geopackage_utils import GeoPackageUtils
 

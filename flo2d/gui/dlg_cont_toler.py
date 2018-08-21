@@ -9,10 +9,10 @@
 # of the License, or (at your option) any later version
 
 from collections import OrderedDict
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from PyQt4.QtGui import QLabel, QComboBox, QCheckBox, QDoubleSpinBox
+from qgis.PyQt.QtWidgets import QLabel, QComboBox, QCheckBox, QDoubleSpinBox
 
 uiDialog, qtBaseClass = load_ui('cont_toler')
 
@@ -121,7 +121,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
             setattr(self, key, widget)
 
     def polulate_values(self):
-        for key, values in self.PARAMS.items():
+        for key, values in list(self.PARAMS.items()):
             db_val = self.gutils.get_cont_par(key)
             if db_val is None:
                 db_val = 0
@@ -142,7 +142,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
                 widget.setCurrentIndex(db_val)
 
     def save_parameters(self):
-        for key in self.PARAMS.keys():
+        for key in list(self.PARAMS.keys()):
             widget = getattr(self, key)
             if isinstance(widget, QCheckBox):
                 if key == 'COURCHAR_C':

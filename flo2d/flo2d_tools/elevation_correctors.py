@@ -8,12 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import QPyNullVariant, QVariant
+from __future__ import absolute_import
+from builtins import next
+from builtins import object
+from qgis.PyQt.QtCore import QPyNullVariant, QVariant
 from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QGis
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
-from grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
-from schematic_tools import get_intervals, interpolate_along_line, polys2levees
+from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
+from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
 
 
 class ElevationCorrector(object):
@@ -356,7 +359,7 @@ class ExternalElevation(ElevationCorrector):
         self.raster = raster
 
     def import_features(self, fids_values):
-        copy_request = QgsFeatureRequest().setFilterFids(fids_values.keys())
+        copy_request = QgsFeatureRequest().setFilterFids(list(fids_values.keys()))
         fields = self.user_polygons.fields()
         self.user_polygons.startEditing()
         for feat in self.polygons.getFeatures(copy_request):
@@ -366,7 +369,7 @@ class ExternalElevation(ElevationCorrector):
             poly_geom = feat.geometry().asPolygon()
             new_geom = QgsGeometry.fromPolygon(poly_geom)
             new_feat.setGeometry(new_geom)
-            for key, val in values.items():
+            for key, val in list(values.items()):
                 new_feat.setAttribute(key, val)
             new_feat.setAttribute('membership', 'grid')
             self.user_polygons.addFeature(new_feat)
@@ -430,7 +433,7 @@ class ExternalElevation(ElevationCorrector):
         fids_elevs = {}
         for fid, gid in grid_gen:
             fids_grids[fid].append(gid)
-        for fid, grids_fids in fids_grids.items():
+        for fid, grids_fids in list(fids_grids.items()):
             grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
             elevs = []
             for grid_feat in self.grid.getFeatures(grid_request):

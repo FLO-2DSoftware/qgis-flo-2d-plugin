@@ -11,11 +11,14 @@
 #QgsMapToolIdentify required those functions to be self
 #pylint: disable=no-self-use
 
+from builtins import str
+from builtins import range
 from collections import OrderedDict
 import functools
 import os
-from PyQt4.QtCore import pyqtSignal, QPoint
-from PyQt4.QtGui import QMenu, QAction, QColor, QCursor, QPixmap
+from qgis.PyQt.QtCore import pyqtSignal, QPoint
+from qgis.PyQt.QtWidgets import QMenu, QAction
+from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
 from qgis.core import QgsFeatureRequest
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 
@@ -44,7 +47,7 @@ class InfoTool(QgsMapToolIdentify):
             lyr_id = item.mLayer.id()
             table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]
             fid = item.mFeature.id()
-            if lyr_name not in lyrs_found.keys():
+            if lyr_name not in list(lyrs_found.keys()):
                 lyrs_found[lyr_name] = {'lid': lyr_id, 'table': table, 'fids': []}
             else:
                 pass
@@ -86,7 +89,7 @@ class InfoTool(QgsMapToolIdentify):
         if gt == 2:
             self.rb.setFillColor(QColor(255, 0, 0, 100))
         self.rb.setWidth(2)
-        feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+        feat = next(lyr.getFeatures(QgsFeatureRequest(fid)))
         self.rb.setToGeometry(feat.geometry(), lyr)
 
     def clear_rubber(self):

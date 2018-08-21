@@ -8,14 +8,17 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ui_utils import load_ui
+from builtins import next
+from builtins import str
+from builtins import range
+from .ui_utils import load_ui
 from ..utils import is_number
 from ..user_communication import UserCommunication
 from operator import itemgetter
-from itertools import izip
+
 from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
-from PyQt4.QtGui import QStandardItemModel, QStandardItem, QColor
-from PyQt4.QtCore import Qt
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import ChannelSegment
 
 uiDialog, qtBaseClass = load_ui('profile_tool')
@@ -113,7 +116,7 @@ class ProfileTool(qtBaseClass, uiDialog):
             return
         self.plot.clear()
         sta, lb, rb, bed = [], [], [], []
-        for st, data in self.chan_seg.profiles.iteritems():
+        for st, data in self.chan_seg.profiles.items():
             sta.append(data['station'])
             lb.append(data['lbank_elev'])
             rb.append(data['rbank_elev'])
@@ -258,7 +261,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.data_model = QStandardItemModel()
         self.data_model.setHorizontalHeaderLabels([name_x, name_y])
         axis_x, axis_y = self.plot_data
-        for x, y in izip(axis_x, axis_y):
+        for x, y in zip(axis_x, axis_y):
             qx = QStandardItem(str(round(x, 3)))
             qy = QStandardItem(str(y))
             items = [qx, qy]

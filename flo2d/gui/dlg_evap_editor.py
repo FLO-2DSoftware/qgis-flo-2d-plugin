@@ -8,12 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt, QModelIndex
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
-from ui_utils import load_ui
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import Qt, QModelIndex
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Evaporation
-from plot_widget import PlotWidget
+from .plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('evaporation_editor')
 
@@ -133,7 +137,8 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         """
         self.plotWidget.clear()
         dm = self.hourly_evap_model
-        print dm.rowCount()
+        # fix_print_with_import
+        print(dm.rowCount())
         x = []
         y = []
         for i in range(dm.rowCount()):

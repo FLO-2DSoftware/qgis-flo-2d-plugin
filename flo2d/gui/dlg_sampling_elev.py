@@ -8,15 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import str
 import os
 from subprocess import Popen, PIPE, STDOUT
 
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QFileDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsRasterLayer
 
 from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -99,7 +100,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             "q1": "q1 - First quartile value of all non-NODATA",
             "q3": "q1 - Third quartile value of all non-NODATA"
         }
-        for m in sorted(met.iterkeys()):
+        for m in sorted(met.keys()):
             self.algCbo.addItem(met[m], m)
             self.algCbo.setCurrentIndex(0)
 

@@ -18,7 +18,7 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaInfiltrationConverter,
     SchemaSWMMConverter
 )
-from ui_utils import load_ui
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui('schema2user')
 

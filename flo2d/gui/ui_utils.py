@@ -8,10 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import str
 import os
-from PyQt4 import uic
-from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QPyNullVariant
+from qgis.PyQt import uic
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QPyNullVariant
 from qgis.core import QgsRectangle
 
 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",

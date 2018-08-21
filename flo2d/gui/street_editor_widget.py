@@ -9,10 +9,10 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from PyQt4.QtGui import QInputDialog
+from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
 from ..flo2d_tools.schematic_tools import schematize_streets
-from ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
+from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -100,7 +100,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
         if self.street_center_chbox.isChecked():
             self.lyrs.show_feat_rubber(self.street_lyr.id(), fid)
-            feat = self.street_lyr.getFeatures(QgsFeatureRequest(fid)).next()
+            feat = next(self.street_lyr.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 

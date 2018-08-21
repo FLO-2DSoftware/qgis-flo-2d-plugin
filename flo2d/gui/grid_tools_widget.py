@@ -9,12 +9,12 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from PyQt4.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from qgis.core import QGis, QgsFeature, QgsGeometry
-from PyQt4.QtGui import QApplication, QInputDialog
+from qgis.PyQt.QtWidgets import QApplication, QInputDialog
 from ..flo2d_tools.grid_tools import (square_grid, update_roughness, evaluate_arfwrf,
                                       evaluate_spatial_tolerance, evaluate_spatial_froude,
                                       evaluate_spatial_shallow, evaluate_spatial_gutter,
@@ -81,7 +81,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             - ask user
         """
         bl = self.lyrs.data['user_model_boundary']['qlyr']
-        bfeat = bl.getFeatures().next()
+        bfeat = next(bl.getFeatures())
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
@@ -382,7 +382,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             fields = arf_lyr.fields()
             arf_feats = arf_lyr.getFeatures()
             # get first 'blocked_cells' (ARF_WRF layer) feature.
-            f0 = arf_feats.next()
+            f0 = next(arf_feats)
             grid0 = f0['grid_fid']
 
             # Assign initial values for variables to accumulate duplicate cell.
@@ -399,7 +399,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             try:
                 while True:
-                    f1 = arf_feats.next()
+                    f1 = next(arf_feats)
                     grid1 = f1['grid_fid']
                     if grid1 == grid0:
                         # Accumulate values for all fields of this duplicate cell.

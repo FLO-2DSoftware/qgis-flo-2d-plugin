@@ -7,20 +7,20 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
+from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import InletRatingTable
 
-from PyQt4.QtGui import (
-    QInputDialog,
-    QColor,
-    QTableWidgetItem,
-    QDialogButtonBox)
+from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox
+from qgis.PyQt.QtGui import QColor
 
-from ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import m_fdata
-from table_editor_widget import StandardItemModel, StandardItem
+from .table_editor_widget import StandardItemModel, StandardItem
 
 
 uiDialog, qtBaseClass = load_ui('inlets')
@@ -450,7 +450,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             swmm_time_for_clogging = ?  
         WHERE fid = ?;'''
 
-        for row in xrange(0, self.inlets_tblw.rowCount()):
+        for row in range(0, self.inlets_tblw.rowCount()):
             item = QTableWidgetItem()
 
             fid = row + 1

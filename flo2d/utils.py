@@ -8,9 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from builtins import range
 import os.path
 from math import ceil
-from PyQt4.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 
 
 def get_file_path(*paths):
@@ -54,11 +55,11 @@ def frange(start, stop=None, step=1):
     """
 
     if stop is None:
-        for x in xrange(int(ceil(start))):
+        for x in range(int(ceil(start))):
             yield x
     else:
         # create a generator expression for the index values
-        indices = (i for i in xrange(0, int((stop-start)/step)))
+        indices = (i for i in range(0, int((stop-start)/step)))
         # yield results
         for i in indices:
             yield start + step * i

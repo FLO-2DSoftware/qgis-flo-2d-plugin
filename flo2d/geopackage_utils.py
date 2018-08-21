@@ -8,11 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
+from builtins import object
 import os
 import traceback
 from functools import wraps
 from collections import defaultdict
-from user_communication import UserCommunication
+from .user_communication import UserCommunication
 
 
 def connection_required(fn):

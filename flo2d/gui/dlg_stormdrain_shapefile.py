@@ -7,14 +7,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QDialogButtonBox
+from builtins import str
+from qgis.PyQt.QtWidgets import QDialogButtonBox
 from qgis.core import QGis, QgsFeature, QgsGeometry
 
-from PyQt4.QtGui import (
-    QApplication,
-    QComboBox)
+from qgis.PyQt.QtWidgets import QApplication, QComboBox
 
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_tools.schema2user_tools import remove_features

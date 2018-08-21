@@ -8,11 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsFeatureRequest
 from ..user_communication import UserCommunication
 from ..flo2dobjects import CrossSection
-from ui_utils import load_ui, center_canvas
+from .ui_utils import load_ui, center_canvas
 import os
 
 
@@ -72,7 +72,7 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
             pass
         del row['geom']
         t = ''
-        for col, val in row.iteritems():
+        for col, val in row.items():
             t += '{}:\t{}\n'.format(col, val)
         chan_x_row = self.xs.get_chan_table()
         if typ == 'N':
@@ -81,7 +81,7 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
             xy = None
         t += '\n'
         if not xy:
-            for col, val in chan_x_row.iteritems():
+            for col, val in chan_x_row.items():
                 t += '{}:\t{}\n'.format(col, val)
         else:
             for i, pt in enumerate(xy):
@@ -91,7 +91,7 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
 
         self.show_xs_rb()
         if self.center_chbox.isChecked():
-            feat = self.xs_lyr.getFeatures(QgsFeatureRequest(self.id)).next()
+            feat = next(self.xs_lyr.getFeatures(QgsFeatureRequest(self.id)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 

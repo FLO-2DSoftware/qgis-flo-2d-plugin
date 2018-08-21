@@ -8,7 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ui_utils import load_ui
+from builtins import str
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 

@@ -7,14 +7,17 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+from __future__ import absolute_import
+from builtins import str
+from builtins import range
 import os
 import traceback
-from itertools import chain, groupby, izip
+from itertools import chain, groupby
 from operator import itemgetter
-from PyQt4.QtCore import QSettings
-from flo2d_parser import ParseDAT
+from qgis.PyQt.QtCore import QSettings
+from .flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
-from PyQt4.QtGui import QApplication
+from qgis.PyQt.QtWidgets import QApplication
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -101,7 +104,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
             ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
         ]
-        gids = res.keys()
+        gids = list(res.keys())
         cells = self.grid_centroids(gids, buffers=True)
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
@@ -141,7 +144,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_tab_fid = 0
         ts_fid = 0
         fid = 1
-        for gid, values in data.iteritems():
+        for gid, values in data.items():
             chan_out = values['K']
             fp_out = values['O']
             hydro_out = values['hydro_out']
@@ -251,7 +254,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         irinters = int(header[1])
         data_len = len(data)
         grid_count = data_len / irinters
-        data_gen = (data[i:i + grid_count] for i in xrange(0, data_len, grid_count))
+        data_gen = (data[i:i + grid_count] for i in range(0, data_len, grid_count))
         time_interval = 0
         for data_series in data_gen:
             for row in data_series:
@@ -408,7 +411,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''', 3]
         self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
-        for key in data.keys():
+        for key in list(data.keys()):
             xsec_no, xsec_name = key
             nodes = data[key]
             for row in nodes:
@@ -441,9 +444,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             params = hs[:-1]
             elems = hs[-1]
             geom = self.build_linestring(params[nodes])
-            typ = elems.keys()[0] if len(elems) == 1 else 'C'
+            typ = list(elems.keys())[0] if len(elems) == 1 else 'C'
             hystruc_sql += [(geom, typ) + tuple(params)]
-            for char in elems.keys():
+            for char in list(elems.keys()):
                 for row in elems[char]:
                     sqls[char] += [(i,) + tuple(row)]
 
@@ -946,7 +949,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
 
-            for gid, hydro_out in sorted(floodplains.iteritems(), key=lambda items: (items[1], items[0])):
+            for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                 ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                 o.write(o_line.format(ident, gid))
 
@@ -1063,7 +1066,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gen = [x if x is not None else '' for x in infil_row[1:]]
             v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
             i.write(line1.format(v1))
-            for val, line in izip([v2, v3, v4], [line2, line3, line4]):
+            for val, line in zip([v2, v3, v4], [line2, line3, line4]):
                 if any(val) is True:
                     i.write(line.format(*val))
                 else:

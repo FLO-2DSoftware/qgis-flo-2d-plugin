@@ -8,8 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from __future__ import absolute_import
+from builtins import object
 from math import log, exp
-from grid_tools import poly2poly_geos
+from .grid_tools import poly2poly_geos
 
 
 class InfiltrationCalculator(object):
