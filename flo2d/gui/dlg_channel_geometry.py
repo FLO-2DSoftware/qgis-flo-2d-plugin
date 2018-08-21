@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+
+# FLO-2D Preprocessor tools for QGIS
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version
 
 from PyQt4.QtCore import Qt
 from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
@@ -379,7 +387,6 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         highlight_selected_xsection_a(self.gutils, self.lyrs.data['chan_elems']['qlyr'], int(self.grid_element_cbo.currentText()))
 
     def clear_all_individual_items_for_current_cell_element(self):
-        return
         self.grid_type_cbo.setCurrentIndex(0)
         self.manning_dbox.setValue(0)
         self.channel_length_dbox.setValue(0)

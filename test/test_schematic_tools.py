@@ -10,9 +10,10 @@
 
 import os
 import unittest
-from qgis.core import *
+from collections import defaultdict
+from qgis.core import QgsVectorLayer
 from utilities import get_qgis_app
-from ..flo2d_tools.schematic_tools import *
+from flo2d.flo2d_tools.schematic_tools import get_intervals, interpolate_along_line, schematize_lines, populate_directions
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))

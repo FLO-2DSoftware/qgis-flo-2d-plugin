@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2016 Lutra Consulting for FLO-2D
+# Copyright © 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@ uiDialog, qtBaseClass = load_ui('cont_toler')
 
 
 class ContTolerDialog(qtBaseClass, uiDialog):
-    
+
     PARAMS = OrderedDict([
         ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT', 'min': -99, 'max': float('inf'), 'dec': 1}],
         ['DEPTHDUR', {'label': 'Depth Duration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 3}],

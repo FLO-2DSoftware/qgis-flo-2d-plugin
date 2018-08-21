@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'dlg_cont_toler_jj.ui'
-#
-# Created: Tue Nov 07 14:35:40 2017
-#      by: PyQt4 UI code generator 4.10.2
-#
-# WARNING! All changes made in this file will be lost!
+# FLO-2D Preprocessor tools for QGIS
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version
 
 from PyQt4 import QtCore, QtGui
 from ui_utils import load_ui

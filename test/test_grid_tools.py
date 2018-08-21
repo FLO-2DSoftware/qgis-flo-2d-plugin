@@ -12,9 +12,9 @@ import os
 import sys
 import unittest
 sys.path.append(os.path.join('..', 'flo2d'))
-from qgis.core import *
+from qgis.core import QgsVectorLayer
 from utilities import get_qgis_app
-from ..flo2d_tools.grid_tools import *
+from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
