@@ -10,9 +10,6 @@
 
 #QgsMapToolIdentify required those functions to be self
 #pylint: disable=no-self-use
-
-from builtins import str
-from builtins import range
 from collections import OrderedDict
 import functools
 import os

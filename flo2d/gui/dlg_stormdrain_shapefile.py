@@ -7,9 +7,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import str
 from qgis.PyQt.QtWidgets import QDialogButtonBox
-from qgis.core import QGis, QgsFeature, QgsGeometry
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
 
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
 
@@ -80,12 +79,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Point :
+                if l.geometryType() == QgsWkbTypes.PointGeometry:
                     if l.featureCount() > 0:
                         self.inlets_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.outfalls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
-                if  l.geometryType() == QGis.Line:
+                if l.geometryType() == QgsWkbTypes.LineGeometry:
                     if l.featureCount() > 0:
                         self.conduits_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
@@ -289,7 +288,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             QApplication.restoreOverrideCursor()
                             self.uc.show_warn("Point of inlet/junction '" + name + "' outside domain!")
 
-                        new_geom = QgsGeometry.fromPoint(point)
+                        new_geom = QgsGeometry.fromPointXY(point)
                         feat.setGeometry(new_geom)
 
                         feat.setAttribute('grid', 0)
@@ -381,7 +380,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             QApplication.restoreOverrideCursor()
                             self.uc.show_warn("Point of outfall'" + name + "' outside domain!")
                             return
-                        new_geom = QgsGeometry.fromPoint(point)
+                        new_geom = QgsGeometry.fromPointXY(point)
                         feat.setGeometry(new_geom)
 
                         feat.setAttribute('grid', 0)
@@ -482,7 +481,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             self.uc.show_warn("Error processing geometry of conduit '" + conduit_name +"' !")
                             return
                         line = geom.asPolyline()
-                        new_geom = QgsGeometry.fromPolyline(line)
+                        new_geom = QgsGeometry.fromPolylineXY(line)
                         feat.setGeometry(new_geom)
 
                         feat.setAttribute('conduit_name', conduit_name)

@@ -8,12 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import str
 import os
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtCore import QPyNullVariant
-from qgis.core import QgsRectangle
+from qgis.core import QgsRectangle, NULL
 
 month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
                "November", "December"]
@@ -63,7 +61,7 @@ def switch_to_selected(vlayer, combo_box, field='name', use_fid=False):
             combo_box.setCurrentIndex(idx)
         else:
             text = feat[field]
-            if isinstance(text, QPyNullVariant):
+            if isinstance(text, NULL):
                 text = ''
             idx = combo_box.findText(text)
             combo_box.setCurrentIndex(idx)

@@ -8,16 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from __future__ import absolute_import
-from builtins import str
-from builtins import range
 import os
 import traceback
 from collections import OrderedDict
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog
 from qgis.PyQt.QtGui import QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -496,7 +493,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_warn("Storm Drain point '" + name + "' outside domain!")
                     return
                 elev = self.gutils.grid_value(grid, 'elevation')
-                geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 feat.setGeometry(geom)
 
                 feat.setAttribute('grid', grid)
@@ -595,7 +592,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 y1 = float(storm_drain.INP_nodes[conduit_inlet]['y'])
                 x2 = float(storm_drain.INP_nodes[conduit_outlet]['x'])
                 y2 = float(storm_drain.INP_nodes[conduit_outlet]['y'])
-                geom = QgsGeometry.fromPolyline([QgsPoint(x1,y1),QgsPoint(x2,y2)])
+                geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1,y1),QgsPointXY(x2,y2)])
                 feat.setGeometry(geom)
 
                 # elev = 0
@@ -605,7 +602,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 #     y = float(values['y'])
                 #     gid = self.gutils.grid_on_point(x, y)
                 #     elev = self.gutils.grid_value(gid, 'elevation')
-                #     geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                #     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 #     feat.setAttribute('grid', gid)
                 #
                 #     feat.setAttribute('ge_elev', elev)

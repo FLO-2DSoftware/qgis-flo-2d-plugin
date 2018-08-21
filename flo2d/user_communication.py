@@ -10,10 +10,6 @@
 
 # Unnecessary parens after u'print' keyword
 #pylint: disable=C0325
-
-from __future__ import print_function
-from builtins import str
-from builtins import object
 import sys
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
 from qgis.PyQt.QtCore import Qt

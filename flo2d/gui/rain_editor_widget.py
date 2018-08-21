@@ -8,13 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from __future__ import absolute_import
-from builtins import range
 import os
 import traceback
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QWidget
+from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from ..utils import is_number, m_fdata

@@ -7,20 +7,14 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from builtins import next
-from builtins import zip
-from builtins import range
-from builtins import object
 import os
 import math
 import uuid
 from qgis.PyQt.QtWidgets import QMessageBox
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
-from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
-from qgis.PyQt.QtCore import QPyNullVariant
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, NULL
+from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
 
 
@@ -40,7 +34,7 @@ class TINInterpolator(object):
         self.lyr_data.vectorLayer = self.lyr
         self.lyr_data.mInputType = 0
         self.lyr_data.zCoordInterpolation = False
-        self.interpolator = QgsTINInterpolator([self.lyr_data])
+        self.interpolator = QgsTinInterpolator([self.lyr_data])
 
     def tin_at_xy(self, x, y):
         success, value = self.interpolator.interpolatePoint(x, y)
@@ -377,7 +371,7 @@ def intersection_spatial_index(vlayer):
             feat_copy.setGeometry(g)
             if new_fid is True:
                 fid = max_fid
-                feat_copy.setFeatureId(fid)
+                feat_copy.setId(fid)
                 max_fid += 1
             else:
                 fid = feat.id()
@@ -407,15 +401,15 @@ def divide_geom(geom, threshold=1000):
     center_x, center_y = bbox.center()
     xmin, ymin = bbox.xMinimum(), bbox.yMinimum()
     xmax, ymax = bbox.xMaximum(), bbox.yMaximum()
-    center_point = QgsPoint(center_x, center_y)
-    s1 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(center_x, ymin), QgsPoint(xmin, ymin), QgsPoint(xmin, center_y), center_point]])
-    s2 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(xmin, center_y), QgsPoint(xmin, ymax), QgsPoint(center_x, ymax), center_point]])
-    s3 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(center_x, ymax), QgsPoint(xmax, ymax), QgsPoint(xmax, center_y), center_point]])
-    s4 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(xmax, center_y), QgsPoint(xmax, ymin), QgsPoint(center_x, ymin), center_point]])
+    center_point = QgsPointXY(center_x, center_y)
+    s1 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(center_x, ymin), QgsPointXY(xmin, ymin), QgsPointXY(xmin, center_y), center_point]])
+    s2 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(xmin, center_y), QgsPointXY(xmin, ymax), QgsPointXY(center_x, ymax), center_point]])
+    s3 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(center_x, ymax), QgsPointXY(xmax, ymax), QgsPointXY(xmax, center_y), center_point]])
+    s4 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(xmax, center_y), QgsPointXY(xmax, ymin), QgsPointXY(center_x, ymin), center_point]])
 
     new_geoms = []
     for s in [s1, s2, s3, s4]:
@@ -423,7 +417,7 @@ def divide_geom(geom, threshold=1000):
         if part.isEmpty():
             continue
         if part.isMultipart():
-            single_geoms = [QgsGeometry.fromPolygon(g) for g in part.asMultiPolygon()]
+            single_geoms = [QgsGeometry.fromPolygonXY(g) for g in part.asMultiPolygon()]
             for sg in single_geoms:
                 new_geoms += divide_geom(sg, threshold)
             continue
@@ -457,7 +451,7 @@ def build_grid(boundary, cell_size):
     for col in range(cols):
         y_tmp = y
         for row in range(rows):
-            pnt = QgsGeometry.fromPoint(QgsPoint(x, y_tmp))
+            pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
             if geos_geom_engine.intersects(pnt.geometry()):
                 poly = (
                     x - half_size, y_tmp - half_size,
@@ -522,7 +516,7 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
                 try:
                     val = feat[col]
                 except KeyError:
-                    val = QPyNullVariant(float)
+                    val = NULL
                 values.append(val)
             values.append(gid)
             values = tuple(values)
@@ -643,7 +637,7 @@ def cluster_polygons(polygons, *columns):
     for feat in polygons.getFeatures():
         geom_poly = feat.geometry().asPolygon()
         attrs = tuple(feat[col] for col in columns)
-        clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
+        clusters[attrs].append(QgsGeometry.fromPolygonXY(geom_poly))
     return clusters
 
 
@@ -658,7 +652,7 @@ def clustered_features(polygons, fields, *columns, **columns_map):
         if len(geom_list) > 1:
             geom = QgsGeometry.unaryUnion(geom_list)
             if geom.isMultipart():
-                poly_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
+                poly_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
             else:
                 poly_geoms = [geom]
         else:
@@ -718,7 +712,7 @@ def calculate_arfwrf(grid, areas):
                     pass
                 grid_center = centroid.asPoint()
                 wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
-                wrf_geoms = (QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
+                wrf_geoms = (QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
                 if fwrf == 1:
                     wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
                 else:
@@ -851,11 +845,11 @@ def modify_elevation(gutils, grid, elev):
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
     for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
-        if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+        if not isinstance(el, NULL) and isinstance(cor, NULL):
             gutils.con.execute(set_qry, (el, fid))
-        elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+        elif isinstance(el, NULL) and not isinstance(cor, NULL):
             gutils.con.execute(add_qry, (cor, fid))
-        elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+        elif not isinstance(el, NULL) and not isinstance(cor, NULL):
             gutils.con.execute(set_add_qry, (el, cor, fid))
         else:
             pass

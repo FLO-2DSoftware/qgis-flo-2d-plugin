@@ -7,8 +7,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import str
-from builtins import range
 from ..utils import is_true
 from qgis.PyQt.QtCore import Qt
 

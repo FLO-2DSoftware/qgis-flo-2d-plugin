@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import str
 from .ui_utils import load_ui
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings

@@ -7,12 +7,8 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from __future__ import absolute_import
-from builtins import next
-from builtins import object
-from qgis.PyQt.QtCore import QPyNullVariant, QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QGis
+from qgis.PyQt.QtCore import QVariant
+from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
 from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
@@ -69,11 +65,11 @@ class ElevationCorrector(object):
         else:
             feats = [feat for feat in vlayer.getFeatures(request)]
         vtype = vlayer.geometryType()
-        if vtype == QGis.Point:
+        if vtype == QgsWkbTypes.PointGeometry:
             uri_type = 'Point'
-        elif vtype == QGis.Line:
+        elif vtype == QgsWkbTypes.LineGeometry:
             uri_type = 'LineString'
-        elif vtype == QGis.Polygon:
+        elif vtype == QgsWkbTypes.PolygonGeometry:
             uri_type = 'Polygon'
         else:
             return
@@ -143,13 +139,13 @@ class LeveesElevation(ElevationCorrector):
             elev = feat[self.ELEVATION_FIELD]
             cor = feat[self.CORRECTION_FIELD]
             qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
-            if isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+            if isinstance(elev, NULL) and isinstance(cor, NULL):
                 continue
-            elif not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif not isinstance(elev, NULL) and not isinstance(cor, NULL):
                 val = elev + cor
-            elif not isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+            elif not isinstance(elev, NULL) and isinstance(cor, NULL):
                 val = elev
-            elif isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif isinstance(elev, NULL) and not isinstance(cor, NULL):
                 qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
                 val = cor
             else:
@@ -207,8 +203,8 @@ class GridElevation(ElevationCorrector):
                 self.ELEVATION_FIELD,
                 self.CORRECTION_FIELD):
 
-            el_null = isinstance(el, QPyNullVariant)
-            cor_null = isinstance(cor, QPyNullVariant)
+            el_null = isinstance(el, NULL)
+            cor_null = isinstance(cor, NULL)
             if not el_null:
                 el = round(el, 3)
             if not cor_null:
@@ -254,7 +250,7 @@ class GridElevation(ElevationCorrector):
         else:
             request = None
         poly_feats = self.user_polygons.getFeatures() if self.only_selected is False else self.user_polygons.getFeatures(request)
-        user_lines = [feat.geometry().convertToType(QGis.Line) for feat in poly_feats]
+        user_lines = [feat.geometry().convertToType(QgsWkbTypes.LineGeometry) for feat in poly_feats]
         allfeatures, index = spatial_index(self.grid)
         boundary_grid_fids = []
         for line_geom in user_lines:
@@ -367,7 +363,7 @@ class ExternalElevation(ElevationCorrector):
             new_feat = QgsFeature()
             new_feat.setFields(fields)
             poly_geom = feat.geometry().asPolygon()
-            new_geom = QgsGeometry.fromPolygon(poly_geom)
+            new_geom = QgsGeometry.fromPolygonXY(poly_geom)
             new_feat.setGeometry(new_geom)
             for key, val in list(values.items()):
                 new_feat.setAttribute(key, val)
@@ -394,8 +390,8 @@ class ExternalElevation(ElevationCorrector):
         qry_values = []
         for fid, el, cor, gid in poly_list:
 
-            el_null = isinstance(el, QPyNullVariant)
-            cor_null = isinstance(cor, QPyNullVariant)
+            el_null = isinstance(el, NULL)
+            cor_null = isinstance(cor, NULL)
             if not el_null:
                 el = round(el, 3)
             if not cor_null:

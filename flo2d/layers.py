@@ -7,9 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from __future__ import absolute_import
-from builtins import range
 import os
 import time
 from collections import OrderedDict
@@ -19,7 +16,6 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     QgsProject,
-    QgsMapLayerRegistry,
     QgsFeatureRequest,
     QgsVectorLayer,
     QgsRectangle,
@@ -915,7 +911,7 @@ class Layers(QObject):
                 raise Flo2dLayerInvalid(msg)
 
             start_time = time.time()
-            QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
+            QgsProject.instance().addMapLayer(vlayer, False)
             self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
             # get target tree group
             start_time = time.time()
@@ -1066,7 +1062,7 @@ class Layers(QObject):
                 gr = self.root
             layeritem = None
             if gr and name:
-                layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+                layers = QgsProject.instance().mapLayersByName(name)
 
                 for layer in layers:
                     layeritem = gr.findLayer(layer.id())
@@ -1239,7 +1235,7 @@ class Layers(QObject):
         sql = '''SELECT table_name FROM gpkg_contents WHERE table_name=? AND data_type = 'features'; '''
         try:
             is_spatial = self.gutils.execute(sql, (t,)).fetchone()[0]
-        except:
+        except Exception as e:
             return
         if is_spatial:
             self.gutils.update_layer_extents(t)
@@ -1251,21 +1247,21 @@ class Layers(QObject):
             try:
                 # works if min & max not null
                 layer.setExtent(QgsRectangle(min_x, min_y, max_x, max_y))
-            except:
+            except Exception as e:
                 return
         else:
             pass
 
     @staticmethod
     def remove_layer_by_name(name):
-        layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+        layers = QgsProject.instance().mapLayersByName(name)
         for layer in layers:
-            QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
+            QgsProject.instance().removeMapLayer(layer.id())
 
     @staticmethod
     def remove_layer(layer_id):
         # do nothing if layer id does not exists
-        QgsMapLayerRegistry.instance().removeMapLayer(layer_id)
+        QgsProject.instance().removeMapLayer(layer_id)
 
     @staticmethod
     def is_str(name):

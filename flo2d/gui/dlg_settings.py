@@ -7,14 +7,13 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from builtins import str
 import os
 import time
 from itertools import chain
 
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.PyQt.QtWidgets import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
-from qgis.core import QgsCoordinateReferenceSystem, QGis
+from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -43,7 +42,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.si_units = None
         self.crs = None
         self.projectionSelector = QgsProjectionSelectionWidget()
-        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
+        self.projectionSelector.setCrs(self.iface.mapCanvas().mapSettings().destinationCrs())
         self.widget_map = {
             "MANNING": self.manningDSpinBox,
             "CELLSIZE": self.cellSizeDSpinBox
@@ -181,10 +180,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
             self.proj_lab.setText(self.crs.description())
-            if self.crs.mapUnits() == QGis.Meters:
+            if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
                 self.si_units = True
                 mu = 'meters'
-            elif self.crs.mapUnits() == QGis.Feet:
+            elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
                 self.si_units = False
                 mu = 'feet'
             else:
@@ -305,9 +304,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
             self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par('PROJ', self.crs.toProj4())
-        if self.crs.mapUnits() == QGis.Meters:
+        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
             metric = 1
-        elif self.crs.mapUnits() == QGis.Feet:
+        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
             self.si_units = False
             metric = 0
         else:

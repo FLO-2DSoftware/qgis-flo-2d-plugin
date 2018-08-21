@@ -7,8 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from builtins import next
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
@@ -36,25 +34,25 @@ class SchemaConverter(GeoPackageUtils):
     @staticmethod
     def point_geom(geom):
         geom_point = geom.asPoint()
-        new_geom = QgsGeometry.fromPoint(geom_point)
+        new_geom = QgsGeometry.fromPointXY(geom_point)
         return new_geom
 
     @staticmethod
     def polyline_geom(geom):
         geom_line = geom.asPolyline()
-        new_geom = QgsGeometry.fromPolyline(geom_line)
+        new_geom = QgsGeometry.fromPolylineXY(geom_line)
         return new_geom
 
     @staticmethod
     def polygon_geom(geom):
         geom_polygon = geom.asPolygon()
-        new_geom = QgsGeometry.fromPolygon(geom_polygon)
+        new_geom = QgsGeometry.fromPolygonXY(geom_polygon)
         return new_geom
 
     @staticmethod
     def centroid_geom(geom):
         geom_centroid = geom.centroid().asPoint()
-        new_geom = QgsGeometry.fromPoint(geom_centroid)
+        new_geom = QgsGeometry.fromPointXY(geom_centroid)
         return new_geom
 
     @staticmethod
@@ -135,7 +133,7 @@ class Schema1DConverter(SchemaConverter):
         wkt_pnt = self.single_centroid(fid)
         point_geom = QgsGeometry().fromWkt(wkt_pnt)
         point = point_geom.asPoint()
-        new_geom = QgsGeometry().fromPolyline([point, point])
+        new_geom = QgsGeometry().fromPolylineXY([point, point])
         feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
@@ -410,7 +408,7 @@ class SchemaSWMMConverter(SchemaConverter):
         for feat in schema_lyr.getFeatures():
             geom = feat.geometry()
             point = geom.asPoint()
-            new_geom = QgsGeometry.fromPoint(point)
+            new_geom = QgsGeometry.fromPointXY(point)
             new_feat = QgsFeature()
             new_feat.setFields(fields)
             new_feat.setGeometry(new_geom)

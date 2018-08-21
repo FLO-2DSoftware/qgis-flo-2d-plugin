@@ -8,10 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
 from qgis.PyQt.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
 from qgis.PyQt.QtGui import QKeySequence, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack

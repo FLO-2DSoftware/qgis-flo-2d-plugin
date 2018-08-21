@@ -7,18 +7,13 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from __future__ import absolute_import
-from builtins import next
-from builtins import range
 import traceback
 from collections import defaultdict, OrderedDict
 
 from math import pi, sqrt
 from operator import itemgetter
 
-from qgis.PyQt.QtCore import QPyNullVariant
-from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPoint
+from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPointXY
 
 from .grid_tools import spatial_index, fid_from_grid
 from ..geopackage_utils import GeoPackageUtils
@@ -124,11 +119,11 @@ def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_
         for poly in sel_polys:
             if poly.geometry().contains(pnt):
                 abs_val, cor = poly[value_col], poly[correct_val]
-                if not isinstance(abs_val, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                if abs_val and cor:
                     poly_val = abs_val + cor
-                elif not isinstance(abs_val, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+                elif abs_val and not cor:
                     poly_val = abs_val
-                elif isinstance(abs_val, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+                elif not abs_val and cor:
                     poly_val = cor + levcrest
                 else:
                     continue
@@ -372,8 +367,8 @@ def inject_points(line_geom, points):
     ipoints = iter(points)
     pnt = next(ipoints)
     xy = next(iline)
-    distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
-    vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+    distance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(pnt))
+    vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(xy))
     shift = 0
     index = 0
     try:
@@ -381,17 +376,17 @@ def inject_points(line_geom, points):
             if vdistance == distance:
                 pnt = next(ipoints)
                 xy = next(iline)
-                distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
-                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+                distance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(pnt))
+                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(xy))
                 index += 1
             elif vdistance < distance:
                 xy = next(iline)
-                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(xy))
+                vdistance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(xy))
                 index += 1
             elif vdistance > distance:
                 new_line.insert(index + shift, pnt)
                 pnt = next(ipoints)
-                distance = line_geom.lineLocatePoint(QgsGeometry.fromPoint(pnt))
+                distance = line_geom.lineLocatePoint(QgsGeometry.fromPointXY(pnt))
                 shift += 1
     except StopIteration:
         return new_line
@@ -625,7 +620,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
         for feat, sorted_xs in feat_xs: # For each channel segment and the XSs that intersect them.
             lbank_fid = feat.id()
-            lbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
+            lbank_geom = QgsGeometry.fromPolylineXY(feat.geometry().asPolyline())
             # Getting left edge.
             self.schematize_leftbanks(feat) # Created schematized geometric 'chan' table, with a polyline of all the
                                             # centroids of the cells that intersect this channel segment line.
@@ -641,7 +636,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         self.clear_tables('rbank')
         for feat in self.user_rbank_lyr.getFeatures():  # For each user right bank segment.
             rbank_fid = feat.id()
-            rbank_geom = QgsGeometry.fromPolyline(feat.geometry().asPolyline())
+            rbank_geom = QgsGeometry.fromPolylineXY(feat.geometry().asPolyline())
             # Getting left edge.
             self.schematize_rightbanks(feat) # Created schematized geometric 'rbank' table, with a polyline of all the
                                              # centroids of the cells that intersect this right segment line.
@@ -680,7 +675,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 geom = xs.geometry()
                 polyline = geom.asPolyline()
                 polyline[1] = end
-                xs.setGeometry(QgsGeometry.fromPolyline(polyline))
+                xs.setGeometry(QgsGeometry.fromPolylineXY(polyline))
 
             # Rotating and schematizing user cross sections
             self.schematize_xs(sorted_xs)
@@ -757,7 +752,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         Using Bresenham's Line Algorithm on list of points.
         """
         feat = QgsFeature()
-        geom = QgsGeometry.fromPolyline(points)
+        geom = QgsGeometry.fromPolylineXY(points)
         feat.setGeometry(geom)
         # One line only
         lines = (feat,)
@@ -784,7 +779,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         polyline = geom.asPolyline()
         for pnt in polyline:
             pnt += shift_vector
-        feature.setGeometry(QgsGeometry.fromPolyline(polyline))
+        feature.setGeometry(QgsGeometry.fromPolylineXY(polyline))
 
     @staticmethod
     def bank_stations(sorted_xs, lbank_geom):
@@ -795,7 +790,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         for xs in sorted_xs: # For each CS line.
             xs_geom = xs.geometry()
             xs_line = xs_geom.asPolyline()
-            start = QgsGeometry.fromPoint(xs_line[0]) # First point (start) of CS line.
+            start = QgsGeometry.fromPointXY(xs_line[0]) # First point (start) of CS line.
             left_cross = lbank_geom.nearestPoint(start) # Nearest point of left bank line to the start point of this CS.
             left_points.append(left_cross.asPoint())
         return left_points # Returns as many points as user cross sections intersecting this channel segment line.
@@ -805,7 +800,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         """
         Getting closest vertexes (with its indexes) to the bank points.
         """
-        segment_geom = QgsGeometry.fromPolyline(segment_points)
+        segment_geom = QgsGeometry.fromPolylineXY(segment_points)
         nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in bank_points]
         return nodes
 
@@ -821,12 +816,12 @@ class ChannelsSchematizer(GeoPackageUtils):
                 azimuth += 360
             closest_angle = round(azimuth / 45) * 45
             rotation = closest_angle - azimuth
-            end_geom = QgsGeometry.fromPoint(end)
+            end_geom = QgsGeometry.fromPointXY(end)
             end_geom.rotate(rotation, start)
             end_point = end_geom.asPoint()
             points = [start, end_point]
             xs_schema = self.centroids_of_cells_intersecting_polyline(points)
-            new_geom = QgsGeometry.fromPolyline([QgsPoint(*xs_schema[0]), QgsPoint(*xs_schema[-1])])
+            new_geom = QgsGeometry.fromPolylineXY([QgsPointXY(*xs_schema[0]), QgsPointXY(*xs_schema[-1])])
             xs_feat.setGeometry(new_geom)
 
     def schematize_xs(self, shifted_xs):
@@ -836,11 +831,11 @@ class ChannelsSchematizer(GeoPackageUtils):
         for xs_feat in shifted_xs:
             geom_poly = xs_feat.geometry().asPolyline()
             start, end = geom_poly[0], geom_poly[-1]
-            end_geom = QgsGeometry.fromPoint(end)
+            end_geom = QgsGeometry.fromPointXY(end)
             end_point = end_geom.asPoint()
             points = [start, end_point]
             xs_schema = self.centroids_of_cells_intersecting_polyline(points)
-            new_geom = QgsGeometry.fromPolyline([QgsPoint(*xs_schema[0]), QgsPoint(*xs_schema[-1])])
+            new_geom = QgsGeometry.fromPolylineXY([QgsPointXY(*xs_schema[0]), QgsPointXY(*xs_schema[-1])])
             xs_feat.setGeometry(new_geom)
 
     @staticmethod
@@ -911,7 +906,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 rotation = 90
             else:
                 rotation = 45
-            end_geom = QgsGeometry.fromPoint(end_point)
+            end_geom = QgsGeometry.fromPointXY(end_point)
             end_geom.rotate(rotation, start_point)
             end_point = end_geom.asPoint()
         else:
@@ -920,7 +915,7 @@ class ChannelsSchematizer(GeoPackageUtils):
 
     @staticmethod
     def apply_rotation(start_point, end_point, rotation):
-        end_geom = QgsGeometry.fromPoint(end_point)
+        end_geom = QgsGeometry.fromPointXY(end_point)
         end_geom.rotate(rotation, start_point)
         end_point = end_geom.asPoint()
         return end_point
@@ -940,7 +935,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             if interpolated == 1:
                 first_clip_xs.append(xs)
                 continue
-            geom = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
+            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
             for key, prev_geom in list(previous.items()):
                 cross = geom.intersects(prev_geom)
                 if cross is False:
@@ -952,7 +947,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             first_clip_xs.append((x1, y1, x2, y2, org_fid, interpolated))
             # Inserting clipped cross sections to spatial index
             feat = QgsFeature()
-            feat.setFeatureId(org_fid)
+            feat.setId(org_fid)
             feat.setGeometry(geom)
             allfeatures[org_fid] = feat
             index.insertFeature(feat)
@@ -967,14 +962,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                 second_clip_xs.append(xs)
                 continue
 
-            geom = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
+            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
             for fid in index.intersects(geom.boundingBox()):
                 f = allfeatures[fid]
                 fgeom = f.geometry()
                 if fgeom.intersects(geom):
                     end = geom.intersection(fgeom).asPoint()
                     x2, y2 = end.x(), end.y()
-                    geom = QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)])
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
             for key, prev_geom in list(previous.items()):
                 cross = geom.intersects(prev_geom)
                 if cross is False:
@@ -1161,8 +1156,8 @@ class ChannelsSchematizer(GeoPackageUtils):
             for xs_feat in xsections_feats:
                 xs_geom = xs_feat.geometry()
                 xs_geom_line = xs_geom.asPolyline()
-                xs_start = QgsGeometry.fromPoint(xs_geom_line[0])
-                xs_end = QgsGeometry.fromPoint(xs_geom_line[-1])
+                xs_start = QgsGeometry.fromPointXY(xs_geom_line[0])
+                xs_end = QgsGeometry.fromPointXY(xs_geom_line[-1])
                 ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
                 rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
                 xs_distances[fid].append((xs_feat.id(), xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
@@ -1351,7 +1346,7 @@ class FloodplainXS(GeoPackageUtils):
             start_wkt = self.execute(cell_qry, (start_gid,)).fetchone()[0]
             start_x, start_y = [float(s) for s in start_wkt.strip('POINT()').split()]
             # Finding shift vector between original start point and start grid centroid
-            shift = QgsPoint(start_x, start_y) - start
+            shift = QgsPointXY(start_x, start_y) - start
             # Shifting start and end point of line
             start += shift
             end += shift
@@ -1361,7 +1356,7 @@ class FloodplainXS(GeoPackageUtils):
                 azimuth += 360
             closest_angle = round(azimuth / 45) * 45
             rotation = closest_angle - azimuth
-            end_geom = QgsGeometry.fromPoint(end)
+            end_geom = QgsGeometry.fromPointXY(end)
             end_geom.rotate(rotation, start)
             end_point = end_geom.asPoint()
             # Getting shifted and rotated end grid fid and its centroid
@@ -1370,7 +1365,7 @@ class FloodplainXS(GeoPackageUtils):
             step = self.cell_size if closest_angle % 90 == 0 else self.diagonal
             end_wkt = self.execute(cell_qry, (end_gid,)).fetchone()[0]
             end_x, end_y = [float(e) for e in end_wkt.strip('POINT()').split()]
-            fpxec_line = QgsGeometry.fromPolyline([QgsPoint(start_x, start_y), QgsPoint(end_x, end_y)])
+            fpxec_line = QgsGeometry.fromPolylineXY([QgsPointXY(start_x, start_y), QgsPointXY(end_x, end_y)])
             sampling_points = tuple(self.interpolate_points(fpxec_line, step))
             # Adding schematized line for 'fpxsec' table
             line_geom = self.build_linestring([start_gid, end_gid])

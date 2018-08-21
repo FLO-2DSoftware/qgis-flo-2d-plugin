@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QGis
+from qgis.core import QgsWkbTypes
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -40,7 +40,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Point:
+                if l.geometryType() == QgsWkbTypes.PointGeometry:
                     if l.featureCount() != 0:
                         self.points_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:

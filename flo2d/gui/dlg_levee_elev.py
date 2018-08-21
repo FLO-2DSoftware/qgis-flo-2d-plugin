@@ -8,7 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import next
 import os
 import traceback
 from qgis.PyQt.QtCore import QSettings
@@ -17,7 +16,7 @@ from .ui_utils import load_ui
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')
 
@@ -96,8 +95,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
                     values = row.split()
                     x, y, z = [float(i) for i in values]
                     point_feat = QgsFeature()
-                    pnt = QgsPoint(x, y)
-                    point_geom = QgsGeometry().fromPoint(pnt)
+                    pnt = QgsPointXY(x, y)
+                    point_geom = QgsGeometry().fromPointXY(pnt)
                     point_feat.setGeometry(point_geom)
                     point_feat.setFields(elev_fields)
                     point_feat.setAttribute('elev', z)
@@ -108,7 +107,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
                     if not polyline:
                         break
                     line_feat = QgsFeature()
-                    line_geom = QgsGeometry().fromPolyline(polyline)
+                    line_geom = QgsGeometry().fromPolylineXY(polyline)
                     line_feat.setGeometry(line_geom)
                     line_feat.setFields(levee_fields)
                     levee_line_lyr.addFeature(line_feat)

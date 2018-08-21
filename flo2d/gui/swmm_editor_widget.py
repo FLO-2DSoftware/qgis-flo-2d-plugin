@@ -8,16 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from __future__ import absolute_import
-from builtins import zip
-from builtins import range
 import os
 import traceback
 from collections import OrderedDict
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog
 from qgis.PyQt.QtGui import QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsFeatureRequest
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -117,7 +114,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if con is None:
             return
         else:
-            return
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.inletRT = InletRatingTable(self.con, self.iface)
@@ -394,7 +390,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def import_swmm_INP_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-#         last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        # last_dir = s.value('FLO-2D/lastSWMMDir', '')
         swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',
@@ -428,7 +424,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 rim_elev = invert_elev + max_depth if invert_elev and max_depth else None
                 gid = self.gutils.grid_on_point(x, y)
                 elev = self.gutils.grid_value(gid, 'elevation')
-                geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 feat.setGeometry(geom)
                 feat.setFields(fields)
                 feat.setAttribute('sd_type', sd_type)
@@ -543,7 +539,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def populate_rtables_data(self):
         idx = self.cbo_rating_tables.currentIndex()
         rt_fid = self.cbo_rating_tables.itemData(idx)
-        if (rt_fid is None):
+        if rt_fid is None:
             self.uc.bar_warn("No rating table defined!")
             return
 

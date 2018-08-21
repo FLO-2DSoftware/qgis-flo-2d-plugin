@@ -13,7 +13,7 @@ from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import Qt
-from qgis.core import QGis, QgsFeature, QgsGeometry
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
 from qgis.PyQt.QtWidgets import QApplication, QInputDialog
 from ..flo2d_tools.grid_tools import (square_grid, update_roughness, evaluate_arfwrf,
                                       evaluate_spatial_tolerance, evaluate_spatial_froude,
@@ -26,6 +26,7 @@ from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 
 uiDialog, qtBaseClass = load_ui('grid_tools_widget')
+
 
 class GridToolsWidget(qtBaseClass, uiDialog):
 
@@ -207,10 +208,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         n_point_layers = False
         layers = self.lyrs.list_group_vlayers()
         for l in layers:
-            if l.geometryType() == QGis.Point:
+            if l.geometryType() == QgsWkbTypes.PointGeometry:
                 if l.featureCount() != 0:
-                   n_point_layers = True
-                   break
+                    n_point_layers = True
+                    break
 
         if not n_point_layers:
             QApplication.restoreOverrideCursor()
@@ -420,7 +421,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                         geom0 = f0.geometry()
                         point0 = geom0.asPoint()
-                        new_geom0 = QgsGeometry.fromPoint(point0)
+                        new_geom0 = QgsGeometry.fromPointXY(point0)
                         new_feat.setGeometry(new_geom0)
 
 
@@ -456,7 +457,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 geom0 = f0.geometry()
                 point0 = geom0.asPoint()
-                new_geom0 = QgsGeometry.fromPoint(point0)
+                new_geom0 = QgsGeometry.fromPointXY(point0)
                 new_feat.setGeometry(new_geom0)
 
                 new_feat['grid_fid'] = grid0

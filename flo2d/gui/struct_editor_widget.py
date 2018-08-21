@@ -8,9 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from __future__ import absolute_import
-from builtins import str
-from builtins import range
 from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict

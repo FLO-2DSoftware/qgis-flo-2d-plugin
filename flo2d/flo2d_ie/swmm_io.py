@@ -7,8 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from builtins import object
 from collections import OrderedDict
 from itertools import zip_longest
 from qgis.PyQt.QtWidgets import QApplication
@@ -62,7 +60,7 @@ class StormDrainProject(object):
                         continue
             try:
                 return len(self.INP_groups["COORDINATES"])
-            except:
+            except Exception as e:
                 return 0
 
         except Exception as e:

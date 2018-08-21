@@ -7,10 +7,8 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from builtins import str
 import traceback
-from qgis.core import QGis
+from qgis.core import QgsWkbTypes
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog
 from .ui_utils import load_ui, set_icon
@@ -80,7 +78,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.buildings_cbo.clear()
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     self.buildings_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
             if self.buildings_cbo.count():
@@ -97,7 +95,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.buildings_layer_cbo.clear()
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     if l.featureCount() != 0:
                         self.buildings_layer_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
@@ -663,7 +661,7 @@ class HazusDialog(qtBaseClass, uiDialog):
 
             building = next(building_fts)
             # geo = building.geometry().asPolygon()
-            # poly = QgsGeometry.fromPolygon (geo)
+            # poly = QgsGeometry.fromPolygonXY (geo)
 
             id0 = building[ID_field]
             elev = building[elev_field]
@@ -688,7 +686,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                     building = next(building_fts)
                     # geo = building.geometry().asPolygon()
                     # poly = geo.asPolygon()
-                    # poly = QgsGeometry.fromPolygon (geo)
+                    # poly = QgsGeometry.fromPolygonXY (geo)
 
                     i += 1
                     id1 = building[ID_field]

@@ -7,18 +7,13 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from builtins import zip
-from builtins import next
-from builtins import range
-from builtins import object
 import re
 import bisect
 from collections import OrderedDict
 from itertools import zip_longest, chain
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.schema2user_tools import remove_features
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
 
 class RASProject(GeoPackageUtils):
@@ -65,8 +60,8 @@ class RASProject(GeoPackageUtils):
     @staticmethod
     def create_xs_geometry(xs_data, limit=0):
         xs_points = xs_data['points']
-        xs_polyline = [QgsPoint(float(x), float(y)) for x, y in xs_points]
-        xs_geom = QgsGeometry().fromPolyline(xs_polyline)
+        xs_polyline = [QgsPointXY(float(x), float(y)) for x, y in xs_points]
+        xs_geom = QgsGeometry().fromPolylineXY(xs_polyline)
         if limit == 1:
             left_station, right_station, new_elev = RASGeometry.find_banks(xs_data)
         elif limit == 2:
@@ -77,13 +72,13 @@ class RASProject(GeoPackageUtils):
             xs_data['elev'] = new_elev
             lpoint = xs_geom.interpolate(left_station)
             rpoint = xs_geom.interpolate(right_station)
-            stations = [xs_geom.lineLocatePoint(QgsGeometry().fromPoint(p)) for p in xs_polyline]
+            stations = [xs_geom.lineLocatePoint(QgsGeometry().QgsPointXYnt(p)) for p in xs_polyline]
             lidx = bisect.bisect(stations, left_station)
             ridx = bisect.bisect(stations, right_station)
             xs_polyline = xs_polyline[lidx:ridx]
             xs_polyline.insert(0, lpoint.asPoint())
             xs_polyline.append(rpoint.asPoint())
-            xs_geom = QgsGeometry().fromPolyline(xs_polyline)
+            xs_geom = QgsGeometry().fromPolylineXY(xs_polyline)
         return xs_geom
 
     def write_xsections(self, ras_geometry, limit):
@@ -122,7 +117,7 @@ class RASProject(GeoPackageUtils):
                 xs_fid += 1
                 nxsecnum += 1
 
-            river_geom = QgsGeometry().fromPolyline(river_polyline)
+            river_geom = QgsGeometry().fromPolylineXY(river_polyline)
             river_feat.setGeometry(river_geom)
             river_feat.setAttribute('name', river_name)
             user_lbank_lyr.addFeature(river_feat)

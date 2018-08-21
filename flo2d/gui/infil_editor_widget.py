@@ -8,9 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import str
-from builtins import zip
-from builtins import range
 import traceback
 from math import isnan
 from itertools import chain
@@ -18,7 +15,7 @@ from collections import OrderedDict
 from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt
 from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QInputDialog, QApplication
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from qgis.core import QGis, QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..utils import m_fdata
 from ..geopackage_utils import GeoPackageUtils
@@ -671,7 +668,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     lyr_name = l.name()
                     self.soil_cbo.addItem(lyr_name, l)
                     self.land_cbo.addItem(lyr_name, l)
@@ -728,7 +725,7 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     lyr_name = l.name()
                     self.single_lyr_cbo.addItem(lyr_name, l)
                     self.multi_lyr_cbo.addItem(lyr_name, l)

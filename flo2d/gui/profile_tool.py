@@ -8,15 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from builtins import next
-from builtins import str
-from builtins import range
 from .ui_utils import load_ui
 from ..utils import is_number
 from ..user_communication import UserCommunication
 from operator import itemgetter
 
-from qgis.core import QgsFeatureRequest, QgsRaster, QgsMapLayerRegistry
+from qgis.core import QgsFeatureRequest, QgsRaster, QgsProject
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import ChannelSegment
@@ -87,8 +84,8 @@ class ProfileTool(qtBaseClass, uiDialog):
         """
         self.plot.plot.enableAutoRange()
         self.populate_rasters()
-        QgsMapLayerRegistry.instance().legendLayersAdded.connect(self.populate_rasters)
-        QgsMapLayerRegistry.instance().layersRemoved.connect(self.populate_rasters)
+        QgsProject.instance().legendLayersAdded.connect(self.populate_rasters)
+        QgsProject.instance().layersRemoved.connect(self.populate_rasters)
 
     def identify_feature(self, user_table, fid):
         """

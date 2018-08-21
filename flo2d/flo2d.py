@@ -10,9 +10,6 @@
 
 # Lambda may not be necessary
 # pylint: disable=W0108
-
-from __future__ import absolute_import
-from builtins import object
 import os
 import sys
 import time
@@ -21,7 +18,7 @@ import traceback
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication
-from qgis.core import QgsProject, QGis
+from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 
@@ -1130,8 +1127,8 @@ class Flo2D(object):
     @connection_required
     def show_hazus_dialog(self):
         if self.gutils.is_table_empty('grid'):
-           self.uc.bar_warn('There is no grid! Please create it before running tool.')
-           return
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
 
         s = QSettings()
         project_dir = s.value('FLO-2D/last_flopro_project', '')
@@ -1142,20 +1139,20 @@ class Flo2D(object):
         lyrs = self.lyrs.list_group_vlayers()
         n_polys = 0
         for l in lyrs:
-            if l.geometryType() == QGis.Polygon:
+            if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                 n_polys += 1
         if n_polys == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('There are not any polygon layers selected (or visible)!')
             return
 
-        self.iface.mainWindow().setWindowTitle( s.value('FLO-2D/lastGpkgDir', '') )
+        self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
 
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
         save = dlg_hazus.exec_()
         if save:
             try:
-                 self.uc.bar_info("Hazus Flooding Analysis performed!")
+                self.uc.bar_info("Hazus Flooding Analysis performed!")
             except Exception as e:
                 self.uc.bar_warn("Could not compute Hazus Flooding Analysis!")
                 return

@@ -8,10 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from __future__ import absolute_import
-from builtins import str
-from builtins import next
-from builtins import range
 import traceback
 import os
 import sys
@@ -898,7 +894,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         qgsPoint0 = QgsGeometry().fromWkt(pnt0).asPoint()
                         pnt1 = self.gutils.single_centroid(right)
                         qgsPoint1 = QgsGeometry().fromWkt(pnt1).asPoint()
-                        new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1])
+                        new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1])
 
                         xs_feat.setGeometry(new_xs)
                         xs_feat.setAttribute('rbankgrid', right)
@@ -1010,7 +1006,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     break
                 else:
                     right = self.gutils.grid_on_point(qgsPoint1.x(), qgsPoint1.y()) # Get cell number of next schematized right bank cell.
-                    new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1]) # Define line  between left bank and right bank.
+                    new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1]) # Define line  between left bank and right bank.
                     xs_feat.setGeometry(new_xs) # Assign new line geometry to current xs.
                     xs_feat.setAttribute('rbankgrid', right)# Assign new cell id for right bank cell of current xs.
 
@@ -1070,7 +1066,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     #                     break
     #                 else:
     #                     right = self.gutils.grid_on_point(qgsPoint1.x(), qgsPoint1.y()) # Cell number of next schematized right bank.
-    #                     new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1])
+    #                     new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1])
     #                     xs_feat.setGeometry(new_xs)
     #                     xs_feat.setAttribute('rbankgrid', right)
     #
