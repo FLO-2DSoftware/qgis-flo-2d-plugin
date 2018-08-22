@@ -602,7 +602,7 @@ class Flo2D(object):
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname, __, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
+        fname, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if not fname:
             return
         s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
@@ -935,7 +935,7 @@ class Flo2D(object):
     def import_from_gpkg(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGpkgDir', '')
-        attached_gpkg, __, __ = QFileDialog.getOpenFileName(
+        attached_gpkg, __ = QFileDialog.getOpenFileName(
             None,
             'Select GeoPackage with data to import',
             directory=last_dir,

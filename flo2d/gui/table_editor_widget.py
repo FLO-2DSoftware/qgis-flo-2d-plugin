@@ -98,12 +98,11 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 for i, col in enumerate(columns):
                     if not is_number(col):
                         columns[i] = ''
-                [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()
-                    ) for col in range(len(columns))]
+                [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()) for col in range(len(columns))]
                 for col in range(len(columns)):
                     self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
             self.after_paste.emit()
-            self.tview.model().dataChanged.emit(top_left_idx, self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
+            self.tview.model().dataChanged.emit(top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
 
 
 class CommandItemEdit(QUndoCommand):

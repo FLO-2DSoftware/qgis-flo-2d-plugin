@@ -34,9 +34,9 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         7: 'Float64'
     }
 
-    def __init__(self, con, iface, lyrs, cell_size, parent=None):
+    def __init__(self, con, iface, lyrs, cell_size):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs

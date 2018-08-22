@@ -22,9 +22,9 @@ month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', '
 
 class EvapEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, parent=None):
+    def __init__(self, con, iface):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.iface = iface
         self.con = con
         self.setupUi(self)

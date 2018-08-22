@@ -20,9 +20,9 @@ uiDialog, qtBaseClass = load_ui('ras_import')
 
 class RasImportDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, parent=None):
+    def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.setupUi(self)
         self.con = con
         self.iface = iface

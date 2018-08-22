@@ -179,7 +179,7 @@ class GridElevation(ElevationCorrector):
 
     def setup_layers(self):
         self.setup_elevation_layers()
-        self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeaturesIds())
+        self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeatureIds())
         self.grid = self.lyrs.data['grid']['qlyr']
         self.blocked_areas = self.lyrs.data['user_blocked_areas']['qlyr']
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
@@ -343,7 +343,7 @@ class ExternalElevation(ElevationCorrector):
         self.only_centroids = True if predicate == 'centroids within polygons' else False
         self.only_selected = only_selected
         if self.only_selected is True:
-            self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeaturesIds())
+            self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeatureIds())
         self.copy_features = copy_features
 
     def setup_attributes(self, elevation, correction):

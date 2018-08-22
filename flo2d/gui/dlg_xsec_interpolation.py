@@ -20,7 +20,7 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
 
     def __init__(self, iface,  xs_survey, parent=None,):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.setupUi(self)
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')

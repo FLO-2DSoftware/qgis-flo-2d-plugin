@@ -20,7 +20,8 @@ from qgis.core import (
     QgsVectorLayer,
     QgsRectangle,
     QgsLayerTreeGroup,
-    QgsDefaultValue
+    QgsDefaultValue,
+    QgsEditorWidgetSetup
 )
 
 from qgis.gui import QgsRubberBand
@@ -982,18 +983,21 @@ class Layers(QObject):
         try:
             lyr = self.data[table_name]['qlyr']
             self.iface.setActiveLayer(lyr)
+            lyr_fields = lyr.fields()
             if not default_attr_exp:
-                for idx in lyr.pendingAllAttributesList():
-                    lyr.setDefaultValueExpression(idx, '')
+                for idx in lyr_fields.allAttributesList():
+                    field = lyr_fields.field(idx)
+                    field.setDefaultValueDefinition(QgsDefaultValue(''))
             else:
                 for attr, exp in default_attr_exp.items():
-                    idx = lyr.fields().lookupField(attr)
-                    lyr.setDefaultValueExpression(idx, exp)
+                    idx = lyr_fields.lookupField(attr)
+                    field = lyr_fields.field(idx)
+                    field.setDefaultValueDefinition(QgsDefaultValue(exp))
             lyr.startEditing()
             self.iface.actionAddFeature().trigger()
             return True
-        except:
-            msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
+        except Exception as e:
+            msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?\n{}'.format(table_name, repr(e))
             self.uc.bar_warn(msg)
             return None
 
@@ -1305,11 +1309,10 @@ class Layers(QObject):
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                c = l.editorWidgetSetup()
+                # ec = l.editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].items():
                     attr_idx = l.fields().lookupField(attr)
-                    c.setWidgetType(attr_idx, widget_data['name'])
-                    c.setWidgetConfig(attr_idx, widget_data['config'])
+                    l.setEditorWidgetSetup(attr_idx, QgsEditorWidgetSetup(widget_data['name'], widget_data['config']))
             else:
                 pass # no attributes edit widgets config
             # set attributes default value, if any
@@ -1321,8 +1324,6 @@ class Layers(QObject):
                 for attr, val in dvs.items():
                     field = l.fields().field(attr)
                     field.setDefaultValueDefinition(QgsDefaultValue(val))
-                    # idx = l.fields().lookupField(attr)
-                    # l.setDefaultValueExpression(idx, val)
             else:
                 pass
             self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))

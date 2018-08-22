@@ -114,6 +114,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if con is None:
             return
         else:
+            return
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.inletRT = InletRatingTable(self.con, self.iface)
@@ -361,7 +362,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             qry_update = 'UPDATE user_swmm_nodes SET max_depth=?, rim_elev=?, ge_elev=?, difference=? WHERE fid=?;'
             vals = {}
             if self.selected_ckbox.isChecked():
-                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeatureIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
                 features = self.swmm_lyr.getFeatures()
@@ -468,7 +469,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.selected_ckbox.isChecked():
-                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeatureIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
                 features = self.swmm_lyr.getFeatures()
@@ -596,7 +597,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_plot(self):
-
         if not self.plot_item_name:
             return
         self.d1, self.d2 = [[], []]

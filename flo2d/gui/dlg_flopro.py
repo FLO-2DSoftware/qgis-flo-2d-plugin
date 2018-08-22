@@ -18,9 +18,9 @@ uiDialog, qtBaseClass = load_ui('flopro')
 
 class SimulationDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, parent=None):
+    def __init__(self, iface):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.setupUi(self)
         self.iface = iface
         self.uc = UserCommunication(iface, 'FLO-2D')
