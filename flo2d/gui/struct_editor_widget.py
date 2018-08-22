@@ -361,7 +361,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         # try to set current struct to the last before the deleted one
         try:
             self.populate_structs(struct_fid=old_fid-1)
-        except:
+        except Exception as e:
             self.populate_structs()
 
     def create_struct(self):

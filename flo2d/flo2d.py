@@ -839,14 +839,6 @@ class Flo2D(object):
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
 
-
-
-# def refresh_layers(self):
-#     for layer in qgis.utils.iface.mapCanvas().layers():
-#         layer.triggerRepaint()
-#
-# self.iface.mapCanvas().clearCache()
-
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_imported != '' or self.files_not_imported != '':
@@ -987,7 +979,7 @@ class Flo2D(object):
         except AttributeError as e:
             pass
 
-   # @connection_required
+    # @connection_required
     def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface)

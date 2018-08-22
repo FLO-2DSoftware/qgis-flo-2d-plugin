@@ -283,7 +283,7 @@ class GeoPackageUtils(object):
             r = self.execute(sql, (name,)).fetchone()[0]
             if r:
                 return r
-        except:
+        except Exception as e:
             return None
 
     def set_cont_par(self, name, value):
@@ -302,7 +302,7 @@ class GeoPackageUtils(object):
             sql = '''PRAGMA database_list;'''
             r = self.execute(sql).fetchone()[2]
             return r
-        except:
+        except Exception as e:
             return None
 
     def get_views_list(self):
@@ -366,10 +366,9 @@ class GeoPackageUtils(object):
         return gpb_buff
 
     def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
-        '''
+        """
         Builds a single line in cell "gid" according to "direction" (1 to 8)
-
-        '''
+        """
         functions = {
             '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
             '2': (lambda x, y, s: (x + s, y + s/2.414, x + s, y - s/2.414)),

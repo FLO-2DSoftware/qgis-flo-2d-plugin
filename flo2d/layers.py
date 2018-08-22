@@ -11,7 +11,6 @@ import os
 import time
 from collections import OrderedDict
 
-from qgis.PyQt.QtCore import QObject
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (
@@ -30,13 +29,12 @@ from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2d
 from .user_communication import UserCommunication
 
 
-class Layers(QObject):
+class Layers(object):
     """
     Class for managing project layers: load, add to layers tree.
     """
 
     def __init__(self, iface):
-        super(Layers, self).__init__()
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
@@ -45,8 +43,7 @@ class Layers(QObject):
         self.gutils = None
         self.lyrs_to_repaint = []
         self.data = OrderedDict([
-
-          # User layers:
+        # User layers:
 
             ('user_bc_points', {
                 'name': 'Boundary Condition Points',
@@ -997,7 +994,7 @@ class Layers(QObject):
             self.iface.actionAddFeature().trigger()
             return True
         except Exception as e:
-            msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?\n{}'.format(table_name, repr(e))
+            msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
             self.uc.bar_warn(msg)
             return None
 
@@ -1026,7 +1023,7 @@ class Layers(QObject):
                 try:
                     lyr = self.data[t]['qlyr']
                     lyr.commitChanges()
-                except:
+                except Exception as e:
                     msg = 'Could\'n save changes for table {}.'.format(t)
                     self.uc.bar_warn(msg)
         return in_edit_mode
@@ -1044,7 +1041,7 @@ class Layers(QObject):
                 try:
                     lyr = self.data[t]['qlyr']
                     lyr.rollBack()
-                except:
+                except Exception as e:
                     msg = 'Could\'n rollback changes for table {}.'.format(t)
                     self.uc.bar_warn(msg)
         return in_edit_mode
@@ -1244,9 +1241,6 @@ class Layers(QObject):
             return
         if is_spatial:
             self.gutils.update_layer_extents(t)
-            # why, oh why this is not working.... ?
-            # layer.reload()
-            # layer.updateExtents()
             sql = '''SELECT min_x, min_y, max_x, max_y FROM gpkg_contents WHERE table_name=?;'''
             min_x, min_y, max_x, max_y = self.gutils.execute(sql, (t,)).fetchone()
             try:
@@ -1309,7 +1303,6 @@ class Layers(QObject):
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                # ec = l.editFormConfig()
                 for attr, widget_data in data['attrs_edit_widgets'].items():
                     attr_idx = l.fields().lookupField(attr)
                     l.setEditorWidgetSetup(attr_idx, QgsEditorWidgetSetup(widget_data['name'], widget_data['config']))

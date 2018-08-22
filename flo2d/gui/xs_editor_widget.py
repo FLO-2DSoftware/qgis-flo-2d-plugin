@@ -761,7 +761,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info('XSEC.DAT model exported to ' + outdir, dur=5)
                 return True
-            except:
+            except Exception as e:
                 QApplication.restoreOverrideCursor()
                 return False
         else:
@@ -950,7 +950,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                         else:
                             pass
-                except:
+                except Exception as e:
                     pass
 
             # Assign max_water_elev and peak_discharge to features of chan_elems table (schematized layer).

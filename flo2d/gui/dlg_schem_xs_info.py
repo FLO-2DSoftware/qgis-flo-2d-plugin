@@ -68,7 +68,7 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
         self.next_id = None
         try:
             self.next_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg + 1)).fetchone()[0]
-        except:
+        except Exception as e:
             pass
         del row['geom']
         t = ''

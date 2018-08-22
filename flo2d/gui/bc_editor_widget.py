@@ -908,7 +908,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # try to set current bc to the last before the deleted one
         try:
             self.populate_bcs(bc_fid=fid-1)
-        except:
+        except Exception as e:
             self.populate_bcs()
 
     def show_outflow_rb(self):

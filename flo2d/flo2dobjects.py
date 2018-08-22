@@ -1256,7 +1256,7 @@ class Structure(GeoPackageUtils):
                 try:
                     if repl[i][0]:
                         res += repl[i]
-                except:
+                except Exception as e:
                     pass
             if not res:
                 res = [''] * 10

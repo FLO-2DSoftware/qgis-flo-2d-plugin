@@ -99,14 +99,14 @@ class ZonalStatistics(object):
         """
         for feat in self.grid.getFeatures():
             geom = feat.geometry()
-            geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+            geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
             geos_geom.prepareGeometry()
             fids = self.points_index.intersects(geom.boundingBox())
             points = []
             for fid in fids:
                 point_feat = self.points_feats[fid]
                 other_geom = point_feat.geometry()
-                isin = geos_geom.intersects(other_geom.geometry())
+                isin = geos_geom.intersects(other_geom.constGet())
                 if isin is True:
                     points.append(point_feat[self.field])
                 else:
@@ -235,14 +235,14 @@ class ZonalStatisticsOther(object):
         """
         for feat in self.grid.getFeatures():
             geom = feat.geometry()
-            geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+            geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
             geos_geom.prepareGeometry()
             fids = self.points_index.intersects(geom.boundingBox())
             points = []
             for fid in fids:
                 point_feat = self.points_feats[fid]
                 other_geom = point_feat.geometry()
-                isin = geos_geom.intersects(other_geom.geometry())
+                isin = geos_geom.intersects(other_geom.constGet())
                 if isin is True:
                     points.append(point_feat[self.field])
                 else:
@@ -365,7 +365,7 @@ def intersection_spatial_index(vlayer):
         new_geoms = divide_geom(geom)
         new_fid = True if len(new_geoms) > 1 else False
         for g in new_geoms:
-            engine = QgsGeometry.createGeometryEngine(g.geometry())
+            engine = QgsGeometry.createGeometryEngine(g.constGet())
             engine.prepareGeometry()
             feat_copy = QgsFeature(feat)
             feat_copy.setGeometry(g)
@@ -446,13 +446,13 @@ def build_grid(boundary, cell_size):
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
     y = ymax - half_size
-    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
     geos_geom_engine.prepareGeometry()
     for col in range(cols):
         y_tmp = y
         for row in range(rows):
             pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
-            if geos_geom_engine.intersects(pnt.geometry()):
+            if geos_geom_engine.intersects(pnt.constGet()):
                 poly = (
                     x - half_size, y_tmp - half_size,
                     x + half_size, y_tmp - half_size,
@@ -502,12 +502,12 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
-        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
         geos_geom_engine.prepareGeometry()
         for gid in index.intersects(geom.boundingBox()):
             grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            other_geom_geos = other_geom.geometry()
+            other_geom_geos = other_geom.constGet()
             isin = geos_geom_engine.intersects(other_geom_geos)
             if isin is not True or geos_compare(geos_geom_engine, other_geom_geos) is False:
                 continue
@@ -565,7 +565,7 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
             continue
         base_fid = feat.id()
         base_area = base_geom.area()
-        base_geom_geos = base_geom.geometry()
+        base_geom_geos = base_geom.constGet()
         base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
         base_geom_engine.prepareGeometry()
         base_parts = []
@@ -576,7 +576,7 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
                 continue
             if other_geom_engine.contains(base_geom_geos):
                 subarea = 1
-            elif base_geom_engine.contains(f.geometry().geometry()):
+            elif base_geom_engine.contains(f.geometry().constGet()):
                 subarea = other_geom_engine.area() / base_area
             else:
                 intersection_geom = other_geom_engine.intersection(base_geom_geos)
@@ -606,7 +606,7 @@ def grid_sections(grid, polygons, request, *columns):
         ids = index.intersects(geom.boundingBox())
         if not ids:
             continue
-        geos_geom = geom.geometry()
+        geos_geom = geom.constGet()
         geom_engine = QgsGeometry.createGeometryEngine(geos_geom)
         geom_engine.prepareGeometry()
         attributes = tuple(feat[col] for col in columns)
@@ -614,7 +614,7 @@ def grid_sections(grid, polygons, request, *columns):
         for gid in ids:
             grid_feat, other_geom_engine = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            other_geom_geos = other_geom.geometry()
+            other_geom_geos = other_geom.constGet()
             if geom_engine.contains(other_geom_geos):
                 subarea = 1
             elif other_geom_engine.contains(geos_geom):
