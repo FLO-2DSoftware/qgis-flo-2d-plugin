@@ -72,7 +72,7 @@ class RASProject(GeoPackageUtils):
             xs_data['elev'] = new_elev
             lpoint = xs_geom.interpolate(left_station)
             rpoint = xs_geom.interpolate(right_station)
-            stations = [xs_geom.lineLocatePoint(QgsGeometry().QgsPointXYnt(p)) for p in xs_polyline]
+            stations = [xs_geom.lineLocatePoint(QgsGeometry().fromPointXY(p)) for p in xs_polyline]
             lidx = bisect.bisect(stations, left_station)
             ridx = bisect.bisect(stations, right_station)
             xs_polyline = xs_polyline[lidx:ridx]
@@ -101,7 +101,7 @@ class RASProject(GeoPackageUtils):
             river_feat.setFields(river_fields)
             for xs_key, xs_data in data['xs_data'].items():
                 xs_geom = self.create_xs_geometry(xs_data, limit)
-                river_polyline.append(xs_geom.vertexAt(0))
+                river_polyline.append(QgsPointXY(xs_geom.vertexAt(0)))
                 xs_feat = QgsFeature()
                 xs_feat.setFields(xs_fields)
                 xs_feat.setGeometry(xs_geom)

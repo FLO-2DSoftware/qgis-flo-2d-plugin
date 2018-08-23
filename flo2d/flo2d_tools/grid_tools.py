@@ -1024,32 +1024,32 @@ def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch
 
 
 def highlight_selected_segment(layer, id):
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == id:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 def highlight_selected_xsection_a(gutils, layer, xs_id):
     qry = '''SELECT id FROM chan_elems WHERE fid = ?;'''
     xs = gutils.execute(qry, (xs_id,)).fetchone()
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == xs[0]:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 def highlight_selected_xsection_b(layer, xs_id):
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == xs_id:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 # def highlight_selected_xsection(layer, xs_id):
@@ -1061,7 +1061,7 @@ def highlight_selected_xsection_b(layer, xs_id):
 #         if feature.id() == xs[0]:
 #             self.feat_selection.append(feature.id())
 #             break
-#     self.chan_elems.setSelectedFeatures(self.feat_selection)
+#     self.chan_elems.selectByIds(self.feat_selection)
 
 
 

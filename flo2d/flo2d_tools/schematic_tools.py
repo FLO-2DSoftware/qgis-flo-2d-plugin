@@ -588,9 +588,9 @@ class ChannelsSchematizer(GeoPackageUtils):
         cross_sections = [self.xsections_feats[fid] for fid in fids
                           if self.xsections_feats[fid].geometry().intersects(line)] # Selects cross sections that intersect this channel segment.
         cross_sections.sort(key=lambda cs: line.lineLocatePoint(cs.geometry().nearestPoint(line)))
-        line_start = line.vertexAt(0)
+        line_start = QgsPointXY(line.vertexAt(0))
         first_xs = cross_sections[0]
-        xs_start = first_xs.geometry().vertexAt(0)
+        xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
         if len(cross_sections) < 2:
             self.uc.show_warn('You need at least 2 cross-sections crossing left bank line!')
             raise Exception
@@ -667,8 +667,8 @@ class ChannelsSchematizer(GeoPackageUtils):
             # Snapping user cross sections to channel segment
             for xs, (lnode, idx) in zip(sorted_xs, left_nodes):
                 vertex_idx.append(idx)
-                move = lnode - xs.geometry().vertexAt(0)
-                end = xs.geometry().vertexAt(1)
+                move = lnode - QgsPointXY(xs.geometry().vertexAt(0))
+                end = QgsPointXY(xs.geometry().vertexAt(1))
                 self.shift_line_geom(xs, move) # Each user cross section 'xs' is moved (shifted) to begin at the
                                                # centroid of nearest cell of schematiced left bank.
 
@@ -1239,7 +1239,7 @@ class Confluences(GeoPackageUtils):
         self.schematized_lbank_lyr.startEditing()
         for (fid, rank) in self.execute(qry):
             # Skip searching for confluences for main channel
-            if rank <= 1:
+            if not rank or rank <= 1:
                 continue
             # Selecting left bank segment with given 'fid'
             segment_req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(fid))

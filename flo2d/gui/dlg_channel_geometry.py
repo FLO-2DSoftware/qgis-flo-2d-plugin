@@ -737,5 +737,5 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def close_dialog(self):
         self.features = []
-        self.lyrs.data['chan']['qlyr'].setSelectedFeatures(self.features)
-        self.lyrs.data['chan_elems']['qlyr'].setSelectedFeatures(self.features)
+        self.lyrs.data['chan']['qlyr'].selectByIds(self.features)
+        self.lyrs.data['chan_elems']['qlyr'].selectByIds(self.features)
