@@ -246,7 +246,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         time_step = float(header[0])
         irinters = int(header[1])
         data_len = len(data)
-        grid_count = data_len / irinters
+        grid_count = data_len // irinters
         data_gen = (data[i:i + grid_count] for i in range(0, data_len, grid_count))
         time_interval = 0
         for data_series in data_gen:
@@ -997,7 +997,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if rain_row[5] == 1:    # if irainarf from rain = 0, omit this line.
                 for row in self.execute(rain_cells_sql):
-                    r.write(cell_line5.format(row[0], '{0:.3f}'.format(row[1] /max_arf)))
+                    r.write(cell_line5.format(row[0], '{0:.3f}'.format(row[1] / max_arf)))
 
     def export_raincell(self, outdir):
         if self.is_table_empty('raincell'):

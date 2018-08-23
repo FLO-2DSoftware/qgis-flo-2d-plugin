@@ -999,7 +999,7 @@ class Flo2D(object):
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
         grid = self.lyrs.data['grid']['qlyr']
-        if grid:
+        if grid is not None:
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par('MANNING')
