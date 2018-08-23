@@ -704,7 +704,7 @@ def calculate_arfwrf(grid, areas):
                 areas_intersection = fgeom.intersection(geom)
                 arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                 centroid = geom.centroid()
-                centroid_wkt = centroid.exportToWkt()
+                centroid_wkt = centroid.asWkt()
                 if arf >= 0.9:
                     yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf)
                     continue
@@ -845,11 +845,11 @@ def modify_elevation(gutils, grid, elev):
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
     for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
-        if not isinstance(el, NULL) and isinstance(cor, NULL):
+        if el != NULL and cor == NULL:
             gutils.con.execute(set_qry, (el, fid))
-        elif isinstance(el, NULL) and not isinstance(cor, NULL):
+        elif el == NULL and cor != NULL:
             gutils.con.execute(add_qry, (cor, fid))
-        elif not isinstance(el, NULL) and not isinstance(cor, NULL):
+        elif el != NULL and cor != NULL:
             gutils.con.execute(set_add_qry, (el, cor, fid))
         else:
             pass

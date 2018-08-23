@@ -139,13 +139,13 @@ class LeveesElevation(ElevationCorrector):
             elev = feat[self.ELEVATION_FIELD]
             cor = feat[self.CORRECTION_FIELD]
             qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
-            if isinstance(elev, NULL) and isinstance(cor, NULL):
+            if elev == NULL and cor == NULL:
                 continue
-            elif not isinstance(elev, NULL) and not isinstance(cor, NULL):
+            elif elev != NULL and cor != NULL:
                 val = elev + cor
-            elif not isinstance(elev, NULL) and isinstance(cor, NULL):
+            elif elev != NULL and cor == NULL:
                 val = elev
-            elif isinstance(elev, NULL) and not isinstance(cor, NULL):
+            elif elev == NULL and cor != NULL:
                 qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
                 val = cor
             else:
@@ -203,8 +203,8 @@ class GridElevation(ElevationCorrector):
                 self.ELEVATION_FIELD,
                 self.CORRECTION_FIELD):
 
-            el_null = isinstance(el, NULL)
-            cor_null = isinstance(cor, NULL)
+            el_null = el == NULL
+            cor_null = cor == NULL
             if not el_null:
                 el = round(el, 3)
             if not cor_null:
@@ -390,8 +390,8 @@ class ExternalElevation(ElevationCorrector):
         qry_values = []
         for fid, el, cor, gid in poly_list:
 
-            el_null = isinstance(el, NULL)
-            cor_null = isinstance(cor, NULL)
+            el_null = el == NULL
+            cor_null = cor == NULL
             if not el_null:
                 el = round(el, 3)
             if not cor_null:

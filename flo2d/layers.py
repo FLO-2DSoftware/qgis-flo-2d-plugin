@@ -49,10 +49,7 @@ class Layers(object):
                 'name': 'Boundary Condition Points',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_points.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -117,10 +114,7 @@ class Layers(object):
                 'name': 'Boundary Condition Lines',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_lines.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -136,10 +130,7 @@ class Layers(object):
                 'name': 'Boundary Condition Polygons',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_polygons.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -295,9 +286,7 @@ class Layers(object):
                 'name': 'Channel Confluences',
                 'sgroup': 'Schematic Layers',
                 'styles': ['chan_confluences.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
-                },
+                'attrs_edit_widgets': {},
                 'readonly': True
             }),
             ('fpxsec', {
@@ -383,7 +372,7 @@ class Layers(object):
                 'readonly': False
             }),
 
-         # Storm Drain layers:
+            # Storm Drain layers:
 
             ('swmmflo', {
                 'name': 'SD Inlets',
@@ -525,11 +514,8 @@ class Layers(object):
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {
-                    'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
-                },
+                'styles': ['inflow.qml'],
+                'attrs_edit_widgets': {},
                 'readonly': False
             }),
             ('outflow', {

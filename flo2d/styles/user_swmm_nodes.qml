@@ -1,412 +1,406 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis version="2.18.15" simplifyAlgorithm="0" minimumScale="0" maximumScale="1e+08" simplifyDrawingHints="0" minLabelScale="0" maxLabelScale="1e+08" simplifyDrawingTol="1" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" simplifyLocal="1" scaleBasedLabelVisibilityFlag="0">
-  <edittypes>
-    <edittype widgetv2type="TextEdit" name="fid">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="grid">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="ValueMap" name="sd_type">
-      <widgetv2config fieldEditable="1" constraint="" labelOnTop="0" constraintDescription="" notNull="0">
-        <value key="Inlet" value="I"/>
-        <value key="Outlet" value="O"/>
-      </widgetv2config>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="name">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="intype">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="junction_invert_elev">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="max_depth">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="init_depth">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="surcharge_depth">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="ponded_area">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="outfall_invert_elev">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="outfall_type">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="tidal_curve">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="time_series">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="flapgate">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_length">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_width">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_height">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_coeff">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_feature">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="curbheight">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_clogging_factor">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_time_for_clogging">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="swmm_allow_discharge">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="water_depth">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="rt_fid">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="outf_flo">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="invert_elev_inp">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="max_depth_inp">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="rim_elev_inp">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="rim_elev">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="ge_elev">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="difference">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-    <edittype widgetv2type="TextEdit" name="notes">
-      <widgetv2config IsMultiline="0" fieldEditable="1" constraint="" UseHtml="0" labelOnTop="0" constraintDescription="" notNull="0"/>
-    </edittype>
-  </edittypes>
-  <renderer-v2 attr="sd_type" forceraster="0" symbollevels="0" type="categorizedSymbol" enableorderby="0">
+<qgis hasScaleBasedVisibilityFlag="0" simplifyDrawingHints="0" readOnly="0" simplifyDrawingTol="1" simplifyAlgorithm="0" maxScale="0" simplifyLocal="1" simplifyMaxScale="1" version="3.2.2-Bonn" labelsEnabled="0" minScale="1e+8">
+  <renderer-v2 symbollevels="0" attr="sd_type" type="categorizedSymbol" enableorderby="0" forceraster="0">
     <categories>
-      <category render="true" symbol="0" value="I" label="Inlets"/>
-      <category render="true" symbol="1" value="O" label="Outlets"/>
-      <category render="true" symbol="2" value="" label=""/>
+      <category symbol="0" render="true" label="Inlets" value="I"/>
+      <category symbol="1" render="true" label="Outlets" value="O"/>
+      <category symbol="2" render="true" label="" value=""/>
     </categories>
     <symbols>
-      <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
-        <layer pass="0" class="SimpleMarker" locked="0">
+      <symbol clip_to_extent="1" type="marker" name="0" alpha="1">
+        <layer enabled="1" pass="0" locked="0" class="SimpleMarker">
           <prop k="angle" v="0"/>
           <prop k="color" v="166,206,227,255"/>
           <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="name" v="circle"/>
           <prop k="offset" v="0,0"/>
-          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
           <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0"/>
-          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="outline_width_unit" v="MM"/>
           <prop k="scale_method" v="area"/>
           <prop k="size" v="2"/>
-          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="size_unit" v="MM"/>
           <prop k="vertical_anchor_point" v="1"/>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" value="" name="name"/>
+              <Option name="properties"/>
+              <Option type="QString" value="collection" name="type"/>
+            </Option>
+          </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="1" clip_to_extent="1" type="marker" name="1">
-        <layer pass="0" class="SimpleMarker" locked="0">
+      <symbol clip_to_extent="1" type="marker" name="1" alpha="1">
+        <layer enabled="1" pass="0" locked="0" class="SimpleMarker">
           <prop k="angle" v="0"/>
           <prop k="color" v="253,140,33,255"/>
           <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="name" v="square"/>
           <prop k="offset" v="0,0"/>
-          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
           <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0"/>
-          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="outline_width_unit" v="MM"/>
           <prop k="scale_method" v="area"/>
           <prop k="size" v="2"/>
-          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="size_unit" v="MM"/>
           <prop k="vertical_anchor_point" v="1"/>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" value="" name="name"/>
+              <Option name="properties"/>
+              <Option type="QString" value="collection" name="type"/>
+            </Option>
+          </data_defined_properties>
         </layer>
       </symbol>
-      <symbol alpha="1" clip_to_extent="1" type="marker" name="2">
-        <layer pass="0" class="SimpleMarker" locked="0">
+      <symbol clip_to_extent="1" type="marker" name="2" alpha="1">
+        <layer enabled="1" pass="0" locked="0" class="SimpleMarker">
           <prop k="angle" v="0"/>
           <prop k="color" v="178,223,138,0"/>
           <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="name" v="diamond"/>
           <prop k="offset" v="0,0"/>
-          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
           <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0"/>
-          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="outline_width_unit" v="MM"/>
           <prop k="scale_method" v="area"/>
           <prop k="size" v="3"/>
-          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="size_unit" v="MM"/>
           <prop k="vertical_anchor_point" v="1"/>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" value="" name="name"/>
+              <Option name="properties"/>
+              <Option type="QString" value="collection" name="type"/>
+            </Option>
+          </data_defined_properties>
         </layer>
       </symbol>
     </symbols>
     <source-symbol>
-      <symbol alpha="1" clip_to_extent="1" type="marker" name="0">
-        <layer pass="0" class="SimpleMarker" locked="0">
+      <symbol clip_to_extent="1" type="marker" name="0" alpha="1">
+        <layer enabled="1" pass="0" locked="0" class="SimpleMarker">
           <prop k="angle" v="0"/>
           <prop k="color" v="38,174,223,255"/>
           <prop k="horizontal_anchor_point" v="1"/>
           <prop k="joinstyle" v="bevel"/>
           <prop k="name" v="diamond"/>
           <prop k="offset" v="0,0"/>
-          <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="offset_unit" v="MM"/>
           <prop k="outline_color" v="0,0,0,255"/>
           <prop k="outline_style" v="solid"/>
           <prop k="outline_width" v="0"/>
-          <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="outline_width_unit" v="MM"/>
           <prop k="scale_method" v="area"/>
           <prop k="size" v="3"/>
-          <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
+          <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"/>
           <prop k="size_unit" v="MM"/>
           <prop k="vertical_anchor_point" v="1"/>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" value="" name="name"/>
+              <Option name="properties"/>
+              <Option type="QString" value="collection" name="type"/>
+            </Option>
+          </data_defined_properties>
         </layer>
       </symbol>
     </source-symbol>
     <rotation/>
-    <sizescale scalemethod="diameter"/>
+    <sizescale/>
   </renderer-v2>
-  <labeling type="simple"/>
   <customproperties>
     <property key="embeddedWidgets/count" value="0"/>
-    <property key="labeling" value="pal"/>
-    <property key="labeling/addDirectionSymbol" value="false"/>
-    <property key="labeling/angleOffset" value="0"/>
-    <property key="labeling/blendMode" value="0"/>
-    <property key="labeling/bufferBlendMode" value="0"/>
-    <property key="labeling/bufferColorA" value="255"/>
-    <property key="labeling/bufferColorB" value="255"/>
-    <property key="labeling/bufferColorG" value="255"/>
-    <property key="labeling/bufferColorR" value="255"/>
-    <property key="labeling/bufferDraw" value="true"/>
-    <property key="labeling/bufferJoinStyle" value="128"/>
-    <property key="labeling/bufferNoFill" value="false"/>
-    <property key="labeling/bufferSize" value="1"/>
-    <property key="labeling/bufferSizeInMapUnits" value="false"/>
-    <property key="labeling/bufferSizeMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/bufferTransp" value="0"/>
-    <property key="labeling/centroidInside" value="false"/>
-    <property key="labeling/centroidWhole" value="false"/>
-    <property key="labeling/decimals" value="3"/>
-    <property key="labeling/displayAll" value="false"/>
-    <property key="labeling/dist" value="0"/>
-    <property key="labeling/distInMapUnits" value="false"/>
-    <property key="labeling/distMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/drawLabels" value="false"/>
-    <property key="labeling/enabled" value="false"/>
-    <property key="labeling/fieldName" value="fid"/>
-    <property key="labeling/fitInPolygonOnly" value="false"/>
-    <property key="labeling/fontCapitals" value="0"/>
-    <property key="labeling/fontFamily" value="MS Shell Dlg 2"/>
-    <property key="labeling/fontItalic" value="false"/>
-    <property key="labeling/fontLetterSpacing" value="0"/>
-    <property key="labeling/fontLimitPixelSize" value="false"/>
-    <property key="labeling/fontMaxPixelSize" value="10000"/>
-    <property key="labeling/fontMinPixelSize" value="3"/>
-    <property key="labeling/fontSize" value="8.25"/>
-    <property key="labeling/fontSizeInMapUnits" value="false"/>
-    <property key="labeling/fontSizeMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/fontStrikeout" value="false"/>
-    <property key="labeling/fontUnderline" value="false"/>
-    <property key="labeling/fontWeight" value="50"/>
-    <property key="labeling/fontWordSpacing" value="0"/>
-    <property key="labeling/formatNumbers" value="false"/>
-    <property key="labeling/isExpression" value="false"/>
-    <property key="labeling/labelOffsetInMapUnits" value="true"/>
-    <property key="labeling/labelOffsetMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/labelPerPart" value="false"/>
-    <property key="labeling/leftDirectionSymbol" value="&lt;"/>
-    <property key="labeling/limitNumLabels" value="false"/>
-    <property key="labeling/maxCurvedCharAngleIn" value="25"/>
-    <property key="labeling/maxCurvedCharAngleOut" value="-25"/>
-    <property key="labeling/maxNumLabels" value="2000"/>
-    <property key="labeling/mergeLines" value="false"/>
-    <property key="labeling/minFeatureSize" value="0"/>
-    <property key="labeling/multilineAlign" value="3"/>
-    <property key="labeling/multilineHeight" value="1"/>
-    <property key="labeling/namedStyle" value="Normal"/>
-    <property key="labeling/obstacle" value="true"/>
-    <property key="labeling/obstacleFactor" value="1"/>
-    <property key="labeling/obstacleType" value="0"/>
-    <property key="labeling/offsetType" value="0"/>
-    <property key="labeling/placeDirectionSymbol" value="0"/>
-    <property key="labeling/placement" value="6"/>
-    <property key="labeling/placementFlags" value="10"/>
-    <property key="labeling/plussign" value="false"/>
-    <property key="labeling/predefinedPositionOrder" value="TR,TL,BR,BL,R,L,TSR,BSR"/>
-    <property key="labeling/preserveRotation" value="true"/>
-    <property key="labeling/previewBkgrdColor" value="#ffffff"/>
-    <property key="labeling/priority" value="5"/>
-    <property key="labeling/quadOffset" value="4"/>
-    <property key="labeling/repeatDistance" value="0"/>
-    <property key="labeling/repeatDistanceMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/repeatDistanceUnit" value="1"/>
-    <property key="labeling/reverseDirectionSymbol" value="false"/>
-    <property key="labeling/rightDirectionSymbol" value=">"/>
-    <property key="labeling/scaleMax" value="10000000"/>
-    <property key="labeling/scaleMin" value="1"/>
-    <property key="labeling/scaleVisibility" value="false"/>
-    <property key="labeling/shadowBlendMode" value="6"/>
-    <property key="labeling/shadowColorB" value="0"/>
-    <property key="labeling/shadowColorG" value="0"/>
-    <property key="labeling/shadowColorR" value="0"/>
-    <property key="labeling/shadowDraw" value="false"/>
-    <property key="labeling/shadowOffsetAngle" value="135"/>
-    <property key="labeling/shadowOffsetDist" value="1"/>
-    <property key="labeling/shadowOffsetGlobal" value="true"/>
-    <property key="labeling/shadowOffsetMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shadowOffsetUnits" value="1"/>
-    <property key="labeling/shadowRadius" value="1.5"/>
-    <property key="labeling/shadowRadiusAlphaOnly" value="false"/>
-    <property key="labeling/shadowRadiusMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shadowRadiusUnits" value="1"/>
-    <property key="labeling/shadowScale" value="100"/>
-    <property key="labeling/shadowTransparency" value="30"/>
-    <property key="labeling/shadowUnder" value="0"/>
-    <property key="labeling/shapeBlendMode" value="0"/>
-    <property key="labeling/shapeBorderColorA" value="255"/>
-    <property key="labeling/shapeBorderColorB" value="128"/>
-    <property key="labeling/shapeBorderColorG" value="128"/>
-    <property key="labeling/shapeBorderColorR" value="128"/>
-    <property key="labeling/shapeBorderWidth" value="0"/>
-    <property key="labeling/shapeBorderWidthMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shapeBorderWidthUnits" value="1"/>
-    <property key="labeling/shapeDraw" value="false"/>
-    <property key="labeling/shapeFillColorA" value="255"/>
-    <property key="labeling/shapeFillColorB" value="255"/>
-    <property key="labeling/shapeFillColorG" value="255"/>
-    <property key="labeling/shapeFillColorR" value="255"/>
-    <property key="labeling/shapeJoinStyle" value="64"/>
-    <property key="labeling/shapeOffsetMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shapeOffsetUnits" value="1"/>
-    <property key="labeling/shapeOffsetX" value="0"/>
-    <property key="labeling/shapeOffsetY" value="0"/>
-    <property key="labeling/shapeRadiiMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shapeRadiiUnits" value="1"/>
-    <property key="labeling/shapeRadiiX" value="0"/>
-    <property key="labeling/shapeRadiiY" value="0"/>
-    <property key="labeling/shapeRotation" value="0"/>
-    <property key="labeling/shapeRotationType" value="0"/>
-    <property key="labeling/shapeSVGFile" value=""/>
-    <property key="labeling/shapeSizeMapUnitScale" value="0,0,0,0,0,0"/>
-    <property key="labeling/shapeSizeType" value="0"/>
-    <property key="labeling/shapeSizeUnits" value="1"/>
-    <property key="labeling/shapeSizeX" value="0"/>
-    <property key="labeling/shapeSizeY" value="0"/>
-    <property key="labeling/shapeTransparency" value="0"/>
-    <property key="labeling/shapeType" value="0"/>
-    <property key="labeling/substitutions" value="&lt;substitutions/>"/>
-    <property key="labeling/textColorA" value="255"/>
-    <property key="labeling/textColorB" value="0"/>
-    <property key="labeling/textColorG" value="0"/>
-    <property key="labeling/textColorR" value="0"/>
-    <property key="labeling/textTransp" value="0"/>
-    <property key="labeling/upsidedownLabels" value="0"/>
-    <property key="labeling/useSubstitutions" value="false"/>
-    <property key="labeling/wrapChar" value=""/>
-    <property key="labeling/xOffset" value="0"/>
-    <property key="labeling/yOffset" value="0"/>
-    <property key="labeling/zIndex" value="0"/>
     <property key="variableNames"/>
     <property key="variableValues"/>
   </customproperties>
   <blendMode>0</blendMode>
   <featureBlendMode>0</featureBlendMode>
-  <layerTransparency>0</layerTransparency>
-  <displayfield>fid</displayfield>
-  <label>0</label>
-  <labelattributes>
-    <label fieldname="" text="Label"/>
-    <family fieldname="" name="MS Shell Dlg 2"/>
-    <size fieldname="" units="pt" value="12"/>
-    <bold fieldname="" on="0"/>
-    <italic fieldname="" on="0"/>
-    <underline fieldname="" on="0"/>
-    <strikeout fieldname="" on="0"/>
-    <color fieldname="" red="0" blue="0" green="0"/>
-    <x fieldname=""/>
-    <y fieldname=""/>
-    <offset x="0" y="0" units="pt" yfieldname="" xfieldname=""/>
-    <angle fieldname="" value="0" auto="0"/>
-    <alignment fieldname="" value="center"/>
-    <buffercolor fieldname="" red="255" blue="255" green="255"/>
-    <buffersize fieldname="" units="pt" value="1"/>
-    <bufferenabled fieldname="" on=""/>
-    <multilineenabled fieldname="" on=""/>
-    <selectedonly on=""/>
-  </labelattributes>
-  <SingleCategoryDiagramRenderer diagramType="Histogram" sizeLegend="0" attributeLegend="1">
-    <DiagramCategory penColor="#000000" labelPlacementMethod="XHeight" penWidth="0" diagramOrientation="Up" sizeScale="0,0,0,0,0,0" minimumSize="0" barWidth="5" penAlpha="255" maxScaleDenominator="1e+08" backgroundColor="#ffffff" transparency="0" width="15" scaleDependency="Area" backgroundAlpha="255" angleOffset="1440" scaleBasedVisibility="0" enabled="0" height="15" lineSizeScale="0,0,0,0,0,0" sizeType="MM" lineSizeType="MM" minScaleDenominator="inf">
+  <layerOpacity>1</layerOpacity>
+  <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
+    <DiagramCategory lineSizeScale="3x:0,0,0,0,0,0" penWidth="0" backgroundColor="#ffffff" minScaleDenominator="-2.14748e+9" penAlpha="255" maxScaleDenominator="1e+8" scaleBasedVisibility="0" barWidth="5" opacity="1" diagramOrientation="Up" labelPlacementMethod="XHeight" width="15" sizeScale="3x:0,0,0,0,0,0" backgroundAlpha="255" penColor="#000000" minimumSize="0" height="15" rotationOffset="270" scaleDependency="Area" sizeType="MM" enabled="0" lineSizeType="MM">
       <fontProperties description="MS Shell Dlg 2,8.25,-1,5,50,0,0,0,0,0" style=""/>
-      <attribute field="" color="#000000" label=""/>
+      <attribute color="#000000" label="" field=""/>
     </DiagramCategory>
-    <symbol alpha="1" clip_to_extent="1" type="marker" name="sizeSymbol">
-      <layer pass="0" class="SimpleMarker" locked="0">
-        <prop k="angle" v="0"/>
-        <prop k="color" v="255,0,0,255"/>
-        <prop k="horizontal_anchor_point" v="1"/>
-        <prop k="joinstyle" v="bevel"/>
-        <prop k="name" v="circle"/>
-        <prop k="offset" v="0,0"/>
-        <prop k="offset_map_unit_scale" v="0,0,0,0,0,0"/>
-        <prop k="offset_unit" v="MM"/>
-        <prop k="outline_color" v="0,0,0,255"/>
-        <prop k="outline_style" v="solid"/>
-        <prop k="outline_width" v="0"/>
-        <prop k="outline_width_map_unit_scale" v="0,0,0,0,0,0"/>
-        <prop k="outline_width_unit" v="MM"/>
-        <prop k="scale_method" v="diameter"/>
-        <prop k="size" v="2"/>
-        <prop k="size_map_unit_scale" v="0,0,0,0,0,0"/>
-        <prop k="size_unit" v="MM"/>
-        <prop k="vertical_anchor_point" v="1"/>
-      </layer>
-    </symbol>
   </SingleCategoryDiagramRenderer>
-  <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
-  <annotationform>.</annotationform>
+  <DiagramLayerSettings showAll="1" linePlacementFlags="2" dist="0" obstacle="0" placement="0" zIndex="0" priority="0">
+    <properties>
+      <Option type="Map">
+        <Option type="QString" value="" name="name"/>
+        <Option name="properties"/>
+        <Option type="QString" value="collection" name="type"/>
+      </Option>
+    </properties>
+  </DiagramLayerSettings>
+  <fieldConfiguration>
+    <field name="fid">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="grid">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="sd_type">
+      <editWidget type="ValueMap">
+        <config>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="I" name="Inlet"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="O" name="Outlet"/>
+              </Option>
+            </Option>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+    <field name="name">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="intype">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="junction_invert_elev">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="max_depth">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="init_depth">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="surcharge_depth">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="ponded_area">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="outfall_invert_elev">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="outfall_type">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="tidal_curve">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="time_series">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="flapgate">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_length">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_width">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_height">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_coeff">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_feature">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="curbheight">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_clogging_factor">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_time_for_clogging">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="swmm_allow_discharge">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="water_depth">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="rt_fid">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="outf_flo">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="invert_elev_inp">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="max_depth_inp">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="rim_elev_inp">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="rim_elev">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="ge_elev">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="difference">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="notes">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+  </fieldConfiguration>
   <aliases>
     <alias field="fid" index="0" name=""/>
     <alias field="grid" index="1" name=""/>
@@ -445,47 +439,157 @@
   </aliases>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
-  <attributeactions default="-1"/>
-  <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+  <defaults>
+    <default applyOnUpdate="0" field="fid" expression=""/>
+    <default applyOnUpdate="0" field="grid" expression=""/>
+    <default applyOnUpdate="0" field="sd_type" expression=""/>
+    <default applyOnUpdate="0" field="name" expression=""/>
+    <default applyOnUpdate="0" field="intype" expression=""/>
+    <default applyOnUpdate="0" field="junction_invert_elev" expression=""/>
+    <default applyOnUpdate="0" field="max_depth" expression=""/>
+    <default applyOnUpdate="0" field="init_depth" expression=""/>
+    <default applyOnUpdate="0" field="surcharge_depth" expression=""/>
+    <default applyOnUpdate="0" field="ponded_area" expression=""/>
+    <default applyOnUpdate="0" field="outfall_invert_elev" expression=""/>
+    <default applyOnUpdate="0" field="outfall_type" expression=""/>
+    <default applyOnUpdate="0" field="tidal_curve" expression=""/>
+    <default applyOnUpdate="0" field="time_series" expression=""/>
+    <default applyOnUpdate="0" field="flapgate" expression=""/>
+    <default applyOnUpdate="0" field="swmm_length" expression=""/>
+    <default applyOnUpdate="0" field="swmm_width" expression=""/>
+    <default applyOnUpdate="0" field="swmm_height" expression=""/>
+    <default applyOnUpdate="0" field="swmm_coeff" expression=""/>
+    <default applyOnUpdate="0" field="swmm_feature" expression=""/>
+    <default applyOnUpdate="0" field="curbheight" expression=""/>
+    <default applyOnUpdate="0" field="swmm_clogging_factor" expression=""/>
+    <default applyOnUpdate="0" field="swmm_time_for_clogging" expression=""/>
+    <default applyOnUpdate="0" field="swmm_allow_discharge" expression=""/>
+    <default applyOnUpdate="0" field="water_depth" expression=""/>
+    <default applyOnUpdate="0" field="rt_fid" expression=""/>
+    <default applyOnUpdate="0" field="outf_flo" expression=""/>
+    <default applyOnUpdate="0" field="invert_elev_inp" expression=""/>
+    <default applyOnUpdate="0" field="max_depth_inp" expression=""/>
+    <default applyOnUpdate="0" field="rim_elev_inp" expression=""/>
+    <default applyOnUpdate="0" field="rim_elev" expression=""/>
+    <default applyOnUpdate="0" field="ge_elev" expression=""/>
+    <default applyOnUpdate="0" field="difference" expression=""/>
+    <default applyOnUpdate="0" field="notes" expression=""/>
+  </defaults>
+  <constraints>
+    <constraint exp_strength="0" constraints="3" unique_strength="1" field="fid" notnull_strength="1"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="grid" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="sd_type" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="name" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="intype" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="junction_invert_elev" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="max_depth" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="init_depth" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="surcharge_depth" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="ponded_area" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="outfall_invert_elev" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="outfall_type" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="tidal_curve" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="time_series" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="flapgate" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_length" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_width" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_height" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_coeff" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_feature" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="curbheight" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_clogging_factor" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_time_for_clogging" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="swmm_allow_discharge" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="water_depth" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="rt_fid" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="outf_flo" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="invert_elev_inp" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="max_depth_inp" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="rim_elev_inp" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="rim_elev" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="ge_elev" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="difference" notnull_strength="0"/>
+    <constraint exp_strength="0" constraints="0" unique_strength="0" field="notes" notnull_strength="0"/>
+  </constraints>
+  <constraintExpressions>
+    <constraint exp="" desc="" field="fid"/>
+    <constraint exp="" desc="" field="grid"/>
+    <constraint exp="" desc="" field="sd_type"/>
+    <constraint exp="" desc="" field="name"/>
+    <constraint exp="" desc="" field="intype"/>
+    <constraint exp="" desc="" field="junction_invert_elev"/>
+    <constraint exp="" desc="" field="max_depth"/>
+    <constraint exp="" desc="" field="init_depth"/>
+    <constraint exp="" desc="" field="surcharge_depth"/>
+    <constraint exp="" desc="" field="ponded_area"/>
+    <constraint exp="" desc="" field="outfall_invert_elev"/>
+    <constraint exp="" desc="" field="outfall_type"/>
+    <constraint exp="" desc="" field="tidal_curve"/>
+    <constraint exp="" desc="" field="time_series"/>
+    <constraint exp="" desc="" field="flapgate"/>
+    <constraint exp="" desc="" field="swmm_length"/>
+    <constraint exp="" desc="" field="swmm_width"/>
+    <constraint exp="" desc="" field="swmm_height"/>
+    <constraint exp="" desc="" field="swmm_coeff"/>
+    <constraint exp="" desc="" field="swmm_feature"/>
+    <constraint exp="" desc="" field="curbheight"/>
+    <constraint exp="" desc="" field="swmm_clogging_factor"/>
+    <constraint exp="" desc="" field="swmm_time_for_clogging"/>
+    <constraint exp="" desc="" field="swmm_allow_discharge"/>
+    <constraint exp="" desc="" field="water_depth"/>
+    <constraint exp="" desc="" field="rt_fid"/>
+    <constraint exp="" desc="" field="outf_flo"/>
+    <constraint exp="" desc="" field="invert_elev_inp"/>
+    <constraint exp="" desc="" field="max_depth_inp"/>
+    <constraint exp="" desc="" field="rim_elev_inp"/>
+    <constraint exp="" desc="" field="rim_elev"/>
+    <constraint exp="" desc="" field="ge_elev"/>
+    <constraint exp="" desc="" field="difference"/>
+    <constraint exp="" desc="" field="notes"/>
+  </constraintExpressions>
+  <attributeactions>
+    <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"/>
+  </attributeactions>
+  <attributetableconfig actionWidgetStyle="dropDown" sortOrder="0" sortExpression="">
     <columns>
-      <column width="-1" hidden="0" type="field" name="fid"/>
-      <column width="-1" hidden="1" type="actions"/>
-      <column width="-1" hidden="0" type="field" name="name"/>
-      <column width="-1" hidden="0" type="field" name="intype"/>
-      <column width="-1" hidden="0" type="field" name="swmm_length"/>
-      <column width="-1" hidden="0" type="field" name="swmm_width"/>
-      <column width="-1" hidden="0" type="field" name="swmm_height"/>
-      <column width="-1" hidden="0" type="field" name="swmm_coeff"/>
-      <column width="-1" hidden="0" type="field" name="flapgate"/>
-      <column width="-1" hidden="0" type="field" name="curbheight"/>
-      <column width="-1" hidden="0" type="field" name="notes"/>
-      <column width="-1" hidden="0" type="field" name="sd_type"/>
-      <column width="-1" hidden="0" type="field" name="outf_flo"/>
-      <column width="-1" hidden="0" type="field" name="grid"/>
-      <column width="-1" hidden="0" type="field" name="junction_invert_elev"/>
-      <column width="-1" hidden="0" type="field" name="max_depth"/>
-      <column width="-1" hidden="0" type="field" name="init_depth"/>
-      <column width="-1" hidden="0" type="field" name="surcharge_depth"/>
-      <column width="-1" hidden="0" type="field" name="ponded_area"/>
-      <column width="-1" hidden="0" type="field" name="outfall_invert_elev"/>
-      <column width="-1" hidden="0" type="field" name="outfall_type"/>
-      <column width="-1" hidden="0" type="field" name="tidal_curve"/>
-      <column width="-1" hidden="0" type="field" name="time_series"/>
-      <column width="-1" hidden="0" type="field" name="swmm_feature"/>
-      <column width="-1" hidden="0" type="field" name="swmm_clogging_factor"/>
-      <column width="-1" hidden="0" type="field" name="swmm_time_for_clogging"/>
-      <column width="-1" hidden="0" type="field" name="swmm_allow_discharge"/>
-      <column width="-1" hidden="0" type="field" name="water_depth"/>
-      <column width="-1" hidden="0" type="field" name="rt_fid"/>
-      <column width="-1" hidden="0" type="field" name="invert_elev_inp"/>
-      <column width="-1" hidden="0" type="field" name="max_depth_inp"/>
-      <column width="-1" hidden="0" type="field" name="rim_elev_inp"/>
-      <column width="-1" hidden="0" type="field" name="rim_elev"/>
-      <column width="-1" hidden="0" type="field" name="ge_elev"/>
-      <column width="-1" hidden="0" type="field" name="difference"/>
+      <column hidden="0" width="-1" type="field" name="fid"/>
+      <column hidden="1" width="-1" type="actions"/>
+      <column hidden="0" width="-1" type="field" name="name"/>
+      <column hidden="0" width="-1" type="field" name="intype"/>
+      <column hidden="0" width="-1" type="field" name="swmm_length"/>
+      <column hidden="0" width="-1" type="field" name="swmm_width"/>
+      <column hidden="0" width="-1" type="field" name="swmm_height"/>
+      <column hidden="0" width="-1" type="field" name="swmm_coeff"/>
+      <column hidden="0" width="-1" type="field" name="flapgate"/>
+      <column hidden="0" width="-1" type="field" name="curbheight"/>
+      <column hidden="0" width="-1" type="field" name="notes"/>
+      <column hidden="0" width="-1" type="field" name="sd_type"/>
+      <column hidden="0" width="-1" type="field" name="outf_flo"/>
+      <column hidden="0" width="-1" type="field" name="grid"/>
+      <column hidden="0" width="-1" type="field" name="junction_invert_elev"/>
+      <column hidden="0" width="-1" type="field" name="max_depth"/>
+      <column hidden="0" width="-1" type="field" name="init_depth"/>
+      <column hidden="0" width="-1" type="field" name="surcharge_depth"/>
+      <column hidden="0" width="-1" type="field" name="ponded_area"/>
+      <column hidden="0" width="-1" type="field" name="outfall_invert_elev"/>
+      <column hidden="0" width="-1" type="field" name="outfall_type"/>
+      <column hidden="0" width="-1" type="field" name="tidal_curve"/>
+      <column hidden="0" width="-1" type="field" name="time_series"/>
+      <column hidden="0" width="-1" type="field" name="swmm_feature"/>
+      <column hidden="0" width="-1" type="field" name="swmm_clogging_factor"/>
+      <column hidden="0" width="-1" type="field" name="swmm_time_for_clogging"/>
+      <column hidden="0" width="-1" type="field" name="swmm_allow_discharge"/>
+      <column hidden="0" width="-1" type="field" name="water_depth"/>
+      <column hidden="0" width="-1" type="field" name="rt_fid"/>
+      <column hidden="0" width="-1" type="field" name="invert_elev_inp"/>
+      <column hidden="0" width="-1" type="field" name="max_depth_inp"/>
+      <column hidden="0" width="-1" type="field" name="rim_elev_inp"/>
+      <column hidden="0" width="-1" type="field" name="rim_elev"/>
+      <column hidden="0" width="-1" type="field" name="ge_elev"/>
+      <column hidden="0" width="-1" type="field" name="difference"/>
     </columns>
   </attributetableconfig>
-  <editform>.</editform>
+  <editform tolerant="1">.</editform>
   <editforminit/>
   <editforminitcodesource>0</editforminitcodesource>
   <editforminitfilepath>.</editforminitfilepath>
@@ -508,47 +612,85 @@ def my_form_open(dialog, layer, feature):
 ]]></editforminitcode>
   <featformsuppress>0</featformsuppress>
   <editorlayout>generatedlayout</editorlayout>
+  <editable>
+    <field editable="1" name="curbheight"/>
+    <field editable="1" name="difference"/>
+    <field editable="1" name="fid"/>
+    <field editable="1" name="flapgate"/>
+    <field editable="1" name="ge_elev"/>
+    <field editable="1" name="grid"/>
+    <field editable="1" name="init_depth"/>
+    <field editable="1" name="intype"/>
+    <field editable="1" name="invert_elev_inp"/>
+    <field editable="1" name="junction_invert_elev"/>
+    <field editable="1" name="max_depth"/>
+    <field editable="1" name="max_depth_inp"/>
+    <field editable="1" name="name"/>
+    <field editable="1" name="notes"/>
+    <field editable="1" name="outf_flo"/>
+    <field editable="1" name="outfall_invert_elev"/>
+    <field editable="1" name="outfall_type"/>
+    <field editable="1" name="ponded_area"/>
+    <field editable="1" name="rim_elev"/>
+    <field editable="1" name="rim_elev_inp"/>
+    <field editable="1" name="rt_fid"/>
+    <field editable="1" name="sd_type"/>
+    <field editable="1" name="surcharge_depth"/>
+    <field editable="1" name="swmm_allow_discharge"/>
+    <field editable="1" name="swmm_clogging_factor"/>
+    <field editable="1" name="swmm_coeff"/>
+    <field editable="1" name="swmm_feature"/>
+    <field editable="1" name="swmm_height"/>
+    <field editable="1" name="swmm_length"/>
+    <field editable="1" name="swmm_time_for_clogging"/>
+    <field editable="1" name="swmm_width"/>
+    <field editable="1" name="tidal_curve"/>
+    <field editable="1" name="time_series"/>
+    <field editable="1" name="water_depth"/>
+  </editable>
+  <labelOnTop>
+    <field labelOnTop="0" name="curbheight"/>
+    <field labelOnTop="0" name="difference"/>
+    <field labelOnTop="0" name="fid"/>
+    <field labelOnTop="0" name="flapgate"/>
+    <field labelOnTop="0" name="ge_elev"/>
+    <field labelOnTop="0" name="grid"/>
+    <field labelOnTop="0" name="init_depth"/>
+    <field labelOnTop="0" name="intype"/>
+    <field labelOnTop="0" name="invert_elev_inp"/>
+    <field labelOnTop="0" name="junction_invert_elev"/>
+    <field labelOnTop="0" name="max_depth"/>
+    <field labelOnTop="0" name="max_depth_inp"/>
+    <field labelOnTop="0" name="name"/>
+    <field labelOnTop="0" name="notes"/>
+    <field labelOnTop="0" name="outf_flo"/>
+    <field labelOnTop="0" name="outfall_invert_elev"/>
+    <field labelOnTop="0" name="outfall_type"/>
+    <field labelOnTop="0" name="ponded_area"/>
+    <field labelOnTop="0" name="rim_elev"/>
+    <field labelOnTop="0" name="rim_elev_inp"/>
+    <field labelOnTop="0" name="rt_fid"/>
+    <field labelOnTop="0" name="sd_type"/>
+    <field labelOnTop="0" name="surcharge_depth"/>
+    <field labelOnTop="0" name="swmm_allow_discharge"/>
+    <field labelOnTop="0" name="swmm_clogging_factor"/>
+    <field labelOnTop="0" name="swmm_coeff"/>
+    <field labelOnTop="0" name="swmm_feature"/>
+    <field labelOnTop="0" name="swmm_height"/>
+    <field labelOnTop="0" name="swmm_length"/>
+    <field labelOnTop="0" name="swmm_time_for_clogging"/>
+    <field labelOnTop="0" name="swmm_width"/>
+    <field labelOnTop="0" name="tidal_curve"/>
+    <field labelOnTop="0" name="time_series"/>
+    <field labelOnTop="0" name="water_depth"/>
+  </labelOnTop>
   <widgets/>
   <conditionalstyles>
     <rowstyles/>
     <fieldstyles/>
   </conditionalstyles>
-  <defaults>
-    <default field="fid" expression=""/>
-    <default field="grid" expression=""/>
-    <default field="sd_type" expression=""/>
-    <default field="name" expression=""/>
-    <default field="intype" expression=""/>
-    <default field="junction_invert_elev" expression=""/>
-    <default field="max_depth" expression=""/>
-    <default field="init_depth" expression=""/>
-    <default field="surcharge_depth" expression=""/>
-    <default field="ponded_area" expression=""/>
-    <default field="outfall_invert_elev" expression=""/>
-    <default field="outfall_type" expression=""/>
-    <default field="tidal_curve" expression=""/>
-    <default field="time_series" expression=""/>
-    <default field="flapgate" expression=""/>
-    <default field="swmm_length" expression=""/>
-    <default field="swmm_width" expression=""/>
-    <default field="swmm_height" expression=""/>
-    <default field="swmm_coeff" expression=""/>
-    <default field="swmm_feature" expression=""/>
-    <default field="curbheight" expression=""/>
-    <default field="swmm_clogging_factor" expression=""/>
-    <default field="swmm_time_for_clogging" expression=""/>
-    <default field="swmm_allow_discharge" expression=""/>
-    <default field="water_depth" expression=""/>
-    <default field="rt_fid" expression=""/>
-    <default field="outf_flo" expression=""/>
-    <default field="invert_elev_inp" expression=""/>
-    <default field="max_depth_inp" expression=""/>
-    <default field="rim_elev_inp" expression=""/>
-    <default field="rim_elev" expression=""/>
-    <default field="ge_elev" expression=""/>
-    <default field="difference" expression=""/>
-    <default field="notes" expression=""/>
-  </defaults>
-  <previewExpression></previewExpression>
+  <expressionfields/>
+  <previewExpression>fid</previewExpression>
+  <mapTip></mapTip>
   <layerGeometryType>0</layerGeometryType>
 </qgis>

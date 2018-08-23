@@ -61,7 +61,7 @@ def switch_to_selected(vlayer, combo_box, field='name', use_fid=False):
             combo_box.setCurrentIndex(idx)
         else:
             text = feat[field]
-            if isinstance(text, NULL):
+            if text == NULL:
                 text = ''
             idx = combo_box.findText(text)
             combo_box.setCurrentIndex(idx)
