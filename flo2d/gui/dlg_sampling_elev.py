@@ -53,6 +53,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.probe_raster = None
         self.radiusSBox.setHidden(True)
         self.max_radius_lab.setHidden(True)
+
         # connections
         self.browseSrcBtn.clicked.connect(self.browse_src_raster)
 
@@ -70,13 +71,13 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_elev_raster_dir = s.value('FLO-2D/lastElevRasterDir', '')
-        self.src = QFileDialog.getOpenFileName(None,
-                                               'Choose elevation raster...',
-                                               directory=last_elev_raster_dir)
+        self.src, __ = QFileDialog.getOpenFileName(None,
+                                                   'Choose elevation raster...',
+                                                   directory=last_elev_raster_dir)
         if not self.src:
             return
         s.setValue('FLO-2D/lastElevRasterDir', os.path.dirname(self.src))
-        if not self.srcRasterCbo.findData(self.src):
+        if self.srcRasterCbo.findData(self.src) == -1:
             bname = os.path.basename(self.src)
             self.srcRasterCbo.addItem(bname, self.src)
             self.srcRasterCbo.setCurrentIndex(len(self.srcRasterCbo)-1)
@@ -122,6 +123,8 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
         self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
+        if not self.src_srs:
+            self.src_srs = self.out_srs
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:
@@ -158,6 +161,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         else:
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(' '.join([opt for opt in opts]), self.src_raster, self.out_raster)
+        print(cmd)
         proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
         out = proc.communicate()
         for line in out:

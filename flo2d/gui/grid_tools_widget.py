@@ -424,7 +424,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         new_geom0 = QgsGeometry.fromPointXY(point0)
                         new_feat.setGeometry(new_geom0)
 
-
                         new_feat['grid_fid'] = grid0
                         new_feat['area_fid'] = area_fid
                         new_feat['arf'] = arf if arf <= 1 else 1
@@ -439,7 +438,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         new_feats.append(new_feat)
 
                         # Make f1 feature the next f0:
-                        f0 =  f1
+                        f0 = f1
                         grid0 = f0['grid_fid']
                         area_fid = f0['area_fid']
                         arf = f0['arf']
@@ -507,7 +506,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         if self.gutils.is_table_empty('tolspatial'):
             w = 'There are no tolerance polygons in Tolerance Areas (Schematic Layers)!.\n\n'
-            w +=  'Please digitize them before running tool.'
+            w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
         try:

@@ -69,13 +69,13 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_elev_raster_dir = s.value('FLO-2D/lastElevRasterDir', '')
-        self.src = QFileDialog.getOpenFileName(None,
-                                               'Choose elevation raster...',
-                                               directory=last_elev_raster_dir)
+        self.src, __ = QFileDialog.getOpenFileName(None,
+                                                   'Choose elevation raster...',
+                                                   directory=last_elev_raster_dir)
         if not self.src:
             return
         s.setValue('FLO-2D/lastElevRasterDir', os.path.dirname(self.src))
-        if not self.srcRasterCbo.findData(self.src):
+        if self.srcRasterCbo.findData(self.src) == -1:
             bname = os.path.basename(self.src)
             self.srcRasterCbo.addItem(bname, self.src)
             self.srcRasterCbo.setCurrentIndex(len(self.srcRasterCbo)-1)

@@ -254,13 +254,13 @@ class GridElevation(ElevationCorrector):
         allfeatures, index = spatial_index(self.grid)
         boundary_grid_fids = []
         for line_geom in user_lines:
-            line_geom_geos = line_geom.geometry()
+            line_geom_geos = line_geom.constGet()
             line_geom_engine = QgsGeometry.createGeometryEngine(line_geom_geos)
             line_geom_engine.prepareGeometry()
             for gid in index.intersects(line_geom.boundingBox()):
                 grid_feat = allfeatures[gid]
                 grid_geom = grid_feat.geometry()
-                if line_geom_engine.intersects(grid_geom.geometry()):
+                if line_geom_engine.intersects(grid_geom.constGet()):
                     boundary_grid_fids.append(gid)
         boundary_request = QgsFeatureRequest().setFilterFids(boundary_grid_fids)
         grid_centroids = self.centroid_layer(self.grid, boundary_request)

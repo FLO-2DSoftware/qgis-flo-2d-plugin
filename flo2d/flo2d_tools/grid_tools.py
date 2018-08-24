@@ -13,7 +13,7 @@ import uuid
 from qgis.PyQt.QtWidgets import QMessageBox
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, NULL
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsFeedback, NULL
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
 
@@ -37,7 +37,8 @@ class TINInterpolator(object):
         self.interpolator = QgsTinInterpolator([self.lyr_data])
 
     def tin_at_xy(self, x, y):
-        success, value = self.interpolator.interpolatePoint(x, y)
+        feedback = QgsFeedback()
+        success, value = self.interpolator.interpolatePoint(x, y, feedback)
         return success, value
 
 
