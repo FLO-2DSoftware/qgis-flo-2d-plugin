@@ -35,7 +35,6 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-
             self.initial_flow_for_all_dbox.valueChanged.connect(self.update_initial_flow_for_all)
             self.max_froude_number_dbox.valueChanged.connect(self.update_froude)
             self.roughness_adjust_coeff_dbox.valueChanged.connect(self.update_roughness)
@@ -103,7 +102,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         self.initial_flow_for_all_dbox.setValue(data_chan[1])
         self.max_froude_number_dbox.setValue(data_chan[2])
         self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
-        equation = data_chan[4]-1  if data_chan[4] is not None else 0
+        equation = data_chan[4]-1 if data_chan[4] is not None else 0
         self.transport_eq_cbo.setCurrentIndex(equation)
 
     def show_channel_segments_dialog(self):

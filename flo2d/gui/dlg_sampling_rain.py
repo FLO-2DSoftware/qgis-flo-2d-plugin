@@ -116,11 +116,11 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         ymax = grid_ext.yMaximum()
         self.output_bounds = (xmin, ymin, xmax, ymax)
         # CRS
-        self.out_srs = self.grid.dataProvider().crs().toProj4()
+        self.out_srs = self.grid.crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
+        self.src_srs = src_raster_lyr.crs().toProj4()
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:

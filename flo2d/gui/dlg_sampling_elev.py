@@ -118,11 +118,11 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         ymax = grid_ext.yMaximum()
         self.output_bounds = (xmin, ymin, xmax, ymax)
         # CRS
-        self.out_srs = self.grid.dataProvider().crs().toProj4()
+        self.out_srs = self.grid.crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
+        self.src_srs = src_raster_lyr.crs().toProj4()
         if not self.src_srs:
             self.src_srs = self.out_srs
         # NODATA
@@ -161,7 +161,6 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         else:
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(' '.join([opt for opt in opts]), self.src_raster, self.out_raster)
-        print(cmd)
         proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
         out = proc.communicate()
         for line in out:
