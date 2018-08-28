@@ -412,6 +412,11 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
+    def build_square_from_polygon(self, polygon_coordinates):
+        gpb = '''SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))'''.format(*polygon_coordinates)
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
     def get_max(self, table, field='fid'):
         sql = '''SELECT MAX("{0}") FROM "{1}";'''.format(field, table)
         max_val = self.execute(sql).fetchone()[0]
@@ -574,8 +579,8 @@ class GeoPackageUtils(object):
             ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
         '''
         qry = qry.format(x, y)
-        data =  self.execute(qry).fetchone()
-        if data is not  None:
+        data = self.execute(qry).fetchone()
+        if data is not None:
             gid = data[0]
         else:
             gid = None

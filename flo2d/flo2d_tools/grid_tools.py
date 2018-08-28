@@ -812,16 +812,19 @@ def square_grid(gutils, boundary):
     """
     Function for calculating and writing square grid into 'grid' table.
     """
-    del_qry = 'DELETE FROM grid;'
-    cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
+    cellsize = float(gutils.get_cont_par('CELLSIZE'))
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
-    insert_qry = '''INSERT INTO grid (geom) VALUES {};'''
-    gpb = '''(AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')))'''
     gutils.execute(update_cellsize, (cellsize,))
-    cellsize = float(cellsize)
-    polygons = (gpb.format(*poly) for poly in build_grid(boundary, cellsize))
-    gutils.execute(del_qry)
-    gutils.execute(insert_qry.format(','.join(polygons)))
+    gutils.clear_tables('grid')
+
+    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize))
+    sql = ['''INSERT INTO grid (geom) VALUES''', 1]
+    for g_tuple in polygons:
+        sql.append(g_tuple)
+    if len(sql) > 2:
+        gutils.batch_execute(sql)
+    else:
+        pass
 
 
 def update_roughness(gutils, grid, roughness, column_name, reset=False):

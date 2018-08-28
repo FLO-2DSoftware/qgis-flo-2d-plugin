@@ -986,7 +986,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                                                     # selected from a list
 
-            if  rain_row[6] == 1:   # if movingstorm from rain = 0, omit this line.
+            if rain_row[6] == 1:   # if movingstorm from rain = 0, omit this line.
                 if rain_row[-1] is not None:    # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                                                 # rainabs, irainarf, movingstorm, rainspeed, iraindir).
                     r.write(rain_line4.format(*rain_row[-2:])) # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
