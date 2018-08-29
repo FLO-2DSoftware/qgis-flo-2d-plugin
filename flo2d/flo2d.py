@@ -571,7 +571,7 @@ class Flo2D(object):
         """
         Import traditional GDS files into FLO-2D database (GeoPackage).
         """
-#         self.gutils.disable_geom_triggers()
+        self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             'import_cont_toler',
