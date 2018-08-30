@@ -399,6 +399,11 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
+    def point_wkt_to_gpb(self, wkt_geom):
+        gpb = '''SELECT AsGPB(ST_GeomFromText('{}'))'''.format(wkt_geom)
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
     def build_square(self, wkt_geom, size):
         x, y = [float(x) for x in wkt_geom.strip('POINT()').split()]
         half_size = float(size) * 0.5

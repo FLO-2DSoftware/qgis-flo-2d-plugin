@@ -848,16 +848,25 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
+    set_vals = []
+    add_vals = []
+    set_add_vals = []
+    qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
     for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
         if el != NULL and cor == NULL:
-            gutils.con.execute(set_qry, (el, fid))
+            set_vals.append((el, fid))
         elif el == NULL and cor != NULL:
-            gutils.con.execute(add_qry, (cor, fid))
+            add_vals.append((cor, fid))
         elif el != NULL and cor != NULL:
-            gutils.con.execute(set_add_qry, (el, cor, fid))
+            set_add_vals.append((el, cor, fid))
         else:
             pass
-    gutils.con.commit()
+
+    for qry, vals in qry_dict.items():
+        if vals:
+            cur = gutils.con.cursor()
+            cur.executemany(qry, vals)
+            gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):
@@ -879,27 +888,17 @@ def evaluate_arfwrf(gutils, grid, areas):
 
     """
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = '''
-    INSERT INTO blocked_cells
-                (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
-                (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
+    qry_cells = ['''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
+
     for row in calculate_arfwrf(grid, areas):
         # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
-        # with a POINT and the values of arf and wrfs for a single cell
+        point_wkt = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
+        point_gpb = gutils.point_wkt_to_gpb(point_wkt)
+        new_row = (point_gpb,) + row[1:]
+        qry_cells.append(new_row)
 
-        point = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
-
-        gpb_qry = qry_cells.format(point)   # This new database command (operation not query) includes the actual point:
-                                            #     INSERT INTO blocked_cells
-                                            #     (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
-                                            #     (AsGPB(ST_GeomFromText('Point (368257 1185486)')),?,?,?,?,?,?,?,?,?,?,?);
-
-        cur.execute(gpb_qry, row[1:])       # Applies the INSERT command with the data from the "row[1:]" tuple.
-
-        gutils.con.commit()                 # Commits operation performed to the table "blocked_cells" using cursor "cur",
-                                            # which means creating (INSERT) a row to the table with the values calculated in "calculate_arfwrf".
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_tolerance(gutils, grid, areas):
@@ -907,14 +906,13 @@ def evaluate_spatial_tolerance(gutils, grid, areas):
     Calculating and inserting tolerance values into 'tolspatial_cells' table.
     """
     del_cells = 'DELETE FROM tolspatial_cells;'
-    qry_cells = '''
-    INSERT INTO tolspatial_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_buildings_adjustment_factor(gutils, grid, areas):
@@ -926,14 +924,13 @@ def evaluate_spatial_froude(gutils, grid, areas):
     Calculating and inserting fraude values into 'fpfroude_cells' table.
     """
     del_cells = 'DELETE FROM fpfroude_cells;'
-    qry_cells = '''
-    INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_shallow(gutils, grid, areas):
@@ -941,14 +938,14 @@ def evaluate_spatial_shallow(gutils, grid, areas):
     Calculating and inserting shallow-n values into 'spatialshallow_cells' table.
     """
     del_cells = 'DELETE FROM spatialshallow_cells;'
-    qry_cells = '''
-    INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
     cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
         cur.execute(qry_cells, row)
-    gutils.con.commit()
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_gutter(gutils, grid, areas):
@@ -956,14 +953,13 @@ def evaluate_spatial_gutter(gutils, grid, areas):
     Calculating and inserting gutter values into 'gutter_cells' table.
     """
     del_cells = 'DELETE FROM gutter_cells;'
-    qry_cells = '''
-    INSERT INTO gutter_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO gutter_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
@@ -971,14 +967,13 @@ def evaluate_spatial_noexchange(gutils, grid, areas):
     Calculating and inserting noexchange values into 'noexchange_chan_cells' table.
     """
     del_cells = 'DELETE FROM noexchange_chan_cells;'
-    qry_cells = '''
-    INSERT INTO noexchange_chan_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def grid_has_empty_elev(gutils):
