@@ -941,9 +941,8 @@ def evaluate_spatial_shallow(gutils, grid, areas):
     qry_cells = ['''INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
+        qry_cells.append(row)
 
     gutils.batch_execute(qry_cells)
 
