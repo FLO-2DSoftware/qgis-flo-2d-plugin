@@ -8,8 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt, QSize
-from PyQt4.QtGui import QVBoxLayout, QColor, QWidget
+from qgis.PyQt.QtCore import Qt, QSize
+from qgis.PyQt.QtWidgets import QVBoxLayout, QWidget
+from qgis.PyQt.QtGui import QColor
 
 from ..deps import safe_pyqtgraph as pg
 

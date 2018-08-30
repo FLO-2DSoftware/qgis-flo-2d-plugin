@@ -8,15 +8,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QInputDialog
+from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
 from collections import OrderedDict
-from ui_utils import load_ui, center_canvas, set_icon
+from .ui_utils import load_ui, center_canvas, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Structure
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
-from table_editor_widget import StandardItemModel, StandardItem
+from .table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
 
 
@@ -106,7 +106,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct.get_row()
         self.show_struct_rb()
         if self.center_chbox.isChecked():
-            feat = self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)).next()
+            feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
@@ -242,7 +242,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             (1, 'Rating table'),
             (2, 'Culvert equation')
         ])
-        for typ, name in self.rating_types.iteritems():
+        for typ, name in self.rating_types.items():
             self.rating_cbo.addItem(name, typ)
 
     def change_struct_name(self):
@@ -361,7 +361,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         # try to set current struct to the last before the deleted one
         try:
             self.populate_structs(struct_fid=old_fid-1)
-        except:
+        except Exception as e:
             self.populate_structs()
 
     def create_struct(self):

@@ -7,16 +7,14 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
 import math
 import uuid
-from PyQt4.QtGui import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest
-from qgis.analysis import QgsInterpolator, QgsTINInterpolator, QgsZonalStatistics
-from PyQt4.QtCore import QPyNullVariant
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsFeedback, NULL
+from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
 
 
@@ -30,16 +28,17 @@ class TINInterpolator(object):
         self.interpolator = None
 
     def setup_layer_data(self):
-        index = self.lyr.fieldNameIndex(self.field_name)
+        index = self.lyr.fields().lookupField(self.field_name)
         self.lyr_data = QgsInterpolator.LayerData()
         self.lyr_data.interpolationAttribute = index
         self.lyr_data.vectorLayer = self.lyr
         self.lyr_data.mInputType = 0
         self.lyr_data.zCoordInterpolation = False
-        self.interpolator = QgsTINInterpolator([self.lyr_data])
+        self.interpolator = QgsTinInterpolator([self.lyr_data])
 
     def tin_at_xy(self, x, y):
-        success, value = self.interpolator.interpolatePoint(x, y)
+        feedback = QgsFeedback()
+        success, value = self.interpolator.interpolatePoint(x, y, feedback)
         return success, value
 
 
@@ -101,14 +100,14 @@ class ZonalStatistics(object):
         """
         for feat in self.grid.getFeatures():
             geom = feat.geometry()
-            geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+            geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
             geos_geom.prepareGeometry()
             fids = self.points_index.intersects(geom.boundingBox())
             points = []
             for fid in fids:
                 point_feat = self.points_feats[fid]
                 other_geom = point_feat.geometry()
-                isin = geos_geom.intersects(other_geom.geometry())
+                isin = geos_geom.intersects(other_geom.constGet())
                 if isin is True:
                     points.append(point_feat[self.field])
                 else:
@@ -237,14 +236,14 @@ class ZonalStatisticsOther(object):
         """
         for feat in self.grid.getFeatures():
             geom = feat.geometry()
-            geos_geom = QgsGeometry.createGeometryEngine(geom.geometry())
+            geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
             geos_geom.prepareGeometry()
             fids = self.points_index.intersects(geom.boundingBox())
             points = []
             for fid in fids:
                 point_feat = self.points_feats[fid]
                 other_geom = point_feat.geometry()
-                isin = geos_geom.intersects(other_geom.geometry())
+                isin = geos_geom.intersects(other_geom.constGet())
                 if isin is True:
                     points.append(point_feat[self.field])
                 else:
@@ -367,13 +366,13 @@ def intersection_spatial_index(vlayer):
         new_geoms = divide_geom(geom)
         new_fid = True if len(new_geoms) > 1 else False
         for g in new_geoms:
-            engine = QgsGeometry.createGeometryEngine(g.geometry())
+            engine = QgsGeometry.createGeometryEngine(g.constGet())
             engine.prepareGeometry()
             feat_copy = QgsFeature(feat)
             feat_copy.setGeometry(g)
             if new_fid is True:
                 fid = max_fid
-                feat_copy.setFeatureId(fid)
+                feat_copy.setId(fid)
                 max_fid += 1
             else:
                 fid = feat.id()
@@ -403,15 +402,15 @@ def divide_geom(geom, threshold=1000):
     center_x, center_y = bbox.center()
     xmin, ymin = bbox.xMinimum(), bbox.yMinimum()
     xmax, ymax = bbox.xMaximum(), bbox.yMaximum()
-    center_point = QgsPoint(center_x, center_y)
-    s1 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(center_x, ymin), QgsPoint(xmin, ymin), QgsPoint(xmin, center_y), center_point]])
-    s2 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(xmin, center_y), QgsPoint(xmin, ymax), QgsPoint(center_x, ymax), center_point]])
-    s3 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(center_x, ymax), QgsPoint(xmax, ymax), QgsPoint(xmax, center_y), center_point]])
-    s4 = QgsGeometry.fromPolygon(
-        [[center_point, QgsPoint(xmax, center_y), QgsPoint(xmax, ymin), QgsPoint(center_x, ymin), center_point]])
+    center_point = QgsPointXY(center_x, center_y)
+    s1 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(center_x, ymin), QgsPointXY(xmin, ymin), QgsPointXY(xmin, center_y), center_point]])
+    s2 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(xmin, center_y), QgsPointXY(xmin, ymax), QgsPointXY(center_x, ymax), center_point]])
+    s3 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(center_x, ymax), QgsPointXY(xmax, ymax), QgsPointXY(xmax, center_y), center_point]])
+    s4 = QgsGeometry.fromPolygonXY(
+        [[center_point, QgsPointXY(xmax, center_y), QgsPointXY(xmax, ymin), QgsPointXY(center_x, ymin), center_point]])
 
     new_geoms = []
     for s in [s1, s2, s3, s4]:
@@ -419,7 +418,7 @@ def divide_geom(geom, threshold=1000):
         if part.isEmpty():
             continue
         if part.isMultipart():
-            single_geoms = [QgsGeometry.fromPolygon(g) for g in part.asMultiPolygon()]
+            single_geoms = [QgsGeometry.fromPolygonXY(g) for g in part.asMultiPolygon()]
             for sg in single_geoms:
                 new_geoms += divide_geom(sg, threshold)
             continue
@@ -448,13 +447,13 @@ def build_grid(boundary, cell_size):
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
     y = ymax - half_size
-    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
     geos_geom_engine.prepareGeometry()
-    for col in xrange(cols):
+    for col in range(cols):
         y_tmp = y
-        for row in xrange(rows):
-            pnt = QgsGeometry.fromPoint(QgsPoint(x, y_tmp))
-            if geos_geom_engine.intersects(pnt.geometry()):
+        for row in range(rows):
+            pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
+            if geos_geom_engine.intersects(pnt.constGet()):
                 poly = (
                     x - half_size, y_tmp - half_size,
                     x + half_size, y_tmp - half_size,
@@ -504,12 +503,12 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
-        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.geometry())
+        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
         geos_geom_engine.prepareGeometry()
         for gid in index.intersects(geom.boundingBox()):
             grid_feat = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            other_geom_geos = other_geom.geometry()
+            other_geom_geos = other_geom.constGet()
             isin = geos_geom_engine.intersects(other_geom_geos)
             if isin is not True or geos_compare(geos_geom_engine, other_geom_geos) is False:
                 continue
@@ -518,7 +517,7 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
                 try:
                     val = feat[col]
                 except KeyError:
-                    val = QPyNullVariant(float)
+                    val = NULL
                 values.append(val)
             values.append(gid)
             values = tuple(values)
@@ -567,7 +566,7 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
             continue
         base_fid = feat.id()
         base_area = base_geom.area()
-        base_geom_geos = base_geom.geometry()
+        base_geom_geos = base_geom.constGet()
         base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
         base_geom_engine.prepareGeometry()
         base_parts = []
@@ -578,7 +577,7 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
                 continue
             if other_geom_engine.contains(base_geom_geos):
                 subarea = 1
-            elif base_geom_engine.contains(f.geometry().geometry()):
+            elif base_geom_engine.contains(f.geometry().constGet()):
                 subarea = other_geom_engine.area() / base_area
             else:
                 intersection_geom = other_geom_engine.intersection(base_geom_geos)
@@ -608,7 +607,7 @@ def grid_sections(grid, polygons, request, *columns):
         ids = index.intersects(geom.boundingBox())
         if not ids:
             continue
-        geos_geom = geom.geometry()
+        geos_geom = geom.constGet()
         geom_engine = QgsGeometry.createGeometryEngine(geos_geom)
         geom_engine.prepareGeometry()
         attributes = tuple(feat[col] for col in columns)
@@ -616,7 +615,7 @@ def grid_sections(grid, polygons, request, *columns):
         for gid in ids:
             grid_feat, other_geom_engine = allfeatures[gid]
             other_geom = grid_feat.geometry()
-            other_geom_geos = other_geom.geometry()
+            other_geom_geos = other_geom.constGet()
             if geom_engine.contains(other_geom_geos):
                 subarea = 1
             elif other_geom_engine.contains(geos_geom):
@@ -639,7 +638,7 @@ def cluster_polygons(polygons, *columns):
     for feat in polygons.getFeatures():
         geom_poly = feat.geometry().asPolygon()
         attrs = tuple(feat[col] for col in columns)
-        clusters[attrs].append(QgsGeometry.fromPolygon(geom_poly))
+        clusters[attrs].append(QgsGeometry.fromPolygonXY(geom_poly))
     return clusters
 
 
@@ -649,12 +648,12 @@ def clustered_features(polygons, fields, *columns, **columns_map):
     """
     clusters = cluster_polygons(polygons, *columns)
     target_columns = [columns_map[c] if c in columns_map else c for c in columns]
-    for attrs, geom_list in clusters.items():
+    for attrs, geom_list in list(clusters.items()):
 
         if len(geom_list) > 1:
             geom = QgsGeometry.unaryUnion(geom_list)
             if geom.isMultipart():
-                poly_geoms = [QgsGeometry.fromPolygon(g) for g in geom.asMultiPolygon()]
+                poly_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
             else:
                 poly_geoms = [geom]
         else:
@@ -706,7 +705,7 @@ def calculate_arfwrf(grid, areas):
                 areas_intersection = fgeom.intersection(geom)
                 arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                 centroid = geom.centroid()
-                centroid_wkt = centroid.exportToWkt()
+                centroid_wkt = centroid.asWkt()
                 if arf >= 0.9:
                     yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf)
                     continue
@@ -714,7 +713,7 @@ def calculate_arfwrf(grid, areas):
                     pass
                 grid_center = centroid.asPoint()
                 wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
-                wrf_geoms = (QgsGeometry.fromPolyline([QgsPoint(x1, y1), QgsPoint(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
+                wrf_geoms = (QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
                 if fwrf == 1:
                     wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
                 else:
@@ -813,16 +812,19 @@ def square_grid(gutils, boundary):
     """
     Function for calculating and writing square grid into 'grid' table.
     """
-    del_qry = 'DELETE FROM grid;'
-    cellsize = gutils.execute('''SELECT value FROM cont WHERE name = "CELLSIZE";''').fetchone()[0]
+    cellsize = float(gutils.get_cont_par('CELLSIZE'))
     update_cellsize = 'UPDATE user_model_boundary SET cell_size = ?;'
-    insert_qry = '''INSERT INTO grid (geom) VALUES {};'''
-    gpb = '''(AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))')))'''
     gutils.execute(update_cellsize, (cellsize,))
-    cellsize = float(cellsize)
-    polygons = (gpb.format(*poly) for poly in build_grid(boundary, cellsize))
-    gutils.execute(del_qry)
-    gutils.execute(insert_qry.format(','.join(polygons)))
+    gutils.clear_tables('grid')
+
+    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize))
+    sql = ['''INSERT INTO grid (geom) VALUES''', 1]
+    for g_tuple in polygons:
+        sql.append(g_tuple)
+    if len(sql) > 2:
+        gutils.batch_execute(sql)
+    else:
+        pass
 
 
 def update_roughness(gutils, grid, roughness, column_name, reset=False):
@@ -846,16 +848,25 @@ def modify_elevation(gutils, grid, elev):
     set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
     add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
     set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
+    set_vals = []
+    add_vals = []
+    set_add_vals = []
+    qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
     for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
-        if not isinstance(el, QPyNullVariant) and isinstance(cor, QPyNullVariant):
-            gutils.con.execute(set_qry, (el, fid))
-        elif isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
-            gutils.con.execute(add_qry, (cor, fid))
-        elif not isinstance(el, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
-            gutils.con.execute(set_add_qry, (el, cor, fid))
+        if el != NULL and cor == NULL:
+            set_vals.append((el, fid))
+        elif el == NULL and cor != NULL:
+            add_vals.append((cor, fid))
+        elif el != NULL and cor != NULL:
+            set_add_vals.append((el, cor, fid))
         else:
             pass
-    gutils.con.commit()
+
+    for qry, vals in qry_dict.items():
+        if vals:
+            cur = gutils.con.cursor()
+            cur.executemany(qry, vals)
+            gutils.con.commit()
 
 
 def evaluate_arfwrf(gutils, grid, areas):
@@ -877,27 +888,17 @@ def evaluate_arfwrf(gutils, grid, areas):
 
     """
     del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = '''
-    INSERT INTO blocked_cells
-                (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
-                (AsGPB(ST_GeomFromText('{}')),?,?,?,?,?,?,?,?,?,?,?);'''
+    qry_cells = ['''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
+
     for row in calculate_arfwrf(grid, areas):
         # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
-        # with a POINT and the values of arf and wrfs for a single cell
+        point_wkt = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
+        point_gpb = gutils.point_wkt_to_gpb(point_wkt)
+        new_row = (point_gpb,) + row[1:]
+        qry_cells.append(new_row)
 
-        point = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
-
-        gpb_qry = qry_cells.format(point)   # This new database command (operation not query) includes the actual point:
-                                            #     INSERT INTO blocked_cells
-                                            #     (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES
-                                            #     (AsGPB(ST_GeomFromText('Point (368257 1185486)')),?,?,?,?,?,?,?,?,?,?,?);
-
-        cur.execute(gpb_qry, row[1:])       # Applies the INSERT command with the data from the "row[1:]" tuple.
-
-        gutils.con.commit()                 # Commits operation performed to the table "blocked_cells" using cursor "cur",
-                                            # which means creating (INSERT) a row to the table with the values calculated in "calculate_arfwrf".
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_tolerance(gutils, grid, areas):
@@ -905,14 +906,13 @@ def evaluate_spatial_tolerance(gutils, grid, areas):
     Calculating and inserting tolerance values into 'tolspatial_cells' table.
     """
     del_cells = 'DELETE FROM tolspatial_cells;'
-    qry_cells = '''
-    INSERT INTO tolspatial_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_buildings_adjustment_factor(gutils, grid, areas):
@@ -924,14 +924,13 @@ def evaluate_spatial_froude(gutils, grid, areas):
     Calculating and inserting fraude values into 'fpfroude_cells' table.
     """
     del_cells = 'DELETE FROM fpfroude_cells;'
-    qry_cells = '''
-    INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_shallow(gutils, grid, areas):
@@ -939,14 +938,13 @@ def evaluate_spatial_shallow(gutils, grid, areas):
     Calculating and inserting shallow-n values into 'spatialshallow_cells' table.
     """
     del_cells = 'DELETE FROM spatialshallow_cells;'
-    qry_cells = '''
-    INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_gutter(gutils, grid, areas):
@@ -954,14 +952,13 @@ def evaluate_spatial_gutter(gutils, grid, areas):
     Calculating and inserting gutter values into 'gutter_cells' table.
     """
     del_cells = 'DELETE FROM gutter_cells;'
-    qry_cells = '''
-    INSERT INTO gutter_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO gutter_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
@@ -969,14 +966,13 @@ def evaluate_spatial_noexchange(gutils, grid, areas):
     Calculating and inserting noexchange values into 'noexchange_chan_cells' table.
     """
     del_cells = 'DELETE FROM noexchange_chan_cells;'
-    qry_cells = '''
-    INSERT INTO noexchange_chan_cells (area_fid, grid_fid)  VALUES (?,?);'''
+    qry_cells = ['''INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    cur = gutils.con.cursor()
     for row in calculate_spatial_variable(grid, areas):
-        cur.execute(qry_cells, row)
-    gutils.con.commit()
+        qry_cells.append(row)
+
+    gutils.batch_execute(qry_cells)
 
 
 def grid_has_empty_elev(gutils):
@@ -986,7 +982,7 @@ def grid_has_empty_elev(gutils):
     qry = '''SELECT count(*) FROM grid WHERE elevation IS NULL;'''
     res = gutils.execute(qry)
     try:
-        n = res.next()
+        n = next(res)
         return n[0]
     except StopIteration:
         return None
@@ -1026,32 +1022,32 @@ def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch
 
 
 def highlight_selected_segment(layer, id):
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == id:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 def highlight_selected_xsection_a(gutils, layer, xs_id):
     qry = '''SELECT id FROM chan_elems WHERE fid = ?;'''
     xs = gutils.execute(qry, (xs_id,)).fetchone()
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == xs[0]:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 def highlight_selected_xsection_b(layer, xs_id):
-    feat_selection=[]
+    feat_selection = []
     for feature in layer.getFeatures():
         if feature.id() == xs_id:
             feat_selection.append(feature.id())
             break
-    layer.setSelectedFeatures(feat_selection)
+    layer.selectByIds(feat_selection)
 
 
 # def highlight_selected_xsection(layer, xs_id):
@@ -1063,7 +1059,7 @@ def highlight_selected_xsection_b(layer, xs_id):
 #         if feature.id() == xs[0]:
 #             self.feat_selection.append(feature.id())
 #             break
-#     self.chan_elems.setSelectedFeatures(self.feat_selection)
+#     self.chan_elems.selectByIds(self.feat_selection)
 
 
 

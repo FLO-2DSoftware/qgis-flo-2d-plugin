@@ -11,17 +11,18 @@
 import os
 import traceback
 from collections import OrderedDict
-from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
-from ui_utils import load_ui, try_disconnect, set_icon
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog
+from qgis.PyQt.QtGui import QColor
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
+from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2dobjects import InletRatingTable
 from ..utils import is_number, m_fdata, is_true
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
 from ..gui.dlg_outfalls import OutfallNodesDialog
@@ -175,7 +176,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if INP_groups is None:
             return part
         else:
-            for tag in INP_groups.keys():
+            for tag in list(INP_groups.keys()):
                 low_tag = tag.lower()
                 if low_tag.startswith(chars):
                     part = INP_groups[tag]
@@ -278,9 +279,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
-        col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
+        col_gen = ('{}=?'.format(c) for c in list(swmm_dict.keys()))
         col_names = ', '.join(col_gen)
-        vals = swmm_dict.values() + [fid]
+        vals = list(swmm_dict.values()) + [fid]
         update_qry = '''UPDATE user_swmm_nodes SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
@@ -392,7 +393,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGpkgDir', '')
         # last_dir = s.value('FLO-2D/lastSWMMDir', '')
-        swmm_file = QFileDialog.getOpenFileName(
+        swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',
             directory=last_dir,
@@ -453,7 +454,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_nodes_lyr)
             fields = self.user_swmm_nodes_lyr.fields()
             new_nodes = []
-            for name, values in storm_drain.INP_nodes.items():  # "INP_nodes dictionary contains attributes names and
+            for name, values in list(storm_drain.INP_nodes.items()):  # "INP_nodes dictionary contains attributes names and
                                                                 # values taken from the .INP file.
                 feat = QgsFeature()
                 feat.setFields(fields)
@@ -492,7 +493,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_warn("Storm Drain point '" + name + "' outside domain!")
                     return
                 elev = self.gutils.grid_value(grid, 'elevation')
-                geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 feat.setGeometry(geom)
 
                 feat.setAttribute('grid', grid)
@@ -559,7 +560,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_conduits_lyr)
             fields = self.user_swmm_conduits_lyr.fields()
             new_conduits = []
-            for name, values in storm_drain.INP_conduits.items():
+            for name, values in list(storm_drain.INP_conduits.items()):
 
                 conduit_inlet = values['conduit_inlet'] if  'conduit_inlet' in values else ''
                 conduit_outlet = values['conduit_outlet'] if  'conduit_outlet' in values else ''
@@ -591,7 +592,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 y1 = float(storm_drain.INP_nodes[conduit_inlet]['y'])
                 x2 = float(storm_drain.INP_nodes[conduit_outlet]['x'])
                 y2 = float(storm_drain.INP_nodes[conduit_outlet]['y'])
-                geom = QgsGeometry.fromPolyline([QgsPoint(x1,y1),QgsPoint(x2,y2)])
+                geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1,y1),QgsPointXY(x2,y2)])
                 feat.setGeometry(geom)
 
                 # elev = 0
@@ -601,7 +602,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 #     y = float(values['y'])
                 #     gid = self.gutils.grid_on_point(x, y)
                 #     elev = self.gutils.grid_value(gid, 'elevation')
-                #     geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                #     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 #     feat.setAttribute('grid', gid)
                 #
                 #     feat.setAttribute('ge_elev', elev)
@@ -669,7 +670,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             s = QSettings()
             last_dir = s.value('FLO-2D/lastSWMMDir', '')
-            swmm_file = QFileDialog.getSaveFileName(
+            swmm_file, __ = QFileDialog.getSaveFileName(
                 None,
                 'Select SWMM input file to update',
                 directory=last_dir,

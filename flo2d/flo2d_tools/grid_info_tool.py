@@ -12,8 +12,8 @@
 #pylint: disable=no-self-use
 
 import os
-from PyQt4.QtCore import pyqtSignal
-from PyQt4.QtGui import QCursor, QPixmap
+from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtGui import QCursor, QPixmap
 from qgis.gui import QgsMapToolIdentify
 
 
@@ -32,12 +32,11 @@ class GridInfoTool(QgsMapToolIdentify):
         pass
 
     def canvasReleaseEvent(self, e):
-        if self.grid:
-            res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
-            if res:
-                self.grid_elem_picked.emit(res[0].mFeature.id())
-            else:
-                self.grid_elem_picked.emit(-1)
+        res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
+        if res:
+            self.grid_elem_picked.emit(res[0].mFeature.id())
+        else:
+            self.grid_elem_picked.emit(-1)
 
     def activate(self):
         self.canvas.setCursor(QCursor(QPixmap(os.path.join(

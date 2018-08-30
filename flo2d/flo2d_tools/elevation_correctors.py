@@ -7,13 +7,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from PyQt4.QtCore import QPyNullVariant, QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QGis
+from qgis.PyQt.QtCore import QVariant
+from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
-from grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
-from schematic_tools import get_intervals, interpolate_along_line, polys2levees
+from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
+from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
 
 
 class ElevationCorrector(object):
@@ -56,7 +55,7 @@ class ElevationCorrector(object):
         layer.addExpressionField(expr, field)
 
     def remove_virtual_sum(self, layer):
-        index = layer.fieldNameIndex(self.VIRTUAL_SUM)
+        index = layer.fields().lookupField(self.VIRTUAL_SUM)
         layer.removeExpressionField(index)
 
     @staticmethod
@@ -66,11 +65,11 @@ class ElevationCorrector(object):
         else:
             feats = [feat for feat in vlayer.getFeatures(request)]
         vtype = vlayer.geometryType()
-        if vtype == QGis.Point:
+        if vtype == QgsWkbTypes.PointGeometry:
             uri_type = 'Point'
-        elif vtype == QGis.Line:
+        elif vtype == QgsWkbTypes.LineGeometry:
             uri_type = 'LineString'
-        elif vtype == QGis.Polygon:
+        elif vtype == QgsWkbTypes.PolygonGeometry:
             uri_type = 'Polygon'
         else:
             return
@@ -140,13 +139,13 @@ class LeveesElevation(ElevationCorrector):
             elev = feat[self.ELEVATION_FIELD]
             cor = feat[self.CORRECTION_FIELD]
             qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
-            if isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+            if elev == NULL and cor == NULL:
                 continue
-            elif not isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif elev != NULL and cor != NULL:
                 val = elev + cor
-            elif not isinstance(elev, QPyNullVariant) and isinstance(cor, QPyNullVariant):
+            elif elev != NULL and cor == NULL:
                 val = elev
-            elif isinstance(elev, QPyNullVariant) and not isinstance(cor, QPyNullVariant):
+            elif elev == NULL and cor != NULL:
                 qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
                 val = cor
             else:
@@ -180,7 +179,7 @@ class GridElevation(ElevationCorrector):
 
     def setup_layers(self):
         self.setup_elevation_layers()
-        self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeaturesIds())
+        self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeatureIds())
         self.grid = self.lyrs.data['grid']['qlyr']
         self.blocked_areas = self.lyrs.data['user_blocked_areas']['qlyr']
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
@@ -204,8 +203,8 @@ class GridElevation(ElevationCorrector):
                 self.ELEVATION_FIELD,
                 self.CORRECTION_FIELD):
 
-            el_null = isinstance(el, QPyNullVariant)
-            cor_null = isinstance(cor, QPyNullVariant)
+            el_null = el == NULL
+            cor_null = cor == NULL
             if not el_null:
                 el = round(el, 3)
             if not cor_null:
@@ -251,17 +250,17 @@ class GridElevation(ElevationCorrector):
         else:
             request = None
         poly_feats = self.user_polygons.getFeatures() if self.only_selected is False else self.user_polygons.getFeatures(request)
-        user_lines = [feat.geometry().convertToType(QGis.Line) for feat in poly_feats]
+        user_lines = [feat.geometry().convertToType(QgsWkbTypes.LineGeometry) for feat in poly_feats]
         allfeatures, index = spatial_index(self.grid)
         boundary_grid_fids = []
         for line_geom in user_lines:
-            line_geom_geos = line_geom.geometry()
+            line_geom_geos = line_geom.constGet()
             line_geom_engine = QgsGeometry.createGeometryEngine(line_geom_geos)
             line_geom_engine.prepareGeometry()
             for gid in index.intersects(line_geom.boundingBox()):
                 grid_feat = allfeatures[gid]
                 grid_geom = grid_feat.geometry()
-                if line_geom_engine.intersects(grid_geom.geometry()):
+                if line_geom_engine.intersects(grid_geom.constGet()):
                     boundary_grid_fids.append(gid)
         boundary_request = QgsFeatureRequest().setFilterFids(boundary_grid_fids)
         grid_centroids = self.centroid_layer(self.grid, boundary_request)
@@ -344,7 +343,7 @@ class ExternalElevation(ElevationCorrector):
         self.only_centroids = True if predicate == 'centroids within polygons' else False
         self.only_selected = only_selected
         if self.only_selected is True:
-            self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeaturesIds())
+            self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeatureIds())
         self.copy_features = copy_features
 
     def setup_attributes(self, elevation, correction):
@@ -356,7 +355,7 @@ class ExternalElevation(ElevationCorrector):
         self.raster = raster
 
     def import_features(self, fids_values):
-        copy_request = QgsFeatureRequest().setFilterFids(fids_values.keys())
+        copy_request = QgsFeatureRequest().setFilterFids(list(fids_values.keys()))
         fields = self.user_polygons.fields()
         self.user_polygons.startEditing()
         for feat in self.polygons.getFeatures(copy_request):
@@ -364,9 +363,9 @@ class ExternalElevation(ElevationCorrector):
             new_feat = QgsFeature()
             new_feat.setFields(fields)
             poly_geom = feat.geometry().asPolygon()
-            new_geom = QgsGeometry.fromPolygon(poly_geom)
+            new_geom = QgsGeometry.fromPolygonXY(poly_geom)
             new_feat.setGeometry(new_geom)
-            for key, val in values.items():
+            for key, val in list(values.items()):
                 new_feat.setAttribute(key, val)
             new_feat.setAttribute('membership', 'grid')
             self.user_polygons.addFeature(new_feat)
@@ -391,8 +390,8 @@ class ExternalElevation(ElevationCorrector):
         qry_values = []
         for fid, el, cor, gid in poly_list:
 
-            el_null = isinstance(el, QPyNullVariant)
-            cor_null = isinstance(cor, QPyNullVariant)
+            el_null = el == NULL
+            cor_null = cor == NULL
             if not el_null:
                 el = round(el, 3)
             if not cor_null:
@@ -430,7 +429,7 @@ class ExternalElevation(ElevationCorrector):
         fids_elevs = {}
         for fid, gid in grid_gen:
             fids_grids[fid].append(gid)
-        for fid, grids_fids in fids_grids.items():
+        for fid, grids_fids in list(fids_grids.items()):
             grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
             elevs = []
             for grid_feat in self.grid.getFeatures(grid_request):

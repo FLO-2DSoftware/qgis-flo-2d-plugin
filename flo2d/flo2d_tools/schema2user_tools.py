@@ -7,7 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import clustered_features
 from qgis.core import QgsFeature, QgsGeometry
@@ -35,25 +34,25 @@ class SchemaConverter(GeoPackageUtils):
     @staticmethod
     def point_geom(geom):
         geom_point = geom.asPoint()
-        new_geom = QgsGeometry.fromPoint(geom_point)
+        new_geom = QgsGeometry.fromPointXY(geom_point)
         return new_geom
 
     @staticmethod
     def polyline_geom(geom):
         geom_line = geom.asPolyline()
-        new_geom = QgsGeometry.fromPolyline(geom_line)
+        new_geom = QgsGeometry.fromPolylineXY(geom_line)
         return new_geom
 
     @staticmethod
     def polygon_geom(geom):
         geom_polygon = geom.asPolygon()
-        new_geom = QgsGeometry.fromPolygon(geom_polygon)
+        new_geom = QgsGeometry.fromPolygonXY(geom_polygon)
         return new_geom
 
     @staticmethod
     def centroid_geom(geom):
         geom_centroid = geom.centroid().asPoint()
-        new_geom = QgsGeometry.fromPoint(geom_centroid)
+        new_geom = QgsGeometry.fromPointXY(geom_centroid)
         return new_geom
 
     @staticmethod
@@ -63,7 +62,7 @@ class SchemaConverter(GeoPackageUtils):
         new_geom = geom_function(geom)
         user_feat.setGeometry(new_geom)
         user_feat.setFields(user_fields)
-        for user_fname, schema_fname in common_fnames.items():
+        for user_fname, schema_fname in list(common_fnames.items()):
             user_feat.setAttribute(user_fname, schema_feat[schema_fname])
         return user_feat
 
@@ -122,8 +121,8 @@ class Schema1DConverter(SchemaConverter):
         }
 
     def copy_xs_tables(self):
-        self.clear_tables(*self.xs_tables.keys())
-        for user_tab, schema_tab in self.xs_tables.items():
+        self.clear_tables(*list(self.xs_tables.keys()))
+        for user_tab, schema_tab in list(self.xs_tables.items()):
             if user_tab == 'user_chan_n':
                 self.execute('''INSERT INTO user_chan_n (fid, user_xs_fid, nxsecnum, xsecname) SELECT fid, fid, nxsecnum, xsecname FROM chan_n;''')
             else:
@@ -134,7 +133,7 @@ class Schema1DConverter(SchemaConverter):
         wkt_pnt = self.single_centroid(fid)
         point_geom = QgsGeometry().fromWkt(wkt_pnt)
         point = point_geom.asPoint()
-        new_geom = QgsGeometry().fromPolyline([point, point])
+        new_geom = QgsGeometry().fromPolylineXY([point, point])
         feat.setGeometry(new_geom)
 
     def create_user_lbank(self):
@@ -409,7 +408,7 @@ class SchemaSWMMConverter(SchemaConverter):
         for feat in schema_lyr.getFeatures():
             geom = feat.geometry()
             point = geom.asPoint()
-            new_geom = QgsGeometry.fromPoint(point)
+            new_geom = QgsGeometry.fromPointXY(point)
             new_feat = QgsFeature()
             new_feat.setFields(fields)
             new_feat.setGeometry(new_geom)

@@ -11,12 +11,12 @@
 import os
 from subprocess import Popen, PIPE, STDOUT
 
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QFileDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsRasterLayer
 
 from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -35,9 +35,9 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         7: 'Float64'
     }
 
-    def __init__(self, con, iface, lyrs, cell_size, parent=None):
+    def __init__(self, con, iface, lyrs, cell_size):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
@@ -53,6 +53,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.probe_raster = None
         self.radiusSBox.setHidden(True)
         self.max_radius_lab.setHidden(True)
+
         # connections
         self.browseSrcBtn.clicked.connect(self.browse_src_raster)
 
@@ -70,13 +71,13 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_elev_raster_dir = s.value('FLO-2D/lastElevRasterDir', '')
-        self.src = QFileDialog.getOpenFileName(None,
-                                               'Choose elevation raster...',
-                                               directory=last_elev_raster_dir)
+        self.src, __ = QFileDialog.getOpenFileName(None,
+                                                   'Choose elevation raster...',
+                                                   directory=last_elev_raster_dir)
         if not self.src:
             return
         s.setValue('FLO-2D/lastElevRasterDir', os.path.dirname(self.src))
-        if not self.srcRasterCbo.findData(self.src):
+        if self.srcRasterCbo.findData(self.src) == -1:
             bname = os.path.basename(self.src)
             self.srcRasterCbo.addItem(bname, self.src)
             self.srcRasterCbo.setCurrentIndex(len(self.srcRasterCbo)-1)
@@ -99,7 +100,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             "q1": "q1 - First quartile value of all non-NODATA",
             "q3": "q1 - Third quartile value of all non-NODATA"
         }
-        for m in sorted(met.iterkeys()):
+        for m in sorted(met.keys()):
             self.algCbo.addItem(met[m], m)
             self.algCbo.setCurrentIndex(0)
 
@@ -117,11 +118,13 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         ymax = grid_ext.yMaximum()
         self.output_bounds = (xmin, ymin, xmax, ymax)
         # CRS
-        self.out_srs = self.grid.dataProvider().crs().toProj4()
+        self.out_srs = self.grid.crs().toProj4()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        self.src_srs = src_raster_lyr.dataProvider().crs().toProj4()
+        self.src_srs = src_raster_lyr.crs().toProj4()
+        if not self.src_srs:
+            self.src_srs = self.out_srs
         # NODATA
         und = self.srcNoDataEdit.text()
         if und:

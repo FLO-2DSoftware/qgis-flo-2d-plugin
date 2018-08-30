@@ -10,19 +10,19 @@
 
 import os
 from ..flo2d_ie.ras_io import RASProject
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..user_communication import UserCommunication
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QFileDialog
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
 
 uiDialog, qtBaseClass = load_ui('ras_import')
 
 
 class RasImportDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, parent=None):
+    def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.setupUi(self)
         self.con = con
         self.iface = iface
@@ -34,7 +34,7 @@ class RasImportDialog(qtBaseClass, uiDialog):
     def get_ras_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastRasDir', '')
-        ras_file = QFileDialog.getOpenFileName(
+        ras_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select HEC-RAS project or geometry file to import data',
             directory=last_dir,

@@ -9,8 +9,8 @@
 # of the License, or (at your option) any later version
 
 import os
-from PyQt4.QtCore import QSettings
-from ui_utils import load_ui
+from qgis.PyQt.QtCore import QSettings
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 

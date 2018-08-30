@@ -8,9 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtGui import QInputDialog
+from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, set_icon
+from .ui_utils import load_ui, center_canvas, set_icon
 from ..flo2dobjects import Reservoir
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -88,7 +88,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_ini_sbox.setValue(wsel)
         self.show_res_rb()
         if self.center_res_chbox.isChecked():
-            feat = self.res_lyr.getFeatures(QgsFeatureRequest(self.reservoir.fid)).next()
+            feat = next(self.res_lyr.getFeatures(QgsFeatureRequest(self.reservoir.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
@@ -102,7 +102,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.seg_ini_sbox.setValue(depini)
         self.show_chan_rb()
         if self.center_seg_chbox.isChecked():
-            feat = self.chan_lyr.getFeatures(QgsFeatureRequest(self.seg_fid)).next()
+            feat = next(self.chan_lyr.getFeatures(QgsFeatureRequest(self.seg_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 

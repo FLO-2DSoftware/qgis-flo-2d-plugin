@@ -8,13 +8,10 @@
 # of the License, or (at your option) any later version
 
 from ..utils import is_true
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import (
-    QApplication,
-    QTableWidgetItem,
-    QDialogButtonBox)
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
 
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -317,7 +314,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             time_series = ?
                         WHERE fid = ?;'''
 
-        for row in xrange(0, self.outfalls_tblw.rowCount()):
+        for row in range(0, self.outfalls_tblw.rowCount()):
             item = QTableWidgetItem()
 
             fid = self.outfall_cbo.itemData(row)

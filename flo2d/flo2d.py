@@ -10,42 +10,42 @@
 
 # Lambda may not be necessary
 # pylint: disable=W0108
-
 import os
 import sys
 import time
 import traceback
 
-from PyQt4.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from PyQt4.QtGui import QIcon, QAction, QFileDialog, QApplication, QDesktopServices
-from qgis.core import QgsProject, QGis
+from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
+from qgis.PyQt.QtGui import QIcon, QDesktopServices
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication
+from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 
-from layers import Layers
-from user_communication import UserCommunication
-from geopackage_utils import connection_required, database_disconnect
-from flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from flo2d_tools.grid_info_tool import GridInfoTool
-from flo2d_tools.info_tool import InfoTool
-from flo2d_tools.channel_profile_tool import ChannelProfile
-from flo2d_tools.grid_tools import grid_has_empty_elev
-from flo2d_tools.schematic_tools import generate_schematic_levees
-from flo2d_tools.flopro_tools import FLOPROExecutor
-from gui.dlg_cont_toler_jj import ContToler_JJ
-from gui.dlg_hazus import HazusDialog
-from gui.dlg_evap_editor import EvapEditorDialog
-from gui.dlg_levee_elev import LeveesToolDialog
-from gui.dlg_schem_xs_info import SchemXsecEditorDialog
-from gui.dlg_settings import SettingsDialog
-from gui.f2d_main_widget import FLO2DWidget
-from gui.grid_info_widget import GridInfoWidget
-from gui.plot_widget import PlotWidget
-from gui.table_editor_widget import TableEditorWidget
-from gui.dlg_schema2user import Schema2UserDialog
-from gui.dlg_ras_import import RasImportDialog
-from gui.dlg_flopro import SimulationDialog
-from gui.dlg_components import ComponentsDialog
+from .layers import Layers
+from .user_communication import UserCommunication
+from .geopackage_utils import connection_required, database_disconnect
+from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from .flo2d_tools.grid_info_tool import GridInfoTool
+from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.channel_profile_tool import ChannelProfile
+from .flo2d_tools.grid_tools import grid_has_empty_elev
+from .flo2d_tools.schematic_tools import generate_schematic_levees
+from .flo2d_tools.flopro_tools import FLOPROExecutor
+from .gui.dlg_cont_toler_jj import ContToler_JJ
+from .gui.dlg_hazus import HazusDialog
+from .gui.dlg_evap_editor import EvapEditorDialog
+from .gui.dlg_levee_elev import LeveesToolDialog
+from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from .gui.dlg_settings import SettingsDialog
+from .gui.f2d_main_widget import FLO2DWidget
+from .gui.grid_info_widget import GridInfoWidget
+from .gui.plot_widget import PlotWidget
+from .gui.table_editor_widget import TableEditorWidget
+from .gui.dlg_schema2user import Schema2UserDialog
+from .gui.dlg_ras_import import RasImportDialog
+from .gui.dlg_flopro import SimulationDialog
+from .gui.dlg_components import ComponentsDialog
 # from gui.dlg_gutterimport SamplingGutter
 
 
@@ -571,7 +571,7 @@ class Flo2D(object):
         """
         Import traditional GDS files into FLO-2D database (GeoPackage).
         """
-#         self.gutils.disable_geom_triggers()
+        self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             'import_cont_toler',
@@ -602,7 +602,7 @@ class Flo2D(object):
         ]
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        fname = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
+        fname, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if not fname:
             return
         s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
@@ -839,14 +839,6 @@ class Flo2D(object):
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
 
-
-
-# def refresh_layers(self):
-#     for layer in qgis.utils.iface.mapCanvas().layers():
-#         layer.triggerRepaint()
-#
-# self.iface.mapCanvas().clearCache()
-
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_imported != '' or self.files_not_imported != '':
@@ -935,7 +927,7 @@ class Flo2D(object):
     def import_from_gpkg(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGpkgDir', '')
-        attached_gpkg = QFileDialog.getOpenFileName(
+        attached_gpkg, __ = QFileDialog.getOpenFileName(
             None,
             'Select GeoPackage with data to import',
             directory=last_dir,
@@ -978,7 +970,7 @@ class Flo2D(object):
     def show_control_table(self):
         try:
             cont_table = self.lyrs.get_layer_by_name('Control', group=self.lyrs.group).layer()
-            index = cont_table.fieldNameIndex('note')
+            index = cont_table.fields().lookupField('note')
             tab_conf = cont_table.attributeTableConfig()
             tab_conf.setSortExpression('"name"')
             tab_conf.setColumnWidth(index, 250)
@@ -987,7 +979,7 @@ class Flo2D(object):
         except AttributeError as e:
             pass
 
-   # @connection_required
+    # @connection_required
     def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface)
@@ -1007,7 +999,7 @@ class Flo2D(object):
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
         grid = self.lyrs.data['grid']['qlyr']
-        if grid:
+        if grid is not None:
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par('MANNING')
@@ -1127,8 +1119,8 @@ class Flo2D(object):
     @connection_required
     def show_hazus_dialog(self):
         if self.gutils.is_table_empty('grid'):
-           self.uc.bar_warn('There is no grid! Please create it before running tool.')
-           return
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
 
         s = QSettings()
         project_dir = s.value('FLO-2D/last_flopro_project', '')
@@ -1139,20 +1131,20 @@ class Flo2D(object):
         lyrs = self.lyrs.list_group_vlayers()
         n_polys = 0
         for l in lyrs:
-            if l.geometryType() == QGis.Polygon:
+            if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                 n_polys += 1
         if n_polys == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('There are not any polygon layers selected (or visible)!')
             return
 
-        self.iface.mainWindow().setWindowTitle( s.value('FLO-2D/lastGpkgDir', '') )
+        self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
 
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
         save = dlg_hazus.exec_()
         if save:
             try:
-                 self.uc.bar_info("Hazus Flooding Analysis performed!")
+                self.uc.bar_info("Hazus Flooding Analysis performed!")
             except Exception as e:
                 self.uc.bar_warn("Could not compute Hazus Flooding Analysis!")
                 return

@@ -12,10 +12,11 @@ import traceback
 import os
 import sys
 import subprocess
-from PyQt4.QtCore import Qt, QSettings
-from PyQt4.QtGui import QStandardItem, QColor, QInputDialog, QFileDialog,  QApplication, QTableWidgetItem
+from qgis.PyQt.QtCore import Qt, QSettings
+from qgis.PyQt.QtGui import QStandardItem, QColor
+from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QTableWidgetItem
 from qgis.core import QgsFeatureRequest, QgsFeature, QgsGeometry
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
+from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import UserCrossSection, ChannelSegment
@@ -24,8 +25,8 @@ from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
 from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
-from plot_widget import PlotWidget
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .plot_widget import PlotWidget
 from collections import OrderedDict
 from math import isnan
 
@@ -196,7 +197,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_types['N'] = {'name': 'Natural', 'cbo_idx': 1}
         self.xs_types['T'] = {'name': 'Trapezoidal', 'cbo_idx': 2}
         self.xs_types['V'] = {'name': 'Variable Area', 'cbo_idx': 3}
-        for typ, data in self.xs_types.iteritems():
+        for typ, data in self.xs_types.items():
             self.xs_type_cbo.addItem(data['name'], typ)
 
     def setup_plot(self):
@@ -282,7 +283,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
         if self.xs_center_chbox.isChecked():
             self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
-            feat = self.user_xs_lyr.getFeatures(QgsFeatureRequest(int(self.xs.fid))).next()
+            feat = next(self.user_xs_lyr.getFeatures(QgsFeatureRequest(int(self.xs.fid))))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
         typ = row['type']
@@ -299,10 +300,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not xy:
             self.plot.clear()
             self.xs_data_model.setHorizontalHeaderLabels(['Value'])
-            for val in chan_x_row.itervalues():
+            for val in chan_x_row.values():
                 item = StandardItem(str(val))
                 self.xs_data_model.appendRow(item)
-            self.xs_data_model.setVerticalHeaderLabels(chan_x_row.keys())
+            self.xs_data_model.setVerticalHeaderLabels(list(chan_x_row.keys()))
             self.xs_data_model.removeRows(0,2)
             self.tview.setModel(self.xs_data_model)
         else:
@@ -760,7 +761,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info('XSEC.DAT model exported to ' + outdir, dur=5)
                 return True
-            except:
+            except Exception as e:
                 QApplication.restoreOverrideCursor()
                 return False
         else:
@@ -863,7 +864,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        chanbank_file = QFileDialog.getOpenFileName(None, "Select CHANBANK.DAT file to read", directory=last_dir, filter='CHANBANK.DAT')
+        chanbank_file, __ = QFileDialog.getOpenFileName(None, "Select CHANBANK.DAT file to read", directory=last_dir, filter='CHANBANK.DAT')
         if not chanbank_file:
             return
 
@@ -893,7 +894,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         qgsPoint0 = QgsGeometry().fromWkt(pnt0).asPoint()
                         pnt1 = self.gutils.single_centroid(right)
                         qgsPoint1 = QgsGeometry().fromWkt(pnt1).asPoint()
-                        new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1])
+                        new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1])
 
                         xs_feat.setGeometry(new_xs)
                         xs_feat.setAttribute('rbankgrid', right)
@@ -926,7 +927,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-        hychan_file = QFileDialog.getOpenFileName(None, "Select HYCHAN.OUT to read", directory=last_dir, filter='HYCHAN.OUT')
+        hychan_file, __ = QFileDialog.getOpenFileName(None, "Select HYCHAN.OUT to read", directory=last_dir, filter='HYCHAN.OUT')
         if not hychan_file:
             return
         try:
@@ -949,7 +950,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                         else:
                             pass
-                except:
+                except Exception as e:
                     pass
 
             # Assign max_water_elev and peak_discharge to features of chan_elems table (schematized layer).
@@ -1005,7 +1006,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     break
                 else:
                     right = self.gutils.grid_on_point(qgsPoint1.x(), qgsPoint1.y()) # Get cell number of next schematized right bank cell.
-                    new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1]) # Define line  between left bank and right bank.
+                    new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1]) # Define line  between left bank and right bank.
                     xs_feat.setGeometry(new_xs) # Assign new line geometry to current xs.
                     xs_feat.setAttribute('rbankgrid', right)# Assign new cell id for right bank cell of current xs.
 
@@ -1065,7 +1066,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     #                     break
     #                 else:
     #                     right = self.gutils.grid_on_point(qgsPoint1.x(), qgsPoint1.y()) # Cell number of next schematized right bank.
-    #                     new_xs = QgsGeometry.fromPolyline([qgsPoint0, qgsPoint1])
+    #                     new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1])
     #                     xs_feat.setGeometry(new_xs)
     #                     xs_feat.setAttribute('rbankgrid', right)
     #

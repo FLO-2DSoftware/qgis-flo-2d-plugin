@@ -7,12 +7,11 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import traceback
-from qgis.core import QGis
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication, QDialogButtonBox, QInputDialog
-from ui_utils import load_ui, set_icon
+from qgis.core import QgsWkbTypes
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
@@ -79,7 +78,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.buildings_cbo.clear()
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     self.buildings_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
             if self.buildings_cbo.count():
@@ -96,7 +95,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.buildings_layer_cbo.clear()
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     if l.featureCount() != 0:
                         self.buildings_layer_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
@@ -219,7 +218,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             - ask user
         """
         bl = self.lyrs.data['user_model_boundary']['qlyr']
-        bfeat = bl.getFeatures().next()
+        bfeat = next(bl.getFeatures())
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
@@ -433,7 +432,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                 n_features = lyr.featureCount()
                 final_val_list= []
                 i = 1
-                building = building_fts.next()
+                building = next(building_fts)
                 id0 = building[ID_field]
                 val = building[field_to_uniformize]
                 elev = building["elevation"]
@@ -449,7 +448,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                     n = 1
 
                     while i < n_features:
-                        building = building_fts.next()
+                        building = next(building_fts)
                         i += 1
                         id1 = building[ID_field]
                         elev =  building["elevation"]
@@ -510,18 +509,18 @@ class HazusDialog(qtBaseClass, uiDialog):
 
                 index_lyr = 1
                 index_val = 0
-                f0 = building_fts.next()
+                f0 = next(building_fts)
                 id0 = f0[ID_field]
-                lyr.changeAttributeValue(f0.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                lyr.changeAttributeValue(f0.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                 while index_lyr < n_features:
-                    f1 = building_fts.next()
+                    f1 = next(building_fts)
                     id1 = f1[ID_field]
                     index_lyr += 1
                     if id1 == id0:
-                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                     else:
                         index_val += 1
-                        lyr.changeAttributeValue(f1.id(), lyr.fieldNameIndex(field_to_uniformize), final_val_list[index_val])
+                        lyr.changeAttributeValue(f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val])
                         id0 = id1
 
                 lyr.commitChanges()
@@ -555,7 +554,7 @@ class HazusDialog(qtBaseClass, uiDialog):
                 flowDepth = f['water_elev'] - f['elevation']
                 if flowDepth < 0:
                     flowdepth = 0
-                lyr.changeAttributeValue(f.id(),lyr.fieldNameIndex('flow_depth'), flowDepth)
+                lyr.changeAttributeValue(f.id(),lyr.fields().lookupField('flow_depth'), flowDepth)
 
             lyr.commitChanges()
             lyr.updateExtents()
@@ -660,9 +659,9 @@ class HazusDialog(qtBaseClass, uiDialog):
             final_val_list= []
             i = 1
 
-            building = building_fts.next()
+            building = next(building_fts)
             # geo = building.geometry().asPolygon()
-            # poly = QgsGeometry.fromPolygon (geo)
+            # poly = QgsGeometry.fromPolygonXY (geo)
 
             id0 = building[ID_field]
             elev = building[elev_field]
@@ -684,10 +683,10 @@ class HazusDialog(qtBaseClass, uiDialog):
 
                 while i < n_features:
 
-                    building = building_fts.next()
+                    building = next(building_fts)
                     # geo = building.geometry().asPolygon()
                     # poly = geo.asPolygon()
-                    # poly = QgsGeometry.fromPolygon (geo)
+                    # poly = QgsGeometry.fromPolygonXY (geo)
 
                     i += 1
                     id1 = building[ID_field]

@@ -7,36 +7,34 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
 import time
 from collections import OrderedDict
 
-from PyQt4.QtCore import QObject
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     QgsProject,
-    QgsMapLayerRegistry,
     QgsFeatureRequest,
     QgsVectorLayer,
     QgsRectangle,
-    QgsLayerTreeGroup
+    QgsLayerTreeGroup,
+    QgsDefaultValue,
+    QgsEditorWidgetSetup
 )
 
 from qgis.gui import QgsRubberBand
-from utils import is_number, get_file_path
-from errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
-from user_communication import UserCommunication
+from .utils import is_number, get_file_path
+from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
+from .user_communication import UserCommunication
 
 
-class Layers(QObject):
+class Layers(object):
     """
     Class for managing project layers: load, add to layers tree.
     """
 
     def __init__(self, iface):
-        super(Layers, self).__init__()
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.root = QgsProject.instance().layerTreeRoot()
@@ -45,17 +43,13 @@ class Layers(QObject):
         self.gutils = None
         self.lyrs_to_repaint = []
         self.data = OrderedDict([
-
-          # User layers:
+        # User layers:
 
             ('user_bc_points', {
                 'name': 'Boundary Condition Points',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_points.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -120,10 +114,7 @@ class Layers(QObject):
                 'name': 'Boundary Condition Lines',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_lines.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -139,10 +130,7 @@ class Layers(QObject):
                 'name': 'Boundary Condition Polygons',
                 'sgroup': 'User Layers',
                 'styles': ['user_bc_polygons.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap',
-                             'config': {u'Outflow': u'outflow', u'Inflow': u'inflow', u'Rain': u'rain'}}
-                },
+                'attrs_edit_widgets': {},
                 'module': ['all'],
                 'readonly': False
             }),
@@ -298,9 +286,7 @@ class Layers(QObject):
                 'name': 'Channel Confluences',
                 'sgroup': 'Schematic Layers',
                 'styles': ['chan_confluences.qml'],
-                'attrs_edit_widgets': {
-                    'type': {'name': 'ValueMap', 'config': {u'Tributary': 0, u'Main': 1}}
-                },
+                'attrs_edit_widgets': {},
                 'readonly': True
             }),
             ('fpxsec', {
@@ -386,7 +372,7 @@ class Layers(QObject):
                 'readonly': False
             }),
 
-         # Storm Drain layers:
+            # Storm Drain layers:
 
             ('swmmflo', {
                 'name': 'SD Inlets',
@@ -528,11 +514,8 @@ class Layers(QObject):
             ('inflow', {
                 'name': 'Inflow',
                 'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {
-                    'ident': {'name': 'ValueMap', 'config': {u'Channel': u'C', u'Floodplain': u'F'}},
-                    'inoutfc': {'name': 'ValueMap', 'config': {u'Inflow': 0, u'Outflow': 1}}
-                },
+                'styles': ['inflow.qml'],
+                'attrs_edit_widgets': {},
                 'readonly': False
             }),
             ('outflow', {
@@ -913,7 +896,7 @@ class Layers(QObject):
                 raise Flo2dLayerInvalid(msg)
 
             start_time = time.time()
-            QgsMapLayerRegistry.instance().addMapLayer(vlayer, False)
+            QgsProject.instance().addMapLayer(vlayer, False)
             self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
             # get target tree group
             start_time = time.time()
@@ -940,7 +923,7 @@ class Layers(QObject):
             vis = Qt.Checked
         else:
             vis = Qt.Unchecked
-        tree_lyr.setVisible(vis)
+        tree_lyr.setItemVisibilityChecked(vis)
         tree_lyr.setExpanded(False)
 
         # set style
@@ -983,17 +966,20 @@ class Layers(QObject):
         try:
             lyr = self.data[table_name]['qlyr']
             self.iface.setActiveLayer(lyr)
+            lyr_fields = lyr.fields()
             if not default_attr_exp:
-                for idx in lyr.pendingAllAttributesList():
-                    lyr.setDefaultValueExpression(idx, '')
+                for idx in lyr_fields.allAttributesList():
+                    field = lyr_fields.field(idx)
+                    field.setDefaultValueDefinition(QgsDefaultValue(''))
             else:
-                for attr, exp in default_attr_exp.iteritems():
-                    idx = lyr.fieldNameIndex(attr)
-                    lyr.setDefaultValueExpression(idx, exp)
+                for attr, exp in default_attr_exp.items():
+                    idx = lyr_fields.lookupField(attr)
+                    field = lyr_fields.field(idx)
+                    field.setDefaultValueDefinition(QgsDefaultValue(exp))
             lyr.startEditing()
             self.iface.actionAddFeature().trigger()
             return True
-        except:
+        except Exception as e:
             msg = 'Could\'n start edit mode for table {}. Is it loaded into QGIS project?'.format(table_name)
             self.uc.bar_warn(msg)
             return None
@@ -1023,7 +1009,7 @@ class Layers(QObject):
                 try:
                     lyr = self.data[t]['qlyr']
                     lyr.commitChanges()
-                except:
+                except Exception as e:
                     msg = 'Could\'n save changes for table {}.'.format(t)
                     self.uc.bar_warn(msg)
         return in_edit_mode
@@ -1041,7 +1027,7 @@ class Layers(QObject):
                 try:
                     lyr = self.data[t]['qlyr']
                     lyr.rollBack()
-                except:
+                except Exception as e:
                     msg = 'Could\'n rollback changes for table {}.'.format(t)
                     self.uc.bar_warn(msg)
         return in_edit_mode
@@ -1064,7 +1050,7 @@ class Layers(QObject):
                 gr = self.root
             layeritem = None
             if gr and name:
-                layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+                layers = QgsProject.instance().mapLayersByName(name)
 
                 for layer in layers:
                     layeritem = gr.findLayer(layer.id())
@@ -1129,7 +1115,7 @@ class Layers(QObject):
         layer2.editingStopped.connect(layer1.reload)
 
     def new_group(self, name):
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, str):
             self.root.addGroup(name)
         else:
             raise Flo2dNotString('{} is not a string or unicode'.format(repr(name)))
@@ -1157,7 +1143,7 @@ class Layers(QObject):
         return subgrp
 
     def get_flo2d_groups(self):
-        all_groups = self.iface.legendInterface().groups()
+        all_groups = [c.name() for c in self.root.children() if isinstance(c, QgsLayerTreeGroup)]
         f2d_groups = []
         for g in all_groups:
             if g.startswith('FLO-2D_'):
@@ -1189,7 +1175,7 @@ class Layers(QObject):
             group.setExpanded(True)
             first_lyr = self.get_layer_by_name('Computational Domain', group=group_name).layer()
             if first_lyr:
-                self.iface.legendInterface().setCurrentLayer(first_lyr)
+                self.iface.layerTreeView().setCurrentLayer(first_lyr)
         else:
             pass
 
@@ -1211,9 +1197,9 @@ class Layers(QObject):
         group = self.get_group(group_name, create=False)
 
     def clear_legend_selection(self):
-        sel_lyrs = self.iface.legendInterface().selectedLayers()
+        sel_lyrs = self.iface.layerTreeView().selectedLayers()
         if sel_lyrs:
-            self.iface.legendInterface().setCurrentLayer(sel_lyrs[0])
+            self.iface.layerTreeView().setCurrentLayer(sel_lyrs[0])
 
     def layer_exists_in_group(self, uri, group=None):
         grp = self.root.findGroup(group) if group is not None else self.root
@@ -1237,37 +1223,34 @@ class Layers(QObject):
         sql = '''SELECT table_name FROM gpkg_contents WHERE table_name=? AND data_type = 'features'; '''
         try:
             is_spatial = self.gutils.execute(sql, (t,)).fetchone()[0]
-        except:
+        except Exception as e:
             return
         if is_spatial:
             self.gutils.update_layer_extents(t)
-            # why, oh why this is not working.... ?
-            # layer.reload()
-            # layer.updateExtents()
             sql = '''SELECT min_x, min_y, max_x, max_y FROM gpkg_contents WHERE table_name=?;'''
             min_x, min_y, max_x, max_y = self.gutils.execute(sql, (t,)).fetchone()
             try:
                 # works if min & max not null
                 layer.setExtent(QgsRectangle(min_x, min_y, max_x, max_y))
-            except:
+            except Exception as e:
                 return
         else:
             pass
 
     @staticmethod
     def remove_layer_by_name(name):
-        layers = QgsMapLayerRegistry.instance().mapLayersByName(name)
+        layers = QgsProject.instance().mapLayersByName(name)
         for layer in layers:
-            QgsMapLayerRegistry.instance().removeMapLayer(layer.id())
+            QgsProject.instance().removeMapLayer(layer.id())
 
     @staticmethod
     def remove_layer(layer_id):
         # do nothing if layer id does not exists
-        QgsMapLayerRegistry.instance().removeMapLayer(layer_id)
+        QgsProject.instance().removeMapLayer(layer_id)
 
     @staticmethod
     def is_str(name):
-        if isinstance(name, (str, unicode)):
+        if isinstance(name, str):
             return True
         else:
             msg = '{} is of type {}, not a string or unicode'.format(repr(name), type(name))
@@ -1306,11 +1289,9 @@ class Layers(QObject):
             if lyr == 'blocked_cells':
                 self.update_style_blocked(lyr_id)
             if data['attrs_edit_widgets']:
-                c = l.editFormConfig()
-                for attr, widget_data in data['attrs_edit_widgets'].iteritems():
-                    attr_idx = l.fieldNameIndex(attr)
-                    c.setWidgetType(attr_idx, widget_data['name'])
-                    c.setWidgetConfig(attr_idx, widget_data['config'])
+                for attr, widget_data in data['attrs_edit_widgets'].items():
+                    attr_idx = l.fields().lookupField(attr)
+                    l.setEditorWidgetSetup(attr_idx, QgsEditorWidgetSetup(widget_data['name'], widget_data['config']))
             else:
                 pass # no attributes edit widgets config
             # set attributes default value, if any
@@ -1319,9 +1300,9 @@ class Layers(QObject):
             except Exception as e:
                 dvs = None
             if dvs:
-                for attr, val in dvs.iteritems():
-                    idx = l.fieldNameIndex(attr)
-                    l.setDefaultValueExpression(idx, val)
+                for attr, val in dvs.items():
+                    field = l.fields().field(attr)
+                    field.setDefaultValueDefinition(QgsDefaultValue(val))
             else:
                 pass
             self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
@@ -1349,7 +1330,7 @@ class Layers(QObject):
             8: (-s, s/2.414, -s/2.414, s)
         }
         lyr = self.get_layer_tree_item(lyr_id).layer()
-        sym = lyr.rendererV2().symbol()
+        sym = lyr.renderer().symbol()
         for nr in range(1, sym.symbolLayerCount()):
             exp = 'make_line(translate(centroid($geometry), {}, {}), translate(centroid($geometry), {}, {}))'
             sym.symbolLayer(nr).setGeometryExpression(exp.format(*dir_lines[nr]))
@@ -1375,7 +1356,7 @@ class Layers(QObject):
             self.rb.setFillColor(fill_color)
         self.rb.setWidth(3)
         try:
-            feat = lyr.getFeatures(QgsFeatureRequest(fid)).next()
+            feat = next(lyr.getFeatures(QgsFeatureRequest(fid)))
         except StopIteration:
             return
         self.rb.setToGeometry(feat.geometry(), lyr)

@@ -11,17 +11,18 @@
 import os
 import traceback
 from collections import OrderedDict
-from PyQt4.QtCore import QSettings, Qt
-from PyQt4.QtGui import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog, QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint, QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QGroupBox, QInputDialog, QFileDialog
+from qgis.PyQt.QtGui import QColor
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsFeatureRequest
+from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2dobjects import InletRatingTable
 from ..utils import is_number, m_fdata
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
 uiDialog, qtBaseClass = load_ui('swmm_editor')
@@ -200,7 +201,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         columns = ['fid', 'name'] + columns
         rows = self.gutils.execute(qry).fetchall()
         for row in rows:
-            swmm_dict = OrderedDict(zip(columns, row))
+            swmm_dict = OrderedDict(list(zip(columns, row)))
             name = swmm_dict['name']
             self.swmm_name_cbo.addItem(name, swmm_dict)
         self.swmm_name_cbo.setCurrentIndex(self.swmm_idx)
@@ -248,7 +249,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if self.center_chbox.isChecked():
             sfid = swmm_dict['fid']
             self.lyrs.show_feat_rubber(self.swmm_lyr.id(), sfid)
-            feat = self.swmm_lyr.getFeatures(QgsFeatureRequest(sfid)).next()
+            feat = next(self.swmm_lyr.getFeatures(QgsFeatureRequest(sfid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
@@ -301,9 +302,9 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
-        col_gen = ('{}=?'.format(c) for c in swmm_dict.keys())
+        col_gen = ('{}=?'.format(c) for c in list(swmm_dict.keys()))
         col_names = ', '.join(col_gen)
-        vals = swmm_dict.values() + [fid]
+        vals = list(swmm_dict.values()) + [fid]
         update_qry = '''UPDATE user_swmm_nodes SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
 
@@ -361,7 +362,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             qry_update = 'UPDATE user_swmm_nodes SET max_depth=?, rim_elev=?, ge_elev=?, difference=? WHERE fid=?;'
             vals = {}
             if self.selected_ckbox.isChecked():
-                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeatureIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
                 features = self.swmm_lyr.getFeatures()
@@ -376,7 +377,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 difference = elev - rim_elev
                 vals[feat['fid']] = (max_depth, rim_elev, elev, difference)
             cur = self.gutils.con.cursor()
-            for k, v in vals.items():
+            for k, v in list(vals.items()):
                 cur.execute(qry_update, v + (k,))
             self.gutils.con.commit()
             self.populate_swmm()
@@ -390,8 +391,8 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def import_swmm_INP_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-#         last_dir = s.value('FLO-2D/lastSWMMDir', '')
-        swmm_file = QFileDialog.getOpenFileName(
+        # last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',
             directory=last_dir,
@@ -410,7 +411,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.swmm_lyr)
             fields = self.swmm_lyr.fields()
             new_feats = []
-            for name, values in sdp.INP_nodes.items():
+            for name, values in list(sdp.INP_nodes.items()):
                 if 'subcatchment' in values:
                     sd_type = 'I'
                 elif 'out_type' in values:
@@ -424,7 +425,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
                 rim_elev = invert_elev + max_depth if invert_elev and max_depth else None
                 gid = self.gutils.grid_on_point(x, y)
                 elev = self.gutils.grid_value(gid, 'elevation')
-                geom = QgsGeometry.fromPoint(QgsPoint(x, y))
+                geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
                 feat.setGeometry(geom)
                 feat.setFields(fields)
                 feat.setAttribute('sd_type', sd_type)
@@ -457,7 +458,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def update_swmm_INP_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastSWMMDir', '')
-        swmm_file = QFileDialog.getOpenFileName(
+        swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to update',
             directory=last_dir,
@@ -468,7 +469,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.selected_ckbox.isChecked():
-                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeaturesIds())
+                request = QgsFeatureRequest().setFilterFids(self.swmm_lyr.selectedFeatureIds())
                 features = self.swmm_lyr.getFeatures(request)
             else:
                 features = self.swmm_lyr.getFeatures()
@@ -539,7 +540,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
     def populate_rtables_data(self):
         idx = self.cbo_rating_tables.currentIndex()
         rt_fid = self.cbo_rating_tables.itemData(idx)
-        if (rt_fid is None):
+        if rt_fid is None:
             self.uc.bar_warn("No rating table defined!")
             return
 
@@ -596,7 +597,6 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_plot(self):
-
         if not self.plot_item_name:
             return
         self.d1, self.d2 = [[], []]

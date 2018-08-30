@@ -11,13 +11,13 @@ import os
 import time
 from itertools import chain
 
-from PyQt4.QtCore import Qt, QSettings
-from PyQt4.QtGui import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
-from qgis.core import QgsCoordinateReferenceSystem, QGis
+from qgis.PyQt.QtCore import Qt, QSettings
+from qgis.PyQt.QtWidgets import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
+from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..errors import Flo2dQueryResultNull
 from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
 from ..user_communication import UserCommunication
@@ -42,7 +42,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.si_units = None
         self.crs = None
         self.projectionSelector = QgsProjectionSelectionWidget()
-        self.projectionSelector.setCrs(self.iface.mapCanvas().mapRenderer().destinationCrs())
+        self.projectionSelector.setCrs(self.iface.mapCanvas().mapSettings().destinationCrs())
         self.widget_map = {
             "MANNING": self.manningDSpinBox,
             "CELLSIZE": self.cellSizeDSpinBox
@@ -80,7 +80,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         con.executemany(qry, values)
 
     def read(self):
-        for name, wid in self.widget_map.iteritems():
+        for name, wid in self.widget_map.items():
             qry = '''SELECT value FROM cont WHERE name = ?;'''
             row = self.gutils.execute(qry, (name,)).fetchone()
             if not row:
@@ -141,7 +141,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
-        gpkg_path = QFileDialog.getSaveFileName(None,
+        gpkg_path, __ = QFileDialog.getSaveFileName(None,
                                                 'Create GeoPackage As...',
                                                 directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
@@ -180,10 +180,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.crs = self.projectionSelector.crs()
             auth, crsid = self.crs.authid().split(':')
             self.proj_lab.setText(self.crs.description())
-            if self.crs.mapUnits() == QGis.Meters:
+            if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
                 self.si_units = True
                 mu = 'meters'
-            elif self.crs.mapUnits() == QGis.Feet:
+            elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
                 self.si_units = False
                 mu = 'feet'
             else:
@@ -252,7 +252,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_gpkg_dir = s.value('FLO-2D/lastGpkgDir', '')
         if not gpkg_path:
-            gpkg_path = QFileDialog.getOpenFileName(None,
+            gpkg_path, __ = QFileDialog.getOpenFileName(None,
                                                     'Select GeoPackage to connect',
                                                     directory=last_gpkg_dir, filter='*.gpkg')
         if not gpkg_path:
@@ -289,7 +289,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 #         QApplication.setOverrideCursor(Qt.ArrowCursor)
 
     def write(self):
-        for name, wid in self.widget_map.iteritems():
+        for name, wid in self.widget_map.items():
             value = None
             if isinstance(wid, QLineEdit):
                 value = wid.text()
@@ -304,9 +304,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
             self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par('PROJ', self.crs.toProj4())
-        if self.crs.mapUnits() == QGis.Meters:
+        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
             metric = 1
-        elif self.crs.mapUnits() == QGis.Feet:
+        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
             self.si_units = False
             metric = 0
         else:

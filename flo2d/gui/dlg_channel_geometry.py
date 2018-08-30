@@ -7,13 +7,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
 
-from PyQt4.QtGui import QTableWidgetItem
+from qgis.PyQt.QtWidgets import QTableWidgetItem
 
 
-from ui_utils import load_ui
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -737,5 +737,5 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def close_dialog(self):
         self.features = []
-        self.lyrs.data['chan']['qlyr'].setSelectedFeatures(self.features)
-        self.lyrs.data['chan_elems']['qlyr'].setSelectedFeatures(self.features)
+        self.lyrs.data['chan']['qlyr'].selectByIds(self.features)
+        self.lyrs.data['chan_elems']['qlyr'].selectByIds(self.features)

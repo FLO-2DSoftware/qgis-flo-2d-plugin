@@ -7,12 +7,11 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
 import traceback
 from functools import wraps
 from collections import defaultdict
-from user_communication import UserCommunication
+from .user_communication import UserCommunication
 
 
 def connection_required(fn):
@@ -284,7 +283,7 @@ class GeoPackageUtils(object):
             r = self.execute(sql, (name,)).fetchone()[0]
             if r:
                 return r
-        except:
+        except Exception as e:
             return None
 
     def set_cont_par(self, name, value):
@@ -303,7 +302,7 @@ class GeoPackageUtils(object):
             sql = '''PRAGMA database_list;'''
             r = self.execute(sql).fetchone()[2]
             return r
-        except:
+        except Exception as e:
             return None
 
     def get_views_list(self):
@@ -367,10 +366,9 @@ class GeoPackageUtils(object):
         return gpb_buff
 
     def build_levee(self, gid, direction, cellsize, table='grid', field='fid'):
-        '''
+        """
         Builds a single line in cell "gid" according to "direction" (1 to 8)
-
-        '''
+        """
         functions = {
             '1': (lambda x, y, s: (x - s/2.414, y + s, x + s/2.414, y + s)),
             '2': (lambda x, y, s: (x + s, y + s/2.414, x + s, y - s/2.414)),
@@ -401,6 +399,11 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
+    def point_wkt_to_gpb(self, wkt_geom):
+        gpb = '''SELECT AsGPB(ST_GeomFromText('{}'))'''.format(wkt_geom)
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
     def build_square(self, wkt_geom, size):
         x, y = [float(x) for x in wkt_geom.strip('POINT()').split()]
         half_size = float(size) * 0.5
@@ -411,6 +414,11 @@ class GeoPackageUtils(object):
             x - half_size, y + half_size,
             x - half_size, y - half_size
         )
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
+    def build_square_from_polygon(self, polygon_coordinates):
+        gpb = '''SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))'''.format(*polygon_coordinates)
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
@@ -576,8 +584,8 @@ class GeoPackageUtils(object):
             ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
         '''
         qry = qry.format(x, y)
-        data =  self.execute(qry).fetchone()
-        if data is not  None:
+        data = self.execute(qry).fetchone()
+        if data is not None:
             gid = data[0]
         else:
             gid = None

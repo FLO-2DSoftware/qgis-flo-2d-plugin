@@ -7,7 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
 import numpy as np
 from ..flo2d_tools.grid_tools import rasters2centroids
@@ -61,15 +60,16 @@ class HDFProcessor(object):
     def export_rainfall_to_binary_hdf5(self, header, data):
         with h5py.File(self.hdf_path, 'w') as hdf_file:
             rainintime, irinters, timestamp = header
-            hdf_file.attrs['hdf5_version'] = np.str_(h5py.version.hdf5_version)
-            hdf_file.attrs['plugin'] = np.str_('FLO-2D')
+            hdf_file.attrs['hdf5_version'] = np.array([h5py.version.hdf5_version], dtype=np.string_)
+            hdf_file.attrs['plugin'] = np.array(['FLO-2D'], dtype=np.string_)
             grp = hdf_file.create_group('raincell')
+            tstamp = np.array([timestamp], dtype=np.string_)
             datasets = [
                 ('RAININTIME', np.int(rainintime), 'Time interval in minutes of the realtime rainfall data.'),
                 ('IRINTERS', np.int(irinters), 'Number of intervals in the dataset.'),
-                ('TIMESTAMP', np.str_(timestamp), 'Timestamp indicates the start and end time of the storm.'),
+                ('TIMESTAMP', tstamp, 'Timestamp indicates the start and end time of the storm.'),
                 ('IRAINDUM', np.array(data), 'Cumulative rainfall in inches or mm over the time interval.')
                 ]
             for name, value, description in datasets:
                 dts = grp.create_dataset(name, data=value)
-                dts.attrs['description'] = np.str_(description)
+                dts.attrs['description'] = np.array([description], dtype=np.string_)

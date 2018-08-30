@@ -9,12 +9,12 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from PyQt4.QtCore import Qt
-from qgis.core import QGis, QgsFeature, QgsGeometry
-from PyQt4.QtGui import QApplication, QInputDialog
+from qgis.PyQt.QtCore import Qt
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
+from qgis.PyQt.QtWidgets import QApplication, QInputDialog
 from ..flo2d_tools.grid_tools import (square_grid, update_roughness, evaluate_arfwrf,
                                       evaluate_spatial_tolerance, evaluate_spatial_froude,
                                       evaluate_spatial_shallow, evaluate_spatial_gutter,
@@ -26,6 +26,7 @@ from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 
 uiDialog, qtBaseClass = load_ui('grid_tools_widget')
+
 
 class GridToolsWidget(qtBaseClass, uiDialog):
 
@@ -81,7 +82,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             - ask user
         """
         bl = self.lyrs.data['user_model_boundary']['qlyr']
-        bfeat = bl.getFeatures().next()
+        bfeat = next(bl.getFeatures())
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
@@ -207,10 +208,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         n_point_layers = False
         layers = self.lyrs.list_group_vlayers()
         for l in layers:
-            if l.geometryType() == QGis.Point:
+            if l.geometryType() == QgsWkbTypes.PointGeometry:
                 if l.featureCount() != 0:
-                   n_point_layers = True
-                   break
+                    n_point_layers = True
+                    break
 
         if not n_point_layers:
             QApplication.restoreOverrideCursor()
@@ -382,7 +383,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             fields = arf_lyr.fields()
             arf_feats = arf_lyr.getFeatures()
             # get first 'blocked_cells' (ARF_WRF layer) feature.
-            f0 = arf_feats.next()
+            f0 = next(arf_feats)
             grid0 = f0['grid_fid']
 
             # Assign initial values for variables to accumulate duplicate cell.
@@ -399,7 +400,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             try:
                 while True:
-                    f1 = arf_feats.next()
+                    f1 = next(arf_feats)
                     grid1 = f1['grid_fid']
                     if grid1 == grid0:
                         # Accumulate values for all fields of this duplicate cell.
@@ -420,9 +421,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                         geom0 = f0.geometry()
                         point0 = geom0.asPoint()
-                        new_geom0 = QgsGeometry.fromPoint(point0)
+                        new_geom0 = QgsGeometry.fromPointXY(point0)
                         new_feat.setGeometry(new_geom0)
-
 
                         new_feat['grid_fid'] = grid0
                         new_feat['area_fid'] = area_fid
@@ -438,7 +438,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         new_feats.append(new_feat)
 
                         # Make f1 feature the next f0:
-                        f0 =  f1
+                        f0 = f1
                         grid0 = f0['grid_fid']
                         area_fid = f0['area_fid']
                         arf = f0['arf']
@@ -456,7 +456,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 geom0 = f0.geometry()
                 point0 = geom0.asPoint()
-                new_geom0 = QgsGeometry.fromPoint(point0)
+                new_geom0 = QgsGeometry.fromPointXY(point0)
                 new_feat.setGeometry(new_geom0)
 
                 new_feat['grid_fid'] = grid0
@@ -506,7 +506,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         if self.gutils.is_table_empty('tolspatial'):
             w = 'There are no tolerance polygons in Tolerance Areas (Schematic Layers)!.\n\n'
-            w +=  'Please digitize them before running tool.'
+            w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
         try:

@@ -7,16 +7,16 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QColor, QComboBox, QSizePolicy, QInputDialog
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QComboBox, QSizePolicy, QInputDialog
 from qgis.core import QgsFeatureRequest
-from ui_utils import load_ui, center_canvas, try_disconnect, set_icon
+from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow, Outflow
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
-from table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
 
 
@@ -159,7 +159,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo: self.inflow_tseries_cbo_layout,
             self.outflow_data_cbo: self.outflow_data_cbo_layout
         }
-        for combo, layout in combos.iteritems():
+        for combo, layout in combos.items():
             combo.setEditable(False)
             combo.setSizePolicy(sp)
             layout.addWidget(combo)
@@ -338,7 +338,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.inflow.geom_type)
         self.show_inflow_rb()
         if self.bc_center_chbox.isChecked():
-            feat = self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)).next()
+            feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
         self.populate_inflow_data_cbo()
@@ -614,7 +614,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.bc_center_chbox.isChecked():
-            feat = self.bc_lyr.getFeatures(QgsFeatureRequest(self.outflow.bc_fid)).next()
+            feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.outflow.bc_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
         self.outflow_type_cbo.setCurrentIndex(self.type_fid)
@@ -745,7 +745,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         self.outflow_type_cbo.clear()
         type_name = '{}. {}'
-        for typnr in sorted(self.outflow_types.iterkeys()):
+        for typnr in sorted(self.outflow_types.keys()):
             outflow_type = type_name.format(typnr, self.outflow_types[typnr]['name']).strip()
             self.outflow_type_cbo.addItem(outflow_type, typnr)
 
@@ -908,7 +908,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # try to set current bc to the last before the deleted one
         try:
             self.populate_bcs(bc_fid=fid-1)
-        except:
+        except Exception as e:
             self.populate_bcs()
 
     def show_outflow_rb(self):

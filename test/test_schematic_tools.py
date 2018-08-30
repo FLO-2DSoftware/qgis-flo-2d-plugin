@@ -12,7 +12,7 @@ import os
 import unittest
 from collections import defaultdict
 from qgis.core import QgsVectorLayer
-from utilities import get_qgis_app
+from .utilities import get_qgis_app
 from flo2d.flo2d_tools.schematic_tools import get_intervals, interpolate_along_line, schematize_lines, populate_directions
 
 QGIS_APP = get_qgis_app()
@@ -87,7 +87,7 @@ class TestSchematicTools(unittest.TestCase):
         for grids in segments:
             populate_directions(coords, grids)
         self.assertSetEqual(coords[(557497.5, 47508.95)], {1, 2, 3, 4})
-        for s in coords.itervalues():
+        for s in coords.values():
             directions = (True if 0 < d < 9 else False for d in s)
             self.assertTrue(all(directions))
 

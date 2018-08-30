@@ -9,12 +9,12 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
-from itertools import chain, groupby, izip
+from itertools import chain, groupby
 from operator import itemgetter
-from PyQt4.QtCore import QSettings
-from flo2d_parser import ParseDAT
+from qgis.PyQt.QtCore import QSettings
+from .flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
-from PyQt4.QtGui import QApplication
+from qgis.PyQt.QtWidgets import QApplication
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -70,14 +70,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         coords = slice(2, 4)
         elev = slice(4, None)
         for row in data:
-            try:
-                row = tuple(r.decode('ascii') for r in row)
-            except UnicodeDecodeError:
-                continue
             if c < self.chunksize:
                 geom = ' '.join(row[coords])
                 g = self.build_square(geom, self.cell_size)
-                sql += [row[man] + row[elev] + (g,)]
+                sql += [tuple(row[man] + row[elev] + [g])]
                 c += 1
             else:
                 self.batch_execute(sql)
@@ -101,7 +97,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
             ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
         ]
-        gids = res.keys()
+        gids = list(res.keys())
         cells = self.grid_centroids(gids, buffers=True)
         for i, gid in enumerate(inf, 1):
             row = inf[gid]['row']
@@ -141,7 +137,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_tab_fid = 0
         ts_fid = 0
         fid = 1
-        for gid, values in data.iteritems():
+        for gid, values in data.items():
             chan_out = values['K']
             fp_out = values['O']
             hydro_out = values['hydro_out']
@@ -250,8 +246,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         time_step = float(header[0])
         irinters = int(header[1])
         data_len = len(data)
-        grid_count = data_len / irinters
-        data_gen = (data[i:i + grid_count] for i in xrange(0, data_len, grid_count))
+        grid_count = data_len // irinters
+        data_gen = (data[i:i + grid_count] for i in range(0, data_len, grid_count))
         time_interval = 0
         for data_series in data_gen:
             for row in data_series:
@@ -408,7 +404,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         xsec_sql = ['''INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES''', 3]
         self.clear_tables('xsec_n_data')
         data = self.parser.parse_xsec()
-        for key in data.keys():
+        for key in list(data.keys()):
             xsec_no, xsec_name = key
             nodes = data[key]
             for row in nodes:
@@ -441,9 +437,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             params = hs[:-1]
             elems = hs[-1]
             geom = self.build_linestring(params[nodes])
-            typ = elems.keys()[0] if len(elems) == 1 else 'C'
+            typ = list(elems.keys())[0] if len(elems) == 1 else 'C'
             hystruc_sql += [(geom, typ) + tuple(params)]
-            for char in elems.keys():
+            for char in list(elems.keys()):
                 for row in elems[char]:
                     sqls[char] += [(i,) + tuple(row)]
 
@@ -946,7 +942,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
 
-            for gid, hydro_out in sorted(floodplains.iteritems(), key=lambda items: (items[1], items[0])):
+            for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                 ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                 o.write(o_line.format(ident, gid))
 
@@ -990,7 +986,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                                                     # selected from a list
 
-            if  rain_row[6] == 1:   # if movingstorm from rain = 0, omit this line.
+            if rain_row[6] == 1:   # if movingstorm from rain = 0, omit this line.
                 if rain_row[-1] is not None:    # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                                                 # rainabs, irainarf, movingstorm, rainspeed, iraindir).
                     r.write(rain_line4.format(*rain_row[-2:])) # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
@@ -1001,7 +997,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if rain_row[5] == 1:    # if irainarf from rain = 0, omit this line.
                 for row in self.execute(rain_cells_sql):
-                    r.write(cell_line5.format(row[0], '{0:.3f}'.format(row[1] /max_arf)))
+                    r.write(cell_line5.format(row[0], '{0:.3f}'.format(row[1] / max_arf)))
 
     def export_raincell(self, outdir):
         if self.is_table_empty('raincell'):
@@ -1063,7 +1059,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gen = [x if x is not None else '' for x in infil_row[1:]]
             v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
             i.write(line1.format(v1))
-            for val, line in izip([v2, v3, v4], [line2, line3, line4]):
+            for val, line in zip([v2, v3, v4], [line2, line3, line4]):
                 if any(val) is True:
                     i.write(line.format(*val))
                 else:

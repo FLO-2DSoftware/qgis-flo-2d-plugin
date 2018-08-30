@@ -7,12 +7,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4 import QtCore, QtGui
-from ui_utils import load_ui
+from qgis.PyQt import QtCore
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from collections import OrderedDict
-from PyQt4.QtGui import QCheckBox, QDoubleSpinBox, QApplication
+from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QApplication
 
 
 uiDialog, qtBaseClass = load_ui('cont_toler_jj')
@@ -25,13 +25,13 @@ except AttributeError:
         return s
 
 try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
+    _encoding = QApplication.UnicodeUTF8
 
     def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+        return QApplication.translate(context, text, disambig, _encoding)
 except AttributeError:
     def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+        return QApplication.translate(context, text, disambig)
 
 
 class ContToler_JJ(qtBaseClass, uiDialog):
@@ -100,7 +100,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         try:
             _mud = False
             _sed = False
-            for key, values in self.PARAMS.items():
+            for key, values in list(self.PARAMS.items()):
                 if key ==  'COURCHAR_C' or key == 'COURCHAR_T':
                     continue
 
@@ -156,7 +156,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             elif val == 1:
                 _sed = 1
 
-            for key in self.PARAMS.keys():
+            for key in list(self.PARAMS.keys()):
                 if key ==  'COURCHAR_C':
                     val = 'C'
                 elif key == 'COURCHAR_T':

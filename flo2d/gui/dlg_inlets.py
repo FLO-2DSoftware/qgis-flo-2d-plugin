@@ -7,20 +7,17 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from PyQt4.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import InletRatingTable
 
-from PyQt4.QtGui import (
-    QInputDialog,
-    QColor,
-    QTableWidgetItem,
-    QDialogButtonBox)
+from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox
+from qgis.PyQt.QtGui import QColor
 
-from ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import m_fdata
-from table_editor_widget import StandardItemModel, StandardItem
+from .table_editor_widget import StandardItemModel, StandardItem
 
 
 uiDialog, qtBaseClass = load_ui('inlets')
@@ -362,65 +359,65 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         # Load controls with selected row in table:
         item = QTableWidgetItem()
 
-        item = self.inlets_tblw.item(row,1)
+        item = self.inlets_tblw.item(row, 1)
         if item is not None:
             self.grid_element.setText(str(item.text()))
 
-        item = self.inlets_tblw.item(row,2)
+        item = self.inlets_tblw.item(row, 2)
         if item is not None:
             self.invert_elevation_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,3)
+        item = self.inlets_tblw.item(row, 3)
         if item is not None:
             self.max_depth_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,4)
+        item = self.inlets_tblw.item(row, 4)
         if item is not None:
             self.initial_depth_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,5)
+        item = self.inlets_tblw.item(row, 5)
         if item is not None:
             self.surcharge_depth_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,6)
+        item = self.inlets_tblw.item(row, 6)
         if item is not None:
             self.ponded_area_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,7)
+        item = self.inlets_tblw.item(row, 7)
         if item is not None:
             index  = int(item.text())
             index = 4 if index > 4 else 0 if index < 0 else index-1
             self.inlet_drain_type_cbo.setCurrentIndex(index)
 
-        item = self.inlets_tblw.item(row,8)
+        item = self.inlets_tblw.item(row, 8)
         if item is not None:
             self.length_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,9)
+        item = self.inlets_tblw.item(row, 9)
         if item is not None:
             self.width_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,10)
+        item = self.inlets_tblw.item(row, 10)
         if item is not None:
             self.height_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,11)
+        item = self.inlets_tblw.item(row, 11)
         if item is not None:
             self.weir_coeff_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,12)
+        item = self.inlets_tblw.item(row, 12)
         if item is not None:
             self.feature_sbox.setValue(int(item.text()))
 
-        item = self.inlets_tblw.item(row,13)
+        item = self.inlets_tblw.item(row, 13)
         if item is not None:
             self.curb_height_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,14)
+        item = self.inlets_tblw.item(row, 14)
         if item is not None:
             self.clogging_factor_dbox.setValue(float(item.text()))
 
-        item = self.inlets_tblw.item(row,15)
+        item = self.inlets_tblw.item(row, 15)
         if item is not None:
             self.time_for_clogging_dbox.setValue(float(item.text()))
 
@@ -450,72 +447,72 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             swmm_time_for_clogging = ?  
         WHERE fid = ?;'''
 
-        for row in xrange(0, self.inlets_tblw.rowCount()):
+        for row in range(0, self.inlets_tblw.rowCount()):
             item = QTableWidgetItem()
 
             fid = row + 1
 
-            item = self.inlets_tblw.item(row,0)
+            item = self.inlets_tblw.item(row, 0)
             if item is not None:
                 name = str(item.text())
 
-            item = self.inlets_tblw.item(row,1)
+            item = self.inlets_tblw.item(row, 1)
             if item is not None:
                 grid = str(item.text())
 
-            item = self.inlets_tblw.item(row,2)
+            item = self.inlets_tblw.item(row, 2)
             if item is not None:
                 invert_elev = str(item.text())
 
-            item = self.inlets_tblw.item(row,3)
+            item = self.inlets_tblw.item(row, 3)
             if item is not None:
                 max_depth= str(item.text())
 
-            item = self.inlets_tblw.item(row,4)
+            item = self.inlets_tblw.item(row, 4)
             if item is not None:
                 init_depth = str(item.text())
 
-            item = self.inlets_tblw.item(row,5)
+            item = self.inlets_tblw.item(row, 5)
             if item is not None:
                 surcharge_depth = str(item.text())
 
-            item = self.inlets_tblw.item(row,6)
+            item = self.inlets_tblw.item(row, 6)
             if item is not None:
                 ponded_area = str(item.text())
 
-            item = self.inlets_tblw.item(row,7)
+            item = self.inlets_tblw.item(row, 7)
             if item is not None:
                 intype = str(item.text())
 
-            item = self.inlets_tblw.item(row,8)
+            item = self.inlets_tblw.item(row, 8)
             if item is not None:
                 swmm_length = str(item.text())
 
-            item = self.inlets_tblw.item(row,9)
+            item = self.inlets_tblw.item(row, 9)
             if item is not None:
                 swmm_width = str(item.text())
 
-            item = self.inlets_tblw.item(row,10)
+            item = self.inlets_tblw.item(row, 10)
             if item is not None:
                 swmm_height = str(item.text())
 
-            item = self.inlets_tblw.item(row,11)
+            item = self.inlets_tblw.item(row, 11)
             if item is not None:
                 swmm_coeff = str(item.text())
 
-            item = self.inlets_tblw.item(row,12)
+            item = self.inlets_tblw.item(row, 12)
             if item is not None:
-                swmm_feature  = str(item.text())
+                swmm_feature = str(item.text())
 
-            item = self.inlets_tblw.item(row,13)
+            item = self.inlets_tblw.item(row, 13)
             if item is not None:
                 curbheight = str(item.text())
 
-            item = self.inlets_tblw.item(row,14)
+            item = self.inlets_tblw.item(row, 14)
             if item is not None:
                 swmm_clogging_factor = str(item.text())
 
-            item = self.inlets_tblw.item(row,15)
+            item = self.inlets_tblw.item(row, 15)
             if item is not None:
                 swmm_time_for_clogging = str(item.text())
 

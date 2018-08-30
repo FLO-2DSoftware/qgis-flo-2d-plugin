@@ -10,13 +10,13 @@
 
 import os
 import traceback
-from PyQt4.QtCore import QSettings
-from PyQt4.QtGui import QFileDialog
-from ui_utils import load_ui
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
+from .ui_utils import load_ui
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.core import QgsFeature, QgsGeometry, QgsPoint
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')
 
@@ -52,7 +52,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
     def get_xyz_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastXYZDir', '')
-        xyz_file = QFileDialog.getOpenFileName(
+        xyz_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select 3D levee lines file',
             directory=last_dir,
@@ -95,8 +95,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
                     values = row.split()
                     x, y, z = [float(i) for i in values]
                     point_feat = QgsFeature()
-                    pnt = QgsPoint(x, y)
-                    point_geom = QgsGeometry().fromPoint(pnt)
+                    pnt = QgsPointXY(x, y)
+                    point_geom = QgsGeometry().fromPointXY(pnt)
                     point_feat.setGeometry(point_geom)
                     point_feat.setFields(elev_fields)
                     point_feat.setAttribute('elev', z)
@@ -107,7 +107,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
                     if not polyline:
                         break
                     line_feat = QgsFeature()
-                    line_geom = QgsGeometry().fromPolyline(polyline)
+                    line_geom = QgsGeometry().fromPolylineXY(polyline)
                     line_feat.setGeometry(line_geom)
                     line_feat.setFields(levee_fields)
                     levee_line_lyr.addFeature(line_feat)

@@ -10,8 +10,8 @@
 
 
 from ..flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
-from ui_utils import load_ui
-from qgis.core import QGis
+from .ui_utils import load_ui
+from qgis.core import QgsWkbTypes
 from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('grid_elevation')
@@ -109,7 +109,7 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
     def populate_vectors(self):
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
-            if l.geometryType() == QGis.Polygon:
+            if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                 self.vector_cbo.addItem(l.name(), l)
 
     def populate_rasters(self):

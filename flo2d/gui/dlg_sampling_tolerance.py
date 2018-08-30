@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QGis
-from ui_utils import load_ui
+from qgis.core import QgsWkbTypes
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -41,7 +41,7 @@ class SamplingToleranceDialog(qtBaseClass, uiDialog):
         self.srcLayerCbo.addItem('', None)
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
-            if l.geometryType() == QGis.Polygon:
+            if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                 self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
             else:
                 pass

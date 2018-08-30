@@ -9,14 +9,6 @@
 # of the License, or (at your option) any later version
 
 
-# DO NOT REMOVE
-# when used mixture of for qgis.PyQt.* and PyQt4.* in the project
-# we need to have consistent sip version set
-# see /usr/lib/python2.7/dist-packages/qgis/PyQt/QtCore.py
-import qgis.PyQt
-# END DO NOT REMOVE
-
-
 def classFactory(iface):  # pylint: disable=invalid-name
     """Load Flo2D class from file Flo2D.
 

@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QGis
-from ui_utils import load_ui
+from qgis.core import QgsWkbTypes
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -41,7 +41,7 @@ class SamplingBuildingsElevationsDialog(qtBaseClass, uiDialog):
         try:
             layers = self.lyrs.list_group_vlayers()
             for l in layers:
-                if l.geometryType() == QGis.Polygon:
+                if l.geometryType() == QgsWkbTypes.PolygonGeometry:
                     if l.featureCount() != 0:
                         self.buildings_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:

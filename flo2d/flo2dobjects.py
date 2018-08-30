@@ -7,13 +7,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 from collections import OrderedDict
 from math import isnan
 
-from errors import Flo2dError
-from geopackage_utils import GeoPackageUtils
-from utils import is_number
+from .errors import Flo2dError
+from .geopackage_utils import GeoPackageUtils
+from .utils import is_number
 
 
 class CrossSection(GeoPackageUtils):
@@ -36,7 +35,7 @@ class CrossSection(GeoPackageUtils):
         ident = 'id' if by_id else 'fid'
         qry = 'SELECT * FROM chan_elems WHERE {} = ?;'.format(ident)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.fid = self.row['fid']
         self.xlen = self.row['xlen']
         self.type = self.row['type']
@@ -96,7 +95,7 @@ class CrossSection(GeoPackageUtils):
         args = self.table_info('chan', only_columns=True)
         qry = 'SELECT * FROM chan WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (seg_fid,)).fetchone()]
-        self.chan = OrderedDict(zip(args, values))
+        self.chan = OrderedDict(list(zip(args, values)))
         return self.chan
 
     def get_chan_table(self):
@@ -108,7 +107,7 @@ class CrossSection(GeoPackageUtils):
         args = self.table_info(tab, only_columns=True)
         qry = 'SELECT * FROM {0} WHERE elem_fid = ?;'.format(tab)
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.chan_tab = OrderedDict(zip(args, values))
+        self.chan_tab = OrderedDict(list(zip(args, values)))
         return self.chan_tab
 
     def get_xsec_data(self):
@@ -151,7 +150,7 @@ class UserCrossSection(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM user_xsections WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.type = self.row['type']
         self.name = self.row['name']
         return self.row
@@ -169,7 +168,7 @@ class UserCrossSection(GeoPackageUtils):
             chan_row = self.add_chan_x_row(fetch=True)
         values = [x if x is not None else '' for x in chan_row]
         args = self.table_info(tab, only_columns=True)
-        self.chan_x_row = OrderedDict(zip(args, values))
+        self.chan_x_row = OrderedDict(list(zip(args, values)))
         return self.chan_x_row
 
     def add_chan_x_row(self, fetch=False):
@@ -291,7 +290,7 @@ class ChannelSegment(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM chan WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.depinitial = self.row['depinitial']
         self.froudc = self.row['froudc']
@@ -331,7 +330,7 @@ class ChannelSegment(GeoPackageUtils):
             return False, "Interpolation failed! "
         for row in rows:
             values = [x if x is not None else '' for x in row]
-            ipars = OrderedDict(zip(cols, values))
+            ipars = OrderedDict(list(zip(cols, values)))
 
             if not ipars['lo_fid']:
                 # no lower base xsection
@@ -413,7 +412,7 @@ class Inflow(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM inflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.time_series_fid = self.row['time_series_fid']
         self.ident = self.row['ident']
@@ -558,7 +557,7 @@ class Outflow(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM outflow WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.chan_out = self.row['chan_out']
         self.fp_out = self.row['fp_out']
@@ -930,7 +929,7 @@ class Rain(GeoPackageUtils):
             values[-1] = ''
         else:
             values = [x if x is not None else '' for x in data]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.irainreal = self.row['irainreal']
         self.irainbuilding = self.row['irainbuilding']
@@ -1049,7 +1048,7 @@ class Evaporation(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM evapor;'
         values = [x if x is not None else '' for x in self.execute(qry).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         return self.row
 
     def get_monthly(self):
@@ -1089,7 +1088,7 @@ class Street(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM street_elems WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.curb_height = self.row['depex']
         self.n_value = self.row['stman']
@@ -1126,7 +1125,7 @@ class Reservoir(GeoPackageUtils):
         if not data:
             return
         values = [x if x is not None else '' for x in data]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row['name']
         self.wsel = self.row['wsel']
         return self.row
@@ -1170,7 +1169,7 @@ class Structure(GeoPackageUtils):
     def get_row(self):
         qry = 'SELECT * FROM struct WHERE fid = ?;'
         values = [x if x is not None else '' for x in self.execute(qry, (self.fid,)).fetchone()]
-        self.row = OrderedDict(zip(self.columns, values))
+        self.row = OrderedDict(list(zip(self.columns, values)))
         self.fid = self.row['fid']
         self.type = self.row['type']
         self.name = self.row['structname']
@@ -1257,7 +1256,7 @@ class Structure(GeoPackageUtils):
                 try:
                     if repl[i][0]:
                         res += repl[i]
-                except:
+                except Exception as e:
                     pass
             if not res:
                 res = [''] * 10

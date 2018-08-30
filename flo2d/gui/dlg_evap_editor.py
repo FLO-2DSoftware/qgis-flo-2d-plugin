@@ -7,13 +7,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
-from PyQt4.QtCore import Qt, QModelIndex
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
-from ui_utils import load_ui
+from qgis.PyQt.QtCore import Qt, QModelIndex
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Evaporation
-from plot_widget import PlotWidget
+from .plot_widget import PlotWidget
 
 uiDialog, qtBaseClass = load_ui('evaporation_editor')
 
@@ -23,9 +22,9 @@ month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', '
 
 class EvapEditorDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, parent=None):
+    def __init__(self, con, iface):
         qtBaseClass.__init__(self)
-        uiDialog.__init__(self, parent)
+        uiDialog.__init__(self)
         self.iface = iface
         self.con = con
         self.setupUi(self)
@@ -133,7 +132,8 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         """
         self.plotWidget.clear()
         dm = self.hourly_evap_model
-        print dm.rowCount()
+        # fix_print_with_import
+        print(dm.rowCount())
         x = []
         y = []
         for i in range(dm.rowCount()):
