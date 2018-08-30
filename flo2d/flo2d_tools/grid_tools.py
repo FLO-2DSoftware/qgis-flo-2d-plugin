@@ -358,7 +358,7 @@ def intersection_spatial_index(vlayer):
     """
     Creating optimized for intersections spatial index over collection of features.
     """
-    allfeatures = {}
+    allf = {}
     index = QgsSpatialIndex()
     max_fid = max(vlayer.allFeatureIds()) + 1
     for feat in vlayer.getFeatures():
@@ -376,10 +376,10 @@ def intersection_spatial_index(vlayer):
                 max_fid += 1
             else:
                 fid = feat.id()
-            allfeatures[fid] = (feat_copy, engine)
+            allf[fid] = (feat_copy, engine)
             index.insertFeature(feat_copy)
 
-    return allfeatures, index
+    return allf, index
 
 
 def count_polygon_vertices(geom):
