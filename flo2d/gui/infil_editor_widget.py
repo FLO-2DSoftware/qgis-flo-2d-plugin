@@ -397,10 +397,10 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
         VALUES ((SELECT geom FROM grid WHERE fid=?),?,?,?,?,?,?);'''
         qry_chan = '''INSERT INTO infil_areas_chan (geom, hydconch) VALUES ((SELECT geom FROM grid WHERE fid=?),?);'''
-        qry_scs = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?),?);'''
+        qry_scs = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid=?),?);'''
         qry_horton = '''
         INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca)
-        VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?);'''
+        VALUES ((SELECT geom FROM grid WHERE fid=?),?,?,?);'''
 
         imethod = self.infmethod
         if imethod == 0:
@@ -409,30 +409,36 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
-            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, 1, *columns))
+            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
             self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan')
             cur = self.con.cursor()
             if imethod == 1 or imethod == 3:
+                green_vals, chan_vals, scs_vals = [], [], []
                 for grid_row in infiltration_grids:
                     row = list(grid_row)
                     gid = row.pop()
                     char = row.pop(0)
                     if char == 'F':
                         val = (gid,) + tuple(row[:6])
-                        cur.execute(qry_green, val)
+                        green_vals.append(val)
                     elif char == 'C':
                         val = (gid, row[6])
-                        cur.execute(qry_chan, val)
+                        chan_vals.append(val)
                     else:
                         val = (gid, row[7])
-                        cur.execute(qry_scs, val)
+                        scs_vals.append(val)
+                cur.executemany(qry_green, green_vals)
+                cur.executemany(qry_chan, chan_vals)
+                cur.executemany(qry_scs, scs_vals)
             else:
                 qry = qry_scs if imethod == 2 else qry_horton
+                vals = []
                 for grid_row in infiltration_grids:
                     row = list(grid_row)
                     gid = row.pop()
                     val = (gid,) + tuple(row)
-                    cur.execute(qry, val)
+                    vals.append(val)
+                cur.executemany(qry, vals)
             self.con.commit()
             self.repaint_schema()
             QApplication.restoreOverrideCursor()

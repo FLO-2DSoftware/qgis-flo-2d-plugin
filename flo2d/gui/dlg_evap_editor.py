@@ -133,7 +133,6 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.plotWidget.clear()
         dm = self.hourly_evap_model
         # fix_print_with_import
-        print(dm.rowCount())
         x = []
         y = []
         for i in range(dm.rowCount()):

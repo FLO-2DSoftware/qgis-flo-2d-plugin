@@ -468,7 +468,7 @@ def build_grid(boundary, cell_size):
         x += cell_size
 
 
-def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *columns):
+def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
@@ -489,6 +489,13 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
                 return False
             else:
                 return True
+
+    if get_grid_geom is True:
+        def default_geom(geom):
+            return [geom]
+    else:
+        def default_geom(geom):
+            return []
 
     if get_fid is True:
         def default_value(feat_id):
@@ -512,7 +519,8 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, threshold, *colum
             isin = geos_geom_engine.intersects(other_geom_geos)
             if isin is not True or geos_compare(geos_geom_engine, other_geom_geos) is False:
                 continue
-            values = default_value(fid)
+            values = default_geom(other_geom)
+            values += default_value(fid)
             for col in columns:
                 try:
                     val = feat[col]
@@ -837,7 +845,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, 1, column_name))
+    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
     gutils.con.commit()
 
 
@@ -852,7 +860,7 @@ def modify_elevation(gutils, grid, elev):
     add_vals = []
     set_add_vals = []
     qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
-    for el, cor, fid in poly2grid(grid, elev, None, True, False, 1, 'elev', 'correction'):
+    for el, cor, fid in poly2grid(grid, elev, None, True, False, False, 1, 'elev', 'correction'):
         if el != NULL and cor == NULL:
             set_vals.append((el, fid))
         elif el == NULL and cor != NULL:
@@ -894,7 +902,7 @@ def evaluate_arfwrf(gutils, grid, areas):
     for row in calculate_arfwrf(grid, areas):
         # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
         point_wkt = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
-        point_gpb = gutils.point_wkt_to_gpb(point_wkt)
+        point_gpb = gutils.wkt_to_gpb(point_wkt)
         new_row = (point_gpb,) + row[1:]
         qry_cells.append(new_row)
 

@@ -99,14 +99,17 @@ class InfiltrationCalculator(object):
         )
 
         for gid, values in soil_values:
-            xksat_parts = [(row[0], row[-1]) for row in values]
-            imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
-            avg_soil_depth = sum(row[3] * row[-1] for row in values)
-            avg_xksat = green_ampt.calculate_xksat(xksat_parts)
-            psif = green_ampt.calculate_psif(avg_xksat)
-            rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
+            try:
+                xksat_parts = [(row[0], row[-1]) for row in values]
+                imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
+                avg_soil_depth = sum(row[3] * row[-1] for row in values)
+                avg_xksat = green_ampt.calculate_xksat(xksat_parts)
+                psif = green_ampt.calculate_psif(avg_xksat)
+                rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
 
-            grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
+                grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
+            except ValueError as e:
+                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
 
         land_values = poly2poly_geos(
             self.grid_lyr,
@@ -119,23 +122,26 @@ class InfiltrationCalculator(object):
         )
 
         for gid, values in land_values:
-            params = grid_params[gid]
-            avg_xksat = params['hydc']
-            rtimp_1 = params['rtimpf']
+            try:
+                params = grid_params[gid]
+                avg_xksat = params['hydc']
+                rtimp_1 = params['rtimpf']
 
-            vc_parts = [(row[1], row[-1]) for row in values]
-            ia_parts = [(row[2], row[-1]) for row in values]
-            rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
+                vc_parts = [(row[1], row[-1]) for row in values]
+                ia_parts = [(row[2], row[-1]) for row in values]
+                rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
 
-            dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-            xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
-            iabstr = green_ampt.calculate_iabstr(ia_parts)
-            rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
+                dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
+                xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
+                iabstr = green_ampt.calculate_iabstr(ia_parts)
+                rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
 
-            params['dtheta'] = dtheta
-            params['hydc'] = xksatc
-            params['abstrinf'] = iabstr
-            params['rtimpf'] = rtimp
+                params['dtheta'] = dtheta
+                params['hydc'] = xksatc
+                params['abstrinf'] = iabstr
+                params['rtimpf'] = rtimp
+            except ValueError as e:
+                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
 
         return grid_params
 
@@ -163,8 +169,11 @@ class InfiltrationCalculator(object):
             self.cd_fld,
             self.imp_fld)
         for gid, values in ground_values:
-            grid_cn = scs.calculate_scs_cn(values)
-            grid_params[gid] = {'scsn': grid_cn}
+            try:
+                grid_cn = scs.calculate_scs_cn(values)
+                grid_params[gid] = {'scsn': grid_cn}
+            except ValueError as e:
+                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
 
         return grid_params
 
@@ -179,11 +188,11 @@ class GreenAmpt(object):
 
     @staticmethod
     def calculate_psif(avg_xksat):
-        if 0.01 <= avg_xksat <= 1.2:
+        if 0.01 <= avg_xksat:
             psif = exp(0.9813 - 0.439 * log(avg_xksat) + 0.0051 * (log(avg_xksat))**2 + 0.0060 * (log(avg_xksat))**3)
             return psif
         else:
-            raise ValueError
+            raise ValueError(avg_xksat)
 
     @staticmethod
     def calculate_dtheta(avg_xksat, saturation):
@@ -192,10 +201,10 @@ class GreenAmpt(object):
                 dtheta = exp(-0.2394 + 0.3616 * log(avg_xksat))
             elif 0.15 < avg_xksat <= 0.25:
                 dtheta = exp(-1.4122 - 0.2614 * log(avg_xksat))
-            elif 0.25 < avg_xksat <= 1.2:
+            elif 0.25 < avg_xksat:
                 dtheta = 0.35
             else:
-                raise ValueError
+                raise ValueError(avg_xksat)
         elif saturation == 'normal':
             if 0.01 <= avg_xksat <= 0.02:
                 dtheta = exp(1.6094 + log(avg_xksat))
@@ -207,14 +216,14 @@ class GreenAmpt(object):
                 dtheta = exp(1.0038 + 1.2599 * log(avg_xksat))
             elif 0.15 < avg_xksat <= 0.4:
                 dtheta = 0.25
-            elif 0.4 < avg_xksat <= 1.2:
+            elif 0.4 < avg_xksat:
                 dtheta = exp(-1.2342 + 0.1660 * log(avg_xksat))
             else:
-                raise ValueError
+                raise ValueError(avg_xksat)
         elif saturation == 'wet' or saturation == 'saturated':
             dtheta = 0
         else:
-            raise ValueError
+            raise ValueError(saturation)
         return dtheta
 
     @staticmethod
@@ -288,7 +297,7 @@ class SCPCurveNumber(object):
         elif soil_group == 'B':
             cn = -0.07 * cover_density + 84
         else:
-            raise ValueError
+            raise ValueError(soil_group)
         return cn
 
     @staticmethod
@@ -300,7 +309,7 @@ class SCPCurveNumber(object):
         elif soil_group == 'B':
             cn = -0.2625 * cover_density + 84
         else:
-            raise ValueError
+            raise ValueError(soil_group)
         return cn
 
     @staticmethod
@@ -312,7 +321,7 @@ class SCPCurveNumber(object):
         elif soil_group == 'B':
             cn = -0.0025 * cover_density**2 + -0.3522 * cover_density + 83
         else:
-            raise ValueError
+            raise ValueError(soil_group)
         return cn
 
     @staticmethod
@@ -324,7 +333,7 @@ class SCPCurveNumber(object):
         elif soil_group == 'B':
             cn = -0.525 * cover_density + 84
         else:
-            raise ValueError
+            raise ValueError(soil_group)
         return cn
 
     @staticmethod
@@ -335,14 +344,14 @@ class SCPCurveNumber(object):
             elif soil_group == 'B':
                 cn = -0.1 * cover_density**2 + -2.4 * cover_density + 84
             else:
-                raise ValueError
+                raise ValueError(soil_group)
         elif 10 < cover_density <= 80:
             if soil_group == 'C':
                 cn = -0.242857 * cover_density + 82.42857
             elif soil_group == 'B':
                 cn = -0.3 * cover_density + 73
             else:
-                raise ValueError
+                raise ValueError(soil_group)
         else:
-            raise ValueError
+            raise ValueError(cover_density)
         return cn

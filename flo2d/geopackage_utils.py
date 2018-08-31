@@ -310,6 +310,16 @@ class GeoPackageUtils(object):
         res = self.execute(qry).fetchall()
         return res
 
+    def wkt_to_gpb(self, wkt_geom):
+        gpb = '''SELECT AsGPB(ST_GeomFromText('{}'))'''.format(wkt_geom)
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
+    def grid_geom(self, gid, table='grid', field='fid'):
+        sql = '''SELECT geom FROM "{0}" WHERE "{1}" = ?;'''
+        geom = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
+        return geom
+
     def grid_centroids(self, gids, table='grid', field='fid', buffers=False):
         cells = {}
         if buffers is False:
@@ -399,8 +409,15 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
-    def point_wkt_to_gpb(self, wkt_geom):
-        gpb = '''SELECT AsGPB(ST_GeomFromText('{}'))'''.format(wkt_geom)
+    def build_square_xy(self, x, y, size):
+        half_size = size * 0.5
+        gpb = '''SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))'''.format(
+            x - half_size, y - half_size,
+            x + half_size, y - half_size,
+            x + half_size, y + half_size,
+            x - half_size, y + half_size,
+            x - half_size, y - half_size
+        )
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 

@@ -199,6 +199,7 @@ class GridElevation(ElevationCorrector):
                 request,
                 True,
                 False,
+                False,
                 self.threshold,
                 self.ELEVATION_FIELD,
                 self.CORRECTION_FIELD):
@@ -228,7 +229,7 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
         grid_fids = [val[-1] for val in
-                     poly2grid(self.grid, self.user_polygons, request, True, True, self.threshold)]
+                     poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
@@ -267,7 +268,7 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(grid_centroids, 'elevation')
         tin.setup_layer_data()
         grid_fids = [val[-1] for val in
-                     poly2grid(self.grid, self.user_polygons, request, True, True, self.threshold)]
+                     poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
@@ -383,6 +384,7 @@ class ExternalElevation(ElevationCorrector):
                               self.request,
                               self.only_centroids,
                               True,
+                              False,
                               self.threshold,
                               self.elevation_field,
                               self.correction_field)
@@ -424,7 +426,7 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True, self.threshold)
+        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True, False, self.threshold)
         fids_grids = defaultdict(list)
         fids_elevs = {}
         for fid, gid in grid_gen:
