@@ -589,6 +589,8 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
                 subarea = other_geom_engine.area() / base_area
             else:
                 intersection_geom = other_geom_engine.intersection(base_geom_geos)
+                if not intersection_geom:
+                    continue
                 subarea = intersection_geom.area() / base_area
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)

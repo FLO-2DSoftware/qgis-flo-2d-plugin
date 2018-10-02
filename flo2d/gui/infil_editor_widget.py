@@ -393,57 +393,84 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn('Please define global infiltration method first!')
             return
-        qry_green = '''
-        INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
-        VALUES ((SELECT geom FROM grid WHERE fid=?),?,?,?,?,?,?);'''
-        qry_chan = '''INSERT INTO infil_areas_chan (geom, hydconch) VALUES ((SELECT geom FROM grid WHERE fid=?),?);'''
-        qry_scs = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid=?),?);'''
-        qry_horton = '''
-        INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca)
-        VALUES ((SELECT geom FROM grid WHERE fid=?),?,?,?);'''
+        qry_green_areas = '''INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);'''
+        qry_chan_areas = '''INSERT INTO infil_areas_chan (fid, geom, hydconch) VALUES (?,?,?);'''
+        qry_scs_areas = '''INSERT INTO infil_areas_scs (fid, geom, scsn) VALUES (?,?,?);'''
+        qry_horton_areas = '''INSERT INTO infil_areas_horton (fid, geom, fhorti, fhortf, deca) VALUES (?,?,?,?,?);'''
+
+        qry_green_cells = '''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);'''
+        qry_chan_cells = '''INSERT INTO infil_chan_elems (infil_area_fid, grid_fid) VALUES (?,?);'''
+        qry_scs_cells = '''INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES (?,?);'''
+        qry_horton_cells = '''INSERT INTO infil_cells_horton (infil_area_fid, grid_fid) VALUES (?,?);'''
 
         imethod = self.infmethod
         if imethod == 0:
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.disable_geom_triggers()
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
             infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
-            self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan')
-            cur = self.con.cursor()
+            self.gutils.clear_tables('infil_areas_green', 'infil_areas_scs', 'infil_areas_horton', 'infil_areas_chan',
+                                     'infil_cells_green', 'infil_cells_scs', 'infil_cells_horton', 'infil_chan_elems')
             if imethod == 1 or imethod == 3:
-                green_vals, chan_vals, scs_vals = [], [], []
+                green_area_vals, chan_area_vals, scs_area_vals = [], [], []
+                green_cells_vals, chan_cells_vals, scs_cells_vals = [], [], []
+                green_fid, chan_fid, scs_fid = 1, 1, 1
                 for grid_row in infiltration_grids:
                     row = list(grid_row)
                     gid = row.pop()
                     char = row.pop(0)
+                    geom = self.gutils.grid_geom(gid)
                     if char == 'F':
-                        val = (gid,) + tuple(row[:6])
-                        green_vals.append(val)
+                        val = (green_fid, geom) + tuple(row[:6])
+                        green_area_vals.append(val)
+                        green_cells_vals.append((green_fid, gid))
+                        green_fid += 1
                     elif char == 'C':
-                        val = (gid, row[6])
-                        chan_vals.append(val)
+                        val = (chan_fid, geom, row[6])
+                        chan_area_vals.append(val)
+                        chan_cells_vals.append((chan_fid, gid))
+                        chan_fid += 1
                     else:
-                        val = (gid, row[7])
-                        scs_vals.append(val)
-                cur.executemany(qry_green, green_vals)
-                cur.executemany(qry_chan, chan_vals)
-                cur.executemany(qry_scs, scs_vals)
+                        val = (scs_fid, geom, row[7])
+                        scs_area_vals.append(val)
+                        scs_cells_vals.append((scs_fid, gid))
+                        scs_fid += 1
+                cur = self.con.cursor()
+                cur.executemany(qry_green_areas, green_area_vals)
+                cur.executemany(qry_chan_areas, chan_area_vals)
+                cur.executemany(qry_scs_areas, scs_area_vals)
+                cur.executemany(qry_green_cells, green_cells_vals)
+                cur.executemany(qry_chan_cells, chan_cells_vals)
+                cur.executemany(qry_scs_cells, scs_cells_vals)
             else:
-                qry = qry_scs if imethod == 2 else qry_horton
-                vals = []
-                for grid_row in infiltration_grids:
+                if imethod == 2:
+                    qry_areas = qry_scs_areas
+                    qry_cells = qry_scs_cells
+                else:
+                    qry_areas = qry_horton_areas
+                    qry_cells = qry_horton_cells
+                area_vals = []
+                cells_vals = []
+                for i, grid_row in enumerate(infiltration_grids, 1):
                     row = list(grid_row)
                     gid = row.pop()
-                    val = (gid,) + tuple(row)
-                    vals.append(val)
-                cur.executemany(qry, vals)
+                    geom = self.gutils.grid_geom(gid)
+                    val = (i, geom) + tuple(row)
+                    area_vals.append(val)
+                    cells_vals.append((i, gid))
+                cur = self.con.cursor()
+                cur.executemany(qry_areas, area_vals)
+                cur.executemany(qry_cells, cells_vals)
             self.con.commit()
             self.repaint_schema()
+            self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             self.uc.bar_info('Schematizing of infiltration finished!')
         except Exception as e:
+            self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Schematizing of infiltration failed! Please check user infiltration layers.')
@@ -455,27 +482,32 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.disable_geom_triggers()
             soil_lyr, land_lyr, fields = dlg.green_ampt_parameters()
             inf_calc = InfiltrationCalculator(self.grid_lyr)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
-            self.gutils.clear_tables('infil_areas_green')
-            qry = '''
-            INSERT INTO infil_areas_green (geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
-            VALUES ((SELECT geom FROM grid WHERE fid = ?),?,?,?,?,?,?);'''
-            all_values = []
-            for gid, params in grid_params.items():
-                par = (params['hydc'], params['soils'], params['dtheta'],
-                       params['abstrinf'], params['rtimpf'], params['soil_depth'])
-                values = (gid,) + tuple(round(p, 3) for p in par)
-                all_values.append(values)
+            self.gutils.clear_tables('infil_areas_green', 'infil_cells_green')
+            qry_areas = '''INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);'''
+            qry_cells = '''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);'''
+            area_values = []
+            cells_values = []
+            for i, (gid, params) in enumerate(grid_params.items(), 1):
+                par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'], params['soil_depth'])
+                geom = self.gutils.grid_geom(gid)
+                values = (i, geom) + tuple(round(p, 3) for p in par)
+                area_values.append(values)
+                cells_values.append((i, gid))
             cur = self.con.cursor()
-            cur.executemany(qry, all_values)
+            cur.executemany(qry_areas, area_values)
+            cur.executemany(qry_cells, cells_values)
             self.con.commit()
             self.schema_green.triggerRepaint()
+            self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Calculating Green-Ampt parameters finished!')
         except Exception as e:
+            self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Calculating Green-Ampt parameters failed! Please check data in your input layers.')
@@ -487,6 +519,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.disable_geom_triggers()
             inf_calc = InfiltrationCalculator(self.grid_lyr)
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
@@ -496,19 +529,26 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 multi_lyr, multi_fields = dlg.multi_scs_parameters()
                 inf_calc.setup_scs_multi(multi_lyr, *multi_fields)
                 grid_params = inf_calc.scs_infiltration_multi()
-            self.gutils.clear_tables('infil_areas_scs')
-            qry = '''INSERT INTO infil_areas_scs (geom, scsn) VALUES ((SELECT geom FROM grid WHERE fid = ?),?);'''
-            all_values = []
-            for gid, params in grid_params.items():
-                values = (gid, round(params['scsn'], 3))
-                all_values.append(values)
+            self.gutils.clear_tables('infil_areas_scs', 'infil_cells_scs')
+            qry_areas = '''INSERT INTO infil_areas_scs (fid, geom, scsn) VALUES (?,?,?);'''
+            qry_cells = '''INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES (?,?);'''
+            area_values = []
+            cells_values = []
+            for i, (gid, params) in enumerate(grid_params.items(), 1):
+                geom = self.gutils.grid_geom(gid)
+                values = (i, geom, round(params['scsn'], 3))
+                area_values.append(values)
+                cells_values.append((i, gid))
             cur = self.con.cursor()
-            cur.executemany(qry, all_values)
+            cur.executemany(qry_areas, area_values)
+            cur.executemany(qry_cells, cells_values)
             self.con.commit()
             self.schema_scs.triggerRepaint()
+            self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Calculating SCS Curve Number parameters finished!')
         except Exception as e:
+            self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Calculating SCS Curve Number parameters failed! Please check data in your input layers.')

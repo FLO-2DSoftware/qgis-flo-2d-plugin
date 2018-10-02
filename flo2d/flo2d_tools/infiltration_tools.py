@@ -221,7 +221,7 @@ class GreenAmpt(object):
             else:
                 raise ValueError(avg_xksat)
         elif saturation == 'wet' or saturation == 'saturated':
-            dtheta = 0
+            dtheta = 0.0
         else:
             raise ValueError(saturation)
         return dtheta
