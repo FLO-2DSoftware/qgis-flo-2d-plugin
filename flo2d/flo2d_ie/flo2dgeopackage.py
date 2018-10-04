@@ -917,7 +917,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if previous_oid != oid:
                     row = self.execute(outflow_sql, (oid,)).fetchone()
-                    row = [x if x is not None else '' for x in row]
+                    row = [x if x is not None else 0 for x in row]
                     previous_oid = oid
                 else:
                     pass
