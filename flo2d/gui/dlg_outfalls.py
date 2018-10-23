@@ -94,13 +94,14 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             time_series              
                     FROM user_swmm_nodes WHERE sd_type = 'O';'''
 
-            rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples
+            rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             self.outfalls_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):       # In each iteration gets a tuble, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
                 self.outfalls_tblw.insertRow(row_number)
                 for col_number, data in enumerate(row_data):   # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
+
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, data)  # item gets value of data (as QTableWidgetItem Class)
+                    item.setData(Qt.DisplayRole, data if data is not None else 0)  # item gets value of data (as QTableWidgetItem Class)
 
                     # Fill the list of outfall names:
                     if col_number == 1:   #We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
@@ -111,7 +112,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         if col_number == 2:
                             self.grid_element_txt.setText(str(data))
                         elif col_number == 3:
-                            self.invert_elevation_dbox.setValue(data)
+                            self.invert_elevation_dbox.setValue(data if data is not None else 0)
                         elif col_number == 4:
                             self.flap_gate_chbox.setChecked(1 if is_true(data) else 0)
                         elif col_number == 5:
@@ -125,7 +126,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             data = self.outfall_type_cbo.currentText()
                             item.setData(Qt.DisplayRole, data)
                         elif col_number == 7:
-                            self.water_depth_dbox.setValue(data)
+                            self.water_depth_dbox.setValue(data if data is not None else 0)
                         elif col_number == 8:
                             self.tidal_curve_cbo.setCurrentIndex(0)
                         elif col_number == 9:

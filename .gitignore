@@ -12,3 +12,5 @@ pylint.log
 *.gpkg-journal
 *flo2d.zip
 *.bak
+.project
+.pydevproject

@@ -249,33 +249,33 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if cell == 1:
                         self.grid_element.setText(str(data))
                     elif cell == 2:
-                        self.invert_elevation_dbox.setValue(data)
+                        self.invert_elevation_dbox.setValue(data if data is not None else 0)
                     elif cell == 3:
-                        self.max_depth_dbox.setValue(data)
+                        self.max_depth_dbox.setValue(data if data is not None else 0)
                     elif cell == 4:
-                        self.initial_depth_dbox.setValue(data)
+                        self.initial_depth_dbox.setValue(data if data is not None else 0)
                     elif cell == 5:
-                        self.surcharge_depth_dbox.setValue(data)
+                        self.surcharge_depth_dbox.setValue(data if data is not None else 0)
                     elif cell == 6:
-                        self.ponded_area_dbox.setValue(data)
+                        self.ponded_area_dbox.setValue(data if data is not None else 0)
                     elif cell == 7:
                         self.inlet_drain_type_cbo.setCurrentIndex(data-1)
                     elif cell == 8:
-                        self.length_dbox.setValue(data)
+                        self.length_dbox.setValue(data if data is not None else 0)
                     elif cell == 9:
-                        self.width_dbox.setValue(data)
+                        self.width_dbox.setValue(data if data is not None else 0)
                     elif cell == 10:
-                        self.height_dbox.setValue(data)
+                        self.height_dbox.setValue(data if data is not None else 0)
                     elif cell == 11:
-                        self.weir_coeff_dbox.setValue(data)
+                        self.weir_coeff_dbox.setValue(data if data is not None else 0)
                     elif cell == 12:
-                        self.feature_sbox.setValue(data)
+                        self.feature_sbox.setValue(data if data is not None else 0)
                     elif cell == 13:
-                        self.curb_height_dbox.setValue(data)
+                        self.curb_height_dbox.setValue(data if data is not None else 0)
                     elif cell == 14:
-                        self.clogging_factor_dbox.setValue(data)
+                        self.clogging_factor_dbox.setValue(data if data is not None else 0)
                     elif cell == 15:
-                        self.time_for_clogging_dbox.setValue(data)
+                        self.time_for_clogging_dbox.setValue(data if data is not None else 0)
 
                 if cell == 1 or cell == 2:
                         item.setFlags( Qt.ItemIsSelectable | Qt.ItemIsEnabled )
