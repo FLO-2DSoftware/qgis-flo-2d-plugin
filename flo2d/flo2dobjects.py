@@ -43,7 +43,7 @@ class CrossSection(GeoPackageUtils):
 
     def get_profile_data(self):
         self.profile_data = {}
-        self.get_row()
+        self.get_row() # Gets values of 'fid', 'xlen', and 'type' of 
         self.get_chan_table()
         if not self.type == 'N':
             par_to_check = ['bankell', 'bankelr', 'fcd']
@@ -302,12 +302,15 @@ class ChannelSegment(GeoPackageUtils):
         return self.row
 
     def get_profiles(self, sta_start=0):
+        # Gets all features of cross sections associated with the selected channel segment,
+        # identified in chan_elems by ´seg_fid'.
         self.profiles = OrderedDict()
         qry = 'SELECT * FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;'
-        rows = self.execute(qry, (self.fid, )).fetchall()  # self.fid is the segment fid.
-                                                           # 'rows' is a list of all chan_elems features values of
+        rows = self.execute(qry, (self.fid, )).fetchall()  # self.fid is the channel segment fid.
+                                                           # 'rows' stores a list of all chan_elems features values of 
                                                            # the selected channel segment.
-        self.profiles = OrderedDict()
+        self.profiles = OrderedDict()   # Dictionary of dictionaries keyed by ´lbank_grid'. Example value:
+                                        # (1067, {'bed_elev': 4711.2, 'station': 0, 'fcd': 4.800000000000182, 'lbank_elev': 4717.1, 'rbank_elev': 4716.0})
         sta = sta_start
         for row in rows:
             lbank_grid = row[1]
@@ -317,6 +320,8 @@ class ChannelSegment(GeoPackageUtils):
             except Flo2dError:
                 return False
             self.profiles[lbank_grid]['station'] = sta
+            self.profiles[lbank_grid]['water'] = row[11]
+            self.profiles[lbank_grid]['peak'] = row[12]
             sta += xs.xlen
             del xs
         return True
@@ -327,7 +332,7 @@ class ChannelSegment(GeoPackageUtils):
         qry = 'SELECT * FROM chan_elems_interp ORDER BY seg_fid, up_fid, up_dist_left;'
         rows = self.execute(qry).fetchall()
         if not rows:
-            return False, "Interpolation failed! "
+            return False, "Interpolation failed! 'chan_elems_interp' table is empty."
         for row in rows:
             values = [x if x is not None else '' for x in row]
             ipars = OrderedDict(list(zip(cols, values)))

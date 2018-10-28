@@ -103,6 +103,7 @@ class Flo2D(object):
         self.project.readProject.connect(self.load_gpkg_from_proj)
 
         self.uc.clear_bar_messages()
+        QApplication.restoreOverrideCursor()
 
     def tr(self, message):
         """
@@ -517,7 +518,9 @@ class Flo2D(object):
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n'
             msg += '{}\n\n Load the model?'.format(old_gpkg)
+            QApplication.restoreOverrideCursor()
             if self.uc.question(msg):
+                QApplication.setOverrideCursor(Qt.WaitCursor) 
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 dlg_settings.connect(old_gpkg)
                 self.con = dlg_settings.con
@@ -1202,7 +1205,7 @@ class Flo2D(object):
         self.canvas.setMapTool(self.channel_profile_tool)  # 'channel_profile_tool' is an instance of ChannelProfile class,
                                                            # created on loading the plugin, and to be used to plot channel
                                                            # profiles using a subtool in the FLO-2D tool bar.
-                                                           # The plots are based from data from the 'chan', 'cham_elems'
+                                                           # The plots will be based on data from the 'chan', 'cham_elems'      
                                                            # schematic layers.
         self.channel_profile_tool.update_lyrs_list()
 

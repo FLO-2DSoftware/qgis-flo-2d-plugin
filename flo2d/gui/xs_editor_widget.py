@@ -843,6 +843,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
+        if self.gutils.is_table_empty('chan'):
+            self.uc.bar_warn('There are no cross-sections! Please create them before running tool.')
+            return        
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Interpolation of cross-sections values failed! '
@@ -958,6 +961,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             for peak in peaks_list:
                 self.gutils.execute(qry, (peak[1], peak[2], peak[0]))
 
+            self.uc.bar_info("HYCHAN.OUT file imported. Channel Cross Sections updated with max. surface water elevations and peak discharge data.")
+            
         except Exception as e:
             self.uc.show_error("ERROR 050818.0618: couln't process HYCHAN.OUT !", e)
 
@@ -1097,10 +1102,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
         if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn('There is no any user left bank lines! Please digitize them before running the tool.')
+            self.uc.bar_warn('There are no any user left bank lines! Please digitize them before running the tool.')
             return
         if self.gutils.is_table_empty('user_xsections'):
-            self.uc.bar_warn('There is no any user cross sections! Please digitize them before running the tool.')
+            self.uc.bar_warn('There are no any user cross sections! Please digitize them before running the tool.')
             return
         try:
             conf = Confluences(self.con, self.iface, self.lyrs)
