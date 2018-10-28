@@ -304,10 +304,10 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             self.to_node_txt.setText(str(data))
 
                         elif element == 4:
-                            self.inlet_offset_dbox.setValue(data)
+                            self.inlet_offset_dbox.setValue(data if data is not None else 0)
 
                         elif element == 5:
-                            self.outlet_offset_dbox.setValue(data)
+                            self.outlet_offset_dbox.setValue(data if data is not None else 0)
 
                         elif element == 6:
                             if data.isdigit():
@@ -318,40 +318,40 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                                 self.conduit_shape_cbo.setCurrentIndex(index)
 
                         elif element == 7:
-                            self.barrels_sbox.setValue(data)
+                            self.barrels_sbox.setValue(data if data is not None else 0)
 
                         elif element == 8:
-                            self.max_depth_dbox.setValue(data)
+                            self.max_depth_dbox.setValue(data if data is not None else 0)
 
                         elif element == 9:
-                            self.geom2_dbox.setValue(data)
+                            self.geom2_dbox.setValue(data if data is not None else 0)
 
                         elif element == 10:
-                            self.geom3_dbox.setValue(data)
+                            self.geom3_dbox.setValue(data if data is not None else 0)
 
                         elif element == 11:
-                            self.geom4_dbox.setValue(data)
+                            self.geom4_dbox.setValue(data if data is not None else 0)
 
                         elif element == 12:
-                            self.length_dbox.setValue(data)
+                            self.length_dbox.setValue(data if data is not None else 0)
 
                         elif element == 13:
-                            self.mannings_dbox.setValue(data)
+                            self.mannings_dbox.setValue(data if data is not None else 0)
 
                         elif element == 14:
-                            self.initial_flow_dbox.setValue(data)
+                            self.initial_flow_dbox.setValue(data if data is not None else 0)
 
                         elif element == 15:
-                            self.max_flow_dbox.setValue(data)
+                            self.max_flow_dbox.setValue(data if data is not None else 0)
 
                         elif element == 16:
-                            self.inlet_losses_dbox.setValue(data)
+                            self.inlet_losses_dbox.setValue(data if data is not None else 0)
 
                         elif element == 17:
-                            self.outlet_losses_dbox.setValue(data)
+                            self.outlet_losses_dbox.setValue(data if data is not None else 0)
 
                         elif element == 18:
-                            self.average_losses_dbox.setValue(data)
+                            self.average_losses_dbox.setValue(data if data is not None else 0)
 
                         elif element == 19:
                             self.flap_gate_chbox.setChecked(1 if is_true(data) else 0)
