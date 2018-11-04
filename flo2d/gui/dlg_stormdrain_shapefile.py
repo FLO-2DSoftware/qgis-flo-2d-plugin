@@ -518,7 +518,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         outfall_invert_elev = f[self.outfall_invert_elevation_FieldCbo.currentText()] if self.outfall_invert_elevation_FieldCbo.currentText() != "" else ""
                         flapgate = f[self.outfall_flap_gate_FieldCbo.currentText()] if self.outfall_flap_gate_FieldCbo.currentText() != "" else ""
                         swmm_allow_discharge = f[self.outfall_allow_discharge_FieldCbo.currentText()] if self.outfall_allow_discharge_FieldCbo.currentText() != "" else ""
-                        outfall_type = f[self.outfall_outfall_type_FieldCbo.currentText()] if self.outfall_outfall_type_FieldCbo.currentText() != "" else ""
+                        outfall_type = f[self.outfall_type_FieldCbo.currentText()] if self.outfall_type_FieldCbo.currentText() != "" else ""
 
                         # water_depth = f[self.outfall_water_depth_FieldCbo.currentText()] if self.outfall_water_depth_FieldCbo.currentText() != "" else ""
                         water_depth = self.outfall_water_depth_FieldCbo.currentText()
