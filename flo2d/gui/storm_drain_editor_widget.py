@@ -771,7 +771,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write('\nMIN_SURFAREA         0')
                     swmm_inp_file.write('\nNORMAL_FLOW_LIMITED  ' + dlg_INP_groups. normal_flow_limited_cbo.currentText())
                     swmm_inp_file.write('\nSKIP_STEADY_STATE    ' + dlg_INP_groups.skip_steady_state_cbo.currentText())
-                    swmm_inp_file.write('\nFORCE_MAIN_EQUATION  ' + dlg_INP_groups.force_main_equation_cbo.currentText())
+                    if dlg_INP_groups.force_main_equation_cbo.currentIndex()  == 0:
+                        equation = "H-W"
+                    else:
+                        equation = "D-W"
+                    swmm_inp_file.write('\nFORCE_MAIN_EQUATION  ' + equation)
                     swmm_inp_file.write('\nLINK_OFFSETS         ' + dlg_INP_groups.link_offsets_cbo.currentText())
                     swmm_inp_file.write('\nMIN_SLOPE            ' + str(dlg_INP_groups.min_slop_dbox.value()))
     
@@ -791,8 +795,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             pass
                         else:
                             for row in junctions_rows:
-#                                 row = (row[0], 0 if row[1] is None else row[1], 0 if row[2] is None else row[2], 0 if row[3] is None else row[3],
-#                                         0 if row[4] is None else row[4], 0 if row[5] is None else row[5])
+                                row = (row[0], 0 if row[1] is None else row[1], 0 if row[2] is None else row[2], 0 if row[3] is None else row[3],
+                                        0 if row[4] is None else row[4], 0 if row[5] is None else row[5])
                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()

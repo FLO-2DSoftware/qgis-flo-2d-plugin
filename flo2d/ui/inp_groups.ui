@@ -294,6 +294,9 @@
      <property name="enabled">
       <bool>false</bool>
      </property>
+     <property name="displayFormat">
+      <string>HH:mm:ss</string>
+     </property>
     </widget>
     <widget class="QDateEdit" name="report_start_date">
      <property name="enabled">
@@ -303,6 +306,9 @@
     <widget class="QTimeEdit" name="report_start_time">
      <property name="enabled">
       <bool>false</bool>
+     </property>
+     <property name="displayFormat">
+      <string>HH:mm:ss</string>
      </property>
     </widget>
     <widget class="QDateEdit" name="end_date">
@@ -318,6 +324,9 @@
     <widget class="QTimeEdit" name="report_stp_time">
      <property name="enabled">
       <bool>true</bool>
+     </property>
+     <property name="displayFormat">
+      <string>HH:mm:ss</string>
      </property>
     </widget>
     <widget class="QComboBox" name="inertial_damping_cbo">
@@ -408,9 +417,12 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="currentText">
+      <string>Hazen-William (H-W)</string>
+     </property>
      <item>
       <property name="text">
-       <string>Hazen-William (H-M)</string>
+       <string>Hazen-William (H-W)</string>
       </property>
      </item>
      <item>

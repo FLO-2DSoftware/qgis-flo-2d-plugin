@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>747</width>
+    <width>735</width>
     <height>544</height>
    </rect>
   </property>
@@ -21,7 +21,7 @@
     <rect>
      <x>24</x>
      <y>16</y>
-     <width>705</width>
+     <width>697</width>
      <height>481</height>
     </rect>
    </property>
@@ -29,7 +29,7 @@
     <cursorShape>ArrowCursor</cursorShape>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="inlets_tab">
     <attribute name="title">
@@ -75,7 +75,7 @@
       <rect>
        <x>16</x>
        <y>72</y>
-       <width>673</width>
+       <width>665</width>
        <height>281</height>
       </rect>
      </property>
@@ -111,7 +111,7 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>11</x>
@@ -198,7 +198,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>114</x>
@@ -272,6 +272,9 @@
        </item>
        <item row="5" column="0">
         <widget class="QgsFieldComboBox" name="inlets_ponded_area_FieldCbo">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -292,12 +295,12 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>296</x>
         <y>32</y>
-        <width>25</width>
+        <width>33</width>
         <height>201</height>
        </rect>
       </property>
@@ -369,6 +372,9 @@
        </item>
        <item row="5" column="0">
         <widget class="QPushButton" name="clear_inlets_ponded_area_btn">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -395,7 +401,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>344</x>
@@ -512,7 +518,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>448</x>
@@ -594,7 +600,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>632</x>
@@ -1088,7 +1094,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>490</x>
@@ -1317,7 +1323,7 @@
        <rect>
         <x>8</x>
         <y>160</y>
-        <width>313</width>
+        <width>321</width>
         <height>185</height>
        </rect>
       </property>
@@ -1499,7 +1505,7 @@
         <rect>
          <x>278</x>
          <y>16</y>
-         <width>25</width>
+         <width>33</width>
          <height>153</height>
         </rect>
        </property>
@@ -1702,7 +1708,7 @@
         <rect>
          <x>293</x>
          <y>18</y>
-         <width>24</width>
+         <width>25</width>
          <height>105</height>
         </rect>
        </property>
@@ -1880,7 +1886,7 @@
          <x>300</x>
          <y>15</y>
          <width>25</width>
-         <height>104</height>
+         <height>105</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_25">
@@ -2064,7 +2070,7 @@
        <rect>
         <x>288</x>
         <y>24</y>
-        <width>25</width>
+        <width>33</width>
         <height>129</height>
        </rect>
       </property>
