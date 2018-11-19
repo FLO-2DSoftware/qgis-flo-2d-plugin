@@ -1298,8 +1298,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
-        line3 = '   {}' * 10 + '\n'
-
+#         line3 = '   {}' * 10 + '\n'
+        line3 = '{0:<8} {1:<7.2f} {2:<7.2f} {3:<7.2f} {4:<7.2f} {5:<7.2f} {6:<7.2f} {7:<7.2f} {8:<7.2f} {9:<7.2f}\n'
         option = self.execute(cont_sql).fetchone()
         if option is None:
             # TODO: We need to implement correct export of 'arfblockmod'
