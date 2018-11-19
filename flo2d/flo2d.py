@@ -528,6 +528,12 @@ class Flo2D(object):
                 self.gutils = dlg_settings.gutils
                 self.crs = dlg_settings.crs
                 self.setup_dock_widgets()
+                
+                s = QSettings()
+                s.setValue('FLO-2D/last_flopro_project', old_gpkg)
+                s.setValue('FLO-2D/lastGdsDir', old_gpkg)
+                window_title = s.value('FLO-2D/last_flopro_project', '')
+                self.iface.mainWindow().setWindowTitle(window_title)                             
             else:
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return

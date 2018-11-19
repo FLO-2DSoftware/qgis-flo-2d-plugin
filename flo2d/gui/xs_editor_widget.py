@@ -173,6 +173,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             res, msg = seg.interpolate_bed()
             if not res:
                 self.uc.log_info(msg)
+                self.uc.show_warn(msg)
                 return False
         return True
 
