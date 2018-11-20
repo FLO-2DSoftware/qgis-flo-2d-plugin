@@ -538,16 +538,6 @@ class Flo2D(object):
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
 
-        # old_gpkg = self.read_proj_entry('gpkg')
-        # if old_gpkg:
-        #     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-        #     dlg_settings.connect(old_gpkg)
-        #     self.con = dlg_settings.con
-        #     self.iface.f2d['con'] = self.con
-        #     self.gutils = dlg_settings.gutils
-        #     self.crs = dlg_settings.crs
-        #     self.setup_dock_widgets()
-
     def call_methods(self, calls, debug, *args):
         self.files_imported = ""
         n_found = 0
@@ -614,7 +604,8 @@ class Flo2D(object):
         fname, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
         if not fname:
             return
-        s.setValue('FLO-2D/lastGdsDir', os.path.dirname(fname))
+        dir_name = os.path.dirname(fname)
+        s.setValue('FLO-2D/lastGdsDir', dir_name)
         bname = os.path.basename(fname)
         if self.f2g.set_parser(fname):
             topo = self.f2g.parser.dat_files['TOPO.DAT']
