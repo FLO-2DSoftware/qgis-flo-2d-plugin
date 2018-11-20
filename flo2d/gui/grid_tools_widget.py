@@ -126,6 +126,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data['user_model_boundary']['qlyr']
             square_grid(self.gutils, bl)
+            
+            default = self.gutils.get_cont_par('MANNING')
+            self.gutils.execute('UPDATE grid SET n_value=?;', (default,))            
+            
+            
             grid_lyr = self.lyrs.data['grid']['qlyr']
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
