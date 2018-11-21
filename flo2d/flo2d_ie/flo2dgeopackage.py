@@ -1043,7 +1043,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         line4 = '\n{0}'
         line4ab = '\nR  {0}  {1}  {2}'
         line5 = '\n{0}  {1}'
-        line6 = '\n' + 'F' + '  {}' * 7
+        line6 = '\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}'
+#         line6 = '\n' + 'F' + '  {}' * 7
         line7 = '\nS  {0}  {1}'
         line8 = '\nC  {0}  {1}'
         line9 = '\nI  {0}  {1}  {2}'
