@@ -127,6 +127,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             bl = self.lyrs.data['user_model_boundary']['qlyr']
             square_grid(self.gutils, bl)
             
+            # Assign default manning value (as set in Control layer ('cont') 
             default = self.gutils.get_cont_par('MANNING')
             self.gutils.execute('UPDATE grid SET n_value=?;', (default,))            
             
@@ -439,7 +440,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         new_feat['wrf5'] = wrf5 if wrf5 <= 1 else 1
                         new_feat['wrf6'] = wrf6 if wrf6 <= 1 else 1
                         new_feat['wrf7'] = wrf7 if wrf7 <= 1 else 1
-                        new_feat['wrf8'] = wrf8 if wrf7 <= 1 else 1
+                        new_feat['wrf8'] = wrf8 if wrf8 <= 1 else 1
                         new_feats.append(new_feat)
 
                         # Make f1 feature the next f0:

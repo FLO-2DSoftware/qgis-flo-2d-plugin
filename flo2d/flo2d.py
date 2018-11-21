@@ -841,6 +841,8 @@ class Flo2D(object):
 
                 finally:
                     QApplication.restoreOverrideCursor()
+#                     s.setValue('FLO-2D/last_flopro_project', dir_name)
+#                     self.iface.mainWindow().setWindowTitle(dir_name)
                     if self.files_imported != '' or self.files_not_imported != '':
                         self.uc.show_info("Files used by this project:\n\n" + self.files_imported + "\n\nProject doesn't contain the following files:\n\n" + self.files_not_imported)
 
