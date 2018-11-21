@@ -250,8 +250,6 @@ class HazusDialog(qtBaseClass, uiDialog):
         else:
             pass
 
-        # if not self.lyrs.save_edits_and_proceed('Tolerance Cells'):
-        #     return
         if self.gutils.is_table_empty('buildings_areas'):
             w = 'There are no buildings areas polygons in Buildings Areas (Schematic Layers)!.\n\n'
             w +=  'Please digitize them before running tool.'

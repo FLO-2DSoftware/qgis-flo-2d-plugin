@@ -336,13 +336,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('Assigning roughness aborted! Please check roughness layer.')
 
-   # def get_froude(self):
-   #      if not self.lyrs.save_edits_and_proceed('Froude'):
-   #          return
-   #      if self.gutils.is_table_empty('grid'):
-   #          self.uc.bar_warn('There is no grid! Please create it before running tool.')
-   #          return
-
     def eval_arfwrf(self):
         try:
             grid_empty = self.gutils.is_table_empty('grid')
@@ -359,7 +352,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.lyrs.save_edits_and_proceed('Blocked Areas'):
                 return
             if self.gutils.is_table_empty('user_blocked_areas'):
-                self.uc.bar_warn('There is no any blocking polygons! Please digitize them before running tool.')
+                self.uc.bar_warn('There is no any blocking polygons in "Blocked Areas" layer! Please digitize them before running tool.')
                 return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -508,10 +501,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             q += 'Please, note that the new spatial tolerance will be evaluated for existing tolerance polygons ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed('Tolerance Cells'):
+        if not self.lyrs.save_edits_and_proceed('Tolerance Areas'):
             return
         if self.gutils.is_table_empty('tolspatial'):
-            w = 'There are no tolerance polygons in Tolerance Areas (Schematic Layers)!.\n\n'
+            w = 'There are no tolerance polygons in Tolerance Areas (User Layers)!.\n\n'
             w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
@@ -542,10 +535,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             q += 'Please, note that the new Froude values will be evaluated for existing Froude polygons ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed('Froude Cells'):
+        if not self.lyrs.save_edits_and_proceed('Froude Areas'):
             return
         if self.gutils.is_table_empty('fpfroude'):
-            w = 'There are no Froude polygons in Froude Areas (Schematic Layers)!.\n\n'
+            w = 'There are no Froude polygons in Froude Areas (User Layers)!.\n\n'
             w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
@@ -579,10 +572,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             q += 'Please, note that the new shallow-n values will be evaluated for existing shallow-n polygons ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed('Shallow-n Cells'):
+        if not self.lyrs.save_edits_and_proceed('Shallow-n Areas'):
             return
         if self.gutils.is_table_empty('spatialshallow'):
-            w = 'There are no shallow polygons in Shallow-n Areas (Schematic Layers)!.\n\n'
+            w = 'There are no shallow polygons in Shallow-n Areas (User Layers)!.\n\n'
             w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
@@ -616,10 +609,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons ONLY.'
             if not self.uc.question(q):
                 return
-        if not self.lyrs.save_edits_and_proceed('Gutter Cells'):
+        if not self.lyrs.save_edits_and_proceed('Gutter Areas'):
             return
         if self.gutils.is_table_empty('gutter_areas'):
-            w = 'There are no gutter polygons in Gutter Areas (Schematic Layers)!.\n\n'
+            w = 'There are no gutter polygons in Gutter Areas (User Layers)!.\n\n'
             w += 'Please digitize them before running tool.'
             self.uc.bar_warn(w)
             return
