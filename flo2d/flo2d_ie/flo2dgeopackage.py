@@ -786,6 +786,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if options['MSTREET'] == '0':
             del options['COURANTST']
 
+        first_gid = self.execute('''SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;''').fetchone()
+        first_gid = first_gid[0] if first_gid is not None else 0
+
+        if options['LGPLOT'] == '0':
+            options['IDEPLT'] = '0'
+            self.set_cont_par('IDEPLT', 0)
+        elif first_gid > 0:
+            options['IDEPLT'] = first_gid
+            self.set_cont_par('IDEPLT', first_gid)
+        elif options['IRAIN'] != '0':
+            # Levee LGPLOT and IDEPLT
+            pass
+        else:
+            options['LGPLOT'] = 0
+            options['IDEPLT'] = 0
+            self.set_cont_par('LGPLOT', 0)   
+            self.set_cont_par('IDEPLT', 0)         
+
         cont = os.path.join(outdir, 'CONT.DAT')
         toler = os.path.join(outdir, 'TOLER.DAT')
         rline = ' {0}'

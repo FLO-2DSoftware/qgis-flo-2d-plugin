@@ -68,7 +68,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         qry = '''INSERT INTO cont (name, value, note) VALUES (?,?,?);'''
         cont_rows = self.parser.cont_rows
         toler_rows = self.parser.toler_rows
-        parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows))
+        extra_rows = [['IHOURDAILY', 'IDEPLT']]
+        parameters = chain(chain.from_iterable(cont_rows), chain.from_iterable(toler_rows), chain.from_iterable(extra_rows))
         values = []
         for param in parameters:
             if param in defaults:
