@@ -867,21 +867,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         tsd_line = '\nH              {0: <15} {1: <15} {2}'
         res_line = '\nR              {0: <15} {1}'
 
-        idplt = self.execute(cont_sql, ('IDEPLT',)).fetchone()
+        ideplt = self.execute(cont_sql, ('IDEPLT',)).fetchone()
         ihourdaily = self.execute(cont_sql, ('IHOURDAILY',)).fetchone()
 
-        # TODO: Need to implement correct export for idplt and ihourdaily parameters
+        # TODO: Need to implement correct export for ideplt and ihourdaily parameters
         if ihourdaily is None:
             ihourdaily = (0,)
-        if idplt is None:
+        if ideplt is None:
             first_gid = self.execute('''SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;''').fetchone()
-            idplt = first_gid if first_gid is not None else (0,)
+            ideplt = first_gid if first_gid is not None else (0,)
 
         inflow = os.path.join(outdir, 'INFLOW.DAT')
         previous_iid = -1
         row = None
         with open(inflow, 'w') as i:
-            i.write(head_line.format(ihourdaily[0], idplt[0]))
+            i.write(head_line.format(ihourdaily[0], ideplt[0]))
             for iid, gid in self.execute(inflow_cells_sql):
 
                 if previous_iid != iid:
@@ -1318,7 +1318,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
 #         line3 = '   {}' * 10 + '\n'
-        line3 = '{0:<8} {1:<7.2f} {2:<7.2f} {3:<7.2f} {4:<7.2f} {5:<7.2f} {6:<7.2f} {7:<7.2f} {8:<7.2f} {9:<7.2f}\n'
+        line3 = '{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n'
         option = self.execute(cont_sql).fetchone()
         if option is None:
             # TODO: We need to implement correct export of 'arfblockmod'
@@ -1331,10 +1331,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 a.write(line1.format(head))
             else:
                 pass
+            # Totally blocked grid elements:
             for row in self.execute(tbc_sql):
                 a.write(line2.format(*row))
+            # Partially blocked grid elements:
             for row in self.execute(pbc_sql):
                 row = [x if x is not None else '' for x in row]
+                any_blocked = sum(row) -row[0]
+                if any_blocked > 0:
                 a.write(line3.format(*row))
 
     def export_mult(self, outdir):
