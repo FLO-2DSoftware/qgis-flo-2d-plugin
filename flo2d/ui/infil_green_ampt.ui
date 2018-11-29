@@ -89,15 +89,15 @@
       <string>Land Use</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="1">
+       <widget class="QComboBox" name="land_cbo"/>
+      </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Land Use layer</string>
         </property>
        </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="land_cbo"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_6">
@@ -106,7 +106,7 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>Initial abstraction [%]</string>
@@ -120,24 +120,31 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="1" column="1">
+       <widget class="QComboBox" name="saturation_cbo"/>
+      </item>
+      <item row="5" column="1">
+       <widget class="QComboBox" name="rtimpl_cbo"/>
+      </item>
+      <item row="4" column="1">
+       <widget class="QComboBox" name="ia_cbo"/>
+      </item>
+      <item row="5" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
          <string>Impervious area [%]</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="saturation_cbo"/>
-      </item>
       <item row="2" column="1">
        <widget class="QComboBox" name="vc_cbo"/>
       </item>
-      <item row="3" column="1">
-       <widget class="QComboBox" name="ia_cbo"/>
-      </item>
-      <item row="4" column="1">
-       <widget class="QComboBox" name="rtimpl_cbo"/>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="veg_cover_chBox">
+        <property name="text">
+         <string>Vegetation Cover [%]</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
