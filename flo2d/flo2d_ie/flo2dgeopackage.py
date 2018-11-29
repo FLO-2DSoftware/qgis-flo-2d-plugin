@@ -1311,9 +1311,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty('arfwrf'):
             return
         cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
-        tbc_sql = '''SELECT grid_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
-        pbc_sql = '''SELECT grid_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+        tbc_sql = '''SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
+        
+        pbc_sql = '''SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                      FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;'''
+        collapse_sql = '''SELECT collapse FROM user_blocked_areas WHERE fid = ?;'''
 
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
@@ -1333,13 +1335,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             # Totally blocked grid elements:
             for row in self.execute(tbc_sql):
-                a.write(line2.format(*row))
+                collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                cell = row[0]
+                if collapse[0]:
+                    cell  = -cell
+                a.write(line2.format(cell))
+                
             # Partially blocked grid elements:
             for row in self.execute(pbc_sql):
                 row = [x if x is not None else '' for x in row]
-                any_blocked = sum(row) -row[0]
+                # Is there any side blocked? If not omit it:
+                any_blocked = sum(row) -row[0] -row[1]
                 if any_blocked > 0:
-                a.write(line3.format(*row))
+                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    cell = row[0]
+                    if collapse[0]:
+                        cell  = -cell
+                    a.write(line3.format(cell, *row[2:]))
+#                     a.write(line3.format(*row))
 
     def export_mult(self, outdir):
         # check if there is any multiple channel defined

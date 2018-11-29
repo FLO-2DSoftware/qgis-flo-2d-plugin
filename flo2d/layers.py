@@ -179,6 +179,7 @@ class Layers(object):
                 'sgroup': 'User Layers',
                 'styles': ['blocked_areas.qml'],
                 'attrs_edit_widgets': {
+                    'collapse': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
                     'calc_arf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}},
                     'calc_wrf': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
                 },

@@ -8,7 +8,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from math import log, exp
+from qgis.PyQt.QtWidgets import QApplication
 from .grid_tools import poly2poly_geos
+from ..user_communication import UserCommunication
+from qgis.utils import iface
 
 
 class InfiltrationCalculator(object):
@@ -85,6 +88,8 @@ class InfiltrationCalculator(object):
         self.imp_fld = imp_fld
 
     def green_ampt_infiltration(self):
+        
+        try:
         grid_params = {}
         green_ampt = GreenAmpt()
 
@@ -143,6 +148,10 @@ class InfiltrationCalculator(object):
             except ValueError as e:
                 raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
 
+        except Exception as e:
+            QApplication.restoreOverrideCursor()      
+        
+        
         return grid_params
 
     def scs_infiltration_single(self):
