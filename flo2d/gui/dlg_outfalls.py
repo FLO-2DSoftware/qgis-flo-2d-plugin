@@ -7,7 +7,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..utils import is_true
+from ..utils import is_true, float_or_zero, int_or_zero, is_number
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
 
@@ -208,7 +208,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.outfall_cbo.blockSignals(False)
 
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
-            self.invert_elevation_dbox.setValue(float(self.outfalls_tblw.item(row, 2).text()))
+            self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
             self.flap_gate_chbox.setChecked(True if self.outfalls_tblw.item(row, 3).text() == 'True' else False)
             self.allow_discharge_chbox.setChecked(True if self.outfalls_tblw.item(row, 4).text() == 'True' else False)
 
@@ -229,15 +229,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
                 self.outfalls_tblw.setItem(row, 5, item)
 
-            self.water_depth_dbox.setValue(float(self.outfalls_tblw.item(row, 6).text()))
+            self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
 
-            # index  = int(self.outfalls_tblw.item(row,7).text())-1
-            # index = self.tidal_curve_cbo.count()-1 if index > self.tidal_curve_cbo.count()-1 else 0 if index < 0 else index
-            # self.tidal_curve_cbo.setCurrentIndex(index)
-            #
-            # index  = int(self.outfalls_tblw.item(row,8).text())-1
-            # index = self.time_series_cbo.count()-1 if index > self.time_series_cbo.count()-1 else 0 if index < 0 else index
-            # self.time_series_cbo.setCurrentIndex(index)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210618.1702: error assigning outfall values!", e)
@@ -254,9 +247,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         if item is not None:
             self.grid_element_txt.setText(str(item.text()))
 
-        item = self.outfalls_tblw.item(row, 2)
-        if item is not None:
-            self.invert_elevation_dbox.setValue(float(item.text()))
+        self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
 
         item = self.outfalls_tblw.item(row, 3)
         if item is not None:
@@ -275,26 +266,17 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 if itemTxt == "":
                     index = 0
                 else:
-                    index = int(itemTxt)
+                    if is_number(itemTxt):
+                        index = itemTxt
+                    else:    
+                        index = 0
             index = 4 if index > 4 else 0 if index < 0 else index
             self.outfall_type_cbo.setCurrentIndex(index)
             item = QTableWidgetItem()
             item.setData(Qt.EditRole, self.outfall_type_cbo.currentText() )
             self.outfalls_tblw.setItem(row, 5, item)
 
-        item = self.outfalls_tblw.item(row, 6)
-        if item is not None:
-            self.water_depth_dbox.setValue(float(item.text()))
-
-        # item = self.outfalls_tblw.item(row,7)
-        # if item is not None:
-        #     index  = int(item.text())
-        #     self.tidal_curve_cbo.setCurrentIndex(index)
-        #
-        # item = self.outfalls_tblw.item(row,8)
-        # if item is not None:
-        #     index  = int(item.text())
-        #     self.time_series_cbo.setCurrentIndex(index)
+        self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
 
     def save_outfalls(self):
         """

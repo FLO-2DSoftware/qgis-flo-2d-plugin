@@ -21,7 +21,7 @@ from .channels_editor_widget import ChannelsEditorWidget
 from .profile_tool import ProfileTool
 from .fpxsec_editor_widget import FPXsecEditorWidget
 from .infil_editor_widget import InfilEditorWidget
-from .swmm_editor_widget import SWMMEditorWidget
+# from .swmm_editor_widget import SWMMEditorWidget
 from .storm_drain_editor_widget import StormDrainEditorWidget
 from ..user_communication import UserCommunication
 
@@ -52,11 +52,16 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
-        self.setup_swmm_editor()
+#         self.setup_swmm_editor()
 
+#         self.cgroups = [
+#             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
+#             self.swmm_editor_grp, self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
+#             self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
+            
         self.cgroups = [
             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
-            self.swmm_editor_grp, self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
+            self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
             self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp
         ]
         self.set_collapsible_groups()
@@ -129,9 +134,9 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.infil_editor = InfilEditorWidget(self.iface, self.lyrs)
         self.infil_editor_lout.addWidget(self.infil_editor)
 
-    def setup_swmm_editor(self):
-        self.swmm_editor = SWMMEditorWidget(self.iface, self.plot, self.table, self.lyrs)
-        self.swmm_editor_lout.addWidget(self.swmm_editor)
+#     def setup_swmm_editor(self):
+#         self.swmm_editor = SWMMEditorWidget(self.iface, self.plot, self.table, self.lyrs)
+#         self.swmm_editor_lout.addWidget(self.swmm_editor)
 
     def setup_storm_drain_editor(self):
         self.storm_drain_editor = StormDrainEditorWidget(self.iface,  self.plot, self.table, self.lyrs)

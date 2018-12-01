@@ -16,7 +16,7 @@ from qgis.PyQt.QtGui import QColor
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata
+from ..utils import m_fdata, float_or_zero, int_or_zero
 from .table_editor_widget import StandardItemModel, StandardItem
 
 
@@ -191,22 +191,22 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlet_cbo.blockSignals(False)
 
         self.grid_element.setText(self.inlets_tblw.item(row,1).text())
-        self.invert_elevation_dbox.setValue(float(self.inlets_tblw.item(row,2).text()))
-        self.max_depth_dbox.setValue(float(self.inlets_tblw.item(row,3).text()))
-        self.initial_depth_dbox.setValue(float(self.inlets_tblw.item(row,4).text()))
-        self.surcharge_depth_dbox.setValue(float(self.inlets_tblw.item(row,5).text()))
-        self.ponded_area_dbox.setValue(float(self.inlets_tblw.item(row,6).text()))
+        self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,2)))
+        self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,3)))
+        self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,4)))
+        self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,5)))
+        self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,6)))
         index = int(self.inlets_tblw.item(row,7).text())-1
         index = 4 if index > 4 else 0 if index < 0 else index
         self.inlet_drain_type_cbo.setCurrentIndex(index)
-        self.length_dbox.setValue(float(self.inlets_tblw.item(row,8).text()))
-        self.width_dbox.setValue(float(self.inlets_tblw.item(row,9).text()))
-        self.height_dbox.setValue(float(self.inlets_tblw.item(row,10).text()))
-        self.weir_coeff_dbox.setValue(float(self.inlets_tblw.item(row,11).text()))
-        self.feature_sbox.setValue(float(self.inlets_tblw.item(row,12).text()))
-        self.curb_height_dbox.setValue(float(self.inlets_tblw.item(row,13).text()))
-        self.clogging_factor_dbox.setValue(float(self.inlets_tblw.item(row,14).text()))
-        self.time_for_clogging_dbox.setValue(float(self.inlets_tblw.item(row,15).text()))
+        self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,8)))
+        self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,9)))
+        self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,10)))
+        self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,11)))
+        self.feature_sbox.setValue(float_or_zero(self.inlets_tblw.item(row,12)))
+        self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,13)))
+        self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,14)))
+        self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,15)))
 
     def populate_inlets(self):
         qry = '''SELECT
@@ -362,64 +362,27 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         item = self.inlets_tblw.item(row, 1)
         if item is not None:
             self.grid_element.setText(str(item.text()))
-
-        item = self.inlets_tblw.item(row, 2)
-        if item is not None:
-            self.invert_elevation_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 3)
-        if item is not None:
-            self.max_depth_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 4)
-        if item is not None:
-            self.initial_depth_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 5)
-        if item is not None:
-            self.surcharge_depth_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 6)
-        if item is not None:
-            self.ponded_area_dbox.setValue(float(item.text()))
-
+        self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
+        self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
+        self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
+        self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
+        self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
         item = self.inlets_tblw.item(row, 7)
         if item is not None:
             index  = int(item.text())
             index = 4 if index > 4 else 0 if index < 0 else index-1
             self.inlet_drain_type_cbo.setCurrentIndex(index)
-
-        item = self.inlets_tblw.item(row, 8)
-        if item is not None:
-            self.length_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 9)
-        if item is not None:
-            self.width_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 10)
-        if item is not None:
-            self.height_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 11)
-        if item is not None:
-            self.weir_coeff_dbox.setValue(float(item.text()))
-
+        self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
+        self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
+        self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
+        self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
         item = self.inlets_tblw.item(row, 12)
         if item is not None:
             self.feature_sbox.setValue(int(item.text()))
+        self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
+        self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
+        self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
 
-        item = self.inlets_tblw.item(row, 13)
-        if item is not None:
-            self.curb_height_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 14)
-        if item is not None:
-            self.clogging_factor_dbox.setValue(float(item.text()))
-
-        item = self.inlets_tblw.item(row, 15)
-        if item is not None:
-            self.time_for_clogging_dbox.setValue(float(item.text()))
 
     def save_inlets(self):
         """
