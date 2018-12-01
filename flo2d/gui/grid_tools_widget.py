@@ -131,7 +131,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             default = self.gutils.get_cont_par('MANNING')
             self.gutils.execute('UPDATE grid SET n_value=?;', (default,))            
             
-            
             grid_lyr = self.lyrs.data['grid']['qlyr']
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:

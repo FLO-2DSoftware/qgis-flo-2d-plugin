@@ -65,9 +65,9 @@
           <property name="rightMargin">
            <number>6</number>
           </property>
-            <property name="bottomMargin">
+          <property name="bottomMargin">
            <number>6</number>
-            </property>
+          </property>
           <item row="0" column="0">
            <layout class="QHBoxLayout" name="rain_editor_lout"/>
           </item>
