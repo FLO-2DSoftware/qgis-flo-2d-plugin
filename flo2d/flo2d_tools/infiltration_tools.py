@@ -13,7 +13,6 @@ from .grid_tools import poly2poly_geos
 from ..user_communication import UserCommunication
 from qgis.utils import iface
 
-
 class InfiltrationCalculator(object):
 
     def __init__(self, grid_lyr):
@@ -90,63 +89,63 @@ class InfiltrationCalculator(object):
     def green_ampt_infiltration(self):
         
         try:
-        grid_params = {}
-        green_ampt = GreenAmpt()
-
-        soil_values = poly2poly_geos(
-            self.grid_lyr,
-            self.soil_lyr,
-            None,
-            self.xksat_fld,
-            self.rtimps_fld,
-            self.eff_fld,
-            self.soil_depth_fld
-        )
-
-        for gid, values in soil_values:
-            try:
-                xksat_parts = [(row[0], row[-1]) for row in values]
-                imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
-                avg_soil_depth = sum(row[3] * row[-1] for row in values)
-                avg_xksat = green_ampt.calculate_xksat(xksat_parts)
-                psif = green_ampt.calculate_psif(avg_xksat)
-                rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
-
-                grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
-            except ValueError as e:
-                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
-
-        land_values = poly2poly_geos(
-            self.grid_lyr,
-            self.land_lyr,
-            None,
-            self.saturation_fld,
-            self.vc_fld,
-            self.ia_fld,
-            self.rtimpl_fld
-        )
-
-        for gid, values in land_values:
-            try:
-                params = grid_params[gid]
-                avg_xksat = params['hydc']
-                rtimp_1 = params['rtimpf']
-
-                vc_parts = [(row[1], row[-1]) for row in values]
-                ia_parts = [(row[2], row[-1]) for row in values]
-                rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
-
-                dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
-                iabstr = green_ampt.calculate_iabstr(ia_parts)
-                rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
-
-                params['dtheta'] = dtheta
-                params['hydc'] = xksatc
-                params['abstrinf'] = iabstr
-                params['rtimpf'] = rtimp
-            except ValueError as e:
-                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
+            grid_params = {}
+            green_ampt = GreenAmpt()
+    
+            soil_values = poly2poly_geos(
+                self.grid_lyr,
+                self.soil_lyr,
+                None,
+                self.xksat_fld,
+                self.rtimps_fld,
+                self.eff_fld,
+                self.soil_depth_fld
+            )
+    
+            for gid, values in soil_values:
+                try:
+                    xksat_parts = [(row[0], row[-1]) for row in values]
+                    imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
+                    avg_soil_depth = sum(row[3] * row[-1] for row in values)
+                    avg_xksat = green_ampt.calculate_xksat(xksat_parts)
+                    psif = green_ampt.calculate_psif(avg_xksat)
+                    rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
+    
+                    grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
+                except ValueError as e:
+                    raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
+    
+            land_values = poly2poly_geos(
+                self.grid_lyr,
+                self.land_lyr,
+                None,
+                self.saturation_fld,
+                self.vc_fld,
+                self.ia_fld,
+                self.rtimpl_fld
+            )
+    
+            for gid, values in land_values:
+                try:
+                    params = grid_params[gid]
+                    avg_xksat = params['hydc']
+                    rtimp_1 = params['rtimpf']
+    
+                    vc_parts = [(row[1], row[-1]) for row in values]
+                    ia_parts = [(row[2], row[-1]) for row in values]
+                    rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
+    
+                    dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
+                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
+                    iabstr = green_ampt.calculate_iabstr(ia_parts)
+                    rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
+    
+                    params['dtheta'] = dtheta
+                    params['hydc'] = xksatc
+                    params['abstrinf'] = iabstr
+                    params['rtimpf'] = rtimp
+                except ValueError as e:
+                    raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
 
         except Exception as e:
             QApplication.restoreOverrideCursor()      

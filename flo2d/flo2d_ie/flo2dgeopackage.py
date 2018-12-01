@@ -1316,7 +1316,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         pbc_sql = '''SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                      FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;'''
         collapse_sql = '''SELECT collapse FROM user_blocked_areas WHERE fid = ?;'''
-
+        
         line1 = 'S  {}\n'
         line2 = ' T   {}\n'
 #         line3 = '   {}' * 10 + '\n'
@@ -1333,6 +1333,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 a.write(line1.format(head))
             else:
                 pass
+            
             # Totally blocked grid elements:
             for row in self.execute(tbc_sql):
                 collapse = self.execute(collapse_sql, (row[1],)).fetchone()

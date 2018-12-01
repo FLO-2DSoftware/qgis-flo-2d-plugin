@@ -382,8 +382,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
         self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
         self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
-
-
+                                             
+            
     def save_inlets(self):
         """
         Save changes of user_swmm_nodes layer.
