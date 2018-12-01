@@ -400,7 +400,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     
                     inlets_shapefile = self.inlets_shapefile_cbo.currentText()
                     group =  self.lyrs.group
-                    lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer() 
+#                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer() 
+                    lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
                             
                     inlets_shapefile_fts = lyr.getFeatures()
 

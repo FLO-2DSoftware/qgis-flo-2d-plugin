@@ -14,7 +14,7 @@ from collections import OrderedDict
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog
 from qgis.PyQt.QtGui import QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, NULL
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -330,6 +330,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         INSERT INTO swmmflo
         (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
         VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?,?);'''
+       
+       
+# CREATE TABLE "swmmflo" (
+#     "fid" INTEGER NOT NULL PRIMARY KEY,
+#     "swmmchar" TEXT, -- SWMMCHAR (D, N)
+#     "swmm_jt" INTEGER, -- SWMM_JT, fid of the grid element with storm drain inlet
+#     "swmm_iden" TEXT, -- SWMM_IDEN
+#     "intype" INTEGER, -- INTYPE, inlet type (1-5)
+#     "swmm_length" REAL, -- SWMMlength, storm drain inlet curb opening lengths along the curb
+#     "swmm_width" REAL, -- SWMMwidth
+#     "swmm_height" REAL, -- SWMMheight, storm drain curb opening height
+#     "swmm_coeff" REAL, -- SWMMcoeff, storm drain inlet weir discharge coefficient
+#     "flapgate" INTEGER, -- FLAPGATE, switch (0 no flap gate, 1 flapgate)
+#     "curbheight" REAL, -- CURBHEIGHT
+#     "name" TEXT, -- optional inlet name
+#     "swmm_feature" INTEGER  -- maybe used as flapgate !!! carefull!!
+# );       
+       
+       
+       
         qry_outlet = '''
         INSERT INTO swmmoutf
         (geom, grid_fid, name, outf_flo)
@@ -366,6 +386,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         rt_updates.append((grid_fid, rt_fid))
                     row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
                     row[10] = int('0' if row[9] == 'False' else '1')
+                    row = [0 if v == NULL else v for v in row]
                     inlets.append(row)
                 elif sd_type == 'O':
                     row = [grid_fid, grid_fid, name] + [feat[col] for col in self.outlet_columns]
@@ -387,8 +408,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_critical("Schematizing of Storm Drains failed!\n\n" +
-                               "Atrribute (inlet or outlet) missing.\n\n" +
+                               "Attribute (inlet or outlet) missing.\n\n" +
                                "Please check user Storm Drain Nodes layer.")
+            self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
+                               +'\n__________________________________________________', e)            
 
     def simulate_stormdrain(self):
         if self.simulate_stormdrain_chbox.isChecked():

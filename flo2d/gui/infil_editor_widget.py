@@ -474,6 +474,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn('Schematizing of infiltration failed! Please check user infiltration layers.')
+            self.uc.show_error('ERROR 271118.1638: error schematizing infiltration!.'
+                   +'\n__________________________________________________', e)
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
