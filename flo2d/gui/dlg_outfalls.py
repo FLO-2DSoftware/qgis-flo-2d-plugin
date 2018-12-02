@@ -44,7 +44,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.tidal_curve_cbo.currentIndexChanged.connect(self.tidal_curve_cbo_currentIndexChanged)
         self.time_series_cbo.currentIndexChanged.connect(self.time_series_cbo_currentIndexChanged)
 
-        self.outfalls_tuple = ('Fixed', 'Free', 'Normal', 'Tidal Curve', 'Time Series')
+        self.outfalls_tuple = ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES')
         # self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
         # self.open_time_series_btn.clicked.connect(self.open_time_series)
         #
@@ -118,6 +118,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         elif col_number == 5:
                             self.allow_discharge_chbox.setChecked(1 if is_true(data) else 0)
                         elif col_number == 6:
+                            data = data.upper()
                             if data in self.outfalls_tuple:
                                 index = self.outfalls_tuple.index(data)
                             else:
@@ -209,20 +210,26 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
             self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
-            self.flap_gate_chbox.setChecked(True if self.outfalls_tblw.item(row, 3).text() == 'True' else False)
+            self.flap_gate_chbox.setChecked(True if self.outfalls_tblw.item(row, 3).text() == 'True' 
+                                            or self.outfalls_tblw.item(row, 3).text() == 'true' 
+                                            or self.outfalls_tblw.item(row, 3).text() == 'Yes'
+                                            or self.outfalls_tblw.item(row, 3).text() == 'yes'
+                                            or self.outfalls_tblw.item(row, 3).text() == '1'
+                                            else False)
             self.allow_discharge_chbox.setChecked(True if self.outfalls_tblw.item(row, 4).text() == 'True' else False)
 
             # Set index of outfall_type_cbo (a combo) depending of text contents:
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
-                itemTxt = item.text().capitalize()
+                itemTxt = item.text().upper().strip()
+                itemTxt = "TIDAL CURVE" if itemTxt == "TIDAL" else "TIME SERIES" if itemTxt == "TIME" else itemTxt
                 if itemTxt in self.outfalls_tuple:
                     index = self.outfall_type_cbo.findText(itemTxt)
                 else:
                     if itemTxt == "":
                         index = 0
                     else:
-                        index = int(itemTxt)
+                        index = map(int, itemTxt)
                 index = 4 if index > 4 else 0 if index < 0 else index
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()
@@ -251,7 +258,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
         item = self.outfalls_tblw.item(row, 3)
         if item is not None:
-            self.flap_gate_chbox.setChecked(True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
+            self.flap_gate_chbox.setChecked(True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' 
+                                            or item.text() == 'Yes' or item.text() == 'yes' else False)
 
         item = self.outfalls_tblw.item(row, 4)
         if item is not None:
@@ -259,7 +267,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
         item = self.outfalls_tblw.item(row, 5)
         if item is not None:
-            itemTxt = item.text()
+            itemTxt = item.text().upper()
             if itemTxt in self.outfalls_tuple:
                 index = self.outfall_type_cbo.findText(itemTxt)
             else:

@@ -181,27 +181,27 @@
     </property>
     <item>
      <property name="text">
-      <string>Fixed</string>
+      <string>FIXED</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Free</string>
+      <string>FREE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Normal</string>
+      <string>NORMAL</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Tidal Curve</string>
+      <string>TIDAL CURVE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Time Series</string>
+      <string>TIME SERIES</string>
      </property>
     </item>
    </widget>

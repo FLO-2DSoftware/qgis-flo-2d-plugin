@@ -21,6 +21,7 @@ encoding//gui/dlg_evap_editor.py=utf-8
 encoding//gui/dlg_flopro.py=utf-8
 encoding//gui/dlg_grid_elev.py=utf-8
 encoding//gui/dlg_levee_elev.py=utf-8
+encoding//gui/dlg_outfalls.py=utf-8
 encoding//gui/dlg_ras_import.py=utf-8
 encoding//gui/dlg_sampling_elev.py=utf-8
 encoding//gui/dlg_sampling_mann.py=utf-8
