@@ -1725,7 +1725,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         swmmflo = os.path.join(outdir, 'SWMMFLO.DAT')
         with open(swmmflo, 'w') as s:
             for row in swmmflo_rows:
-                s.write(line1.format(*row))
+                if row[2][0] == "I":
+                    s.write(line1.format(*row))
 
     def export_swmmflort(self, outdir):
         # check if there is any SWMM rating data defined
