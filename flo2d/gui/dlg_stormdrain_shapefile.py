@@ -384,7 +384,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 break
 
         if not load_inlets and not load_outfalls and not load_conduits:
-            self.uc.show_warn("No data was selected!")
+            self.uc.bar_warn("No data was selected!")
 
         else:
              # self.uc.clear_bar_messages()
@@ -719,4 +719,4 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
     def cancel_message(self):
-        self.uc.show_warn("No data was selected!")
+        self.uc.bar_warn("No data was selected!")

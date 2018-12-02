@@ -456,6 +456,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
             Create an ordered dictionary "storm_drain.INP_groups".
@@ -466,7 +467,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             """
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            
             storm_drain = StormDrainProject(self.iface, swmm_file)
 
             if storm_drain.split_INP_groups_dictionary_by_tags() <= 1:
@@ -527,7 +528,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 outfall_invert_elev =  float(values['outfall_invert_elev']) if 'outfall_invert_elev' in values else 0
                 rim_elev = junction_invert_elev + max_depth if junction_invert_elev and max_depth else 0
                 # outfall_type = values['outfall_type'] if 'outfall_type' in values else 'Normal'
-                outfall_type = values['out_type'] if 'out_type' in values else 'Normal'
+                outfall_type = values['out_type'].upper() if 'out_type' in values else 'NORMAL'
                 tidal_curve = values['tidal_curve'] if 'tidal_curve' in values else '...'
                 time_series = values['time_series'] if 'time_series' in values else '...'
 
@@ -594,8 +595,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.user_swmm_nodes_lyr.updateExtents()
                 self.user_swmm_nodes_lyr.triggerRepaint()
                 self.user_swmm_nodes_lyr.removeSelection()
-
-            QApplication.restoreOverrideCursor()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -832,20 +831,31 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write('\n[OUTFALLS]')
                         swmm_inp_file.write('\n;;               Invert     Outfall    Stage/Table      Tide')
                         swmm_inp_file.write('\n;;Name           Elev.      Type       Time Series      Gate')
-                        swmm_inp_file.write('\n;;-------------- ---------- ---------- ---------------- ----')
+                        swmm_inp_file.write('\n;;-------------- ---------- ------------ ----------------  ----')
     
-                        SD_outfalls_sql =  '''SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve
+                        SD_outfalls_sql =  '''SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate 
                                           FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;'''
     
-                        line = '\n{0:16} {1:<10.2f} {2:<10} {3:<10} {4:<10}'
+                        line = '\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}'
                         outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
                         if not outfalls_rows:
                             pass
                         else:
                             for row in outfalls_rows:
-                                row = (row[0], 0 if row[1] is None else row[1], 0 if row[2] is None else row[2], 
-                                       0 if row[3] is None else row[3], 0 if row[4] is None else row[4])                                 
-                                swmm_inp_file.write(line.format(*row))
+                                lrow = list(row)
+                                lrow = [lrow[0], 0 if lrow[1] is None else lrow[1], 0 if lrow[2] is None else lrow[2], 
+                                       "   "  if lrow[3] is None else lrow[3] , 0 if lrow[4] is None else lrow[4], 0 if lrow[5] is None else lrow[5]]
+                                lrow[3] = "   "  if lrow[3] == "..." else lrow[3]
+                                lrow[4] = "   "  if lrow[4] == "..." else lrow[4]
+                                lrow[2] = lrow[2].upper()
+                                if lrow[2] == "TIME SERIES":
+                                    lrow[3] = lrow[4]
+                                lrow[5] = "YES" if lrow[5] in ("True", "true", "Yes", "yes", "1") else "NO"
+                                swmm_inp_file.write(line.format(lrow[0], lrow[1],lrow[2],lrow[3],lrow[5]))                                                              
+#                                 row = (row[0], 0 if row[1] is None else row[1], 0 if row[2] is None else row[2], 
+#                                        "   "  if row[3] is None else row[3] , 0 if row[4] is None else row[4])
+                        
+#                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
