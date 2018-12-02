@@ -209,7 +209,12 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
             self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
-            self.flap_gate_chbox.setChecked(True if self.outfalls_tblw.item(row, 3).text() == 'True' else False)
+            self.flap_gate_chbox.setChecked(True if self.outfalls_tblw.item(row, 3).text() == 'True' 
+                                            or self.outfalls_tblw.item(row, 3).text() == 'true' 
+                                            or self.outfalls_tblw.item(row, 3).text() == 'Yes'
+                                            or self.outfalls_tblw.item(row, 3).text() == 'yes'
+                                            or self.outfalls_tblw.item(row, 3).text() == '1'
+                                            else False)
             self.allow_discharge_chbox.setChecked(True if self.outfalls_tblw.item(row, 4).text() == 'True' else False)
 
             # Set index of outfall_type_cbo (a combo) depending of text contents:
@@ -251,7 +256,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
         item = self.outfalls_tblw.item(row, 3)
         if item is not None:
-            self.flap_gate_chbox.setChecked(True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
+            self.flap_gate_chbox.setChecked(True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' 
+                                            or item.text() == 'Yes' or item.text() == 'yes' else False)
 
         item = self.outfalls_tblw.item(row, 4)
         if item is not None:
