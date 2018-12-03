@@ -196,7 +196,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,4)))
         self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,5)))
         self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,6)))
-        index = int(self.inlets_tblw.item(row,7).text())-1
+        val = self.inlets_tblw.item(row,7).text()
+        index = int(val if val != "" else 1)-1
         index = 4 if index > 4 else 0 if index < 0 else index
         self.inlet_drain_type_cbo.setCurrentIndex(index)
         self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,8)))
@@ -369,7 +370,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
         item = self.inlets_tblw.item(row, 7)
         if item is not None:
-            index  = int(item.text())
+            index  = int(item.text() if item.text() != "" else 1)
             index = 4 if index > 4 else 0 if index < 0 else index-1
             self.inlet_drain_type_cbo.setCurrentIndex(index)
         self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))

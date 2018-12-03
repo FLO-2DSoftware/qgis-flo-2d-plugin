@@ -44,6 +44,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         # Connections to clear inlets fields.
         self.clear_inlets_name_btn.clicked.connect(self.clear_inlets_name)
+        self.clear_inlets_type_btn.clicked.connect(self.clear_inlets_type)
         self.clear_inlets_invert_elev_btn.clicked.connect(self.clear_inlets_invert_elevation)
         self.clear_inlets_max_depth_btn.clicked.connect(self.clear_inlets_max_depth)        
         self.clear_inlets_init_depth_btn.clicked.connect(self.clear_inlets_init_depth)              
@@ -161,6 +162,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     # CLEAR INLETS FIELDS:
     def clear_inlets_name(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
+    def clear_inlets_type(self):
+        self.inlets_type_FieldCbo.setCurrentIndex(-1)
     def clear_inlets_invert_elevation(self):
            self.inlets_invert_elevation_FieldCbo.setCurrentIndex(-1) 
     def clear_inlets_max_depth(self):
@@ -246,43 +249,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_conduit_flap_gate(self):
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
 
-
-
-
-
-#     def clear_field(self, fld):
-#         if fld == "inlets_name":
-#              self.inlets_name_FieldCbo.setCurrentIndex(-1)
-#         elif fld == "inlets_invert_elevation":  
-#            self.inlets_invert_elevation_FieldCbo.setCurrentIndex(-1) 
-#         elif fld == "inlets_max_depth":  
-#            self.inlets_max_depth_FieldCbo.setCurrentIndex(-1)      
-#         elif fld == "inlets_init_depth":  
-#             self.inlets_init_depth_FieldCbo.setCurrentIndex(-1)                                  
-#         elif fld == "inlets_surcharge_depth":  
-#             self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(-1)                   
-#         elif fld == "inlets_weir_coeff":              
-#             self.inlets_weir_coeff_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_feature":             
-#             self.inlets_feature_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_curb_height":              
-#             self.inlets_curb_height_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_clogging_factor":              
-#             self.inlets_clogging_factor_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_time_for_clogging":              
-#              self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_ponded_area":              
-#             self.inlets_ponded_area_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_length_perimeter":              
-#             self.inlets_length_perimeter_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_width_area":              
-#             self.inlets_width_area_FieldCbo.setCurrentIndex(-1)             
-#         elif fld == "inlets_height_sag_surch":              
-#             self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(-1)               
-
-
     def clear_all_inlets_attributes(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
+        self.inlets_type_FieldCbo.setCurrentIndex(-1) 
         self.inlets_invert_elevation_FieldCbo.setCurrentIndex(-1)
         self.inlets_max_depth_FieldCbo.setCurrentIndex(-1)
         self.inlets_init_depth_FieldCbo.setCurrentIndex(-1)
@@ -329,32 +298,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
 
     def assign_components_from_shapefile(self):
-        # self.saveSelected = True
-        # empty = True
-        # for combo_inlet in self.inlets_fields_groupBox.findChildren(QComboBox):
-        #     if combo_inlet.currentIndex() != -1:
-        #         empty = False
-        #         break
-        # if not empty:
-        #     return
-        #
-        # empty = True
-        # for combo_outfall in self.outfalls_fields_groupBox.findChildren(QComboBox):
-        #     if combo_outfall.currentIndex() != -1:
-        #         empty = False
-        #         break
-        # if not empty:
-        #     return
-        #
-        #
-        # empty = True
-        # for combo_conduit in self.conduits_fields_groupBox.findChildren(QComboBox):
-        #     if combo_conduit.currentIndex() != -1:
-        #         empty = False
-        #         break
-        # if not empty:
-        #     return
-
         self.uc.clear_bar_messages()
 
         if self.gutils.is_table_empty('user_model_boundary'):
@@ -387,10 +330,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.uc.bar_warn("No data was selected!")
 
         else:
-             # self.uc.clear_bar_messages()
-             # s = QSettings()
-             # last_dir = s.value('FLO-2D/lastGdsDir', '')
-
             # Load inlets from shapefile:
             if load_inlets:
                 try:
@@ -409,7 +348,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         grid = 0
                         sd_type = "I"
                         name = f[self.inlets_name_FieldCbo.currentText()] if self.inlets_name_FieldCbo.currentText() != "" else ""
-                        intype = 1
+                        intype = f[self.inlets_type_FieldCbo.currentText()] if self.inlets_type_FieldCbo.currentText() != "" else 1
                         junction_invert_elev = f[self.inlets_invert_elevation_FieldCbo.currentText()] if self.inlets_invert_elevation_FieldCbo.currentText() != "" else 0
                         max_depth = f[self.inlets_max_depth_FieldCbo.currentText()] if self.inlets_max_depth_FieldCbo.currentText() != "" else 0
                         init_depth = f[self.inlets_init_depth_FieldCbo.currentText()] if self.inlets_init_depth_FieldCbo.currentText() != "" else 0
@@ -451,7 +390,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute('grid', cell)
                         feat.setAttribute('sd_type', 'I')
                         feat.setAttribute('name', name)
-                        feat.setAttribute('intype', 1)
+                        feat.setAttribute('intype', intype)
                         feat.setAttribute('junction_invert_elev', junction_invert_elev)
                         feat.setAttribute('max_depth', max_depth)
                         feat.setAttribute('init_depth', init_depth)
@@ -719,4 +658,4 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
     def cancel_message(self):
-        self.uc.bar_warn("No data was selected!")
+        self.uc.bar_info("No data was selected!")
