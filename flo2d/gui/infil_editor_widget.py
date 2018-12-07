@@ -12,7 +12,7 @@ import traceback
 from math import isnan
 from itertools import chain
 from collections import OrderedDict
-from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt
+from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt, QSettings
 from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QInputDialog, QApplication
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
@@ -484,35 +484,52 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg.save_green_ampt_shapefile_fields()
             self.gutils.disable_geom_triggers()
-            soil_lyr, land_lyr, fields = dlg.green_ampt_parameters()
-            inf_calc = InfiltrationCalculator(self.grid_lyr)
-            inf_calc.setup_green_ampt(soil_lyr, land_lyr, *fields)
+            soil_lyr, land_lyr, fields, vcCheck = dlg.green_ampt_parameters()
+            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface)
+            inf_calc.setup_green_ampt(soil_lyr, land_lyr, vcCheck, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
-            self.gutils.clear_tables('infil_areas_green', 'infil_cells_green')
-            qry_areas = '''INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);'''
-            qry_cells = '''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);'''
-            area_values = []
-            cells_values = []
-            for i, (gid, params) in enumerate(grid_params.items(), 1):
-                par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'], params['soil_depth'])
-                geom = self.gutils.grid_geom(gid)
-                values = (i, geom) + tuple(round(p, 3) for p in par)
-                area_values.append(values)
-                cells_values.append((i, gid))
-            cur = self.con.cursor()
-            cur.executemany(qry_areas, area_values)
-            cur.executemany(qry_cells, cells_values)
-            self.con.commit()
-            self.schema_green.triggerRepaint()
-            self.gutils.enable_geom_triggers()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info('Calculating Green-Ampt parameters finished!')
+            if grid_params:
+                self.gutils.clear_tables('infil_areas_green', 'infil_cells_green')
+                qry_areas = '''INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);'''
+                qry_cells = '''INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);'''
+                area_values = []
+                cells_values = []
+                non_intercepted =[]
+                for i, (gid, params) in enumerate(grid_params.items(), 1):
+                    if not 'dtheta' in params:
+                        non_intercepted.append(gid)
+                        params['dtheta'] = 0
+                        params['abstrinf'] = 0
+                    par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'], params['soil_depth'])
+                    geom = self.gutils.grid_geom(gid)
+                    values = (i, geom) + tuple(round(p, 3) for p in par)
+                    area_values.append(values)
+                    cells_values.append((i, gid))
+                cur = self.con.cursor()
+                cur.executemany(qry_areas, area_values)
+                cur.executemany(qry_cells, cells_values)
+                self.con.commit()
+                self.schema_green.triggerRepaint()
+                self.gutils.enable_geom_triggers()
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info('Calculating Green-Ampt parameters finished!')
+                if non_intercepted:
+                    self.uc.show_info('WARNING: ' + str(len(non_intercepted)) + ' cells didn´t intercept the land use shapefile.\n' +
+                                      'Default values were assigned for the infiltration.')
+                    
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_critical("ERROR 061218.1839: Green-Ampt infiltration failed!. Please check data in your input layers.")              
+                
         except Exception as e:
             self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('Calculating Green-Ampt parameters failed! Please check data in your input layers.')
+            self.uc.show_error("ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                   +'\n__________________________________________________', e)
+            
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)
@@ -522,7 +539,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.gutils.disable_geom_triggers()
-            inf_calc = InfiltrationCalculator(self.grid_lyr)
+            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface)
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
                 inf_calc.setup_scs_single(single_lyr, *single_fields)
@@ -705,7 +722,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.land_combos = [self.saturation_cbo, self.vc_cbo, self.ia_cbo, self.rtimpl_cbo]
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
+        
         self.setup_layer_combos()
+        self.restore_green_ampt_shapefile_fields()
 
     def setup_layer_combos(self):
         """
@@ -722,6 +741,17 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     self.land_cbo.addItem(lyr_name, l)
         except Exception as e:
             pass
+
+        s = QSettings()
+        previous = "" if s.value('ga_soil_layer_name') is None else s.value('ga_soil_layer_name')
+        idx = self.soil_cbo.findText(previous)
+        if idx != -1:
+            self.soil_cbo.setCurrentIndex(idx)
+
+        previous = "" if s.value('ga_land_layer_name') is None else s.value('ga_land_layer_name')
+        idx = self.land_cbo.findText(previous)
+        if idx != -1:
+            self.land_cbo.setCurrentIndex(idx)
 
     def populate_soil_fields(self, idx):
         lyr = self.soil_cbo.itemData(idx)
@@ -744,8 +774,55 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         lidx = self.land_cbo.currentIndex()
         land_lyr = self.land_cbo.itemData(lidx)
         fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
-        return soil_lyr, land_lyr, fields
+        vcCheck = self.veg_cover_chBox.isChecked()
+        return soil_lyr, land_lyr, fields, vcCheck
 
+    def save_green_ampt_shapefile_fields(self):
+        s = QSettings()
+
+        s.setValue('ga_soil_layer_name', self.soil_cbo.currentText())
+        s.setValue('ga_soil_XKSAT', self.xksat_cbo.currentIndex())
+        s.setValue('ga_soil_rtimps',self.rtimps_cbo.currentIndex())
+        s.setValue('ga_soil_eff_imp',self.eff_cbo.currentIndex())
+        s.setValue('ga_soil_depth',self.soil_depth_cbo.currentIndex())
+
+        s.setValue('ga_land_layer_name', self.land_cbo.currentText())
+        s.setValue('ga_land_saturation', self.saturation_cbo.currentIndex())
+        s.setValue('ga_land_vc',self.vc_cbo.currentIndex())
+        s.setValue('ga_land_ia',self.ia_cbo.currentIndex())
+        s.setValue('ga_land_rtimpl',self.rtimpl_cbo.currentIndex())
+
+        
+    def restore_green_ampt_shapefile_fields(self):
+        s = QSettings()
+
+        name = "" if s.value('ga_soil_layer_name') is None else s.value('ga_soil_layer_name')
+        if name == self.soil_cbo.currentText():
+            val = int(-1 if s.value('ga_soil_XKSAT') is None else s.value('ga_soil_XKSAT'))
+            self.xksat_cbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('ga_soil_rtimps') is None else s.value('ga_soil_rtimps'))
+            self.rtimps_cbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('ga_soil_eff_imp') is None else s.value('ga_soil_eff_imp'))
+            self.eff_cbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('ga_soil_depth') is None else s.value('ga_soil_depth'))
+            self.soil_depth_cbo.setCurrentIndex(val)
+                     
+        name = "" if s.value('ga_land_layer_name') is None else s.value('ga_land_layer_name')
+        if name == self.land_cbo.currentText():
+            val = int(-1 if s.value('ga_land_saturation') is None else s.value('ga_land_saturation'))
+            self.saturation_cbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('ga_land_vc') is None else s.value('ga_land_vc'))
+            self.vc_cbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('ga_land_ia') is None else s.value('ga_land_ia'))
+            self.ia_cbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('ga_land_rtimpl') is None else s.value('ga_land_rtimpl'))
+            self.rtimpl_cbo.setCurrentIndex(val)  
 
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
 

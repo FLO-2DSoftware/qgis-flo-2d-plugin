@@ -12,10 +12,12 @@ from qgis.PyQt.QtWidgets import QApplication
 from .grid_tools import poly2poly_geos
 from ..user_communication import UserCommunication
 from qgis.utils import iface
+from qgis.PyQt.QtCore import QSettings
 
 class InfiltrationCalculator(object):
 
-    def __init__(self, grid_lyr):
+    def __init__(self, grid_lyr, iface):
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.grid_lyr = grid_lyr
         self.soil_lyr = None
         self.land_lyr = None
@@ -33,6 +35,8 @@ class InfiltrationCalculator(object):
         self.vc_fld = None
         self.ia_fld = None
         self.rtimpl_fld = None
+        
+        self.vcCheck = None
 
         # SCS (single) layer fields
         self.curve_fld = None
@@ -46,6 +50,7 @@ class InfiltrationCalculator(object):
             self,
             soil,
             land,
+            vcCheck,
             xksat_fld='XKSAT',
             rtimps_fld='field_4',
             eff_fld='field_5',
@@ -69,6 +74,8 @@ class InfiltrationCalculator(object):
         self.vc_fld = vc_fld
         self.ia_fld = ia_fld
         self.rtimpl_fld = rtimpl_fld
+        
+        self.vcCheck = vcCheck
 
     def setup_scs_single(self, curve_lyr, curve_fld='CurveNum'):
         self.curve_lyr = curve_lyr
@@ -92,16 +99,22 @@ class InfiltrationCalculator(object):
             grid_params = {}
             green_ampt = GreenAmpt()
     
-            soil_values = poly2poly_geos(
-                self.grid_lyr,
-                self.soil_lyr,
-                None,
-                self.xksat_fld,
-                self.rtimps_fld,
-                self.eff_fld,
-                self.soil_depth_fld
-            )
-    
+            try:
+                soil_values = poly2poly_geos(
+                    self.grid_lyr,
+                    self.soil_lyr,
+                    None,
+                    self.xksat_fld,
+                    self.rtimps_fld,
+                    self.eff_fld,
+                    self.soil_depth_fld
+                )
+            except Exception as e:
+                QApplication.restoreOverrideCursor() 
+                self.uc.show_error('ERROR 051218.2035: Green-Ampt infiltration failed\nwhile intersecting soil layer with grid.'
+                                   +'\n__________________________________________________', e)   
+                return grid_params
+                     
             for gid, values in soil_values:
                 try:
                     xksat_parts = [(row[0], row[-1]) for row in values]
@@ -113,7 +126,7 @@ class InfiltrationCalculator(object):
     
                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
                 except ValueError as e:
-                    raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
+                    raise ValueError('Calculation of soil variables failed for grid cell with fid: {}'.format(gid)) from e
     
             land_values = poly2poly_geos(
                 self.grid_lyr,
@@ -136,7 +149,7 @@ class InfiltrationCalculator(object):
                     rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
     
                     dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
+                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)
                     iabstr = green_ampt.calculate_iabstr(ia_parts)
                     rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
     
@@ -144,13 +157,18 @@ class InfiltrationCalculator(object):
                     params['hydc'] = xksatc
                     params['abstrinf'] = iabstr
                     params['rtimpf'] = rtimp
+                    
+#                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth,
+#                                         'theta': dtheta,' hydc': xksatc, 'abstrinf': iabstr, 'rtimpf': rtimp}
+                
                 except ValueError as e:
-                    raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
+                    raise ValueError('Calculation of land use variables failed for grid cell with fid: {}'.format(gid)) from e
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()      
-        
-        
+            QApplication.restoreOverrideCursor() 
+            self.uc.show_error('ERROR 051218.2001: Green-Ampt infiltration failed!.'
+                               +'\n__________________________________________________', e)
+            
         return grid_params
 
     def scs_infiltration_single(self):
@@ -235,9 +253,12 @@ class GreenAmpt(object):
         return dtheta
 
     @staticmethod
-    def calculate_xksatc(avg_xksat, parts):
+    def calculate_xksatc(avg_xksat, parts, vcCheck):
         if avg_xksat < 0.4:
-            pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+            if vcCheck:
+                pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+            else:
+                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)    
             xksatc = avg_xksat * sum(pc_gen)
         else:
             xksatc = avg_xksat
