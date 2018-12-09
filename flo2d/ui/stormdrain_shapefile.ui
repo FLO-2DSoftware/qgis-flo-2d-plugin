@@ -115,9 +115,9 @@
       <property name="geometry">
        <rect>
         <x>344</x>
-        <y>32</y>
+        <y>31</y>
         <width>97</width>
-        <height>193</height>
+        <height>192</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_15">
@@ -130,36 +130,6 @@
          </property>
          <property name="text">
           <string>Width/Area *</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="font">
-          <font>
-           <italic>true</italic>
-          </font>
-         </property>
-         <property name="text">
-          <string>Height/Sag/Surch *</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_13">
-         <property name="font">
-          <font>
-           <italic>true</italic>
-          </font>
-         </property>
-         <property name="text">
-          <string>Weir Coeff. *</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -196,15 +166,30 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_15">
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_7">
          <property name="font">
           <font>
            <italic>true</italic>
           </font>
          </property>
          <property name="text">
-          <string>Clogging Factor #</string>
+          <string>Height/Sag/Surch *</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_13">
+         <property name="font">
+          <font>
+           <italic>true</italic>
+          </font>
+         </property>
+         <property name="text">
+          <string>Weir Coeff. *</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -220,6 +205,21 @@
          </property>
          <property name="text">
           <string>Time for Clogging #</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_15">
+         <property name="font">
+          <font>
+           <italic>true</italic>
+          </font>
+         </property>
+         <property name="text">
+          <string>Clogging Factor #</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -315,8 +315,8 @@
        <rect>
         <x>632</x>
         <y>32</y>
-        <width>25</width>
-        <height>193</height>
+        <width>24</width>
+        <height>199</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_13">
@@ -1138,8 +1138,8 @@
        <rect>
         <x>490</x>
         <y>26</y>
-        <width>25</width>
-        <height>201</height>
+        <width>24</width>
+        <height>200</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_14">
@@ -1544,8 +1544,8 @@
         <rect>
          <x>278</x>
          <y>16</y>
-         <width>25</width>
-         <height>153</height>
+         <width>24</width>
+         <height>152</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_26">
@@ -1747,8 +1747,8 @@
         <rect>
          <x>293</x>
          <y>18</y>
-         <width>25</width>
-         <height>105</height>
+         <width>24</width>
+         <height>104</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_24">
@@ -1924,8 +1924,8 @@
         <rect>
          <x>300</x>
          <y>15</y>
-         <width>25</width>
-         <height>105</height>
+         <width>24</width>
+         <height>104</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_25">
@@ -2109,8 +2109,8 @@
        <rect>
         <x>288</x>
         <y>24</y>
-        <width>25</width>
-        <height>129</height>
+        <width>24</width>
+        <height>128</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_16">

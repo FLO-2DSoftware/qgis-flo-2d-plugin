@@ -75,3 +75,24 @@ class ChanRightBankExecutor(object):
 
     def run(self):
         return self.execute_chanrightbank()
+    
+class ChannelNInterpolatorExecutor(object):
+
+    N_VALUE_INTERPOLATOR = 'CHAN N-VALUE INTERPOLATOR.EXE'
+
+    def __init__(self, channelNinterpolator_dir, project_dir):
+        self.channelNinterpolator_dir = channelNinterpolator_dir
+        self.channelNinterpolator_exe = os.path.join(channelNinterpolator_dir, self.N_VALUE_INTERPOLATOR)
+        self.project_dir = project_dir
+
+    def execute_chanNInterpolator(self):
+        if os.path.isfile(os.path.join(self.project_dir, "CHAN.DAT")):
+            with cd(self.project_dir):
+                proc = Popen(self.channelNinterpolator_exe)
+                proc.wait()
+                return proc.returncode
+        else:
+            return -999    
+
+    def run(self):
+        return self.execute_chanNInterpolator()    

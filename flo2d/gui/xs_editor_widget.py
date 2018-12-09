@@ -23,7 +23,8 @@ from ..flo2dobjects import UserCrossSection, ChannelSegment
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
-from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor
+from ..gui.dlg_flopro import ExternalProgramFLO2D
+from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from .plot_widget import PlotWidget
@@ -117,6 +118,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.import_HYCHAN_OUT_btn, 'import_channel_peaks.svg')
         set_icon(self.interpolate_xs_btn, 'interpolate_xsec.svg')
         set_icon(self.confluences_btn, 'schematize_confluence.svg')
+        set_icon(self.interpolate_channel_n_btn, 'interpolate_channel_n.svg')
         set_icon(self.rename_xs_btn, 'change_name.svg')
         # Connections:
 
@@ -131,8 +133,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
         self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.import_HYCHAN_OUT_btn.clicked.connect(self.import_channel_peaks_from_HYCHAN_OUT)
-        # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values_externally)
+#         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values_externally)
         self.confluences_btn.clicked.connect(self.schematize_confluences)
+        self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
 
         # More connections:
@@ -1038,65 +1041,46 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.show_error("ERROR 240718.0359: couln't join left and right banks !", e)
 
-    # def reassign_xs_rightbanks_grid_id_from_schematized_rbank(self, pairs_left_right):
-    #     try:
-    #         new_feats = []
-    #         xs_lyr = self.lyrs.data['chan_elems']['qlyr']
-    #         right_lyr = self.lyrs.data['rbank']['qlyr']
-    #         rbank_feats= iter(right_lyr.getFeatures())
-    #
-    #         for xs_seg_fid, rb_fid in pairs_left_right:
-    #             while True:
-    #                 r = next(rbank_feats, None)
-    #                 if r is None:
-    #                     return
-    #                 elif  r['fid'] == rb_fid:
-    #                     break
-    #
-    #             r_poly = r.geometry().asPolyline()
-    #             r_points = iter(r_poly)
-    #
-    #             # Create a list of features taken from cham_elems layer (schematized cross sections), modifying their geometry
-    #             # by changing the point of the coordinates of the right bank cell:
-    #             for xs_f in xs_lyr.getFeatures():
-    #                 if not xs_f['seg_fid'] == xs_seg_fid:
-    #                     continue
-    #                 xs_feat = QgsFeature()
-    #                 # Copy the next complete feature of chan_elems layer.
-    #                 xs_feat = xs_f
-    #                 left = str(xs_f['fid'])
-    #                 pnt0 = self.gutils.single_centroid(left)
-    #                 qgsPoint0 = QgsGeometry().fromWkt(pnt0).asPoint() # Start point of XS in schematized left bank.
-    #                 qgsPoint1 =  next(r_points, None)                 # End point of XS in schematized right bank.
-    #                 if qgsPoint1 is None:
-    #                     break
-    #                 else:
-    #                     right = self.gutils.grid_on_point(qgsPoint1.x(), qgsPoint1.y()) # Cell number of next schematized right bank.
-    #                     new_xs = QgsGeometry.fromPolylineXY([qgsPoint0, qgsPoint1])
-    #                     xs_feat.setGeometry(new_xs)
-    #                     xs_feat.setAttribute('rbankgrid', right)
-    #
-    #                     new_feats.append(xs_feat)
-    #
-    #         # Replace all features of chan_elems with the new calculated features:
-    #         xs_lyr.startEditing()
-    #         for feat in xs_lyr.getFeatures():
-    #             xs_lyr.deleteFeature(feat.id())
-    #         for feat in new_feats:
-    #             xs_lyr.addFeature(feat)
-    #         xs_lyr.commitChanges()
-    #         xs_lyr.updateExtents()
-    #         xs_lyr.triggerRepaint()
-    #         xs_lyr.removeSelection()
-    #
-    #         self.gutils.create_schematized_rbank_lines_from_xs_tips()
-    #         rbank = self.lyrs.data['rbank']['qlyr']
-    #         rbank.updateExtents()
-    #         rbank.triggerRepaint()
-    #         rbank.removeSelection()
-    #
-    #     except Exception as e:
-    #         self.uc.show_error("ERROR 240718.0359: couln't join left and right banks !", e)
+
+    def interpolate_channel_n(self):
+   
+        if sys.platform != 'win32':
+            self.uc.bar_warn("Could not run 'CHAN N-VALUE INTERPOLATOR.EXE' under current operation system!")
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return        
+
+        dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
+        try:
+            channelNInterpolator = ChannelNInterpolatorExecutor(flo2d_dir, project_dir)
+            return_code = channelNInterpolator.run()
+            if (return_code == 0):
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn('Channel n-values interpolated into CHAN.DAT file!\n\n')
+                
+            elif return_code == -999:
+                self.uc.show_warn("Interpolation of channel n-values could not be performed!\n\n" +
+                                  "File\n\n" + os.path.join(project_dir, 'CHAN.DAT\n\n') +  
+                                  "doesn't exist.")  
+            else:    
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn('Interpolation of channel n-values failed!\n\n' +
+                                  'Program finished with return code ' + str(return_code) + '.' +
+                                  '\n\nCheck content and format of file\n\n' +
+                                  os.path.join(project_dir, "CHAN.DAT"))                  
+              
+                
+
+        except Exception as e:
+            self.uc.log_info(repr(e))               
+            self.uc.show_error('Interpolation of channel n-values failed!\n'
+                              '\n_________________________________________________', e)
+
 
     def schematize_confluences(self):
         if self.gutils.is_table_empty('grid'):

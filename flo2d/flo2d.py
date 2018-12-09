@@ -44,7 +44,7 @@ from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_ras_import import RasImportDialog
-from .gui.dlg_flopro import SimulationDialog
+from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
 # from gui.dlg_gutterimport SamplingGutter
 
@@ -493,7 +493,7 @@ class Flo2D(object):
 #             self.setup_dock_widgets()
 
     def run_flopro(self):
-        dlg = SimulationDialog(self.iface)
+        dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         ok = dlg.exec_()
         if not ok:
             return
@@ -530,7 +530,7 @@ class Flo2D(object):
                 self.setup_dock_widgets()
                 
                 s = QSettings()
-                s.setValue('FLO-2D/last_flopro_project', old_gpkg)
+                s.setValue('FLO-2D/last_flopro_project', os.path.dirname(old_gpkg))
                 s.setValue('FLO-2D/lastGdsDir', old_gpkg)
                 window_title = s.value('FLO-2D/last_flopro_project', '')
                 self.iface.mainWindow().setWindowTitle(window_title)                             

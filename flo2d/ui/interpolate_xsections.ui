@@ -183,14 +183,14 @@
       <item row="0" column="0">
        <widget class="QToolButton" name="interpolation_browse">
         <property name="text">
-         <string>Browse</string>
+         <string>...</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QToolButton" name="project_browse">
         <property name="text">
-         <string>Browse</string>
+         <string>...</string>
         </property>
        </widget>
       </item>
