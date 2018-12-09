@@ -7,10 +7,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+
 from qgis.PyQt.QtWidgets import QDialogButtonBox 
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
+from qgis.PyQt.QtCore import QSettings
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -36,7 +38,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.user_swmm_conduits_lyr = self.lyrs.data['user_swmm_conduits']['qlyr']
         self.current_lyr = None
         self.saveSelected = None
-        self.setup_layers_comboxes()
+
         self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText("Assign Selected Inlets/Junctions, Outfalls, and Conduits")
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlets_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfalls_attributes)
@@ -90,16 +92,18 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_conduit_average_loss_btn.clicked.connect(self.clear_conduit_average_loss)        
         self.clear_conduit_flap_gate_btn.clicked.connect(self.clear_conduit_flap_gate)        
         
-        
-        
         self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlets_attributes)
         self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfalls_attributes)
         self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduits_attributes)
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
-
-
+        
+        self.setup_layers_comboxes()
+        
+        self.restore_storm_drain_shapefile_fields()
+        
     def setup_layers_comboxes(self):
+                
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
@@ -113,51 +117,90 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.conduits_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
                     pass
+                
+            s = QSettings()
+            previous_inlet = "" if s.value('sf_inlets_layer_name') is None else s.value('sf_inlets_layer_name')
+            idx = self.inlets_shapefile_cbo.findText(previous_inlet)
+            if idx != -1:
+                self.inlets_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_inlets_attributes(self.inlets_shapefile_cbo.currentIndex())
 
-            self.populate_inlets_attributes(self.inlets_shapefile_cbo.currentIndex())
-            self.populate_outfalls_attributes(self.outfalls_shapefile_cbo.currentIndex())
-            self.populate_conduits_attributes(self.conduits_shapefile_cbo.currentIndex())
+            previous_outfall = "" if s.value('sf_outfalls_layer_name') is None else s.value('sf_outfalls_layer_name')
+            idx = self.outfalls_shapefile_cbo.findText(previous_outfall)
+            if idx != -1:
+                self.outfalls_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_outfalls_attributes(self.outfalls_shapefile_cbo.currentIndex())                
+
+            previous_conduit = "" if s.value('sf_conduits_layer_name') is None else s.value('sf_conduits_layer_name')
+            idx = self.conduits_shapefile_cbo.findText(previous_conduit)
+            if idx != -1:
+                self.conduits_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_conduits_attributes(self.conduits_shapefile_cbo.currentIndex())
+      
         except Exception as e:
-            pass
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 051218.1146: couldn't load point or/and line layers!"
+                       +'\n__________________________________________________', e)
 
     def populate_inlets_attributes(self, idx):
-        uri = self.inlets_shapefile_cbo.itemData(idx)
-        lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        try:
+            uri = self.inlets_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+    
+            for combo_inlets in self.inlets_fields_groupBox.findChildren(QComboBox):
+                combo_inlets.clear()
+                combo_inlets.setLayer(self.current_lyr)
+    
+            nFeatures = self.current_lyr.featureCount()
+            self.inlets_fields_groupBox.setTitle("Inlets Fields Selection (from '" + self.inlets_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("WARNING 051218.0559:  there are not defined or visible point layers to select inlets/junctions components!"
+                       +'\n__________________________________________________', e)
 
-        for combo_inlets in self.inlets_fields_groupBox.findChildren(QComboBox):
-            combo_inlets.clear()
-            combo_inlets.setLayer(self.current_lyr)
 
-        nFeatures = self.current_lyr.featureCount()
-        self.inlets_fields_groupBox.setTitle("Inlets Fields Selection (from '" + self.inlets_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
+
 
     def populate_outfalls_attributes(self, idx):
-        uri = self.outfalls_shapefile_cbo.itemData(idx)
-        lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+        try:
+            uri = self.outfalls_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+    
+            for combo_outfalls in self.outfalls_fields_groupBox.findChildren(QComboBox):
+                combo_outfalls.clear()
+                combo_outfalls.setLayer(self.current_lyr)
+    
+            nFeatures = self.current_lyr.featureCount()
+            self.outfalls_fields_groupBox.setTitle("Outfalls Fields Selection (from '" + self.outfalls_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("WARNING 051218.0600: there are not defined or visible point layers to select outfall components!"
+                       +'\n__________________________________________________', e)
 
-        for combo_outfalls in self.outfalls_fields_groupBox.findChildren(QComboBox):
-            combo_outfalls.clear()
-            combo_outfalls.setLayer(self.current_lyr)
 
-        nFeatures = self.current_lyr.featureCount()
-        self.outfalls_fields_groupBox.setTitle("Outfalls Fields Selection (from '" + self.outfalls_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
 
-    def populate_conduits_attributes(self, idx):
-        uri = self.conduits_shapefile_cbo.itemData(idx)
-        lyr_id = self.lyrs.layer_exists_in_group(uri)
-        self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-        for combo_conduits in self.conduits_fields_groupBox.findChildren(QComboBox):
-            combo_conduits.clear()
-            combo_conduits.setLayer(self.current_lyr)
+    def populate_conduits_attributes(self, idx): 
+        try:
+            uri = self.conduits_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+    
+            for combo_conduits in self.conduits_fields_groupBox.findChildren(QComboBox):
+                combo_conduits.clear()
+                combo_conduits.setLayer(self.current_lyr)
+    
+            nFeatures = self.current_lyr.featureCount()
+            self.conduits_fields_groupBox.setTitle("Conduits Fields Selection (from '" + self.conduits_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (lines))")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("WARNING 051218.0601: there are not defined or visible line layers to select conduits components!"
+                       +'\n__________________________________________________', e)
 
-        nFeatures = self.current_lyr.featureCount()
-        self.conduits_fields_groupBox.setTitle("Conduits Fields Selection (from '" + self.conduits_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (lines))")
 
-#     def clear_invert_elev(self):
-#         self.inlets_invert_elevation_FieldCbo.setCurrentIndex(-1)
+
 
     # CLEAR INLETS FIELDS:
     def clear_inlets_name(self):
@@ -328,7 +371,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         if not load_inlets and not load_outfalls and not load_conduits:
             self.uc.bar_warn("No data was selected!")
-
+            self.save_storm_drain_shapefile_fields()
+            
         else:
             # Load inlets from shapefile:
             if load_inlets:
@@ -571,13 +615,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         conduit_loss_average = f[self.conduit_average_loss_FieldCbo.currentText()] if self.conduit_average_loss_FieldCbo.currentText() != "" else 0
                         conduits_flap_gate = f[self.conduit_flap_gate_FieldCbo.currentText()] if self.conduit_flap_gate_FieldCbo.currentText() != "" else 0
 
-                        # xsections_shape  = f[self.conduits_manning_FieldCbo.currentText()] if self.conduits_manning_FieldCbo.currentText() != "" else 0
-                        # xsections_barrels = f[self.conduits_initial_flow_FieldCbo.currentText()] if self.conduits_initial_flow_FieldCbo.currentText() != "" else 0
-                        # xsections_max_depth = f[self.conduits_max_flow_FieldCbo.currentText()] if self.conduits_max_flow_FieldCbo.currentText() != "" else 0
-                        # xsections_geom2 = f[self.conduits_inlet_losses_FieldCbo.currentText()] if self.conduits_inlet_losses_FieldCbo.currentText() != "" else 0
-                        # xsections_geom2 = f[self.conduits_outlet_losses_FieldCbo.currentText()] if self.conduits_outlet_losses_FieldCbo.currentText() != "" else 0
-                        # xsections_geom2 = f[self.conduits_average_losses_FieldCbo.currentText()] if self.conduits_average_losses_FieldCbo.currentText() != "" else 0
-
                         if conduit_inlet == "?" or conduit_outlet == "?":
                             no_in_out += 1
                             
@@ -641,6 +678,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 070618.0500: creation of Storm Drain Modes (Conduits) layer failed!", e)
+            
+            self.save_storm_drain_shapefile_fields()
 
             if (load_inlets or load_outfalls) and load_conduits:
                 self.uc.show_info("Importing SWMM input data finished!\n\n" +
@@ -659,3 +698,241 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
+
+    def save_storm_drain_shapefile_fields(self):
+        s = QSettings()
+        
+        # Inlets/Junctions:
+#         s.setValue('sf_inlets_layer', self.inlets_shapefile_cbo.currentIndex())
+        s.setValue('sf_inlets_layer_name', self.inlets_shapefile_cbo.currentText())
+        s.setValue('sf_inlets_name', self.inlets_name_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_type',self.inlets_type_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_invert_elevation',self.inlets_invert_elevation_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_max_depth',self.inlets_max_depth_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_init_depth',self.inlets_init_depth_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_surcharge_depth',self.inlets_surcharge_depth_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_ponded_area',self.inlets_ponded_area_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_length_perimeter',self.inlets_length_perimeter_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_width_area',self.inlets_width_area_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_height_sag_surch',self.inlets_height_sag_surch_FieldCbo.currentIndex())        
+        s.setValue('sf_inlets_weir_coeff',self.inlets_weir_coeff_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_feature',self.inlets_feature_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_curb_height',self.inlets_curb_height_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_clogging_factor',self.inlets_clogging_factor_FieldCbo.currentIndex())
+        s.setValue('sf_inlets_time_for_clogging',self.inlets_time_for_clogging_FieldCbo.currentIndex())
+
+        # Outfalls
+#         s.setValue('sf_outfalls_layer', self.outfalls_shapefile_cbo.currentIndex())
+        s.setValue('sf_outfalls_layer_name', self.outfalls_shapefile_cbo.currentText())
+        s.setValue('sf_outfalls_name', self.outfall_name_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_invert_elevation',self.outfall_invert_elevation_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_flap_gate',self.outfall_flap_gate_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_allow_discharge',self.outfall_allow_discharge_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_type',self.outfall_type_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_water_depth',self.outfall_water_depth_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_tidal_curve',self.outfall_tidal_curve_FieldCbo.currentIndex())
+        s.setValue('sf_outfalls_time_series',self.outfall_time_series_FieldCbo.currentIndex())
+
+
+        # Conduits:
+#         s.setValue('sf_conduits_layer', self.conduits_shapefile_cbo.currentIndex())
+        s.setValue('sf_conduits_layer_name', self.conduits_shapefile_cbo.currentText())
+        s.setValue('sf_conduits_name', self.conduit_name_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_from_inlet',self.conduit_from_inlet_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_to_outlet',self.conduit_to_outlet_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_inlet_offset',self.conduit_inlet_offset_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_outlet_offset',self.conduit_outlet_offset_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_shape',self.conduit_shape_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_barrels',self.conduit_barrels_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_max_depth',self.conduit_max_depth_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_geom2',self.conduit_geom2_FieldCbo.currentIndex())        
+        s.setValue('sf_conduits_geom3',self.conduit_geom3_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_geom4',self.conduit_geom4_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_length',self.conduit_length_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_manning',self.conduit_manning_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_initial_flow',self.conduit_initial_flow_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_max_flow',self.conduit_max_flow_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_entry_loss',self.conduit_entry_loss_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_exit_loss',self.conduit_exit_loss_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_average_loss',self.conduit_average_loss_FieldCbo.currentIndex())
+        s.setValue('sf_conduits_flap_gate',self.conduit_flap_gate_FieldCbo.currentIndex())
+        
+    def restore_storm_drain_shapefile_fields(self):
+        s = QSettings()
+        
+        # Inlets/Junctions:
+#         val = int(0 if s.value('sf_inlets_layer') is None else s.value('sf_inlets_layer'))
+#         self.inlets_shapefile_cbo.setCurrentIndex(val)
+
+        name = "" if s.value('sf_inlets_layer_name') is None else s.value('sf_inlets_layer_name')
+        if name == self.inlets_shapefile_cbo.currentText():
+            val = int(-1 if s.value('sf_inlets_name') is None else s.value('sf_inlets_name'))
+            self.inlets_name_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_inlets_type') is None else s.value('sf_inlets_type'))
+            self.inlets_type_FieldCbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('sf_inlets_invert_elevation') is None else s.value('sf_inlets_invert_elevation'))
+            self.inlets_invert_elevation_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_max_depth') is None else s.value('sf_inlets_max_depth'))
+            self.inlets_max_depth_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_init_depth') is None else s.value('sf_inlets_init_depth'))
+            self.inlets_init_depth_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_surcharge_depth') is None else s.value('sf_inlets_surcharge_depth'))
+            self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_ponded_area') is None else s.value('sf_inlets_ponded_area'))
+            self.inlets_ponded_area_FieldCbo.setCurrentIndex(val)
+                      
+            val = int(-1 if s.value('sf_inlets_length_perimeter') is None else s.value('sf_inlets_length_perimeter'))
+            self.inlets_length_perimeter_FieldCbo.setCurrentIndex(val)      
+            
+            val = int(-1 if s.value('sf_inlets_width_area') is None else s.value('sf_inlets_width_area'))
+            self.inlets_width_area_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_height_sag_surch') is None else s.value('sf_inlets_height_sag_surch'))
+            self.inlets_height_sag_surch_FieldCbo.setCurrentIndex( val)     
+                 
+            val = int(-1 if s.value('sf_inlets_weir_coeff') is None else s.value('sf_inlets_weir_coeff'))
+            self.inlets_weir_coeff_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_feature') is None else s.value('sf_inlets_feature'))
+            self.inlets_feature_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_curb_height') is None else s.value('sf_inlets_curb_height'))
+            self.inlets_curb_height_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_inlets_clogging_factor') is None else s.value('sf_inlets_clogging_factor'))
+            self.inlets_clogging_factor_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_inlets_time_for_clogging') is None else s.value('sf_inlets_time_for_clogging'))
+            self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)
+        
+
+        # Outfalls
+#         val = int(0 if s.value('sf_outfalls_layer') is None else s.value('sf_outfalls_layer'))
+#         self.outfalls_shapefile_cbo.setCurrentIndex(val)
+                
+        name = "" if s.value('sf_outfalls_layer_name') is None else s.value('sf_outfalls_layer_name')
+        if name == self.outfalls_shapefile_cbo.currentText():
+                
+            val = int(-1 if s.value('sf_outfalls_name') is None else s.value('sf_outfalls_name'))
+            self.outfall_name_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_outfalls_invert_elevation') is None else s.value('sf_outfalls_invert_elevation'))
+            self.outfall_invert_elevation_FieldCbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('sf_outfalls_flap_gate') is None else s.value('sf_outfalls_flap_gate'))
+            self.outfall_flap_gate_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_outfalls_allow_discharge') is None else s.value('sf_outfalls_allow_discharge'))
+            self.outfall_allow_discharge_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_outfalls_type') is None else s.value('sf_outfalls_type'))
+            self.outfall_type_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_outfalls_water_depth') is None else s.value('sf_outfalls_water_depth'))
+            self.outfall_water_depth_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_outfalls_tidal_curve') is None else s.value('sf_outfalls_tidal_curve'))
+            self.outfall_tidal_curve_FieldCbo.setCurrentIndex(val)
+                      
+            val = int(-1 if s.value('sf_outfalls_time_series') is None else s.value('sf_outfalls_time_series'))
+            self.outfall_time_series_FieldCbo.setCurrentIndex(val)      
+        
+
+        # Conduits:
+#         val = int(0 if s.value('sf_conduits_layer') is None else s.value('sf_conduits_layer'))
+#         self.conduits_shapefile_cbo.setCurrentIndex(val)
+                
+        name = "" if s.value('sf_conduits_layer_name') is None else s.value('sf_conduits_layer_name')
+        if name == self.conduits_shapefile_cbo.currentText():
+
+            val = int(-1 if s.value('sf_conduits_name') is None else s.value('sf_conduits_name'))
+            self.conduit_name_FieldCbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('sf_conduits_to_outlet') is None else s.value('sf_conduits_to_outlet'))
+            self.conduit_to_outlet_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_inlet_offset') is None else s.value('sf_conduits_inlet_offset'))
+            self.conduit_inlet_offset_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_outlet_offset') is None else s.value('sf_conduits_outlet_offset'))
+            self.conduit_outlet_offset_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_shape') is None else s.value('sf_conduits_shape'))
+            self.conduit_shape_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_barrels') is None else s.value('sf_conduits_barrels'))
+            self.conduit_barrels_FieldCbo.setCurrentIndex(val)
+                      
+            val = int(-1 if s.value('sf_conduits_max_depth') is None else s.value('sf_conduits_max_depth'))
+            self.conduit_max_depth_FieldCbo.setCurrentIndex(val)  
+    
+            val = int(-1 if s.value('sf_conduits_geom2') is None else s.value('sf_conduits_geom2'))
+            self.conduit_geom2_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_conduits_geom3') is None else s.value('sf_conduits_geom3'))
+            self.conduit_geom3_FieldCbo.setCurrentIndex(val)
+                    
+            val = int(-1 if s.value('sf_conduits_geom4') is None else s.value('sf_conduits_geom4'))
+            self.conduit_geom4_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_length') is None else s.value('sf_conduits_length'))
+            self.conduit_length_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_manning') is None else s.value('sf_conduits_manning'))
+            self.conduit_manning_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_initial_flow') is None else s.value('sf_conduits_initial_flow'))
+            self.conduit_initial_flow_FieldCbo.setCurrentIndex(val)
+                     
+            val = int(-1 if s.value('sf_conduits_max_flow') is None else s.value('sf_conduits_max_flow'))
+            self.conduit_max_flow_FieldCbo.setCurrentIndex(val)
+                      
+            val = int(-1 if s.value('sf_conduits_entry_loss') is None else s.value('sf_conduits_entry_loss'))
+            self.conduit_entry_loss_FieldCbo.setCurrentIndex(val)  
+    
+            val = int(-1 if s.value('sf_conduits_exit_loss') is None else s.value('sf_conduits_exit_loss'))
+            self.conduit_exit_loss_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_conduits_average_loss') is None else s.value('sf_conduits_average_loss'))
+            self.conduit_average_loss_FieldCbo.setCurrentIndex(val)
+            
+            val = int(-1 if s.value('sf_conduits_flap_gate') is None else s.value('sf_conduits_flap_gate'))
+            self.conduit_flap_gate_FieldCbo.setCurrentIndex(val)
+                        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+           

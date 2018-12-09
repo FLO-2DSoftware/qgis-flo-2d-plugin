@@ -15,10 +15,9 @@ from qgis.PyQt.QtWidgets import QFileDialog
 
 uiDialog, qtBaseClass = load_ui('flopro')
 
+class ExternalProgramFLO2D(qtBaseClass, uiDialog):
 
-class SimulationDialog(qtBaseClass, uiDialog):
-
-    def __init__(self, iface):
+    def __init__(self, iface, title):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.setupUi(self)
@@ -26,20 +25,24 @@ class SimulationDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.flo2d_browse.clicked.connect(self.get_flo2d_dir)
         self.project_browse.clicked.connect(self.get_project_dir)
-        self.set_previous_paths()
+        self.set_previous_paths(title)
 
-    def set_previous_paths(self):
+    def set_previous_paths(self, title):
         s = QSettings()
         flo2d_dir = s.value('FLO-2D/last_flopro', '')
         project_dir = s.value('FLO-2D/last_flopro_project', '')
+        self.setWindowTitle(title)
         self.flo2d_le.setText(flo2d_dir)
         self.project_le.setText(project_dir)
+        s.setValue('FLO-2D/last_flopro', flo2d_dir) 
+        s.setValue('FLO-2D/last_flopro_project', project_dir) 
+              
 
     def get_flo2d_dir(self):
         s = QSettings()
         flo2d_dir = QFileDialog.getExistingDirectory(
             None,
-            'Select FLO-2D installation folder',
+            'Select FLO-2D program folder',
             directory=self.flo2d_le.text())
         if not flo2d_dir:
             return
