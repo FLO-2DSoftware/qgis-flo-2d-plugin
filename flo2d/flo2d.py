@@ -43,6 +43,7 @@ from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .gui.dlg_schema2user import Schema2UserDialog
+from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
@@ -241,6 +242,12 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/schematic_to_user.svg'),
             text=self.tr(u'Convert Schematic Layers to User Layers'),
             callback=lambda: self.schematic2user(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/user_to_schematic.svg'),
+            text=self.tr(u'Convert User Layers to Schematic Layers'),
+            callback=lambda: self.user2schematic(),
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -1039,7 +1046,7 @@ class Flo2D(object):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.struct_editor_grp.setCollapsed(False)
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
-
+        
     @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
@@ -1180,6 +1187,29 @@ class Flo2D(object):
         self.setup_dock_widgets()
         self.uc.bar_info('Converting Schematic Layers to User Layers finished!')
         QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def user2schematic(self):
+        converter_dlg = User2SchemaDialog(self.con, self.iface, self.lyrs, self.uc)
+        ok = converter_dlg.exec_()
+        if ok:
+            if converter_dlg.methods:
+                pass
+            else:
+                self.uc.show_warn('Please choose at least one conversion source!')
+                return
+        else:
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        for no in sorted(converter_dlg.methods):
+            converter_dlg.methods[no]()
+        self.setup_dock_widgets()
+        QApplication.restoreOverrideCursor()
+        self.uc.show_info('Converting User Layers to Schematic Layers finished!\n\n'  +
+                          converter_dlg.message)
+        
+
+
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
