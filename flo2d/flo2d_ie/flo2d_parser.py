@@ -49,6 +49,7 @@ class ParseDAT(object):
             'TOLSPATIAL.DAT': None,
             'SHALLOWN_SPATIAL.DAT':None,
             'WSURF.DAT': None,
+            'GUTTER.DAT': None,
             'WSTIME.DAT': None
         }
         self.cont_rows = [
@@ -129,6 +130,7 @@ class ParseDAT(object):
 
     @staticmethod
     def single_parser(file1):
+
         with open(file1, 'r') as f1:
             for line in f1:
                 row = line.split()
@@ -529,6 +531,16 @@ class ParseDAT(object):
         data = [row[1:] for row in par]
         return data
 
+
+    def parse_gutter(self):
+        gutter = self.dat_files['GUTTER.DAT']
+        par = self.single_parser(gutter)
+        head = next(par)
+        data = []
+        for row in par:
+            data.append(row)
+        return head, data
+        
     def parse_swmmflo(self):
         swmmflo = self.dat_files['SWMMFLO.DAT']
         par = self.single_parser(swmmflo)
