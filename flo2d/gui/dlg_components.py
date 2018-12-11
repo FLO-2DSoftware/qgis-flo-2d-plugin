@@ -42,54 +42,75 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if os.path.isfile(last_dir + '\CHAN.DAT'):
             self.channels_chbox.setChecked(True)
+            self.channels_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\ARF.DAT'):
             self.reduction_factors_chbox.setChecked(True)
-
+            self.reduction_factors_chbox.setEnabled(True)
+            
         if os.path.isfile(last_dir + '\STREET.DAT'):
             self.streets_chbox.setChecked(True)
+            self.streets_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\OUTFLOW.DAT'):
             self.outflow_elements_chbox.setChecked(True)
+            self.outflow_elements_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\INFLOW.DAT'):
             self.inflow_elements_chbox.setChecked(True)
+            self.inflow_elements_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\LEVEE.DAT'):
             self.levees_chbox.setChecked(True)
+            self.levees_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\MULT.DAT'):
             self.multiple_channels_chbox.setChecked(True)
+            self.multiple_channels_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\BREACH.DAT'):
             self.breach_chbox.setChecked(True)
+            self.breach_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\GUTTER.DAT'):
             self.gutters_chbox.setChecked(True)
+            self.gutters_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\INFIL.DAT'):
             self.infiltration_chbox.setChecked(True)
+            self.infiltration_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\FPXSEC.DAT'):
             self.floodplain_xs_chbox.setChecked(True)
+            self.floodplain_xs_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\SED.DAT'):
             self.mud_and_sed_chbox.setChecked(True)
+            self.mud_and_sed_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\EVAPOR.DAT'):
             self.evaporation_chbox.setChecked(True)
+            self.evaporation_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\HYSTRUC.DAT'):
             self.hydr_struct_chbox.setChecked(True)
-
-        # if (os.path.isfile(last_dir + '\.DAT')):
-        #    self.mudflo_chbox.setChecked(True)
+            self.hydr_struct_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\RAIN.DAT'):
             self.rain_chbox.setChecked(True)
+            self.rain_chbox.setEnabled(True)
 
         if os.path.isfile(last_dir + '\SWMMFLO.DAT'):
             self.storm_drain_chbox.setChecked(True)
+            self.storm_drain_chbox.setEnabled(True)
+
+        if os.path.isfile(last_dir + '\TOLSPATIAL.DAT'):
+            self.spatial_tolerance_chbox.setChecked(True)      
+            self.spatial_tolerance_chbox.setEnabled(True)      
+
+        if os.path.isfile(last_dir + '\FPFROUDE.DAT'):
+            self.spatial_froude_chbox.setChecked(True)            
+            self.spatial_froude_chbox.setEnabled(True)            
 
     def load_selected_components(self):
 
@@ -143,3 +164,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if self.storm_drain_chbox.isChecked():
             self.components.append('Storm Drain')
+
+        if self.spatial_tolerance_chbox.isChecked():
+            self.components.append('Spatial Tolerance')
+
+        if self.spatial_froude_chbox.isChecked():
+            self.components.append('Spatial Froude')            

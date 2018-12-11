@@ -79,8 +79,11 @@ class Flo2D(object):
         # Declare instance attributes
         self.project = QgsProject.instance()
         self.actions = []
-        self.files_imported = ""
-        self.files_not_imported = ""
+        
+        self.files_used = ""
+        self.files_not_used = ""
+    
+          
         self.menu = self.tr(u'&Flo2D')
         self.toolbar = self.iface.addToolBar(u'Flo2D')
         self.toolbar.setObjectName(u'Flo2D')
@@ -546,26 +549,32 @@ class Flo2D(object):
                 return
 
     def call_methods(self, calls, debug, *args):
-        self.files_imported = ""
-        n_found = 0
-        self.files_not_imported = ""
+        self.files_used = "CONT.DAT\n"
+        self.files_not_used = ""
+        n_found = 0        
         n_not_found = 0
-
+        
         for call in calls:
             dat = call.split('_')[-1].upper() + '.DAT'
-            if call.startswith('import') and self.f2g.parser.dat_files[dat] is None:
-                self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
-                self.files_not_imported += dat + '\n'
-                continue
-            else:
-                self.files_imported += dat + '\n'
-                pass
-
+            if call.startswith('import'):
+                if self.f2g.parser.dat_files[dat] is None:
+                    self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
+                    self.files_not_used += dat + '\n'
+                    continue
+                else:
+                    self.files_used += dat + '\n'
+                    pass
+            
             try:
                 start_time = time.time()
                 method = getattr(self.f2g, call)
-                method(*args)
+                if method(*args):
+                    if call.startswith('export'):
+                        self.files_used += dat + '\n'
+                        pass                    
+                    
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
+                
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())
@@ -598,6 +607,7 @@ class Flo2D(object):
             'import_levee',
             'import_fpxsec',
             'import_breach',
+            'import_gutter',
             'import_fpfroude',
             'import_swmmflo',
             'import_swmmflort',
@@ -662,8 +672,8 @@ class Flo2D(object):
                     if 'Breach' not in dlg_components.components:
                         import_calls.remove('import_breach')
 
-                    # if 'Gutters' not in dlg_components.components:
-                    #     import_calls.remove('')
+                    if 'Gutters' not in dlg_components.components:
+                        import_calls.remove('import_gutter')
 
                     if 'Infiltration' not in dlg_components.components:
                         import_calls.remove('import_infil')
@@ -691,6 +701,13 @@ class Flo2D(object):
                         import_calls.remove('import_swmmflo')
                         import_calls.remove('import_swmmflort')
                         import_calls.remove('import_swmmoutf')
+
+                    if 'Spatial Tolerance' not in dlg_components.components:
+                        import_calls.remove('import_tolspatial')                       
+
+                    if 'Spatial Froude' not in dlg_components.components:
+                        import_calls.remove('import_fpfroude')                       
+                                                
 
                     tables = [
                                 'all_schem_bc',
@@ -837,21 +854,13 @@ class Flo2D(object):
                     if 'import_chan' in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
                     self.setup_dock_widgets()
-
-                    # self.lyrs.repaint_layers()
-                    #
-                    # for layer in self.iface.mapCanvas().layers():
-                    #     layer.triggerRepaint()
-                    #
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
 
                 finally:
                     QApplication.restoreOverrideCursor()
-#                     s.setValue('FLO-2D/last_flopro_project', dir_name)
-#                     self.iface.mainWindow().setWindowTitle(dir_name)
-                    if self.files_imported != '' or self.files_not_imported != '':
-                        self.uc.show_info("Files used by this project:\n\n" + self.files_imported + "\n\nProject doesn't contain the following files:\n\n" + self.files_not_imported)
+                    if self.files_used != '' or self.files_not_used != '':
+                        self.uc.show_info("Files used by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
 
     @connection_required
     def export_gds(self):
@@ -882,7 +891,7 @@ class Flo2D(object):
             'export_fpxsec',
             'export_breach',
             'export_fpfroude',
-            'export_shallow_n',
+            'export_shallowNSpatial',
             'export_swmmflo',
             'export_swmmflort',
             'export_swmmoutf',
@@ -924,13 +933,19 @@ class Flo2D(object):
                                     'Select directory where FLO-2D model will be exported',
                                     directory=last_dir)
         if outdir:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            s.setValue('FLO-2D/lastGdsDir', outdir)
-            self.call_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
-                                                            # the methods in the class Flo2dGeoPackage to export (write) the
-                                                            # FLO-2D .DAT files
-            self.uc.bar_info('Flo2D model exported', dur=3)
-            QApplication.restoreOverrideCursor()
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                s.setValue('FLO-2D/lastGdsDir', outdir)
+                self.call_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
+                                                                # the methods in the class Flo2dGeoPackage to export (write) the
+                                                                # FLO-2D .DAT files
+                self.uc.bar_info('Flo2D model exported', dur=3)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor()
+                if self.files_used != '' or self.files_not_used != '':
+                    self.uc.show_info("Files exported:\n\n" + self.files_used)
+                
 
     @connection_required
     def import_from_gpkg(self):

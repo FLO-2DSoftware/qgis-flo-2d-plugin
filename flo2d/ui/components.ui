@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>285</width>
-    <height>378</height>
+    <width>453</width>
+    <height>295</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,8 +25,8 @@
   <widget class="QDialogButtonBox" name="components_buttonBox">
    <property name="geometry">
     <rect>
-     <x>120</x>
-     <y>340</y>
+     <x>280</x>
+     <y>260</y>
      <width>156</width>
      <height>23</height>
     </rect>
@@ -38,17 +38,17 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>150</x>
-     <y>10</y>
-     <width>122</width>
-     <height>301</height>
+     <x>170</x>
+     <y>20</y>
+     <width>131</width>
+     <height>221</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout_2">
+   <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="QCheckBox" name="infiltration_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Infiltration</string>
@@ -58,62 +58,24 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QCheckBox" name="evaporation_chbox">
+    <item row="1" column="0">
+     <widget class="QCheckBox" name="floodplain_xs_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
-       <string>Evaporation</string>
+       <string>Floodplain
+Cross Sections</string>
       </property>
       <property name="checked">
        <bool>false</bool>
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
-     <widget class="QCheckBox" name="rain_chbox">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Rain</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0">
-     <widget class="QCheckBox" name="hydr_struct_chbox">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Hydraulic Structures</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="0">
-     <widget class="QCheckBox" name="storm_drain_chbox">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Storm Drain</string>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <widget class="QCheckBox" name="mud_and_sed_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Mudflow and 
@@ -124,10 +86,36 @@ sediment transport</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="0">
+    <item row="3" column="0">
+     <widget class="QCheckBox" name="evaporation_chbox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Evaporation</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QCheckBox" name="hydr_struct_chbox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Hydraulic Structures</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
      <widget class="QCheckBox" name="mudflo_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>MODFLO-2D</string>
@@ -137,14 +125,26 @@ sediment transport</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QCheckBox" name="floodplain_xs_chbox">
+    <item row="6" column="0">
+     <widget class="QCheckBox" name="rain_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
-       <string>Floodplain
-Cross Sections</string>
+       <string>Rain</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="QCheckBox" name="storm_drain_chbox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Storm Drain</string>
       </property>
       <property name="checked">
        <bool>false</bool>
@@ -156,17 +156,17 @@ Cross Sections</string>
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>10</y>
-     <width>110</width>
-     <height>301</height>
+     <x>22</x>
+     <y>20</y>
+     <width>131</width>
+     <height>221</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
      <widget class="QCheckBox" name="channels_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Channels</string>
@@ -179,7 +179,7 @@ Cross Sections</string>
     <item row="1" column="0">
      <widget class="QCheckBox" name="reduction_factors_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Reduction factors</string>
@@ -192,7 +192,7 @@ Cross Sections</string>
     <item row="2" column="0">
      <widget class="QCheckBox" name="streets_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Streets</string>
@@ -205,7 +205,7 @@ Cross Sections</string>
     <item row="3" column="0">
      <widget class="QCheckBox" name="outflow_elements_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Outflow elements</string>
@@ -218,7 +218,7 @@ Cross Sections</string>
     <item row="4" column="0">
      <widget class="QCheckBox" name="inflow_elements_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Inflow elements</string>
@@ -231,7 +231,7 @@ Cross Sections</string>
     <item row="5" column="0">
      <widget class="QCheckBox" name="levees_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Levees</string>
@@ -244,7 +244,7 @@ Cross Sections</string>
     <item row="6" column="0">
      <widget class="QCheckBox" name="multiple_channels_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Multiple channels</string>
@@ -257,7 +257,7 @@ Cross Sections</string>
     <item row="7" column="0">
      <widget class="QCheckBox" name="breach_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Breach</string>
@@ -270,10 +270,48 @@ Cross Sections</string>
     <item row="8" column="0">
      <widget class="QCheckBox" name="gutters_chbox">
       <property name="enabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="text">
        <string>Gutters</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>320</x>
+     <y>20</y>
+     <width>121</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0">
+     <widget class="QCheckBox" name="spatial_tolerance_chbox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Spatial Tolerance</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QCheckBox" name="spatial_froude_chbox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Spatial Froude</string>
       </property>
       <property name="checked">
        <bool>false</bool>
