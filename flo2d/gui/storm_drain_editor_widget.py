@@ -455,7 +455,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not swmm_file:
             return
         s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
-
+        
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
@@ -829,8 +829,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     try:
                         swmm_inp_file.write('\n')
                         swmm_inp_file.write('\n[OUTFALLS]')
-                        swmm_inp_file.write('\n;;               Invert     Outfall    Stage/Table      Tide')
-                        swmm_inp_file.write('\n;;Name           Elev.      Type       Time Series      Gate')
+                        swmm_inp_file.write('\n;;               Invert     Outfall      Stage/Table       Tide')
+                        swmm_inp_file.write('\n;;Name           Elev.      Type         Time Series       Gate')
                         swmm_inp_file.write('\n;;-------------- ---------- ------------ ----------------  ----')
     
                         SD_outfalls_sql =  '''SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate 
@@ -929,7 +929,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             pass
                         else:
                             for row in losses_rows:
-                                swmm_inp_file.write(line.format(*row))
+                                lrow = list(row)
+                                lrow[4] = "YES" if lrow[4] in ("True", "true", "Yes", "yes", "1") else "NO"
+                                swmm_inp_file.write(line.format(*lrow))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1622: error while exporting [LOSSES] to .INP file!", e)
