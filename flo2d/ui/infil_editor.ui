@@ -20,7 +20,16 @@
    <string>FLO-2D Widget</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
     <number>6</number>
    </property>
    <item>
@@ -300,13 +309,25 @@
           </widget>
          </item>
          <item row="0" column="3">
-          <widget class="QDoubleSpinBox" name="spin_soils"/>
+          <widget class="QDoubleSpinBox" name="spin_soils">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="spin_dtheta"/>
+          <widget class="QDoubleSpinBox" name="spin_dtheta">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="spin_hydc"/>
+          <widget class="QDoubleSpinBox" name="spin_hydc">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_3">
@@ -319,7 +340,11 @@
           </widget>
          </item>
          <item row="1" column="3">
-          <widget class="QDoubleSpinBox" name="spin_abstrinf"/>
+          <widget class="QDoubleSpinBox" name="spin_abstrinf">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_2">
@@ -352,7 +377,11 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="spin_rtimpf"/>
+          <widget class="QDoubleSpinBox" name="spin_rtimpf">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_7">
@@ -365,7 +394,11 @@
           </widget>
          </item>
          <item row="2" column="3">
-          <widget class="QDoubleSpinBox" name="spin_soil_depth"/>
+          <widget class="QDoubleSpinBox" name="spin_soil_depth">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -393,7 +426,11 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QDoubleSpinBox" name="spin_hydconch"/>
+          <widget class="QDoubleSpinBox" name="spin_hydconch">
+           <property name="decimals">
+            <number>4</number>
+           </property>
+          </widget>
          </item>
          <item row="0" column="3">
           <spacer name="horizontalSpacer_3">
@@ -444,7 +481,11 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="spin_scsn"/>
+       <widget class="QDoubleSpinBox" name="spin_scsn">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0">
        <spacer name="horizontalSpacer_5">
@@ -518,13 +559,25 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="spin_fhorti"/>
+       <widget class="QDoubleSpinBox" name="spin_fhorti">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QDoubleSpinBox" name="spin_fhortf"/>
+       <widget class="QDoubleSpinBox" name="spin_fhortf">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item row="0" column="5">
-       <widget class="QDoubleSpinBox" name="spin_deca"/>
+       <widget class="QDoubleSpinBox" name="spin_deca">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
