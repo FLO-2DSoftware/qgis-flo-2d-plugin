@@ -38,7 +38,7 @@
          <bool>false</bool>
         </property>
         <property name="decimals">
-         <number>3</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -94,7 +94,7 @@
       <item row="3" column="1">
        <widget class="QDoubleSpinBox" name="spin_hydcadj">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -111,7 +111,7 @@
       <item row="3" column="3">
        <widget class="QDoubleSpinBox" name="spin_soild">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -126,7 +126,11 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="spin_hydcall"/>
+       <widget class="QDoubleSpinBox" name="spin_hydcall">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_7">
@@ -141,7 +145,7 @@
       <item row="2" column="3">
        <widget class="QDoubleSpinBox" name="spin_soilall">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -168,14 +172,14 @@
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="spin_poros">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_abstr">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -202,14 +206,14 @@
       <item row="0" column="3">
        <widget class="QDoubleSpinBox" name="spin_sati">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
       <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="spin_satf">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -240,14 +244,14 @@
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_scsnall">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
       <item row="0" column="4">
        <widget class="QDoubleSpinBox" name="spin_abstr1">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -318,7 +322,7 @@
       <item row="0" column="4">
        <widget class="QDoubleSpinBox" name="spin_fhortonf">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
@@ -335,12 +339,16 @@
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_fhortoni">
         <property name="decimals">
-         <number>1</number>
+         <number>4</number>
         </property>
        </widget>
       </item>
       <item row="0" column="7">
-       <widget class="QDoubleSpinBox" name="spin_decaya"/>
+       <widget class="QDoubleSpinBox" name="spin_decaya">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_13">

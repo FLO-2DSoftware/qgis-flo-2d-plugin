@@ -1133,8 +1133,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #         line6 = '\n' + 'F' + '  {}' * 7
             line7 = '\nS  {0}  {1}'
             line8 = '\nC  {0}  {1}'
-            line9 = '\nI  {0}  {1}  {2}'
-            line10 = '\nH  {0}  {1}  {2}  {3}'
+            line9 = '\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}'
+            line10 = '\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}'
     
             infil_row = self.execute(infil_sql).fetchone()
             if infil_row is None:
