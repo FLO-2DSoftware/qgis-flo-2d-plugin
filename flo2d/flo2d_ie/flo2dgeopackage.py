@@ -719,11 +719,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflort(self):
+        """
+        Reads SWMMFLORT.DAT (Rating Tables).
+        
+        Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
+            
+        """             
         swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid, name) VALUES''', 2]
         data_sql = ['''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES''', 3]
 
         self.clear_tables('swmmflort', 'swmmflort_data')
-        data = self.parser.parse_swmmflort()
+        data = self.parser.parse_swmmflort() # Reads SWMMFLORT.DAT.
         for i, row in enumerate(data, 1):
             gid, params = row
             name = 'Rating Table {}'.format(i)
@@ -1457,6 +1463,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Totally blocked grid elements:
                 for row in self.execute(tbc_sql):
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    collapse =[collapse if collapse is not None else 0]
                     cell = row[0]
                     if collapse[0]:
                         cell  = -cell
@@ -1469,6 +1476,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     any_blocked = sum(row) -row[0] -row[1]
                     if any_blocked > 0:
                         collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                        collapse =[collapse if collapse is not None else 0]
                         cell = row[0]
                         if collapse[0]:
                             cell  = -cell

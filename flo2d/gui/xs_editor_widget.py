@@ -1039,7 +1039,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             # rbank.removeSelection()
 
         except Exception as e:
-            self.uc.show_error("ERROR 240718.0359: couln't join left and right banks !", e)
+            self.uc.show_error("ERROR 240718.0359: Couldn't join left and right banks!", e)
 
 
     def interpolate_channel_n(self):

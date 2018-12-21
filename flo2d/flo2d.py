@@ -393,9 +393,11 @@ class Flo2D(object):
             if self.f2d_widget.bc_editor is not None:
                 self.f2d_widget.bc_editor.close()
                 del self.f2d_widget.bc_editor
+                
             if self.f2d_widget.profile_tool is not None:
                 self.f2d_widget.profile_tool.close()
                 del self.f2d_widget.profile_tool
+                
             if self.f2d_widget.ic_editor is not None:
                 self.f2d_widget.ic_editor.close()
                 del self.f2d_widget.ic_editor
@@ -407,19 +409,23 @@ class Flo2D(object):
             if self.f2d_widget.channels_editor is not None:
                 self.f2d_widget.channels_editor.close()
                 del self.f2d_widget.channels_editor
-
+                
             if self.f2d_widget.fpxsec_editor is not None:
                 self.f2d_widget.fpxsec_editor.close()
                 del self.f2d_widget.fpxsec_editor
+                
             if self.f2d_widget.struct_editor is not None:
                 self.f2d_widget.struct_editor.close()
                 del self.f2d_widget.struct_editor
+                
             if self.f2d_widget.street_editor is not None:
                 self.f2d_widget.street_editor.close()
                 del self.f2d_widget.street_editor
+                
             if self.f2d_widget.xs_editor is not None:
                 self.f2d_widget.xs_editor.close()
                 del self.f2d_widget.xs_editor
+                
             if self.f2d_widget.infil_editor is not None:
                 self.f2d_widget.infil_editor.close()
                 del self.f2d_widget.infil_editor
@@ -429,6 +435,7 @@ class Flo2D(object):
             if self.f2d_widget.storm_drain_editor is not None:
                 self.f2d_widget.storm_drain_editor.close()
                 del self.f2d_widget.storm_drain_editor
+                
             if self.f2d_widget.grid_tools is not None:
                 self.f2d_widget.grid_tools.close()
                 del self.f2d_widget.grid_tools
@@ -1119,15 +1126,30 @@ class Flo2D(object):
         # show the dialog
         dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
         dlg_levee_elev.show()
-        ok = dlg_levee_elev.exec_()
-        if ok:
-            if dlg_levee_elev.methods:
-                pass
+        
+        while True:
+            ok = dlg_levee_elev.exec_()
+            if ok:
+                if dlg_levee_elev.methods:
+                    break
+#                 else:
+#                     self.uc.show_warn('Please choose at least one crest elevation source!')    
             else:
-                self.uc.show_warn('Please choose at least one crest elevation source!')
                 return
-        else:
-            return
+
+
+
+
+#         ok = dlg_levee_elev.exec_()
+#         if ok:
+#             if dlg_levee_elev.methods:
+#                 pass
+#             else:
+#                 self.uc.show_warn('Please choose at least one crest elevation source!')
+#                 return
+#         else:
+#             return        
+        
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.schematize_levees()
