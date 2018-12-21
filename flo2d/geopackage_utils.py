@@ -13,7 +13,6 @@ from functools import wraps
 from collections import defaultdict
 from .user_communication import UserCommunication
 
-
 def connection_required(fn):
     """
     Checking for active connection object.

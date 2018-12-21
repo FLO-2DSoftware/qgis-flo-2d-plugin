@@ -48,6 +48,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.browse_btn.clicked.connect(self.get_xyz_file)
         self.xyz_line.textChanged.connect(self.activate_import)
         self.import_btn.clicked.connect(self.run_import_z)
+        self.buttonBox.accepted.connect(self.check_sources)
 
     def get_xyz_file(self):
         s = QSettings()
@@ -75,6 +76,11 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn('Could not import 3D levee lines data!')
+
+    def check_sources(self):
+        if not self.methods:
+            self.uc.show_warn('Please choose at least one crest elevation source!')
+            return False
 
     def import_z_data(self):
         elev_points_lyr = self.lyrs.data['user_elevation_points']['qlyr']
