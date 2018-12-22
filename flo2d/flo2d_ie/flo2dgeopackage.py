@@ -1463,9 +1463,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Totally blocked grid elements:
                 for row in self.execute(tbc_sql):
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    collapse =[collapse if collapse is not None else 0]
+                    cllapse = collapse[0]
+                    cllapse =[cllapse if cllapse is not None else 0]
                     cell = row[0]
-                    if collapse[0]:
+                    if cllapse[0] == 1:
                         cell  = -cell
                     a.write(line2.format(cell))
                     
@@ -1476,9 +1477,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     any_blocked = sum(row) -row[0] -row[1]
                     if any_blocked > 0:
                         collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                        collapse =[collapse if collapse is not None else 0]
+                        cllapse = collapse[0]
+                        cllapse =[cllapse if cllapse is not None else 0]
                         cell = row[0]
-                        if collapse[0]:
+                        if cllapse[0] == 1:
                             cell  = -cell
                         a.write(line3.format(cell, *row[2:]))
     #                     a.write(line3.format(*row))

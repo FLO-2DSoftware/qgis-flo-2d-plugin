@@ -402,7 +402,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     grid1 = f1['grid_fid']
                     if grid1 == grid0:
                         # Accumulate values for all fields of this duplicate cell.
-                        area_fid += f1['area_fid']
+#                         area_fid += f1['area_fid']
                         arf += f1['arf']
                         wrf1 += f1['wrf1']
                         wrf2 += f1['wrf2']
