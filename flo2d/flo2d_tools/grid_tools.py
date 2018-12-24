@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import sys
 import math
 import uuid
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -318,6 +319,19 @@ def debugMsg(msg_string):
     msgBox.setText(msg_string)
     msgBox.exec_()
 
+def show_error(msg):
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    filename = exc_tb.tb_frame.f_code.co_filename
+    function = exc_tb.tb_frame.f_code.co_name
+    line = str(exc_tb.tb_lineno)
+    ms_box = QMessageBox(QMessageBox.Critical, "Error",msg  + "\n\n" +
+                         "Error:\n   " + str(exc_obj) + "\n\n" +
+                         "In file:\n   " + filename + "\n\n" +
+                         "In function:\n   " +  function  + "\n\n" +
+                         "On line " + line)
+    ms_box.exec_()
+    ms_box.show()
+    
 
 def polygons_statistics(vlayer, rlayer, statistics):
     rlayer_src = rlayer.source()
@@ -676,63 +690,6 @@ def clustered_features(polygons, fields, *columns, **columns_map):
                 new_feat.setAttribute(col, val)
             yield new_feat
 
-
-def calculate_arfwrf(grid, areas):
-    """
-    Generator which calculates ARF and WRF values based on polygons representing blocked areas.
-    """
-    sides = (
-        (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
-        (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
-        (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
-        (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
-        (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
-        (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
-        (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
-        (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
-    )
-    allfeatures, index = spatial_index(areas)
-    features = grid.getFeatures()
-    first = next(features)
-    grid_area = first.geometry().area()
-    grid_side = math.sqrt(grid_area)
-    octagon_side = grid_side / 2.414
-    half_square = grid_side * 0.5
-    half_octagon = octagon_side * 0.5
-    empty_wrf = (0,) * 8
-    full_wrf = (1,) * 8
-    features.rewind()
-    for feat in features:
-        geom = feat.geometry()
-        fids = index.intersects(geom.boundingBox())
-        for fid in fids:
-            f = allfeatures[fid]
-            fgeom = f.geometry()
-            farf = int(f['calc_arf'])
-            fwrf = int(f['calc_wrf'])
-            inter = fgeom.intersects(geom)
-            if inter is True:
-                areas_intersection = fgeom.intersection(geom)
-                arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
-                centroid = geom.centroid()
-                centroid_wkt = centroid.asWkt()
-                if arf >= 0.9:
-                    yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf)
-                    continue
-                else:
-                    pass
-                grid_center = centroid.asPoint()
-                wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
-                wrf_geoms = (QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
-                if fwrf == 1:
-                    wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
-                else:
-                    wrf = empty_wrf
-                yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf)
-            else:
-                pass
-
-
 def calculate_spatial_variable(grid, areas):
     """
     Generator which calculates values based on polygons representing values.
@@ -897,18 +854,104 @@ def evaluate_arfwrf(gutils, grid, areas):
         the user blocked areas.
 
     """
-    del_cells = 'DELETE FROM blocked_cells;'
-    qry_cells = ['''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
-    gutils.execute(del_cells)
+    try:
+        nulls = 0
+        del_cells = 'DELETE FROM blocked_cells;'
+        qry_cells = ['''INSERT INTO blocked_cells (geom, grid_fid, area_fid, arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
+        gutils.execute(del_cells)
+    
+        for row, was_null in calculate_arfwrf(grid, areas):
+            # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
+            point_wkt = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
+            point_gpb = gutils.wkt_to_gpb(point_wkt)
+            new_row = (point_gpb,) + row[1:]
+            qry_cells.append(new_row)
+            
+            if was_null:
+                nulls += 1
+    
+        gutils.batch_execute(qry_cells)
+        
+                
+        if nulls > 0:
+            ms_box = QMessageBox(QMessageBox.Warning, "Warning", 
+                                "Calculation of the area reduction factors encountered NULL values in\n" +
+                                "the atributes of the User Blocked Areas layer.\n\n" +
+                                str(nulls) + " intersections with the Grid layer were performed but their\n" +
+                                "references to the NULL values may affect its related FLO-2D funtionality.")
 
-    for row in calculate_arfwrf(grid, areas):
-        # "row" is a tuple like  (u'Point (368257 1185586)', 1075L, 1L, 0.06, 0.0, 1.0, 0.0, 0.0, 0.14, 0.32, 0.0, 0.0)
-        point_wkt = row[0]   # Fist element of tuple "row" is a POINT (centroid of cell?)
-        point_gpb = gutils.wkt_to_gpb(point_wkt)
-        new_row = (point_gpb,) + row[1:]
-        qry_cells.append(new_row)
-
-    gutils.batch_execute(qry_cells)
+            ms_box.exec_()
+            ms_box.show()     
+                  
+        return True
+        
+    except:
+        show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+                   '_______________________________________________________________________________')
+        return False
+    
+def calculate_arfwrf(grid, areas):
+    """
+    Generator which calculates ARF and WRF values based on polygons representing blocked areas.
+    """
+    try:
+        sides = (
+            (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
+            (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
+            (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
+            (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
+            (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
+            (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
+            (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
+            (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
+        )
+        was_null = False
+        allfeatures, index = spatial_index(areas)
+        features = grid.getFeatures()
+        first = next(features)
+        grid_area = first.geometry().area()
+        grid_side = math.sqrt(grid_area)
+        octagon_side = grid_side / 2.414
+        half_square = grid_side * 0.5
+        half_octagon = octagon_side * 0.5
+        empty_wrf = (0,) * 8
+        full_wrf = (1,) * 8
+        features.rewind()
+        for feat in features:
+            geom = feat.geometry()
+            fids = index.intersects(geom.boundingBox())
+            for fid in fids:
+                f = allfeatures[fid]
+                fgeom = f.geometry()
+                if f['calc_arf'] == NULL or  f['calc_wrf'] == NULL:
+                    was_null = True
+                farf = int(1 if f['calc_arf'] == NULL else f['calc_arf'])
+                fwrf = int(1 if f['calc_wrf'] == NULL else f['calc_wrf'])
+                inter = fgeom.intersects(geom)
+                if inter is True:
+                    areas_intersection = fgeom.intersection(geom)
+                    arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
+                    centroid = geom.centroid()
+                    centroid_wkt = centroid.asWkt()
+                    if arf >= 0.9:
+                        yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        continue
+                    else:
+                        pass
+                    grid_center = centroid.asPoint()
+                    wrf_s = (f(grid_center.x(), grid_center.y(), half_square, half_octagon) for f in sides)
+                    wrf_geoms = (QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)]) for x1, y1, x2, y2 in wrf_s)
+                    if fwrf == 1:
+                        wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
+                    else:
+                        wrf = empty_wrf
+                    yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
+                else:
+                    pass
+        
+    except:
+        show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+                   '_______________________________________________________________________________')     
 
 
 def evaluate_spatial_tolerance(gutils, grid, areas):

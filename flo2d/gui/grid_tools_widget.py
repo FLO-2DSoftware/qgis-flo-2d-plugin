@@ -357,17 +357,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
             user_arf_lyr = self.lyrs.data['user_blocked_areas']['qlyr']
-            evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr)
-            if self.replace_ARF_WRF_duplicates():
-                arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
-                arf_lyr.reload()
-                self.lyrs.update_layer_extents(arf_lyr)
-
-                self.lyrs.update_style_blocked(arf_lyr.id())
-                self.iface.mapCanvas().clearCache()
-                user_arf_lyr.triggerRepaint()
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info('ARF and WRF values calculated!')
+            if evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr):
+                if self.replace_ARF_WRF_duplicates():
+                    arf_lyr = self.lyrs.data['blocked_cells']['qlyr']
+                    arf_lyr.reload()
+                    self.lyrs.update_layer_extents(arf_lyr)
+    
+                    self.lyrs.update_style_blocked(arf_lyr.id())
+                    self.iface.mapCanvas().clearCache()
+                    user_arf_lyr.triggerRepaint()
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info('ARF and WRF values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
