@@ -208,9 +208,15 @@ class GreenAmpt(object):
 
     @staticmethod
     def calculate_xksat(parts):
-        xksat_gen = (area * log(xksat) for xksat, area in parts if xksat > 0)
-        avg_xksat = round(exp(sum(xksat_gen)), 2)
+        xksat_gen = (area * log10(xksat) for xksat, area in parts if xksat > 0)
+        areaTotal = sum(area for xksat, area in parts)
+        avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4)
         return avg_xksat
+    
+            
+#         xksat_gen = (area * log(xksat) for xksat, area in parts if xksat > 0)
+#         avg_xksat = round(exp(sum(xksat_gen)), 2)
+#         return avg_xksat
 
     @staticmethod
     def calculate_psif(avg_xksat):
@@ -257,12 +263,27 @@ class GreenAmpt(object):
         if avg_xksat < 0.4:
             if vcCheck:
                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+
+                pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
+
+                xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
             else:
-                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)    
-            xksatc = avg_xksat * sum(pc_gen)
+                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
+                
+                xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
         else:
             xksatc = avg_xksat
-        return xksatc
+        return xksatc        
+        
+#         if avg_xksat < 0.4:
+#             if vcCheck:
+#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+#             else:
+#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)    
+#             xksatc = avg_xksat * sum(pc_gen)
+#         else:
+#             xksatc = avg_xksat
+#         return xksatc
 
     @staticmethod
     def calculate_iabstr(parts):
