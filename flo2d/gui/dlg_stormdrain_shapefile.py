@@ -380,6 +380,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     fields = self.user_swmm_nodes_lyr.fields()
                     new_feats = []
+                    outside_inlets = ""
                     
                     inlets_shapefile = self.inlets_shapefile_cbo.currentText()
                     group =  self.lyrs.group
@@ -425,7 +426,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         cell = self.gutils.grid_on_point(point.x(), point.y())
                         if cell is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Inlet/junction  " + name + "  is outside the computational domain!")
+                            outside_inlets  += "\n" + name
+#                             self.uc.show_warn("Inlet/junction  " + name + "  is outside the computational domain!")
                             continue    
                                             
                         new_geom = QgsGeometry.fromPointXY(point)
@@ -477,11 +479,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.user_swmm_nodes_lyr.removeSelection()
 
                     QApplication.restoreOverrideCursor()
+                    
+                    if outside_inlets != "":
+                       self.uc.show_warn("The following inlets/junctions are outside the computational domain!\n" + outside_inlets) 
+                        
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0451: creation of Storm Drain Modes (Inlets) layer failed!"
+                    self.uc.show_error("ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed!"
                                +'\n__________________________________________________', e)
+                    load_inlets = False
 
             # Load outfalls from shapefile:
             if load_outfalls:
@@ -489,6 +496,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     fields = self.user_swmm_nodes_lyr.fields()
                     new_feats = []
+                    outside_outfalls = ""
 
                     outfalls_shapefile = self.outfalls_shapefile_cbo.currentText()
                     lyr = self.lyrs.get_layer_by_name(outfalls_shapefile, self.lyrs.group).layer()
@@ -526,7 +534,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         cell = self.gutils.grid_on_point(point.x(), point.y())
                         if cell is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Outfall  " + name + "  is outside the computationsl domain!")
+                            outside_outfalls  += "\n" + name
+#                             self.uc.show_warn("Outfall  " + name + "  is outside the computational domain!")
                             continue                        
                         
                         new_geom = QgsGeometry.fromPointXY(point)
@@ -579,10 +588,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     QApplication.restoreOverrideCursor()
 
+                    if outside_outfalls != "":
+                       self.uc.show_warn("The following outfalls are outside the computational domain!\n" + outside_outfalls) 
+                       
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0454: creation of Storm Drain Modes (Outfalls) layer failed!", e)
-
+                    self.uc.show_error("ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed!"
+                               +'\n__________________________________________________', e)                    
+                    load_outfalls = False
+                    
             if load_conduits:
                 try:
                     fields = self.user_swmm_conduits_lyr.fields()
@@ -671,28 +685,30 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
 
                     if no_in_out != 0:
-                        self.uc.show_warn(str(no_in_out) + " conduits have no inlet and/or outlet!\n" +
-                                                           "The value '?' was assigned to them. It will cause errors during their processing.\n" +
+                        self.uc.show_warn(str(no_in_out) + " conduits have no inlet and/or outlet!\n\n" +
+                                                           "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n" +
                                                            "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?" )                     
                         
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0500: creation of Storm Drain Modes (Conduits) layer failed!", e)
+                    self.uc.show_error("ERROR 070618.0500: creation of Storm Drain Conduits User layer failed!"
+                               +'\n__________________________________________________', e)                    
+                    load_conduits = False
             
             self.save_storm_drain_shapefile_fields()
 
             if (load_inlets or load_outfalls) and load_conduits:
-                self.uc.show_info("Importing SWMM input data finished!\n\n" +
+                self.uc.show_info("Importing Storm Drain nodes and conduits data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
             elif not (load_inlets or load_outfalls) and load_conduits:
-                self.uc.show_info("Importing SWMM input data finished!\n\n" +
+                self.uc.show_info("Importing Storm Drain conduits data finished!\n\n" +
                                   "The 'Storm Drain Conduits' layer was created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")   
             elif (load_inlets or load_outfalls) and not load_conduits:
-                self.uc.show_info("Importing SWMM input data finished!\n\n" +
+                self.uc.show_info("Importing Storm Drain nodes input data finished!\n\n" +
                                   "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
@@ -853,7 +869,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value('sf_conduits_name') is None else s.value('sf_conduits_name'))
             self.conduit_name_FieldCbo.setCurrentIndex(val)
-                    
+             
+            val = int(-1 if s.value('sf_conduits_from_inlet') is None else s.value('sf_conduits_from_inlet'))
+            self.conduit_from_inlet_FieldCbo.setCurrentIndex(val)             
+              
             val = int(-1 if s.value('sf_conduits_to_outlet') is None else s.value('sf_conduits_to_outlet'))
             self.conduit_to_outlet_FieldCbo.setCurrentIndex(val)
                      

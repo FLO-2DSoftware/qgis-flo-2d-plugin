@@ -701,7 +701,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if len(new_nodes) == 0 and len(new_conduits) == 0:
                 self.uc.show_info("No nodes or conduits were defined in file\n\n" + swmm_file)
             else:
-                self.uc.show_info("Importing SWMM input data finished!\n\n" +
+                self.uc.show_info("Importing Storm Drain input data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")

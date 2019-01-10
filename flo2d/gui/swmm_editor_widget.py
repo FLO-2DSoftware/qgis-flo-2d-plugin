@@ -449,11 +449,11 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
             self.swmm_lyr.triggerRepaint()
             self.swmm_lyr.removeSelection()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info('Importing SWMM input data finished!')
+            self.uc.show_info('Importing Storm Drain input data finished!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn('Importing SWMM input data failed! Please check your SWMM input data.')
+            self.uc.bar_warn('Importing Storm Drain input data failed! Please check your SWMM input data.')
 
     def update_swmm_INP_file(self):
         s = QSettings()
