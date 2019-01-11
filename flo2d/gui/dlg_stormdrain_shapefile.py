@@ -578,7 +578,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     if not self.inlets_append_chbox.isChecked() and not load_inlets:
                         remove_features(self.user_swmm_nodes_lyr)
-                    # remove_features(self.user_swmm_nodes_lyr)
+
                     self.user_swmm_nodes_lyr.startEditing()
                     self.user_swmm_nodes_lyr.addFeatures(new_feats)
                     self.user_swmm_nodes_lyr.commitChanges()
@@ -708,7 +708,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")   
             elif (load_inlets or load_outfalls) and not load_conduits:
-                self.uc.show_info("Importing Storm Drain nodes input data finished!\n\n" +
+                self.uc.show_info("Importing Storm Drain nodes data finished!\n\n" +
                                   "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
@@ -923,35 +923,4 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             
             val = int(-1 if s.value('sf_conduits_flap_gate') is None else s.value('sf_conduits_flap_gate'))
             self.conduit_flap_gate_FieldCbo.setCurrentIndex(val)
-                        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
            
