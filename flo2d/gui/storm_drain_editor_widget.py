@@ -614,8 +614,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_conduits_lyr)
             fields = self.user_swmm_conduits_lyr.fields()
             new_conduits = []
+            conduit_inlets_not_found = ""
+            conduit_outlets_not_found = ""
+            
             for name, values in list(storm_drain.INP_conduits.items()):
-
+                
+                go_go = True
+                
                 conduit_inlet = values['conduit_inlet'] if  'conduit_inlet' in values else 0
                 conduit_outlet = values['conduit_outlet'] if  'conduit_outlet' in values else 0
                 conduit_length  = float(values['conduit_length']) if  'conduit_length' in values else 0
@@ -643,8 +648,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 feat.setFields(fields)
 
                 if not conduit_inlet in storm_drain.INP_nodes:
-                    continue
+                    conduit_inlets_not_found += conduit_inlet + "\n"  
+                    go_go = False
+                if not conduit_outlet in storm_drain.INP_nodes:
+                    conduit_outlets_not_found += conduit_outlet + "\n"  
+                    go_go = False   
                 
+                if not go_go:
+                    continue      
+                      
                 x1 = float(storm_drain.INP_nodes[conduit_inlet]['x'])
                 y1 = float(storm_drain.INP_nodes[conduit_inlet]['y'])
                 x2 = float(storm_drain.INP_nodes[conduit_outlet]['x'])
@@ -701,7 +713,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if len(new_nodes) == 0 and len(new_conduits) == 0:
                 self.uc.show_info("No nodes or conduits were defined in file\n\n" + swmm_file)
             else:
-                self.uc.show_info("Importing Storm Drain input data finished!\n\n" +
+                if conduit_inlets_not_found != "":
+                       self.uc.show_warn("The following conduit inlets were not found!\n\n" + conduit_inlets_not_found) 
+
+                if conduit_outlets_not_found != "":
+                       self.uc.show_warn("The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
+                                            
+                self.uc.show_info("Importing Storm Drain data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
                                   "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
