@@ -1130,25 +1130,13 @@ class Flo2D(object):
         while True:
             ok = dlg_levee_elev.exec_()
             if ok:
-                if dlg_levee_elev.methods:
-                    break
-#                 else:
-#                     self.uc.show_warn('Please choose at least one crest elevation source!')    
+                if dlg_levee_elev.methods: 
+                    if 1 in dlg_levee_elev.methods:
+                        break 
+                    else:
+                        self.uc.show_info('Levee user lines required!')
             else:
-                return
-
-
-
-
-#         ok = dlg_levee_elev.exec_()
-#         if ok:
-#             if dlg_levee_elev.methods:
-#                 pass
-#             else:
-#                 self.uc.show_warn('Please choose at least one crest elevation source!')
-#                 return
-#         else:
-#             return        
+                return       
         
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1156,7 +1144,7 @@ class Flo2D(object):
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info('Values assigned!')
+            self.uc.show_info('Values assigned to the Schematic Levees layer!')
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())

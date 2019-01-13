@@ -11,7 +11,7 @@
 import os
 import traceback
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox
 from .ui_utils import load_ui
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
@@ -35,21 +35,42 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.corrector = LeveesElevation(self.gutils, self.lyrs)
         self.corrector.setup_layers()
         self.methods = {}
-
+        
+        self.buttonBox.button(QDialogButtonBox.Ok).setText("Create Levees")
         # connections
         self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
         self.elev_points_chbox.stateChanged.connect(self.points_checked)
         self.elev_lines_chbox.stateChanged.connect(self.lines_checked)
 
-        self.elev_polygons_chbox.setChecked(True)
-        self.elev_points_chbox.setChecked(True)
-        self.elev_lines_chbox.setChecked(True)
-
+        self.enable_sources()
         self.browse_btn.clicked.connect(self.get_xyz_file)
         self.xyz_line.textChanged.connect(self.activate_import)
         self.import_btn.clicked.connect(self.run_import_z)
         self.buttonBox.accepted.connect(self.check_sources)
 
+    def enable_sources(self):
+        # Check presence of layers:
+        if self.gutils.is_table_empty('user_elevation_points'):
+            self.elev_points_chbox.setChecked(False)
+            self.elev_points_chbox.setEnabled(False)
+        else:
+           self.elev_points_chbox.setChecked(True) 
+           self.elev_points_chbox.setEnabled(True) 
+              
+        if self.gutils.is_table_empty('user_levee_lines'):
+            self.elev_lines_chbox.setChecked(False)
+            self.elev_lines_chbox.setEnabled(False)
+        else:
+            self.elev_lines_chbox.setChecked(True)
+            self.elev_lines_chbox.setEnabled(True)
+
+        if self.gutils.is_table_empty('user_elevation_polygons'):
+            self.elev_polygons_chbox.setChecked(False)
+            self.elev_polygons_chbox.setEnabled(False)
+        else:
+            self.elev_polygons_chbox.setChecked(True)
+            self.elev_polygons_chbox.setEnabled(True)        
+        
     def get_xyz_file(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastXYZDir', '')
@@ -71,7 +92,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def run_import_z(self):
         try:
-            self.import_z_data()
+            self.import_z_data() 
+            self.enable_sources()  
             self.uc.bar_info('3D levee lines data imported!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
