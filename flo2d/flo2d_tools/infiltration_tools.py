@@ -7,7 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from math import log, exp
+from math import log, exp, log10
 from qgis.PyQt.QtWidgets import QApplication
 from .grid_tools import poly2poly_geos
 from ..user_communication import UserCommunication
@@ -76,7 +76,14 @@ class InfiltrationCalculator(object):
         self.rtimpl_fld = rtimpl_fld
         
         self.vcCheck = vcCheck
+        
+        # get area of an item in self.grid_lyr.
+        
+        self.gridArea = None
+        gridfeat = next(self.grid_lyr.getFeatures())
+        self.gridArea = gridfeat.geometry().area()
 
+                       
     def setup_scs_single(self, curve_lyr, curve_fld='CurveNum'):
         self.curve_lyr = curve_lyr
         self.curve_fld = curve_fld
@@ -109,8 +116,7 @@ class InfiltrationCalculator(object):
                     self.eff_fld,
                     self.soil_depth_fld
                 )
-            except Exception as e:
-                QApplication.restoreOverrideCursor() 
+            except Exception as e: 
                 self.uc.show_error('ERROR 051218.2035: Green-Ampt infiltration failed\nwhile intersecting soil layer with grid.'
                                    +'\n__________________________________________________', e)   
                 return grid_params
@@ -120,13 +126,20 @@ class InfiltrationCalculator(object):
                     xksat_parts = [(row[0], row[-1]) for row in values]
                     imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
                     avg_soil_depth = sum(row[3] * row[-1] for row in values)
-                    avg_xksat = green_ampt.calculate_xksat(xksat_parts)
+                    avg_xksat = green_ampt.calculate_xksat(xksat_parts, self.gridArea)
+#                     avg_xksat = green_ampt.calculate_xksat(xksat_parts)
                     psif = green_ampt.calculate_psif(avg_xksat)
                     rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
     
                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
-                except ValueError as e:
-                    raise ValueError('Calculation of soil variables failed for grid cell with fid: {}'.format(gid)) from e
+                except Exception as e:
+                    self.uc.show_error('ERROR 1401181951.2035: Green-Ampt infiltration failed'
+                                       + '\nwhile intersecting soil layer with grid {}'.format(gid)
+                                       +'\n__________________________________________________', e)   
+                    return grid_params
+                    
+#                 except ValueError as e:
+#                     raise ValueError('Calculation of soil variables failed for grid cell with fid: {}'.format(gid)) from e
     
             land_values = poly2poly_geos(
                 self.grid_lyr,
@@ -149,7 +162,8 @@ class InfiltrationCalculator(object):
                     rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
     
                     dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)
+                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck, self.gridArea)                    
+#                     xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)                   
                     iabstr = green_ampt.calculate_iabstr(ia_parts)
                     rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
     
@@ -165,7 +179,6 @@ class InfiltrationCalculator(object):
                     raise ValueError('Calculation of land use variables failed for grid cell with fid: {}'.format(gid)) from e
 
         except Exception as e:
-            QApplication.restoreOverrideCursor() 
             self.uc.show_error('ERROR 051218.2001: Green-Ampt infiltration failed!.'
                                +'\n__________________________________________________', e)
             
@@ -206,17 +219,34 @@ class InfiltrationCalculator(object):
 
 class GreenAmpt(object):
 
-    @staticmethod
-    def calculate_xksat(parts):
-        xksat_gen = (area * log10(xksat) for xksat, area in parts if xksat > 0)
-        areaTotal = sum(area for xksat, area in parts)
-        avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4)
-        return avg_xksat
-    
-            
-#         xksat_gen = (area * log(xksat) for xksat, area in parts if xksat > 0)
-#         avg_xksat = round(exp(sum(xksat_gen)), 2)
-#         return avg_xksat
+    def __init__(self):
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        
+#     @staticmethod
+    def calculate_xksat(self, parts, totalGridArea, globalXKSAT = 0.06):
+        try: 
+            xksat_gen = [area * log10(xksat) for xksat, area in parts if xksat > 0]
+            areaTotal = sum(area for xksat, area in parts)
+            if areaTotal < totalGridArea: # check if intersected parts area is less than grid area, assumes same units. Values would differ if soils did not completely cover cell.
+                if globalXKSAT > 0: # if it's zero, we don't need to do anything and can't evaluate log10. If it's less than zero, it's not valid input.
+                    xksat_gen.append((totalGridArea - areaTotal) * log10(globalXKSAT))
+                areaTotal = totalGridArea
+            avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4)
+            return avg_xksat    
+                
+#             xksat_gen = (area * log10(xksat) for xksat, area in parts if xksat > 0)
+#             areaTotal = sum(area for xksat, area in parts)
+#             if areaTotal == 0:
+#                 areaTotal = 1    
+#             avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4) 
+#             return avg_xksat
+     
+        except Exception as e:
+            QApplication.restoreOverrideCursor() 
+            self.uc.show_error("ERROR 140119.1715: Green-Ampt infiltration failed!."
+                               +"\nError while calculating xksat."
+                               +"\n__________________________________________________", e)   
+
 
     @staticmethod
     def calculate_psif(avg_xksat):
@@ -259,21 +289,73 @@ class GreenAmpt(object):
         return dtheta
 
     @staticmethod
-    def calculate_xksatc(avg_xksat, parts, vcCheck):
+    def calculate_xksatc(avg_xksat, parts, vcCheck, totalGridArea, defaultVCAdj = 1):
         if avg_xksat < 0.4:
             if vcCheck:
                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
 
                 pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
-
-                xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
+                areaTotal = sum(area for xksat, area in parts)
+                if areaTotal < totalGridArea:
+                    if areaTotal == 0:
+                        # no intersecting area, calculate using the defaultVCAdj value
+                        xksatc = avg_xksat * defaultVCAdj
+                    else:
+                        # composite using the default VCAdj value
+                        xksatc = avg_xksat * ((sum(pc_gen) + sum(pc_noadj) + defaultVCAdj * (totalGridArea - areaTotal)) / totalGridArea)
+                else:
+                    xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
             else:
                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
-                
-                xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
+                areaTotal = sum(area for xksat, area in parts)
+                if areaTotal < totalGridArea:
+                    if areaTotal == 0:
+                        # no intersecting area, calculate using the defaultVCAdj value
+                        xksatc = avg_xksat * defaultVCAdj
+                    else:
+                        # composite using the default VCAdj value
+                        xksatc = avg_xksat * (sum(pc_gen) +  defaultVCAdj * (totalGridArea - areaTotal))/ totalGridArea # divides by area for areal averaging
+                else:
+                    xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
         else:
             xksatc = avg_xksat
         return xksatc        
+    
+#         if avg_xksat < 0.4:
+#             if vcCheck:
+#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+# 
+#                 pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
+#                 areaTotal = sum(area for vc, area in parts)
+#                 if areaTotal == 0:
+#                     areaTotal = 1
+#                 xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/ areaTotal
+#             else:
+#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
+#                 areaTotal = sum(area for vc, area in parts)
+#                 if areaTotal ==  0:
+#                     areaTotal = 1           
+#                 xksatc = avg_xksat * sum(pc_gen) /areaTotal  # divides by area for areal averaging
+#         else:
+#             xksatc = avg_xksat
+#         return xksatc        
+        
+        
+        
+#         if avg_xksat < 0.4:
+#             if vcCheck:
+#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+# 
+#                 pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
+# 
+#                 xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
+#             else:
+#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
+#                 
+#                 xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
+#         else:
+#             xksatc = avg_xksat
+#         return xksatc        
         
 #         if avg_xksat < 0.4:
 #             if vcCheck:
