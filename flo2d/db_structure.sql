@@ -2444,8 +2444,8 @@ CREATE TABLE "user_infiltration" (
     "green_char" TEXT DEFAULT 'F', --CHECK("green_char" = 'F' OR "green_char" = 'C')
     "hydc" REAL DEFAULT 0,
     "soils" REAL DEFAULT 0,
-    "dtheta" REAL DEFAULT 0,
-    "abstrinf" REAL DEFAULT 0,
+    "dtheta" REAL DEFAULT 0.3,
+    "abstrinf" REAL DEFAULT 0.1,
     "rtimpf" REAL DEFAULT 0,
     "soil_depth" REAL DEFAULT 0,
     "hydconch" REAL DEFAULT 0,
