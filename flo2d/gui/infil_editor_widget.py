@@ -500,8 +500,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 for i, (gid, params) in enumerate(grid_params.items(), 1):
                     if not 'dtheta' in params:
                         non_intercepted.append(gid)
-                        params['dtheta'] = 0
-                        params['abstrinf'] = 0
+                        params['dtheta'] = 0.3
+                        params['abstrinf'] = 0.1
                     par = (params['hydc'], params['soils'], params['dtheta'], params['abstrinf'], params['rtimpf'], params['soil_depth'])
                     geom = self.gutils.grid_geom(gid)
                     values = (i, geom) + tuple(round(p, 3) for p in par)
@@ -514,10 +514,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 self.schema_green.triggerRepaint()
                 self.gutils.enable_geom_triggers()
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info('Calculating Green-Ampt parameters finished!')
+                
                 if non_intercepted:
-                    self.uc.show_info('WARNING: ' + str(len(non_intercepted)) + ' cells didn´t intercept the land use shapefile.\n' +
+                    self.uc.show_info("WARNING 150119.0354: Calculating Green-Ampt parameters finished, but \n"
+                                        + str(len(non_intercepted)) + ' cells didn´t intercept the land use shapefile.\n' +
                                       'Default values were assigned for the infiltration.')
+                else:
+                    self.uc.show_info('Calculating Green-Ampt parameters finished!')    
                     
             else:
                 QApplication.restoreOverrideCursor()
