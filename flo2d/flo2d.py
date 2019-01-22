@@ -157,6 +157,8 @@ class Flo2D(object):
         self.f2d_widget.fpxsec_editor.populate_cbos()
 
         self.f2d_widget.infil_editor.setup_connection()
+        
+        self.f2d_widget.levee_and_breach_editor.setup_connection()
 
 #         self.f2d_widget.swmm_editor.setup_connection()
 

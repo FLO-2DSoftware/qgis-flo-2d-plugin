@@ -9,16 +9,13 @@
 
 from qgis.PyQt.QtCore import Qt
 from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
-
 from qgis.PyQt.QtWidgets import QTableWidgetItem
-
-
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import float_or_zero
 
 uiDialog, qtBaseClass = load_ui('channel_geometry')
-
 
 class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
@@ -483,41 +480,41 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.grid_type_cbo.setCurrentIndex(0 if type == "R" else 1 if type == "V" else 2 if type == "T" else 3)
         self.enable_or_disable_items_according_to_type(type)
 
-        self.manning_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 2)))
-        self.channel_length_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 3)))
+        self.manning_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 2)))
+        self.channel_length_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 3)))
         self.right_bank_cell_lbl.setText(str(self.int_or_zero(self.segment_elements_tblw.item(row, 11))))
 
         if type == "R":
-            self.left_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 4)))
-            # self.right_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row,5)))
-            self.average_channel_width_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 8)))
-            self.thalweg_channel_depth_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 9)))
+            self.left_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 4)))
+            # self.right_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row,5)))
+            self.average_channel_width_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 8)))
+            self.thalweg_channel_depth_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 9)))
 
         elif type == "V":
-            self.left_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 4)))
-            # self.right_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row,5)))
-            self.thalweg_channel_depth_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 9)))
-            self.first_area_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 12)))
-            self.first_area_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 13)))
-            self.first_wetted_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 14)))
-            self.first_wetted_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 15)))
-            self.first_top_width_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 16)))
-            self.first_top_width_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 17)))
-            self.second_depth_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 18)))
-            self.second_area_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 19)))
-            self.second_area_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 20)))
-            self.second_wetted_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 21)))
-            self.second_wetted_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 22)))
-            self.second_top_width_coeff_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 23)))
-            self.second_top_width_exp_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 24)))
+            self.left_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 4)))
+            # self.right_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row,5)))
+            self.thalweg_channel_depth_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 9)))
+            self.first_area_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 12)))
+            self.first_area_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 13)))
+            self.first_wetted_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 14)))
+            self.first_wetted_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 15)))
+            self.first_top_width_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 16)))
+            self.first_top_width_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 17)))
+            self.second_depth_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 18)))
+            self.second_area_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 19)))
+            self.second_area_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 20)))
+            self.second_wetted_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 21)))
+            self.second_wetted_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 22)))
+            self.second_top_width_coeff_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 23)))
+            self.second_top_width_exp_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 24)))
 
         elif type == "T":
-            self.left_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 4)))
-            # self.right_bank_elevation_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row,5)))
-            self.average_channel_width_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 8)))
-            self.thalweg_channel_depth_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 9)))
-            self.left_side_slope_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 6)))
-            self.right_side_slope_dbox.setValue(self.float_or_zero(self.segment_elements_tblw.item(row, 7)))
+            self.left_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 4)))
+            # self.right_bank_elevation_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row,5)))
+            self.average_channel_width_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 8)))
+            self.thalweg_channel_depth_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 9)))
+            self.left_side_slope_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 6)))
+            self.right_side_slope_dbox.setValue(float_or_zero(self.segment_elements_tblw.item(row, 7)))
 
         elif type == "N":
             self.cross_section_number_lbl.setText(str(self.int_or_zero(self.segment_elements_tblw.item(row, 10))))
@@ -525,14 +522,6 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         highlight_selected_segment(self.lyrs.data['chan']['qlyr'], self.channel_segment_cbo.currentIndex() + 1)
         highlight_selected_xsection_a(self.gutils, self.lyrs.data['chan_elems']['qlyr'], int(self.grid_element_cbo.currentText()))
-
-    def float_or_zero(self, value):
-        if value is None:
-            return 0
-        elif value.text() == "":
-            return 0
-        else:
-            return float(value.text())
 
     def int_or_zero(self, value):
         if value is None:
@@ -693,30 +682,6 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
     def second_top_width_exp_dbox_valueChanged(self):
         self.update_chan_elem_attr(self.db_name(), "c22", self.second_top_width_exp_dbox.value(), "elem_fid")
         self.update_segment_widget_table(self.second_top_width_exp_dbox, 24)
-
-        # grid_type_cbo.
-        # channel_length_dbox.
-        # left_bank_elevation_dbox.
-        # right_bank_elevation_dbox.
-        # left_side_slope_dbox.
-        # right_side_slope_dbox.
-        # average_channel_width_dbox.
-        # cross_section_number_lbl.
-        # cross_section_name_lbl.
-        # right_bank_cell_lbl.
-        # first_area_coeff_dbox.
-        # first_area_exp_dbox.
-        # first_wetted_coeff_dbox.
-        # first_wetted_exp_dbox.
-        # first_top_width_coeff_dbox.
-        # first_top_width_exp_dbox.
-        # second_depth_dbox.
-        # second_area_coeff_dbox.
-        # second_area_exp_dbox.
-        # second_wetted_coeff_dbox.
-        # second_wetted_exp_dbox.
-        # second_top_width_coeff_dbox.
-        # second_top_width_exp_dbox.
 
     def update_chan_elem_attr(self, table, attr_name, attr_value, id_name):
         id_value =  self.grid_element_cbo.currentText()
