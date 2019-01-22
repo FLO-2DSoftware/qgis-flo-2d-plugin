@@ -13,8 +13,8 @@ from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QIcon
 from qgis.core import QgsRectangle, NULL
 
-month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-               "November", "December"]
+# month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+#                "November", "December"]
 
 
 def load_ui(name):

@@ -603,7 +603,14 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-
+            ('breach_global', {
+                'name': 'Breach Global Data',
+                'sgroup': 'Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            
           # Rain Tables:
 
             ('rain_time_series', {
