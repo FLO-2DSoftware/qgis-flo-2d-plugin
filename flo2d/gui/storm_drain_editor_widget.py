@@ -248,11 +248,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         after = self.gutils.count('user_swmm_nodes')
         if after > before:
             self.swmm_idx = after - 1
-        # elif self.swmm_idx >= 0:
-        #     self.save_attrs()
-        # else:
-        #     return
-        # self.populate_swmm()
+        elif self.swmm_idx >= 0:
+            self.save_attrs()
+        else:
+            return
+#         self.populate_swmm()
+
 
     def revert_swmm_lyr_edits(self):
         user_swmm_nodes_edited = self.lyrs.rollback_lyrs_edits('user_swmm_nodes')

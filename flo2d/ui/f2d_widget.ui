@@ -276,7 +276,7 @@
        <item row="3" column="0">
         <widget class="QgsCollapsibleGroupBox" name="xs_editor_grp">
          <property name="title">
-          <string>User Cross Sections Editor</string>
+          <string>Cross Sections Editor</string>
          </property>
          <property name="collapsed" stdset="0">
           <bool>false</bool>

@@ -383,7 +383,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom1, geom2 = cells[gid1], cells[gid2]
                     chan_conf_sql += [(geom1, i, 0, gid1)]
                     chan_conf_sql += [(geom2, i, 1, gid2)]
-
                 for i, row in enumerate(noexchange, 1):
                     gid = row[-1]
                     geom = self.grid_centroids([gid])[0]
@@ -397,7 +396,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             except Exception:
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn('Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files.')
+                self.uc.show_warn('ERROR 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files.')
                 #self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
 
     def import_xsec(self):
@@ -639,7 +638,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'ibreachsedeqn', 'gbratio', 'gweircoef', 'gbreachtime', 'gzu', 'gzd', 'gzc', 'gcrestwidth', 'gcrestlength',
             'gbrbotwidmax', 'gbrtopwidmax', 'gbrbottomel', 'gd50c', 'gporc', 'guwc', 'gcnc', 'gafrc', 'gcohc', 'gunfcc',
             'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
-            'gsedconmax', 'd50df', 'gunfcdf'
+            'gsedconmax', 'gd50df', 'gunfcdf'
         ]
         local = [
             'geom', 'ibreachdir', 'zu', 'zd', 'zc', 'crestwidth', 'crestlength', 'brbotwidmax', 'brtopwidmax',
@@ -1224,7 +1223,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
      
     def export_chan(self, outdir):
         # check if there are any channels defined.
-        try:
+#         try:
             if self.is_table_empty('chan'):
                 return False
             chan_sql = '''SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
@@ -1281,6 +1280,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         sql, line, fcn_idx, xlen_idx = sqls[typ]    # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
                                                                     # line (format to write), fcn_idx (?), and xlen_idx (?)
                         res = [x if x is not None else '' for x in self.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+
                         res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
                         res.insert(xlen_idx, xlen)  # Add ´xlen' (comming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
@@ -1305,10 +1305,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     
             return True  
               
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1623: exporting CHAN.DAT failed!.\n", e)
-            return False
+#         except Exception as e:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 101218.1623: exporting CHAN.DAT failed!.\n", e)
+#             return False
                          
 
     def export_xsec(self, outdir):
@@ -1325,6 +1325,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             else:
                 pass
+            
             xsec = os.path.join(outdir, 'XSEC.DAT')
             with open(xsec, 'w') as x:
                 for nxecnum, xsecname in chan_n:

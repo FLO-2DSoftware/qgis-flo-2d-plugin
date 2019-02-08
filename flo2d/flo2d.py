@@ -572,6 +572,8 @@ class Flo2D(object):
                     continue
                 else:
                     self.files_used += dat + '\n'
+                    if dat == "CHAN.DAT":
+                        self.files_used += "CHANBANK.DAT" + '\n'  
                     pass
             
             try:
@@ -869,7 +871,7 @@ class Flo2D(object):
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_used != '' or self.files_not_used != '':
-                        self.uc.show_info("Files used by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
+                        self.uc.show_info("Files read by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
 
     @connection_required
     def export_gds(self):

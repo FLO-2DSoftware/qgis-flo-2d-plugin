@@ -1348,10 +1348,10 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatia
 
 CREATE TABLE "levee_general" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "raiselev" REAL, -- RAISELEV, incremental height that all the levee grid element crest elevations are raised
-    "ilevfail" INTEGER, -- ILEVFAIL, switch identifying levee failure mode: 0 for no failure, 1 for prescribed level failure rates, 2 for initiation of levee or dam breach failure routine
+    "raiselev" REAL DEFAULT 0.0, -- RAISELEV, incremental height that all the levee grid element crest elevations are raised
+    "ilevfail" INTEGER DEFAULT 0, -- ILEVFAIL, switch identifying levee failure mode: 0 for no failure, 1 for prescribed level failure rates, 2 for initiation of levee or dam breach failure routine
     "gfragchar" TEXT, -- GFRAGCHAR, global levee fragility curve ID
-    "gfragprob" REAL -- GFRAGPROB, global levee fragility curve failure probability
+    "gfragprob" REAL DEFAULT 0.0 -- GFRAGPROB, global levee fragility curve failure probability
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('levee_general', 'aspatial');
 
@@ -1581,75 +1581,75 @@ SELECT gpkgAddGeometryTriggers('wstime', 'geom');
 
 CREATE TABLE "breach_global" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "ibreachsedeqn" INTEGER, -- IBREACHSEDEQN, sediment transport equation number
-    "gbratio" REAL, -- GBRATIO, global ratio of the initial breach width to breach depth
-    "gweircoef" REAL, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
-    "gbreachtime" REAL, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
-    "gzu" REAL, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
-    "gzd" REAL, -- GZD, global slope of the downstream face of the levee or dam
-    "gzc" REAL, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material
-    "gcrestwidth" REAL, -- GCRESTWIDTH, global crest length of the levee or dam
-    "gcrestlength" REAL, -- GCRESTLENGTH, global crest length of the levee or dam
-    "gbrbotwidmax" REAL, -- GBRBOTWIDMAX, maximum allowable global breach bottom width (ft or m) as constrained by the valley cross section
-    "gbrtopwidmax" REAL, -- GBRTOPWIDMAX, maximum allowable global breach top width (ft or m) as constrained by the valley cross section
-    "gbrbottomel" REAL, -- GBRBOTTOMEL, initial global breach or pipe bottom elevation (ft or m)
-    "gd50c" REAL, -- GD50C, mean sediment size (D50 in mm) of the levee or dam core material
-    "gporc" REAL, -- GPORC, global porosity of the levee or dam core material
-    "guwc" REAL, -- GUWC, global unit weight (lb/ft 3 or N/m 3 ) of the levee or dam core material
-    "gcnc" REAL, -- GCNC, global Manning’s n-value of the levee or dam core material
-    "gafrc" REAL, -- GAFRC, global angle (degrees) of internal friction of the core material for the entire levee or dam, 0 for no core
-    "gcohc" REAL, -- GCOHC, global cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam core material
-    "gunfcc" REAL, -- GUNFCC, global sediment gradient, ratio of D90 to D30 of the levee or dam core material
-    "gd50s" REAL, -- GD50S, mean sediment size (D50 in mm) of the levee or dam shell material
-    "gpors" REAL, -- GPORS, global porosity of the levee or dam shell material
-    "guws" REAL, -- GUWS, global unit weight (lb/ft 3 or N/m 3 ) of the levee or dam shell material
-    "gcns" REAL, -- GCNS, global Manning’s n-value of the levee or dam shell material
-    "gafrs" REAL, -- GAFRS, global angle (degrees) of internal friction of the shell material for the entire levee or dam, 0 for no core
-    "gcohs" REAL, -- GCOHS, global cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam shell material
-    "gunfcs" REAL, -- GUNFCS, global sediment gradient, ratio of D90 to D30 of the levee or dam shell material
-    "ggrasslength" REAL, -- GGRASSLENGTH, global average length of grass (inches or mm) on downstream face
-    "ggrasscond" REAL, -- GGRASSCOND, condition of the grass on the downstream face
-    "ggrassvmaxp" REAL, -- GGRASSVMAXP, global maximum permissible velocity (fps or mps) for a grass-lined downstream face before the grass is eroded
-    "gsedconmax" REAL, -- GSEDCONMAX, global maximum sediment concentration by volume in the breach discharge
-    "d50df" REAL, -- D50DF, mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream face (riprap material)
-    "gunfcdf" REAL -- GUNFCDF, global sediment gradient, ratio of D 90 to D 30 of the downstream face upper one foot of material (riprap)
+    "ibreachsedeqn" INTEGER DEFAULT 0, -- IBREACHSEDEQN, sediment transport equation number
+    "gbratio" REAL DEFAULT 0.0, -- GBRATIO, global ratio of the initial breach width to breach depth
+    "gweircoef" REAL DEFAULT 0.0, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
+    "gbreachtime" REAL DEFAULT 0.0, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
+    "gzu" REAL DEFAULT 0.0, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
+    "gzd" REAL DEFAULT 0.0, -- GZD, global slope of the downstream face of the levee or dam
+    "gzc" REAL DEFAULT 0.0, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material
+    "gcrestwidth" REAL DEFAULT 0.0, -- GCRESTWIDTH, global crest length of the levee or dam
+    "gcrestlength" REAL DEFAULT 0.0, -- GCRESTLENGTH, global crest length of the levee or dam
+    "gbrbotwidmax" REAL DEFAULT 0.0, -- GBRBOTWIDMAX, maximum allowable global breach bottom width (ft or m) as constrained by the valley cross section
+    "gbrtopwidmax" REAL DEFAULT 0.0, -- GBRTOPWIDMAX, maximum allowable global breach top width (ft or m) as constrained by the valley cross section
+    "gbrbottomel" REAL DEFAULT 0.0, -- GBRBOTTOMEL, initial global breach or pipe bottom elevation (ft or m)
+    "gd50c" REAL DEFAULT 0.0, -- GD50C, mean sediment size (D50 in mm) of the levee or dam core material
+    "gporc" REAL DEFAULT 0.4, -- GPORC, global porosity of the levee or dam core material
+    "guwc" REAL DEFAULT 0.0, -- GUWC, global unit weight (lb/ft 3 or N/m 3 ) of the levee or dam core material
+    "gcnc" REAL DEFAULT 0.0, -- GCNC, global Manning’s n-value of the levee or dam core material
+    "gafrc" REAL DEFAULT 0.0, -- GAFRC, global angle (degrees) of internal friction of the core material for the entire levee or dam, 0 for no core
+    "gcohc" REAL DEFAULT 0.0, -- GCOHC, global cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam core material
+    "gunfcc" REAL DEFAULT 0.0, -- GUNFCC, global sediment gradient, ratio of D90 to D30 of the levee or dam core material
+    "gd50s" REAL DEFAULT 0.0, -- GD50S, mean sediment size (D50 in mm) of the levee or dam shell material
+    "gpors" REAL DEFAULT 0.0, -- GPORS, global porosity of the levee or dam shell material
+    "guws" REAL DEFAULT 0.0, -- GUWS, global unit weight (lb/ft 3 or N/m 3 ) of the levee or dam shell material
+    "gcns" REAL DEFAULT 0.0, -- GCNS, global Manning’s n-value of the levee or dam shell material
+    "gafrs" REAL DEFAULT 0.0, -- GAFRS, global angle (degrees) of internal friction of the shell material for the entire levee or dam, 0 for no core
+    "gcohs" REAL DEFAULT 0.0, -- GCOHS, global cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam shell material
+    "gunfcs" REAL DEFAULT 0.0, -- GUNFCS, global sediment gradient, ratio of D90 to D30 of the levee or dam shell material
+    "ggrasslength" REAL DEFAULT 0.0, -- GGRASSLENGTH, global average length of grass (inches or mm) on downstream face
+    "ggrasscond" REAL DEFAULT 0.0, -- GGRASSCOND, condition of the grass on the downstream face
+    "ggrassvmaxp" REAL DEFAULT 0.0, -- GGRASSVMAXP, global maximum permissible velocity (fps or mps) for a grass-lined downstream face before the grass is eroded
+    "gsedconmax" REAL DEFAULT 0.55, -- GSEDCONMAX, global maximum sediment concentration by volume in the breach discharge
+    "gd50df" REAL DEFAULT 0.0, -- D50DF, mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream face (riprap material)
+    "gunfcdf" REAL DEFAULT 0.0 -- GUNFCDF, global sediment gradient, ratio of D 90 to D 30 of the downstream face upper one foot of material (riprap)
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('breach_global', 'aspatial');
 
 CREATE TABLE "breach" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "ibreachdir" INTEGER, -- IBREACHDIR, direction of breach
-    "zu" REAL, -- ZU, slope of the upstream face of the levee or dam
-    "zd" REAL, -- ZD, slope of the downstream face of the levee or dam
-    "zc" REAL, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
-    "crestwidth" REAL, -- CRESTWIDTH, crest width of the levee or dam
-    "crestlength" REAL, -- CRESTLENGTH, length of the crest of the levee or dam
-    "brbotwidmax" REAL, -- BRBOTWIDMAX, maximum allowable breach bottom width (ft or m) as constrained by the valley cross section
-    "brtopwidmax" REAL, -- BRTOPWIDMAX, maximum allowable breach top width (ft or m) as constrained by the valley cross section
-    "brbottomel" REAL, -- BRBOTTOMEL, initial breach or pipe bottom elevation (ft or m)
-    "weircoef" REAL, -- WEIRCOEF, weir coefficient for piping or breach channel weir
-    "d50c" REAL, -- D50C, mean sediment size (D50 in mm) of the levee or dam core material
-    "porc" REAL, -- PORC, porosity of the levee or dam core material
-    "uwc" REAL, -- UWC, unit weight (lb/ft 3 or N/m 3 ) of the levee or dam core material
-    "cnc" REAL, -- CNC, global Manning’s n-value of the levee or dam core material
-    "afrc" REAL, -- AFRC, angle (degrees) of internal friction of the core material for the entire levee or dam, 0 for no core
-    "cohc" REAL, -- COHC, cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam core material
-    "unfcc" REAL, -- UNFCC, sediment gradient, ratio of D90 to D30 of the levee or dam core material
-    "d50s" REAL, -- D50S, mean sediment size (D50 in mm) of the levee or dam shell material
-    "pors" REAL, -- PORS, porosity of the levee or dam shell material
-    "uws" REAL, -- UWS, unit weight (lb/ft 3 or N/m 3 ) of the levee or dam shell material
-    "cns" REAL, -- CNS, Manning’s n-value of the levee or dam shell material
-    "afrs" REAL, -- AFRS, angle (degrees) of internal friction of the shell material for the entire levee or dam, 0 for no core
-    "cohs" REAL, -- COHS, cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam shell material
-    "unfcs" REAL, -- UNFCS, sediment gradient, ratio of D90 to D30 of the levee or dam shell material
-    "bratio" REAL, -- BRATIO, ratio of the initial breach width to breach depth
-    "grasslength" REAL, -- GRASSLENGTH, average length of grass (inches or mm) on downstream face
-    "grasscond" REAL, -- GRASSCOND, condition of the grass on the downstream face
-    "grassvmaxp" REAL, -- GRASSVMAXP, maximum permissible velocity (fps or mps) for a grass-lined downstream face before the grass is eroded
-    "sedconmax" REAL, -- maximum sediment concentration by volume in the breach discharge
-    "d50df" REAL, -- D50DF, mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream face (riprap material)
-    "unfcdf" REAL, -- UNFCDF, sediment gradient, ratio of D 90 to D 30 of the downstream face upper one foot of material (riprap)
-    "breachtime" REAL -- BREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
+    "ibreachdir" INTEGER DEFAULT 0, -- IBREACHDIR, direction of breach
+    "zu" REAL DEFAULT 0.0, -- ZU, slope of the upstream face of the levee or dam
+    "zd" REAL DEFAULT 0.0, -- ZD, slope of the downstream face of the levee or dam
+    "zc" REAL DEFAULT 0.0, -- ZC, average slope of the upstream and downstream face of the levee or dam core material
+    "crestwidth" REAL DEFAULT 0.0, -- CRESTWIDTH, crest width of the levee or dam
+    "crestlength" REAL DEFAULT 0.0, -- CRESTLENGTH, length of the crest of the levee or dam
+    "brbotwidmax" REAL DEFAULT 0.0, -- BRBOTWIDMAX, maximum allowable breach bottom width (ft or m) as constrained by the valley cross section
+    "brtopwidmax" REAL DEFAULT 0.0, -- BRTOPWIDMAX, maximum allowable breach top width (ft or m) as constrained by the valley cross section
+    "brbottomel" REAL DEFAULT 0.0, -- BRBOTTOMEL, initial breach or pipe bottom elevation (ft or m)
+    "weircoef" REAL DEFAULT 0.0, -- WEIRCOEF, weir coefficient for piping or breach channel weir
+    "d50c" REAL DEFAULT 0.0, -- D50C, mean sediment size (D50 in mm) of the levee or dam core material
+    "porc" REAL DEFAULT 0.4, -- PORC, porosity of the levee or dam core material
+    "uwc" REAL DEFAULT 0.0, -- UWC, unit weight (lb/ft 3 or N/m 3 ) of the levee or dam core material
+    "cnc" REAL DEFAULT 0.0, -- CNC, global Manning’s n-value of the levee or dam core material
+    "afrc" REAL DEFAULT 0.0, -- AFRC, angle (degrees) of internal friction of the core material for the entire levee or dam, 0 for no core
+    "cohc" REAL DEFAULT 0.0, -- COHC, cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam core material
+    "unfcc" REAL DEFAULT 0.0, -- UNFCC, sediment gradient, ratio of D90 to D30 of the levee or dam core material
+    "d50s" REAL DEFAULT 0.0, -- D50S, mean sediment size (D50 in mm) of the levee or dam shell material
+    "pors" REAL DEFAULT 0.0, -- PORS, porosity of the levee or dam shell material
+    "uws" REAL DEFAULT 0.0, -- UWS, unit weight (lb/ft 3 or N/m 3 ) of the levee or dam shell material
+    "cns" REAL DEFAULT 0.0, -- CNS, Manning’s n-value of the levee or dam shell material
+    "afrs" REAL DEFAULT 0.0, -- AFRS, angle (degrees) of internal friction of the shell material for the entire levee or dam, 0 for no core
+    "cohs" REAL DEFAULT 0.0, -- COHS, cohesive strength (lb/ft 2 or N/m 2 ) of the levee or dam shell material
+    "unfcs" REAL DEFAULT 0.0, -- UNFCS, sediment gradient, ratio of D90 to D30 of the levee or dam shell material
+    "bratio" REAL DEFAULT 0.0, -- BRATIO, ratio of the initial breach width to breach depth
+    "grasslength" REAL DEFAULT 0.0, -- GRASSLENGTH, average length of grass (inches or mm) on downstream face
+    "grasscond" REAL DEFAULT 0.0, -- GRASSCOND, condition of the grass on the downstream face
+    "grassvmaxp" REAL DEFAULT 0.0, -- GRASSVMAXP, maximum permissible velocity (fps or mps) for a grass-lined downstream face before the grass is eroded
+    "sedconmax" REAL DEFAULT 055, -- maximum sediment concentration by volume in the breach discharge
+    "d50df" REAL DEFAULT 0.0, -- D50DF, mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream face (riprap material)
+    "unfcdf" REAL DEFAULT 0.0, -- UNFCDF, sediment gradient, ratio of D 90 to D 30 of the downstream face upper one foot of material (riprap)
+    "breachtime" REAL DEFAULT 0.0 -- BREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('breach', 'features', 4326);
 SELECT gpkgAddGeometryColumn('breach', 'geom', 'POINT', 0, 0, 0);
@@ -1670,6 +1670,16 @@ CREATE TABLE "breach_fragility_curves" (
     "prdepth" REAL -- PRDEPTH, point of failure on the levee as defined by the distance or height below the levee crest
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('breach_fragility_curves', 'aspatial');
+
+
+CREATE TRIGGER IF NOT EXISTS "find_breach_cells_insert"
+    AFTER INSERT ON "breach"
+    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "breach_cells" WHERE breach_fid = NEW."fid";
+        INSERT INTO "breach_cells" (breach_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
 
 
 -- SED.DAT
