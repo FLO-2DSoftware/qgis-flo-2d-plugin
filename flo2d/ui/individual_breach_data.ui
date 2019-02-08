@@ -7,17 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>459</width>
-    <height>646</height>
+    <height>733</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Global Breach Data</string>
+   <string>Individual Breach Data</string>
   </property>
   <widget class="QDialogButtonBox" name="global_breach_buttonBox">
    <property name="geometry">
     <rect>
      <x>314</x>
-     <y>616</y>
+     <y>696</y>
      <width>121</width>
      <height>23</height>
     </rect>
@@ -29,17 +29,17 @@
     <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
    </property>
   </widget>
-  <widget class="QGroupBox" name="global_core_data_grp">
+  <widget class="QGroupBox" name="individual_core_data_grp">
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>168</y>
+     <y>248</y>
      <width>441</width>
      <height>137</height>
     </rect>
    </property>
    <property name="title">
-    <string>Global Core Data</string>
+    <string>Individual Core Data</string>
    </property>
    <widget class="QWidget" name="layoutWidget_2">
     <property name="geometry">
@@ -98,16 +98,16 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_13">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gd50c_dbox"/>
+        <widget class="QDoubleSpinBox" name="d50c_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gporc_dbox"/>
+        <widget class="QDoubleSpinBox" name="porc_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="guwc_dbox"/>
+        <widget class="QDoubleSpinBox" name="uwc_dbox"/>
        </item>
        <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="gcnc_dbox"/>
+        <widget class="QDoubleSpinBox" name="cnc_dbox"/>
        </item>
       </layout>
      </item>
@@ -160,30 +160,30 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_10">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gafrc_dbox"/>
+        <widget class="QDoubleSpinBox" name="afrc_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gcohc_dbox"/>
+        <widget class="QDoubleSpinBox" name="cohc_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="gunfcc_dbox"/>
+        <widget class="QDoubleSpinBox" name="unfcc_dbox"/>
        </item>
       </layout>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="global_miscellaneous_data_grp">
+  <widget class="QGroupBox" name="individual_miscellaneous_data_grp">
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>488</y>
+     <y>568</y>
      <width>441</width>
      <height>113</height>
     </rect>
    </property>
    <property name="title">
-    <string>Global Miscellaneous Data</string>
+    <string>Individual Miscellaneous Data</string>
    </property>
    <widget class="QWidget" name="layoutWidget_5">
     <property name="geometry">
@@ -232,13 +232,13 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_23">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="ggrasslength_dbox"/>
+        <widget class="QDoubleSpinBox" name="grasslength_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="ggrasscond_dbox"/>
+        <widget class="QDoubleSpinBox" name="grasscond_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="ggrassvmaxp_dbox"/>
+        <widget class="QDoubleSpinBox" name="grassvmaxp_dbox"/>
        </item>
       </layout>
      </item>
@@ -291,30 +291,30 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_26">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gsedconmax_dbox"/>
+        <widget class="QDoubleSpinBox" name="sedconmax_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gd50df_dbox"/>
+        <widget class="QDoubleSpinBox" name="d50df_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="gunfcdf_dbox"/>
+        <widget class="QDoubleSpinBox" name="unfcdf_dbox"/>
        </item>
       </layout>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="global_shell_data_grp">
+  <widget class="QGroupBox" name="individual_shell_data_grp">
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>328</y>
+     <y>408</y>
      <width>441</width>
      <height>135</height>
     </rect>
    </property>
    <property name="title">
-    <string>Global Shell Data</string>
+    <string>Individual Shell Data</string>
    </property>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
@@ -363,13 +363,13 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_20">
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="gunfcs_dbox"/>
+        <widget class="QDoubleSpinBox" name="unfcs_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gcohs_dbox"/>
+        <widget class="QDoubleSpinBox" name="cohs_dbox"/>
        </item>
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gafrs_dbox"/>
+        <widget class="QDoubleSpinBox" name="afrs_dbox"/>
        </item>
       </layout>
      </item>
@@ -432,33 +432,33 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_17">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gd50s_dbox"/>
+        <widget class="QDoubleSpinBox" name="d50s_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gpors_dbox"/>
+        <widget class="QDoubleSpinBox" name="pors_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="guws_dbox"/>
+        <widget class="QDoubleSpinBox" name="uws_dbox"/>
        </item>
        <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="gcns_dbox"/>
+        <widget class="QDoubleSpinBox" name="cns_dbox"/>
        </item>
       </layout>
      </item>
     </layout>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="global_geometry_data_grp">
+  <widget class="QGroupBox" name="individual_geometry_data_grp">
    <property name="geometry">
     <rect>
      <x>9</x>
-     <y>8</y>
+     <y>88</y>
      <width>441</width>
      <height>135</height>
     </rect>
    </property>
    <property name="title">
-    <string>Global Geometry Data</string>
+    <string>Individual Geometry Data</string>
    </property>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
@@ -517,16 +517,16 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gzu_dbox"/>
+        <widget class="QDoubleSpinBox" name="zu_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gzd_dbox"/>
+        <widget class="QDoubleSpinBox" name="zd_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="gcrestwidth_dbox"/>
+        <widget class="QDoubleSpinBox" name="crestwidth_dbox"/>
        </item>
        <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="gcrestlength_dbox"/>
+        <widget class="QDoubleSpinBox" name="crestlength_dbox"/>
        </item>
       </layout>
      </item>
@@ -589,21 +589,108 @@
      <item row="0" column="1">
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="gzc_dbox"/>
+        <widget class="QDoubleSpinBox" name="zc_dbox"/>
        </item>
        <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="gbrbotwidmax_dbox"/>
+        <widget class="QDoubleSpinBox" name="brbotwidmax_dbox"/>
        </item>
        <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="gbrtopwidmax_dbox"/>
+        <widget class="QDoubleSpinBox" name="brtopwidmax_dbox"/>
        </item>
        <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="gbrbottomel_dbox"/>
+        <widget class="QDoubleSpinBox" name="brbottomel_dbox"/>
        </item>
       </layout>
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>112</x>
+     <y>25</y>
+     <width>241</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_27">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_14">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Breach failure grid element</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>Direction of breach failure</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout_15">
+      <item row="0" column="0">
+       <widget class="QComboBox" name="individual_breach_element_cbo"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QComboBox" name="breach_failure_direction_cbo">
+        <item>
+         <property name="text">
+          <string>1 = North</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2 = East</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>3 =South</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4 = West</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>5 = Northeast</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>6 = Southeast</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>7 = Southwest</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>8 = Northwest</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

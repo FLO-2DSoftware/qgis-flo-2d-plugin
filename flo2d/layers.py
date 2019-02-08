@@ -311,7 +311,7 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'module': ['breach'],
                 'readonly': False
-            }),
+            }),         
             ('levee_data', {
                 'name': 'Levees',
                 'sgroup': 'Schematic Layers',
@@ -603,13 +603,7 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-            ('breach_global', {
-                'name': 'Breach Global Data',
-                'sgroup': 'Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'readonly': False
-            }),
+       
             
           # Rain Tables:
 
@@ -702,7 +696,48 @@ class Layers(object):
                 'readonly': False
             }),
 
+          # Levee and Breach Tables:
 
+            ('levee_general', {
+                'name': 'Levee General',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('levee_failure', {
+                'name': 'Levee Failure',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+            ('levee_fragility', {
+                'name': 'Levee Fragility',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),            
+            ('breach_global', {
+                'name': 'Breach Global Data',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('breach_cells', {
+                'name': 'Breach Cells',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),                 
+            
+            
           # Sediment Transport:
 
             ('sed_supply_areas', {

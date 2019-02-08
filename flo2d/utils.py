@@ -10,7 +10,7 @@
 import os.path
 from math import ceil
 from qgis.PyQt.QtCore import Qt
-
+from qgis.PyQt.QtWidgets import QMessageBox
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
@@ -88,3 +88,26 @@ def int_or_zero(value):
         return 0
     else:
         return int(value.text())
+
+def Msge(msg_string, icon):
+    msgBox = QMessageBox()
+    msgBox.setWindowTitle("FLO-2D")
+    if icon == "Info":  
+        msgBox.setIcon(QMessageBox.Information)
+    elif icon == "Error":  
+        msgBox.setIcon(QMessageBox.Critical)  
+    elif icon == "Warning":  
+        msgBox.setIcon(QMessageBox.Warning)
+    msgBox.setText(msg_string)
+    msgBox.exec_()
+    
+    
+#                         msg.("Interpolation Performed")
+#                     msg.setText(q)
+# #                     msg.setStandardButtons(
+# #                         QMessageBox().Ok | QMessageBox().Cancel)
+#                     msg.addButton(QPushButton('Import CHAN.DAT and XSEC.DAT files'), QMessageBox.YesRole)
+#                     msg.addButton(QPushButton('Run CHANRIGHTBANK.EXE'), QMessageBox.NoRole)
+#                     msg.addButton(QPushButton('Cancel'), QMessageBox.RejectRole)
+#                     msg.setDefaultButton(QMessageBox().Cancel)
+#                     

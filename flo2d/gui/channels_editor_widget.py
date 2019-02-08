@@ -76,7 +76,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
                 self.ending_water_elev_dbox.setValue(row[4])
                 break
 
-        self.uc.bar_warn('Schematized Channel Editor populated!.')
+#         self.uc.bar_warn('Schematized Channel Editor populated!.')
 
     def show_channel_segment_dependencies(self):
         if self.gutils.is_table_empty('chan'):

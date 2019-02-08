@@ -10,7 +10,8 @@
 import os
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest, chain, repeat
-
+from qgis.PyQt.QtWidgets import  QMessageBox
+from ..utils import Msge
 
 class ParseDAT(object):
     """
@@ -354,9 +355,25 @@ class ParseDAT(object):
             elif char in shape:
                 fix_index = 2 if char == 'T' else None
                 self.fix_row_size(row, shape[char], index=fix_index)
-                rbank = next(parbank)[1:]
-                xsec = next(parxs)[0:1] if char == 'N' else []
-                segments[-1][-1].append(row + xsec + rbank)
+                
+                try:
+                    nxt = next(parbank)
+                    rbank = nxt[1:]
+                    lbank =  nxt[0]
+                    if row[1] != lbank:
+                       Msge("ERROR 010219.2020: Element " + row [1] + " in CHAN.DAT has no right bank element in CHANBANK.DAT !", "Error") 
+                       return
+                except StopIteration:
+                    Msge("ERROR 010219.0956: There is a missing right bank element in CHANBANK.DAT !\n\n"
+                         "The number of left bank elements in CHAN.DAT must be the same of the number of pairs (left bank, right bank) in CHANBANK.DAT.", "Error")
+                    return
+
+                try:
+                    xsec = next(parxs)[0:1] if char == 'N' else []
+                    segments[-1][-1].append(row + xsec + rbank)                    
+                except StopIteration:
+                    return
+
             elif char == 'C':
                 confluence.append(row)
             elif char == 'E':
@@ -369,6 +386,7 @@ class ParseDAT(object):
                     wsel[-1].extend(row)
                     start = True
         return segments, wsel, confluence, noexchange
+
 
     def parse_xsec(self):
         xsec = self.dat_files['XSEC.DAT']

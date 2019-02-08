@@ -28,6 +28,9 @@
   <layout class="QGridLayout" name="gridLayout_5">
    <item row="1" column="0" colspan="2">
     <widget class="QGroupBox" name="segment_control_grp">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -221,6 +224,9 @@
    </item>
    <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="initial_flow_depth_grp">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Initial flow depth</string>
      </property>
@@ -413,10 +419,17 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QComboBox" name="channel_segment_cbo"/>
+    <widget class="QComboBox" name="channel_segment_cbo">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+    </widget>
    </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label_19">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
