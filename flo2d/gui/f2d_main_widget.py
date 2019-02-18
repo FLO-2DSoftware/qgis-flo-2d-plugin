@@ -19,6 +19,7 @@ from .street_editor_widget import StreetEditorWidget
 from .rain_editor_widget import RainEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
 from .levee_and_breach_editor_widget import LeveeAndBreachEditorWidget
+from .multiple_channels_editor_widget import MultipleChannelsEditorWidget
 from .profile_tool import ProfileTool
 from .fpxsec_editor_widget import FPXsecEditorWidget
 from .infil_editor_widget import InfilEditorWidget
@@ -54,14 +55,14 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
         self.setup_levee_and_breach_editor()
-#         self.setup_swmm_editor()
+        self.setup_multiple_channels_editor()
 
             
         self.cgroups = [
             self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
             self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
             self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp,
-            self.levee_and_breach_editor_grp           
+            self.levee_and_breach_editor_grp, self.multiple_channels_editor_grp        
         ]
         self.set_collapsible_groups()
 
@@ -144,6 +145,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_levee_and_breach_editor(self):
         self.levee_and_breach_editor= LeveeAndBreachEditorWidget(self.iface, self.lyrs)
         self.levee_and_breach_lout.addWidget(self.levee_and_breach_editor)        
+
+    def setup_multiple_channels_editor(self):
+        self.multiple_channels_editor= MultipleChannelsEditorWidget(self.iface, self.lyrs)
+        self.multiple_channels_lout.addWidget(self.multiple_channels_editor) 
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:

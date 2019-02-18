@@ -159,6 +159,8 @@ class Flo2D(object):
         self.f2d_widget.infil_editor.setup_connection()
         
         self.f2d_widget.levee_and_breach_editor.setup_connection()
+        
+        self.f2d_widget.multiple_channels_editor.setup_connection()
 
 #         self.f2d_widget.swmm_editor.setup_connection()
 
@@ -357,7 +359,7 @@ class Flo2D(object):
         ma = s.value('dock/area', Qt.RightDockWidgetArea, type=int)
         ta = s.value('table_dock/area', Qt.BottomDockWidgetArea, type=int)
         pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea, type=int)
-        ga = s.value('grid_info_dock/area', Qt.RightDockWidgetArea, type=int)
+        ga = s.value('grid_info_dock/area', Qt.TopDockWidgetArea, type=int)
         self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
         self.iface.addDockWidget(ma, self.f2d_dock)
         self.iface.addDockWidget(pa, self.f2d_plot_dock)
