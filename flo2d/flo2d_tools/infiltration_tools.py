@@ -82,7 +82,6 @@ class InfiltrationCalculator(object):
         self.gridArea = None
         gridfeat = next(self.grid_lyr.getFeatures())
         self.gridArea = gridfeat.geometry().area()
-
                        
     def setup_scs_single(self, curve_lyr, curve_fld='CurveNum'):
         self.curve_lyr = curve_lyr
@@ -126,12 +125,16 @@ class InfiltrationCalculator(object):
                     xksat_parts = [(row[0], row[-1]) for row in values]
                     imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
                     avg_soil_depth = sum(row[3] * row[-1] for row in values)
-                    avg_xksat = green_ampt.calculate_xksat(xksat_parts, self.gridArea)
+                    avg_xksat = green_ampt.calculate_xksat(xksat_parts)
+                    
 #                     avg_xksat = green_ampt.calculate_xksat(xksat_parts)
                     psif = green_ampt.calculate_psif(avg_xksat)
-                    rtimp_1 = green_ampt.calculate_rtimp_1(imp_parts)
+                    rtimp_n = green_ampt.calculate_rtimp_n(imp_parts)
+                    eff = green_ampt.calculate_eff(imp_parts)
+                    if rtimp_n > 1.0:
+                        rtimp_n = 1.0
     
-                    grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth}
+                    grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_n, 'soil_depth': avg_soil_depth, 'eff': eff}
                 except Exception as e:
                     self.uc.show_error('ERROR 1401181951.2035: Green-Ampt infiltration failed'
                                        + '\nwhile intersecting soil layer with grid {}'.format(gid)
@@ -155,17 +158,28 @@ class InfiltrationCalculator(object):
                 try:
                     params = grid_params[gid]
                     avg_xksat = params['hydc']
-                    rtimp_1 = params['rtimpf']
+                    rtimp_n = params['rtimpf']
+                    eff = params['eff']
     
                     vc_parts = [(row[1], row[-1]) for row in values]
                     ia_parts = [(row[2], row[-1]) for row in values]
                     rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
     
                     dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                    xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck, self.gridArea)                    
+                    if self.vcCheck == True:
+                        # perform vc adjusment
+                        xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
+                    else:
+                        # don't perform vc adjusment
+                        xksatc = avg_xksat
 #                     xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)                   
                     iabstr = green_ampt.calculate_iabstr(ia_parts)
-                    rtimp = green_ampt.calculate_rtimp(rtimp_1, rtimp_parts)
+                    
+                    rtimpl = green_ampt.calculate_rtimp_l(rtimp_parts)
+                    # perform summary rtimp calc = RTIMPl + EFF/100 * RTIMPn per FCDMC eq 4.6
+                    rtimp = rtimpl + eff * rtimp_n
+                    if rtimp > 1.0:
+                        rtimp = 1.0
     
                     params['dtheta'] = dtheta
                     params['hydc'] = xksatc
@@ -223,18 +237,18 @@ class GreenAmpt(object):
         self.uc = UserCommunication(iface, 'FLO-2D')
         
 #     @staticmethod
-    def calculate_xksat(self, parts, totalGridArea, globalXKSAT = 0.06):
+    def calculate_xksat(self, parts, globalXKSAT = 0.06):
+        # parts are reported in % of grid area
         try: 
             xksat_gen = [area * log10(xksat) for xksat, area in parts if xksat > 0]
             areaTotal = sum(area for xksat, area in parts)
-            if areaTotal < totalGridArea: # check if intersected parts area is less than grid area, assumes same units. Values would differ if soils did not completely cover cell.
+            if areaTotal < 1.0: # check if intersected parts area is less than grid area, assumes same units. Values would differ if soils did not completely cover cell.
                 if globalXKSAT > 0: # if it's zero, we don't need to do anything and can't evaluate log10. If it's less than zero, it's not valid input.
-                    xksat_gen.append((totalGridArea - areaTotal) * log10(globalXKSAT))
-                areaTotal = totalGridArea
-            avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4)
+                    xksat_gen.append((1.0 - areaTotal) * log10(globalXKSAT))
+            avg_xksat = round(10**(sum(xksat_gen)), 4)
             return avg_xksat    
                 
-    
+     
         except Exception as e:
             QApplication.restoreOverrideCursor() 
             self.uc.show_error("ERROR 140119.1715: Green-Ampt infiltration failed!."
@@ -283,54 +297,74 @@ class GreenAmpt(object):
         return dtheta
 
     @staticmethod
-    def calculate_xksatc(avg_xksat, parts, vcCheck, totalGridArea, defaultVCAdj = 1):
+    def calculate_xksatc(avg_xksat, parts, defaultVCAdj = 1):
         if avg_xksat < 0.4:
-            if vcCheck:
-                pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+            pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
 
-                pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
-                areaTotal = sum(area for xksat, area in parts)
-                if areaTotal < totalGridArea:
-                    if areaTotal == 0:
-                        # no intersecting area, calculate using the defaultVCAdj value
-                        xksatc = avg_xksat * defaultVCAdj
-                    else:
-                        # composite using the default VCAdj value
-                        xksatc = avg_xksat * ((sum(pc_gen) + sum(pc_noadj) + defaultVCAdj * (totalGridArea - areaTotal)) / totalGridArea)
+            pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
+            areaTotal = sum(area for xksat, area in parts)
+            if areaTotal < 1.0:
+                if areaTotal == 0:
+                    # no intersecting area, calculate using the defaultVCAdj value
+                    xksatc = avg_xksat * defaultVCAdj
                 else:
-                    xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
+                    # composite using the default VCAdj value
+                    xksatc = avg_xksat * ((sum(pc_gen) + sum(pc_noadj) + defaultVCAdj * (1.0 - areaTotal)))
             else:
-                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
-                areaTotal = sum(area for xksat, area in parts)
-                if areaTotal < totalGridArea:
-                    if areaTotal == 0:
-                        # no intersecting area, calculate using the defaultVCAdj value
-                        xksatc = avg_xksat * defaultVCAdj
-                    else:
-                        # composite using the default VCAdj value
-                        xksatc = avg_xksat * (sum(pc_gen) +  defaultVCAdj * (totalGridArea - areaTotal))/ totalGridArea # divides by area for areal averaging
-                else:
-                    xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
+                xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
+##            else:
+##                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
+##                areaTotal = sum(area for xksat, area in parts)
+##                if areaTotal < 1.0:
+##                    if areaTotal == 0:
+##                        # no intersecting area, calculate using the defaultVCAdj value
+##                        xksatc = avg_xksat * defaultVCAdj
+##                    else:
+##                        # composite using the default VCAdj value
+##                        xksatc = avg_xksat * (sum(pc_gen) +  defaultVCAdj * (1.0 - areaTotal)) # divides by area for areal averaging
+##                else:
+##                    xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
         else:
             xksatc = avg_xksat
         return xksatc        
-    
+
     @staticmethod
-    def calculate_iabstr(parts):
-        iabstr_gen = (area * float(ia) for ia, area in parts)
+    def calculate_iabstr(parts, globalIA = 0.1):
+        iabstr_gen = [area * float(ia) for ia, area in parts]
+        areaTotal = sum(area for ia, area in parts)
+        if areaTotal < 1.0:
+            iabstr_gen.append((1.0 - areaTotal)*globalIA)  
         iabstr = sum(iabstr_gen)
         return iabstr
 
     @staticmethod
-    def calculate_rtimp_1(parts):
-        rtimp_gen_1 = (area * (float(rtimps) * float(eff)) for rtimps, eff, area in parts)
-        rtimp_1 = sum(rtimp_gen_1)
-        return rtimp_1
+    def calculate_rtimp_n(parts, globalRockOutCrop = 0.2):
+        # calculated naturall occuring RTIMP without consideration of the effective impervious area
+        #rtimp_gen_n = (area * (float(rtimps) * float(eff)) for rtimps, eff, area in parts)
+        rtimp_gen_n = [area * (float(rtimps)) for rtimps, eff, area in parts]
+        areaTotal = sum(area for rtimps, eff, area in parts)
+        if areaTotal < 1.0:
+            rtimp_gen_n.append((1.0 - areaTotal) * globalRockOutCrop)
+        rtimp_n = sum(rtimp_gen_n)
+        return rtimp_n
 
     @staticmethod
-    def calculate_rtimp(rtimp_1, parts):
-        rtimp_gen = (area * float(rtimpl) for rtimpl, area in parts)
-        rtimp = rtimp_1 + sum(rtimp_gen)
+    def calculate_eff(parts, globalEff = 1.0):
+        # calculate the area weightint of the effective rock cover, per FCDMC guidance
+        eff_calc = [area * (float(eff)) for rtimps, eff, area in parts]
+        areaTotal = sum(area for rtimps, eff, area in parts)
+        if areaTotal < 1.0:
+            eff_calc.append((1.0 - areaTotal) * globalEff)
+        eff_calc = sum(eff_calc)
+        return eff_calc
+
+    @staticmethod
+    def calculate_rtimp_l(parts, globalRTIMPL = 0.2):
+        rtimp_l = [area * float(rtimpl) for rtimpl, area in parts]
+        areaTotal = sum(area for rtimpl, area in parts)
+        if areaTotal < 1.0:
+            rtimp_l.append((1.0-areaTotal)*globalRTIMPL)
+        rtimp = sum(rtimp_l)
         return rtimp
 
 
