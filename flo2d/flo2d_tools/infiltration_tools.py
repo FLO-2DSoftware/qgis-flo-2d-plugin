@@ -234,13 +234,7 @@ class GreenAmpt(object):
             avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4)
             return avg_xksat    
                 
-#             xksat_gen = (area * log10(xksat) for xksat, area in parts if xksat > 0)
-#             areaTotal = sum(area for xksat, area in parts)
-#             if areaTotal == 0:
-#                 areaTotal = 1    
-#             avg_xksat = round(10**(sum(xksat_gen)/areaTotal), 4) 
-#             return avg_xksat
-     
+    
         except Exception as e:
             QApplication.restoreOverrideCursor() 
             self.uc.show_error("ERROR 140119.1715: Green-Ampt infiltration failed!."
@@ -321,52 +315,6 @@ class GreenAmpt(object):
             xksatc = avg_xksat
         return xksatc        
     
-#         if avg_xksat < 0.4:
-#             if vcCheck:
-#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
-# 
-#                 pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
-#                 areaTotal = sum(area for vc, area in parts)
-#                 if areaTotal == 0:
-#                     areaTotal = 1
-#                 xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/ areaTotal
-#             else:
-#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
-#                 areaTotal = sum(area for vc, area in parts)
-#                 if areaTotal ==  0:
-#                     areaTotal = 1           
-#                 xksatc = avg_xksat * sum(pc_gen) /areaTotal  # divides by area for areal averaging
-#         else:
-#             xksatc = avg_xksat
-#         return xksatc        
-        
-        
-        
-#         if avg_xksat < 0.4:
-#             if vcCheck:
-#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
-# 
-#                 pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
-# 
-#                 xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
-#             else:
-#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
-#                 
-#                 xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
-#         else:
-#             xksatc = avg_xksat
-#         return xksatc        
-        
-#         if avg_xksat < 0.4:
-#             if vcCheck:
-#                 pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
-#             else:
-#                 pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)    
-#             xksatc = avg_xksat * sum(pc_gen)
-#         else:
-#             xksatc = avg_xksat
-#         return xksatc
-
     @staticmethod
     def calculate_iabstr(parts):
         iabstr_gen = (area * float(ia) for ia, area in parts)

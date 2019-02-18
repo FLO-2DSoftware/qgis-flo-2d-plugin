@@ -369,7 +369,7 @@ class Layers(object):
                 'sgroup': 'Schematic Layers',
                 'styles': ['mult_areas.qml'],
                 'attrs_edit_widgets': {},
-                'visible': False,
+                'visible': True,
                 'readonly': False
             }),
 
@@ -714,14 +714,6 @@ class Layers(object):
                 'visible': False,
                 'readonly': False
             }),
-            ('levee_fragility', {
-                'name': 'Levee Fragility',
-                'sgroup': 'Levee and Breach Tables',
-                'styles': None,
-                'attrs_edit_widgets': {},
-                'visible': False,
-                'readonly': False
-            }),            
             ('breach_global', {
                 'name': 'Breach Global Data',
                 'sgroup': 'Levee and Breach Tables',
@@ -736,8 +728,22 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),                 
-            
-            
+            ('levee_fragility', {
+                'name': 'Levee Fragility',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),              
+            ('breach_fragility_curves', {
+                'name': 'Breach Fragility Curves',
+                'sgroup': 'Levee and Breach Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),             
           # Sediment Transport:
 
             ('sed_supply_areas', {
@@ -919,7 +925,27 @@ class Layers(object):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': True
-            })
+            }),
+            
+          # Channel  Tables:
+
+            ('mult', {
+                'name': 'Multiple Channels Global Parameters (mult)',
+                'sgroup': 'Multiple Channels Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            }),
+
+            ('mult_cells', {
+                'name': 'Multiple Channels Cells (mult_cells)',
+                'sgroup': 'Multiple Channels Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'visible': False,
+                'readonly': False
+            })           
 
         ])
         # set QGIS layer (qlyr) to None for each table

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>global_breach_data_dlg</class>
- <widget class="QDialog" name="global_breach_data_dlg">
+ <class>individual_breach_data_dlg</class>
+ <widget class="QDialog" name="individual_breach_data_dlg">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -16,9 +16,9 @@
   <widget class="QDialogButtonBox" name="global_breach_buttonBox">
    <property name="geometry">
     <rect>
-     <x>314</x>
+     <x>18</x>
      <y>696</y>
-     <width>121</width>
+     <width>417</width>
      <height>23</height>
     </rect>
    </property>
@@ -605,7 +605,7 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>112</x>
@@ -698,12 +698,12 @@
   <connection>
    <sender>global_breach_buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>global_breach_data_dlg</receiver>
+   <receiver>individual_breach_data_dlg</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>331</x>
-     <y>624</y>
+     <x>35</x>
+     <y>696</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -714,12 +714,12 @@
   <connection>
    <sender>global_breach_buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>global_breach_data_dlg</receiver>
+   <receiver>individual_breach_data_dlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>400</x>
-     <y>625</y>
+     <x>104</x>
+     <y>696</y>
     </hint>
     <hint type="destinationlabel">
      <x>141</x>

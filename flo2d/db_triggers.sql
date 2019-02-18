@@ -428,31 +428,6 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_arf_delete"
 
 -- MULT.DAT
 
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
-    AFTER INSERT ON "mult_areas"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid)
-            SELECT NEW.fid, g.fid FROM grid as g
-            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
-    AFTER UPDATE ON "mult_areas"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid)
-        SELECT NEW.fid, g.fid FROM grid as g
-        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
-    AFTER DELETE ON "mult_areas"
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
-    END;
 
 
 -- LEVEE.DAT

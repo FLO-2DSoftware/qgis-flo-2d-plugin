@@ -9,14 +9,15 @@
 
 from qgis.PyQt.QtCore import Qt
 from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication
-from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication, QInputDialog
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
 
 uiDialog_global, qtBaseClass = load_ui('global_breach_data')
 uiDialog_individual, qtBaseClass = load_ui('individual_breach_data')
+uiDialog_levee_fragility, qtBaseClass = load_ui('levee_fragility_curves')
 
 class GlobalBreachDialog(qtBaseClass, uiDialog_global):
 
@@ -390,4 +391,202 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
             self.uc.show_error("ERROR 040219.2015: update of Individual Breach Data failed!"
                        +'\n__________________________________________________', e)  
             return False 
+
+class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
+
+    def __init__(self, iface, lyrs):
+        qtBaseClass.__init__(self)
+        uiDialog_levee_fragility.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+
+        set_icon(self.add_curve_btn, 'add.svg')
+        set_icon(self.remove_curve_btn, 'remove.svg')
+
+        self.setup_connection()
+        self.ID_cbo.currentIndexChanged.connect(self.ID_cbo_currentIndexChanged)
+        self.add_row_btn.clicked.connect(self.add_row)
+        self.delete_row_btn.clicked.connect(self.delete_row)
+        self.add_curve_btn.clicked.connect(self.add_curve)
+        self.remove_curve_btn.clicked.connect(self.remove_curve)
+        
+        self.populate_list_of_curves()
+        self.populate_table_with_current_curve() 
+           
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_list_of_curves(self):
+        qry_probabilities = '''SELECT fragchar, prfail, prdepth FROM breach_fragility_curves'''
+        probabilities_rows = self.gutils.execute(qry_probabilities).fetchall() 
+        if not probabilities_rows:
+            return
+        self.ID_cbo.clear()
+        for row in probabilities_rows:
+            if self.ID_cbo.findText(str(row[0])) == -1:
+                self.ID_cbo.addItem(str(row[0]))
+                
+          
+ 
+    def add_curve(self):
+#         qid = QInputDialog()       
+#         title = "Enter Your Name"
+#         label = "Name: "
+#         mode = QLineEdit.Normal
+#         default = "<your name here>"        
+#         txt, ok = QinputDialog.getText(qid,title, label, mode, default)
+        ID, ok = QInputDialog.getText(None, 'New fragility curve ID', 'Fragility curve ID (one letter and one number)')
+        if not ok or not ID:
+            return 
+        sql = '''INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES (?,?,?);'''
+        self.gutils.execute(sql,(ID, '0.0', '0.0',))
+        self.populate_list_of_curves()
+        self.ID_cbo.setCurrentIndex(len(self.ID_cbo)-1)
+        self.populate_table_with_current_curve()
+
+    def remove_curve(self):
+        qry = '''DELETE FROM breach_fragility_curves WHERE fragchar = ?;'''
+        self.gutils.execute(qry, (self.ID_cbo.currentText(), ))        
+        
+        self.populate_list_of_curves()
+        self.populate_table_with_current_curve()  
+
+    def add_row(self):
+#         self.fragility_tblw.insertRow(self.fragility_tblw.rowCount())
+        self.fragility_tblw.insertRow(self.fragility_tblw.currentRow())  
+              
+    def delete_row(self):
+        self.fragility_tblw.removeRow(self.fragility_tblw.currentRow())        
+   
+             
+    def populate_table_with_current_curve(self):         
+        qry_curve= '''SELECT prfail, prdepth FROM breach_fragility_curves WHERE fragchar = ?;'''    
+        
+        data = self.gutils.execute(qry_curve, (self.ID_cbo.currentText(),)).fetchall()  
+        if not data:
+            pass
+        
+        self.fragility_tblw.clear() 
+        for row, value in enumerate(data):
+            if value[0] is not None:
+                item1 = QTableWidgetItem()
+                item1.setData(Qt.DisplayRole, value[0]) 
+                self.fragility_tblw.setItem(row, 0, item1)
+                 
+                item2 = QTableWidgetItem()
+                item2.setData(Qt.DisplayRole, value[1]) 
+                self.fragility_tblw.setItem(row, 1, item2)
+ 
+    def ID_cbo_currentIndexChanged(self):
+        self.populate_table_with_current_curve()
+         
+    def save_current_probability_table(self):
+        pass
+        """
+        Save changes to table.
+        """
+        qry = '''DELETE FROM breach_fragility_curves WHERE fragchar = ?;'''
+        self.gutils.execute(qry, (self.ID_cbo.currentText(), ))          
+        
+        sql = '''INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES (?,?,?);'''
+        
+        for row in range(0, self.fragility_tblw.rowCount()):
+            item = QTableWidgetItem()
+            item = self.fragility_tblw.item(row, 0)
+            if item is not None:  
+   
+                fragchar = self.ID_cbo.currentText()
+                prfail = str(item.text())
+                item = self.fragility_tblw.item(row, 1)
+                prdepth = item.text() if item is not None else 0
+                self.gutils.execute(sql, (fragchar, prfail, prdepth))
+                     
+        return True
+#         except Exception as e:                
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 130219.0755: update of fragility curves failed!"
+#                        +'\n__________________________________________________', e)  
+#             return False 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
