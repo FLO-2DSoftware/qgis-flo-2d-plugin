@@ -82,8 +82,22 @@ def float_or_zero(value):
         return float(value.text())
 
 def int_or_zero(value):
+#     if value is None:
+#         return 0
+#     elif value.text() == "":
+#         return 0
+#     else:
+#         return int(value.text())
+
     if value is None:
         return 0
+    if type(value) is int:
+        return value
+    if type(value) is str:
+        if value == "":
+            return 0
+        else:
+           return int(value)  
     elif value.text() == "":
         return 0
     else:

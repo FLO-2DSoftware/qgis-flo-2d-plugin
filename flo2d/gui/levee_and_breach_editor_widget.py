@@ -10,8 +10,9 @@
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..gui.dlg_breach import GlobalBreachDialog, IndividualBreachDialog
+from ..gui.dlg_breach import GlobalBreachDialog, IndividualBreachDialog, LeveeFragilityCurvesDialog
 from ..utils import float_or_zero
+from qgis.PyQt.QtWidgets import QApplication
 
 uiDialog, qtBaseClass = load_ui('levee_and_breach')
 
@@ -34,19 +35,22 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+            
+            # Widgets connections:
             self.global_breach_data_btn.clicked.connect(self.show_global_breach_dialog)
             self.individual_breach_data_btn.clicked.connect(self.show_individual_breach_dialog)
-            self.populate_levee_and_breach_widget()
-            
+            self.levee_fragility_curves_btn.clicked.connect(self.show_levee_fragility_curves_dialog)
             self.no_failure_radio.clicked.connect(self.update_levee_failure_mode)
             self.prescribed_failure_radio.clicked.connect(self.update_levee_failure_mode)
             self.breach_failure_radio.clicked.connect(self.update_levee_failure_mode)
             self.crest_increment_dbox.editingFinished.connect(self.update_crest_increment)
-            
             self.transport_eq_cbo.currentIndexChanged.connect(self.update_general_breach_data)
             self.initial_breach_width_depth_ratio_dbox.valueChanged.connect(self.update_general_breach_data)
             self.weir_coefficient_dbox.editingFinished.connect(self.update_general_breach_data)
-            self.time_to_initial_failure_dbox.valueChanged.connect(self.update_general_breach_data)
+            self.time_to_initial_failure_dbox.valueChanged.connect(self.update_general_breach_data)  
+            self.write_global_chbox.clicked.connect(self.enable_global_breach)          
+            
+            self.populate_levee_and_breach_widget()
             
     def populate_levee_and_breach_widget(self):
  
@@ -67,15 +71,17 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             return
 
         if row[1] == 1:
-            self.prescribed_failure_radio.setChecked(1)  
+            self.prescribed_failure_radio.setChecked(True)  
         elif row[1] == 2:
-            self.breach_failure_radio.setChecked(1)
+            self.breach_failure_radio.setChecked(True)
         else:
-            self.no_failure_radio.setChecked(1) 
+            self.no_failure_radio.setChecked(True) 
                  
         self.crest_increment_dbox.setValue(float_or_zero(row[0]))
 
-
+        self.enable_breach_group()
+        self.enable_global_breach()
+        
     def show_global_breach_dialog(self):
         """
         Shows global breach dialog.
@@ -104,6 +110,10 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         Shows individual breach dialog.
 
         """
+        if self.gutils.is_table_empty('breach_cells'):
+            self.uc.bar_info("There aren't individual breach cells!") 
+            return
+                    
         dlg_individual_breach = IndividualBreachDialog(self.iface, self.lyrs)
         save = dlg_individual_breach.exec_()
         if save:
@@ -117,6 +127,24 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_error("ERROR 040219.2004: assignment of Individual Breach Data failed!"
                            +'\n__________________________________________________', e) 
 
+    def show_levee_fragility_curves_dialog(self):
+        """
+        Shows levee fragility curves dialog.
+
+        """
+        dlg_levee_fragility = LeveeFragilityCurvesDialog(self.iface, self.lyrs)
+        save = dlg_levee_fragility.exec_()
+        if save:
+            try:
+                if dlg_levee_fragility.save_current_probability_table():
+                    self.uc.bar_info('Fragility curve data saved.')
+                else:
+                     self.uc.bar_info('Saving of Fragility Curve Data failed!.')    
+            except Exception as e:                
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 130219.0746: Saving of Fragility Curve Data failed!"
+                           +'\n__________________________________________________', e) 
+
     def fill_levee_general_with_defauts_if_empty(self):   
          if self.gutils.is_table_empty('levee_general'):
             sql = '''INSERT INTO levee_general DEFAULT VALUES;'''
@@ -127,7 +155,23 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         qry = '''UPDATE levee_general SET ilevfail = ?;'''
         value = 0 if self.no_failure_radio.isChecked() else 1 if self.prescribed_failure_radio.isChecked() else 2 if self.breach_failure_radio.isChecked() else 0
         self.gutils.execute(qry, (value,)) 
-
+        
+        self.enable_breach_group()
+        
+    def enable_breach_group(self): 
+        if self.no_failure_radio.isChecked():
+            self.breach_grp.setDisabled(True)
+        elif self.prescribed_failure_radio.isChecked(): 
+            self.breach_grp.setDisabled(True)
+        else:       
+            self.breach_grp.setEnabled(True)   
+    
+    def enable_global_breach(self):
+        if self.write_global_chbox.isChecked():
+            self.global_breach_data_btn.setEnabled(True)
+        else:       
+            self.global_breach_data_btn.setEnabled(False)      
+                            
     def update_crest_increment(self):
         self.fill_levee_general_with_defauts_if_empty()
         qry = '''UPDATE levee_general SET raiselev = ?;'''

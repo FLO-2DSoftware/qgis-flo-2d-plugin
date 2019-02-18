@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Schematic to user layers conversion</string>
+   <string>User to Schematic layers conversion</string>
   </property>
   <widget class="QDialogButtonBox" name="user2schema_buttonBox">
    <property name="geometry">
@@ -55,7 +55,7 @@
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Choose User Layer elements for conversion to Schematic Layers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>32</x>

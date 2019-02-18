@@ -1790,8 +1790,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_breach(self, outdir):
         # check if there is any breach defined.
         try:
+            # Check conditions to save BREACH.DAT:
+            if self.is_table_empty('levee_data'):
+                return  False            
+            ilevfail_sql = '''SELECT ilevfail FROM levee_general;'''   
+            ilevfail = self.execute(ilevfail_sql).fetchone()
+            if ilevfail is None:            
+                return False
+            if ilevfail[0] != 2:
+                return False
             if self.is_table_empty('breach'):
                 return  False
+            
             global_sql = '''SELECT * FROM breach_global ORDER BY fid;'''
             local_sql = '''SELECT * FROM breach ORDER BY fid;'''
             cells_sql = '''SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;'''
@@ -1823,9 +1833,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             breach = os.path.join(outdir, 'BREACH.DAT')
             with open(breach, 'w') as b:
                 c = 1
+                
                 for row in global_rows:
                     row_slice = [str(x) if x is not None else '' for x in row[b1]]
                     b.write(bline.format(c, ' '.join(row_slice)))
+                    # if breach_grp write G lines:
                     for gslice, dslice, line in parts:
                         row_slice = [str(x) if x is not None else '' for x in row[gslice]]
                         if any(row_slice) is True:

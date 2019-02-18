@@ -1287,23 +1287,23 @@ INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, 
 
 CREATE TABLE "mult" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "wmc" REAL, -- WMC, incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded
-    "wdrall" REAL, -- WDRALL, global assignment of the multiple channel width
-    "dmall" REAL, -- DMALL, global assignment of the maximum depth
-    "nodchansall" INTEGER, -- NODCHNSALL, global assignment of the number of multiple channels
-    "xnmultall" REAL, -- XNMULTALL, global assignment of the multiple channel n-values
-    "sslopemin" REAL, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
-    "sslopemax" REAL, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
-    "avuld50" REAL -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
+    "wmc" REAL DEFAULT 0.0, -- WMC, incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded
+    "wdrall" REAL DEFAULT 0.0, -- WDRALL, global assignment of the multiple channel width
+    "dmall" REAL DEFAULT 0.0, -- DMALL, global assignment of the maximum depth
+    "nodchansall" INTEGER DEFAULT 0, -- NODCHNSALL, global assignment of the number of multiple channels
+    "xnmultall" REAL DEFAULT 0.0, -- XNMULTALL, global assignment of the multiple channel n-values
+    "sslopemin" REAL DEFAULT 0.0, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
+    "sslopemax" REAL DEFAULT 0.0, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
+    "avuld50" REAL DEFAULT 0.0 -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
 
 CREATE TABLE "mult_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "wdr" REAL, -- WDR, channel width for individual grid elements
-    "dm" REAL, -- DM, maximum depth of multiple channels
-    "nodchns" REAL, -- NODCHNS, number of multiple channels assigned in a grid element
-    "xnmult" REAL -- XNMULT, channel n-values for individual grid elements
+    "wdr" REAL DEFAULT 0.0, -- WDR, channel width for individual grid elements
+    "dm" REAL DEFAULT 0.0, -- DM, maximum depth of multiple channels
+    "nodchns" INTEGER DEFAULT 0, -- NODCHNS, number of multiple channels assigned in a grid element
+    "xnmult" REAL DEFAULT 0.0 -- XNMULT, channel n-values for individual grid elements
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('mult_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1317,32 +1317,31 @@ CREATE TABLE "mult_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatial');
 
---CREATE TRIGGER "find_cells_mult_insert"
---    AFTER INSERT ON "mult_areas"
---    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
---        INSERT INTO "mult_cells" (area_fid, grid_fid)
---            SELECT NEW.fid, g.fid FROM grid as g
---            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_cells_mult_update"
---    AFTER UPDATE ON "mult_areas"
---    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
---        INSERT INTO "mult_cells" (area_fid, grid_fid)
---        SELECT NEW.fid, g.fid FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_cells_mult_delete"
---    AFTER DELETE ON "mult_areas"
---    BEGIN
---        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
---    END;
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
+    AFTER INSERT ON "mult_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid)
+            SELECT NEW.fid, g.fid FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
 
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
+    AFTER UPDATE ON "mult_areas"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
+    AFTER DELETE ON "mult_areas"
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
+    END;
 
 -- LEVEE.DAT
 
@@ -1681,6 +1680,22 @@ CREATE TRIGGER IF NOT EXISTS "find_breach_cells_insert"
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
+
+CREATE TRIGGER IF NOT EXISTS "find_breach_cells_update"
+    AFTER UPDATE ON "breach"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "breach_cells" WHERE breach_fid = NEW."fid";
+        INSERT INTO "breach_cells" (breach_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER IF NOT EXISTS "find_breach_cells_delete"
+    AFTER DELETE ON "breach"
+    BEGIN
+        DELETE FROM "breach_cells" WHERE breach_fid = OLD."fid";
+    END;
 
 -- SED.DAT
 
