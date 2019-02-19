@@ -25,35 +25,35 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_8">
           <property name="text">
-           <string>Initial abstraction [%]</string>
+           <string>Initial abstraction [in or mm]</string>
           </property>
          </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_6">
           <property name="text">
-           <string>Saturation</string>
+           <string>Saturation [wet, dry, or normal]</string>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
          <widget class="QCheckBox" name="veg_cover_chBox">
           <property name="text">
-           <string>Vegetation Cover [%]</string>
+           <string>Vegetation cover [0 to 100%]</string>
           </property>
          </widget>
         </item>
         <item row="4" column="0">
          <widget class="QLabel" name="label_9">
           <property name="text">
-           <string>Impervious area [%]</string>
+           <string>Impervious area [0 to 100%]</string>
           </property>
          </widget>
         </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>Land Use layer</string>
+           <string>Land use layer</string>
           </property>
          </widget>
         </item>
@@ -118,28 +118,28 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Hydraulic conductivity (XKSAT)</string>
+           <string>Hydraulic conductivity [in/hr or mm/hr]</string>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>Rock outcrop</string>
+           <string>Rock outcrop [0 to 100%]</string>
           </property>
          </widget>
         </item>
         <item row="3" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Effective impervious area [%]</string>
+           <string>Effective impervious area [0 to 100%]</string>
           </property>
          </widget>
         </item>
         <item row="4" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>Soil Depth</string>
+           <string>Soil Depth [ft or m]</string>
           </property>
          </widget>
         </item>
