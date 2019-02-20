@@ -806,9 +806,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             with open(chan, 'w') as c:
                 surveyed = 0
                 non_surveyed = 0
+
+                ISED = self.gutils.get_cont_par('ISED')        
+                       
                 for row in chan_rows:
                     row = [x if x is not None else '0' for x in row]
                     fid = row[0]
+                    if ISED == '0':
+                        row[4] = ''
                     c.write(segment.format(*row[1:5]))  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                                                         # A single line for each channel segment. The next lines will be the grid elements of
                                                         # this channel segment.

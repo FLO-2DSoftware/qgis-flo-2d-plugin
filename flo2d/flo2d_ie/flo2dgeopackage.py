@@ -28,7 +28,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.buffer = None
         self.shrink = None
         self.chunksize = float('inf')
-
+        self.gutils = GeoPackageUtils(con, iface)
+        
     def set_parser(self, fpath):
         self.parser = ParseDAT()
         self.parser.scan_project_dir(fpath)
@@ -1266,9 +1267,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             bank = os.path.join(outdir, 'CHANBANK.DAT')
     
             with open(chan, 'w') as c, open(bank, 'w') as b:
+                
+                ISED = self.gutils.get_cont_par('ISED')    
+                
                 for row in chan_rows:
                     row = [x if x is not None else '0' for x in row]
                     fid = row[0]
+                    if ISED == '0':
+                        row[4] = ''                    
                     c.write(segment.format(*row[1:5]))  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
                                                         # A single line for each channel segment. The next lines will be the grid elements of
                                                         # this channel segment.
