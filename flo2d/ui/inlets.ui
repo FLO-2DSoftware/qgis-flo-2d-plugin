@@ -14,7 +14,7 @@
    <string>Inlets/Junctions (as defined in 'Storm Drain Nodes-Inlets/Junctions' User Layer)</string>
   </property>
   <property name="modal">
-   <bool>true</bool>
+   <bool>false</bool>
   </property>
   <widget class="QDialogButtonBox" name="inlets_buttonBox">
    <property name="geometry">

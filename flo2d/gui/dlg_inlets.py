@@ -144,6 +144,16 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.add_rtable_btn.setEnabled(True)
             self.remove_rtable_btn.setEnabled(True)
             self.rename_rtable_btn.setEnabled(True)
+            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
+            self.length_dbox.setEnabled(False)
+            self.width_dbox.setEnabled(False)
+            self.height_dbox.setEnabled(False)
+            self.weir_coeff_dbox.setEnabled(False)
+            self.feature_sbox.setEnabled(False)
+            self.curb_height_dbox.setEnabled(False)
+            self.clogging_factor_dbox.setEnabled(False)
+            self.time_for_clogging_dbox.setEnabled(False)        
+            
         else:
             self.label_17.setEnabled(False)
             self.rating_table_cbo.setEnabled(False)
@@ -151,7 +161,16 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.add_rtable_btn.setEnabled(False)
             self.remove_rtable_btn.setEnabled(False)
             self.rename_rtable_btn.setEnabled(False)
-
+            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
+            self.length_dbox.setEnabled(True)
+            self.width_dbox.setEnabled(True)
+            self.height_dbox.setEnabled(True)
+            self.weir_coeff_dbox.setEnabled(True)
+            self.feature_sbox.setEnabled(True)
+            self.curb_height_dbox.setEnabled(True)
+            self.clogging_factor_dbox.setEnabled(True)
+            self.time_for_clogging_dbox.setEnabled(True)  
+            
     def length_dbox_valueChanged(self):
         self.box_valueChanged(self.length_dbox, 8)
 
@@ -283,6 +302,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
                 self.inlets_tblw.setItem(row_number, cell, item)
 
+        self.populate_rtables()
+        
     def populate_rtables(self):
         self.rating_table_cbo.clear()
         for row in self.inletRT.get_rating_tables():

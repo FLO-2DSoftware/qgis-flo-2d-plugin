@@ -260,7 +260,7 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/profile_tool.svg'),
             text=self.tr(u'Channel Profile'),
-            callback=self.channel_profile,    # Connects to 'channel_profile' method, via QAction triggered.connect(callback)
+            callback=self.channel_profile,    # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
             parent=self.iface.mainWindow())
 
         self.add_action(
@@ -433,9 +433,11 @@ class Flo2D(object):
             if self.f2d_widget.infil_editor is not None:
                 self.f2d_widget.infil_editor.close()
                 del self.f2d_widget.infil_editor
+                
 #             if self.f2d_widget.swmm_editor is not None:
 #                 self.f2d_widget.swmm_editor.close()
 #                 del self.f2d_widget.swmm_editor
+
             if self.f2d_widget.storm_drain_editor is not None:
                 self.f2d_widget.storm_drain_editor.close()
                 del self.f2d_widget.storm_drain_editor
@@ -1016,7 +1018,7 @@ class Flo2D(object):
         except AttributeError as e:
             pass
 
-    # @connection_required
+    @connection_required
     def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface)
@@ -1260,7 +1262,7 @@ class Flo2D(object):
             self.uc.bar_info('Not implemented...')
             return
         show_editor(fid)
-
+        
     def channel_profile(self):
         self.canvas.setMapTool(self.channel_profile_tool)  # 'channel_profile_tool' is an instance of ChannelProfile class,
                                                            # created on loading the plugin, and to be used to plot channel

@@ -56,6 +56,9 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_infil_editor()
         self.setup_levee_and_breach_editor()
         self.setup_multiple_channels_editor()
+        
+#         self.setup_swmm_editor()
+        
 
             
         self.cgroups = [

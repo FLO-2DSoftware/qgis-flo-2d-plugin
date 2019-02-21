@@ -1645,7 +1645,7 @@ CREATE TABLE "breach" (
     "grasslength" REAL DEFAULT 0.0, -- GRASSLENGTH, average length of grass (inches or mm) on downstream face
     "grasscond" REAL DEFAULT 0.0, -- GRASSCOND, condition of the grass on the downstream face
     "grassvmaxp" REAL DEFAULT 0.0, -- GRASSVMAXP, maximum permissible velocity (fps or mps) for a grass-lined downstream face before the grass is eroded
-    "sedconmax" REAL DEFAULT 055, -- maximum sediment concentration by volume in the breach discharge
+    "sedconmax" REAL DEFAULT 0.55, -- maximum sediment concentration by volume in the breach discharge
     "d50df" REAL DEFAULT 0.0, -- D50DF, mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream face (riprap material)
     "unfcdf" REAL DEFAULT 0.0, -- UNFCDF, sediment gradient, ratio of D 90 to D 30 of the downstream face upper one foot of material (riprap)
     "breachtime" REAL DEFAULT 0.0 -- BREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
