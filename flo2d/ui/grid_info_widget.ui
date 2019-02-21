@@ -20,7 +20,16 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
     <number>6</number>
    </property>
    <item>
@@ -34,6 +43,17 @@
      </item>
      <item>
       <widget class="QLineEdit" name="idEdit"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="find_cell_btn">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="label">

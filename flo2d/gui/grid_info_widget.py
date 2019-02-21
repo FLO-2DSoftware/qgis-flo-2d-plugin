@@ -13,8 +13,9 @@ from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import QSize
-from .ui_utils import load_ui
+from .ui_utils import load_ui, center_canvas, set_icon
 from ..utils import m_fdata
+from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('grid_info_widget')
 
@@ -25,6 +26,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        self.uc = UserCommunication(iface, 'FLO-2D')
         self.canvas = iface.mapCanvas()
         self.plot = plot
         self.plot_item_name = None
@@ -40,6 +42,10 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.d1 = []
         self.d2 = []
 
+        self.find_cell_btn.clicked.connect(self.find_cell)
+        set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
+        
+                
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
 
@@ -123,3 +129,32 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.data_model, i, 0))
             self.d2.append(m_fdata(self.data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        
+    def find_cell(self):
+        try: 
+            grid = self.lyrs.data['grid']['qlyr']
+            cell = self.idEdit.text()
+            if cell != '':
+                cell = int(cell)
+                if len(grid) >= cell and cell > 0:
+                    self.lyrs.show_feat_rubber(grid.id(), cell)
+                    feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                    x, y = feat.geometry().centroid().asPoint()
+                    self.lyrs.zoom_to_all()
+                    center_canvas(self.iface, x, y)  
+                else:
+                    self.idEdit.setText('')
+                    self.lyrs.clear_rubber()                          
+            else:
+                self.lyrs.clear_rubber()              
+        except ValueError:
+            self.idEdit.setText('')
+            self.lyrs.clear_rubber()    
+            pass            
+        
+        
+#         feat = grid.getFeatures(QgsFeatureRequest(self.idEdit.text()))
+#         
+#         grid.setSelectedFeatures(feat);
+#         self.canvas.zoomToSelected(grid)
+#         self.canvas.refresh();        
