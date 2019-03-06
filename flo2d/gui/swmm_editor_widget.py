@@ -593,7 +593,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
     def create_plot(self):
         self.plot.clear()
-        self.plot_item_name = 'Rating tables'
+        self.plot_item_name = 'Rating Tables'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_plot(self):

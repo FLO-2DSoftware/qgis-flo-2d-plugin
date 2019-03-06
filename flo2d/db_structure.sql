@@ -1428,6 +1428,127 @@ CREATE TABLE "fpfroude_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'aspatial');
 
+-- Storm Drain
+
+CREATE TABLE "user_swmm_nodes" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "grid" INTEGER DEFAULT 0,
+    "sd_type" TEXT DEFAULT 'I' CHECK("sd_type" = 'I' OR "sd_type" = 'O'), --Inlet or Outfall
+    "name" TEXT,
+    "intype" INTEGER DEFAULT 1, --FLO-2D Drain Type
+
+    --VARIABLES FROM .INP [JUNCTIONS]:   
+	    "junction_invert_elev" REAL DEFAULT 0,
+	    "max_depth" REAL DEFAULT 0,
+	    "init_depth" REAL DEFAULT 0,
+	    "surcharge_depth" REAL DEFAULT 0,
+	    "ponded_area" REAL DEFAULT 0,  
+    -----------------------------------
+
+    --VARIABLES FROM .INP [OUTFALLS]:
+    	"outfall_invert_elev" REAL DEFAULT 0,
+		"outfall_type" TEXT DEFAULT 'Normal',	 
+		"tidal_curve" TEXT DEFAULT '...',
+		"time_series" TEXT DEFAULT '...',
+	    "flapgate" TEXT DEFAULT 'False', 
+    -------------------------------------    
+
+	--VARIABLES FOR SWMMFLO.DAT    
+	    "swmm_length" REAL DEFAULT 0,
+	    "swmm_width" REAL DEFAULT 0,
+	    "swmm_height" REAL DEFAULT 0,
+	    "swmm_coeff" REAL DEFAULT 0,
+	    "swmm_feature" INTEGER DEFAULT 0,  
+	    "curbheight" REAL DEFAULT 0,
+	    "swmm_clogging_factor" REAL DEFAULT 0,
+	    "swmm_time_for_clogging" REAL DEFAULT 0,
+	    "swmm_allow_discharge" TEXT DEFAULT 'False',
+	------------------------------------
+
+	"water_depth" REAL DEFAULT 0,
+    "rt_fid" INTEGER,
+    "rt_name" TEXT,
+    "outf_flo" INTEGER DEFAULT 0,
+    "invert_elev_inp" REAL DEFAULT 0,
+    "max_depth_inp" REAL DEFAULT 0,
+    "rim_elev_inp" REAL DEFAULT 0,
+    "rim_elev" REAL DEFAULT 0,
+    "ge_elev" REAL DEFAULT 0,
+    "difference" REAL DEFAULT 0,
+    "notes" TEXT
+
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_nodes', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_nodes', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_nodes', 'geom');
+
+
+CREATE TABLE "user_swmm_conduits" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+--VARIABLES FROM .INP [CONDUITS]:
+	"conduit_name" TEXT,
+	"conduit_inlet" TEXT,
+	"conduit_outlet" TEXT,
+	"conduit_length" REAL DEFAULT 0,
+	"conduit_manning" REAL DEFAULT 0,	
+	"conduit_inlet_offset" REAL DEFAULT 0,	
+	"conduit_outlet_offset" REAL DEFAULT 0,	
+	"conduit_init_flow" REAL DEFAULT 0,	
+	"conduit_max_flow" REAL DEFAULT 0,
+	"losses_inlet" REAL DEFAULT 0, 
+	"losses_outlet" REAL DEFAULT 0, 
+	"losses_average" REAL DEFAULT 0,
+	"losses_flapgate" TEXT DEFAULT 'False', 
+	"xsections_shape" TEXT DEFAULT 'CIRCULAR',
+	"xsections_max_depth" REAL DEFAULT 0,
+	"xsections_geom2"REAL DEFAULT 0,
+    "xsections_geom3"REAL DEFAULT 0,
+    "xsections_geom4"REAL DEFAULT 0,
+	"xsections_barrels" INTEGER DEFAULT 0,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_conduits', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_conduits', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
+
+CREATE TRIGGER "default_swmm_name"
+    AFTER INSERT ON "user_swmm_nodes"
+    BEGIN
+        UPDATE "user_swmm_nodes"
+        SET grid = 0,
+            sd_type = 'I',
+            name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT)),
+            intype = 1,
+            junction_invert_elev = 0,
+            max_depth = 0,
+            init_depth = 0,
+            surcharge_depth = 0,
+            ponded_area = 0,  
+            outfall_invert_elev = 0,
+            outfall_type = 'Normal',    
+            tidal_curve = '...',
+            time_series = '...',
+            flapgate = 'False', 
+            swmm_length = 0,
+            swmm_width = 0,
+            swmm_height = 0,
+            swmm_coeff = 0,
+            swmm_feature = 0,  
+            curbheight = 0,
+            swmm_clogging_factor = 0,
+            swmm_time_for_clogging = 0,
+            swmm_allow_discharge = 'False',
+            water_depth = 0,
+            rt_fid = 0,
+            outf_flo = 0,
+            invert_elev_inp = 0,
+            max_depth_inp = 0,
+            rim_elev_inp = 0,
+            rim_elev = 0,
+            ge_elev = 0,
+            difference = 0      
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
 
 -- SWMMFLO.DAT
 
@@ -1456,7 +1577,7 @@ SELECT gpkgAddGeometryTriggers('swmmflo', 'geom');
 
 CREATE TABLE "swmmflort" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" INTEGER, -- SWMM_JT, fid of the grid element with a storm drain inlet
+    "grid_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- SWMM_JT, fid of the grid element with a storm drain inlet
     "name" TEXT -- optional name of the rating table
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort', 'aspatial');
@@ -2490,125 +2611,6 @@ CREATE TRIGGER "default_infiltration_name"
     BEGIN
         UPDATE "user_infiltration"
         SET name = ('Infiltration ' || cast(NEW."fid" AS TEXT))
-        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
-    END;
-
-CREATE TABLE "user_swmm_nodes" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
-    "grid" INTEGER DEFAULT 0,
-    "sd_type" TEXT DEFAULT 'I' CHECK("sd_type" = 'I' OR "sd_type" = 'O'), --Inlet or Outfall
-    "name" TEXT,
-    "intype" INTEGER DEFAULT 1, --FLO-2D Drain Type
-
-    --VARIABLES FROM .INP [JUNCTIONS]:   
-	    "junction_invert_elev" REAL DEFAULT 0,
-	    "max_depth" REAL DEFAULT 0,
-	    "init_depth" REAL DEFAULT 0,
-	    "surcharge_depth" REAL DEFAULT 0,
-	    "ponded_area" REAL DEFAULT 0,  
-    -----------------------------------
-
-    --VARIABLES FROM .INP [OUTFALLS]:
-    	"outfall_invert_elev" REAL DEFAULT 0,
-		"outfall_type" TEXT DEFAULT 'Normal',	 
-		"tidal_curve" TEXT DEFAULT '...',
-		"time_series" TEXT DEFAULT '...',
-	    "flapgate" TEXT DEFAULT 'False', 
-    -------------------------------------    
-
-	--VARIABLES FOR SWMMFLO.DAT    
-	    "swmm_length" REAL DEFAULT 0,
-	    "swmm_width" REAL DEFAULT 0,
-	    "swmm_height" REAL DEFAULT 0,
-	    "swmm_coeff" REAL DEFAULT 0,
-	    "swmm_feature" INTEGER DEFAULT 0,  
-	    "curbheight" REAL DEFAULT 0,
-	    "swmm_clogging_factor" REAL DEFAULT 0,
-	    "swmm_time_for_clogging" REAL DEFAULT 0,
-	    "swmm_allow_discharge" TEXT DEFAULT 'False',
-	------------------------------------
-
-	"water_depth" REAL DEFAULT 0,
-    "rt_fid" INTEGER,
-    "outf_flo" INTEGER DEFAULT 0,
-    "invert_elev_inp" REAL DEFAULT 0,
-    "max_depth_inp" REAL DEFAULT 0,
-    "rim_elev_inp" REAL DEFAULT 0,
-    "rim_elev" REAL DEFAULT 0,
-    "ge_elev" REAL DEFAULT 0,
-    "difference" REAL DEFAULT 0,
-    "notes" TEXT
-
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_nodes', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_swmm_nodes', 'geom', 'POINT', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_swmm_nodes', 'geom');
-
-
-CREATE TABLE "user_swmm_conduits" (
-    "fid" INTEGER PRIMARY KEY NOT NULL,
---VARIABLES FROM .INP [CONDUITS]:
-	"conduit_name" TEXT,
-	"conduit_inlet" TEXT,
-	"conduit_outlet" TEXT,
-	"conduit_length" REAL DEFAULT 0,
-	"conduit_manning" REAL DEFAULT 0,	
-	"conduit_inlet_offset" REAL DEFAULT 0,	
-	"conduit_outlet_offset" REAL DEFAULT 0,	
-	"conduit_init_flow" REAL DEFAULT 0,	
-	"conduit_max_flow" REAL DEFAULT 0,
-	"losses_inlet" REAL DEFAULT 0, 
-	"losses_outlet" REAL DEFAULT 0, 
-	"losses_average" REAL DEFAULT 0,
-	"losses_flapgate" TEXT DEFAULT 'False', 
-	"xsections_shape" TEXT DEFAULT 'CIRCULAR',
-	"xsections_max_depth" REAL DEFAULT 0,
-	"xsections_geom2"REAL DEFAULT 0,
-    "xsections_geom3"REAL DEFAULT 0,
-    "xsections_geom4"REAL DEFAULT 0,
-	"xsections_barrels" INTEGER DEFAULT 0,
-    "notes" TEXT
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_conduits', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_swmm_conduits', 'geom', 'LINESTRING', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
-
-CREATE TRIGGER "default_swmm_name"
-    AFTER INSERT ON "user_swmm_nodes"
-    BEGIN
-        UPDATE "user_swmm_nodes"
-        SET grid = 0,
-            sd_type = 'I',
-            name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT)),
-            intype = 1,
-            junction_invert_elev = 0,
-            max_depth = 0,
-            init_depth = 0,
-            surcharge_depth = 0,
-            ponded_area = 0,  
-            outfall_invert_elev = 0,
-            outfall_type = 'Normal',    
-            tidal_curve = '...',
-            time_series = '...',
-            flapgate = 'False', 
-            swmm_length = 0,
-            swmm_width = 0,
-            swmm_height = 0,
-            swmm_coeff = 0,
-            swmm_feature = 0,  
-            curbheight = 0,
-            swmm_clogging_factor = 0,
-            swmm_time_for_clogging = 0,
-            swmm_allow_discharge = 'False',
-            water_depth = 0,
-            rt_fid = 0,
-            outf_flo = 0,
-            invert_elev_inp = 0,
-            max_depth_inp = 0,
-            rim_elev_inp = 0,
-            rim_elev = 0,
-            ge_elev = 0,
-            difference = 0      
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 

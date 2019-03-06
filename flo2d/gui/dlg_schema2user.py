@@ -154,5 +154,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
             swmm_converter.create_user_swmm_nodes()
         except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating User Layers failed on Storm Drains conversion!")
+            self.uc.log_info(traceback.format_exc())         
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                               +'\n_______________________________________________________________', e)  

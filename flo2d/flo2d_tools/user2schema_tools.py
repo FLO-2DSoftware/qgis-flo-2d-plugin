@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2016 Lutra Consulting for FLO-2D
+# Copyright © 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -373,6 +373,7 @@ class SchemaSWMMConverter(SchemaConverter):
             ('swmm_coeff', 'swmm_coeff'),
             ('flapgate', 'flapgate'),
             ('curbheight', 'curbheight')
+            ('swmm_feature', 'swmm_feature')
         ]
 
         self.outlet_columns = [('name', 'name'), ('outf_flo', 'outf_flo')]

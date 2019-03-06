@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2016 Lutra Consulting for FLO-2D
+# Copyright © 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -139,84 +139,3 @@ class User2SchemaDialog(qtBaseClass, uiDialog):
         self.message += "User storm drains converted!\n"
         pass     
              
-            
-            
-            
-            
-            
-            
-            
-            
-            
-#     def convert_domain(self):
-#         pass
-#         try:
-#             grid_converter = SchemaGridConverter(self.con, self.iface, self.lyrs)
-#             grid_converter.boundary_from_grid()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Grid to Computational Domain conversion!")
-# 
-#     def convert_roughness(self):
-#         pass
-#         try:
-#             grid_converter = SchemaGridConverter(self.con, self.iface, self.lyrs)
-#             grid_converter.roughness_from_grid()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Grid to Roughness conversion!")
-# 
-#     def convert_bc(self):
-#         pass
-#         try:
-#             bc_converter = SchemaBCConverter(self.con, self.iface, self.lyrs)
-#             bc_converter.create_user_bc()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Boundary Conditions conversion!")
-# 
-#     def convert_1d(self):
-#         pass
-#         try:
-#             domain_converter = Schema1DConverter(self.con, self.iface, self.lyrs)
-#             domain_converter.create_user_lbank()
-#             domain_converter.create_user_xs()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on 1D Domain elements conversion!")
-# 
-#     def convert_levees(self):
-#         pass
-#         try:
-#             levee_converter = SchemaLeveesConverter(self.con, self.iface, self.lyrs)
-#             levee_converter.create_user_levees()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Levees conversion!")
-# 
-#     def convert_fpxsec(self):
-#         pass
-#         try:
-#             fpxsec_converter = SchemaFPXSECConverter(self.con, self.iface, self.lyrs)
-#             fpxsec_converter.create_user_fpxsec()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Floodplain cross-sections conversion!")
-# 
-#     def convert_infil(self):
-#         pass
-#         try:
-#             infil_converter = SchemaInfiltrationConverter(self.con, self.iface, self.lyrs)
-#             infil_converter.create_user_infiltration()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Infiltration conversion!")
-# 
-#     def convert_swmm(self):
-#         pass
-#         try:
-#             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-#             swmm_converter.create_user_swmm_nodes()
-#         except Exception as e:
-#             self.uc.log_info(traceback.format_exc())
-#             self.uc.bar_warn("Creating User Layers failed on Storm Drains conversion!")

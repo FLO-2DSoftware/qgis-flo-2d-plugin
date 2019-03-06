@@ -1326,17 +1326,17 @@ class InletRatingTable(GeoPackageUtils):
             rt = self.execute('SELECT fid, name FROM swmmflort ORDER BY name COLLATE NOCASE;').fetchall()
         else:
             rt = self.execute('SELECT fid, name FROM swmmflort ORDER BY fid;').fetchall()
-        if not rt:
-            rt = self.add_rating_table(fetch=True)
+#         if not rt:
+#             rt = self.add_rating_table(fetch=True)
         return rt
 
     def add_rating_table(self, name=None, fetch=False):
         qry = '''INSERT INTO swmmflort (name) VALUES (?);'''
         rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE swmmflort SET name =  'Rating table ' || cast(fid as text) WHERE fid = ?;'''
+        name_qry = '''UPDATE swmmflort SET name =  'Rating Table ' || cast(fid as text) WHERE fid = ?;'''
         self.execute(name_qry, (rowid,))
         if not name:
-            self.name = 'Rating table {}'.format(rowid)
+            self.name = 'Rating Table {}'.format(rowid)
         if fetch:
             return self.get_rating_tables()
 
@@ -1360,7 +1360,7 @@ class InletRatingTable(GeoPackageUtils):
         """
         Add new rows to swmmflort_data for a given rt_fid.
         """
-        qry = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, NULL, NULL);'
+        qry = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, 0, 0);'
         self.execute_many(qry, ([rt_fid],) * rows)
         if fetch:
             return self.get_rating_tables_data(rt_fid)
