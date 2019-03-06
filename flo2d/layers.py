@@ -392,7 +392,7 @@ class Layers(object):
                 'readonly': False
             }),
             ('swmmflort', {
-                'name': 'Rating tables',
+                'name': 'Rating Tables',
                 'sgroup': 'Storm Drain',
                 'styles': None,
                 'attrs_edit_widgets': {},

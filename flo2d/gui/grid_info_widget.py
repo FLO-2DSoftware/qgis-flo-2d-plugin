@@ -41,7 +41,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.mann_default = None
         self.d1 = []
         self.d2 = []
-
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
         
@@ -133,20 +132,22 @@ class GridInfoWidget(qtBaseClass, uiDialog):
     def find_cell(self):
         try: 
             grid = self.lyrs.data['grid']['qlyr']
-            cell = self.idEdit.text()
-            if cell != '':
-                cell = int(cell)
-                if len(grid) >= cell and cell > 0:
-                    self.lyrs.show_feat_rubber(grid.id(), cell)
-                    feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)  
-                else:
-                    self.idEdit.setText('')
-                    self.lyrs.clear_rubber()                          
-            else:
-                self.lyrs.clear_rubber()              
+            if grid is not None:
+                if grid:
+                    cell = self.idEdit.text()
+                    if cell != '':
+                        cell = int(cell)
+                        if len(grid) >= cell and cell > 0:
+                            self.lyrs.show_feat_rubber(grid.id(), cell)
+                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                            x, y = feat.geometry().centroid().asPoint()
+                            self.lyrs.zoom_to_all()
+                            center_canvas(self.iface, x, y)
+                        else:
+                            self.idEdit.setText('')
+                            self.lyrs.clear_rubber()                          
+                    else:
+                        self.lyrs.clear_rubber()              
         except ValueError:
             self.idEdit.setText('')
             self.lyrs.clear_rubber()    

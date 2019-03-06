@@ -109,6 +109,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
                     if row_number == 0:
+                        data = 0 if data is None else data
                         if col_number == 2:
                             self.grid_element_txt.setText(str(data))
                         elif col_number == 3:
@@ -118,7 +119,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         elif col_number == 5:
                             self.allow_discharge_chbox.setChecked(1 if is_true(data) else 0)
                         elif col_number == 6:
-                            data = data.upper()
+                            data = str(data).upper()
                             if data in self.outfalls_tuple:
                                 index = self.outfalls_tuple.index(data)
                             else:

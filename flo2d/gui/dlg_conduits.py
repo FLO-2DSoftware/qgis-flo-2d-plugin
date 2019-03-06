@@ -295,7 +295,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                     if element == 1:   #We need 2nd. element: 'J3' in the example above, and its fid from row_data[0]
                         self.conduit_name_cbo.addItem(data, row_data[0])
 
-                    # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
+                    # Fill all text boxes with data of first feature of query (first element in table user_swmm_conduits):
                     if row_number == 0:
                         if element == 2:
                             self.from_node_txt.setText(str(data))

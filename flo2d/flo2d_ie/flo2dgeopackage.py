@@ -1956,8 +1956,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             swmmflo = os.path.join(outdir, 'SWMMFLO.DAT')
             with open(swmmflo, 'w') as s:
                 for row in swmmflo_rows:
+                    new_row = []
                     if row[2][0] == "I":
-                        s.write(line1.format(*row))
+                        for i, item in enumerate(row,1):
+                            new_row.append(item if item is not None else 0)
+                        s.write(line1.format(*new_row))
                     
             return True  
               
@@ -1972,11 +1975,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty('swmmflort'):
                 return False
-            swmmflort_sql = '''SELECT fid, grid_fid FROM swmmflort ORDER BY grid_fid;'''
+            swmmflort_sql = '''SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;'''
             data_sql = '''SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;'''
     
             line1 = 'D {0}\n'
             line2 = 'N {0}  {1}\n'
+            errors = ""
     
             swmmflort_rows = self.execute(swmmflort_sql).fetchall()
             if not swmmflort_rows:
@@ -1985,11 +1989,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
             swmmflort = os.path.join(outdir, 'SWMMFLORT.DAT')
             with open(swmmflort, 'w') as s:
-                for fid, gid in swmmflort_rows:
-                    s.write(line1.format(gid))
-                    for row in self.execute(data_sql, (fid,)):
-                        s.write(line2.format(*row))
-                    
+                for fid, gid, name in swmmflort_rows:
+                    if gid != "" and gid is not None:
+                            rows = self.execute(data_sql, (fid,)).fetchone()
+                            if not rows:
+                               errors += "\n" + str(gid) + "\t" + name
+                            else:
+                                s.write(line1.format(gid))
+                                for row in self.execute(data_sql, (fid,)):
+                                    s.write(line2.format(*row))
+            
+            if errors:
+                self.uc.show_info("WARNING 040319.0521:\n\nThe following cell(s) with inlet/junction of type 4 " + 
+                                  "(stage discharge with rating table) have empty rating table(s) (no data):\n\n"
+                                  "Cell\tTable\n" + errors)
             return True  
               
         except Exception as e:

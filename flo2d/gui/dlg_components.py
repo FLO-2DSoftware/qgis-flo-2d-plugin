@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2016 Lutra Consulting for FLO-2D
+# Copyright © 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,6 +32,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.components = []
 
         self.components_buttonBox.accepted.connect(self.load_selected_components)
+        self.unselect_all_btn.clicked.connect(self.unselect_all)
         self.setFixedSize(self.size())
 
         self.populate_components_dialog()
@@ -170,3 +171,52 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if self.spatial_froude_chbox.isChecked():
             self.components.append('Spatial Froude')            
+        
+            
+    def unselect_all(self):
+
+        self.channels_chbox.setChecked(False);
+        self.reduction_factors_chbox.setChecked(False);
+        self.streets_chbox.setChecked(False);
+        self.outflow_elements_chbox.setChecked(False);
+        self.inflow_elements_chbox.setChecked(False);
+        self.levees_chbox.setChecked(False);
+        self.multiple_channels_chbox.setChecked(False);
+        self.breach_chbox.setChecked(False);
+        self.gutters_chbox.setChecked(False);
+        self.infiltration_chbox.setChecked(False);
+        self.floodplain_xs_chbox.setChecked(False);
+        self.mud_and_sed_chbox.setChecked(False);
+        self.evaporation_chbox.setChecked(False);
+        self.hydr_struct_chbox.setChecked(False);
+        self.mudflo_chbox.setChecked(False);
+        self.rain_chbox.setChecked(False);
+        self.storm_drain_chbox.setChecked(False);
+        self.spatial_tolerance_chbox.setChecked(False);
+        self.spatial_froude_chbox.setChecked(False);
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
