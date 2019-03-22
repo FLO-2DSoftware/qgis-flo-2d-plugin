@@ -136,7 +136,7 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             if os.path.isfile(self.out_raster):
                 os.remove(self.out_raster)
         except OSError:
-            msg = 'Couldn\'t remove existing raster:\n{}\nChoose another filename.'.format(self.out_raster)
+            msg = 'WARNING 060319.1652: Couldn\'t remove existing raster:\n{}\nChoose another filename.'.format(self.out_raster)
             self.uc.show_warn(msg)
             return False
         self.get_worp_opts_data()

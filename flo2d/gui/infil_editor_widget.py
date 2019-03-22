@@ -257,7 +257,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.infil_name_cbo.findText(new_name) == -1:
-            msg = 'Infiltration with name {} already exists in the database. Please, choose another name.'
+            msg = 'WARNING 060319.1723: Infiltration with name {} already exists in the database. Please, choose another name.'
             msg = msg.format(new_name)
             self.uc.show_warn(msg)
             return
@@ -573,7 +573,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('Calculating SCS Curve Number parameters failed! Please check data in your input layers.')
+            self.uc.show_warn('WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check data in your input layers.')
 
 
 class InfilGlobal(uiDialog_glob, qtBaseClass_glob):

@@ -86,7 +86,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
+                self.uc.show_warn('WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
                 return None
             self.gutils.set_cont_par('CELLSIZE', cs)
         else:
@@ -94,7 +94,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             cs = None if cs == '' else cs
         if cs:
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
+                self.uc.show_warn('WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
                 return None
             return cs
         else:
@@ -113,7 +113,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There is no Computational Domain! Please digitize it before running tool.')
             return
         if self.gutils.count('user_model_boundary') > 1:
-            warn = 'There are multiple features created on Computational Domain layer.\n'
+            warn = 'WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n'
             warn += 'Only ONE will be used with the lowest fid (first created).'
             self.uc.show_warn(warn)
         if not self.gutils.is_table_empty('grid'):
@@ -141,7 +141,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('Creating grid aborted! Please check Computational Domain layer.')
+            self.uc.show_warn('WARNING 060319.1709: Creating grid aborted! Please check Computational Domain layer.')
 
     def raster_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
@@ -166,11 +166,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
+            self.uc.show_warn('WARNING 060319.1710: Probing grid elevation failed! Please check your raster layer.')
 
     def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            self.uc.bar_warn('WARNING 060319.1711: There is no grid! Please create it before running tool.')
             return
         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
@@ -203,7 +203,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.\n\n' +  repr(e))
+            self.uc.show_warn('WARNING 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n\n' +  repr(e))
 
     def other_variable(self):
         if self.gutils.is_table_empty('grid'):
@@ -255,7 +255,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn("Calculating sampling of grid field '" + grid_field + "' aborted!\n\nPlease check grid layer or input points layer.\n\n" +  repr(e))
+                self.uc.show_warn("WARNING 060319.1713: Calculating sampling of grid field '" + grid_field + "' aborted!\n\nPlease check grid layer or input points layer.\n\n" +  repr(e))
 
     def correct_elevation(self):
         try:
@@ -282,7 +282,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             else:
                 correct_dlg.setup_external_method()
                 if correct_dlg.external_method is None:
-                    self.uc.show_warn('Please choose at least one elevation source!')
+                    self.uc.show_warn('WARNING 060319.1714: Please choose at least one elevation source!')
                     return
                 method = correct_dlg.run_external
 
@@ -293,7 +293,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_error('Assigning grid elevation aborted! Please check your input layers.'
+            self.uc.show_error('ERROR 060319.1607: Assigning grid elevation aborted! Please check your input layers.'
                                +'\n___________________________________________________', e)
 
     def get_roughness(self):
@@ -319,7 +319,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             nfield = 'n'
             flag = False
             if self.gutils.is_table_empty('user_roughness'):
-                self.uc.show_warn('There is no roughness polygons! Please digitize them before running tool.')
+                self.uc.show_warn('WARNING 060319.1715: There are no roughness polygons! Please digitize them before running tool.')
                 return
             else:
                 pass
@@ -333,7 +333,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('Assigning roughness aborted! Please check roughness layer.')
+            self.uc.show_warn('WARNING 060319.1716: Assigning roughness aborted! Please check roughness layer.')
 
     def eval_arfwrf(self):
         try:
@@ -370,7 +370,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     self.uc.show_info('ARF and WRF values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+            self.uc.show_error('ERROR 060319.1608: Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
                                '________________________________________________________________', e)
             QApplication.restoreOverrideCursor()
 
@@ -484,7 +484,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_error('Replacing duplicated ARFs and WRFs failed!.\n'
+            self.uc.show_error('ERROR 060319.1609: Replacing duplicated ARFs and WRFs failed!.\n'
                                '________________________________________________________________', e)
             return False
 
@@ -519,7 +519,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.show_info('Spatial tolerance values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of spatial tolerance failed! Please check your Tolerance Areas (Schematic layer).')
+            self.uc.show_warn('ERROR 060319.1834: Evaluation of spatial tolerance failed! Please check your Tolerance Areas (Schematic layer).')
             QApplication.restoreOverrideCursor()
 
     def eval_froude(self):
@@ -556,13 +556,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.show_info('Spatial Froude values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of spatial Froude failed! Please check your Froude Areas (Schematic layer).')
+            self.uc.show_warn('WARNING 060319.1717: Evaluation of spatial Froude failed! Please check your Froude Areas (Schematic layer).')
             QApplication.restoreOverrideCursor()
 
     def eval_shallow_n(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:
-            self.uc.bar_warn('There is no grid. Please, create it before evaluating the shallow-n values.')
+            self.uc.bar_warn('WARNING 060319.1718: There is no grid. Please, create it before evaluating the shallow-n values.')
             return
         else:
             pass
@@ -593,7 +593,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.show_info('Spatial shallow-n values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of spatial shallow-n failed! Please check your Shallow-n Areas (Schematic layer).')
+            self.uc.show_warn('WARNING 060319.1719: Evaluation of spatial shallow-n failed! Please check your Shallow-n Areas (Schematic layer).')
             QApplication.restoreOverrideCursor()
 
     def eval_gutter(self):
@@ -630,7 +630,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.show_info('Spatial gutter values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
+            self.uc.show_warn('WARNING 060319.1720: Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
             QApplication.restoreOverrideCursor()
 
     def eval_noexchange(self):
@@ -664,5 +664,5 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.show_info('No-exchange areas selected!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer).')
+            self.uc.show_warn('WARNING 060319.1721: Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer).')
             QApplication.restoreOverrideCursor()

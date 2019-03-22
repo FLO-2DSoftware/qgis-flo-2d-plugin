@@ -74,87 +74,37 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
         self.imc_manning_dbox.setValue(float_or_zero(row[3]))
         
         
-    def save_individual_breach_data(self):
+    def save_individual_multiple_chennels_data(self):
         pass
-#         """
-#         Save changes to breach.
-#         """
-#         update_qry = '''
-#         UPDATE breach
-#         SET ibreachdir = ?,
-#             zu = ? , 
-#             zd  = ? , 
-#             zc = ?  , 
-#             crestwidth = ?  , 
-#             crestlength  = ? ,
-#             brbotwidmax  = ? , 
-#             brtopwidmax  = ? , 
-#             brbottomel = ? , 
-#             d50c  = ? , 
-#             porc = ?  , 
-#             uwc = ?  ,
-#             cnc = ? , 
-#             afrc = ? , 
-#             cohc = ? , 
-#             unfcc  = ? ,
-#             d50s = ?  , 
-#             pors = ?   , 
-#             uws = ?  , 
-#             cns = ?  , 
-#             afrs = ?  , 
-#             cohs = ?  , 
-#             unfcs = ?  , 
-#             grasslength = ?  , 
-#             grasscond = ?  , 
-#             grassvmaxp = ?  ,
-#             sedconmax = ?  , 
-#             d50df = ?  , 
-#             unfcdf = ?  
-#         WHERE fid = ? ; '''
-# 
-# 
-#         qry_breach_cell = '''SELECT breach_fid FROM breach_cells WHERE grid_fid = ?'''
-#         
-#                       
-#         try:
-#             breach = self.gutils.execute(qry_breach_cell, (self.individual_breach_element_cbo.currentText(),)).fetchone()    
-#             self.gutils.execute(update_qry, (
-#                 self.breach_failure_direction_cbo.currentIndex(),
-#                 self.zu_dbox.value(),
-#                 self.zd_dbox.value(),
-#                 self.zc_dbox.value(),
-#                 self.crestwidth_dbox.value(),
-#                 self.crestlength_dbox.value(),
-#                 self.brbotwidmax_dbox.value(),
-#                 self.brtopwidmax_dbox.value(),
-#                 self.brbottomel_dbox.value(),
-#                 self.d50c_dbox.value(),
-#                 self.porc_dbox.value(),
-#                 self.uwc_dbox.value(),
-#                 self.cnc_dbox.value(),
-#                 self.afrc_dbox.value(),
-#                 self.cohc_dbox.value(),
-#                 self.unfcc_dbox.value(),
-#                 self.d50s_dbox.value(),
-#                 self.pors_dbox.value(),
-#                 self.uws_dbox.value(),
-#                 self.cns_dbox.value(),
-#                 self.afrs_dbox.value(),
-#                 self.cohs_dbox.value(),
-#                 self.unfcs_dbox.value(),
-#                 self.grasslength_dbox.value(),
-#                 self.grasscond_dbox.value(),
-#                 self.grassvmaxp_dbox.value(),
-#                 self.sedconmax_dbox.value(),
-#                 self.d50df_dbox.value(),
-#                 self.unfcdf_dbox.value(),
-#                 breach[0]
-#                 ))
-#             
-#             return True
-#         except Exception as e:                
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_error("ERROR 040219.2015: update of Individual Breach Data failed!"
-#                        +'\n__________________________________________________', e)  
-#             return False 
+        """
+        Save changes to individual multiple channel.
+        """
+        update_qry = '''
+        UPDATE mult_areas
+        SET wdr = ?,
+            dm = ? , 
+            nodchns  = ? , 
+            xnmult = ?
+        WHERE fid = ? ; '''
+ 
+ 
+        qry_mult_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
+         
+                       
+        try:
+            mult_cell = self.gutils.execute(qry_mult_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()    
+            self.gutils.execute(update_qry, 
+                                (   self.imc_width_dbox.value(),
+                                    self.imc_depth_dbox.value(),
+                                    self.imc_number_sbox.value(),
+                                    self.imc_manning_dbox.value(),
+                                    mult_cell[0]
+                                ))
+             
+            return True
+        except Exception as e:                
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 210319.0633: update of Individual Multiple Channel Data failed!"
+                       +'\n__________________________________________________', e)  
+            return False 
 

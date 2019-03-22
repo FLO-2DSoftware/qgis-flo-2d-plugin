@@ -49,7 +49,7 @@ class CrossSection(GeoPackageUtils):
             par_to_check = ['bankell', 'bankelr', 'fcd']
             for par in par_to_check:
                 if not is_number(self.chan_tab[par]):
-                    msg = 'Missing {} data in user cross section {}'.format(par, self.row['user_xs_fid'])
+                    msg = 'WARNING 060319.1820: Missing {} data in user cross section {}'.format(par, self.row['user_xs_fid'])
                     self.uc.show_warn(msg)
                     raise Flo2dError
             self.profile_data['lbank_elev'] = self.chan_tab['bankell']

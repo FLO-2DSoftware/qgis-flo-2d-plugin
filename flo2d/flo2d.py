@@ -561,7 +561,7 @@ class Flo2D(object):
                 self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
 
-    def call_methods(self, calls, debug, *args):
+    def call_IO_methods(self, calls, debug, *args):
         self.files_used = "CONT.DAT\n"
         self.files_not_used = ""
         n_found = 0        
@@ -855,7 +855,7 @@ class Flo2D(object):
                     for table in tables:
                         self.gutils.clear_tables(table)
 
-                    self.call_methods(import_calls, True)   # The strings list 'export_calls', contains the names of
+                    self.call_IO_methods(import_calls, True)   # The strings list 'export_calls', contains the names of
                                                             # the methods in the class Flo2dGeoPackage to import (read) the
                                                             # FLO-2D .DAT files
 
@@ -951,7 +951,7 @@ class Flo2D(object):
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 s.setValue('FLO-2D/lastGdsDir', outdir)
-                self.call_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
+                self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
                                                                 # the methods in the class Flo2dGeoPackage to export (write) the
                                                                 # FLO-2D .DAT files
                 self.uc.bar_info('Flo2D model exported', dur=3)
@@ -1120,7 +1120,7 @@ class Flo2D(object):
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
-            msg = 'The grid has {} elements with null elevation.\n' \
+            msg = 'WARNING 060319.1805: The grid has {} elements with null elevation.\n' \
                   'Levee elevation tool requires that all grid elements have elevation defined.'
             self.uc.show_warn(msg.format(null_elev_nr))
             return
@@ -1142,7 +1142,7 @@ class Flo2D(object):
                     if 1 in dlg_levee_elev.methods:
                         break 
                     else:
-                        self.uc.show_info('Levee user lines required!')
+                        self.uc.show_warn('WARNING 060319.1831: Levee user lines required!')
             else:
                 return       
         
@@ -1156,7 +1156,7 @@ class Flo2D(object):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Assigning values aborted! Please check your crest elevation source layers.')
+            self.uc.show_warn('WARNING 060319.1806: Assigning values aborted! Please check your crest elevation source layers.')
 
     @connection_required
     def show_hazus_dialog(self):
@@ -1167,7 +1167,7 @@ class Flo2D(object):
         s = QSettings()
         project_dir = s.value('FLO-2D/last_flopro_project', '')
         if not os.path.isfile(project_dir + '\DEPFP.OUT'):
-            self.uc.show_warn("File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"+ project_dir)
+            self.uc.show_warn("WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"+ project_dir)
             pass
 
         lyrs = self.lyrs.list_group_vlayers()
@@ -1177,7 +1177,7 @@ class Flo2D(object):
                 n_polys += 1
         if n_polys == 0:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn('There are not any polygon layers selected (or visible)!')
+            self.uc.bar_warn('WARNING 060319.1809: There are not any polygon layers selected (or visible)!')
             return
 
         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
@@ -1210,7 +1210,7 @@ class Flo2D(object):
             if converter_dlg.methods:
                 pass
             else:
-                self.uc.show_warn('Please choose at least one conversion source!')
+                self.uc.show_warn('WARNING 060319.1810: Please choose at least one conversion source!')
                 return
         else:
             return
@@ -1229,7 +1229,7 @@ class Flo2D(object):
             if converter_dlg.methods:
                 pass
             else:
-                self.uc.show_warn('Please choose at least one conversion source!')
+                self.uc.show_warn('WARNING 060319.1811: Please choose at least one conversion source!')
                 return
         else:
             return

@@ -186,7 +186,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.swmm_name_cbo.findText(new_name) == -1:
-            msg = 'Storm Drain point with name {} already exists in the database. Please, choose another name.'
+            msg = 'WARNING 060319.1738: Storm Drain point with name {} already exists in the database. Please, choose another name.'
             msg = msg.format(new_name)
             self.uc.show_warn(msg)
             return
@@ -528,7 +528,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.cbo_rating_tables.findText(new_name) == -1:
-            msg = 'Rating table with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1739: Rating table with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return

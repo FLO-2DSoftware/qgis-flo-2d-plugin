@@ -157,7 +157,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info('{0:.3f} seconds => database create'.format(time.time() - start_time))
         if not con:
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("Couldn't create new database {}".format(gpkg_path))
+            self.uc.show_warn("WARNING 060319.1653: Couldn't create new database {}".format(gpkg_path))
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
@@ -188,7 +188,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 self.si_units = False
                 mu = 'feet'
             else:
-                msg = 'Unknown map units. Choose a different projection!'
+                msg = 'WARNING 060319.1654: Unknown map units. Choose a different projection!'
                 self.uc.show_warn(msg)
                 return
             self.unit_lab.setText(mu)
@@ -217,7 +217,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 else:
                     return
         else:
-            msg = 'Choose a valid CRS!'
+            msg = 'WARNING 060319.1655: Choose a valid CRS!'
             self.uc.show_warn(msg)
             return
         if self.con:

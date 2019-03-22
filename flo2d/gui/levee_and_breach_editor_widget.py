@@ -7,14 +7,14 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from .ui_utils import load_ui
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..gui.dlg_breach import GlobalBreachDialog, IndividualBreachDialog, LeveeFragilityCurvesDialog
 from ..utils import float_or_zero
 from qgis.PyQt.QtWidgets import QApplication
 
-uiDialog, qtBaseClass = load_ui('levee_and_breach')
+uiDialog, qtBaseClass = load_ui('levee_and_breach_editor')
 
 class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
@@ -27,7 +27,16 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.grid_lyr = None
-
+        
+        set_icon(self.create_breach_location_btn, 'mActionCapturePoint.svg')
+        self.create_breach_location_btn.clicked.connect(self.create_point_breach)
+        
+        set_icon(self.save_breach_location_btn, 'mactionsavealledits.svg')
+        self.save_breach_location_btn.clicked.connect(self.save_breach_location_edits)
+        
+        set_icon(self.revert_breach_changes_btn, 'mactionundo.svg')
+        self.revert_breach_changes_btn.clicked.connect(self.revert_breach_lyr_edits)
+                
     def setup_connection(self):
         con = self.iface.f2d['con']
         if con is None:
@@ -40,6 +49,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             self.global_breach_data_btn.clicked.connect(self.show_global_breach_dialog)
             self.individual_breach_data_btn.clicked.connect(self.show_individual_breach_dialog)
             self.levee_fragility_curves_btn.clicked.connect(self.show_levee_fragility_curves_dialog)
+            self.show_levees_btn.clicked.connect(self.show_levees)
             self.no_failure_radio.clicked.connect(self.update_levee_failure_mode)
             self.prescribed_failure_radio.clicked.connect(self.update_levee_failure_mode)
             self.breach_failure_radio.clicked.connect(self.update_levee_failure_mode)
@@ -47,9 +57,9 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             self.transport_eq_cbo.currentIndexChanged.connect(self.update_general_breach_data)
             self.initial_breach_width_depth_ratio_dbox.valueChanged.connect(self.update_general_breach_data)
             self.weir_coefficient_dbox.editingFinished.connect(self.update_general_breach_data)
-            self.time_to_initial_failure_dbox.valueChanged.connect(self.update_general_breach_data)  
-            self.write_global_chbox.clicked.connect(self.enable_global_breach)          
-            
+            self.time_to_initial_failure_dbox.valueChanged.connect(self.update_general_breach_data) 
+             
+       
             self.populate_levee_and_breach_widget()
             
     def populate_levee_and_breach_widget(self):
@@ -80,8 +90,38 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         self.crest_increment_dbox.setValue(float_or_zero(row[0]))
 
         self.enable_breach_group()
-        self.enable_global_breach()
+
+    def create_point_breach(self):
+        if not self.lyrs.enter_edit_mode('breach'):
+            return
+
+    def save_breach_location_edits(self):
+        if not self.lyrs.any_lyr_in_edit('breach'):
+            return
+        self.lyrs.save_lyrs_edits('breach')
         
+    def revert_breach_lyr_edits(self):
+        breach_lyr_edited = self.lyrs.rollback_lyrs_edits('breach')
+
+    def show_levees(self):
+        if self.gutils.is_table_empty('levee_data'): 
+            self.uc.bar_info("There aren't cells with levees defined!") 
+            return   
+
+        dlg_individual_breach = IndividualBreachDialog(self.iface, self.lyrs)
+        save = dlg_individual_breach.exec_()
+        if save:
+            try:
+                if dlg_individual_breach.save_individual_breach_data():
+                    self.uc.bar_info('Individual Breach Data saved.')
+                else:
+                     self.uc.bar_info('Saving of Individual Breach Data failed!.')    
+            except Exception as e:                
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 040219.2004: assignment of Individual Breach Data failed!"
+                           +'\n__________________________________________________', e)         
+        
+                                       
     def show_global_breach_dialog(self):
         """
         Shows global breach dialog.
@@ -161,16 +201,14 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
     def enable_breach_group(self): 
         if self.no_failure_radio.isChecked():
             self.breach_grp.setDisabled(True)
+#             self.show_levees_btn.setEnabled(True)
+            
         elif self.prescribed_failure_radio.isChecked(): 
             self.breach_grp.setDisabled(True)
+#             self.show_levees_btn.setEnabled(True)
         else:       
-            self.breach_grp.setEnabled(True)   
-    
-    def enable_global_breach(self):
-        if self.write_global_chbox.isChecked():
-            self.global_breach_data_btn.setEnabled(True)
-        else:       
-            self.global_breach_data_btn.setEnabled(False)      
+            self.breach_grp.setEnabled(True)  
+#             self.show_levees_btn.setEnabled(False)   
                             
     def update_crest_increment(self):
         self.fill_levee_general_with_defauts_if_empty()

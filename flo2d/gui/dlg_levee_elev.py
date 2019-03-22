@@ -101,7 +101,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def check_sources(self):
         if not self.methods:
-            self.uc.show_warn('Please choose at least one crest elevation source!')
+            self.uc.show_warn('WARNING 060319.1612: Please choose at least one crest elevation source!')
             return False
 
     def import_z_data(self):

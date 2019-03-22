@@ -335,10 +335,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         self.time_for_clogging_dbox.setValue(data if data is not None else 0)
                     elif cell == 16:     
 #                         idx = self.rating_table_cbo.findData(data if data is not None else 0)
-#                         self.rating_table_cbo.setCurrentIndex(idx)
-
-                        idx = self.rating_table_cbo.findText(data if data is not None else 0)
-                        self.rating_table_cbo.setCurrentIndex(idx)                        
+                        idx = self.rating_table_cbo.findText(str(data) if data is not None else "")
+                        self.rating_table_cbo.setCurrentIndex(idx)
+                    
                         
                 if cell == 1 or cell == 2:
                         item.setFlags( Qt.ItemIsSelectable | Qt.ItemIsEnabled )
@@ -378,7 +377,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         if inlet_type_index == 3:
             rt_name = self.inlets_tblw.item(row, 16)
             rt_name = rt_name.text() if  rt_name.text() is not None else ""
-            idx = self.rating_table_cbo.findData(rt_name)
+            idx = self.rating_table_cbo.findText(rt_name)
             self.rating_table_cbo.setCurrentIndex(idx)                                                 
             
     def save_inlets(self):
@@ -410,7 +409,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     
             replace_rt = '''REPLACE INTO swmmflort (grid_fid, name) VALUES (?,?);'''  
             delete_rt = '''DELETE FROM swmmflort where grid_fid = ?;'''    
-            insert_rt = '''INSERT INTO swmmflort (grid_fid, name) values (?,?);''' 
+            insert_rt = '''INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);''' 
             
             inlets = []
             type4 = []
@@ -507,6 +506,33 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         head, sep, tail = rt_name.partition('.G') 
                         rt_name = head + '.G' + grid
                                            
+        
+                
+                # See if rating table doesn't exists in swmmflort:
+                if intype == '4': # Rating table. 
+                    if rt_name != '':
+                        qry = 'SELECT grid_fid, name, fid FROM swmmflort WHERE grid_fid = ? AND name = ?'
+                        row = self.gutils.execute(qry, (grid, rt_name,)).fetchone()
+                        if row:
+                            if row[0]:
+                                if row[1] != rt_name:
+                                    type4.append((grid, rt_name))
+                                else:
+                                    # rating table exists in swmmflort, does it have pairs of values in swmmflort_data
+                                    data_qry = 'SELECT * FROM swmmflort_data WHERE swmm_rt_fid = ?'
+                                    data = self.gutils.execute(data_qry, (row[2],)).fetchone()
+                                    if data is None:
+                                        type4.append((grid, rt_name))  
+                                    
+                            else:
+                                type4.append((grid, rt_name))  
+                        else:
+                            type4.append((grid, rt_name))                    
+                    else:
+                        no_rt += 1
+                        no_rt_names += "\n" + grid + "   (" + name + ")"               
+            
+            
                 inlets.append(( name,
                                 grid,
                                 invert_elev,
@@ -525,50 +551,55 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                                 swmm_time_for_clogging,
                                 rt_name,
                                 fid
-                            ))        
-                
-                # See if rating table doesn't exists in swmmflort:
-                if intype == '4': # Rating table. 
-                    if rt_name != '':
-                        qry = 'SELECT grid_fid, name, fid FROM swmmflort WHERE grid_fid = ? AND name = ?'
-                        row = self.gutils.execute(qry, (grid, rt_name)).fetchone()
-                        if row:
-                            if row[0]:
-                                if row[1] != rt_name:
-                                    type4.append((grid, rt_name))
-                                else:
-                                    # rating table exists in swmmflort, does it have pairs of values in swmmflort_data
-                                    data_qry = 'SELECT * FROM swmmflort_data WHERE swmm_rt_fid = ?'
-                                    data = self.gutils.execute(data_qry, (row[2],)).fetchone()
-                                    if data is None:
-                                        if self.uc.question('WARNING 060319.0640:\n\nNo data for rating table  "' + str(row[1]) + '"  of cell ' + str(row[0]) +
-                                                            '\n\nWould you like to create it?'):
-                                            self.add_rating_table_data(row[2], fetch=False)                                        
-                            else:
-                                type4.append((grid, rt_name))  
-                        else:
-                            type4.append((grid, rt_name))                    
-                    else:
-                        no_rt += 1
-                        no_rt_names += "\n" + grid + "   (" + name + ")"               
+                            ))            
+            
             
             # Update 'user_swmm_nodes' table:
             self.gutils.execute_many(update_qry, inlets)
             
             
-            # Update 'swmmflort' table:
+            
             if type4:
                 for item in type4:
-                    self.gutils.execute(insert_rt, item)
-#                 self.gutils.execute_many(insert_rt, type4)
-            
+                    # Insert item into 'swmmflort' table:
+                    self.gutils.execute(insert_rt, item) #
+
+                    head, sep, tail = item[1].partition('.G') 
+                    
+                    qry_base = 'SELECT fid FROM swmmflort WHERE name = ?'
+                    fid_base = self.gutils.execute(qry_base, (head,)).fetchone()
+
+                    data_qry = 'SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ?'
+                    data_base = self.gutils.execute(data_qry, (fid_base[0],)).fetchall()
+                    
+                    fid_new_rt = self.gutils.execute(qry_base, (item[1],)).fetchone()
+                    
+                    
+                    insert_data = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?,?,?);'
+                    for d in data_base:
+                        self.gutils.execute(insert_data, (fid_new_rt[0], d[0], d[1]))
+                    pass
+                        
+                        
+                        
+                        
+                        
+                        
+#                         if self.uc.question('WARNING 060319.0832:\n\nNo data for rating table  "' + str(item[1]) + '"  of cell ' + str(item[0]) +
+#                                             '\n\nWould you like to create it?'):
+#                             self.add_rating_table_data(row[0], fetch=False)
+                            
+                            
+                            
+                              
+                    
             if no_rt > 0:   
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info("WARNING 020219.1836: The following " + str(no_rt) + 
+                self.uc.show_info("WARNING 020219.1836:\n\nThe following " + str(no_rt) + 
                                   " grid element(s) have inlet of type 4 (stage discharge with rating table) but don't have rating table assigned:\n"
                                   + no_rt_names)          
             
-            self.update_rating_tables_in_storm_drain_widget()
+#             self.update_rating_tables_in_storm_drain_widget()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -726,6 +757,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 #         
     def update_rating_tables_in_storm_drain_widget(self):
+        self.populate_rtables_data()
         pass
         
         

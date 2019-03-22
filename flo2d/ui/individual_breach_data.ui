@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>459</width>
-    <height>733</height>
+    <width>440</width>
+    <height>754</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="QDialogButtonBox" name="global_breach_buttonBox">
    <property name="geometry">
     <rect>
-     <x>18</x>
-     <y>696</y>
+     <x>8</x>
+     <y>712</y>
      <width>417</width>
      <height>23</height>
     </rect>
@@ -32,584 +32,557 @@
   <widget class="QGroupBox" name="individual_core_data_grp">
    <property name="geometry">
     <rect>
-     <x>9</x>
-     <y>248</y>
-     <width>441</width>
-     <height>137</height>
+     <x>8</x>
+     <y>256</y>
+     <width>417</width>
+     <height>135</height>
     </rect>
    </property>
    <property name="title">
     <string>Individual Core Data</string>
    </property>
-   <widget class="QWidget" name="layoutWidget_2">
-    <property name="geometry">
-     <rect>
-      <x>56</x>
-      <y>23</y>
-      <width>158</width>
-      <height>102</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_11">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_12">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_13">
-         <property name="text">
-          <string>Mean sediment size</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_14">
-         <property name="text">
-          <string>Porosity</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_15">
-         <property name="text">
-          <string>Unit weight</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_16">
-         <property name="text">
-          <string>Manning's n-value</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_13">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="d50c_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="porc_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="uwc_dbox"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="cnc_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>24</y>
-      <width>180</width>
-      <height>76</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_9">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_8">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_9">
-         <property name="text">
-          <string>Angle of internal friction</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_10">
-         <property name="text">
-          <string>Cohesive strength</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_11">
-         <property name="text">
-          <string>Core sediment gradient</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_10">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="afrc_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="cohc_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="unfcc_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_26">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_11">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_12">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>Mean sediment size</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>Porosity</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_15">
+          <property name="text">
+           <string>Unit weight</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_16">
+          <property name="text">
+           <string>Manning's n-value</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_13">
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="d50c_dbox"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="porc_dbox"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QDoubleSpinBox" name="uwc_dbox"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QDoubleSpinBox" name="cnc_dbox"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout_9">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_8">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>Angle of internal friction</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Cohesive strength</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string>Core sediment gradient</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_10">
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="afrc_dbox"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="cohc_dbox"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QDoubleSpinBox" name="unfcc_dbox"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QGroupBox" name="individual_miscellaneous_data_grp">
    <property name="geometry">
     <rect>
-     <x>9</x>
-     <y>568</y>
-     <width>441</width>
-     <height>113</height>
+     <x>8</x>
+     <y>560</y>
+     <width>419</width>
+     <height>133</height>
     </rect>
    </property>
    <property name="title">
     <string>Individual Miscellaneous Data</string>
    </property>
-   <widget class="QWidget" name="layoutWidget_5">
-    <property name="geometry">
-     <rect>
-      <x>16</x>
-      <y>23</y>
-      <width>202</width>
-      <height>76</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_21">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_22">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_29">
-         <property name="text">
-          <string>Average grass length</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_30">
-         <property name="text">
-          <string>Downstream grass condition</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_31">
-         <property name="text">
-          <string>Maximum grass velocity</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_23">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="grasslength_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="grasscond_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="grassvmaxp_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>256</x>
-      <y>24</y>
-      <width>164</width>
-      <height>76</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_24">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_25">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_33">
-         <property name="text">
-          <string>Max. sediment conc.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_35">
-         <property name="text">
-          <string>Riprap gradient</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_34">
-         <property name="text">
-          <string>Riprap size</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_26">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="sedconmax_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="d50df_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="unfcdf_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout_24">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_36">
+        <property name="text">
+         <string>Ratio of init. width to length</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_29">
+        <property name="text">
+         <string>Average grass length</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_30">
+        <property name="text">
+         <string>Downstream grass condition</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_31">
+        <property name="text">
+         <string>Maximum grass velocity</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout_21">
+      <item row="0" column="0">
+       <widget class="QDoubleSpinBox" name="bratio_dbox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="grasslength_dbox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QDoubleSpinBox" name="grasscond_dbox"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QDoubleSpinBox" name="grassvmaxp_dbox"/>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="2">
+     <layout class="QGridLayout" name="gridLayout_22">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_33">
+        <property name="text">
+         <string>Max. sediment conc.</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_34">
+        <property name="text">
+         <string>Mean sediment (riprap) size</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_35">
+        <property name="text">
+         <string>Sediment (riprap) gradient</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_37">
+        <property name="text">
+         <string>Breach time</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="3">
+     <layout class="QGridLayout" name="gridLayout_23">
+      <item row="0" column="0">
+       <widget class="QDoubleSpinBox" name="sedconmax_dbox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="d50df_dbox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QDoubleSpinBox" name="unfcdf_dbox"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QDoubleSpinBox" name="breachtime_dbox"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QGroupBox" name="individual_shell_data_grp">
    <property name="geometry">
     <rect>
-     <x>9</x>
+     <x>8</x>
      <y>408</y>
-     <width>441</width>
+     <width>417</width>
      <height>135</height>
     </rect>
    </property>
    <property name="title">
     <string>Individual Shell Data</string>
    </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>24</y>
-      <width>180</width>
-      <height>76</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_18">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_19">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_25">
-         <property name="text">
-          <string>Angle of internal friction</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_27">
-         <property name="text">
-          <string>Shell sediment gradient</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_26">
-         <property name="text">
-          <string>Cohesive strength</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_20">
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="unfcs_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="cohs_dbox"/>
-       </item>
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="afrs_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>57</x>
-      <y>25</y>
-      <width>158</width>
-      <height>102</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_6">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_16">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_21">
-         <property name="text">
-          <string>Mean sediment size</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_22">
-         <property name="text">
-          <string>Porosity</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_23">
-         <property name="text">
-          <string>Unit weight</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_24">
-         <property name="text">
-          <string>Manning's n-value</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_17">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="d50s_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="pors_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="uws_dbox"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="cns_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout_25">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_16">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>Mean sediment size</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_22">
+          <property name="text">
+           <string>Porosity</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string>Unit weight</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string>Manning's n-value</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_17">
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="d50s_dbox"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="pors_dbox"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QDoubleSpinBox" name="uws_dbox"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QDoubleSpinBox" name="cns_dbox"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout_18">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_19">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_25">
+          <property name="text">
+           <string>Angle of internal friction</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_27">
+          <property name="text">
+           <string>Shell sediment gradient</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_26">
+          <property name="text">
+           <string>Cohesive strength</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_20">
+        <item row="2" column="0">
+         <widget class="QDoubleSpinBox" name="unfcs_dbox"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="cohs_dbox"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="afrs_dbox"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QGroupBox" name="individual_geometry_data_grp">
    <property name="geometry">
     <rect>
-     <x>9</x>
-     <y>88</y>
-     <width>441</width>
-     <height>135</height>
+     <x>8</x>
+     <y>80</y>
+     <width>417</width>
+     <height>159</height>
     </rect>
    </property>
    <property name="title">
     <string>Individual Geometry Data</string>
    </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>32</x>
-      <y>23</y>
-      <width>180</width>
-      <height>102</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_7">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Upstream face slope</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Down stream face slope</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>Crest width</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>Crest length</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="zu_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="zd_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="crestwidth_dbox"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="crestlength_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>23</y>
-      <width>183</width>
-      <height>102</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_5">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Core average face slope</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Maximum bottom width</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_5">
-         <property name="text">
-          <string>Maximum top width</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_6">
-         <property name="text">
-          <string>Pipe bottom elevation</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="zc_dbox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="brbotwidmax_dbox"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="brtopwidmax_dbox"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="brbottomel_dbox"/>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_5">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Upstream face slope</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Down stream face slope</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Core average face slope</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Crest width</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Crest length</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QDoubleSpinBox" name="zu_dbox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="zd_dbox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QDoubleSpinBox" name="zc_dbox"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QDoubleSpinBox" name="crestwidth_dbox"/>
+      </item>
+      <item row="4" column="0">
+       <widget class="QDoubleSpinBox" name="crestlength_dbox"/>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="2">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Maximum top width</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>Weir Coeficient</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Maximum bottom width</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Pipe bottom elevation</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="3">
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <widget class="QDoubleSpinBox" name="brbotwidmax_dbox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="brtopwidmax_dbox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QDoubleSpinBox" name="brbottomel_dbox"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QDoubleSpinBox" name="weircoef_dbox"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>112</x>
-     <y>25</y>
+     <x>104</x>
+     <y>16</y>
      <width>241</width>
      <height>50</height>
     </rect>
@@ -697,33 +670,33 @@
  <connections>
   <connection>
    <sender>global_breach_buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>individual_breach_data_dlg</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>35</x>
-     <y>696</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>271</x>
-     <y>619</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>global_breach_buttonBox</sender>
    <signal>rejected()</signal>
    <receiver>individual_breach_data_dlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>104</x>
-     <y>696</y>
+     <x>94</x>
+     <y>712</y>
     </hint>
     <hint type="destinationlabel">
      <x>141</x>
      <y>605</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>global_breach_buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>individual_breach_data_dlg</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>25</x>
+     <y>712</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>619</y>
     </hint>
    </hints>
   </connection>

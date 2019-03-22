@@ -156,7 +156,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.inlets_fields_groupBox.setTitle("Inlets Fields Selection (from '" + self.inlets_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("WARNING 051218.0559:  there are not defined or visible point layers to select inlets/junctions components!"
+            self.uc.show_error("ERROR 051218.0559:  there are not defined or visible point layers to select inlets/junctions components!"
                        +'\n__________________________________________________', e)
 
 
@@ -176,7 +176,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.outfalls_fields_groupBox.setTitle("Outfalls Fields Selection (from '" + self.outfalls_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (points))")
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("WARNING 051218.0600: there are not defined or visible point layers to select outfall components!"
+            self.uc.show_error("ERROR 051218.0600: there are not defined or visible point layers to select outfall components!"
                        +'\n__________________________________________________', e)
 
 
@@ -196,7 +196,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.conduits_fields_groupBox.setTitle("Conduits Fields Selection (from '" + self.conduits_shapefile_cbo.currentText() + "' layer with " + str(nFeatures) + " features (lines))")
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("WARNING 051218.0601: there are not defined or visible line layers to select conduits components!"
+            self.uc.show_error("ERROR 051218.0601: there are not defined or visible line layers to select conduits components!"
                        +'\n__________________________________________________', e)
 
 
@@ -414,13 +414,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         geom = f.geometry()
                         if geom is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Error processing geometry of inlet/junction '" + name + "' !")
+                            self.uc.show_warn("WARNING 060319.1822: Error processing geometry of inlet/junction '" + name + "' !")
                             continue
 
                         point = geom.asPoint()
                         if point is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Inlet/junction  " + name + "  is faulty!")
+                            self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
                             continue
                         
                         cell = self.gutils.grid_on_point(point.x(), point.y())
@@ -481,7 +481,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
                     
                     if outside_inlets != "":
-                       self.uc.show_warn("The following inlets/junctions are outside the computational domain!\n" + outside_inlets) 
+                       self.uc.show_warn("WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n" + outside_inlets) 
                         
 
                 except Exception as e:
@@ -522,13 +522,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         geom = f.geometry()
                         if geom is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Error processing geometry of outfall'" + name + "' !")
+                            self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall'" + name + "' !")
                             continue
                         
                         point = geom.asPoint()
                         if point is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Outfall  " + name + "  is faulty!")
+                            self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
                             continue
                         
                         cell = self.gutils.grid_on_point(point.x(), point.y())
@@ -589,7 +589,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
 
                     if outside_outfalls != "":
-                       self.uc.show_warn("The following outfalls are outside the computational domain!\n" + outside_outfalls) 
+                       self.uc.show_warn("WARNING 060319.1700: The following outfalls are outside the computational domain!\n" + outside_outfalls) 
                        
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
@@ -638,13 +638,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         geom = f.geometry()
                         if geom is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Error processing geometry of conduit '" + conduit_name +"' !")
+                            self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit '" + conduit_name +"' !")
                             continue
                         
                         line = geom.asPolyline()
                         if line is None:
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("Conduit " + name + " is faulty!")
+                            self.uc.show_warn("WARNING 060319.1702: Conduit " + name + " is faulty!")
                             continue
                                                 
                         new_geom = QgsGeometry.fromPolylineXY(line)
@@ -685,7 +685,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
 
                     if no_in_out != 0:
-                        self.uc.show_warn(str(no_in_out) + " conduits have no inlet and/or outlet!\n\n" +
+                        self.uc.show_warn("WARNING 060319.1703: " + str(no_in_out) + " conduits have no inlet and/or outlet!\n\n" +
                                                            "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n" +
                                                            "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?" )                     
                         

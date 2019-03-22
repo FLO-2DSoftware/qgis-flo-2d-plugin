@@ -90,14 +90,18 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
         Shows individual multiple channels dialog.
 
         """
+        if self.gutils.is_table_empty('mult_areas'):
+            self.uc.bar_warn('There are no Schematized Multiple Channel Areas defined!.')
+            return
+        
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)
         save = dlg_individual_multiple_channels.exec_()
         if save:
             try:
-                if dlg_individual_multiple_channels.save_individual_breach_data():
+                if dlg_individual_multiple_channels.save_individual_multiple_chennels_data():
                     self.uc.bar_info('Individual Multiple Channels Data saved.')
                 else:
-                     self.uc.bar_info('Saving of Individual Multriple Channels Data failed!.')    
+                     self.uc.bar_info('Saving of Individual Multiple Channels Data failed!.')    
             except Exception as e:                
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 100219.0646: assignment of Individual Multiple Channels Data failed!"

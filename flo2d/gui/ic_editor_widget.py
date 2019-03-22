@@ -138,7 +138,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.res_cbo.findText(new_name) == -1:
-            msg = 'Reservoir with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1722: Reservoir with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return
