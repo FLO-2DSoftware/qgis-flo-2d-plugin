@@ -222,7 +222,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.bc_name_cbo.findText(new_name) == -1:
-            msg = 'Boundary condition with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1619: Boundary condition with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return
@@ -244,7 +244,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # inflow
         if self.bc_type_inflow_radio.isChecked():
             if not self.inflow_tseries_cbo.findText(new_name) == -1:
-                msg = 'Time series with name {} already exists in the database. Please, choose another name.'.format(
+                msg = 'WARNING 060319.1620: Time series with name {} already exists in the database. Please, choose another name.'.format(
                     new_name)
                 self.uc.show_warn(msg)
                 return
@@ -253,7 +253,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # outflow
         else:
             if not self.outflow_data_cbo.findText(new_name) == -1:
-                msg = 'Data series with name {} already exists in the database. Please, choose another name.'.format(
+                msg = 'WARNING 060319.1621: Data series with name {} already exists in the database. Please, choose another name.'.format(
                     new_name)
                 self.uc.show_warn(msg)
                 return
@@ -421,7 +421,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # check if the name was changed
         if not self.inflow.name == new_name:
             if new_name in self.gutils.get_inflow_names():
-                msg = 'Inflow with name {} already exists in the database. Please, choose another name.'.format(self.inflow.name)
+                msg = 'WARNING 060319.1622: Inflow with name {} already exists in the database. Please, choose another name.'.format(self.inflow.name)
                 self.uc.show_warn(msg)
                 return False
             else:
@@ -449,17 +449,22 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow.set_time_series_data(data_name, ts_data)
 
     def schematize_inflows(self):
-        del_qry = 'DELETE FROM inflow_cells;'
-        ins_qry = '''INSERT INTO inflow_cells (inflow_fid, grid_fid)
-            SELECT
-                abc.bc_fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'inflow' AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
-        self.gutils.execute(del_qry)
-        self.gutils.execute(ins_qry)
+        try:
+            del_qry = 'DELETE FROM inflow_cells;'
+            ins_qry = '''INSERT INTO inflow_cells (inflow_fid, grid_fid)
+                SELECT
+                    abc.bc_fid, g.fid
+                FROM
+                    grid AS g, all_user_bc AS abc
+                WHERE
+                    abc.type = 'inflow' AND
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
+            self.gutils.execute(del_qry)
+            self.gutils.execute(ins_qry)
+            self.uc.show_info("Inflows schematized!")
+        except Exception as e:
+            self.uc.show_warn("WARNING 180319.1431: Schematizing of inflow aborted!")
+            self.uc.log_info(traceback.format_exc())
 
     def show_inflow_rb(self):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
@@ -757,7 +762,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # check if the name was changed
         if not self.outflow.name == new_name:
             if new_name in self.gutils.get_outflow_names():
-                msg = 'Outflow data with name {} already exists in the database. Please, choose another name.'.format(
+                msg = 'WARNING 060319.1623: Outflow data with name {} already exists in the database. Please, choose another name.'.format(
                     new_name)
                 self.uc.show_warn(msg)
             return
@@ -780,19 +785,24 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow.set_data(data_name, data)
 
     def schematize_outflows(self):
-        del_qry = 'DELETE FROM outflow_cells;'
-        ins_qry = '''
-            INSERT INTO outflow_cells (outflow_fid, grid_fid)
-            SELECT
-                abc.bc_fid, g.fid
-            FROM
-                grid AS g, all_user_bc AS abc
-            WHERE
-                abc.type = 'outflow' AND
-                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-                '''
-        self.gutils.execute(del_qry)
-        self.gutils.execute(ins_qry)
+        try:
+            del_qry = 'DELETE FROM outflow_cells;'
+            ins_qry = '''
+                INSERT INTO outflow_cells (outflow_fid, grid_fid)
+                SELECT
+                    abc.bc_fid, g.fid
+                FROM
+                    grid AS g, all_user_bc AS abc
+                WHERE
+                    abc.type = 'outflow' AND
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+                    '''
+            self.gutils.execute(del_qry)
+            self.gutils.execute(ins_qry)
+            self.uc.show_info("Outflows schematized!")       
+        except Exception as e:
+            self.uc.show_warn("WARNING 180319.1434: Schematizing of outflows aborted!")
+            self.uc.log_info(traceback.format_exc())
 
     def define_outflow_types(self):
         self.outflow_types = {

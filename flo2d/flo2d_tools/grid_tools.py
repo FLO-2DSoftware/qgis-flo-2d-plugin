@@ -886,7 +886,7 @@ def evaluate_arfwrf(gutils, grid, areas):
         return True
         
     except:
-        show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+        show_error('ERROR 060319.1605: Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
                    '_______________________________________________________________________________')
         return False
     
@@ -950,7 +950,7 @@ def calculate_arfwrf(grid, areas):
                     pass
         
     except:
-        show_error('Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
+        show_error('ERROR 060319.1606: Evaluation of ARFs and WRFs failed! Please check your Blocked Areas User Layer.\n'
                    '_______________________________________________________________________________')     
 
 
@@ -969,7 +969,7 @@ def evaluate_spatial_tolerance(gutils, grid, areas):
 
 
 def evaluate_spatial_buildings_adjustment_factor(gutils, grid, areas):
-    gutils.uc.show_warn('Assignment of building areas to building polygons. Not implemented yet!')
+    gutils.uc.show_warn('WARNING 060319.1615: Assignment of building areas to building polygons. Not implemented yet!')
 
 
 def evaluate_spatial_froude(gutils, grid, areas):

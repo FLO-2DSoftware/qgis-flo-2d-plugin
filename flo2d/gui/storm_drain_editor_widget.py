@@ -370,7 +370,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 geom = feat.geometry()
                 if geom is None:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_critical("Schematizing of Storm Drains failed!\n\n" +
+                    self.uc.show_critical("ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n" +
                                "Geometry (inlet or outlet) missing.\n\n" +
                                "Please check user Storm Drain Nodes layer.")
                     return
@@ -406,7 +406,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_critical("Schematizing of Storm Drains failed!\n\n" +
+            self.uc.show_critical("ERROR 060319.1832: Schematizing of Storm Drains failed!\n\n" +
                                "Attribute (inlet or outlet) missing.\n\n" +
                                "Please check user Storm Drain Nodes layer.")
             self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
@@ -472,13 +472,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if storm_drain.split_INP_groups_dictionary_by_tags() <= 1:
                 # No coordinates in INP file
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!")
+                self.uc.show_warn("WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!")
                 return
 
             # Build Nodes:
             if storm_drain.create_INP_nodes_dictionary_with_coordinates() == 0:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!")
+                self.uc.show_warn("WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!")
                 return
             else:
                 storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
@@ -544,7 +544,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_warn("Storm Drain point '" + name + "' outside domain!")
+                    self.uc.show_warn("WARNING 060319.1731: Storm Drain point '" + name + "' outside domain!")
                     continue
                 
                 elev = self.gutils.grid_value(grid, 'elevation')
@@ -597,7 +597,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("Creating Storm Drain Nodes layer failed!\n\n" + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?", e)
+            self.uc.show_error("ERROR 060319.1610: Creating Storm Drain Nodes layer failed!\n\n" + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?", e)
             return
 
         try:
@@ -713,10 +713,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_info("No nodes or conduits were defined in file\n\n" + swmm_file)
             else:
                 if conduit_inlets_not_found != "":
-                       self.uc.show_warn("The following conduit inlets were not found!\n\n" + conduit_inlets_not_found) 
+                       self.uc.show_warn("WARNING 060319.1732: The following conduit inlets were not found!\n\n" + conduit_inlets_not_found) 
 
                 if conduit_outlets_not_found != "":
-                       self.uc.show_warn("The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
+                       self.uc.show_warn("WARNING 060319.1733: The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
                                             
                 self.uc.show_info("Importing Storm Drain data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
@@ -989,7 +989,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 swmm_inp_file.write(line.format(row[0], x, y))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.16323: error while exporting [COORDINATES] to .INP file!", e)
+                        self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
                         return
     
                     # CONTROLS ##################################################
@@ -1023,7 +1023,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                   str(len(coordinates_rows)) + "\t[COORDINATES]"
                                   )
                 if no_in_out_conduits != 0:
-                        self.uc.show_warn(str(no_in_out_conduits) + " conduits have no inlet and/or outlet! The value '?' was assigned to them.\n" + 
+                        self.uc.show_warn("WARNING 060319.1734: " + str(no_in_out_conduits) + " conduits have no inlet and/or outlet! The value '?' was assigned to them.\n" + 
                                           "Please review them because it will cause errors during their processing.\n")              
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
@@ -1163,7 +1163,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         idx = self.rating_table_cbo.currentIndex()
         rt_fid = self.rating_table_cbo.itemData(idx)
         if rt_fid is None:
-            self.uc.bar_warn("No rating table defined!")
+#             self.uc.bar_warn("No rating table defined!")
             return
 
         self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
@@ -1212,16 +1212,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for rt in rts: 
             grid_fid = rt[0]          
             if grid_fid is None or grid_fid == '':
-                q = 'Rating table "' +  rt_name + '" is not assigned to any grid element.\nDo you want to delete it?'
+                q = 'WARNING 100319.1024:\n\nRating table "' +  rt_name + '" is not assigned to any grid element.\nDo you want to delete it?'
                 if not self.uc.question(q):
                     return        
                 idx = self.rating_table_cbo.currentIndex()
                 rt_fid = self.rating_table_cbo.itemData(idx)
                 self.inletRT.del_rating_table(rt_fid)  
             else:
-                self.uc.show_info("WARNING 040319.0444: Rating table '"+ rt_name + 
-                                  "' can't be deleted!. It is assigned to grid element " + str(grid_fid) + ".")           
-                          
+                if self.uc.question("WARNING 040319.0444:\n\nRating table '"+ rt_name + 
+                                  "' is assigned to grid element " + str(grid_fid) + ".\nDo you want to delete it?.\n"):
+                    if self.uc.question("CONFIRM:  Delete rating table '"+ rt_name + 
+                                      "' assigned to grid element " + str(grid_fid) + " ?"):                            
+                        idx = self.rating_table_cbo.currentIndex()
+                        rt_fid = self.rating_table_cbo.itemData(idx)
+                        self.inletRT.del_rating_table(rt_fid)                            
         self.populate_rtables()
 
 
@@ -1232,7 +1236,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.rating_table_cbo.findText(new_name) == -1:
-            msg = 'Rating table with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1735: Rating table with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return

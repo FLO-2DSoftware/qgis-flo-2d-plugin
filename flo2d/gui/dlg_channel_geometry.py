@@ -336,7 +336,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.average_channel_width_dbox.setValue(chan_r[2])
                 self.thalweg_channel_depth_dbox.setValue(chan_r[3])
             else:
-                self.uc.show_warn("Element " + elem + " has a cross section of type 'R' without data!")
+                self.uc.show_warn("WARNING 060319.1641: Element " + elem + " has a cross section of type 'R' without data!")
 
         elif type == "V":
             if chan_v is not None:
@@ -358,7 +358,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.second_top_width_coeff_dbox.setValue(chan_v[14])
                 self.second_top_width_exp_dbox.setValue(chan_v[15])
             else:
-                self.uc.show_warn("Element " + elem + " has a cross section of type 'V' without data!")
+                self.uc.show_warn("WARNING 060319.1624: Element " + elem + " has a cross section of type 'V' without data!")
 
         elif type == "T":
             if chan_t is not None:
@@ -370,7 +370,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.left_side_slope_dbox.setValue(chan_t[4])
                 self.right_side_slope_dbox.setValue(chan_t[5])
             else:
-                self.uc.show_warn("Element " + elem + " has a cross section of type 'T' without data!")
+                self.uc.show_warn("WARNING 060319.1625: Element " + elem + " has a cross section of type 'T' without data!")
 
         elif type == "N":
             if chan_n is not None:
@@ -378,7 +378,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.cross_section_number_lbl.setText(str(chan_n[0]))
                 # self.cross_section_name_lbl.setText(str(chan_n[1]))
             else:
-                self.uc.show_warn("Element " + elem + " has a cross section of type 'N' without data!")
+                self.uc.show_warn("WARNING 060319.1626: Element " + elem + " has a cross section of type 'N' without data!")
 
         highlight_selected_segment(self.lyrs.data['chan']['qlyr'], self.channel_segment_cbo.currentIndex() + 1)
         highlight_selected_xsection_a(self.gutils, self.lyrs.data['chan_elems']['qlyr'], int(self.grid_element_cbo.currentText()))

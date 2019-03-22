@@ -35,7 +35,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
         if self.cell_size == 0:
-            self.uc.bar_error('Cell size is 0 - something went wrong! Does TOPO.DAT file exists or is empty?')
+            self.uc.bar_error('ERROR 060319.1604: Cell size is 0 - something went wrong! Does TOPO.DAT file exists or is empty?')
             return False
         else:
             pass
@@ -325,10 +325,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             s = QSettings()
             last_dir = s.value('FLO-2D/lastGdsDir', '')
             if not os.path.isfile(last_dir + '\CHAN.DAT'):
-                self.uc.show_warn("Can't import channels!.\nCHAN.DAT doesn't exist.")
+                self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\nCHAN.DAT doesn't exist.")
                 return
             if not os.path.isfile(last_dir + '\CHANBANK.DAT'):
-                self.uc.show_warn("Can't import channels!.\nCHANBANK.DAT doesn't exist.")
+                self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\nCHANBANK.DAT doesn't exist.")
                 return
 
             chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''', 5]
@@ -397,7 +397,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             except Exception:
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn('ERROR 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files.')
+                self.uc.show_warn('WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files.')
                 #self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
 
     def import_xsec(self):
@@ -520,7 +520,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             mult_area_sql += [(geom,) + tuple(row[1:])]
             cells_sql += [(i, gid)]
 
-        self.batch_execute(mult_sql, mult_area_sql, cells_sql)
+        self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.
 
     def import_sed(self):
         sed_m_sql = ['''INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES''', 6]
@@ -641,22 +641,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
             'gsedconmax', 'gd50df', 'gunfcdf'
         ]
+        
+#             'ibreachsedeqn', 'gbratio', 'gweircoef', 'gbreachtime', 'gzu', 'gzd', 'gzc', 'gcrestwidth', 'gcrestlength',
+#             'gbrbotwidmax', 'gbrtopwidmax', 'gbrbottomel', 'gd50c', 'gporc', 'guwc', 'gcnc', 'gafrc', 'gcohc', 'gunfcc',
+#             'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
+#             'gsedconmax', 'gd50df', 'gunfcdf'    
+#         
+#             ibreachsedeqn  = ?, 
+#             gbratio  = ?, 
+#             gweircoef  = ?,  
+#             gbreachtime  = ?, 
+#             useglobaldata = ?,
+#             gzu  = ?, 
+#             gzd  = ? , 
+#             gzc  = ? , 
+#             gcrestwidth  = ? , 
+#             gcrestlength  = ? ,
+#             gbrbotwidmax  = ? , 
+#             gbrtopwidmax  = ?, 
+#             gbrbottomel  = ?, 
+#             gd50c  = ? , 
+#             gporc  = ? , 
+#             guwc  = ? , 
+#             gcnc  = ?, 
+#             gafrc  = ?, 
+#             gcohc  = ?, 
+#             gunfcc  = ? ,
+#             gd50s  = ? , 
+#             gpors  = ?  , 
+#             guws  = ? , 
+#             gcns  = ? , 
+#             gafrs  = ? , 
+#             gcohs  = ? , 
+#             gunfcs  = ? , 
+#             ggrasslength  = ? , 
+#             ggrasscond  = ? , 
+#             ggrassvmaxp  = ? ,
+#             gsedconmax  = ? , 
+#             gd50df  = ? , 
+#             gunfcdf  = ? ;        
+#         
+#         
+        
         local = [
             'geom', 'ibreachdir', 'zu', 'zd', 'zc', 'crestwidth', 'crestlength', 'brbotwidmax', 'brtopwidmax',
             'brbottomel', 'weircoef', 'd50c', 'porc', 'uwc', 'cnc', 'afrc', 'cohc', 'unfcc', 'd50s', 'pors', 'uws',
             'cns', 'afrs', 'cohs', 'unfcs', 'bratio', 'grasslength', 'grasscond', 'grassvmaxp', 'sedconmax', 'd50df',
             'unfcdf', 'breachtime'
         ]
+        use_global_data = 0
         global_sql = ['INSERT INTO breach_global (' + ', '.join(glob) + ') VALUES', 32]
         local_sql = ['INSERT INTO breach (' + ', '.join(local) + ') VALUES', 33]
         cells_sql = ['''INSERT INTO breach_cells (breach_fid, grid_fid) VALUES''', 2]
         frag_sql = ['''INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES''', 3]
 
-        self.clear_tables('breach_global', 'breach', 'breach_cells', 'breach_fragility_curves')
+
         data = self.parser.parse_breach()
         gids = (x[0] for x in data['D'])
         cells = self.grid_centroids(gids, buffers=True)
         for row in data['G']:
+            use_global_data = 1
             global_sql += [tuple(row)]
         for i, row in enumerate(data['D'], 1):
             gid = row[0]
@@ -665,9 +709,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid)]
         for row in data['F']:
             frag_sql += [tuple(row)]
-
-        self.batch_execute(global_sql, local_sql, cells_sql, frag_sql)
-
+            
+        self.clear_tables('breach_global', 'breach', 'breach_cells', 'breach_fragility_curves') 
+                # NOTE: 'cells_sql' was removed in next self.batch_execute since there is a trigger for ´breach' table that inserts them.
+                # self.batch_execute(global_sql, local_sql, cells_sql, frag_sql) 
+        self.batch_execute(global_sql, local_sql, frag_sql)
+        
+        # Set 'useglobaldata' to 1 if there are 'G' lines, 0 otherwise:
+        gutils.execute('UPDATE breach_global SET useglobaldata = ?;', (use_global_data,))
+        
+        
+        
     def import_fpfroude(self):
         fpfroude_sql = ['''INSERT INTO fpfroude (geom, froudefp) VALUES''', 2]
         cells_sql = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''', 2]
@@ -922,14 +974,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflow = os.path.join(outdir, 'INFLOW.DAT')
             previous_iid = -1
             row = None
+            
+            warning = ""
             with open(inflow, 'w') as i:
                 i.write(head_line.format(ihourdaily[0], ideplt[0]))
                 for iid, gid in self.execute(inflow_cells_sql):
     
                     if previous_iid != iid:
                         row = self.execute(inflow_sql, (iid,)).fetchone()
-                        row = [x if x is not None else '' for x in row]
-                        previous_iid = iid
+                        if row:
+                            row = [x if x is not None and x is not '' else 0 for x in row]
+                            previous_oid = iid
+                        else:
+                            warning += "Data for inflow in cell " + str(gid) + " not found in 'Inflow' table (wrong inflow 'id' "  + str(iid) + " in 'Inflow Cells' table).\n"
+                            continue                          
+                        
+#                         row = [x if x is not None else '' for x in row]
+#                         previous_iid = iid
                     else:
                         pass
     
@@ -942,12 +1003,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for res in self.execute(reservoirs_sql):
                     res = [x if x is not None else '' for x in res]
                     i.write(res_line.format(*res).rstrip())
+
+                
+            if warning != "":
+                self.uc.show_warn("ERROR 180319.1020: error while exporting INFLOW.DAT!\n\n" + warning + 
+                                  "\n\nWere the Boundary Conditions schematized? ")
                     
             return True  
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1541: exporting INFLOW.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
             return False
         
     def export_outflow(self, outdir):
@@ -957,8 +1023,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             outflow_sql = '''
             SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-            FROM outflow WHERE fid = ?;'''
-            outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;'''
+            FROM outflow WHERE bc_fid = ?;'''
+#             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;'''
+            outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''
             qh_params_data_sql = '''SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'''
             qh_table_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
             ts_data_sql = '''SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
@@ -979,14 +1046,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
             floodplains = {}
             previous_oid = -1
             row = None
-    
+            
+            warning = ""
             with open(outflow, 'w') as o:
                 for oid, gid in out_cells:
     
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
-                        row = [x if x is not None else 0 for x in row]
-                        previous_oid = oid
+                        if row:
+                            row = [x if x is not None and x is not '' else 0 for x in row]
+                            previous_oid = oid
+                        else:
+                            warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
+                            continue   
                     else:
                         pass
     
@@ -1013,6 +1085,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                     ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                     o.write(o_line.format(ident, gid))
+                
+            if warning != "":
+                self.uc.show_warn("ERROR 170319.2018: error while exporting OUTFLOW.DAT!\n\n" + warning +
+                                  "\n\nWere the Boundary Conditions schematized? ")
                     
             return True  
               
@@ -1079,7 +1155,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1541: exporting RAIN.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
             return False
         
     def export_raincell(self, outdir):
@@ -1219,7 +1295,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1541: exporting EVAPOR.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1544: exporting EVAPOR.DAT failed!.\n", e)
             return False
      
     def export_chan(self, outdir):
@@ -1624,7 +1700,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         
         except Exception:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Export to "GUTTER.DAT" failed!.')
+            self.uc.show_warn('WARNING 060319.1613: Export to "GUTTER.DAT" failed!.')
             QApplication.restoreOverrideCursor()
             return False
 
@@ -1808,12 +1884,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty('breach'):
                 return  False
             
+            # Writes BREACH.DAT if ILEVFAIL = 2.
+            
             global_sql = '''SELECT * FROM breach_global ORDER BY fid;'''
             local_sql = '''SELECT * FROM breach ORDER BY fid;'''
             cells_sql = '''SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;'''
             frag_sql = '''SELECT fragchar, prfail, prdepth FROM breach_fragility_curves ORDER BY fid;'''
     
-            b1, g1, g2, g3, g4 = slice(1, 5), slice(5, 13), slice(13, 20), slice(20, 27), slice(27, 33)
+            b1, g1, g2, g3, g4 = slice(1, 5), slice(6, 14), slice(14, 21), slice(21, 28), slice(28, 34)
             b2, d1, d2, d3, d4 = slice(0, 2), slice(2, 11), slice(11, 18), slice(18, 25), slice(25, 33)
     
             bline = 'B{0} {1}\n'
@@ -1832,6 +1910,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     
             global_rows = self.execute(global_sql).fetchall()
             local_rows = self.execute(local_sql).fetchall()
+            fragility_rows = self.execute(frag_sql)
+            
             if not global_rows and not local_rows:
                 return False
             else:
@@ -1841,16 +1921,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 c = 1
                 
                 for row in global_rows:
+                    # Write 'B1' line (general variables):
                     row_slice = [str(x) if x is not None else '' for x in row[b1]]
                     b.write(bline.format(c, ' '.join(row_slice)))
-                    # if breach_grp write G lines:
-                    for gslice, dslice, line in parts:
-                        row_slice = [str(x) if x is not None else '' for x in row[gslice]]
-                        if any(row_slice) is True:
-                            b.write(line.format('G', '  '.join(row_slice)))
-                        else:
-                            pass
-                    c += 1
+                    
+                    # Write G1,G2,G3,G4 lines if 'Use Global Data' checkbox is selected in Global Breach Data dialog:
+                    
+                    if row[5] == 1: # useglobaldata
+                        for gslice, dslice, line in parts:
+                            row_slice = [str(x) if x is not None else '' for x in row[gslice]]
+                            if any(row_slice) is True:
+                                b.write(line.format('G', '  '.join(row_slice)))
+                            else:
+                                pass
+                        c += 1
+                    
                 for row in local_rows:
                     fid = row[0]
                     gid = self.execute(cells_sql, (fid,)).fetchone()[0]
@@ -1863,8 +1948,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             b.write(line.format('D', '  '.join(row_slice)))
                         else:
                             pass
-                    c += 1
-                for row in self.execute(frag_sql):
+                c += 1
+                    
+                for row in fragility_rows:
                     b.write(fline.format(*row))
                     
             return True  
@@ -1931,7 +2017,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1617: exporting SHALLOWN_SPATIAL.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!.\n", e)
             return False
                              
 

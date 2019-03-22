@@ -183,7 +183,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
                 streets_schem.triggerRepaint()
             self.uc.show_info("Streets schematized!")
         except Exception as e:
-            self.uc.show_warn("Schematizing of streets aborted! Please check Street Lines layer.")
+            self.uc.show_warn("WARNING 060319.1736: Schematizing of streets aborted! Please check Street Lines layer.")
             self.uc.log_info(traceback.format_exc())
 
     def change_street_name(self):

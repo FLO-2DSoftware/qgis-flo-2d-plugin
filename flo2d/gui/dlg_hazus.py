@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2016 Lutra Consulting for FLO-2D
+# Copyright © 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -171,11 +171,11 @@ class HazusDialog(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
+            self.uc.show_warn('WARNING 060319.1627: Probing grid elevation failed! Please check your raster layer.')
 
     def xyz_elevation(self):
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            self.uc.bar_warn('WARNING 060319.1628: There is no grid! Please create it before running tool.')
             return
         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
@@ -222,7 +222,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
+                self.uc.show_warn('WARNING 060319.1629: Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
                 return None
             self.gutils.set_cont_par('CELLSIZE', cs)
         else:
@@ -230,7 +230,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             cs = None if cs == '' else cs
         if cs:
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
+                self.uc.show_warn('WARNING 060319.1630: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
                 return None
             return cs
         else:
@@ -245,7 +245,7 @@ class HazusDialog(qtBaseClass, uiDialog):
     def eval_buildings_adjustment_factor(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:
-            self.uc.bar_warn('There is no grid. Please, create it before evaluating the tolerance values.')
+            self.uc.bar_warn('WARNING 060319.1631: There is no grid. Please, create it before evaluating the tolerance values.')
             return
         else:
             pass
@@ -256,7 +256,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn(w)
             return
         try:
-            self.uc.show_warn('Assignment of building areas to building polygons. Not implemented yet!')
+            self.uc.show_warn('WARNING 060319.1632: Assignment of building areas to building polygons. Not implemented yet!')
             # QApplication.setOverrideCursor(Qt.WaitCursor)
             # grid_lyr = self.lyrs.data['grid']['qlyr']
             # user_building_areas_lyr = self.lyrs.data['buildings_areas']['qlyr']
@@ -268,7 +268,7 @@ class HazusDialog(qtBaseClass, uiDialog):
             # self.uc.show_info('Spatial tolerance values calculated!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Evaluation of buildings adjustment factor failed! Please check your Building Areas (Schematic layer).')
+            self.uc.show_warn('WARNING 060319.1650: Evaluation of buildings adjustment factor failed! Please check your Building Areas (Schematic layer).')
             QApplication.restoreOverrideCursor()
 
     def enable_global_adjustment_radio(self):
@@ -319,7 +319,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         if self.intercept_grid_radio.isChecked():
             null_elev = grid_has_empty_elev(self.gutils)
             if null_elev:
-                msg = 'Warning: There are {} grid elements that have no elevation value.'.format(null_elev)
+                msg = 'INFO 060319.1633: There are {} grid elements that have no elevation value.'.format(null_elev)
                 self.uc.show_info(msg)
             else:
                 self.uc.show_info('Perform average grid elevation interception.')

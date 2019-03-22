@@ -25,6 +25,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.flo2d_browse.clicked.connect(self.get_flo2d_dir)
         self.project_browse.clicked.connect(self.get_project_dir)
+        self.debug_run_btn.clicked.connect(self.debug_run)
         self.set_previous_paths(title)
 
     def set_previous_paths(self, title):
@@ -62,3 +63,6 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
 
     def get_parameters(self):
         return self.flo2d_le.text(), self.project_le.text()
+    
+    def debug_run(self):
+        self.uc.show_info("Run 0.4 min debug")

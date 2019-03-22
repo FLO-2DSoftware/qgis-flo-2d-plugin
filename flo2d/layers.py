@@ -960,7 +960,7 @@ class Layers(object):
             vlayer = QgsVectorLayer(uri, name, provider)
             self.uc.log_info('\t{0:.3f} seconds => loading {1} - create QgsVectorLayer'.format(time.time() - start_time, name))
             if not vlayer.isValid():
-                msg = 'Unable to load layer {}'.format(name)
+                msg = 'WARNING 060319.1821: Unable to load layer {}'.format(name)
                 self.uc.show_warn(msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool.")
                 raise Flo2dLayerInvalid(msg)
 

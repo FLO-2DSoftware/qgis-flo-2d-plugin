@@ -186,7 +186,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             res, msg = seg.interpolate_bed()
             if not res:
                 self.uc.log_info(msg)
-                self.uc.show_warn(msg)
+                self.uc.show_warn("WARNING 060319.1740: " + msg)
                 return False
         return True
 
@@ -382,7 +382,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.xs_cbo.findText(new_name) == -1:
-            msg = 'Boundary condition with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1741: Boundary condition with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return
@@ -477,7 +477,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             cs.create_schematized_channel_segments_aka_left_banks()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_error('Schematizing left bank lines failed !\n'
+            self.uc.show_error('ERROR 060319.1611: Schematizing left bank lines failed !\n'
                               'Please check your User Layers.\n\n'
                               'Check that:\n\n'
                               '   * For each User Left Bank line, the first cross section is\n'
@@ -494,7 +494,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             cs.create_schematized_xsections()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Schematizing failed while creating cross-sections! '
+            self.uc.show_warn('WARNING 060319.1742: Schematizing failed while creating cross-sections! '
                               'Please check your User Layers.')
             return
 
@@ -512,7 +512,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Schematizing failed while processing attributes! '
+            self.uc.show_warn('WARNING 060319.1743: Schematizing failed while processing attributes! '
                               'Please check your User Layers.')
             return
 
@@ -521,12 +521,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 cs.make_distance_table()
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn('Schematizing failed while preparing interpolation table!\n\n'
+                self.uc.show_warn('WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
                                   'Please check your User Layers.')
                 return
         else:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Schematizing failed while preparing interpolation table!\n\n'
+            self.uc.show_warn('WARNING 060319.1745: Schematizing failed while preparing interpolation table!\n\n'
                               'Schematic Channel Cross Sections layer is empty!')
             return
 
@@ -594,7 +594,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There are no Schematized Channel Cross Sections to export.')
             return
         if self.gutils.is_table_empty('user_xsections'):
-            self.uc.show_warn("There are no user cross sections defined.")
+            self.uc.show_warn("WARNING 060319.1746: There are no user cross sections defined.")
             return
 
         xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
@@ -643,7 +643,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             m += "\n\nIncrement the number of stations in the problematic cross sections." 
                         self.uc.show_info(m)
                     if ret == 1:
-                        self.uc.show_warn("CHANRIGHTBANK.EXE execution is disabled!") 
+                        self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!") 
 #                         self.run_CHANRIGHTBANK()                       
                     if ret == 2:
                         pass
@@ -655,7 +655,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value('FLO-2D/lastGdsDir', '')
             if not os.path.isfile(last_dir + '\CHAN.DAT'):
-                self.uc.show_warn("Can't import channels!.\nCHAN.DAT doesn't exist.")
+                self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
                 return
             
             cont_file = last_dir + '\CHAN.DAT'
@@ -1004,7 +1004,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         chan_n = self.gutils.execute(chan_n_sql).fetchall()
         if not chan_n:
-            self.uc.show_warn("There are no user cross sections defined!\n\n" + 
+            self.uc.show_warn("WARNING 060319.1749: There are no user cross sections defined!\n\n" + 
                               "XSEC.DAT was not saved!")
             return False
         else:
@@ -1104,7 +1104,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return_code = interpolate.run()
                 QApplication.restoreOverrideCursor()
                 if return_code != 0:
-                    self.uc.show_warn('ERROR 280119.0631 : Cross sections interpolation failed!\n\n' 
+                    self.uc.show_warn('WARNING 280119.0631 : Cross sections interpolation failed!\n\n' 
                                       'Interpolation program finished with return code ' + str(return_code) + '.' 
                                       '\n\nCheck content and format of CHAN.DAT and XSEC.DAT files.' 
                                       '\n\n For natural cross sections:'  
@@ -1118,7 +1118,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return return_code
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn('Program INTERPOLATE.EXE is not in directory\n\n' + self.exe_dir )
+                self.uc.show_warn('WARNING 060319.1750: Program INTERPOLATE.EXE is not in directory\n\n' + self.exe_dir )
                 return -1
         except Exception as e:
             self.uc.log_info(repr(e))
@@ -1136,18 +1136,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return_code = chanrightbank.run()
                 if (return_code != 0):
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_warn('Right bank cells selection failed!\n\n' +
+                    self.uc.show_warn('WARNING 060319.1751: Right bank cells selection failed!\n\n' +
                                       'Program finished with return code ' + str(return_code) + '.' +
                                       '\n\nCheck content and format of CHAN.DAT, XSEC.DAT, and TOPO.DAT files.' +
                                       '\n\nHave you assigned elevations to cells?')
                 else:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_warn('Right bank cells calculated!\n\n' +
+                    self.uc.show_warn('WARNING 060319.1752: Right bank cells calculated!\n\n' +
                                       'CHANBANK.DAT written as pairs (left bank cell, right bank cell)\n' +
                                       'in directory\n\n' + self.project_dir)
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn('Program CHANRIGHTBANK.EXE is not in directory!.\n\n' + self.exe_dir)
+                self.uc.show_warn('WARNING 060319.1753: Program CHANRIGHTBANK.EXE is not in directory!.\n\n' + self.exe_dir)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(repr(e))
@@ -1155,14 +1155,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def interpolate_xs_values(self):
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            self.uc.bar_warn('WARNING 060319.1754: There is no grid! Please create it before running tool.')
             return
         if self.gutils.is_table_empty('chan'):
-            self.uc.bar_warn('There are no cross-sections! Please create them before running tool.')
+            self.uc.bar_warn('WARNING 060319.1755: There are no cross-sections! Please create them before running tool.')
             return        
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('Interpolation of cross-sections values failed! '
+            self.uc.show_warn('WARNING 060319.1756: Interpolation of cross-sections values failed! '
                               'Please check your User Layers.')
             return
         else:
@@ -1371,15 +1371,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return_code = channelNInterpolator.run()
             if (return_code == 0):
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn('Channel n-values interpolated into CHAN.DAT file!\n\n')
+                self.uc.show_warn('WARNING 060319.1757: Channel n-values interpolated into CHAN.DAT file!\n\n')
                 
             elif return_code == -999:
-                self.uc.show_warn("Interpolation of channel n-values could not be performed!\n\n" +
+                self.uc.show_warn("WARNING 060319.1758: Interpolation of channel n-values could not be performed!\n\n" +
                                   "File\n\n" + os.path.join(project_dir, 'CHAN.DAT\n\n') +  
                                   "doesn't exist.")  
             else:    
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn('Interpolation of channel n-values failed!\n\n' +
+                self.uc.show_warn('WARNING 060319.1759: Interpolation of channel n-values failed!\n\n' +
                                   'Program finished with return code ' + str(return_code) + '.' +
                                   '\n\nCheck content and format of file\n\n' +
                                   os.path.join(project_dir, "CHAN.DAT"))                  
@@ -1388,19 +1388,19 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             self.uc.log_info(repr(e))               
-            self.uc.show_error('Interpolation of channel n-values failed!\n'
+            self.uc.show_error('ERROR 060319.1631: Interpolation of channel n-values failed!\n'
                               '\n_________________________________________________', e)
 
 
     def schematize_confluences(self):
         if self.gutils.is_table_empty('grid'):
-            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            self.uc.bar_warn('WARNING 060319.1801: There is no grid! Please create it before running tool.')
             return
         if self.gutils.is_table_empty('user_left_bank'):
-            self.uc.bar_warn('There are no any user left bank lines! Please digitize them before running the tool.')
+            self.uc.bar_warn('WARNING 060319.1802: There are no any user left bank lines! Please digitize them before running the tool.')
             return
         if self.gutils.is_table_empty('user_xsections'):
-            self.uc.bar_warn('There are no any user cross sections! Please digitize them before running the tool.')
+            self.uc.bar_warn('WARNING 060319.1803: There are no any user cross sections! Please digitize them before running the tool.')
             return
         try:
             conf = Confluences(self.con, self.iface, self.lyrs)
@@ -1414,4 +1414,4 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_info('Confluences schematized!')
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Schematizing aborted! Please check your 1D User Layers.')
+            self.uc.show_warn('WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.')

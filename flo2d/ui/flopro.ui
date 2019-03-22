@@ -16,94 +16,85 @@
   <property name="windowTitle">
    <string>Run Program</string>
   </property>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>35</y>
-     <width>67</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Project Folder</string>
-   </property>
-  </widget>
-  <widget class="QToolButton" name="project_browse">
-   <property name="geometry">
-    <rect>
-     <x>448</x>
-     <y>35</y>
-     <width>25</width>
-     <height>19</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>...</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="flo2d_le">
-   <property name="geometry">
-    <rect>
-     <x>84</x>
-     <y>9</y>
-     <width>353</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>9</y>
-     <width>69</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>FLO-2D Folder</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="project_le">
-   <property name="geometry">
-    <rect>
-     <x>84</x>
-     <y>35</y>
-     <width>353</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QToolButton" name="flo2d_browse">
-   <property name="geometry">
-    <rect>
-     <x>448</x>
-     <y>9</y>
-     <width>25</width>
-     <height>19</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>...</string>
-   </property>
-  </widget>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>304</x>
-     <y>80</y>
-     <width>156</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>FLO-2D Folder</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="3">
+    <widget class="QLineEdit" name="flo2d_le"/>
+   </item>
+   <item row="0" column="4">
+    <widget class="QToolButton" name="flo2d_browse">
+     <property name="text">
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Project Folder</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="3">
+    <widget class="QLineEdit" name="project_le"/>
+   </item>
+   <item row="1" column="4">
+    <widget class="QToolButton" name="project_browse">
+     <property name="text">
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>104</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="1">
+    <widget class="QPushButton" name="debug_run_btn">
+     <property name="text">
+      <string>Debug Run</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>103</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="3" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections>

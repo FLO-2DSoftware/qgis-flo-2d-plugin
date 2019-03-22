@@ -169,7 +169,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Importing Rainfall Data failed! ({0}) : {1}".format(e.errno, e.strerror))
+            self.uc.show_warn("WARNING 060319.1835: Importing Rainfall Data failed! ({0}) : {1}".format(e.errno, e.strerror))
 
     def export_rainfall_to_binary_hdf5(self):
         try:
@@ -339,7 +339,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.tseries_cbo.findText(new_name) == -1:
-            msg = 'Time series with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1725: Time series with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return
@@ -455,7 +455,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Probing grid elevation failed! Please check your raster layer.')
+            self.uc.show_warn('WARNING 060319.1726: Probing grid elevation failed! Please check your raster layer.')
 
     def get_cell_size(self):
         """
@@ -469,7 +469,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         if bfeat['cell_size']:
             cs = bfeat['cell_size']
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
+                self.uc.show_warn('WARNING 060319.1727: Cell size must be positive. Change the feature attribute value in Computational Domain layer.')
                 return None
             self.gutils.set_cont_par('CELLSIZE', cs)
         else:
@@ -477,7 +477,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             cs = None if cs == '' else cs
         if cs:
             if cs <= 0:
-                self.uc.show_warn('Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
+                self.uc.show_warn('WARNING 060319.1728: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
                 return None
             return cs
         else:

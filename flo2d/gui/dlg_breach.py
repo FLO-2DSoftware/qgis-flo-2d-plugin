@@ -13,7 +13,7 @@ from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication, QInputDialog
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, int_or_zero
 
 uiDialog_global, qtBaseClass = load_ui('global_breach_data')
 uiDialog_individual, qtBaseClass = load_ui('individual_breach_data')
@@ -68,18 +68,21 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
                         gcns , 
                         gafrs , 
                         gcohs , 
-                        gunfcs , 
+                        gunfcs ,
                         ggrasslength , 
                         ggrasscond , 
                         ggrassvmaxp ,
                         gsedconmax , 
                         gd50df , 
-                        gunfcdf
+                        gunfcdf,
+                        useglobaldata
                 FROM breach_global;'''
 
         row = self.gutils.execute(qry).fetchone() 
         if not row:
             return
+        
+        self.use_global_data_chbox.setChecked(int_or_zero(row[28]))
         
         self.gzu_dbox.setValue(float_or_zero(row[0]))
         self.gzd_dbox.setValue(float_or_zero(row[1]))
@@ -120,6 +123,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
             gbratio  = ?, 
             gweircoef  = ?,  
             gbreachtime  = ?, 
+            useglobaldata = ?,
             gzu  = ?, 
             gzd  = ? , 
             gzc  = ? , 
@@ -149,13 +153,8 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
             gd50df  = ? , 
             gunfcdf  = ? ;
         '''
-        
-        
-        
-#         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ; '''
-                
+               
         try:
-#             self.gutils.clear_tables('breach_global')
             if self.gutils.is_table_empty('breach_global'):
                 sql = '''INSERT INTO breach_global DEFAULT VALUES;'''
                 self.gutils.execute(sql,)
@@ -165,6 +164,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
                 self.ratio,
                 self.weird,
                 self.time,
+                self.use_global_data_chbox.isChecked(),
                 self.gzu_dbox.value(),
                 self.gzd_dbox.value(),
                 self.gzc_dbox.value(),
@@ -215,6 +215,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
 
         self.setup_connection()
         self.individual_breach_element_cbo.currentIndexChanged.connect(self.individual_breach_element_cbo_currentIndexChanged)
+
         self.populate_individual_breach_dialog()
 
 
@@ -246,6 +247,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
                         brbotwidmax , 
                         brtopwidmax, 
                         brbottomel, 
+                        weircoef,
                         d50c , 
                         porc , 
                         uwc , 
@@ -259,13 +261,15 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
                         cns , 
                         afrs , 
                         cohs , 
-                        unfcs , 
+                        unfcs ,
+                        bratio, 
                         grasslength , 
                         grasscond , 
                         grassvmaxp ,
                         sedconmax , 
                         d50df , 
-                        unfcdf
+                        unfcdf,
+                        breachtime
                 FROM breach
                 WHERE fid = ?;'''    
         
@@ -287,26 +291,36 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
         self.brbotwidmax_dbox.setValue(float_or_zero(row[6]))
         self.brtopwidmax_dbox.setValue(float_or_zero(row[7]))
         self.brbottomel_dbox.setValue(float_or_zero(row[8]))
-        self.d50c_dbox.setValue(float_or_zero(row[9]))
-        self.porc_dbox.setValue(float_or_zero(row[10]))
-        self.uwc_dbox.setValue(float_or_zero(row[11]))
-        self.cnc_dbox.setValue(float_or_zero(row[12]))
-        self.afrc_dbox.setValue(float_or_zero(row[13]))
-        self.cohc_dbox.setValue(float_or_zero(row[14]))
-        self.unfcc_dbox.setValue(float_or_zero(row[15]))
-        self.d50s_dbox.setValue(float_or_zero(row[16]))
-        self.pors_dbox.setValue(float_or_zero(row[17]))
-        self.uws_dbox.setValue(float_or_zero(row[18]))
-        self.cns_dbox.setValue(float_or_zero(row[19]))
-        self.afrs_dbox.setValue(float_or_zero(row[20]))
-        self.cohs_dbox.setValue(float_or_zero(row[21]))
-        self.unfcs_dbox.setValue(float_or_zero(row[22]))
-        self.grasslength_dbox.setValue(float_or_zero(row[23]))
-        self.grasscond_dbox.setValue(float_or_zero(row[24]))
-        self.grassvmaxp_dbox.setValue(float_or_zero(row[25]))
-        self.sedconmax_dbox.setValue(float_or_zero(row[26]))
-        self.d50df_dbox.setValue(float_or_zero(row[27]))
-        self.unfcdf_dbox.setValue(float_or_zero(row[28]))
+        
+        self.weircoef_dbox.setValue(float_or_zero(row[9]))
+        
+        self.d50c_dbox.setValue(float_or_zero(row[10]))
+        self.porc_dbox.setValue(float_or_zero(row[11]))
+        self.uwc_dbox.setValue(float_or_zero(row[12]))
+        self.cnc_dbox.setValue(float_or_zero(row[13]))
+        self.afrc_dbox.setValue(float_or_zero(row[14]))
+        self.cohc_dbox.setValue(float_or_zero(row[15]))
+        self.unfcc_dbox.setValue(float_or_zero(row[16]))
+        self.d50s_dbox.setValue(float_or_zero(row[17]))
+        self.pors_dbox.setValue(float_or_zero(row[18]))
+        self.uws_dbox.setValue(float_or_zero(row[19]))
+        self.cns_dbox.setValue(float_or_zero(row[20]))
+        self.afrs_dbox.setValue(float_or_zero(row[21]))
+        self.cohs_dbox.setValue(float_or_zero(row[22]))
+        self.unfcs_dbox.setValue(float_or_zero(row[23]))
+        
+        
+        self.bratio_dbox.setValue(float_or_zero(row[24]))
+        
+        
+        self.grasslength_dbox.setValue(float_or_zero(row[25]))
+        self.grasscond_dbox.setValue(float_or_zero(row[26]))
+        self.grassvmaxp_dbox.setValue(float_or_zero(row[27]))
+        self.sedconmax_dbox.setValue(float_or_zero(row[28]))
+        self.d50df_dbox.setValue(float_or_zero(row[29]))
+        self.unfcdf_dbox.setValue(float_or_zero(row[30]))
+        
+        self.breachtime_dbox.setValue(float_or_zero(row[31]))
         
         
     def save_individual_breach_data(self):
@@ -316,34 +330,37 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
         update_qry = '''
         UPDATE breach
         SET ibreachdir = ?,
-            zu = ? , 
-            zd  = ? , 
-            zc = ?  , 
-            crestwidth = ?  , 
-            crestlength  = ? ,
-            brbotwidmax  = ? , 
-            brtopwidmax  = ? , 
-            brbottomel = ? , 
-            d50c  = ? , 
-            porc = ?  , 
-            uwc = ?  ,
-            cnc = ? , 
-            afrc = ? , 
-            cohc = ? , 
-            unfcc  = ? ,
-            d50s = ?  , 
-            pors = ?   , 
-            uws = ?  , 
-            cns = ?  , 
-            afrs = ?  , 
-            cohs = ?  , 
-            unfcs = ?  , 
-            grasslength = ?  , 
-            grasscond = ?  , 
-            grassvmaxp = ?  ,
-            sedconmax = ?  , 
-            d50df = ?  , 
-            unfcdf = ?  
+            zu = ?, 
+            zd  = ?, 
+            zc = ?, 
+            crestwidth = ?, 
+            crestlength  = ?,
+            brbotwidmax  = ?, 
+            brtopwidmax  = ?, 
+            brbottomel = ?, 
+            weircoef = ?,
+            d50c  = ?, 
+            porc = ?, 
+            uwc = ?,
+            cnc = ?, 
+            afrc = ?, 
+            cohc = ?, 
+            unfcc  = ?,
+            d50s = ?, 
+            pors = ?, 
+            uws = ?, 
+            cns = ?, 
+            afrs = ?, 
+            cohs = ?, 
+            unfcs = ?, 
+            bratio = ?,
+            grasslength = ?, 
+            grasscond = ?, 
+            grassvmaxp = ?,
+            sedconmax = ?, 
+            d50df = ?, 
+            unfcdf = ?,
+            breachtime = ?
         WHERE fid = ? ; '''
 
 
@@ -362,6 +379,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
                 self.brbotwidmax_dbox.value(),
                 self.brtopwidmax_dbox.value(),
                 self.brbottomel_dbox.value(),
+                self.weircoef_dbox.value(),
                 self.d50c_dbox.value(),
                 self.porc_dbox.value(),
                 self.uwc_dbox.value(),
@@ -376,12 +394,14 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual):
                 self.afrs_dbox.value(),
                 self.cohs_dbox.value(),
                 self.unfcs_dbox.value(),
+                self.bratio_dbox.value(),
                 self.grasslength_dbox.value(),
                 self.grasscond_dbox.value(),
                 self.grassvmaxp_dbox.value(),
                 self.sedconmax_dbox.value(),
                 self.d50df_dbox.value(),
                 self.unfcdf_dbox.value(),
+                self.breachtime_dbox.value(),
                 breach[0]
                 ))
             

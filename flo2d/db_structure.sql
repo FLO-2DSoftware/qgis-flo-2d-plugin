@@ -1705,6 +1705,7 @@ CREATE TABLE "breach_global" (
     "gbratio" REAL DEFAULT 0.0, -- GBRATIO, global ratio of the initial breach width to breach depth
     "gweircoef" REAL DEFAULT 0.0, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
     "gbreachtime" REAL DEFAULT 0.0, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
+    "useglobaldata" INTEGER DEFAULT 1, -- switch to determine if global data is written
     "gzu" REAL DEFAULT 0.0, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzd" REAL DEFAULT 0.0, -- GZD, global slope of the downstream face of the levee or dam
     "gzc" REAL DEFAULT 0.0, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material
@@ -1778,7 +1779,7 @@ SELECT gpkgAddGeometryTriggers('breach', 'geom');
 
 CREATE TABLE "breach_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "breach_fid" INTEGER, -- fid of a breach from breach table
+    "breach_fid" INTEGER UNIQUE ON CONFLICT REPLACE, -- fid of a breach from breach table
     "grid_fid" INTEGER -- IBREACHGRID, grid element fid for which an individual breach parameters are defined
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('breach_cells', 'aspatial');

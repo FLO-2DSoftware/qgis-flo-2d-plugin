@@ -252,7 +252,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.struct_cbo.findText(new_name) == -1:
-            msg = 'Structure with name {} already exists in the database. Please, choose another name.'.format(
+            msg = 'WARNING 060319.1737: Structure with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return

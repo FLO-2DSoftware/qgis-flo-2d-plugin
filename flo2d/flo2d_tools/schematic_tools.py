@@ -592,12 +592,12 @@ class ChannelsSchematizer(GeoPackageUtils):
         first_xs = cross_sections[0]
         xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
         if len(cross_sections) < 2:
-            self.uc.show_warn('You need at least 2 cross-sections crossing left bank line!')
+            self.uc.show_warn('WARNING 060319.1633: You need at least 2 cross-sections crossing left bank line!')
             raise Exception
         if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
             return cross_sections
         else:
-            msg = 'Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
+            msg = 'WARNING 060319.1617: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
             # msg = msg.format(line_feat.id(), first_xs.id())
             msg = msg.format(line_feat.attributes()[1], first_xs.attributes()[3])
             self.uc.show_warn(msg)
@@ -725,7 +725,7 @@ class ChannelsSchematizer(GeoPackageUtils):
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('Error while creating schematic Left banks!.')
+            self.uc.show_warn('WARNING 060319.1618: Error while creating schematic Left banks!.')
 
     def schematize_rightbanks(self, rbank_feat):
         """
@@ -745,7 +745,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                                                                     # the vertices calculated from the intersected centroids of cells.
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('ERROR 220718.0741: Error while creating schematic Right banks!.')
+            self.uc.show_warn('WARNING 220718.0741: Error while creating schematic Right banks!.')
 
     def centroids_of_cells_intersecting_polyline(self, points):
         """

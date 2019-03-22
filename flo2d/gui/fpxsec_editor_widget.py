@@ -134,7 +134,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if not ok or not new_name:
             return
         if not self.fpxs_cbo.findText(new_name) == -1:
-            msg = 'Floodplain cross-sections with name {} already exists in the database. Please, choose another name.'
+            msg = 'WARNING 060319.1704: Floodplain cross-sections with name {} already exists in the database. Please, choose another name.'
             msg = msg.format(new_name)
             self.uc.show_warn(msg)
             return
@@ -181,7 +181,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             fpxs.schematize_floodplain_xs()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("Process failed on schematizing floodplain cross-sections! "
+            self.uc.show_warn("WARNING 060319.1705: Process failed on schematizing floodplain cross-sections! "
                               "Please check your User Layers.")
             return
         self.uc.show_info("Floodplain cross-sections schematized!")
