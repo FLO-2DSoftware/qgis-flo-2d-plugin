@@ -10,7 +10,7 @@
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..gui.dlg_breach import GlobalBreachDialog, IndividualBreachDialog, LeveeFragilityCurvesDialog
+from ..gui.dlg_breach import GlobalBreachDialog, IndividualBreachDialog, LeveeFragilityCurvesDialog, IndividualLeveesDialog
 from ..utils import float_or_zero
 from qgis.PyQt.QtWidgets import QApplication
 
@@ -104,21 +104,25 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         breach_lyr_edited = self.lyrs.rollback_lyrs_edits('breach')
 
     def show_levees(self):
+        """
+        Shows individual levees dialog.
+
+        """        
         if self.gutils.is_table_empty('levee_data'): 
             self.uc.bar_info("There aren't cells with levees defined!") 
             return   
 
-        dlg_individual_breach = IndividualBreachDialog(self.iface, self.lyrs)
-        save = dlg_individual_breach.exec_()
+        dlg_individual_levees = IndividualLeveesDialog(self.iface, self.lyrs)
+        save = dlg_individual_levees.exec_()
         if save:
             try:
-                if dlg_individual_breach.save_individual_breach_data():
-                    self.uc.bar_info('Individual Breach Data saved.')
+                if dlg_individual_levees.save_individual_levee_data():
+                    self.uc.bar_info('Individual Levee Data saved.')
                 else:
-                     self.uc.bar_info('Saving of Individual Breach Data failed!.')    
+                     self.uc.bar_info('Saving of Individual Levee Data failed!.')    
             except Exception as e:                
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 040219.2004: assignment of Individual Breach Data failed!"
+                self.uc.show_error("ERROR 240319.0959: assignment of Individual Levee Data failed!"
                            +'\n__________________________________________________', e)         
         
                                        

@@ -1795,7 +1795,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line2 = 'L  {0}\n'
             line3 = 'D  {0}  {1}\n'
             line4 = 'F  {0}\n'
-            line5 = 'W  {0}  {1}  {2}  {3}  {4}  {5}\n'
+            line5 = 'W  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n'
             line6 = 'C  {0}  {1}\n'
             line7 = 'P  {0}  {1}  {2}\n'
     
@@ -1817,6 +1817,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for gid, directions in fail_rows:
                     l.write(line4.format(gid))
                     for row in directions:
+                        rowl = list(row)
+                        for i in range(0, len(rowl)):
+                            rowl[i] = rowl[i] if rowl[i] is not None else 0
+                            rowl[i]= rowl[i] if rowl[i] != 'None' else 0
+                        row = tuple(rowl)  
                         l.write(line5.format(*row[2:]))
                 if None not in glob_frag:
                     l.write(line6.format(*glob_frag))

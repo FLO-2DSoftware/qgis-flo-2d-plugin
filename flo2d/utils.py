@@ -74,6 +74,8 @@ def float_or_zero(value):
     if type(value) is str:
         if value == "":
             return 0
+        elif value == "None":
+            return 0
         else:
            return float(value)  
     elif value.text() == "":
@@ -96,6 +98,8 @@ def int_or_zero(value):
     if type(value) is str:
         if value == "":
             return 0
+        elif value == "None":
+            return 0        
         else:
            return int(value)  
     elif value.text() == "":

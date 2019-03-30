@@ -93,6 +93,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             cs = self.gutils.get_cont_par('CELLSIZE')
             cs = None if cs == '' else cs
         if cs:
+            cs = float(cs)
             if cs <= 0:
                 self.uc.show_warn('WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings.')
                 return None
@@ -107,21 +108,21 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
 
     def create_grid(self):
-        if not self.lyrs.save_edits_and_proceed('Computational Domain'):
-            return
-        if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn('There is no Computational Domain! Please digitize it before running tool.')
-            return
-        if self.gutils.count('user_model_boundary') > 1:
-            warn = 'WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n'
-            warn += 'Only ONE will be used with the lowest fid (first created).'
-            self.uc.show_warn(warn)
-        if not self.gutils.is_table_empty('grid'):
-            if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
-                return
-        if not self.get_cell_size():
-            return
         try:
+            if not self.lyrs.save_edits_and_proceed('Computational Domain'):
+                return
+            if self.gutils.is_table_empty('user_model_boundary'):
+                self.uc.bar_warn('There is no Computational Domain! Please digitize it before running tool.')
+                return
+            if self.gutils.count('user_model_boundary') > 1:
+                warn = 'WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n'
+                warn += 'Only ONE will be used with the lowest fid (first created).'
+                self.uc.show_warn(warn)
+            if not self.gutils.is_table_empty('grid'):
+                if not self.uc.question('There is a grid already saved in the database. Overwrite it?'):
+                    return
+            if not self.get_cell_size():
+                return
             self.uc.progress_bar('Creating grid...')
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data['user_model_boundary']['qlyr']
@@ -141,7 +142,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn('WARNING 060319.1709: Creating grid aborted! Please check Computational Domain layer.')
+            self.uc.show_warn('WARNING 060319.1709: Creating grid aborted!\n\n' + 
+                              'Please check Computational Domain layer and cell size.')
 
     def raster_elevation(self):
         if self.gutils.is_table_empty('user_model_boundary'):
