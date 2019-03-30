@@ -692,7 +692,11 @@ class ChannelsSchematizer(GeoPackageUtils):
                 except Exception as e:
                     self.uc.log_info(traceback.format_exc())
                     continue
+#                 org_fid = 0 if interpolated  == 1 else org_fid   # JJ fix. Check it!!
                 vals = (lbankgrid, rbankgrid, lbank_fid, i, org_fid, interpolated)
+#                 vals_list = list(vals)
+#                 vals_list[4] = 0 if vals_list[5] == 1 else vals_list[4]
+#                 vals = tuple(vals_list)
                 sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
             cursor = self.con.cursor()
             for qry, vals in sqls:

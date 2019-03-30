@@ -108,6 +108,8 @@ class RASProject(GeoPackageUtils):
                 xs_feat.setAttribute('fid', xs_fid)
                 xs_feat.setAttribute('type', 'N')
                 xs_feat.setAttribute('name', xs_key)
+                fcn = xs_feat.attribute('fcn')
+                xs_feat.setAttribute('fcn', fcn if fcn is not None else 0.04)
                 user_xs_lyr.addFeature(xs_feat)
 
                 uchan_n_rows.append((xs_fid, nxsecnum, xs_key))

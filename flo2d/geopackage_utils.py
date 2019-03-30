@@ -537,7 +537,7 @@ class GeoPackageUtils(object):
     def set_def_n(self):
         def_n = self.get_cont_par('MANNING')
         if not def_n:
-            def_n = 0.035
+            def_n = 0.04
         qry = '''UPDATE user_xsections SET fcn = ? WHERE fcn IS NULL;'''
         self.execute(qry, (def_n,))
 

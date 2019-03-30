@@ -91,7 +91,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
 
         """
         if self.gutils.is_table_empty('mult_areas'):
-            self.uc.bar_warn('There are no Schematized Multiple Channel Areas defined!.')
+            self.uc.bar_warn('There are no Schematic Multiple Channel Areas defined!.')
             return
         
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)

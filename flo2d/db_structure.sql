@@ -505,7 +505,7 @@ CREATE TABLE "chan_elems" (
     "seg_fid" INTEGER, -- fid of cross-section's segment
     "nr_in_seg" INTEGER, -- cross-section number in segment
     "rbankgrid" INTEGER DEFAULT 0, -- RIGHTBANK, right bank grid element fid
-    "fcn" REAL DEFAULT 0, -- FCN, average Manning's n in the grid element
+    "fcn" REAL DEFAULT 0.04, -- FCN, average Manning's n in the grid element
     "xlen" REAL DEFAULT 0, -- channel length contained within the grid element ICHANGRID
     "type" TEXT, -- SHAPE, type of cross-section shape definition
     "notes" TEXT,
@@ -2014,7 +2014,7 @@ SELECT gpkgAddGeometryTriggers('user_right_bank', 'geom');
 
 CREATE TABLE "user_xsections" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "fcn" REAL, -- FCN, average Manning's n in the grid element
+    "fcn" REAL  DEFAULT 0.04, -- FCN, average Manning's n in the grid element
     "type" TEXT DEFAULT 'N', -- SHAPE, type of cross-section shape definition
     "name" TEXT,
     "notes" TEXT
@@ -2028,7 +2028,7 @@ CREATE TRIGGER "default_user_xsections"
     AFTER INSERT ON "user_xsections"
     BEGIN
         UPDATE "user_xsections"
-        SET name = ('Cross-Section-' || cast(NEW."fid" AS TEXT)), fcn = 0.05, type = 'N'
+        SET name = ('Cross-Section-' || cast(NEW."fid" AS TEXT)), fcn = 0.04, type = 'N'
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
@@ -2146,8 +2146,8 @@ SELECT gpkgAddGeometryTriggers('user_elevation_points', 'geom');
 CREATE TABLE "user_levee_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "elev" REAL,
-    "correction" REAL
+    "elev" REAL DEFAULT 0.0,
+    "correction" REAL DEFAULT 0.0
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);

@@ -33,7 +33,6 @@ from math import isnan
 
 uiDialog, qtBaseClass = load_ui('schematized_channels_info')
 
-
 class ShematizedChannelsInfo(qtBaseClass, uiDialog):
 
     def __init__(self, iface):
@@ -46,7 +45,6 @@ class ShematizedChannelsInfo(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
         self.populate_schematized_dialog()
-
 
     def populate_schematized_dialog(self):
         try:
@@ -85,9 +83,7 @@ class ShematizedChannelsInfo(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
             return
 
-
 uiDialog, qtBaseClass = load_ui('xs_editor')
-
 
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
@@ -799,9 +795,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #             try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue('FLO-2D/lastGdsDir', outdir)
-            
             chan = os.path.join(outdir, 'CHAN.DAT')
-#             bank = os.path.join(outdir, 'CHANBANK.DAT')
             
             with open(chan, 'w') as c:
                 surveyed = 0
@@ -818,6 +812,33 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                                         # A single line for each channel segment. The next lines will be the grid elements of
                                                         # this channel segment.
                     previous_xs = -999
+#  March                   
+#                     elems =  self.gutils.execute(chan_elems_sql, (fid,)).fetchall()  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+#                                                                         # 'chan_elems' table (the cross sections in the schematic layer),
+#                     
+#                     for elem in elems:  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+#                                                                         # 'chan_elems' table (the cross sections in the schematic layer),
+#                                                                         #  that has the 'fid' value indicated (the channel segment id).
+#    
+#                         elem = [x if x is not None else '' for x in elem] # If 'elems' has a None in any of above values of list, replace it by ''
+#                         eid, rbank, fcn, xlen, typ, user_xs_fid   = elem  # Separates values of list into individual variables.
+#                         sql, line, fcn_idx, xlen_idx = sqls[typ]    # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+#                                                                     # line (format to write), fcn_idx (?), and xlen_idx (?)
+#                         res = [x if x is not None else '' for x in self.gutils.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+#    
+#                         res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+#                         res.insert(xlen_idx, xlen)  # Add ´xlen' (comming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+#                         c.write(line.format(*res))
+#                            
+#                         if typ == "N":
+#                             if user_xs_fid == previous_xs:
+#                                 non_surveyed += 1                  
+#                             else:
+#                                 surveyed += 1
+#                                 previous_xs = user_xs_fid
+# March
+
+# Jan 29
                     for elems in self.gutils.execute(chan_elems_sql, (fid,)):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                                                                         # 'chan_elems' table (the cross sections in the schematic layer),
                                                                         #  that has the 'fid' value indicated (the channel segment id).
@@ -828,17 +849,24 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                                                     # line (format to write), fcn_idx (?), and xlen_idx (?)
                         res = [x if x is not None else '' for x in self.gutils.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
 
-                        res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                        res.insert(xlen_idx, xlen)  # Add ´xlen' (comming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                        c.write(line.format(*res))
-#                         b.write(chanbank.format(eid, rbank))
-                        
                         if typ == "N":
+                            res.insert(1, fcn)    # Add 'fcn' (comming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(2, xlen)  # Add Â´xlen' (comming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                             if user_xs_fid == previous_xs:
-                                non_surveyed += 1                  
+                                res.insert(3, 0)
+                                non_surveyed += 1
                             else:
+                                res.insert(3, user_xs_fid)
                                 surveyed += 1
                                 previous_xs = user_xs_fid
+                        else:
+                            res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(xlen_idx, xlen)  # Add Â´xlen' (comming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+
+                        c.write(line.format(*res))
+# Jan 29
+
+
 
 ##########################
                 for row in self.gutils.execute(chan_wsel_sql):
@@ -994,9 +1022,54 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #         else:
 #             return []
 
+
+
+
+
+#     def save_xsec_dot_dat_with_only_user_cross_sections(self):
+#         chan_n_sql = '''SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;'''
+#         xsec_sql = '''SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'''
+# 
+#         xsec_line = '''X     {0}  {1}\n'''
+#         pkt_line = ''' {0:<10} {1: >10}\n'''
+#         nr = '{0:.2f}'
+# 
+#         chan_n = self.gutils.execute(chan_n_sql).fetchall()
+#         if not chan_n:
+#             self.uc.show_warn("WARNING 060319.1749: There are no user cross sections defined!\n\n" + 
+#                               "XSEC.DAT was not saved!")
+#             return False
+#         else:
+#             pass
+# 
+#         s = QSettings()
+#         outdir = s.value('FLO-2D/lastGdsDir', '')
+#         if outdir:
+#             try:
+#                 QApplication.setOverrideCursor(Qt.WaitCursor)
+# 
+#                 xsec = os.path.join(outdir, 'XSEC.DAT')
+#                 with open(xsec, 'w') as x:
+#                     for nxecnum, xsecname in chan_n:
+#                         x.write(xsec_line.format(nxecnum, xsecname))
+#                         for xi, yi in self.gutils.execute(xsec_sql, (nxecnum,)):
+#                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+#                             
+#                 QApplication.restoreOverrideCursor()
+#                 self.uc.bar_info('XSEC.DAT model exported to ' + outdir, dur=5)
+#                 return True
+#             except Exception as e:
+#                 QApplication.restoreOverrideCursor()
+#                 self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)                
+#                 return False
+#         else:
+#             return False
+
     def save_xsec_dot_dat_with_only_user_cross_sections(self):
-        chan_n_sql = '''SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;'''
-        xsec_sql = '''SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'''
+        chan_n_sql = '''SELECT user_xs_fid, nxsecnum, xsecname FROM user_chan_n ORDER BY nxsecnum;'''
+        xsec_sql = '''SELECT xi, yi FROM user_xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;'''
+
+        user_xsections_sql = '''SELECT fid, name FROM user_xsections ORDER BY fid;'''
 
         xsec_line = '''X     {0}  {1}\n'''
         pkt_line = ''' {0:<10} {1: >10}\n'''
@@ -1004,8 +1077,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         chan_n = self.gutils.execute(chan_n_sql).fetchall()
         if not chan_n:
-            self.uc.show_warn("WARNING 060319.1749: There are no user cross sections defined!\n\n" + 
-                              "XSEC.DAT was not saved!")
+            self.uc.show_warn("WARNING 230319.0645: There are no user cross sections of type n defined!\n\n" + 
+                              "XSEC.DAT was not saved!")            
+            return False
+        else:
+            pass
+
+        user_xsections = self.gutils.execute(user_xsections_sql).fetchall()
+        if not user_xsections:
+            self.uc.show_warn("WARNING 230319.0646: There are no user cross sections defined!\n\n" + 
+                              "XSEC.DAT was not saved!")             
             return False
         else:
             pass
@@ -1015,37 +1096,33 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if outdir:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-
+                s.setValue('FLO-2D/lastGdsDir', outdir)
                 xsec = os.path.join(outdir, 'XSEC.DAT')
                 with open(xsec, 'w') as x:
-                    for nxecnum, xsecname in chan_n:
-                        x.write(xsec_line.format(nxecnum, xsecname))
-                        for xi, yi in self.gutils.execute(xsec_sql, (nxecnum,)):
+                    for fid, name in user_xsections:
+                        x.write(xsec_line.format(fid, name))
+                        for xi, yi in self.gutils.execute(xsec_sql, (fid,)):
                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
-                            
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info('XSEC.DAT model exported to ' + outdir, dur=5)
                 return True
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)                
                 return False
         else:
             return False
 
 
-
-
 #     def save_xsec_dot_dat_with_only_user_cross_sections(self):
 #         chan_n_sql = '''select user_xs_fid, nxsecnum, xsecname from user_chan_n order by nxsecnum;'''
 #         xsec_sql = '''select xi, yi from user_xsec_n_data where chan_n_nxsecnum = ? order by fid;'''
-# 
+#  
 #         user_xsections_sql = '''select fid, name from user_xsections order by fid;'''
-# 
+#  
 #         xsec_line = '''x     {0}  {1}\n'''
 #         pkt_line = ''' {0:<10} {1: >10}\n'''
 #         nr = '{0:.2f}'
-# 
+#  
 #         chan_n = self.gutils.execute(chan_n_sql).fetchall()
 #         if not chan_n:
 #             self.uc.show_warn("there are no user cross sections defined!\n\n" + 
@@ -1053,14 +1130,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #             return false
 #         else:
 #             pass
-# 
+#  
 #         user_xsections = self.gutils.execute(user_xsections_sql).fetchall()
 #         if not user_xsections:
 #             return false
 #         else:
 #             pass
-# 
-#         s = qsettings()
+#  
+#         s = QSettings()
 #         outdir = s.value('flo-2d/lastgdsdir', '')
 #         if outdir:
 #             try:
