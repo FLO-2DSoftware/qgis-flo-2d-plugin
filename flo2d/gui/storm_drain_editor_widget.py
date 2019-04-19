@@ -251,6 +251,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
     def save_swmm_edits(self):
+        
         self.uc.clear_bar_messages()
 
         if self.gutils.is_table_empty('user_model_boundary'):
@@ -263,12 +264,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         before = self.gutils.count('user_swmm_nodes')
         self.lyrs.save_lyrs_edits('user_swmm_nodes')
         after = self.gutils.count('user_swmm_nodes')
-        if after > before:
-            self.swmm_idx = after - 1
-        elif self.swmm_idx >= 0:
-            self.save_attrs()
-        else:
-            return
+#         if after > before:
+#             self.swmm_idx = after - 1
+#         elif self.swmm_idx >= 0:
+#             self.save_attrs()
+#         else:
+#             return
 #         self.populate_swmm()
 
 
@@ -333,6 +334,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         vals = list(swmm_dict.values()) + [fid]
         update_qry = '''UPDATE user_swmm_nodes SET {0} WHERE fid = ?;'''.format(col_names)
         self.gutils.execute(update_qry, vals)
+
 
     def schematize_swmm(self):
         self.uc.clear_bar_messages()

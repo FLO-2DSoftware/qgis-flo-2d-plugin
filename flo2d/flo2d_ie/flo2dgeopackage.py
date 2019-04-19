@@ -1459,7 +1459,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(hystruc, 'w') as h:
                 for stru in hystruc_rows:
                     fid = stru[0]
-                    vals = [x if x is not None else '' for x in stru[2:-2]]
+#                     vals = [x if x is not None else 0.0 for x in stru[2:-2]]
+                    vals1 = [x if x is not None and x != '' else 0 for x in stru[2:8]]
+                    vals2 = [x if x is not None and x != '' else 0.0 for x in stru[8:11]]
+                    vals = vals1 + vals2
                     h.write(line1.format(*vals))
                     for qry, line in pairs:
                         for row in self.execute(qry, (fid,)):

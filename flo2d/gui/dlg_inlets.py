@@ -43,6 +43,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.d1, self.d2 = [[], []]
         self.previous_type = -1
 
+        set_icon(self.change_name_btn, 'change_name.svg')
 #         set_icon(self.show_table_btn, 'show_cont_table.svg')
 #         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
 #         set_icon(self.add_rtable_btn, 'add_bc_data.svg')

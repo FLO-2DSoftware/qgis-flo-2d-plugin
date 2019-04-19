@@ -64,7 +64,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
         ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
         ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
-        ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
+        ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 'r', 'dat': 'CONT', 'min': 0.00, 'max': float('inf'), 'dec': 2}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
         ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 2}],
         ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],
