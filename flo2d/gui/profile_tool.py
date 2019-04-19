@@ -121,6 +121,7 @@ class ProfileTool(qtBaseClass, uiDialog):
             water.append(data['water'])
             peak.append(data['peak']+data['bed_elev'])
         self.plot.clear()
+        self.plot.plot.addLegend()
         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
@@ -130,6 +131,9 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.plot.plot.setLabel('bottom', text='Channel length')
         self.plot.plot.setLabel('left', text='Elevation')
         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
+
+        
+
 
     def check_mode(self):
         """

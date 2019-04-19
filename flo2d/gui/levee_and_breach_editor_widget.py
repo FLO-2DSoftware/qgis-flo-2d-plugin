@@ -110,6 +110,8 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         """        
         if self.gutils.is_table_empty('levee_data'): 
             self.uc.bar_info("There aren't cells with levees defined!") 
+            self.uc.show_info("The schematic layer doen't have levees defined!\n\n" +
+                              "Use the 'Levee elevation tool' in the FLO-2D tool bar to create schematic levees from user levees lines.")            
             return   
 
         dlg_individual_levees = IndividualLeveesDialog(self.iface, self.lyrs)

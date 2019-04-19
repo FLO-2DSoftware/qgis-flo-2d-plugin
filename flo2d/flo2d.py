@@ -162,8 +162,6 @@ class Flo2D(object):
         
         self.f2d_widget.multiple_channels_editor.setup_connection()
 
-#         self.f2d_widget.swmm_editor.setup_connection()
-
     def add_action(
             self,
             icon_path,
@@ -433,10 +431,6 @@ class Flo2D(object):
             if self.f2d_widget.infil_editor is not None:
                 self.f2d_widget.infil_editor.close()
                 del self.f2d_widget.infil_editor
-                
-#             if self.f2d_widget.swmm_editor is not None:
-#                 self.f2d_widget.swmm_editor.close()
-#                 del self.f2d_widget.swmm_editor
 
             if self.f2d_widget.storm_drain_editor is not None:
                 self.f2d_widget.storm_drain_editor.close()

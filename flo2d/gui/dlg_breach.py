@@ -237,7 +237,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_individual_breach_dialog(self):
-        qry_breach_cells = '''SELECT breach_fid, grid_fid FROM breach_cells'''
+        qry_breach_cells = '''SELECT breach_fid, grid_fid FROM breach_cells ORDER BY grid_fid'''
         breach_rows = self.gutils.execute(qry_breach_cells).fetchall() 
         if not breach_rows:
             return

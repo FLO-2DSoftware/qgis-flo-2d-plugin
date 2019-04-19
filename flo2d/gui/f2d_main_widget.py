@@ -23,7 +23,6 @@ from .multiple_channels_editor_widget import MultipleChannelsEditorWidget
 from .profile_tool import ProfileTool
 from .fpxsec_editor_widget import FPXsecEditorWidget
 from .infil_editor_widget import InfilEditorWidget
-# from .swmm_editor_widget import SWMMEditorWidget
 from .storm_drain_editor_widget import StormDrainEditorWidget
 from ..user_communication import UserCommunication
 
@@ -50,7 +49,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_rain_editor()
         self.setup_channels_editor()
         self.setup_xsec_editor()
-        self.setup_storm_drain_editor()
+        self.setup_storm_drain_editor()       
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
@@ -132,10 +131,6 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_infil_editor(self):
         self.infil_editor = InfilEditorWidget(self.iface, self.lyrs)
         self.infil_editor_lout.addWidget(self.infil_editor)
-
-#     def setup_swmm_editor(self):
-#         self.swmm_editor = SWMMEditorWidget(self.iface, self.plot, self.table, self.lyrs)
-#         self.swmm_editor_lout.addWidget(self.swmm_editor)
 
     def setup_storm_drain_editor(self):
         self.storm_drain_editor = StormDrainEditorWidget(self.iface,  self.plot, self.table, self.lyrs)

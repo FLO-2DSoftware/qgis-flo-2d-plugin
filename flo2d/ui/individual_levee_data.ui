@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Individual Breach Data</string>
+   <string>Individual Levee Data</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_16">
    <item row="0" column="0">

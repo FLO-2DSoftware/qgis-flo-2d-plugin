@@ -69,16 +69,35 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_13">
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="gd50c_dbox"/>
+           <widget class="QDoubleSpinBox" name="gd50c_dbox">
+            <property name="value">
+             <double>0.020000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="gporc_dbox"/>
+           <widget class="QDoubleSpinBox" name="gporc_dbox">
+            <property name="value">
+             <double>0.350000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QDoubleSpinBox" name="guwc_dbox"/>
+           <widget class="QDoubleSpinBox" name="guwc_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>109.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QDoubleSpinBox" name="gcnc_dbox"/>
+           <widget class="QDoubleSpinBox" name="gcnc_dbox">
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -123,13 +142,34 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_10">
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="gafrc_dbox"/>
+           <widget class="QDoubleSpinBox" name="gafrc_dbox">
+            <property name="maximum">
+             <double>999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>26.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="gcohc_dbox"/>
+           <widget class="QDoubleSpinBox" name="gcohc_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>922.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QDoubleSpinBox" name="gunfcc_dbox"/>
+           <widget class="QDoubleSpinBox" name="gunfcc_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>750.000000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -363,7 +403,11 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_26">
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="gsedconmax_dbox"/>
+           <widget class="QDoubleSpinBox" name="gsedconmax_dbox">
+            <property name="value">
+             <double>0.550000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
            <widget class="QDoubleSpinBox" name="gd50df_dbox"/>
@@ -446,16 +490,35 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_17">
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="gd50s_dbox"/>
+           <widget class="QDoubleSpinBox" name="gd50s_dbox">
+            <property name="value">
+             <double>20.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="gpors_dbox"/>
+           <widget class="QDoubleSpinBox" name="gpors_dbox">
+            <property name="value">
+             <double>0.400000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QDoubleSpinBox" name="guws_dbox"/>
+           <widget class="QDoubleSpinBox" name="guws_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>130.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QDoubleSpinBox" name="gcns_dbox"/>
+           <widget class="QDoubleSpinBox" name="gcns_dbox">
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -500,13 +563,31 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_20">
           <item row="2" column="0">
-           <widget class="QDoubleSpinBox" name="gunfcs_dbox"/>
+           <widget class="QDoubleSpinBox" name="gunfcs_dbox">
+            <property name="value">
+             <double>7.500000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="gcohs_dbox"/>
+           <widget class="QDoubleSpinBox" name="gcohs_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>250.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="gafrs_dbox"/>
+           <widget class="QDoubleSpinBox" name="gafrs_dbox">
+            <property name="maximum">
+             <double>999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>38.000000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
