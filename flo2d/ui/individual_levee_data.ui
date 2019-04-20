@@ -74,6 +74,12 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="inputMethodHints">
+          <set>Qt::ImhNone</set>
+         </property>
+         <property name="maxVisibleItems">
+          <number>40</number>
+         </property>
          <property name="duplicatesEnabled">
           <bool>false</bool>
          </property>
@@ -453,22 +459,49 @@
         <item row="0" column="1">
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="0">
-           <widget class="QDoubleSpinBox" name="failure_elevation_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_elevation_dbox">
+            <property name="maximum">
+             <double>99999.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="failure_duration_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_duration_dbox">
+            <property name="minimum">
+             <double>-99.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QDoubleSpinBox" name="failure_base_elevation_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_base_elevation_dbox">
+            <property name="maximum">
+             <double>99999.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QDoubleSpinBox" name="failure_max_width_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_max_width_dbox">
+            <property name="maximum">
+             <double>99999.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="4" column="0">
-           <widget class="QDoubleSpinBox" name="failure_vertical_rate_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_vertical_rate_dbox">
+            <property name="minimum">
+             <double>0.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+           </widget>
           </item>
           <item row="5" column="0">
-           <widget class="QDoubleSpinBox" name="failure_horizontal_rate_dbox"/>
+           <widget class="QDoubleSpinBox" name="failure_horizontal_rate_dbox">
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

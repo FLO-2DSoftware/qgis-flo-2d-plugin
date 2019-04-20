@@ -53,6 +53,23 @@ class Layers(object):
                 'module': ['all'],
                 'readonly': False
             }),
+            ('user_bc_lines', {
+                'name': 'Boundary Condition Lines',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_lines.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),            
+            
+            ('user_bc_polygons', {
+                'name': 'Boundary Condition Polygons',
+                'sgroup': 'User Layers',
+                'styles': ['user_bc_polygons.qml'],
+                'attrs_edit_widgets': {},
+                'module': ['all'],
+                'readonly': False
+            }),            
             ('user_fpxsec', {
                 'name': 'Floodplain Cross Sections',
                 'sgroup': 'User Layers',
@@ -110,14 +127,7 @@ class Layers(object):
                 'module': ['streets'],
                 'readonly': False
             }),
-            ('user_bc_lines', {
-                'name': 'Boundary Condition Lines',
-                'sgroup': 'User Layers',
-                'styles': ['user_bc_lines.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
+
             ('user_levee_lines', {
                 'name': 'Levee Lines',
                 'sgroup': 'User Layers',
@@ -126,14 +136,7 @@ class Layers(object):
                 'module': ['levees'],
                 'readonly': False
             }),
-            ('user_bc_polygons', {
-                'name': 'Boundary Condition Polygons',
-                'sgroup': 'User Layers',
-                'styles': ['user_bc_polygons.qml'],
-                'attrs_edit_widgets': {},
-                'module': ['all'],
-                'readonly': False
-            }),
+
             ('user_model_boundary', {
                 'name': 'Computational Domain',
                 'sgroup': 'User Layers',

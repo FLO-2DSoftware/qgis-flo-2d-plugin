@@ -507,7 +507,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
                                          xnmultall, sslopemin, sslopemax, avuld50) VALUES''', 8]
         mult_area_sql = ['''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES''', 5]
-        cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid) VALUES''', 2]
+        cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES''', 6]
 
         self.clear_tables('mult', 'mult_areas', 'mult_cells')
         head, data = self.parser.parse_mult()
@@ -520,7 +520,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             mult_area_sql += [(geom,) + tuple(row[1:])]
             cells_sql += [(i, gid)]
 
-        self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.
+        self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.        
+        
+        
+        
+#         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+#                                          xnmultall, sslopemin, sslopemax, avuld50) VALUES''', 8]
+#         mult_area_sql = ['''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES''', 5]
+#         cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid) VALUES''', 2]
+# 
+#         self.clear_tables('mult', 'mult_areas', 'mult_cells')
+#         head, data = self.parser.parse_mult()
+#         mult_sql += [tuple(head)]
+#         gids = (x[0] for x in data)
+#         cells = self.grid_centroids(gids)
+#         for i, row in enumerate(data, 1):
+#             gid = row[0]
+#             geom = self.build_square(cells[gid], self.shrink)
+#             mult_area_sql += [(geom,) + tuple(row[1:])]
+#             cells_sql += [(i, gid)]
+# 
+#         self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.
 
     def import_sed(self):
         sed_m_sql = ['''INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES''', 6]
@@ -1585,9 +1605,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty('mult'):
                 return False
             mult_sql = '''SELECT * FROM mult;'''
-            mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
-            mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = ?;'''
-    
+            mult_cell_sql = '''SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid;'''
             line1 = ' {}' * 8 + '\n'
             line2 = ' {}' * 5 + '\n'
     
@@ -1599,17 +1617,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
             mult = os.path.join(outdir, 'MULT.DAT')
             with open(mult, 'w') as m:
                 m.write(line1.format(*head[1:]).replace('None', ''))
-                for gid, aid in self.execute(mult_cell_sql):
-                    for row in self.execute(mult_area_sql, (aid,)):
-                        vals = [x if x is not None else '' for x in row]
-                        m.write(line2.format(gid, *vals))
+                for row in self.execute(mult_cell_sql):
+                    vals = [x if x is not None else '' for x in row]
+                    m.write(line2.format(*vals))
                     
             return True  
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
-            return False
+            return False        
+        
+        
+        
+        
+        
+        
+#         # check if there is any multiple channel defined.
+#         try:
+#             if self.is_table_empty('mult'):
+#                 return False
+#             mult_sql = '''SELECT * FROM mult;'''
+#             mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
+#             mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = ?;'''
+#     
+#             line1 = ' {}' * 8 + '\n'
+#             line2 = ' {}' * 5 + '\n'
+#     
+#             head = self.execute(mult_sql).fetchone()
+#             if head is None:
+#                 return  False
+#             else:
+#                 pass
+#             mult = os.path.join(outdir, 'MULT.DAT')
+#             with open(mult, 'w') as m:
+#                 m.write(line1.format(*head[1:]).replace('None', ''))
+#                 for gid, aid in self.execute(mult_cell_sql):
+#                     for row in self.execute(mult_area_sql, (aid,)):
+#                         vals = [x if x is not None else '' for x in row]
+#                         m.write(line2.format(gid, *vals))
+#                     
+#             return True  
+#               
+#         except Exception as e:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
+#             return False
                              
 
     def export_tolspatial(self, outdir):

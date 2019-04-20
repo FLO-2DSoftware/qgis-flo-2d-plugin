@@ -1313,7 +1313,11 @@ SELECT gpkgAddGeometryTriggers('mult_areas', 'geom');
 CREATE TABLE "mult_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- equal to fid from grid table
-    "area_fid" INTEGER -- fid of area from mult_areas table
+    "area_fid" INTEGER, -- fid of area from mult_areas table
+    "wdr" REAL DEFAULT 0.0, -- WDR, channel width for this grid element
+    "dm" REAL DEFAULT 0.0, -- DM, maximum depth of this multiple channel grid
+    "nodchns" INTEGER DEFAULT 0, -- NODCHNS, number of multiple channels assigned to this grid element
+    "xnmult" REAL DEFAULT 0.0 -- XNMULT, channel n-values for this multiple channel grid element  
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatial');
 
@@ -1322,8 +1326,8 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid)
-            SELECT NEW.fid, g.fid FROM grid as g
+        INSERT INTO "mult_cells" (area_fid, grid_fid, wdr, dm, nodchns, xnmult)
+            SELECT NEW.fid, g.fid, NEW.wdr, NEW.dm, NEW.nodchns, NEW. xnmult  FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
