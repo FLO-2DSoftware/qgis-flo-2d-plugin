@@ -43,7 +43,7 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_individual_multiple_cells_dialog(self):
-        qry_mc_cells = '''SELECT area_fid, grid_fid FROM mult_cells'''
+        qry_mc_cells = '''SELECT area_fid, grid_fid FROM mult_cells ORDER BY grid_fid'''
         mc_rows = self.gutils.execute(qry_mc_cells).fetchall() 
         if not mc_rows:
             return
@@ -57,13 +57,13 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
                         dm , 
                         nodchns , 
                         xnmult
-                FROM mult_areas
-                WHERE fid = ?;'''    
+                FROM mult_cells
+                WHERE grid_fid = ?;'''    
          
-        qry_mc_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
-         
-        mc = self.gutils.execute(qry_mc_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()  
-        row = self.gutils.execute(qry_mc, (mc[0],)).fetchone()    
+#         qry_mc_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
+#          
+#         mc = self.gutils.execute(qry_mc_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()  
+        row = self.gutils.execute(qry_mc, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()    
          
         if not row:
             pass
@@ -71,34 +71,55 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
         self.imc_width_dbox.setValue(float_or_zero(row[0]))
         self.imc_depth_dbox.setValue(float_or_zero(row[1]))
         self.imc_number_sbox.setValue(int_or_zero(row[2]))
-        self.imc_manning_dbox.setValue(float_or_zero(row[3]))
+        self.imc_manning_dbox.setValue(float_or_zero(row[3]))        
+        
+    
+#         qry_mc = '''SELECT 
+#                         wdr,
+#                         dm , 
+#                         nodchns , 
+#                         xnmult
+#                 FROM mult_areas
+#                 WHERE fid = ?;'''    
+#          
+#         qry_mc_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
+#          
+#         mc = self.gutils.execute(qry_mc_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()  
+#         row = self.gutils.execute(qry_mc, (mc[0],)).fetchone()    
+#          
+#         if not row:
+#             pass
+#          
+#         self.imc_width_dbox.setValue(float_or_zero(row[0]))
+#         self.imc_depth_dbox.setValue(float_or_zero(row[1]))
+#         self.imc_number_sbox.setValue(int_or_zero(row[2]))
+#         self.imc_manning_dbox.setValue(float_or_zero(row[3]))
         
         
     def save_individual_multiple_chennels_data(self):
-        pass
         """
         Save changes to individual multiple channel.
         """
         update_qry = '''
-        UPDATE mult_areas
+        UPDATE mult_cells
         SET wdr = ?,
             dm = ? , 
             nodchns  = ? , 
             xnmult = ?
-        WHERE fid = ? ; '''
+        WHERE grid_fid = ? ; '''
  
  
-        qry_mult_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
+#         qry_mult_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
          
                        
         try:
-            mult_cell = self.gutils.execute(qry_mult_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()    
+#             mult_cell = self.gutils.execute(qry_mult_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()    
             self.gutils.execute(update_qry, 
                                 (   self.imc_width_dbox.value(),
                                     self.imc_depth_dbox.value(),
                                     self.imc_number_sbox.value(),
                                     self.imc_manning_dbox.value(),
-                                    mult_cell[0]
+                                    self.individual_multiple_channel_element_cbo.currentText()
                                 ))
              
             return True
@@ -107,4 +128,40 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 210319.0633: update of Individual Multiple Channel Data failed!"
                        +'\n__________________________________________________', e)  
             return False 
+        
+        
+        
+        
+#         pass
+#         """
+#         Save changes to individual multiple channel.
+#         """
+#         update_qry = '''
+#         UPDATE mult_areas
+#         SET wdr = ?,
+#             dm = ? , 
+#             nodchns  = ? , 
+#             xnmult = ?
+#         WHERE fid = ? ; '''
+#  
+#  
+#         qry_mult_cell = '''SELECT area_fid FROM mult_cells WHERE grid_fid = ?'''
+#          
+#                        
+#         try:
+#             mult_cell = self.gutils.execute(qry_mult_cell, (self.individual_multiple_channel_element_cbo.currentText(),)).fetchone()    
+#             self.gutils.execute(update_qry, 
+#                                 (   self.imc_width_dbox.value(),
+#                                     self.imc_depth_dbox.value(),
+#                                     self.imc_number_sbox.value(),
+#                                     self.imc_manning_dbox.value(),
+#                                     mult_cell[0]
+#                                 ))
+#              
+#             return True
+#         except Exception as e:                
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 210319.0633: update of Individual Multiple Channel Data failed!"
+#                        +'\n__________________________________________________', e)  
+#             return False 
 
