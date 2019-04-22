@@ -375,7 +375,15 @@ class Layers(object):
                 'visible': True,
                 'readonly': False
             }),
-
+            ('mult_lines', {
+                'name': 'Multiple Channel Lines',
+                'sgroup': 'Schematic Layers',
+                'styles': ['mult_lines.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'readonly': False
+            }),
+            
             # Storm Drain layers:
 
             ('swmmflo', {
@@ -746,7 +754,8 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            }),             
+            }),  
+          
           # Sediment Transport:
 
             ('sed_supply_areas', {

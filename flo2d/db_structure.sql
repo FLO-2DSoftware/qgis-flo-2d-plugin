@@ -1298,6 +1298,19 @@ CREATE TABLE "mult" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
 
+
+CREATE TABLE "mult_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- equal to fid from grid table
+    "area_fid" INTEGER, -- fid of area from mult_areas table
+    "line_fid" INTEGER, -- fid of area from mult_line table    
+    "wdr" REAL DEFAULT 0.0, -- WDR, channel width for this grid element
+    "dm" REAL DEFAULT 0.0, -- DM, maximum depth of this multiple channel grid
+    "nodchns" INTEGER DEFAULT 0, -- NODCHNS, number of multiple channels assigned to this grid element
+    "xnmult" REAL DEFAULT 0.0 -- XNMULT, channel n-values for this multiple channel grid element  
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatial');
+
 CREATE TABLE "mult_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "wdr" REAL DEFAULT 0.0, -- WDR, channel width for individual grid elements
@@ -1309,17 +1322,6 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_areas', 
 SELECT gpkgAddGeometryColumn('mult_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_areas', 'geom');
 -- SELECT gpkgAddSpatialIndex('mult_areas', 'geom');
-
-CREATE TABLE "mult_cells" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" INTEGER, -- equal to fid from grid table
-    "area_fid" INTEGER, -- fid of area from mult_areas table
-    "wdr" REAL DEFAULT 0.0, -- WDR, channel width for this grid element
-    "dm" REAL DEFAULT 0.0, -- DM, maximum depth of this multiple channel grid
-    "nodchns" INTEGER DEFAULT 0, -- NODCHNS, number of multiple channels assigned to this grid element
-    "xnmult" REAL DEFAULT 0.0 -- XNMULT, channel n-values for this multiple channel grid element  
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_cells', 'aspatial');
 
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
     AFTER INSERT ON "mult_areas"
@@ -1345,6 +1347,45 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
     AFTER DELETE ON "mult_areas"
     BEGIN
         DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
+    END;
+
+
+CREATE TABLE "mult_lines" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "wdr" REAL DEFAULT 0.0, -- WDR, channel width for individual grid elements
+    "dm" REAL DEFAULT 0.0, -- DM, maximum depth of multiple channels
+    "nodchns" INTEGER DEFAULT 0, -- NODCHNS, number of multiple channels assigned in a grid element
+    "xnmult" REAL DEFAULT 0.0 -- XNMULT, channel n-values for individual grid elements
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('mult_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('mult_lines', 'geom');
+-- SELECT gpkgAddSpatialIndex('mult_lines', 'geom');
+
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_insert"
+    AFTER INSERT ON "mult_lines"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE line_fid = NEW."fid";
+        INSERT INTO "mult_cells" (line_fid, grid_fid, wdr, dm, nodchns, xnmult)
+            SELECT NEW.fid, g.fid, NEW.wdr, NEW.dm, NEW.nodchns, NEW. xnmult  FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_update"
+    AFTER UPDATE ON "mult_lines"
+    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE line_fid = NEW."fid";
+        INSERT INTO "mult_cells" (line_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_delete"
+    AFTER DELETE ON "mult_lines"
+    BEGIN
+        DELETE FROM "mult_cells" WHERE line_fid = OLD."fid";
     END;
 
 -- LEVEE.DAT
