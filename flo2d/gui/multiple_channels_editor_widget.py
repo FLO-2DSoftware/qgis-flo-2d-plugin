@@ -90,8 +90,8 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
         Shows individual multiple channels dialog.
 
         """
-        if self.gutils.is_table_empty('mult_areas'):
-            self.uc.bar_warn('There are no Schematic Multiple Channel Areas defined!.')
+        if self.gutils.is_table_empty('mult_cells'):
+            self.uc.bar_warn('There are no Multiple Channel Cells defined!.')
             return
         
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)
