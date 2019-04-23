@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+from os.path import normpath
 import time
 from collections import OrderedDict
 
@@ -1000,12 +1001,14 @@ class Layers(object):
         self.data[table]['qlyr'] = tree_lyr.layer()
 
         # set visibility
-        if visible:
-            vis = Qt.Checked
-        else:
-            vis = Qt.Unchecked
-        tree_lyr.setItemVisibilityChecked(vis)
-        tree_lyr.setExpanded(False)
+        if not lyr_exists:
+            if visible:
+                vis = Qt.Checked
+            else:
+                vis = Qt.Unchecked
+            tree_lyr.setItemVisibilityChecked(vis)
+            tree_lyr.setExpanded(False)
+        # preserve layer visibility for existing layers
 
         # set style
         if style:
@@ -1286,7 +1289,7 @@ class Layers(object):
         grp = self.root.findGroup(group) if group is not None else self.root
         if grp:
             for lyr in grp.findLayers():
-                if lyr.layer().dataProvider().dataSourceUri() == uri:
+                if normpath(lyr.layer().dataProvider().dataSourceUri()) == normpath(uri):
                     return lyr.layer().id()
         return None
 

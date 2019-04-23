@@ -531,6 +531,8 @@ class Flo2D(object):
         If QGIS project has a gpkg path saved ask user if it should be loaded.
         """
         old_gpkg = self.read_proj_entry('gpkg')
+        qgs_file = QgsProject.instance().fileName()
+        qgs_dir = os.path.dirname(qgs_file) 
         if old_gpkg:
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n'
@@ -547,13 +549,36 @@ class Flo2D(object):
                 self.setup_dock_widgets()
                 
                 s = QSettings()
-                s.setValue('FLO-2D/last_flopro_project', os.path.dirname(old_gpkg))
-                s.setValue('FLO-2D/lastGdsDir', old_gpkg)
+                s.setValue('FLO-2D/last_flopro_project', qgs_file)
+                s.setValue('FLO-2D/lastGdsDir',qgs_dir)
                 window_title = s.value('FLO-2D/last_flopro_project', '')
                 self.iface.mainWindow().setWindowTitle(window_title)                             
-            else:
-                self.uc.bar_info('Loading last model cancelled', dur=3)
                 return
+
+            else:
+                # load gpkg from qgis project directory
+                gpkg_dir,gpkg_file = os.path.split(old_gpkg)
+                _old_gpkg = os.path.join(qgs_dir,gpkg_file)
+                if os.path.exists(_old_gpkg):
+                    msg = 'Load the geopackage %s from QGIS project folder instead?'%_old_gpkg
+                    if self.uc.question(msg):
+                        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                        dlg_settings.connect(_old_gpkg)
+                        self.con = dlg_settings.con
+                        self.iface.f2d['con'] = self.con
+                        self.gutils = dlg_settings.gutils
+                        self.crs = dlg_settings.crs
+                        self.setup_dock_widgets()
+
+                        s = QSettings()
+                        s.setValue('FLO-2D/last_flopro_project',qgs_file)
+                        s.setValue('FLO-2D/lastGdsDir', qgs_dir)
+                        self.write_proj_entry('gpkg',_old_gpkg)
+                        window_title = s.value('FLO-2D/last_flopro_project', '')
+                        self.iface.mainWindow().setWindowTitle(window_title)                             
+                        return
+
+                self.uc.bar_info('Loading last model cancelled', dur=3)
 
     def call_IO_methods(self, calls, debug, *args):
         self.files_used = "CONT.DAT\n"
