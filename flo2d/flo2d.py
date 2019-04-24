@@ -34,6 +34,7 @@ from .flo2d_tools.schematic_tools import generate_schematic_levees
 from .flo2d_tools.flopro_tools import FLOPROExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
+from .gui.dlg_issues import IssuesDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
@@ -291,6 +292,12 @@ class Flo2D(object):
             callback=lambda: self.show_hazus_dialog(),
             parent=self.iface.mainWindow())
 
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/issue.svg'),
+            text=self.tr(u'Warnings and Errors'),
+            callback=lambda: self.show_issues_dialog(),
+            parent=self.iface.mainWindow())
+        
         self.add_action(
             os.path.join(self.plugin_dir, 'img/help_contents.svg'),
             text=self.tr(u'FlO-2D Help'),
@@ -1208,6 +1215,40 @@ class Flo2D(object):
                 self.uc.bar_info("Hazus Flooding Analysis performed!")
             except Exception as e:
                 self.uc.bar_warn("Could not compute Hazus Flooding Analysis!")
+                return
+
+    @connection_required
+    def show_issues_dialog(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
+
+#         s = QSettings()
+#         project_dir = s.value('FLO-2D/last_flopro_project', '')
+#         if not os.path.isfile(project_dir + '\DEPFP.OUT'):
+#             self.uc.show_warn("WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"+ project_dir)
+#             pass
+# 
+#         lyrs = self.lyrs.list_group_vlayers()
+#         n_polys = 0
+#         for l in lyrs:
+#             if l.geometryType() == QgsWkbTypes.PolygonGeometry:
+#                 n_polys += 1
+#         if n_polys == 0:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.bar_warn('WARNING 060319.1809: There are not any polygon layers selected (or visible)!')
+#             return
+# 
+#         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
+
+        
+        dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
+        save = dlg_issues.exec_()
+        if save:
+            try:
+                self.uc.bar_info("Errors performed!")
+            except Exception as e:
+                self.uc.bar_warn("Could not compute errors!")
                 return
 
     def schematize_levees(self):
