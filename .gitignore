@@ -14,3 +14,4 @@ pylint.log
 *.bak
 .project
 .pydevproject
+*.swp
