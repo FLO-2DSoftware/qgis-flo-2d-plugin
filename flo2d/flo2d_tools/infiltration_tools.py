@@ -13,6 +13,7 @@ from .grid_tools import poly2poly_geos
 from ..user_communication import UserCommunication
 from qgis.utils import iface
 from qgis.PyQt.QtCore import QSettings
+import os
 
 class InfiltrationCalculator(object):
 
@@ -100,7 +101,7 @@ class InfiltrationCalculator(object):
         self.imp_fld = imp_fld
 
     def green_ampt_infiltration(self):
-        
+        writeDiagnosticCSV = True # flag to determine if a csv file should be written with computational values
         try:
             grid_params = {}
             green_ampt = GreenAmpt()
@@ -119,7 +120,7 @@ class InfiltrationCalculator(object):
                 self.uc.show_error('ERROR 051218.2035: Green-Ampt infiltration failed\nwhile intersecting soil layer with grid.'
                                    +'\n__________________________________________________', e)   
                 return grid_params
-                     
+
             for gid, values in soil_values:
                 try:
                     xksat_parts = [(row[0], row[-1]) for row in values]
@@ -134,7 +135,7 @@ class InfiltrationCalculator(object):
                     if rtimp_n > 1.0:
                         rtimp_n = 1.0
     
-                    grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_n, 'soil_depth': avg_soil_depth, 'eff': eff}
+                    grid_params[gid] = {'soilParts': len(values),'soilhydc': avg_xksat, 'hydc': avg_xksat, 'soils': psif, 'rtimpn': rtimp_n ,'rtimpf': rtimp_n, 'soil_depth': avg_soil_depth, 'eff': eff}
                 except Exception as e:
                     self.uc.show_error('ERROR 1401181951.2035: Green-Ampt infiltration failed'
                                        + '\nwhile intersecting soil layer with grid {}'.format(gid)
@@ -185,13 +186,44 @@ class InfiltrationCalculator(object):
                     params['hydc'] = xksatc
                     params['abstrinf'] = iabstr
                     params['rtimpf'] = rtimp
+                    params['luParts'] = len(values)
                     
 #                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth,
 #                                         'theta': dtheta,' hydc': xksatc, 'abstrinf': iabstr, 'rtimpf': rtimp}
                 
                 except ValueError as e:
                     raise ValueError('Calculation of land use variables failed for grid cell with fid: {}'.format(gid)) from e
-
+            if writeDiagnosticCSV == True:
+                # write a diagnostic CSV file with all fo the information for the calculations in it
+                diagCSVFolder = r'C:\temp'
+                if os.path.exists(diagCSVFolder) == False:
+                    os.mkdir(diagCSVFolder)
+                diagFilename = 'GA_Diagnostics.csv'
+                diagPath = os.path.join(diagCSVFolder, diagFilename)
+                # organize the grid data for csv writing
+                gids = sorted(grid_params.keys())
+                writeVals = (
+                    (
+                        str(gid),
+                        str(grid_params[gid]['soilParts']),
+                        str(grid_params[gid]['soilhydc']),
+                        str(grid_params[gid]['rtimpn']),
+                        str(grid_params[gid]['eff']),
+                        str(grid_params[gid]['soil_depth']),
+                        str(grid_params[gid]['luParts']),
+                        str(round(grid_params[gid]['hydc'] / grid_params[gid]['soilhydc'], 5)),
+                        str(grid_params[gid]['hydc']),
+                        str(grid_params[gid]['dtheta']),
+                        str(grid_params[gid]['abstrinf']),
+                        str(grid_params[gid]['soils']),
+                        str(grid_params[gid]['rtimpf'])
+                        ) for gid in gids
+                    )
+                with open(diagPath, 'w') as writer:
+                    header = ','.join(['GridNum', 'NumSoilPartsInGrid', 'SoilXKSAT', 'SoilRTIMP', 'RTIMP_EFF', 'InfilDepth', 'NumLUPartsInGrid', 'VCAdjustment', 'VCXKSAT', 'DTHETA', 'IA', 'PSIF', 'LU_RTIMP']) + '\n'
+                    writer.write(header)
+                    for item in writeVals:
+                        writer.write(','.join(item) + '\n')
         except Exception as e:
             self.uc.show_error('ERROR 051218.2001: Green-Ampt infiltration failed!.'
                                +'\n__________________________________________________', e)
@@ -297,12 +329,14 @@ class GreenAmpt(object):
         return dtheta
 
     @staticmethod
-    def calculate_xksatc(avg_xksat, parts, defaultVCAdj = 1):
+    def calculate_xksatc(avg_xksat, parts, defaultVCAdj = 1.0):
         if avg_xksat < 0.4:
-            pc_gen = (((float(vc) - 10) / 90 + 1) * area for vc, area in parts)
+            pc_gen = tuple((((float(vc) - 10.0) / 90.0 + 1.0) * float(area) for vc, area in parts if vc > 10))
 
-            pc_noadj = (area for vc, area in parts if vc <= 10) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
-            areaTotal = sum(area for xksat, area in parts)
+            pc_noadj = tuple((float(area) for vc, area in parts if vc <= 10)) # adds areas where adjustment is not applied, assumes a coefficient of 1 for these areas
+                
+            areaTotal = sum(float(area) for xksat, area in parts)
+                
             if areaTotal < 1.0:
                 if areaTotal == 0:
                     # no intersecting area, calculate using the defaultVCAdj value
@@ -311,19 +345,7 @@ class GreenAmpt(object):
                     # composite using the default VCAdj value
                     xksatc = avg_xksat * ((sum(pc_gen) + sum(pc_noadj) + defaultVCAdj * (1.0 - areaTotal)))
             else:
-                xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))/sum(area for vc, area in parts)
-##            else:
-##                pc_gen = (((-10) / 90 + 1) * area for vc, area in parts)
-##                areaTotal = sum(area for xksat, area in parts)
-##                if areaTotal < 1.0:
-##                    if areaTotal == 0:
-##                        # no intersecting area, calculate using the defaultVCAdj value
-##                        xksatc = avg_xksat * defaultVCAdj
-##                    else:
-##                        # composite using the default VCAdj value
-##                        xksatc = avg_xksat * (sum(pc_gen) +  defaultVCAdj * (1.0 - areaTotal)) # divides by area for areal averaging
-##                else:
-##                    xksatc = avg_xksat * sum(pc_gen) / sum(area for vc, area in parts) # divides by area for areal averaging
+                xksatc = avg_xksat * (sum(pc_gen) + sum(pc_noadj))
         else:
             xksatc = avg_xksat
         return xksatc        

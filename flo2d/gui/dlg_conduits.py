@@ -9,15 +9,12 @@
 
 from ..utils import is_true
 from qgis.PyQt.QtCore import Qt
-
 from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
-
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
 uiDialog, qtBaseClass = load_ui('conduits')
-
 
 class ConduitsDialog(qtBaseClass, uiDialog):
 
