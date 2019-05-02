@@ -291,7 +291,7 @@ class Flo2D(object):
             text=self.tr(u'HAZUS'),
             callback=lambda: self.show_hazus_dialog(),
             parent=self.iface.mainWindow())
-
+        
         self.add_action(
             os.path.join(self.plugin_dir, 'img/issue.svg'),
             text=self.tr(u'Warnings and Errors'),
@@ -526,6 +526,9 @@ class Flo2D(object):
             self.uc.bar_warn('Could not run simulation under current operation system!')
             return
         try:
+            debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
+            if os.path.exists(debugDAT):
+              os.remove(debugDAT)            
             simulation = FLOPROExecutor(flo2d_dir, project_dir)
             simulation.run()
             self.uc.bar_info('Simulation started!', dur=3)
@@ -583,7 +586,7 @@ class Flo2D(object):
                         self.write_proj_entry('gpkg',_old_gpkg)
                         window_title = s.value('FLO-2D/last_flopro_project', '')
                         self.iface.mainWindow().setWindowTitle(window_title)                             
-                        return
+                return
 
                 self.uc.bar_info('Loading last model cancelled', dur=3)
 
@@ -968,15 +971,17 @@ class Flo2D(object):
             export_calls.remove('export_swmmflort')
             export_calls.remove('export_swmmoutf')
 
+
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         outdir = QFileDialog.getExistingDirectory(None,
                                     'Select directory where FLO-2D model will be exported',
                                     directory=last_dir)
         if outdir:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
                 s.setValue('FLO-2D/lastGdsDir', outdir)
+                
                 self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
                                                                 # the methods in the class Flo2dGeoPackage to export (write) the
                                                                 # FLO-2D .DAT files
@@ -985,8 +990,7 @@ class Flo2D(object):
             finally:
                 QApplication.restoreOverrideCursor()
                 if self.files_used != '' or self.files_not_used != '':
-                    self.uc.show_info("Files exported:\n\n" + self.files_used)
-                
+                    self.uc.show_info("Files exported:\n\n" + self.files_used)  
 
     @connection_required
     def import_from_gpkg(self):
@@ -1243,13 +1247,10 @@ class Flo2D(object):
 
         
         dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
-        save = dlg_issues.exec_()
-        if save:
-            try:
-                self.uc.bar_info("Errors performed!")
-            except Exception as e:
-                self.uc.bar_warn("Could not compute errors!")
-                return
+        ok = dlg_issues.exec_()
+#         if ok:
+        self.lyrs.clear_rubber() 
+
 
     def schematize_levees(self):
         """

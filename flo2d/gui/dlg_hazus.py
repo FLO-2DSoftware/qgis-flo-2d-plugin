@@ -7,6 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
 import traceback
 from qgis.core import QgsWkbTypes
 from qgis.PyQt.QtCore import Qt
@@ -20,7 +21,6 @@ from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsD
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
 
 uiDialog, qtBaseClass = load_ui('hazus')
-
 
 class HazusDialog(qtBaseClass, uiDialog):
 

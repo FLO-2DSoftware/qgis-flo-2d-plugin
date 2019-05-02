@@ -8,10 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import os
 from .ui_utils import load_ui
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication
+from ..flo2d_tools.flopro_tools import FLOPROExecutor
 
 uiDialog, qtBaseClass = load_ui('flopro')
 
@@ -29,14 +31,14 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         self.set_previous_paths(title)
 
     def set_previous_paths(self, title):
+        self.setWindowTitle(title)
         s = QSettings()
         flo2d_dir = s.value('FLO-2D/last_flopro', '')
-        project_dir = s.value('FLO-2D/last_flopro_project', '')
-        self.setWindowTitle(title)
+        project_dir = last_dir = s.value('FLO-2D/lastGdsDir', '')
         self.flo2d_le.setText(flo2d_dir)
         self.project_le.setText(project_dir)
-        s.setValue('FLO-2D/last_flopro', flo2d_dir) 
-        s.setValue('FLO-2D/last_flopro_project', project_dir) 
+#         s.setValue('FLO-2D/last_flopro', flo2d_dir) 
+#         s.setValue('FLO-2D/last_flopro_project', project_dir) 
               
 
     def get_flo2d_dir(self):
@@ -59,10 +61,26 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         if not project_dir:
             return
         self.project_le.setText(project_dir)
-        s.setValue('FLO-2D/last_flopro_project', project_dir)
+        s.setValue('FLO-2D/lastGdsDir', project_dir)
 
     def get_parameters(self):
         return self.flo2d_le.text(), self.project_le.text()
     
     def debug_run(self):
-        self.uc.show_info("Run 0.4 min debug")
+        try:
+            self.uc.show_info("Run 0.4 min debug")
+            s = QSettings()
+            flo2d_dir = self.flo2d_le.text()
+            project_dir = self.project_le.text()
+            debugDAT = os.path.join(project_dir, 'QGISDEBUG.DAT')
+            with open(debugDAT, 'w') as f:
+                f.write("")
+                
+            simulation = FLOPROExecutor(flo2d_dir, project_dir)
+            simulation.run()
+            self.uc.bar_info('Debug simulation started!', dur=3)                
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 250419.1729: can't run debug model!.\n", e)                
+                

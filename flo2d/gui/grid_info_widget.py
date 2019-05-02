@@ -12,7 +12,7 @@ from math import sqrt
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtCore import QSize
+from qgis.PyQt.QtCore import QSize, Qt
 from .ui_utils import load_ui, center_canvas, set_icon
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
@@ -138,24 +138,19 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     if cell != '':
                         cell = int(cell)
                         if len(grid) >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell)
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
                             feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = feat.geometry().centroid().asPoint()
                             self.lyrs.zoom_to_all()
                             center_canvas(self.iface, x, y)
                         else:
-                            self.idEdit.setText('')
-                            self.lyrs.clear_rubber()                          
+                            self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
+                            self.lyrs.clear_rubber()                            
                     else:
+                        self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
                         self.lyrs.clear_rubber()              
         except ValueError:
-            self.idEdit.setText('')
+            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
             self.lyrs.clear_rubber()    
-            pass            
-        
-        
-#         feat = grid.getFeatures(QgsFeatureRequest(self.idEdit.text()))
-#         
-#         grid.setSelectedFeatures(feat);
-#         self.canvas.zoomToSelected(grid)
-#         self.canvas.refresh();        
+            pass          
+      

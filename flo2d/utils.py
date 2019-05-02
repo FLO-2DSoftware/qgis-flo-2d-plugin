@@ -118,14 +118,4 @@ def Msge(msg_string, icon):
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
     msgBox.exec_()
-    
-    
-#                         msg.("Interpolation Performed")
-#                     msg.setText(q)
-# #                     msg.setStandardButtons(
-# #                         QMessageBox().Ok | QMessageBox().Cancel)
-#                     msg.addButton(QPushButton('Import CHAN.DAT and XSEC.DAT files'), QMessageBox.YesRole)
-#                     msg.addButton(QPushButton('Run CHANRIGHTBANK.EXE'), QMessageBox.NoRole)
-#                     msg.addButton(QPushButton('Cancel'), QMessageBox.RejectRole)
-#                     msg.setDefaultButton(QMessageBox().Cancel)
-#                     
+                  
