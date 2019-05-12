@@ -32,9 +32,9 @@
   <widget class="QGroupBox" name="individual_multiple_channels_data_grp">
    <property name="geometry">
     <rect>
-     <x>32</x>
+     <x>16</x>
      <y>64</y>
-     <width>219</width>
+     <width>249</width>
      <height>135</height>
     </rect>
    </property>
@@ -91,16 +91,28 @@
       <item row="0" column="1">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="QDoubleSpinBox" name="imc_width_dbox"/>
+         <widget class="QDoubleSpinBox" name="imc_width_dbox">
+          <property name="decimals">
+           <number>4</number>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="imc_depth_dbox"/>
+         <widget class="QDoubleSpinBox" name="imc_depth_dbox">
+          <property name="decimals">
+           <number>4</number>
+          </property>
+         </widget>
         </item>
         <item row="2" column="0">
          <widget class="QSpinBox" name="imc_number_sbox"/>
         </item>
         <item row="3" column="0">
-         <widget class="QDoubleSpinBox" name="imc_manning_dbox"/>
+         <widget class="QDoubleSpinBox" name="imc_manning_dbox">
+          <property name="decimals">
+           <number>4</number>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>

@@ -30,6 +30,7 @@ from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsD
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
 from qgis.PyQt.QtGui import QColor
 from collections import OrderedDict
+from pickle import FALSE
 
 uiDialog, qtBaseClass = load_ui('issues')
 
@@ -47,12 +48,16 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.errors = []
 
         self.setup_connection()
-        self.populate_issues()
+        if (not self.populate_issues()):
+            raise ValueError('Not a legal file!')
         self.populate_elements_cbo()
         self.issues_codes_cbo.currentIndexChanged.connect(self.codes_cbo_currentIndexChanged)
         self.elements_cbo.currentIndexChanged.connect(self.elements_cbo_currentIndexChanged)        
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
+
+
+
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -63,10 +68,6 @@ class IssuesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_issues(self):
-        self.import_DEBUG_file()
-        
-        
-    def import_DEBUG_file(self):
         """
         Reads DEBUG file.
         """
@@ -74,7 +75,7 @@ class IssuesDialog(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
-            return
+            return False
 
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGpkgDir', '')
@@ -84,16 +85,37 @@ class IssuesDialog(qtBaseClass, uiDialog):
             directory=last_dir,
             filter='(DEBUG* debug*')
         if not debug_file:
-            return
+            return False
 
-        with open(debug_file, 'r') as f1:
-            for line in f1:
-                row = line.split(',') 
-                if len(row) == 3: 
-                    self.errors.append([row[0], row[1], row[2]])                   
-
-        QApplication.restoreOverrideCursor()        
+        try: 
+            if (not os.path.isfile(debug_file)):
+                self.uc.show_warn(os.path.basename(debug_file) + " is being used by another process!")   
+                return False   
+            elif (os.path.getsize(debug_file) == 0):   
+                self.uc.show_warn(os.path.basename(debug_file) + " is empty!")    
+                return False   
+            else:       
+                with open(debug_file, 'r') as f1:
+                    build = next(f1)
+                    for line in f1:
+                        row = line.split(',') 
+                        if len(row) == 3: 
+                            self.errors.append([row[0], row[1], row[2]])  
+                if (self.errors):      
+                    self.setWindowTitle("Error and Warnings in    " + os.path.basename(debug_file))
+                    QApplication.restoreOverrideCursor()  
+                    return True                        
+                else:
+                    self.uc.show_warn("Format of file " + os.path.basename(debug_file) + " is incorrect!")
+                    return False     
+                
+        except UnicodeDecodeError:
+             # non-text dat    
+            self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
+            return False                                   
         
+       
+    
            
     def populate_elements_cbo(self):
         self.elements_cbo.clear()

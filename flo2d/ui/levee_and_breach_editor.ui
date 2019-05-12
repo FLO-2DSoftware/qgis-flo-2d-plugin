@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>419</width>
+    <width>458</width>
     <height>457</height>
    </rect>
   </property>
@@ -133,7 +133,7 @@
               <enum>QAbstractSpinBox::UpDownArrows</enum>
              </property>
              <property name="decimals">
-              <number>2</number>
+              <number>4</number>
              </property>
              <property name="maximum">
               <double>9999999.000000000000000</double>
@@ -278,152 +278,94 @@
         <property name="title">
          <string>General breach data</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_9">
+        <layout class="QGridLayout" name="gridLayout_4">
          <item row="0" column="0">
-          <layout class="QGridLayout" name="gridLayout_4">
+          <layout class="QGridLayout" name="gridLayout_7">
            <item row="0" column="0">
-            <layout class="QGridLayout" name="gridLayout_7">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_22">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment routing equation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="wordWrap">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QComboBox" name="transport_eq_cbo">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <item>
-                <property name="text">
-                 <string>Zeller and Fullerton</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Yang</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Englund and Hansen</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Ackers and Hansen</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Laursen</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Toffaleti</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Woo-MPM</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>MPM-Smart</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Karim-Kennedy</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Parker, Klingeman &amp; McLean</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>Van Rijn</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QLabel" name="label_22">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment routing equation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
            <item row="1" column="0">
-            <layout class="QGridLayout" name="gridLayout_2">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_23">
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial breach witdth/depth ratio&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-               <property name="wordWrap">
-                <bool>true</bool>
-               </property>
-              </widget>
+            <widget class="QComboBox" name="transport_eq_cbo">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <item>
+              <property name="text">
+               <string>Zeller and Fullerton</string>
+              </property>
              </item>
-             <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="initial_breach_width_depth_ratio_dbox">
-               <property name="minimum">
-                <double>-1.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>99999.990000000005239</double>
-               </property>
-              </widget>
+             <item>
+              <property name="text">
+               <string>Yang</string>
+              </property>
              </item>
-            </layout>
+             <item>
+              <property name="text">
+               <string>Englund and Hansen</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Ackers and Hansen</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Laursen</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Toffaleti</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Woo-MPM</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>MPM-Smart</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Karim-Kennedy</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Parker, Klingeman &amp; McLean</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Van Rijn</string>
+              </property>
+             </item>
+            </widget>
            </item>
           </layout>
          </item>
-         <item row="0" column="1">
+         <item row="0" column="1" rowspan="2">
           <layout class="QGridLayout" name="gridLayout_6">
-           <item row="1" column="0">
-            <layout class="QGridLayout" name="gridLayout_3">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_25">
-               <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time to initial failure&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-               <property name="wordWrap">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="time_to_initial_failure_dbox">
-               <property name="minimum">
-                <double>-1.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>99999.990000000005239</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
            <item row="0" column="0">
             <layout class="QGridLayout" name="gridLayout">
              <item row="0" column="0">
@@ -438,6 +380,9 @@
              </item>
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="weir_coefficient_dbox">
+               <property name="decimals">
+                <number>4</number>
+               </property>
                <property name="minimum">
                 <double>-1.000000000000000</double>
                </property>
@@ -447,6 +392,72 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item row="1" column="0">
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_25">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time to initial failure&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="time_to_initial_failure_dbox">
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>-1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>99999.990000000005239</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item row="1" column="0">
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial breach witdth/depth ratio&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QDoubleSpinBox" name="initial_breach_width_depth_ratio_dbox">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>-1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99999.990000000005239</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
