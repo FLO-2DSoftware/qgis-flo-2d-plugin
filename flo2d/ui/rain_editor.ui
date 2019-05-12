@@ -96,7 +96,7 @@
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
           <property name="decimals">
-           <number>2</number>
+           <number>4</number>
           </property>
           <property name="maximum">
            <double>9999999.000000000000000</double>
@@ -157,7 +157,7 @@
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
           <property name="decimals">
-           <number>2</number>
+           <number>4</number>
           </property>
           <property name="maximum">
            <double>99999999.000000000000000</double>
@@ -556,6 +556,9 @@
            </property>
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Storm speed (mph or kph).&lt;/p&gt;&lt;p&gt;FLO-2D variable: RAINSPEED (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="decimals">
+            <number>4</number>
            </property>
            <property name="singleStep">
             <double>1.000000000000000</double>

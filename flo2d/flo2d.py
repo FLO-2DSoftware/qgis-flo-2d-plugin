@@ -1226,30 +1226,14 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
-
-#         s = QSettings()
-#         project_dir = s.value('FLO-2D/last_flopro_project', '')
-#         if not os.path.isfile(project_dir + '\DEPFP.OUT'):
-#             self.uc.show_warn("WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"+ project_dir)
-#             pass
-# 
-#         lyrs = self.lyrs.list_group_vlayers()
-#         n_polys = 0
-#         for l in lyrs:
-#             if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-#                 n_polys += 1
-#         if n_polys == 0:
-#             QApplication.restoreOverrideCursor()
-#             self.uc.bar_warn('WARNING 060319.1809: There are not any polygon layers selected (or visible)!')
-#             return
-# 
-#         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
-
-        
-        dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
-        ok = dlg_issues.exec_()
-#         if ok:
-        self.lyrs.clear_rubber() 
+        try: 
+            dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
+            ok = dlg_issues.exec_()
+    #         if ok:
+            self.lyrs.clear_rubber() 
+        except ValueError:  
+            # Forced error during contructor to stop showing dialog.
+            pass
 
 
     def schematize_levees(self):

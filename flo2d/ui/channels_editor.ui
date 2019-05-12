@@ -80,7 +80,7 @@
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
           <property name="decimals">
-           <number>2</number>
+           <number>4</number>
           </property>
           <property name="maximum">
            <double>9999999.000000000000000</double>
@@ -106,7 +106,7 @@
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
           <property name="decimals">
-           <number>2</number>
+           <number>4</number>
           </property>
           <property name="maximum">
            <double>99999999.000000000000000</double>
@@ -240,6 +240,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="initial_flow_for_all_dbox">
+        <property name="decimals">
+         <number>4</number>
+        </property>
         <property name="minimum">
          <double>-1.000000000000000</double>
         </property>
@@ -329,7 +332,7 @@
                <enum>QAbstractSpinBox::UpDownArrows</enum>
               </property>
               <property name="decimals">
-               <number>2</number>
+               <number>4</number>
               </property>
               <property name="maximum">
                <double>99999999.000000000000000</double>
@@ -399,7 +402,7 @@
                <enum>QAbstractSpinBox::UpDownArrows</enum>
               </property>
               <property name="decimals">
-               <number>2</number>
+               <number>4</number>
               </property>
               <property name="maximum">
                <double>99999999.000000000000000</double>
