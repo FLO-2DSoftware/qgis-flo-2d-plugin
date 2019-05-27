@@ -38,6 +38,26 @@ def center_canvas(iface, x, y):
     mc.setExtent(rect)
     mc.refresh()
 
+def zoom(iface, porcentage):
+    canvas = iface.mapCanvas() 
+    extend = canvas.extent()
+    xMin = extend.xMinimum()
+    xMax = extend.xMaximum()
+    yMin = extend.yMinimum()
+    yMax = extend.yMaximum()
+
+    width = abs(xMin-xMax)
+    height = abs(yMin-yMax)
+    
+    xMin = xMin + width * porcentage
+    xMax = xMax - width * porcentage
+    yMin = yMin + height *porcentage
+    yMax = yMax - height * porcentage            
+    
+    rect = QgsRectangle(xMin, yMin, xMax, yMax)        
+    canvas.setExtent(rect) 
+    canvas.refresh()
+        
 def try_disconnect(signal, met):
     try:
         signal.disconnect(met)

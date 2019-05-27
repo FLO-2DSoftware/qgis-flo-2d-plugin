@@ -1641,18 +1641,18 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells'
 
 CREATE TABLE "gutter_globals" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "height" REAL, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
-    "width" REAL, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
-    "n_value" REAL -- STREET_n-VALUE, global assignment of the street gutter n-value
+    "height" REAL DEFAULT 0.88, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
+    "width" REAL DEFAULT 0.99, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
+    "n_value" REAL DEFAULT 0.77 -- STREET_n-VALUE, global assignment of the street gutter n-value
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_globals', 'aspatial');
 
 CREATE TABLE "gutter_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "width" REAL, -- WIDSTR, channel width for individual grid elements
-    "height" REAL, -- CURBHT, maximum depth of multiple channels
-    "n_value" REAL, -- XNSTR, number of multiple channels assigned in a grid element
-    "direction" INTEGER -- ICURBDIR, channel n-values for individual grid elements    
+    "width" REAL DEFAULT 0.99, -- WIDSTR, channel width for individual grid elements
+    "height" REAL DEFAULT 0.88, -- CURBHT, maximum depth of multiple channels
+    "n_value" REAL DEFAULT 0.77, -- XNSTR, number of multiple channels assigned in a grid element
+    "direction" INTEGER DEFAULT 1 -- ICURBDIR, channel n-values for individual grid elements    
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('gutter_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('gutter_areas', 'geom', 'POLYGON', 0, 0, 0);
