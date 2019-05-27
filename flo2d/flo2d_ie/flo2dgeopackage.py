@@ -1700,12 +1700,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty('gutter_cells'):
                 return  False
             if self.is_table_empty('gutter_globals'):
-                self.uc.show_info('gutter globals is empty')
-                # update_qry = '''INSERT INTO gutter_globals (global_gutter_width,global_gutter_height, global_gutter_n_value) VALUES (?,?,?);'''
-                # self.gutils.execute(update_qry, ('9.9', '8.8', '7.7'))
-                qry = '''UPDATE gutter_globals SET width = 0.99, height = 0.88, n_value = 0.77;'''
-                self.execute(qry)
-                self.uc.show_info('gutter globals filled')
+                self.uc.show_info('Gutter Global values are missing!.\n\nDefault values will be assigned.')
+                update_qry = '''INSERT INTO gutter_globals (height, width, n_value) VALUES (?,?,?);'''
+                self.gutils.execute(update_qry, ('0.88', '0.99', '0.77'))
+#                 self.gutils.execute(update_qry, ('9.9', '8.8', '7.7'))
+#                 qry = '''UPDATE gutter_globals SET width = 0.99, height = 0.88, n_value = 0.77;'''
+#                 self.execute(qry)
+#                 self.uc.show_info('gutter globals filled')
 
             gutter_globals_sql = '''SELECT * FROM gutter_globals LIMIT 1;'''
             gutter_poly_sql = '''SELECT fid, width, height, n_value, direction FROM gutter_areas ORDER BY fid;'''
@@ -1748,7 +1749,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for fid, width, height, n_value, direction in gutter_poly_rows: # One tuple for each polygon.
                     # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
                     for row in self.execute(gutter_cells_sql, (fid,)): # Gets each cell number that pairs with area_fid.
-                        # self.uc.show_info('next line')
                         grid_ID = row[0]
                         g.write(line2.format(grid_ID, width, height, n_value, direction))
             

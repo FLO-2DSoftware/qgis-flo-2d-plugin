@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>829</width>
-    <height>393</height>
+    <width>708</width>
+    <height>331</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,13 +19,13 @@
   <property name="windowTitle">
    <string>Errors and Warnings Analysis</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_4">
+  <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="2">
     <layout class="QGridLayout" name="gridLayout">
      <property name="sizeConstraint">
       <enum>QLayout::SetFixedSize</enum>
      </property>
-     <item row="0" column="2">
+     <item row="0" column="4">
       <widget class="QPushButton" name="find_cell_btn">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -74,6 +74,40 @@
        </property>
        <property name="insertPolicy">
         <enum>QComboBox::InsertAlphabetically</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="zoom_in_btn">
+       <property name="toolTip">
+        <string>Zoom In</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="zoom_out_btn">
+       <property name="toolTip">
+        <string>Zoom Out</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
        </property>
       </widget>
      </item>
@@ -212,17 +246,70 @@
          <string>9000-9999</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>Depressed Elements (DEPRESSED_ELEMENTS.OUT)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channel &lt;&gt; Floodplain (CHANBANKEL.CHK)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Floodplain &lt;&gt; Storm Drain Rim  (FPRIMELEV.OUT)</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="2" column="0" colspan="4">
+   <item row="0" column="1">
+    <widget class="QComboBox" name="errors_cbo">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maxVisibleItems">
+      <number>20</number>
+     </property>
+     <property name="insertPolicy">
+      <enum>QComboBox::InsertAlphabetically</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
     <widget class="QTableWidget" name="description_tblw">
      <property name="enabled">
       <bool>true</bool>
      </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>7</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="alternatingRowColors">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::SingleSelection</enum>
@@ -230,74 +317,55 @@
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <property name="rowCount">
       <number>0</number>
      </property>
      <property name="columnCount">
       <number>3</number>
      </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>false</bool>
+     </attribute>
      <column>
       <property name="text">
        <string>Element</string>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <italic>true</italic>
+        <bold>true</bold>
+       </font>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Error Code</string>
       </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <italic>true</italic>
+        <bold>true</bold>
+       </font>
+      </property>
      </column>
      <column>
       <property name="text">
        <string>Description</string>
       </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <italic>true</italic>
+        <bold>true</bold>
+       </font>
+      </property>
      </column>
     </widget>
-   </item>
-   <item row="3" column="3">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetFixedSize</enum>
-     </property>
-     <item row="0" column="0">
-      <widget class="QSpinBox" name="spinBox">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::PlusMinus</enum>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-       <property name="singleStep">
-        <number>100</number>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="pushButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Show</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

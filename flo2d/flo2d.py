@@ -991,7 +991,9 @@ class Flo2D(object):
                 QApplication.restoreOverrideCursor()
                 if self.files_used != '' or self.files_not_used != '':
                     self.uc.show_info("Files exported:\n\n" + self.files_used)  
-
+        QApplication.restoreOverrideCursor()
+        
+        
     @connection_required
     def import_from_gpkg(self):
         s = QSettings()
@@ -1229,8 +1231,6 @@ class Flo2D(object):
         try: 
             dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
             ok = dlg_issues.exec_()
-    #         if ok:
-            self.lyrs.clear_rubber() 
         except ValueError:  
             # Forced error during contructor to stop showing dialog.
             pass
