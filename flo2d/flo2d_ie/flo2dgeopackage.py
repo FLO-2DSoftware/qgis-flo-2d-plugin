@@ -121,7 +121,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_outflow(self):
         outflow_sql = ['''INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
-                                            chan_qhtab_fid, fp_tser_fid) VALUES''', 7]
+                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES''', 8]
         cells_sql = ['''INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES''', 2]
         qh_params_sql = ['''INSERT INTO qh_params (fid) VALUES''', 1]
         qh_params_data_sql = ['''INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES''', 4]
@@ -172,7 +172,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ts_data_sql += [(ts_fid,) + tuple(row)]
             else:
                 pass
-            outflow_sql += [(chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)]
+            outflow_sql += [(chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, fid)]
             cells_sql += [(fid, gid)]
             fid += 1
 
@@ -1043,9 +1043,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             outflow_sql = '''
             SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-            FROM outflow WHERE bc_fid = ?;'''
-#             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;'''
-            outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''
+            FROM outflow WHERE bc_fid = ? ORDER BY type;'''
+            outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;'''
+#             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''
             qh_params_data_sql = '''SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;'''
             qh_table_data_sql = '''SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;'''
             ts_data_sql = '''SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
@@ -1094,7 +1094,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         pass
                     if chan_tser_fid > 0 or fp_tser_fid > 0:
-                        nostacfp = 0 if chan_tser_fid > 0 else 1
+                        
+                        nostacfp = 1 if chan_tser_fid == 1 else 0 
+#                         nostacfp = 0 if chan_tser_fid > 0 else 1
                         o.write(n_line.format(gid, nostacfp))
                         series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
                         for values in self.execute(ts_data_sql, (series_fid,)):

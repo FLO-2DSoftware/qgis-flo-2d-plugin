@@ -958,7 +958,17 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            })           
+            })   
+            
+#             ('trigger_control', {
+#                 'name': 'Triggers',
+#                 'sgroup': 'Triggers control table',
+#                 'styles': None,
+#                 'attrs_edit_widgets': {},
+#                 'visible': False,
+#                 'readonly': False
+#             })                 
+                    
 
         ])
         # set QGIS layer (qlyr) to None for each table

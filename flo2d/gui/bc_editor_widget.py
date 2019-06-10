@@ -139,10 +139,15 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         qry = 'SELECT * FROM all_schem_bc;'
         exist_bc = self.gutils.execute(qry).fetchone()
         if exist_bc:
-            if not self.uc.question('There are some boundary conditions grid cells defined already. Overwrite them?'):
+            if not self.uc.question('There are some boundary conditions grid cells defined already in the Schematic layer (BC Cells).\n\n Overwrite them?'):
                 return
-        self.schematize_inflows()
-        self.schematize_outflows()
+        in_inserted = self.schematize_inflows()
+        out_inserted = self.schematize_outflows()
+    
+        self.uc.show_info(str(in_inserted) + " inflows and " + str(out_inserted) + " outflows boundary conditions schematized!")
+      
+        
+        
         self.lyrs.lyrs_to_repaint = [
             self.lyrs.data['all_schem_bc']['qlyr']
         ]
@@ -460,11 +465,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     abc.type = 'inflow' AND
                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
             self.gutils.execute(del_qry)
-            self.gutils.execute(ins_qry)
-            self.uc.show_info("Inflows schematized!")
-        except Exception as e:
+            inserted = self.gutils.execute(ins_qry)
+            return inserted.rowcount
+#             self.uc.show_info("Inflows schematized!")
+        except Exception:
             self.uc.show_warn("WARNING 180319.1431: Schematizing of inflow aborted!")
             self.uc.log_info(traceback.format_exc())
+            return 0
 
     def show_inflow_rb(self):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
@@ -798,11 +805,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
                     '''
             self.gutils.execute(del_qry)
-            self.gutils.execute(ins_qry)
-            self.uc.show_info("Outflows schematized!")       
+            inserted = self.gutils.execute(ins_qry)
+            return inserted.rowcount            
+#             self.uc.show_info("Outflows schematized!")  
         except Exception as e:
             self.uc.show_warn("WARNING 180319.1434: Schematizing of outflows aborted!")
             self.uc.log_info(traceback.format_exc())
+            return 0
 
     def define_outflow_types(self):
         self.outflow_types = {
@@ -1003,11 +1012,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # if user bc layers were edited
         if user_bc_edited:
             self.enable_bc_type_change()
-            # update inflow names
-            if self.bc_type_inflow_radio.isChecked():
-                self.gutils.fill_empty_inflow_names()
-            else:
-                self.gutils.fill_empty_outflow_names()
+            # update inflow or outflow names
+#             if self.bc_type_inflow_radio.isChecked():
+#                 self.gutils.fill_empty_inflow_names()
+#             else:
+#                 self.gutils.fill_empty_outflow_names()
+                
+
+            self.gutils.fill_empty_inflow_names()
+            self.gutils.fill_empty_outflow_names()    
+            self.uc.show_info("Boundary Condition(s) added to the User Layer.\n\n" +
+                               "Use the Schematize tool in Boundary Conditions Editor to include them in the Schematic Layer (BC cells)." )  
+                
             # populate widgets and show last edited bc
             self.populate_bcs(show_last_edited=True)
         self.repaint_bcs()

@@ -32,7 +32,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.components = []
 
         self.components_buttonBox.accepted.connect(self.load_selected_components)
-        self.unselect_all_btn.clicked.connect(self.unselect_all)
+        self.select_all_chbox.clicked.connect(self.unselect_all)
+        
         self.setFixedSize(self.size())
 
         self.populate_components_dialog()
@@ -174,26 +175,70 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         
             
     def unselect_all(self):
+        self.select_components(self.select_all_chbox.isChecked()); 
 
-        self.channels_chbox.setChecked(False);
-        self.reduction_factors_chbox.setChecked(False);
-        self.streets_chbox.setChecked(False);
-        self.outflow_elements_chbox.setChecked(False);
-        self.inflow_elements_chbox.setChecked(False);
-        self.levees_chbox.setChecked(False);
-        self.multiple_channels_chbox.setChecked(False);
-        self.breach_chbox.setChecked(False);
-        self.gutters_chbox.setChecked(False);
-        self.infiltration_chbox.setChecked(False);
-        self.floodplain_xs_chbox.setChecked(False);
-        self.mud_and_sed_chbox.setChecked(False);
-        self.evaporation_chbox.setChecked(False);
-        self.hydr_struct_chbox.setChecked(False);
-        self.mudflo_chbox.setChecked(False);
-        self.rain_chbox.setChecked(False);
-        self.storm_drain_chbox.setChecked(False);
-        self.spatial_tolerance_chbox.setChecked(False);
-        self.spatial_froude_chbox.setChecked(False);
+    def select_components(self, select = True):  
+        
+        
+#         self.reduction_factors_chbox.setChecked(select);
+#         self.streets_chbox.setChecked(select);
+#         self.outflow_elements_chbox.setChecked(select);
+#         self.inflow_elements_chbox.setChecked(select);
+#         self.levees_chbox.setChecked(select);
+#         self.multiple_channels_chbox.setChecked(select);
+#         self.breach_chbox.setChecked(select);
+#         self.gutters_chbox.setChecked(select);
+#         self.infiltration_chbox.setChecked(select);
+#         self.floodplain_xs_chbox.setChecked(select);
+#         self.mud_and_sed_chbox.setChecked(select);
+#         self.evaporation_chbox.setChecked(select);
+#         self.hydr_struct_chbox.setChecked(select);
+#         self.mudflo_chbox.setChecked(select);
+#         self.rain_chbox.setChecked(select);
+#         self.storm_drain_chbox.setChecked(select);
+#         self.spatial_tolerance_chbox.setChecked(select);
+#         self.spatial_froude_chbox.setChecked(select);        
+        
+        
+        
+        if self.channels_chbox.isEnabled():  
+            self.channels_chbox.setChecked(select);
+        if self.reduction_factors_chbox.isEnabled():      
+            self.reduction_factors_chbox.setChecked(select);
+        if self.streets_chbox.isEnabled():    
+            self.streets_chbox.setChecked(select);
+        if self.outflow_elements_chbox.isEnabled():        
+            self.outflow_elements_chbox.setChecked(select);
+        if self.inflow_elements_chbox.isEnabled():        
+            self.inflow_elements_chbox.setChecked(select);
+        if self.levees_chbox.isEnabled():        
+            self.levees_chbox.setChecked(select);
+        if self.multiple_channels_chbox.isEnabled():        
+            self.multiple_channels_chbox.setChecked(select);
+        if self.breach_chbox.isEnabled():        
+            self.breach_chbox.setChecked(select);
+        if self.gutters_chbox.isEnabled():        
+            self.gutters_chbox.setChecked(select);
+        if self.infiltration_chbox.isEnabled():        
+            self.infiltration_chbox.setChecked(select);
+        if self.floodplain_xs_chbox.isEnabled():        
+            self.floodplain_xs_chbox.setChecked(select);
+        if self.mud_and_sed_chbox.isEnabled():        
+            self.mud_and_sed_chbox.setChecked(select);
+        if self.evaporation_chbox.isEnabled():        
+            self.evaporation_chbox.setChecked(select);
+        if self.hydr_struct_chbox.isEnabled():        
+            self.hydr_struct_chbox.setChecked(select);
+        if self.mudflo_chbox.isEnabled():        
+            self.mudflo_chbox.setChecked(select);
+        if self.rain_chbox.isEnabled():        
+            self.rain_chbox.setChecked(select);
+        if self.storm_drain_chbox.isEnabled():        
+            self.storm_drain_chbox.setChecked(select);
+        if self.spatial_tolerance_chbox.isEnabled():        
+            self.spatial_tolerance_chbox.setChecked(select);
+        if self.spatial_froude_chbox.isEnabled():        
+            self.spatial_froude_chbox.setChecked(select);
 
         
         

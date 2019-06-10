@@ -372,7 +372,8 @@ class SchemaSWMMConverter(SchemaConverter):
             ('swmm_height', 'swmm_height'),
             ('swmm_coeff', 'swmm_coeff'),
             ('flapgate', 'flapgate'),
-            ('curbheight', 'curbheight')
+            ('curbheight', 'curbheight'),
+            ('swmm_feature', 'swmm_feature')
         ]   
 
 
@@ -428,40 +429,6 @@ class SchemaSWMMConverter(SchemaConverter):
             remove_features(self.user_swmm_nodes_lyr)
             sd_feats = self.user_swmm_nodes_features(self.schema_inlet_lyr, self.inlet_columns)
             sd_feats += self.user_swmm_nodes_features(self.schema_outlet_lyr, self.outlet_columns)
-            
-#             for i in range(len(sd_feats)):
-#                 for j in range(0, len(sd_feats[i].attributes())-1):
-#                     sd_feats[i].setAttribute('junction_invert_elev', 0.0)
-#                     sd_feats[i].setAttribute('max_depth', 0.0)
-#                     sd_feats[i].setAttribute('init_depth',0.0)
-#                     sd_feats[i].setAttribute('surcharge_depth',  0.0)
-#                     sd_feats[i].setAttribute('ponded_area',  0.0)
-#                     sd_feats[i].setAttribute('outfall_type', 'NORMAL')
-#                     sd_feats[i].setAttribute('outfall_invert_elev', 0.0)
-#                     sd_feats[i].setAttribute('tidal_curve', '...')
-#                     sd_feats[i].setAttribute('time_series', '...')
-#     #                 feat.setAttribute('flapgate', flap_gate)
-#     #                 feat.setAttribute('swmm_length', 0)
-#     #                 feat.setAttribute('swmm_width', 0)
-#     #                 feat.setAttribute('swmm_height', 0)
-#     #                 feat.setAttribute('swmm_coeff', 0)
-#                     sd_feats[i].setAttribute('swmm_feature', 0)
-#     #                 feat.setAttribute('curbheight', 0)
-#                     sd_feats[i].setAttribute('swmm_clogging_factor', 0.0)
-#                     sd_feats[i].setAttribute('swmm_time_for_clogging', 0)
-#                     sd_feats[i].setAttribute('swmm_allow_discharge', 'False')
-#                     sd_feats[i].setAttribute('water_depth', 0.0)
-#                     sd_feats[i].setAttribute('rt_fid', 0)
-#                     sd_feats[i].setAttribute('outf_flo', 0)
-#                     sd_feats[i].setAttribute('invert_elev_inp', 0.0)
-#                     sd_feats[i].setAttribute('max_depth_inp', 0.0)
-#                     sd_feats[i].setAttribute('rim_elev_inp', 0.0)
-#                     sd_feats[i].setAttribute('rim_elev', 0.0)
-#                     sd_feats[i].setAttribute('ge_elev', 0.0)
-#                     sd_feats[i].setAttribute('difference', 0.0)                    
-#                     if sd_feats[i][j] is None:
-#                         sd_feats[i][j] = 0.0
-
             self.user_swmm_nodes_lyr.startEditing()
             self.user_swmm_nodes_lyr.addFeatures(sd_feats)
             self.user_swmm_nodes_lyr.commitChanges()
@@ -472,34 +439,3 @@ class SchemaSWMMConverter(SchemaConverter):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040319.1921:\n\nAdding features to Storm Drain Nodes failed!"
                                +'\n_______________________________________________________________', e)    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
