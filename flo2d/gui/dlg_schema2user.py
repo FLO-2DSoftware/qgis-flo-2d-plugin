@@ -19,6 +19,7 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaSWMMConverter
 )
 from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QApplication
 
 uiDialog, qtBaseClass = load_ui('schema2user')
 

@@ -20,7 +20,6 @@ import os
 import traceback
 from qgis.core import * 
 from qgis.PyQt.QtCore import Qt, QSettings, QVariant
-
 # ( QgsFields, QgsField, QgsFeature, QgsVectorFileWriter, QgsFeatureRequest, 
 #                         QgsWkbTypes, QgsGeometry, QgsPointXY, QgsProject, QgsVectorLayer )
 from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QFileDialog, QTableWidgetItem
@@ -32,12 +31,110 @@ from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
 from qgis.PyQt.QtGui import QColor
-from collections import OrderedDict
-from pickle import FALSE
-from msilib.schema import SelfReg
+from ..flo2d_tools.conflicts import Conflicts
+
+uiDialog, qtBaseClass = load_ui('errors')
+class ErrorsDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, con, iface, lyrs):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+        self.errors = []
+        self.debug_directory = ""
+        
+        self.setup_connection()
+        self.import_DEBUG_btn.clicked.connect(self.import_DEBUG_file)
+        self.errors_in_current_project_btn.clicked.connect(self.errors_in_current_project)
+        
+        
+        
+#         self.issues_codes_cbo.activated.connect(self.codes_cbo_activated)
+#         self.errors_cbo.activated.connect(self.errors_cbo_activated)    
+#         self.elements_cbo.activated.connect(self.elements_cbo_activated)        
+#         
+#         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
+#         self.zoom_in_btn.clicked.connect(self.zoom_in)
+#         self.zoom_out_btn.clicked.connect(self.zoom_out)
+#         
+#         if (not self.populate_issues()):
+#             raise ValueError('Not a legal file!')
+#         self.import_other_issues_files()
+#         self.populate_elements_cbo()
+#         self.populate_errors_cbo()
+#         self.loadIssues()
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)        
+
+    def import_DEBUG_file(self):
+        try:        
+            dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
+            dlg_issues.exec_()
+ 
+        except ValueError:  
+            # Forced error during contructor to stop showing dialog.
+            pass      
+
+    def errors_in_current_project(self):
+        try:        
+            dlg_conflicts = ConflictsDialog(self.con, self.iface, self.lyrs)
+            dlg_conflicts.exec_()
+ 
+        except ValueError:  
+            # Forced error during contructor to stop showing dialog.
+            pass           
+        
+#         conflicts = Conflicts(self.lyrs, self.con, self.iface)
+#         
+#         repeats = conflicts.conflict_inflow_inflow()
+#         msg = "Inflow repeats:"
+#         if repeats:
+#             for r in repeats:
+#                 msg += "\n" + str(r)
+#         self.uc.show_info(msg)
+# 
+#         repeats = conflicts.conflict_outflow_outflow()
+#         msg = "Outflow repeats:"
+#         if repeats:
+#             for r in repeats:
+#                 msg += "\n" + str(r)
+#         self.uc.show_info(msg)
+#         
+#         repeats = conflicts.conflict_inflow_outflow()
+#         msg = "Inflow-Outflow repeats:"
+#         if repeats:
+#             for r in repeats:
+#                 msg += "\n" + str(r)
+#         self.uc.show_info(msg)
+# 
+#         repeats = conflicts.conflict_inflow_partialARF()
+#         msg = "Inflow-partial ARF repeats:"
+#         if repeats:
+#             for r in repeats:
+#                 msg += "\n" + str(r)
+#         self.uc.show_info(msg)
+# 
+#         repeats = conflicts.conflict_outflow_partialARF()
+#         msg = "Outflow-partial ARF repeats:"
+#         if repeats:
+#             for r in repeats:
+#                 msg += "\n" + str(r)
+#         self.uc.show_info(msg)
+
+
 
 uiDialog, qtBaseClass = load_ui('issues')
-
 class IssuesDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs):
@@ -95,12 +192,12 @@ class IssuesDialog(qtBaseClass, uiDialog):
                                 features = []        
                                 with open(file, 'r') as f:                                     
                                     for _ in range(4):
-                                         next(f)
+                                        next(f)
                                     for row in f:
-                                         values  = row.split()
-                                         self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
+                                        values  = row.split()
+                                        self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
                                          
-                                         features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
+                                        features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
                                 shapefile = self.debug_directory + "/Depressed Elements.shp"
                                 name = "Depressed Elements"
                                 fields = [['cell','I'], ['min_elev','D']]
@@ -425,8 +522,6 @@ class IssuesDialog(qtBaseClass, uiDialog):
             return False      
     
 uiDialog, qtBaseClass = load_ui('issues_files')
-
-
 class IssuesFiles(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs):
@@ -473,6 +568,329 @@ class IssuesFiles(qtBaseClass, uiDialog):
 
         if self.fprimelev_chbox.isChecked():
             self.files.append('Rim')
-       
+
+uiDialog, qtBaseClass = load_ui('conflicts')
+class ConflictsDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, con, iface, lyrs):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+        self.errors = []
+        self.debug_directory = ""
+        set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
+        set_icon(self.zoom_in_btn, 'zoom_in.svg')
+        set_icon(self.zoom_out_btn, 'zoom_out.svg')
         
+        self.setup_connection()
+#         self.conflicts_codes_cbo.activated.connect(self.codes_cbo_activated)
+        self.component1_cbo.activated.connect(self.component1_cbo_activated)
+        self.component2_cbo.activated.connect(self.component2_cbo_activated)
+        self.errors_cbo.activated.connect(self.errors_cbo_activated)    
+        self.elements_cbo.activated.connect(self.elements_cbo_activated)        
+        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+        
+        self.populate_issues()
+        self.populate_elements_cbo()
+        self.populate_errors_cbo()
+        self.loadIssuePairs()
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)                                                            
+
+    def populate_issues(self):
+        conflicts = Conflicts(self.lyrs, self.con, self.iface)
+        
+        # 'repeats' is a list of repeated nodes (conflict nodes) in pair of components.       
+        repeats = conflicts.conflict_inflow_inflow()
+        msg = "Inflow repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Inflows", "Inflows", "2 or more inflows"])  
+
+        repeats = conflicts.conflict_outflow_outflow()
+        msg = "Outflow repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Outflows", "Outflows", "2 or more outflows"])  
+        
+        repeats = conflicts.conflict("inflow_cells", "grid_fid", "outflow_cells", "grid_fid")
+#         repeats = conflicts.conflict_inflow_outflow()
+        msg = "Inflow-Outflow repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Inflows", "Outflows", "Inflow(s) and outflow(s) in same cell"])  
+
+        repeats = conflicts.conflict_inflow_partialARF()
+        msg = "Inflow-partial ARF repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Inflows", "Partial ARF", "Inflow(s) and partial ARF in same cell"])  
+
+        repeats = conflicts.conflict_outflow_partialARF()
+        msg = "Outflow-partial ARF repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Outflows", "Partial ARF", "Outflow(s) and partial ARF in same cell"])                   
+        if (self.errors):      
+            self.setWindowTitle("Conflicts")
+            QApplication.restoreOverrideCursor()        
+
+        repeats = conflicts.conflict_outflow_fullARF()
+        msg = "Outflow-full ARF repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Outflows", "Full ARF", "Outflow(s) and full ARF in same cell"])                   
+        if (self.errors):      
+            self.setWindowTitle("Conflicts")
+            QApplication.restoreOverrideCursor() 
+ 
+        repeats = conflicts.conflict_outfall_partialARF()
+        msg = "Outfall-partial ARF repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Storm Drain Outfalls", "Partial ARF", "Storm Drain Outfalls(s) and partial ARF in same cell"])         
+
+        repeats = conflicts.conflict_inlet_partialARF()
+        msg = "Inlet-partial ARF repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Storm Drain Inlets", "Partial ARF", "Storm Drain Inlets(s) and partial ARF in same cell"])         
+
+        repeats = conflicts.conflict("levee_data", "grid_fid", "levee_data", "grid_fid")
+        msg = "Levees repeats:"
+        if repeats:
+            for r in repeats:
+                self.errors.append([str(r), "Levees", "Levees", "2 or more levees in same cell"])  
+
+
+    def populate_elements_cbo(self):
+        self.elements_cbo.clear()
+        self.elements_cbo.addItem(" ")
+        for x in self.errors:
+            if self.elements_cbo.findText(x[0].strip()) == -1:
+                self.elements_cbo.addItem(x[0].strip())
+        self.elements_cbo.model().sort(0)
+                
+    def populate_errors_cbo(self):
+        self.errors_cbo.clear()
+        self.errors_cbo.addItem(" ")
+        for x in self.errors:
+            if self.errors_cbo.findText(x[1].strip()) == -1:
+                self.errors_cbo.addItem(x[1].strip())
+            if self.errors_cbo.findText(x[2].strip()) == -1:
+                self.errors_cbo.addItem(x[2].strip())                
+        self.errors_cbo.model().sort(0)                                   
+
+    def component1_cbo_activated(self):
+        self.loadIssuePairs()
+        
+    def component2_cbo_activated(self):
+        self.loadIssuePairs()         
+        
+    def loadIssuePairs(self):    
+        self.description_tblw.setRowCount(0)
+        comp1 = self.component1_cbo.currentText()
+        comp2 = self.component2_cbo.currentText()
+        for item in self.errors:
+            if (  (item[1] == comp1 and item[2] == comp2)  or
+                  (item[1] == comp2 and item[2] == comp1) or
+                  (comp1 == "" and (item[1] == comp2 or item[2] == comp2)) or
+                  (comp2 == "" and (item[1] == comp1 or item[2] == comp1)) ): 
+                rowPosition = self.description_tblw.rowCount()
+                self.description_tblw.insertRow(rowPosition)   
+                itm = QTableWidgetItem()
+                itm.setData(Qt.EditRole, item[0].strip())                 
+                self.description_tblw.setItem(rowPosition , 0, itm)
+#                 itm = QTableWidgetItem() 
+#                 itm.setData(Qt.EditRole, item[1].strip())  
+#                 self.description_tblw.setItem(rowPosition , 1, itm)
+                itm = QTableWidgetItem() 
+                itm.setData(Qt.EditRole, item[3])  
+                self.description_tblw.setItem(rowPosition , 2, itm)  
+        self.errors_cbo.setCurrentIndex(0)
+        self.elements_cbo.setCurrentIndex(0)
+            
+    def elements_cbo_activated(self):
+        self.description_tblw.setRowCount(0)
+        nElems = self.elements_cbo.count()
+        if nElems > 0:
+            cell = self.elements_cbo.currentText().strip()
+            for item in self.errors:
+                if item[0].strip() == cell:
+                    rowPosition = self.description_tblw.rowCount()
+                    self.description_tblw.insertRow(rowPosition)   
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, item[0].strip())                 
+                    self.description_tblw.setItem(rowPosition , 0, itm)
+#                     itm = QTableWidgetItem() 
+#                     itm.setData(Qt.EditRole, item[1].strip())  
+#                     self.description_tblw.setItem(rowPosition , 1, itm)
+                    itm = QTableWidgetItem() 
+                    itm.setData(Qt.EditRole, item[3])  
+                    self.description_tblw.setItem(rowPosition , 2, itm) 
+            self.component1_cbo.setCurrentIndex(0)
+            self.component2_cbo.setCurrentIndex(0)
+            self.errors_cbo.setCurrentIndex(0)
+            self.find_cell(cell)             
+
+    def errors_cbo_activated(self):
+        self.description_tblw.setRowCount(0)
+        nElems = self.errors_cbo.count()
+        if nElems > 0:
+            for item in self.errors:
+                if ( item[1].strip() == self.errors_cbo.currentText().strip() or
+                   item[2].strip() == self.errors_cbo.currentText().strip() ): 
+                    
+                    rowPosition = self.description_tblw.rowCount()
+                    self.description_tblw.insertRow(rowPosition)   
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, item[0].strip())                 
+                    self.description_tblw.setItem(rowPosition , 0, itm)
+#                     itm = QTableWidgetItem() 
+#                     itm.setData(Qt.EditRole, item[1].strip())  
+#                     self.description_tblw.setItem(rowPosition , 1, itm)
+                    itm = QTableWidgetItem() 
+                    itm.setData(Qt.EditRole, item[3])  
+                    self.description_tblw.setItem(rowPosition , 2, itm) 
+#                     self.errors_cbo.setCurrentIndex(0)
+        self.component1_cbo.setCurrentIndex(0)
+        self.component2_cbo.setCurrentIndex(0)
+        
+    def find_cell_clicked(self):
+        cell = self.elements_cbo.currentText()
+        self.find_cell(cell)   
+
+    def find_cell(self, cell):
+        try: 
+            grid = self.lyrs.data['grid']['qlyr']
+            if grid is not None:
+                if grid:
+                    if cell != '':
+                        cell = int(cell)
+                        if len(grid) >= cell and cell > 0:
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                            x, y = feat.geometry().centroid().asPoint()
+                            center_canvas(self.iface, x, y)
+                        else:
+#                             if cell != -999:
+#                                 self.uc.bar_warn('Cell ' + str(cell) + ' not found.',2)
+                                self.lyrs.clear_rubber()                          
+                    else:
+#                         if cell != -999:                        
+#                             self.uc.bar_warn('Cell ' + str(cell) + ' not found.',2)
+                            self.lyrs.clear_rubber()              
+        except ValueError:
+            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
+            self.lyrs.clear_rubber()    
+            pass  
+            
+            
+    def description_tblw_cell_clicked(self, row, column):
+        cell  = self.description_tblw.item(row,0).text()
+        self.find_cell(cell)        
+ 
+    def zoom_in(self):
+        zoom(self.iface,  0.4)
+
+    def zoom_out(self):
+        zoom(self.iface,  -0.4)        
        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

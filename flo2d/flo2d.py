@@ -34,7 +34,7 @@ from .flo2d_tools.schematic_tools import generate_schematic_levees
 from .flo2d_tools.flopro_tools import FLOPROExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
-from .gui.dlg_issues import IssuesDialog
+from .gui.dlg_issues import IssuesDialog, ErrorsDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
@@ -295,7 +295,7 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, 'img/issue.svg'),
             text=self.tr(u'Warnings and Errors'),
-            callback=lambda: self.show_issues_dialog(),
+            callback=lambda: self.show_errors_dialog(),
             parent=self.iface.mainWindow())
         
         self.add_action(
@@ -1224,16 +1224,15 @@ class Flo2D(object):
                 return
 
     @connection_required
-    def show_issues_dialog(self):
+    def show_errors_dialog(self):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
-            return
-        try: 
-            dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
-            ok = dlg_issues.exec_()
-        except ValueError:  
-            # Forced error during contructor to stop showing dialog.
-            pass
+            return 
+        dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
+        dlg_errors.exec_()  
+#         return
+#         if cancel:
+#             return      
 
 
     def schematize_levees(self):

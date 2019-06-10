@@ -43,6 +43,7 @@ CREATE TABLE "trigger_control" (
     "name" TEXT,
     "enabled" INTEGER
 );
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('trigger_control', 'aspatial');
 
 
 -- Grid table - data from FPLAIN.DAT, CADPTS.DAT, TOPO.DAT, MANNINGS_N.DAT
@@ -2307,8 +2308,8 @@ CREATE TRIGGER "update_outflow_on_bc_pts_update"
     )
     BEGIN
         -- delete this bc from other tables
-        DELETE FROM inflow WHERE bc_fid = NEW.fid AND geom_type = 'point';
-        -- try to insert to the inflow table, ignore on fail
+        DELETE FROM outflow WHERE bc_fid = NEW.fid AND geom_type = 'point';
+        -- try to insert to the outflow table, ignore on fail
         INSERT OR IGNORE INTO outflow (geom_type, bc_fid) SELECT 'point', NEW."fid";
         -- update existing (includes geometry changes)
         UPDATE outflow SET geom_type = 'point' WHERE bc_fid = NEW.fid;
