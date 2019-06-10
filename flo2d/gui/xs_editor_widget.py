@@ -149,9 +149,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
-        self.xs_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
+        self.table.after_delete.connect(self.save_xs_data)
 
     def block_saving(self):
         try_disconnect(self.xs_data_model.dataChanged, self.save_xs_data)
@@ -186,16 +186,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return False
         return True
 
-    def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
-        """
-        Slot used to push changes of existing items onto undoStack.
-        """
-        if role == Qt.EditRole:
-            command = CommandItemEdit(self, item, oldValue, newValue,
-                                      "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
-            self.tview.undoStack.push(command)
-            return True
-
     def populate_xsec_type_cbo(self):
         """
         Get current xsection data, populate all relevant fields of the dialog and create xsection plot.
@@ -223,6 +213,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         qry = 'SELECT fid, name FROM user_xsections ORDER BY fid COLLATE NOCASE;'
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
+            self.xs_data_model.clear()
+            self.tview.setModel(self.xs_data_model)
+            self.plot.clear()
             return
         cur_idx = 0 # Pointer to selected item in combo. See below. Depending on call of method,
                     # it could be the first, the last, or a given one.
@@ -303,8 +296,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         chan_x_row = self.xs.get_chan_x_row()
         if typ == 'N':
             xy = self.xs.get_chan_natural_data()
+            self.table.connect_delete(True)
         else:
             xy = None
+            self.table.connect_delete(False) # disable data or row delete function if table editor
         self.xs_data_model.clear()
         self.tview.undoStack.clear()
         if not xy:
@@ -314,14 +309,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 item = StandardItem(str(val))
                 self.xs_data_model.appendRow(item)
             self.xs_data_model.setVerticalHeaderLabels(list(chan_x_row.keys()))
-            self.xs_data_model.removeRows(0,2)
+            self.xs_data_model.removeRows(0,2) #excluding fid and user_xs_fid values
             self.tview.setModel(self.xs_data_model)
         else:
             self.xs_data_model.setHorizontalHeaderLabels(['Station', 'Elevation'])
             for i, pt in enumerate(xy):
                 x, y = pt
-                xi = QStandardItem(str(x))
-                yi = QStandardItem(str(y))
+                xi = StandardItem(str(x))
+                yi = StandardItem(str(y))
                 self.xs_data_model.appendRow([xi, yi])
             self.tview.setModel(self.xs_data_model)
             rc = self.xs_data_model.rowCount()
@@ -335,9 +330,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         for i in range(2):
             self.tview.setColumnWidth(i, 100)
 
-        if self.xs_type_cbo.currentText() == 'Natural':
-            self.create_plot()
-            self.update_plot()
+        self.create_plot()
+        self.update_plot()
 
         # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
 
@@ -354,17 +348,50 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         Create initial plot.
         """
         self.plot.clear()
-        self.plot.add_item('Cross-section', [self.xi, self.yi], col=QColor("#0018d4"))
+        self.plot.add_item('Cross-section', [[], []], col=QColor("#0018d4"))
 
     def update_plot(self):
         """
         When time series data for plot change, update the plot.
         """
+        xs_type = self.xs_type_cbo.currentText() 
+        if xs_type  == 'Natural':
+            self._create_natural_xy()
+        elif xs_type == 'Rectangular':
+            self._create_rectangular_xy()
+        elif xs_type == 'Trapezoidal':
+            self._create_trapezoidal_xy()
+        self.plot.update_item('Cross-section', [self.xi, self.yi])
+    
+    def _create_rectangular_xy(self):
+        data = []
+        for i in range(self.xs_data_model.rowCount()):
+            data.append(m_fdata(self.xs_data_model,i,0))
+        bankell,bankelr,fcw,fcd = data
+        x0,y0 = [0,bankell]
+        x1,y1 = [0,bankell-fcd]
+        x2,y2 = [fcw,bankell-fcd]
+        x3,y3 = [fcw,bankelr]
+        self.xi = [x0,x1,x2,x3]
+        self.yi = [y0,y1,y2,y3]
+
+    def _create_trapezoidal_xy(self):
+        data = []
+        for i in range(self.xs_data_model.rowCount()):
+            data.append(m_fdata(self.xs_data_model,i,0))
+        bankell,bankelr,fcw,fcd,zl,zr = data
+        x0,y0 = [0,bankell]
+        x1,y1 = [x0+zl*fcd,bankell-fcd]
+        x2,y2 = [x1+fcw,bankell-fcd]
+        x3,y3 = [x2+((bankelr-bankell+fcd)*zr*1.0),bankelr]
+        self.xi = [x0,x1,x2,x3]
+        self.yi = [y0,y1,y2,y3]
+
+    def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
         for i in range(self.xs_data_model.rowCount()):
             self.xi.append(m_fdata(self.xs_data_model, i, 0))
             self.yi.append(m_fdata(self.xs_data_model, i, 1))
-        self.plot.update_item('Cross-section', [self.xi, self.yi])
 
     def save_n(self, n_val):
         if not self.xs_cbo.count():
@@ -411,6 +438,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         )
                     )
             self.xs.set_chan_data(data)
+            self.update_plot()
 
     def delete_xs(self, i):
         """

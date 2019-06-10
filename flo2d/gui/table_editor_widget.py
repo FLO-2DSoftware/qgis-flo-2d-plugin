@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
 from qgis.PyQt.QtGui import QKeySequence, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
@@ -16,6 +17,7 @@ from ..utils import is_number
 from ..user_communication import UserCommunication
 import io
 import csv
+from qgis.core import QgsMessageLog
 
 uiDialog, qtBaseClass = load_ui('table_editor')
 
@@ -24,6 +26,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
 
     before_paste = pyqtSignal()
     after_paste = pyqtSignal()
+    after_delete = pyqtSignal()
 
     def __init__(self, iface, plot, lyrs):
         qtBaseClass.__init__(self)
@@ -33,13 +36,22 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.setupUi(self)
         self.setup_tview()
-        self.tview.undoStack = QUndoStack(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = None
         self.copy_btn.clicked.connect(self.copy_selection)
         self.paste_btn.clicked.connect(self.paste)
         self.undo_btn.clicked.connect(self.undo)
         self.redo_btn.clicked.connect(self.redo)
+        self.connect_delete(True)
+    
+    def connect_delete(self,connect=True):
+        if connect:
+            self.delete_btn.clicked.connect(self.delete_selection)
+        else:
+            try:
+                self.delete_btn.clicked.disconnect()
+            except:
+                pass # OK to fail when switching between R and T type xs 
 
     def undo(self):
         self.tview.undoStack.undo()
@@ -104,6 +116,15 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             self.after_paste.emit()
             self.tview.model().dataChanged.emit(top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
 
+    def delete_selection(self):
+        indices = []
+        for i in self.tview.selectionModel().selectedRows():
+            index = QtCore.QPersistentModelIndex(i)
+            indices.append(index)
+        for i in indices:
+            self.tview.model().removeRow(i.row())
+        if indices:
+            self.after_delete.emit()
 
 class CommandItemEdit(QUndoCommand):
     """
@@ -117,18 +138,17 @@ class CommandItemEdit(QUndoCommand):
         self.newText = newText
 
     def redo(self):
-        self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
+        self.widget.connect_itemDataChanged(False)
         self.item.setText(self.newText)
-        self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
+        self.widget.connect_itemDataChanged(True)
 
     def undo(self):
-        self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
+        self.widget.connect_itemDataChanged(False)
         try:
             self.item.setText(self.oldText)
         except TypeError:
             self.item.setText('')
-        self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
-
+        self.widget.connect_itemDataChanged(True)
 
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
@@ -177,8 +197,21 @@ class TableView(QTableView):
         QTableView.__init__(self)
         model = StandardItemModel()
         self.setModel(model)
-        self.model().itemDataChanged.connect(self.itemDataChangedSlot)
+
+    def setModel(self,model):
+        if not isinstance(model,StandardItemModel):
+            msg = "Model for TableView object must be StandardItem type"
+            QgsMessageLog.logMessage(msg)
+            return Exception(msg)
+        super().setModel(model)
         self.undoStack = QUndoStack(self)
+        self.connect_itemDataChanged(True)
+
+    def connect_itemDataChanged(self,connect=True):
+        if connect:
+            self.model().itemDataChanged.connect(self.itemDataChangedSlot)
+        else:
+            self.model().itemDataChanged.disconnect()
 
     def itemDataChangedSlot(self, item, oldValue, newValue, role):
         """
