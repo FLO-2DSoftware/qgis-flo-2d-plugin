@@ -1018,17 +1018,44 @@ class ChannelsSchematizer(GeoPackageUtils):
             type = (SELECT type FROM user_xsections WHERE fid = chan_elems.user_xs_fid),
             notes = (SELECT notes FROM user_xsections WHERE fid = chan_elems.user_xs_fid);
         '''
+        
+        
+        get_val = '''SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+                FROM grid AS g, chan AS l, ce as chan_elems
+                WHERE g.fid = ce.fid AND l.user_lbank_fid = ce.seg_fid;'''
+        
+        
         update_xlen = '''
         UPDATE chan_elems
         SET
-            xlen = (
-                SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
-                FROM grid AS g, chan AS l
-                WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
-                );
+            xlen = CASE
+                   WHEN (
+                            SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+                            FROM grid AS g, chan AS l
+                            WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
+                        ) < ? THEN ? 
+                ELSE (
+                        SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+                        FROM grid AS g, chan AS l
+                        WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
+                     )
+                END ;
         '''
+        
+        
+#         update_xlen = '''
+#         UPDATE chan_elems
+#         SET
+#             xlen = (
+#                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+#                 FROM grid AS g, chan AS l
+#                 WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
+#                 );
+#         '''        
+        
+#         self.execute(get_val)
         self.execute(update_chan_elems)
-        self.execute(update_xlen)
+        self.execute(update_xlen, (self.cell_size, self.cell_size))
 
     # def copy_features_from_user_channel_layer_to_schematized_channel_layer(self):
     #     """
