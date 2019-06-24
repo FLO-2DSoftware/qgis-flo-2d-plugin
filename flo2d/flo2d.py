@@ -227,6 +227,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow())
 
         self.add_action(
+            os.path.join(self.plugin_dir, 'img/import_components.svg'),
+            text=self.tr(u'Import selected components files'),
+            callback=lambda: self.import_selected_components(),
+            parent=self.iface.mainWindow())
+
+        self.add_action(
             os.path.join(self.plugin_dir, 'img/export_gds.svg'),
             text=self.tr(u'Export GDS files'),
             callback=lambda: self.export_gds(),
@@ -572,6 +578,7 @@ class Flo2D(object):
                 if os.path.exists(_old_gpkg):
                     msg = 'Load the geopackage %s from QGIS project folder instead?'%_old_gpkg
                     if self.uc.question(msg):
+                        QApplication.setOverrideCursor(Qt.WaitCursor) 
                         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                         dlg_settings.connect(_old_gpkg)
                         self.con = dlg_settings.con
@@ -615,7 +622,11 @@ class Flo2D(object):
                 if method(*args):
                     if call.startswith('export'):
                         self.files_used += dat + '\n'
-                        pass                    
+                        if dat == "CHAN.DAT":
+                            self.files_used += "CHANBANK.DAT" + '\n'  
+                        if dat == "TOPO.DAT":
+                            self.files_used += "MANNINGS_N.DAT" + '\n'                              
+                        pass                                          
                     
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
                 
@@ -685,7 +696,7 @@ class Flo2D(object):
                     self.uc.bar_info('Import cancelled', dur=3)
                     return
 
-            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs)
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in" )
             ok = dlg_components.exec_()
             if ok:
                 try:
@@ -907,6 +918,278 @@ class Flo2D(object):
                         self.uc.show_info("Files read by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
 
     @connection_required
+    def import_selected_components(self):
+        """
+        Import selected traditional GDS files into FLO-2D database (GeoPackage).
+        """
+        self.gutils.disable_geom_triggers()
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        import_calls = [
+            'import_tolspatial',
+            'import_inflow',
+            'import_outflow',
+            'import_rain',
+            'import_raincell',
+            'import_evapor',
+            'import_infil',
+            'import_chan',
+            'import_xsec',
+            'import_hystruc',
+            'import_street',
+            'import_arf',
+            'import_mult',
+            'import_sed',
+            'import_levee',
+            'import_fpxsec',
+            'import_breach',
+            'import_gutter',
+            'import_fpfroude',
+            'import_swmmflo',
+            'import_swmmflort',
+            'import_swmmoutf',
+            'import_wsurf',
+            'import_wstime'
+        ]
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastGdsDir', '')
+        fname, __ = QFileDialog.getOpenFileName(None, 'Select FLO-2D file to import', directory=last_dir, filter='CONT.DAT')
+        if not fname:
+            return
+        dir_name = os.path.dirname(fname)
+        s.setValue('FLO-2D/lastGdsDir', dir_name)
+        bname = os.path.basename(fname)
+        if self.f2g.set_parser(fname):
+            if bname not in self.f2g.parser.dat_files:
+                return
+            
+            empty = self.f2g.is_table_empty('grid')
+            # check if a grid exists in the grid table
+            if empty:
+                self.uc.show_info("There is no grid defined!")
+                return
+
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            ok = dlg_components.exec_()
+            if ok:
+                try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                    if 'Channels' not in dlg_components.components:
+                        import_calls.remove('import_chan')
+                        import_calls.remove('import_xsec')
+
+                    if 'Reduction Factors' not in dlg_components.components:
+                        import_calls.remove('import_arf')
+
+                    if 'Streets' not in dlg_components.components:
+                        import_calls.remove('import_street')
+
+                    if 'Outflow Elements' not in dlg_components.components:
+                        import_calls.remove('import_outflow')
+
+                    if 'Inflow Elements' not in dlg_components.components:
+                        import_calls.remove('import_inflow')
+
+                    if 'Levees' not in dlg_components.components:
+                        import_calls.remove('import_levee')
+
+                    if 'Multiple Channels' not in dlg_components.components:
+                        import_calls.remove('import_mult')
+
+                    if 'Breach' not in dlg_components.components:
+                        import_calls.remove('import_breach')
+
+                    if 'Gutters' not in dlg_components.components:
+                        import_calls.remove('import_gutter')
+
+                    if 'Infiltration' not in dlg_components.components:
+                        import_calls.remove('import_infil')
+
+                    if 'Floodplain Cross Sections' not in dlg_components.components:
+                        import_calls.remove('import_fpxsec')
+
+                    if 'Mudflow and Sediment Transport' not in dlg_components.components:
+                        import_calls.remove('import_sed')
+
+                    if 'Evaporation' not in dlg_components.components:
+                        import_calls.remove('import_evapor')
+
+                    if 'Hydraulic  Structures' not in dlg_components.components:
+                        import_calls.remove('import_hystruc')
+
+                    # if 'MODFLO-2D' not in dlg_components.components:
+                    #     import_calls.remove('')
+
+                    if 'Rain' not in dlg_components.components:
+                        import_calls.remove('import_rain')
+                        import_calls.remove('import_raincell')
+
+                    if 'Storm Drain' not in dlg_components.components:
+                        import_calls.remove('import_swmmflo')
+                        import_calls.remove('import_swmmflort')
+                        import_calls.remove('import_swmmoutf')
+
+                    if 'Spatial Tolerance' not in dlg_components.components:
+                        import_calls.remove('import_tolspatial')                       
+
+                    if 'Spatial Froude' not in dlg_components.components:
+                        import_calls.remove('import_fpfroude')                       
+                                                
+
+                    tables = [
+                                'all_schem_bc',
+                                'blocked_cells',
+                                'breach',
+                                'breach_cells',
+                                'breach_fragility_curves',
+                                'breach_global',
+                                'buildings_areas',
+                                'buildings_stats',
+                                'chan',
+                                'chan_confluences',
+                                'chan_elems',
+                                'chan_elems_interp',
+                                'chan_n',
+                                'chan_r',
+                                'chan_t',
+                                'chan_v',
+                                'chan_wsel',
+                                'chan_elems',
+                                'cont',
+                                'culvert_equations',
+                                'evapor',
+                                'evapor_hourly',
+                                'evapor_monthly',
+                                'fpfroude',
+                                'fpfroude_cells',
+                                'fpxsec',
+                                'fpxsec_cells',
+                                'grid',
+                                'gutter_areas',
+                                'gutter_cells',
+                                'gutter_globals',
+                                'infil',
+                                'infil_areas_chan',
+                                'infil_areas_green',
+                                'infil_areas_horton',
+                                'infil_areas_scs',
+                                'infil_cells_green',
+                                'infil_cells_horton',
+                                'infil_cells_scs',
+                                'infil_chan_elems',
+                                'infil_chan_seg',
+                                'inflow',
+                                'inflow_cells',
+                                'inflow_time_series',
+                                'inflow_time_series_data',
+                                'levee_data',
+                                'levee_failure',
+                                'levee_fragility',
+                                'levee_general',
+                                'mud_areas',
+                                'mud_cells',
+                                'mult',
+                                'mult_areas',
+                                'mult_cells',
+                                'noexchange_chan_cells',
+                                'outflow',
+                                'outflow_cells',
+                                'outflow_time_series',
+                                'outflow_time_series_data',
+                                'qh_params',
+                                'qh_params_data',
+                                'qh_table',
+                                'qh_table_data',
+                                'rain',
+                                'rain_arf_areas',
+                                'rain_arf_cells',
+                                'rain_time_series',
+                                'rain_time_series_data',
+                                'raincell',
+                                'raincell_data',
+                                'rat_curves',
+                                'rat_table',
+                                'rbank',
+                                'reservoirs',
+                                'repl_rat_curves',
+                                'reservoirs',
+                                'sed_group_areas',
+                                'sed_group_cells',
+                                'sed_groups',
+                                'sed_rigid_areas',
+                                'sed_rigid_cells',
+                                'sed_supply_areas',
+                                'sed_supply_cells',
+                                'spatialshallow',
+                                'spatialshallow_cells',
+                                'storm_drains',
+                                'street_elems',
+                                'street_general',
+                                'street_seg',
+                                'streets',
+                                'struct',
+                                'swmmflo',
+                                'swmmflort',
+                                'swmmflort_data',
+                                'swmmoutf',
+                                'tolspatial',
+                                'tolspatial_cells',
+                                'user_bc_lines',
+                                'user_bc_points',
+                                'user_bc_polygons',
+                                'user_blocked_areas',
+                                'user_chan_n',
+                                'user_chan_r',
+                                'user_chan_t',
+                                'user_chan_v',
+                                'user_elevation_points',
+                                'user_elevation_polygons',
+                                'user_fpxsec',
+                                'user_infiltration',
+                                'user_left_bank',
+                                'user_levee_lines',
+                                'user_model_boundary',
+                                'user_noexchange_chan_areas',
+                                'user_reservoirs',
+                                'user_right_bank',
+                                'user_roughness',
+                                'user_streets',
+                                'user_struct',
+                                'user_swmm_conduits',
+                                'user_swmm_nodes',
+                                'user_xsec_n_data',
+                                'user_xsections',
+                                'wstime',
+                                'wsurf',
+                                'xsec_n_data'
+                            ]
+
+#                     for table in tables:
+#                         self.gutils.clear_tables(table)
+
+                    self.call_IO_methods(import_calls, True)   # The strings list 'export_calls', contains the names of
+                                                            # the methods in the class Flo2dGeoPackage to import (read) the
+                                                            # FLO-2D .DAT files
+
+                    # save CRS to table cont
+                    self.gutils.set_cont_par('PROJ', self.crs.toProj4())
+
+                    # load layers and tables
+                    self.load_layers()
+                    self.uc.bar_info('Flo2D model imported', dur=3)
+                    self.gutils.enable_geom_triggers()
+                    if 'import_chan' in import_calls:
+                        self.gutils.create_schematized_rbank_lines_from_xs_tips()
+                    self.setup_dock_widgets()
+                    self.lyrs.refresh_layers()
+                    self.lyrs.zoom_to_all()
+
+                finally:
+                    QApplication.restoreOverrideCursor()
+                    if self.files_used != '' or self.files_not_used != '':
+                        self.uc.show_info("Files read by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
+
+    @connection_required
     def export_gds(self):
         """
         Export traditional GDS files into FLO-2D database (GeoPackage).
@@ -917,13 +1200,12 @@ class Flo2D(object):
         export_calls = [
             'export_cont_toler',
             'export_tolspatial',
-            'export_mannings_n_topo',
             'export_inflow',
             'export_outflow',
             'export_rain',
             'export_raincell',
-            'export_infil',
             'export_evapor',
+            'export_infil',
             'export_chan',
             'export_xsec',
             'export_hystruc',
@@ -934,66 +1216,150 @@ class Flo2D(object):
             'export_levee',
             'export_fpxsec',
             'export_breach',
+            'export_gutter',
             'export_fpfroude',
-            'export_shallowNSpatial',
             'export_swmmflo',
             'export_swmmflort',
             'export_swmmoutf',
             'export_wsurf',
             'export_wstime',
-            'export_gutter'
+            'export_shallowNSpatial',
+            'export_mannings_n_topo',
             ]
 
-        if options['ICHANNEL'] == '0':
-            export_calls.remove('export_chan')
-            export_calls.remove('export_xsec')
-        if options['IEVAP'] == '0':
-            export_calls.remove('export_evapor')
-        if options['IHYDRSTRUCT'] == '0':
-            export_calls.remove('export_hystruc')
-        if options['IMULTC'] == '0':
-            export_calls.remove('export_mult')
-        if options['INFIL'] == '0':
-            export_calls.remove('export_infil')
-        if options['IRAIN'] == '0':
-            export_calls.remove('export_rain')
-            export_calls.remove('export_raincell')
-        if options['ISED'] == '0' and options['MUD'] == '0':
-            export_calls.remove('export_sed')
-        if options['IWRFS'] == '0':
-            export_calls.remove('export_arf')
-        if options['LEVEE'] == '0':
-            export_calls.remove('export_levee')
-        if options['MSTREET'] == '0':
-            export_calls.remove('export_street')
-        if options['SWMM'] == '0':
-            export_calls.remove('export_swmmflo')
-            export_calls.remove('export_swmmflort')
-            export_calls.remove('export_swmmoutf')
+#         if options['ICHANNEL'] == '0':
+#             export_calls.remove('export_chan')
+#             export_calls.remove('export_xsec')
+#         if options['IEVAP'] == '0':
+#             export_calls.remove('export_evapor')
+#         if options['IHYDRSTRUCT'] == '0':
+#             export_calls.remove('export_hystruc')
+#         if options['IMULTC'] == '0':
+#             export_calls.remove('export_mult')
+#         if options['INFIL'] == '0':
+#             export_calls.remove('export_infil')
+#         if options['IRAIN'] == '0':
+#             export_calls.remove('export_rain')
+#             export_calls.remove('export_raincell')
+#         if options['ISED'] == '0' and options['MUD'] == '0':
+#             export_calls.remove('export_sed')
+#         if options['IWRFS'] == '0':
+#             export_calls.remove('export_arf')
+#         if options['LEVEE'] == '0':
+#             export_calls.remove('export_levee')
+#         if options['MSTREET'] == '0':
+#             export_calls.remove('export_street')
+#         if options['SWMM'] == '0':
+#             export_calls.remove('export_swmmflo')
+#             export_calls.remove('export_swmmflort')
+#             export_calls.remove('export_swmmoutf')
 
 
-        s = QSettings()
-        last_dir = s.value('FLO-2D/lastGdsDir', '')
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        outdir = QFileDialog.getExistingDirectory(None,
-                                    'Select directory where FLO-2D model will be exported',
-                                    directory=last_dir)
-        if outdir:
-            try:
-                s.setValue('FLO-2D/lastGdsDir', outdir)
-                
-                self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
-                                                                # the methods in the class Flo2dGeoPackage to export (write) the
-                                                                # FLO-2D .DAT files
-                self.uc.bar_info('Flo2D model exported', dur=3)
-                QApplication.restoreOverrideCursor()
-            finally:
-                QApplication.restoreOverrideCursor()
-                if self.files_used != '' or self.files_not_used != '':
-                    self.uc.show_info("Files exported:\n\n" + self.files_used)  
-        QApplication.restoreOverrideCursor()
+########################################
+        dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+        ok = dlg_components.exec_()
+        if ok:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+    
+            if 'Channels' not in dlg_components.components:
+                export_calls.remove('export_chan')
+                export_calls.remove('export_xsec')
+    
+            if 'Reduction Factors' not in dlg_components.components:
+                export_calls.remove('export_arf')
+    
+            if 'Streets' not in dlg_components.components:
+                export_calls.remove('export_street')
+    
+            if 'Outflow Elements' not in dlg_components.components:
+                export_calls.remove('export_outflow')
+    
+            if 'Inflow Elements' not in dlg_components.components:
+                export_calls.remove('export_inflow')
+    
+            if 'Levees' not in dlg_components.components:
+                export_calls.remove('export_levee')
+    
+            if 'Multiple Channels' not in dlg_components.components:
+                export_calls.remove('export_mult')
+    
+            if 'Breach' not in dlg_components.components:
+                export_calls.remove('export_breach')
+    
+            if 'Gutters' not in dlg_components.components:
+                export_calls.remove('export_gutter')
+    
+            if 'Infiltration' not in dlg_components.components:
+                export_calls.remove('export_infil')
+    
+            if 'Floodplain Cross Sections' not in dlg_components.components:
+                export_calls.remove('export_fpxsec')
+    
+            if 'Mudflow and Sediment Transport' not in dlg_components.components:
+                export_calls.remove('export_sed')
+    
+            if 'Evaporation' not in dlg_components.components:
+                export_calls.remove('export_evapor')
+    
+            if 'Hydraulic  Structures' not in dlg_components.components:
+                export_calls.remove('export_hystruc')
+    
+            # if 'MODFLO-2D' not in dlg_components.components:
+            #     export_calls.remove('')
+    
+            if 'Rain' not in dlg_components.components:
+                export_calls.remove('export_rain')
+                export_calls.remove('export_raincell')
+    
+            if 'Storm Drain' not in dlg_components.components:
+                export_calls.remove('export_swmmflo')
+                export_calls.remove('export_swmmflort')
+                export_calls.remove('export_swmmoutf')
+
+            if 'Spatial Shallow-n' not in dlg_components.components:
+                export_calls.remove('export_shallowNSpatial')  
+                    
+            if 'Spatial Tolerance' not in dlg_components.components:
+                export_calls.remove('export_tolspatial')                       
+    
+            if 'Spatial Froude' not in dlg_components.components:
+                export_calls.remove('export_fpfroude')                       
+                                        
+            if "Manning's n and Topo" not in dlg_components.components:
+                export_calls.remove('export_mannings_n_topo')                       
+                                        
         
-        
+            s = QSettings()
+            last_dir = s.value('FLO-2D/lastGdsDir', '')
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            outdir = QFileDialog.getExistingDirectory(None,
+                                        'Select directory where FLO-2D model will be exported',
+                                        directory=last_dir)
+            if outdir:
+                try:
+                    s.setValue('FLO-2D/lastGdsDir', outdir)
+
+                    self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
+                                                                    # the methods in the class Flo2dGeoPackage to export (write) the
+                                                                    # FLO-2D .DAT files
+                    self.uc.bar_info('Flo2D model exported', dur=3)
+                    QApplication.restoreOverrideCursor()
+                finally:
+                    QApplication.restoreOverrideCursor()
+                    if self.files_used != '':
+                        self.uc.show_info("Files exported:\n\n" + self.files_used)  
+            QApplication.restoreOverrideCursor()
+
+
+
+
+########################################
+
+
+
+
+
+              
     @connection_required
     def import_from_gpkg(self):
         s = QSettings()
@@ -1229,12 +1595,9 @@ class Flo2D(object):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return 
         dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
-        dlg_errors.exec_()  
-#         return
-#         if cancel:
-#             return      
-
-
+        dlg_errors.exec_()    
+        
+        
     def schematize_levees(self):
         """
         Generate schematic lines for user defined levee lines.
@@ -1285,9 +1648,6 @@ class Flo2D(object):
         self.uc.show_info('Converting User Layers to Schematic Layers finished!\n\n'  +
                           converter_dlg.message)
         
-
-
-
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)

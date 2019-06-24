@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>768</width>
+    <width>838</width>
     <height>331</height>
    </rect>
   </property>
@@ -153,6 +153,16 @@
        </property>
        <item>
         <property name="text">
+         <string/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>0000-0999  General</string>
         </property>
        </item>
@@ -188,7 +198,7 @@
        </item>
        <item>
         <property name="text">
-         <string>          0600  Raifall</string>
+         <string>          0600  Rainfall</string>
         </property>
        </item>
        <item>

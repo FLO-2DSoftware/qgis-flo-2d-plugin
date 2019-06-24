@@ -57,6 +57,29 @@ def zoom(iface, porcentage):
     rect = QgsRectangle(xMin, yMin, xMax, yMax)        
     canvas.setExtent(rect) 
     canvas.refresh()
+
+def zoom_show_n_cells(iface, cell_size, nCells):
+    canvas = iface.mapCanvas() 
+    extend = canvas.extent()
+    xMin = extend.xMinimum()
+    xMax = extend.xMaximum()
+    yMin = extend.yMinimum()
+    yMax = extend.yMaximum()
+
+    centerX = xMin + abs(xMin-xMax)/2
+    centerY = yMin + abs(yMin-yMax)/2
+    
+    d = (nCells/2)*cell_size
+    xMin = centerX  - d
+    xMax = centerX  + d
+    yMin = centerY  - d
+    yMax = centerY  + d
+    
+    rect = QgsRectangle(xMin, yMin, xMax, yMax)        
+    canvas.setExtent(rect) 
+    canvas.refresh()
+
+
         
 def try_disconnect(signal, met):
     try:
