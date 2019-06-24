@@ -82,7 +82,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.cellEdit.setText('')
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error('ERROR 290718.1934: error while displaying elevation of cell ' + fid
+            self.uc.show_error('ERROR 290718.1934: error while displaying elevation of cell ' + str(fid)
                                +'\n____________________________________________', e)
 
     def plot_grid_rainfall(self, feat):

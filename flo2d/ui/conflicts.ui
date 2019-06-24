@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
+    <width>757</width>
     <height>416</height>
    </rect>
   </property>
@@ -20,315 +20,6 @@
    <string>Errors and Warnings Analysis</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Components</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="0">
-      <widget class="QComboBox" name="component1_cbo">
-       <property name="maxVisibleItems">
-        <number>20</number>
-       </property>
-       <item>
-        <property name="text">
-         <string/>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Inflows</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Outflows</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Full ARF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Partial ARF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>WRF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Hydr. Structures</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Channels</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Chanbanks</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Levees</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Mult. Channels</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Storm Drain Inlets</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Storm Drain Outfalls</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Streets</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Inner Channels</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="component2_cbo">
-       <property name="maxVisibleItems">
-        <number>20</number>
-       </property>
-       <item>
-        <property name="text">
-         <string/>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Inflows</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Outflows</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Full ARF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Partial ARF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>WRF</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Hydr. Structures</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Channels</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Chanbanks</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Levees</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Mult. Channels</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Storm Drain Inlets</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Storm Drain Outfalls</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Streets</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Inner Channel</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="0" column="2">
-    <widget class="QComboBox" name="errors_cbo">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="maxVisibleItems">
-      <number>20</number>
-     </property>
-     <property name="insertPolicy">
-      <enum>QComboBox::InsertAlphabetically</enum>
-     </property>
-     <item>
-      <property name="text">
-       <string/>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="0" column="3">
-    <layout class="QGridLayout" name="gridLayout">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetFixedSize</enum>
-     </property>
-     <item row="0" column="4">
-      <widget class="QPushButton" name="find_cell_btn">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Grid element</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="elements_cbo">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maxVisibleItems">
-        <number>20</number>
-       </property>
-       <property name="insertPolicy">
-        <enum>QComboBox::InsertAlphabetically</enum>
-       </property>
-       <item>
-        <property name="text">
-         <string/>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="zoom_in_btn">
-       <property name="toolTip">
-        <string>Zoom In</string>
-       </property>
-       <property name="toolTipDuration">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="zoom_out_btn">
-       <property name="toolTip">
-        <string>Zoom Out</string>
-       </property>
-       <property name="toolTipDuration">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
    <item row="1" column="0" colspan="4">
     <widget class="QTableWidget" name="description_tblw">
      <property name="enabled">
@@ -339,6 +30,12 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>1000</width>
+       <height>16777215</height>
+      </size>
      </property>
      <property name="baseSize">
       <size>
@@ -353,7 +50,7 @@
       <set>QAbstractItemView::NoEditTriggers</set>
      </property>
      <property name="alternatingRowColors">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ContiguousSelection</enum>
@@ -362,7 +59,7 @@
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
      <property name="sortingEnabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="rowCount">
       <number>0</number>
@@ -410,6 +107,355 @@
       </property>
      </column>
     </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QComboBox" name="errors_cbo">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maxVisibleItems">
+      <number>20</number>
+     </property>
+     <property name="insertPolicy">
+      <enum>QComboBox::InsertAlphabetically</enum>
+     </property>
+     <item>
+      <property name="text">
+       <string/>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Components</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <item row="0" column="0">
+      <widget class="QComboBox" name="component1_cbo">
+       <property name="maxVisibleItems">
+        <number>20</number>
+       </property>
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Inflows</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Outflows</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Reduction Factors</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Full ARF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Partial ARF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>WRF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Hydr. Structures</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channels (Left Bank)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channels (Right Bank)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Levees</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mult. Channels</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Storm Drain Inlets</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Storm Drain Outfalls</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Streets</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Inner Channels</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="component2_cbo">
+       <property name="maxVisibleItems">
+        <number>20</number>
+       </property>
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>All</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Inflows</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Outflows</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Reduction Factors</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Full ARF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Partial ARF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>WRF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Hydr. Structures</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channels (Left Bank)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Channels (Right Bank)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Levees</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mult. Channels</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Storm Drain Inlets</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Storm Drain Outfalls</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Streets</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Inner Channel</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="3">
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetFixedSize</enum>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Grid element</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="elements_cbo">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maxVisibleItems">
+        <number>20</number>
+       </property>
+       <property name="insertPolicy">
+        <enum>QComboBox::InsertAfterCurrent</enum>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToContents</enum>
+       </property>
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="zoom_out_btn">
+       <property name="toolTip">
+        <string>Zoom Out</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="zoom_in_btn">
+       <property name="toolTip">
+        <string>Zoom In</string>
+       </property>
+       <property name="toolTipDuration">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
+      <widget class="QPushButton" name="find_cell_btn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QPushButton" name="copy_btn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/copy.svg</normaloff>../img/copy.svg</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item row="2" column="2" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">

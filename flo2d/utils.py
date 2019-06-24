@@ -8,9 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os.path
+import io
+import csv
 from math import ceil
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
@@ -77,7 +79,7 @@ def float_or_zero(value):
         elif value == "None":
             return 0
         else:
-           return float(value)  
+            return float(value)  
     elif value.text() == "":
         return 0
     else:
@@ -101,7 +103,7 @@ def int_or_zero(value):
         elif value == "None":
             return 0        
         else:
-           return int(value)  
+            return int(value)  
     elif value.text() == "":
         return 0
     else:
@@ -117,5 +119,20 @@ def Msge(msg_string, icon):
     elif icon == "Warning":  
         msgBox.setIcon(QMessageBox.Warning)
     msgBox.setText(msg_string)
-    msgBox.exec_()
-                  
+    msgBox.exec_()   
+    
+def copy_tablewidget_selection(tablewidget):
+    selection = tablewidget.selectedIndexes()
+    if selection:
+        rows = sorted(index.row() for index in selection)
+        columns = sorted(index.column() for index in selection)
+        rowcount = rows[-1] - rows[0] + 1
+        colcount = columns[-1] - columns[0] + 1
+        table = [[''] * colcount for _ in range(rowcount)]
+        for index in selection:
+            row = index.row() - rows[0]
+            column = index.column() - columns[0]
+            table[row][column] = str(index.data())
+        stream = io.StringIO()
+        csv.writer(stream, delimiter='\t').writerows(table)
+        QApplication.clipboard().setText(stream.getvalue())

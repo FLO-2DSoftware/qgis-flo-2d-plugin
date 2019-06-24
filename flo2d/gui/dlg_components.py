@@ -19,7 +19,7 @@ uiDialog, qtBaseClass = load_ui('components')
 
 class ComponentsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs):
+    def __init__(self, con, iface, lyrs, in_or_out):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -30,8 +30,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.current_lyr = None
         self.components = []
+        self.in_or_out = in_or_out
 
-        self.components_buttonBox.accepted.connect(self.load_selected_components)
+        self.components_buttonBox.accepted.connect(self.select_components)
         self.select_all_chbox.clicked.connect(self.unselect_all)
         
         self.setFixedSize(self.size())
@@ -41,80 +42,214 @@ class ComponentsDialog(qtBaseClass, uiDialog):
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
-
-        if os.path.isfile(last_dir + '\CHAN.DAT'):
-            self.channels_chbox.setChecked(True)
-            self.channels_chbox.setEnabled(True)
-
-        if os.path.isfile(last_dir + '\ARF.DAT'):
-            self.reduction_factors_chbox.setChecked(True)
-            self.reduction_factors_chbox.setEnabled(True)
+        
+        if self.in_or_out == "in":
+            self.setWindowTitle = "FLO-2D Components to Import"
+            self.components_note_lbl.setVisible(False)
             
-        if os.path.isfile(last_dir + '\STREET.DAT'):
-            self.streets_chbox.setChecked(True)
-            self.streets_chbox.setEnabled(True)
+            if os.path.isfile(last_dir + '\CHAN.DAT'):
+                self.channels_chbox.setChecked(True)
+                self.channels_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\ARF.DAT'):
+                self.reduction_factors_chbox.setChecked(True)
+                self.reduction_factors_chbox.setEnabled(True)
+                
+            if os.path.isfile(last_dir + '\STREET.DAT'):
+                self.streets_chbox.setChecked(True)
+                self.streets_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\OUTFLOW.DAT'):
+                self.outflow_elements_chbox.setChecked(True)
+                self.outflow_elements_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\INFLOW.DAT'):
+                self.inflow_elements_chbox.setChecked(True)
+                self.inflow_elements_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\LEVEE.DAT'):
+                self.levees_chbox.setChecked(True)
+                self.levees_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\MULT.DAT'):
+                self.multiple_channels_chbox.setChecked(True)
+                self.multiple_channels_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\BREACH.DAT'):
+                self.breach_chbox.setChecked(True)
+                self.breach_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\GUTTER.DAT'):
+                self.gutters_chbox.setChecked(True)
+                self.gutters_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\INFIL.DAT'):
+                self.infiltration_chbox.setChecked(True)
+                self.infiltration_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\FPXSEC.DAT'):
+                self.floodplain_xs_chbox.setChecked(True)
+                self.floodplain_xs_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\SED.DAT'):
+                self.mud_and_sed_chbox.setChecked(True)
+                self.mud_and_sed_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\EVAPOR.DAT'):
+                self.evaporation_chbox.setChecked(True)
+                self.evaporation_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\HYSTRUC.DAT'):
+                self.hydr_struct_chbox.setChecked(True)
+                self.hydr_struct_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\RAIN.DAT'):
+                self.rain_chbox.setChecked(True)
+                self.rain_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\SWMMFLO.DAT'):
+                self.storm_drain_chbox.setChecked(True)
+                self.storm_drain_chbox.setEnabled(True)
+    
+            if os.path.isfile(last_dir + '\TOLSPATIAL.DAT'):
+                self.spatial_tolerance_chbox.setChecked(True)      
+                self.spatial_tolerance_chbox.setEnabled(True)      
+    
+            if os.path.isfile(last_dir + '\FPFROUDE.DAT'):
+                self.spatial_froude_chbox.setChecked(True)            
+                self.spatial_froude_chbox.setEnabled(True)  
+                
+        elif self.in_or_out == "out":  
+            self.setWindowTitle = "FLO-2D Components to Export"
+            
+            sql = '''SELECT name, value FROM cont;'''
+            options = {o: v if v is not None else '' for o, v in self.gutils.execute(sql).fetchall()}
+    
+    
+            if options['ICHANNEL'] == '0':
+                self.channels_chbox.setText("*" + self.channels_chbox.text() + "*")
+                
+            if options['IEVAP'] == '0':
+                self.evaporation_chbox.setText("*" + self.evaporation_chbox.text() + "*")
+                
+            if options['IHYDRSTRUCT'] == '0':
+                self.hydr_struct_chbox.setText("*" + self.hydr_struct_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\OUTFLOW.DAT'):
-            self.outflow_elements_chbox.setChecked(True)
-            self.outflow_elements_chbox.setEnabled(True)
+            if options['IMULTC'] == '0':
+                self.multiple_channels_chbox.setText("*" + self.multiple_channels_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\INFLOW.DAT'):
-            self.inflow_elements_chbox.setChecked(True)
-            self.inflow_elements_chbox.setEnabled(True)
+            if options['INFIL'] == '0':
+                self.infiltration_chbox.setText("*" + self.infiltration_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\LEVEE.DAT'):
-            self.levees_chbox.setChecked(True)
-            self.levees_chbox.setEnabled(True)
+            if options['IRAIN'] == '0':
+                self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\MULT.DAT'):
-            self.multiple_channels_chbox.setChecked(True)
-            self.multiple_channels_chbox.setEnabled(True)
+            if options['ISED'] == '0' and options['MUD'] == '0':
+                self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\BREACH.DAT'):
-            self.breach_chbox.setChecked(True)
-            self.breach_chbox.setEnabled(True)
+            if options['IWRFS'] == '0':
+                self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\GUTTER.DAT'):
-            self.gutters_chbox.setChecked(True)
-            self.gutters_chbox.setEnabled(True)
+            if options['LEVEE'] == '0':
+                self.levees_chbox.setText("*" + self.levees_chbox.text() + "*")
+  
+            if options['MSTREET'] == '0':
+                self.streets_chbox.setText("*" + self.streets_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\INFIL.DAT'):
-            self.infiltration_chbox.setChecked(True)
-            self.infiltration_chbox.setEnabled(True)
+            if options['SWMM'] == '0':
+                self.storm_drain_chbox.setText("*" + self.storm_drain_chbox.text() + "*")
 
-        if os.path.isfile(last_dir + '\FPXSEC.DAT'):
-            self.floodplain_xs_chbox.setChecked(True)
-            self.floodplain_xs_chbox.setEnabled(True)
+            
+            
+            self.components_note_lbl.setVisible(True)
+            
+            if not self.gutils.is_table_empty('chan'):
+                self.channels_chbox.setChecked(True)
+                self.channels_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('arfwrf'):
+                self.reduction_factors_chbox.setChecked(True)
+                self.reduction_factors_chbox.setEnabled(True)
+                
+            if not self.gutils.is_table_empty('streets'):    
+                self.streets_chbox.setChecked(True)
+                self.streets_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('outflow'):    
+                self.outflow_elements_chbox.setChecked(True)
+                self.outflow_elements_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('inflow'):    
+                self.inflow_elements_chbox.setChecked(True)
+                self.inflow_elements_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('levee_data'):    
+                self.levees_chbox.setChecked(True)
+                self.levees_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('mult'):    
+                self.multiple_channels_chbox.setChecked(True)
+                self.multiple_channels_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('breach'):    
+                self.breach_chbox.setChecked(True)
+                self.breach_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('gutter_cells'):    
+                self.gutters_chbox.setChecked(True)
+                self.gutters_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('infil'):    
+                self.infiltration_chbox.setChecked(True)
+                self.infiltration_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('fpxsec'):    
+                self.floodplain_xs_chbox.setChecked(True)
+                self.floodplain_xs_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('mud') and not self.gutils.is_table_empty('sed'):  
+                self.mud_and_sed_chbox.setChecked(True)
+                self.mud_and_sed_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('evapor'):    
+                self.evaporation_chbox.setChecked(True)
+                self.evaporation_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('struct'):    
+                self.hydr_struct_chbox.setChecked(True)
+                self.hydr_struct_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('rain'):    
+                self.rain_chbox.setChecked(True)
+                self.rain_chbox.setEnabled(True)
+    
+            if not self.gutils.is_table_empty('swmmflo'):    
+                self.storm_drain_chbox.setChecked(True)
+                self.storm_drain_chbox.setEnabled(True)
+ 
+            if not self.gutils.is_table_empty('spatialshallow') and not self.gutils.is_table_empty('spatialshallow_cells'):  
+                self.spatial_shallow_n_chbox.setChecked(True)      
+                self.spatial_shallow_n_chbox.setEnabled(True)      
+       
+            if not self.gutils.is_table_empty('tolspatial'):    
+                self.spatial_tolerance_chbox.setChecked(True)      
+                self.spatial_tolerance_chbox.setEnabled(True)      
+    
+            if not self.gutils.is_table_empty('fpfroude'):    
+                self.spatial_froude_chbox.setChecked(True)            
+                self.spatial_froude_chbox.setEnabled(True) 
 
-        if os.path.isfile(last_dir + '\SED.DAT'):
-            self.mud_and_sed_chbox.setChecked(True)
-            self.mud_and_sed_chbox.setEnabled(True)
+            if not self.gutils.is_table_empty('grid'):    
+                self.mannings_n_and_Topo_chbox.setChecked(True)      
+                self.mannings_n_and_Topo_chbox.setEnabled(True)                 
+                
+                            
+        else:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")            
+            
 
-        if os.path.isfile(last_dir + '\EVAPOR.DAT'):
-            self.evaporation_chbox.setChecked(True)
-            self.evaporation_chbox.setEnabled(True)
-
-        if os.path.isfile(last_dir + '\HYSTRUC.DAT'):
-            self.hydr_struct_chbox.setChecked(True)
-            self.hydr_struct_chbox.setEnabled(True)
-
-        if os.path.isfile(last_dir + '\RAIN.DAT'):
-            self.rain_chbox.setChecked(True)
-            self.rain_chbox.setEnabled(True)
-
-        if os.path.isfile(last_dir + '\SWMMFLO.DAT'):
-            self.storm_drain_chbox.setChecked(True)
-            self.storm_drain_chbox.setEnabled(True)
-
-        if os.path.isfile(last_dir + '\TOLSPATIAL.DAT'):
-            self.spatial_tolerance_chbox.setChecked(True)      
-            self.spatial_tolerance_chbox.setEnabled(True)      
-
-        if os.path.isfile(last_dir + '\FPFROUDE.DAT'):
-            self.spatial_froude_chbox.setChecked(True)            
-            self.spatial_froude_chbox.setEnabled(True)            
-
-    def load_selected_components(self):
+    def select_components(self):
 
         if self.channels_chbox.isChecked():
             self.components.append('Channels')
@@ -167,40 +302,23 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.storm_drain_chbox.isChecked():
             self.components.append('Storm Drain')
 
+        if self.spatial_shallow_n_chbox.isChecked():
+            self.components.append('Spatial Shallow-n')
+
         if self.spatial_tolerance_chbox.isChecked():
             self.components.append('Spatial Tolerance')
 
         if self.spatial_froude_chbox.isChecked():
             self.components.append('Spatial Froude')            
         
-            
+        if self.mannings_n_and_Topo_chbox.isChecked():
+            self.components.append("Manning's n and Topo")            
+                    
     def unselect_all(self):
-        self.select_components(self.select_all_chbox.isChecked()); 
+        self.check_components(self.select_all_chbox.isChecked()); 
 
-    def select_components(self, select = True):  
-        
-        
-#         self.reduction_factors_chbox.setChecked(select);
-#         self.streets_chbox.setChecked(select);
-#         self.outflow_elements_chbox.setChecked(select);
-#         self.inflow_elements_chbox.setChecked(select);
-#         self.levees_chbox.setChecked(select);
-#         self.multiple_channels_chbox.setChecked(select);
-#         self.breach_chbox.setChecked(select);
-#         self.gutters_chbox.setChecked(select);
-#         self.infiltration_chbox.setChecked(select);
-#         self.floodplain_xs_chbox.setChecked(select);
-#         self.mud_and_sed_chbox.setChecked(select);
-#         self.evaporation_chbox.setChecked(select);
-#         self.hydr_struct_chbox.setChecked(select);
-#         self.mudflo_chbox.setChecked(select);
-#         self.rain_chbox.setChecked(select);
-#         self.storm_drain_chbox.setChecked(select);
-#         self.spatial_tolerance_chbox.setChecked(select);
-#         self.spatial_froude_chbox.setChecked(select);        
-        
-        
-        
+    def check_components(self, select = True):  
+         
         if self.channels_chbox.isEnabled():  
             self.channels_chbox.setChecked(select);
         if self.reduction_factors_chbox.isEnabled():      
@@ -235,11 +353,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.rain_chbox.setChecked(select);
         if self.storm_drain_chbox.isEnabled():        
             self.storm_drain_chbox.setChecked(select);
+        if self.spatial_shallow_n_chbox.isEnabled():        
+            self.spatial_shallow_n_chbox.setChecked(select);            
         if self.spatial_tolerance_chbox.isEnabled():        
             self.spatial_tolerance_chbox.setChecked(select);
         if self.spatial_froude_chbox.isEnabled():        
             self.spatial_froude_chbox.setChecked(select);
-
+        if self.mannings_n_and_Topo_chbox.isEnabled():        
+            self.mannings_n_and_Topo_chbox.setChecked(select);
         
         
         
