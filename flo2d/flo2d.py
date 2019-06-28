@@ -17,7 +17,7 @@ import traceback
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp 
 from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
@@ -34,7 +34,7 @@ from .flo2d_tools.schematic_tools import generate_schematic_levees
 from .flo2d_tools.flopro_tools import FLOPROExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
-from .gui.dlg_issues import IssuesDialog, ErrorsDialog
+from .gui.dlg_issues import ErrorsDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
@@ -550,12 +550,15 @@ class Flo2D(object):
         qgs_file = QgsProject.instance().fileName()
         qgs_dir = os.path.dirname(qgs_file) 
         if old_gpkg:
+            QApplication.restoreOverrideCursor()
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n'
             msg += '{}\n\n Load the model?'.format(old_gpkg)
-            QApplication.restoreOverrideCursor()
+            
             if self.uc.question(msg):
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
+                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                qApp.processEvents()                 
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                 dlg_settings.connect(old_gpkg)
                 self.con = dlg_settings.con
@@ -568,7 +571,8 @@ class Flo2D(object):
                 s.setValue('FLO-2D/last_flopro_project', qgs_file)
                 s.setValue('FLO-2D/lastGdsDir',qgs_dir)
                 window_title = s.value('FLO-2D/last_flopro_project', '')
-                self.iface.mainWindow().setWindowTitle(window_title)                             
+                self.iface.mainWindow().setWindowTitle(window_title) 
+                QApplication.restoreOverrideCursor()                            
                 return
 
             else:

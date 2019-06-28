@@ -268,7 +268,7 @@
        </item>
        <item>
         <property name="text">
-         <string>Floodplain &lt;&gt; Storm Drain Rim  (FPRIMELEV.OUT)</string>
+         <string>Floodplain &lt;&gt; Storm Drain Rim (FPRIMELEV.OUT)</string>
         </property>
        </item>
       </widget>
@@ -312,6 +312,12 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>1000</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="baseSize">
       <size>
        <width>7</width>
@@ -322,7 +328,7 @@
       <set>QAbstractItemView::NoEditTriggers</set>
      </property>
      <property name="alternatingRowColors">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ContiguousSelection</enum>
@@ -331,7 +337,7 @@
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
      <property name="sortingEnabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="rowCount">
       <number>0</number>
