@@ -259,6 +259,23 @@ class Layers(object):
                 'readonly': False
             }),
 
+            ('mult_areas', {
+                'name': 'Multiple Channel Areas',
+                'sgroup': 'User Layers',
+                'styles': ['mult_areas.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'readonly': False
+            }),
+            ('mult_lines', {
+                'name': 'Multiple Channel Lines',
+                'sgroup': 'User Layers',
+                'styles': ['mult_lines.qml'],
+                'attrs_edit_widgets': {},
+                'visible': True,
+                'readonly': False
+            }),
+            
           # Schematic layers:
 
             ('chan', {
@@ -366,22 +383,6 @@ class Layers(object):
                 'sgroup': 'Schematic Layers',
                 'styles': ['reservoirs.qml'],
                 'attrs_edit_widgets': {},
-                'readonly': False
-            }),
-            ('mult_areas', {
-                'name': 'Multiple Channel Areas',
-                'sgroup': 'Schematic Layers',
-                'styles': ['mult_areas.qml'],
-                'attrs_edit_widgets': {},
-                'visible': True,
-                'readonly': False
-            }),
-            ('mult_lines', {
-                'name': 'Multiple Channel Lines',
-                'sgroup': 'Schematic Layers',
-                'styles': ['mult_lines.qml'],
-                'attrs_edit_widgets': {},
-                'visible': True,
                 'readonly': False
             }),
             

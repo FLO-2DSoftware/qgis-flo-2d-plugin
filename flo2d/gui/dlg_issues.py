@@ -17,11 +17,11 @@
 
 import os
 from qgis.core import * 
-from qgis.PyQt.QtCore import Qt, QSettings, QVariant
+from qgis.PyQt.QtCore import Qt, QSettings, QVariant, QModelIndex
 # ( QgsFields, QgsField, QgsFeature, QgsVectorFileWriter, QgsFeatureRequest, 
 #                         QgsWkbTypes, QgsGeometry, QgsPointXY, QgsProject, QgsVectorLayer )
 from qgis.PyQt.QtWidgets import (QApplication, QDialogButtonBox, QInputDialog, QFileDialog, 
-                                QTableWidgetItem, QListView, QComboBox, QTableView, QCompleter, QTableWidget )
+                                QTableWidgetItem, QListView, QComboBox, QTableView, QCompleter, QTableWidget, qApp )
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_show_n_cells
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..utils import copy_tablewidget_selection
@@ -98,6 +98,8 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
         self.errors = []
+        self.ext = self.iface.mapCanvas().extent()
+        self.currentCell = None        
         self.debug_directory = ""
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
         set_icon(self.zoom_in_btn, 'zoom_in.svg')
@@ -107,22 +109,32 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.issues_codes_cbo.activated.connect(self.codes_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)    
         self.elements_cbo.activated.connect(self.elements_cbo_activated)        
-        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+#         self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
         self.zoom_in_btn.clicked.connect(self.zoom_in)
         self.zoom_out_btn.clicked.connect(self.zoom_out)
         
+        self.description_tblw.setSortingEnabled(False)
+        self.description_tblw.setColumnWidth(2,550)
+        self.description_tblw.resizeRowsToContents()  
+              
         if (not self.populate_issues()):
             raise ValueError('Not a legal file!')
         self.import_other_issues_files()
-        
-        self.description_tblw.setColumnWidth(2,550)
-        self.populate_elements_cbo()
-        self.populate_errors_cbo()
-        self.loadIssues()
-        self.issues_codes_cbo.setCurrentIndex(1)
-        self.codes_cbo_activated()        
+#         self.populate_elements_cbo()
+#         self.populate_errors_cbo()
 
+        self.issues_codes_cbo.setCurrentIndex(1)
+        self.loadIssues()
+        
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+            zoom_show_n_cells(iface, cell_size, 30)
+            self.update_extent()        
+      
+        
     def setup_connection(self):
         con = self.iface.f2d['con']
         if con is None:
@@ -140,9 +152,9 @@ class IssuesDialog(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return False
-
         s = QSettings()
-        last_dir = s.value('FLO-2D/lastGpkgDir', '')
+        
+        last_dir = s.value('FLO-2D/lastDEBUGDir', s.value('FLO-2D/lastGdsDir'))
         debug_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select DEBUG file to import',
@@ -159,6 +171,9 @@ class IssuesDialog(qtBaseClass, uiDialog):
                 self.uc.show_warn(os.path.basename(debug_file) + " is empty!")    
                 return False   
             else:  
+                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                qApp.processEvents()    
+                s.setValue('FLO-2D/lastDEBUGDir', debug_file)
                 self.debug_directory = os.path.dirname(debug_file)     
                 with open(debug_file, 'r') as f1:
                     build = next(f1)
@@ -173,7 +188,7 @@ class IssuesDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.show_warn("Format of file " + os.path.basename(debug_file) + " is incorrect!")
                     return False     
-                
+                QApplication.restoreOverrideCursor() 
         except UnicodeDecodeError:
              # non-text dat    
             self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
@@ -192,27 +207,30 @@ class IssuesDialog(qtBaseClass, uiDialog):
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:   
                             lyr = self.lyrs.get_layer_by_name('Depressed Elements', self.lyrs.group)                       
-                            if lyr:
-                                self.uc.show_info("Layer 'Depressed Elements' already exists!")         
-                            else:                                               
-                                try:
-                                    features = []        
-                                    with open(file, 'r') as f:                                     
-                                        for _ in range(4):
-                                            next(f)
-                                        for row in f:
-                                            values  = row.split()
-                                            self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
-                                             
-                                            features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
-                                    shapefile = self.debug_directory + "/Depressed Elements.shp"
-                                    name = "Depressed Elements"
-                                    fields = [['cell','I'], ['min_elev','D']]
-                                    if self.create_points_shapefile(shapefile, name, fields, features):
-                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')      
-                                except Exception as e:
-                                    QApplication.restoreOverrideCursor()
-                                    self.uc.show_error("ERROR 170519.0700: error while reading \n" + file  + "!\n", e)                
+#                             if lyr:
+#                                 self.uc.show_info("Layer 'Depressed Elements' already exists!")         
+#                             else:                                               
+                            try:
+                                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                                qApp.processEvents() 
+                                features = []        
+                                with open(file, 'r') as f:                                     
+                                    for _ in range(4):
+                                        next(f)
+                                    for row in f:
+                                        values  = row.split()
+                                        self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
+                                         
+                                        features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
+                                shapefile = self.debug_directory + "/Depressed Elements.shp"
+                                name = "Depressed Elements"
+                                fields = [['cell','I'], ['min_elev','D']]
+                                if self.create_points_shapefile(shapefile, name, fields, features):
+                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+                                QApplication.restoreOverrideCursor()         
+                            except Exception as e:
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error("ERROR 170519.0700: error while reading \n" + file  + "!\n", e)                
                     
                     if "Channels" in dlg_issues_files.files:
                         file = self.debug_directory + "/CHANBANKEL.CHK"
@@ -222,28 +240,30 @@ class IssuesDialog(qtBaseClass, uiDialog):
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else: 
                             lyr = self.lyrs.get_layer_by_name('Channel Bank Elev Differences', self.lyrs.group)                        
-                            if lyr:
-                                self.uc.show_info("Layer 'Channel Bank Elev Differences' already exists!")         
-                            else:  
-                                try:
-                                    features = []  
-                                    with open(file, 'r') as f:
-                                        for _ in range(6):
-                                            next(f)
-                                        for row in f:
-                                            values  = row.split()
-                                            self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
-    
-                                            features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
-                                    shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
-                                    name = "Channel Bank Elev Differences"
-                                    fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
-                                    if self.create_points_shapefile(shapefile, name, fields, features):
-                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
-                                                
-                                except Exception as e:
-                                    QApplication.restoreOverrideCursor()
-                                    self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)                               
+#                             if lyr:
+#                                 self.uc.show_info("Layer 'Channel Bank Elev Differences' already exists!")         
+#                             else:  
+                        try:
+                            QApplication.setOverrideCursor(Qt.WaitCursor) 
+                            qApp.processEvents() 
+                            features = []  
+                            with open(file, 'r') as f:
+                                for _ in range(6):
+                                    next(f)
+                                for row in f:
+                                    values  = row.split()
+                                    self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
+
+                                    features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
+                            shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
+                            name = "Channel Bank Elev Differences"
+                            fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
+                            if self.create_points_shapefile(shapefile, name, fields, features):
+                                vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+                            QApplication.restoreOverrideCursor()            
+                        except Exception as e:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)                               
                     
                     if "Rim" in dlg_issues_files.files:
                         file = self.debug_directory + "/FPRIMELEV.OUT"
@@ -253,33 +273,35 @@ class IssuesDialog(qtBaseClass, uiDialog):
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:  
                             lyr = self.lyrs.get_layer_by_name('Flooplain Rim Differences', self.lyrs.group)                        
-                            if lyr:
-                                self.uc.show_info("Layer 'Flooplain Rim Differences' already exists!")         
-                            else:  
-                                try:
-                                    grid = self.lyrs.data['grid']['qlyr']
-                                    features = []  
-                                    with open(file, 'r') as f:
-                                        for _ in range(1):
-                                             next(f)
-                                        for row in f:
-                                            values  = row.split()
-                                            self.errors.append([values[0], "9003", "FPRIMELEV.OUT : Floodplain - Rim = " + values[3]]) 
-                                            
-                                            cell = int(values[0])
-                                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                                            x, y = feat.geometry().centroid().asPoint()
-                                            
-                                            features.append( [ x, y , values[0], values[1], values[2], values[3], values[4]] ) # x, y, cell, etc
-                                    shapefile = self.debug_directory + "/Flooplain Rim Differences.shp"
-                                    name = "Flooplain Rim Differences"
-                                    fields = [['cell','I'], ['floodplain_elev','D'], ['rim_elev','D'], ['difference','D'], ['new_floodplain_elev','D']]
-                                    if self.create_points_shapefile(shapefile, name, fields, features):
-                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')                                         
+#                             if lyr:
+#                                 self.uc.show_info("Layer 'Flooplain Rim Differences' already exists!")         
+#                             else:  
+                            try:
+                                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                                qApp.processEvents() 
+                                grid = self.lyrs.data['grid']['qlyr']
+                                features = []  
+                                with open(file, 'r') as f:
+                                    for _ in range(1):
+                                         next(f)
+                                    for row in f:
+                                        values  = row.split()
+                                        self.errors.append([values[0], "9003", "FPRIMELEV.OUT : Floodplain - Rim = " + values[3]]) 
                                         
-                                except Exception as e:
-                                    QApplication.restoreOverrideCursor()
-                                    self.uc.show_error("ERROR 170519.0705: error while reading " + file  + "!\n", e)                                                                     
+                                        cell = int(values[0])
+                                        feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                                        x, y = feat.geometry().centroid().asPoint()
+                                        
+                                        features.append( [ x, y , values[0], values[1], values[2], values[3], values[4]] ) # x, y, cell, etc
+                                shapefile = self.debug_directory + "/Flooplain Rim Differences.shp"
+                                name = "Flooplain Rim Differences"
+                                fields = [['cell','I'], ['floodplain_elev','D'], ['rim_elev','D'], ['difference','D'], ['new_floodplain_elev','D']]
+                                if self.create_points_shapefile(shapefile, name, fields, features):
+                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')                                         
+                                QApplication.restoreOverrideCursor()    
+                            except Exception as e:
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error("ERROR 170519.0705: error while reading " + file  + "!\n", e)                                                                     
 
 
     def populate_elements_cbo(self):
@@ -299,81 +321,103 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.errors_cbo.model().sort(0)        
                 
     def codes_cbo_activated(self): 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.loadIssues()
-        
+        QApplication.restoreOverrideCursor() 
+            
     def loadIssues(self):
-        
         self.description_tblw.setRowCount(0)
-        
         codes = self.issues_codes_cbo.currentText()
         if codes == "Depressed Elements (DEPRESSED_ELEMENTS.OUT)":
             self.uc.bar_info("Depressed Elements (DEPRESSED_ELEMENTS.OUT)",2)
+            codes = "9001"
         elif codes == "Channel <> Floodplain (CHANBANKEL.CHK)":
            self.uc.bar_info("Channel <> Floodplain (CHANBANKEL.CHK)",2)
-        elif codes == "Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)": 
+           codes = "9002"
+        elif codes == "Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)":     
             self.uc.bar_info("Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)",2)
+            codes = "9003"
         elif codes == "High Velocities (CHANSTABILITY.OUT)":
             self.uc.bar_info("High Velocities (CHANSTABILITY.OUT)",2)
-        
-        else:    
-            first, second = "", ""
-            codes = codes.split(' ')
-            for item in codes:
-                if (item != ''):
-                    codes = item
-                    break 
-            if codes[0] != "":
-                codes = codes.split('-') 
-                if (len(codes) == 1): 
-                    # There only one code.
-                    first = codes[0]
-                else:
-                    first = codes[0]
-                    second = codes[1]
-                
-                if first.isdigit():
-                    for item in self.errors:
-                        if (  second == "" and int(item[1]) == int(first) ):
-                                rowPosition = self.description_tblw.rowCount()
-                                self.description_tblw.insertRow(rowPosition)   
-                                itm = QTableWidgetItem()
-                                itm.setData(Qt.EditRole, item[0].strip())                 
-                                self.description_tblw.setItem(rowPosition , 0, itm)
-                                itm = QTableWidgetItem() 
-                                itm.setData(Qt.EditRole, item[1].strip())  
-                                self.description_tblw.setItem(rowPosition , 1, itm)
-                                itm = QTableWidgetItem() 
-                                itm.setData(Qt.EditRole, item[2])  
-                                self.description_tblw.setItem(rowPosition , 2, itm)                   
-                        elif ( second != "" and int(item[1]) >= int(first) and int(item[1]) <= int(second) ):
-                                rowPosition = self.description_tblw.rowCount()
-                                self.description_tblw.insertRow(rowPosition)   
-                                itm = QTableWidgetItem()
-                                itm.setData(Qt.EditRole, item[0].strip())                 
-                                self.description_tblw.setItem(rowPosition , 0, itm)
-                                itm = QTableWidgetItem() 
-                                itm.setData(Qt.EditRole, item[1].strip() ) 
-                                self.description_tblw.setItem(rowPosition , 1, itm)
-                                itm = QTableWidgetItem() 
-                                itm.setData(Qt.EditRole, item[2])  
-                                self.description_tblw.setItem(rowPosition , 2, itm) 
-                elif first == "All":
-                    for item in self.errors:                    
-                        rowPosition = self.description_tblw.rowCount()
-                        self.description_tblw.insertRow(rowPosition)   
-                        itm = QTableWidgetItem()
-                        itm.setData(Qt.EditRole, item[0].strip())                 
-                        self.description_tblw.setItem(rowPosition , 0, itm)
-                        itm = QTableWidgetItem() 
-                        itm.setData(Qt.EditRole, item[1].strip() ) 
-                        self.description_tblw.setItem(rowPosition , 1, itm)
-                        itm = QTableWidgetItem() 
-                        itm.setData(Qt.EditRole, item[2])  
-                        self.description_tblw.setItem(rowPosition , 2, itm) 
-                        
-            self.errors_cbo.setCurrentIndex(0)
-            self.elements_cbo.setCurrentIndex(0)                   
+            codes = "9004"
             
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+        qApp.processEvents()            
+          
+           
+        first, second = "", ""
+        codes = codes.split(' ')
+        for item in codes:
+            if (item != ''):
+                codes = item
+                break 
+        if codes[0] != "":
+            codes = codes.split('-') 
+            if (len(codes) == 1): 
+                # There only one code.
+                first = codes[0]
+            else:
+                first = codes[0]
+                second = codes[1]
+            
+            if first.isdigit():
+                for item in self.errors:
+                    if (  second == "" and int(item[1]) == int(first) ):
+                            rowPosition = self.description_tblw.rowCount()
+                            self.description_tblw.insertRow(rowPosition)   
+                            itm = QTableWidgetItem()
+                            itm.setData(Qt.EditRole, item[0].strip())                 
+                            self.description_tblw.setItem(rowPosition , 0, itm)
+                            itm = QTableWidgetItem() 
+                            itm.setData(Qt.EditRole, item[1].strip())  
+                            self.description_tblw.setItem(rowPosition , 1, itm)
+                            itm = QTableWidgetItem() 
+                            itm.setData(Qt.EditRole, item[2])  
+                            self.description_tblw.setItem(rowPosition , 2, itm)                   
+                    elif ( second != "" and int(item[1]) >= int(first) and int(item[1]) <= int(second) ):
+                            rowPosition = self.description_tblw.rowCount()
+                            self.description_tblw.insertRow(rowPosition)   
+                            itm = QTableWidgetItem()
+                            itm.setData(Qt.EditRole, item[0].strip())                 
+                            self.description_tblw.setItem(rowPosition , 0, itm)
+                            itm = QTableWidgetItem() 
+                            itm.setData(Qt.EditRole, item[1].strip() ) 
+                            self.description_tblw.setItem(rowPosition , 1, itm)
+                            itm = QTableWidgetItem() 
+                            itm.setData(Qt.EditRole, item[2])  
+                            self.description_tblw.setItem(rowPosition , 2, itm) 
+            elif first == "All":
+                for item in self.errors:                 
+                    rowPosition = self.description_tblw.rowCount()
+                    self.description_tblw.insertRow(rowPosition)   
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, item[0].strip())                 
+                    self.description_tblw.setItem(rowPosition , 0, itm)
+                    itm = QTableWidgetItem() 
+                    itm.setData(Qt.EditRole, item[1].strip() ) 
+                    self.description_tblw.setItem(rowPosition , 1, itm)
+                    itm = QTableWidgetItem() 
+                    itm.setData(Qt.EditRole, item[2])  
+                    self.description_tblw.setItem(rowPosition , 2, itm) 
+        
+            if self.description_tblw.rowCount() > 0:
+        
+                self.description_tblw.selectRow(0)
+                cell  = self.description_tblw.item(0,0).text()
+                self.find_cell(cell)
+            else:
+                self.lyrs.clear_rubber()
+                 
+        self.errors_cbo.setCurrentIndex(0)
+        self.elements_cbo.setCurrentIndex(0)
+        if self.description_tblw.rowCount() > 0:
+            self.description_tblw.selectRow(0)
+            cell  = self.description_tblw.item(0,0).text()
+            self.find_cell(cell) 
+                                                    
+        QApplication.restoreOverrideCursor() 
+                       
     def elements_cbo_activated(self):
         self.description_tblw.setRowCount(0)
         nElems = self.elements_cbo.count()
@@ -430,17 +474,23 @@ class IssuesDialog(qtBaseClass, uiDialog):
                         cell = int(cell)
                         if len(grid) >= cell and cell > 0:
                             self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
-                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                            x, y = feat.geometry().centroid().asPoint()
-                            center_canvas(self.iface, x, y)
+                            self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                            x, y = self.currentCell.geometry().centroid().asPoint()
+                            if x < self.ext.xMinimum() or x > self.ext.xMaximum() or y < self.ext.yMinimum() or y > self.ext.yMaximum():
+                                center_canvas(self.iface, x, y)
+                                self.update_extent()
                         else:
                             if cell != -999:
                                 self.uc.bar_warn('Cell ' + str(cell) + ' not found.',2)
-                                self.lyrs.clear_rubber()                          
+                                self.lyrs.clear_rubber() 
+                            else:
+                                self.lyrs.clear_rubber()                              
                     else:
                         if cell.strip() != "-999" and cell.strip() != "":                        
                             self.uc.bar_warn('Cell ' + str(cell) + ' not found.',2)
-                            self.lyrs.clear_rubber()              
+                            self.lyrs.clear_rubber()
+                        else:
+                             self.lyrs.clear_rubber()
         except ValueError:
             self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
             self.lyrs.clear_rubber()    
@@ -452,11 +502,22 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.find_cell(cell)        
  
     def zoom_in(self):
-        zoom(self.iface,  0.4)
-
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface,  0.4)
+            self.update_extent()
+            
     def zoom_out(self):
-        zoom(self.iface,  -0.4)        
-    
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)        
+            zoom(self.iface,  -0.4) 
+            self.update_extent()  
+                
+    def update_extent(self):  
+        self.ext = self.iface.mapCanvas().extent() 
+             
     def create_points_shapefile(self, shapefile, name, fields, features):
         try: 
             lyr = QgsProject.instance().mapLayersByName(name)
@@ -574,9 +635,7 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         self.gutils = None
         self.errors = []              
         self.ext = self.iface.mapCanvas().extent()
-        self.init_ext = self.iface.mapCanvas().extent()
         self.currentCell = None
-        
         self.debug_directory = ""
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
         set_icon(self.zoom_in_btn, 'zoom_in.svg')
@@ -598,39 +657,9 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         self.description_tblw.setColumnWidth(2,450)
         self.description_tblw.resizeRowsToContents()
         
-#         self.elements_cbo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength);
-
-
-#         tw = QTableWidget()
-#         tw.resizeRowsToContents()
-
-#         qList = QListView()
-#         qList.setUniformItemSizes(True)
-#         qList.setLayoutMode(QListView.Batched)
-#         self.elements_cbo.setView(qList)
-
-        
-#         table.horizontalHeader.setVisible(False)
-#         table.horizontalHeader.setSectionResizeMode(QHeaderView.Stretch) 
-#         table.verticalHeader.setVisible(False)
-#         table.resizeRowsToContents()
-#         table = StandardItemModel()
-         
-#         self.elements_cbo.setView(self.description_tblw)
-#         self.elements_cbo.horizontalHeader().setStretchLastSection(True)
-
-#         self.tweak1(self.elements_cbo)
-
-#         completer = QCompleter();
-#         completer.setCaseSensitivity(Qt.CaseInsensitive) 
-#         completer.setModelSorting(QCompleter.CaseSensitivelySortedModel)        
-#         self.elements_cbo.setCompleter(completer)
-
-
-
         self.populate_issues()
 #         self.populate_elements_cbo()
-        self.populate_errors_cbo()
+#         self.populate_errors_cbo()
         self.errors_cbo.setCurrentIndex(0)
         self.errors_cbo_activated()
         
@@ -643,51 +672,6 @@ class ConflictsDialog(qtBaseClass, uiDialog):
             cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
             zoom_show_n_cells(iface, cell_size, 30)
             self.update_extent()
-###########################################
-
-
-    def tweak1(self, combo):
-#       //  For performance reasons use this policy on large models
-#       // or AdjustToMinimumContentsLengthWithIcon
-      combo.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLength)
-    
-#       // Improve combobox view performance
-      self.tweak2(combo.view)
-    
-#       // Improve combobox completer performance
-      self.tweak3(combo.completer);
-
-    def tweak2(self, view):
-#           // Improving Performance:  It is possible to give the view hints
-#           // about the data it is handling in order to improve its performance
-#           // when displaying large numbers of items. One approach that can be taken
-#           // for views that are intended to display items with equal sizes
-#           // is to set the uniformItemSizes property to true.
-          view.setUniformItemSizes(True)
-#           // This property holds the layout mode for the items. When the mode is Batched,
-#           // the items are laid out in batches of batchSize items, while processing events.
-#           // This makes it possible to instantly view and interact with the visible items
-#           // while the rest are being laid out.
-          view.setLayoutMode(QListView.Batched)
-#           // batchSize : int
-#           // This property holds the number of items laid out in each batch
-#           // if layoutMode is set to Batched. The default value is 100.
-#           // view.setBatchSize(100)
-
-    def tweak3(self, completer):
-          completer.setCaseSensitivity(Qt.CaseInsensitive);
-#           // If the model's data for the completionColumn() and completionRole() is sorted
-#           // in ascending order, you can set ModelSorting property
-#           // to CaseSensitivelySortedModel or CaseInsensitivelySortedModel.
-#           // On large models, this can lead to significant performance improvements
-#           // because the completer object can then use a binary search algorithm
-#           // instead of linear search algorithm.
-          completer.setModelSorting(QCompleter.CaseSensitivelySortedModel);
-    
-#           // Improve completer popup (view) performance
-          tweak(completer.popup())
-
-######################################################################
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -1361,7 +1345,7 @@ class ConflictsDialog(qtBaseClass, uiDialog):
                       "2 or more Streets in same cell") 
         
         
-        self.setWindowTitle("Errors and Warnings for " + self.issue1 + " components with " + self.issue2 + " components")
+        self.setWindowTitle("Errors and Warnings for " + self.issue1 + " with " + self.issue2)
         
 #############################                
     def get_n_cells(self, table, cell, n):
@@ -1423,13 +1407,15 @@ class ConflictsDialog(qtBaseClass, uiDialog):
                 itm.setData(Qt.EditRole, item[3])  
                 self.description_tblw.setItem(rowPosition , 2, itm)  
             else:
-                self.lyrs.clear_rubber()       
+                self.lyrs.clear_rubber() 
+                      
         self.errors_cbo.setCurrentIndex(0)
         self.elements_cbo.setCurrentIndex(0)
         if self.description_tblw.rowCount() > 0:
             self.description_tblw.selectRow(0)
             cell  = self.description_tblw.item(0,0).text()
-            self.find_cell(cell) 
+            self.find_cell(cell)
+             
         QApplication.restoreOverrideCursor()   
          
     def elements_cbo_activated(self):
