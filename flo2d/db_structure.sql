@@ -1642,11 +1642,18 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells'
 
 CREATE TABLE "gutter_globals" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "height" REAL DEFAULT 0.88, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
     "width" REAL DEFAULT 0.99, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
+    "height" REAL DEFAULT 0.88, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
     "n_value" REAL DEFAULT 0.77 -- STREET_n-VALUE, global assignment of the street gutter n-value
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_globals', 'aspatial');
+
+CREATE TRIGGER "delete_current_gutter_global"
+   AFTER INSERT ON "gutter_globals"
+   BEGIN
+       DELETE FROM "gutter_globals" WHERE fid < NEW.fid;
+   END;
+
 
 CREATE TABLE "gutter_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

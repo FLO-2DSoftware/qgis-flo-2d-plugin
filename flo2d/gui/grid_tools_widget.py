@@ -26,8 +26,6 @@ from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 
 uiDialog, qtBaseClass = load_ui('grid_tools_widget')
-
-
 class GridToolsWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, lyrs):
@@ -39,6 +37,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
         self.gutils = None
+        self.globlyr = None
 
         set_icon(self.create_grid_btn, 'create_grid.svg')
         set_icon(self.raster_elevation_btn, 'sample_elev.svg')
@@ -603,37 +602,81 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         if grid_empty:
             self.uc.bar_warn('There is no grid. Please, create it before evaluating the shallow-n values.')
             return
+        if not self.lyrs.save_edits_and_proceed('Gutter Areas'): # Gutter polygons in User Layer, save them or cancel them.
+                return        
+            
         else:
             pass
-        if not self.gutils.is_table_empty('gutter_cells'):
-            q = 'There are some spatial gutter cells already defined in the database. Overwrite them?\n\n'
-            q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons ONLY.'
-            if not self.uc.question(q):
-                return
-        if not self.lyrs.save_edits_and_proceed('Gutter Areas'):
-            return
-        if self.gutils.is_table_empty('gutter_areas'):
-            w = 'There are no gutter polygons in Gutter Areas (User Layers)!.\n\n'
-            w += 'Please digitize them before running tool.'
-            self.uc.bar_warn(w)
-            return
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            grid_lyr = self.lyrs.data['grid']['qlyr']
-            user_gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
-            evaluate_spatial_gutter(self.gutils, grid_lyr, user_gutter_lyr)
-            gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
-            gutter_lyr.reload()
-            self.lyrs.update_layer_extents(gutter_lyr)
-            # self.lyrs.update_style_blocked(shallow_lyr.id())
-            # self.iface.mapCanvas().clearCache()
-            # user_tol_lyr.triggerRepaint()
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info('Spatial gutter values calculated!')
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('WARNING 060319.1720: Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
-            QApplication.restoreOverrideCursor()
+        
+        self.assign_gutter_globals()
+        self.iface.actionPan().trigger()          
+
+        if not self.gutils.is_table_empty('gutter_areas'): # Gutter polygons in User Layer
+            if not self.gutils.is_table_empty('gutter_cells'): # Gutter cells in Schematic Layer
+                q = 'There are some spatial gutter cells already defined in the database. Overwrite them?\n\n'
+                q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons ONLY.'
+                if not self.uc.question(q):
+                    return
+
+        if self.gutils.is_table_empty('gutter_areas'): # Gutter polygons in User Layer
+            self.uc.show_warn("There are no gutter polygons in Gutter Areas (User Layers)!.\n\n" +
+                              "Please digitize them to create Gutter Cells.")
+           
+        else: 
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                grid_lyr = self.lyrs.data['grid']['qlyr']
+                user_gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
+                evaluate_spatial_gutter(self.gutils, grid_lyr, user_gutter_lyr)
+                gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
+                gutter_lyr.reload()
+                self.lyrs.update_layer_extents(gutter_lyr)
+                # self.lyrs.update_style_blocked(shallow_lyr.id())
+                # self.iface.mapCanvas().clearCache()
+                # user_tol_lyr.triggerRepaint()
+                QApplication.restoreOverrideCursor()
+    
+                self.uc.show_info('Spatial gutter values calculated into the Gutter Cells table!')
+    
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_warn('WARNING 060319.1720: Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
+                QApplication.restoreOverrideCursor()
+
+
+    def assign_gutter_globals(self):
+        self.globlyr = self.lyrs.data["gutter_globals"]['qlyr']
+        self.iface.setActiveLayer(self.globlyr)
+        self.globlyr.featureAdded.connect(self.feature_added)
+        self.globlyr.startEditing()
+        self.iface.actionAddFeature().trigger()   
+
+#         self.lyrs.save_lyrs_edits('gutter_globals')
+        
+    # Define a function called when a feature is added to the layer
+    def feature_added(self):
+        
+        # Disconnect from the signal
+        self.globlyr.featureAdded.disconnect()
+    
+        # Save changes and end edit mode
+        self.globlyr.commitChanges()
+
+
+    def evaluate_gutter(self):
+        self.eval_gutter()
+
+#         self.iface.actionPan().trigger()
+#         self.iface.activeLayer().stopEditing()   
+        
+#         if not self.lyrs.any_lyr_in_edit("gutter_globals"):
+#             self.lyrs.save_lyrs_edits('gutter_globals')
+
+#         lyr = self.lyrs.data["gutter_globals"]['qlyr']
+#         lyr.commitChanges()
+#         lyr.updateExtents()
+#         lyr.triggerRepaint()
+#         lyr.removeSelection() 
 
     def eval_noexchange(self):
         grid_empty = self.gutils.is_table_empty('grid')
