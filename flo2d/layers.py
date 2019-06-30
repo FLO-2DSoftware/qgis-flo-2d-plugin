@@ -523,7 +523,9 @@ class Layers(object):
                 'sgroup': "Tables",
                 'styles': None,
                 'attrs_edit_widgets': {},
-                'readonly': True
+                'readonly': False,
+                'attrs_defaults': {'height': '0.88', 'width': '0.99', 'n_value': '0.77'}  
+                
             }),
             ('inflow', {
                 'name': 'Inflow',
