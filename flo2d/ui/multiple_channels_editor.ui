@@ -215,7 +215,11 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QSpinBox" name="mc_number_sbox"/>
+         <widget class="QSpinBox" name="mc_number_sbox">
+          <property name="maximum">
+           <number>100000</number>
+          </property>
+         </widget>
         </item>
         <item row="3" column="0">
          <widget class="QDoubleSpinBox" name="mc_manning_dbox">

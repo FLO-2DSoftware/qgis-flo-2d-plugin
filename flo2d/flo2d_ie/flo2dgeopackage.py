@@ -509,6 +509,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         mult_area_sql = ['''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES''', 5]
         cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES''', 6]
 
+        
         self.clear_tables('mult', 'mult_areas', 'mult_cells')
         head, data = self.parser.parse_mult()
         mult_sql += [tuple(head)]
@@ -518,10 +519,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gid = row[0]
             geom = self.build_square(cells[gid], self.shrink)
             mult_area_sql += [(geom,) + tuple(row[1:])]
-            cells_sql += [(i, gid)]
-
-        self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.        
-        
+            cells_sql += [(i, gid,) +  tuple(row[1:])]
+        self.gutils.disable_geom_triggers()
+        self.batch_execute(mult_sql, mult_area_sql, cells_sql) # No need to include cells_sql, a trigger does the job. 
+        self.gutils.enable_geom_triggers()       
+        pass
         
         
 #         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall,

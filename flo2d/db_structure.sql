@@ -1324,33 +1324,6 @@ SELECT gpkgAddGeometryColumn('mult_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_areas', 'geom');
 -- SELECT gpkgAddSpatialIndex('mult_areas', 'geom');
 
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
-    AFTER INSERT ON "mult_areas"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid, wdr, dm, nodchns, xnmult)
-            SELECT NEW.fid, g.fid, NEW.wdr, NEW.dm, NEW.nodchns, NEW. xnmult  FROM grid as g
-            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
-    AFTER UPDATE ON "mult_areas"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
-        INSERT INTO "mult_cells" (area_fid, grid_fid)
-        SELECT NEW.fid, g.fid FROM grid as g
-        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
-    AFTER DELETE ON "mult_areas"
-    BEGIN
-        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
-    END;
-
-
 CREATE TABLE "mult_lines" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "wdr" REAL DEFAULT 0.0, -- WDR, channel width for individual grid elements
@@ -1363,9 +1336,49 @@ SELECT gpkgAddGeometryColumn('mult_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_lines', 'geom');
 -- SELECT gpkgAddSpatialIndex('mult_lines', 'geom');
 
+
+
+
+-----------------------------
+
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_insert', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
+    AFTER INSERT ON "mult_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_mult_insert') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid, wdr, dm, nodchns, xnmult)
+            SELECT NEW.fid, g.fid, NEW.wdr, NEW.dm, NEW.nodchns, NEW. xnmult  FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_update', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
+    AFTER UPDATE ON "mult_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_mult_update') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "mult_cells" (area_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
+    AFTER DELETE ON "mult_areas"
+    BEGIN
+        DELETE FROM "mult_cells" WHERE area_fid = OLD."fid";
+    END;
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_line_insert', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_insert"
     AFTER INSERT ON "mult_lines"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_mult_line_insert') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "mult_cells" WHERE line_fid = NEW."fid";
         INSERT INTO "mult_cells" (line_fid, grid_fid, wdr, dm, nodchns, xnmult)
@@ -1373,9 +1386,11 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_insert"
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_line_update', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_update"
     AFTER UPDATE ON "mult_lines"
-    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_mult_line_update') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
     BEGIN
         DELETE FROM "mult_cells" WHERE line_fid = NEW."fid";
         INSERT INTO "mult_cells" (line_fid, grid_fid)
@@ -1383,11 +1398,23 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_update"
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_line_delete', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_delete"
     AFTER DELETE ON "mult_lines"
     BEGIN
         DELETE FROM "mult_cells" WHERE line_fid = OLD."fid";
     END;
+
+
+
+-----------------------------------------------------
+
+
+
+
+
+
 
 -- LEVEE.DAT
 
