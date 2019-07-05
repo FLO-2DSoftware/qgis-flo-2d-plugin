@@ -1072,17 +1072,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
             warning = ""
             with open(outflow, 'w') as o:
                 for oid, gid in out_cells:
+
+
     
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
                         if row:
                             row = [x if x is not None and x is not '' else 0 for x in row]
                             previous_oid = oid
-                        else:
-                            warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
-                            continue   
+#                         else:
+#                             warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
+#                             continue   
                     else:
                         pass
+
+# July 05
+#                     if previous_oid != oid:
+#                         row = self.execute(outflow_sql, (oid,)).fetchone()
+#                         if row:
+#                             row = [x if x is not None and x is not '' else 0 for x in row]
+#                             previous_oid = oid
+#                         else:
+#                             warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
+#                             continue   
+#                     else:
+#                         pass
+
+# March 22:                    
+#                     if previous_oid != oid:
+#                         row = self.execute(outflow_sql, (oid,)).fetchone()
+#                         row = [x if x is not None else 0 for x in row]
+#                         previous_oid = oid
+#                     else:
+#                         pass
+                    
+                    
     
                     fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
                     if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
