@@ -86,39 +86,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_inflow(self):
         cont_sql = ['''INSERT INTO cont (name, value, note) VALUES''', 3]
-        inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc) VALUES''', 3]
+        inflow_sql = ['''INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES''', 4]
         cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''', 2]
-        ts_sql = ['''INSERT INTO inflow_time_series (fid) VALUES''', 1]
+        ts_sql = ['''INSERT INTO inflow_time_series (fid, name) VALUES''', 2]
         tsd_sql = ['''INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES''', 4]
         reservoirs_sql = ['''INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES''', 3]
 
-        self.clear_tables('inflow', 'inflow_cells', 'reservoirs', 'inflow_time_series', 'inflow_time_series_data')
-        head, inf, res = self.parser.parse_inflow()
-        cont_sql += [
-            ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
-            ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
-        ]
-        gids = list(res.keys())
-        cells = self.grid_centroids(gids, buffers=True)
-        for i, gid in enumerate(inf, 1):
-            row = inf[gid]['row']
-            inflow_sql += [(i, row[0], row[1])]
-            cells_sql += [(i, gid)]
-            ts_sql += [(i,)]
-            for n in inf[gid]['time_series']:
-                tsd_sql += [(i,) + tuple(n[1:])]
+        try:
+            self.clear_tables('inflow', 'inflow_cells', 'reservoirs', 'inflow_time_series', 'inflow_time_series_data')
+            head, inf, res = self.parser.parse_inflow()
+            cont_sql += [
+                ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
+                ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
+            ]
+            gids = list(res.keys())
+            cells = self.grid_centroids(gids, buffers=True)
+            for i, gid in enumerate(inf, 1):
+                row = inf[gid]['row']
+                inflow_sql += [(i, row[0], row[1], i)]
+                cells_sql += [(i, gid)]
+                if inf[gid]['time_series']:
+                    ts_sql += [(i,'Time series ' + str(i))]
+                    for n in inf[gid]['time_series']:
+                        tsd_sql += [(i,) + tuple(n[1:])]
+    
+            for gid in res:
+                row = res[gid]['row']
+                wsel = row[-1] if len(row) == 3 else None
+                reservoirs_sql += [(row[1], wsel, cells[gid])]
+    
+            self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
+            qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);'''
+            self.execute(qry)
+            qry = '''UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);'''
+            self.execute(qry)
 
-        for gid in res:
-            row = res[gid]['row']
-            wsel = row[-1] if len(row) == 3 else None
-            reservoirs_sql += [(row[1], wsel, cells[gid])]
-
-        self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
-        qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);'''
-        self.execute(qry)
-        qry = '''UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);'''
-        self.execute(qry)
-
+        except Exception:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('ERROR 070719.1051: Import inflow failed!.')
+ 
     def import_outflow(self):
         outflow_sql = ['''INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
                                             chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES''', 8]
@@ -973,8 +979,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty('inflow'):
                 return False
             cont_sql = '''SELECT value FROM cont WHERE name = ?;'''
-            inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;'''
-            inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY fid, grid_fid;'''
+            inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;'''
+            inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;'''
             ts_data_sql = '''SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
             reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;'''
     
@@ -1003,20 +1009,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for iid, gid in self.execute(inflow_cells_sql):
     
                     if previous_iid != iid:
-                        row = self.execute(inflow_sql, (iid,)).fetchone()
+                        row = self.execute(inflow_sql, (iid,)).fetchone()   
                         if row:
                             row = [x if x is not None and x is not '' else 0 for x in row]
                             previous_oid = iid
                         else:
                             warning += "Data for inflow in cell " + str(gid) + " not found in 'Inflow' table (wrong inflow 'id' "  + str(iid) + " in 'Inflow Cells' table).\n"
                             continue                          
-                        
-#                         row = [x if x is not None else '' for x in row]
-#                         previous_iid = iid
                     else:
                         pass
     
-                    fid, ts_fid, ident, inoutfc = row
+                    fid, ts_fid, ident, inoutfc = row # ident is 'F' or 'C'
                     i.write(inf_line.format(ident, inoutfc, gid))
                     series = self.execute(ts_data_sql, (ts_fid,))
                     for tsd_row in series:
@@ -1026,7 +1029,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     res = [x if x is not None else '' for x in res]
                     i.write(res_line.format(*res).rstrip())
 
-                
+            QApplication.restoreOverrideCursor()    
             if warning != "":
                 self.uc.show_warn("ERROR 180319.1020: error while exporting INFLOW.DAT!\n\n" + warning + 
                                   "\n\nWere the Boundary Conditions schematized? ")
@@ -1073,30 +1076,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(outflow, 'w') as o:
                 for oid, gid in out_cells:
 
-
-    
+# July 05
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
                         if row:
                             row = [x if x is not None and x is not '' else 0 for x in row]
                             previous_oid = oid
-#                         else:
-#                             warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
-#                             continue   
+                        else:
+                            warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
+                            continue   
                     else:
                         pass
-
-# July 05
-#                     if previous_oid != oid:
-#                         row = self.execute(outflow_sql, (oid,)).fetchone()
-#                         if row:
-#                             row = [x if x is not None and x is not '' else 0 for x in row]
-#                             previous_oid = oid
-#                         else:
-#                             warning += "Data for outflow in cell " + str(gid) + " not found in 'Outflow' table (wrong outflow 'id' "  + str(oid) + " in 'Outflow Cells' table).\n"
-#                             continue   
-#                     else:
-#                         pass
 
 # March 22:                    
 #                     if previous_oid != oid:
@@ -1133,7 +1123,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                     ident = 'O{0}'.format(hydro_out) if hydro_out > 0 else 'O'
                     o.write(o_line.format(ident, gid))
-                
+                    
+            QApplication.restoreOverrideCursor()    
             if warning != "":
                 self.uc.show_warn("ERROR 170319.2018: error while exporting OUTFLOW.DAT!\n\n" + warning +
                                   "\n\nWere the Boundary Conditions schematized? ")

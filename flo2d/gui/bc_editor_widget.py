@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QComboBox, QSizePolicy, QInputDialog
+from qgis.PyQt.QtWidgets import QComboBox, QSizePolicy, QInputDialog, QApplication
 from qgis.core import QgsFeatureRequest
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
@@ -136,18 +136,26 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             return True
 
     def schematize_bc(self):
-        qry = 'SELECT * FROM all_schem_bc;'
-        exist_bc = self.gutils.execute(qry).fetchone()
-        if exist_bc:
+        qry_all_user_bc = 'SELECT * FROM all_user_bc;'
+        exist_user_bc = self.gutils.execute(qry_all_user_bc).fetchone()
+        if not exist_user_bc:
+            self.uc.show_info('There are no User Boundary Conditions (points, lines, or polygons) defined.')
+            return  
+                  
+        qry_all_schem_bc = 'SELECT * FROM all_schem_bc;'
+        exist_schem_bc = self.gutils.execute(qry_all_schem_bc).fetchone()
+        if exist_schem_bc:
             if not self.uc.question('There are some boundary conditions grid cells defined already in the Schematic layer (BC Cells).\n\n Overwrite them?'):
                 return
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+            
         in_inserted = self.schematize_inflows()
         out_inserted = self.schematize_outflows()
-    
+        
+        QApplication.restoreOverrideCursor()   
+        
         self.uc.show_info(str(in_inserted) + " inflows and " + str(out_inserted) + " outflows boundary conditions schematized!")
-      
-        
-        
+
         self.lyrs.lyrs_to_repaint = [
             self.lyrs.data['all_schem_bc']['qlyr']
         ]
@@ -454,6 +462,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.inflow.set_time_series_data(data_name, ts_data)
 
     def schematize_inflows(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
         try:
             del_qry = 'DELETE FROM inflow_cells;'
             ins_qry = '''INSERT INTO inflow_cells (inflow_fid, grid_fid)
@@ -466,12 +475,15 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));'''
             self.gutils.execute(del_qry)
             inserted = self.gutils.execute(ins_qry)
+            QApplication.restoreOverrideCursor()   
             return inserted.rowcount
-#             self.uc.show_info("Inflows schematized!")
+#             self.uc.show_info("Inflows schematized!") 
         except Exception:
+            QApplication.restoreOverrideCursor()   
             self.uc.show_warn("WARNING 180319.1431: Schematizing of inflow aborted!")
             self.uc.log_info(traceback.format_exc())
             return 0
+        
 
     def show_inflow_rb(self):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
@@ -792,6 +804,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow.set_data(data_name, data)
 
     def schematize_outflows(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
         try:
             del_qry = 'DELETE FROM outflow_cells;'
             ins_qry = '''
@@ -806,9 +819,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     '''
             self.gutils.execute(del_qry)
             inserted = self.gutils.execute(ins_qry)
+            QApplication.restoreOverrideCursor()    
             return inserted.rowcount            
-#             self.uc.show_info("Outflows schematized!")  
+#             self.uc.show_info("Outflows schematized!") 
         except Exception as e:
+            QApplication.restoreOverrideCursor()   
             self.uc.show_warn("WARNING 180319.1434: Schematizing of outflows aborted!")
             self.uc.log_info(traceback.format_exc())
             return 0

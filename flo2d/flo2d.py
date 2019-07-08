@@ -1335,12 +1335,13 @@ class Flo2D(object):
         
             s = QSettings()
             last_dir = s.value('FLO-2D/lastGdsDir', '')
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+#             QApplication.setOverrideCursor(Qt.WaitCursor)
             outdir = QFileDialog.getExistingDirectory(None,
                                         'Select directory where FLO-2D model will be exported',
                                         directory=last_dir)
             if outdir:
                 try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     s.setValue('FLO-2D/lastGdsDir', outdir)
 
                     self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
@@ -1352,7 +1353,8 @@ class Flo2D(object):
                     QApplication.restoreOverrideCursor()
                     if self.files_used != '':
                         self.uc.show_info("Files exported:\n\n" + self.files_used)  
-            QApplication.restoreOverrideCursor()
+        
+        QApplication.restoreOverrideCursor()
 
 
 
