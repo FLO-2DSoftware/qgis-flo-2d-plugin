@@ -44,7 +44,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         
         if self.in_or_out == "in":
-            self.setWindowTitle = "FLO-2D Components to Import"
+            self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
             
             if os.path.isfile(last_dir + '\CHAN.DAT'):
@@ -120,7 +120,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.spatial_froude_chbox.setEnabled(True)  
                 
         elif self.in_or_out == "out":  
-            self.setWindowTitle = "FLO-2D Components to Export"
+            self.setWindowTitle("FLO-2D Components to Export")
             
             sql = '''SELECT name, value FROM cont;'''
             options = {o: v if v is not None else '' for o, v in self.gutils.execute(sql).fetchall()}
@@ -175,7 +175,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.streets_chbox.setChecked(True)
                 self.streets_chbox.setEnabled(True)
     
-            if not self.gutils.is_table_empty('outflow'):    
+            if not self.gutils.is_table_empty('outflow_cells'):    
                 self.outflow_elements_chbox.setChecked(True)
                 self.outflow_elements_chbox.setEnabled(True)
     
