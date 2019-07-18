@@ -420,7 +420,7 @@
         <enum>QAbstractSpinBox::NoButtons</enum>
        </property>
        <property name="decimals">
-        <number>4</number>
+        <number>3</number>
        </property>
        <property name="maximum">
         <double>1.000000000000000</double>

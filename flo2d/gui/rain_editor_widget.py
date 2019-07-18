@@ -36,6 +36,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.lyrs = lyrs
         self.plot = plot
+        self.plot_item_name = None
         self.table = table
         self.tview = table.tview
         self.rain = None
@@ -43,7 +44,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.rain_data_model = StandardItemModel()
         self.rain_tseries_data = None
-        self.plot_item_name = None
+        
         self.d1, self.d2 = [[], []]
 
         set_icon(self.raster_rain_btn, 'sample_rain.svg')
@@ -128,7 +129,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.simulate_rain_grp.setChecked(True)
 
         self.rain = Rain(self.con, self.iface)
-        self.create_plot()
+#         self.create_plot()
 
     def import_rainfall(self):
         try:
@@ -286,7 +287,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             None,
             'Select time series files to import data',
             directory=last_dir,
-            filter='(*.DAT)')
+            filter = '(*.DAT *.TXT)')
         if not predefined_files:
             return
         s.setValue('FLO-2D/lastPredefinedSeriesDir', os.path.dirname(predefined_files[0]))

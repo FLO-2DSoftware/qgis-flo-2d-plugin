@@ -84,7 +84,7 @@
               <item row="0" column="1">
                <widget class="QRadioButton" name="prescribed_failure_radio">
                 <property name="text">
-                 <string>Precribed Failure</string>
+                 <string>Prescribed Failure</string>
                 </property>
                </widget>
               </item>

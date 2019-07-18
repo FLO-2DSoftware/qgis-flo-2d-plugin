@@ -247,6 +247,9 @@ max flow depth field</string>
       <property name="toolTip">
        <string>Set 0 to use default value</string>
       </property>
+      <property name="maximum">
+       <number>10000</number>
+      </property>
      </widget>
     </item>
    </layout>

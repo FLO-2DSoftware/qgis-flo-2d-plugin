@@ -810,22 +810,22 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('evapor_hourly', 'aspa
 
 CREATE TABLE "infil" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "infmethod" INTEGER, -- INFMETHOD, infiltration method number
-    "abstr" REAL, -- ABSTR, Green Ampt global floodplain rainfall abstraction or interception
-    "sati" REAL, -- SATI, Global initial saturation of the soil
-    "satf" REAL, -- SATF, Global final saturation of the soil
-    "poros" REAL, -- POROS, global floodplain soil porosity
-    "soild" REAL, -- SOILD, Green Ampt global soil limiting depth storage
-    "infchan" INTEGER, -- INFCHAN, switch for simulating channel infiltration
-    "hydcall" REAL, -- HYDCALL, average global floodplain hydraulic conductivity
-    "soilall" REAL, -- SOILALL, average global floodplain capillary suction
-    "hydcadj" REAL, -- HYDCADJ, hydraulic conductivity adjustment variable
-    "hydcxx" REAL, -- HYDCXX, global channel infiltration hydraulic conductivity
-    "scsnall" REAL, -- SCSNALL, global floodplain SCS curve number
-    "abstr1" REAL, -- ABSTR1, SCS global floodplain rainfall abstraction or interception
-    "fhortoni" REAL, -- FHORTONI, global Horton’s equation initial infiltration rate
-    "fhortonf" REAL, -- FHORTONF, global Horton’s equation final infiltration rate
-    "decaya" REAL --DECAYA, Horton’s equation decay coefficient
+    "infmethod" INTEGER DEFAULT 1, -- INFMETHOD, infiltration method number
+    "abstr" REAL DEFAULT 0.0, -- ABSTR, Green Ampt global floodplain rainfall abstraction or interception
+    "sati" REAL DEFAULT 0.7, -- SATI, Global initial saturation of the soil
+    "satf" REAL DEFAULT 1.0, -- SATF, Global final saturation of the soil
+    "poros" REAL DEFAULT 0.4, -- POROS, global floodplain soil porosity
+    "soild" REAL DEFAULT 0.0, -- SOILD, Green Ampt global soil limiting depth storage
+    "infchan" INTEGER  DEFAULT 0, -- INFCHAN, switch for simulating channel infiltration
+    "hydcall" REAL DEFAULT 0.1, -- HYDCALL, average global floodplain hydraulic conductivity
+    "soilall" REAL DEFAULT 4.3, -- SOILALL, average global floodplain capillary suction
+    "hydcadj" REAL DEFAULT 0.1, -- HYDCADJ, hydraulic conductivity adjustment variable
+    "hydcxx" REAL DEFAULT 0.1, -- HYDCXX, global channel infiltration hydraulic conductivity
+    "scsnall" REAL DEFAULT 99.0, -- SCSNALL, global floodplain SCS curve number
+    "abstr1" REAL DEFAULT 0.0, -- ABSTR1, SCS global floodplain rainfall abstraction or interception
+    "fhortoni" REAL DEFAULT 0.0, -- FHORTONI, global Horton’s equation initial infiltration rate
+    "fhortonf" REAL DEFAULT 0.0, -- FHORTONF, global Horton’s equation final infiltration rate
+    "decaya" REAL DEFAULT 0.0 --DECAYA, Horton’s equation decay coefficient
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil', 'aspatial');
 
@@ -1669,9 +1669,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells'
 
 CREATE TABLE "gutter_globals" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "width" REAL DEFAULT 0.99, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
-    "height" REAL DEFAULT 0.88, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
-    "n_value" REAL DEFAULT 0.77 -- STREET_n-VALUE, global assignment of the street gutter n-value
+    "width" REAL DEFAULT 0.0, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
+    "height" REAL DEFAULT 0.0, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
+    "n_value" REAL DEFAULT 0.04 -- STREET_n-VALUE, global assignment of the street gutter n-value
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_globals', 'aspatial');
 
@@ -1684,9 +1684,9 @@ CREATE TRIGGER "delete_current_gutter_global"
 
 CREATE TABLE "gutter_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "width" REAL DEFAULT 0.99, -- WIDSTR, channel width for individual grid elements
-    "height" REAL DEFAULT 0.88, -- CURBHT, maximum depth of multiple channels
-    "n_value" REAL DEFAULT 0.77, -- XNSTR, number of multiple channels assigned in a grid element
+    "width" REAL DEFAULT 0.0, -- WIDSTR, channel width for individual grid elements
+    "height" REAL DEFAULT 0.0, -- CURBHT, maximum depth of multiple channels
+    "n_value" REAL DEFAULT 0.04, -- XNSTR, number of multiple channels assigned in a grid element
     "direction" INTEGER DEFAULT 1 -- ICURBDIR, channel n-values for individual grid elements    
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('gutter_areas', 'features', 4326);

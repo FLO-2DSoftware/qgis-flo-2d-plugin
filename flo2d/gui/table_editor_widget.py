@@ -20,8 +20,6 @@ import csv
 from qgis.core import QgsMessageLog
 
 uiDialog, qtBaseClass = load_ui('table_editor')
-
-
 class TableEditorWidget(qtBaseClass, uiDialog):
 
     before_paste = pyqtSignal()
@@ -36,6 +34,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.setupUi(self)
         self.setup_tview()
+        self.tview.undoStack = QUndoStack(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.gutils = None
         self.copy_btn.clicked.connect(self.copy_selection)
@@ -43,7 +42,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.undo_btn.clicked.connect(self.undo)
         self.redo_btn.clicked.connect(self.redo)
         self.connect_delete(True)
-    
+     
     def connect_delete(self,connect=True):
         if connect:
             self.delete_btn.clicked.connect(self.delete_selection)
@@ -197,7 +196,9 @@ class TableView(QTableView):
         QTableView.__init__(self)
         model = StandardItemModel()
         self.setModel(model)
-
+        self.model().itemDataChanged.connect(self.itemDataChangedSlot)
+        self.undoStack = QUndoStack(self)
+        
     def setModel(self,model):
         if not isinstance(model,StandardItemModel):
             msg = "Model for TableView object must be StandardItem type"

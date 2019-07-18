@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.8.1
+version=0.8.8
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,33 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=<p>
+ <p>0.8.8
+ - Added export dialog to select components
+ - Added gutter globals dialog
+ <p>0.8.7
+ - Added Errors/Warnings/Conflicts checks in QGIS prior to running model
+ - Run model in debug mode and read error/warnings/conflicts file from QGIS
+ - Dialogs to show errors/warnings/conflicts and highlight/zoom cells
+ <p>0.8.6
+ - Added Multiple Channels widget
+ - Added Multiple Channels lines User Layer
+ - MULT.DAT save speed improved
+ - Highlight cell functionality
+ - Import project from geopakage .gpkg fixes
+ <p>0.8.5
+ - Added Dam Bridge editor widget
+ - Added Levee fragility curves editor
+ <p>0.8.4
+ - Green-Ampt infiltration switch for vegetation cover
+ - Green-Ampt calculations as in GDS Visual Basic program
+ - Call external channel-n values interpolator
+ - Import components dialog
+ <p>0.8.3
+ - ARF.DAT saved with collapsed buildings
+ <p>0.8.2
+ - Storm Drain from imported shapefile
+ - Storm Drain: save .INP file 
+ - Storm Drain type-4 rating tables
  <p>0.8.1
  - optimization fixes for infiltration
  <p>0.8

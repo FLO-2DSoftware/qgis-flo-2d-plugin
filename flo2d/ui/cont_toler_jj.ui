@@ -161,10 +161,16 @@
                  </sizepolicy>
                 </property>
                 <property name="toolTip">
-                 <string>GRAPTIM</string>
+                 <string>DEPRESSDEP</string>
                 </property>
                 <property name="minimum">
-                 <double>0.010000000000000</double>
+                 <double>0.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>3.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -344,10 +350,13 @@
              <string>TIMTEP</string>
             </property>
             <property name="minimum">
-             <double>1.000000000000000</double>
+             <double>0.000000000000000</double>
             </property>
             <property name="maximum">
              <double>100.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
             </property>
            </widget>
           </widget>
@@ -538,6 +547,12 @@
               <property name="minimum">
                <double>0.010000000000000</double>
               </property>
+              <property name="maximum">
+               <double>99.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.100000000000000</double>
+              </property>
              </widget>
             </item>
             <item>
@@ -684,7 +699,7 @@
                <string>AMANN</string>
               </property>
               <property name="minimum">
-               <double>-5.000000000000000</double>
+               <double>-99.000000000000000</double>
               </property>
               <property name="maximum">
                <double>5.000000000000000</double>
@@ -693,7 +708,7 @@
                <double>0.100000000000000</double>
               </property>
               <property name="value">
-               <double>0.100000000000000</double>
+               <double>0.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -714,6 +729,9 @@
               <property name="maximum">
                <double>100.000000000000000</double>
               </property>
+              <property name="value">
+               <double>0.010000000000000</double>
+              </property>
              </widget>
             </item>
             <item>
@@ -726,6 +744,9 @@
               </property>
               <property name="toolTip">
                <string>XCONC</string>
+              </property>
+              <property name="maximum">
+               <double>0.500000000000000</double>
               </property>
              </widget>
             </item>
@@ -741,7 +762,7 @@
                <string>XARF</string>
               </property>
               <property name="decimals">
-               <number>1</number>
+               <number>2</number>
               </property>
               <property name="maximum">
                <double>1.000000000000000</double>

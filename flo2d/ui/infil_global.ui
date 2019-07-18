@@ -244,7 +244,7 @@
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_scsnall">
         <property name="decimals">
-         <number>4</number>
+         <number>0</number>
         </property>
        </widget>
       </item>

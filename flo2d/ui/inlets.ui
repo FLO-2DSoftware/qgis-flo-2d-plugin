@@ -272,9 +272,9 @@
      <bool>true</bool>
     </property>
    </widget>
+   <zorder>rating_table_cbo</zorder>
    <zorder>layoutWidget</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder></zorder>
+   <zorder>label_17</zorder>
   </widget>
   <widget class="QLabel" name="label_18">
    <property name="geometry">
@@ -334,12 +334,12 @@
     <bool>false</bool>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>48</x>
      <y>48</y>
-     <width>590</width>
+     <width>608</width>
      <height>132</height>
     </rect>
    </property>
@@ -402,6 +402,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="maximum">
+             <double>100000.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item row="1" column="0">
@@ -431,6 +434,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="maximum">
+             <double>1000.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -554,6 +560,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="maximum">
+           <double>1000.000000000000000</double>
+          </property>
          </widget>
         </item>
         <item row="2" column="0">
@@ -564,6 +573,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="maximum">
+           <double>1000.000000000000000</double>
+          </property>
          </widget>
         </item>
         <item row="3" column="0">
@@ -573,6 +585,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="maximum">
+           <double>1000.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -715,7 +730,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>184</x>

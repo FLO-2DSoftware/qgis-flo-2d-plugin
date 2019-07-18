@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>flo2d_table_widget</class>
  <widget class="QWidget" name="flo2d_table_widget">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,7 +16,7 @@
   <property name="windowTitle">
    <string>FLO-2D Table Editor</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
     <number>6</number>
    </property>
@@ -26,7 +29,7 @@
    <property name="bottomMargin">
     <number>6</number>
    </property>
-   <item row="0" column="0">
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_4">
