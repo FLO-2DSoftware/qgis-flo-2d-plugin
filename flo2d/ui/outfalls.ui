@@ -254,6 +254,9 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="maximum">
+     <double>1000.000000000000000</double>
+    </property>
    </widget>
    <widget class="QLabel" name="label_7">
     <property name="geometry">
@@ -433,7 +436,7 @@
     <item row="1" column="1">
      <widget class="QDoubleSpinBox" name="invert_elevation_dbox">
       <property name="maximum">
-       <double>10000.000000000000000</double>
+       <double>30000.000000000000000</double>
       </property>
      </widget>
     </item>

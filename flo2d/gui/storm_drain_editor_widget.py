@@ -95,11 +95,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.inletRT = None
         self.plot = plot
+        self.plot_item_name = None
         self.table = table
         self.tview = table.tview        
         self.inlet_data_model = StandardItemModel()
         self.inlet_series_data = None
-        self.plot_item_name = None
+        
         self.d1, self.d2 = [[], []]
 
         set_icon(self.create_point_btn, 'mActionCapturePoint.svg')

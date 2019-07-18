@@ -17,10 +17,9 @@ from qgis.core import QgsFeatureRequest, QgsRaster, QgsProject
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
 from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import ChannelSegment
+from ..utils import Msge
 
 uiDialog, qtBaseClass = load_ui('profile_tool')
-
-
 class ProfileTool(qtBaseClass, uiDialog):
     """
     Tool for creating profile from schematized and user data.
@@ -51,7 +50,9 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.iface = iface
         self.setupUi(self)
         self.lyrs = lyrs
+        
         self.plot = plot
+              
         self.uc = UserCommunication(iface, 'FLO-2D')
 
         self.fid = None
@@ -77,6 +78,8 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.rprofile_radio.toggled.connect(self.check_mode)
         self.raster_combo.currentIndexChanged.connect(self.plot_raster_data)
         self.field_combo.currentIndexChanged.connect(self.plot_schema_data)
+        
+        
 
     def setup_connection(self):
         """
@@ -111,7 +114,7 @@ class ProfileTool(qtBaseClass, uiDialog):
     def plot_channel_data(self):
         if not self.chan_seg:
             return
-        self.plot.clear()
+#         try:
         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
         for st, data in self.chan_seg.profiles.items():
             sta.append(data['station'])
@@ -120,18 +123,41 @@ class ProfileTool(qtBaseClass, uiDialog):
             bed.append(data['bed_elev'])
             water.append(data['water'])
             peak.append(data['peak']+data['bed_elev'])
-        self.plot.clear()
+        
+        self.plot.clear()          
+
+#         self.plot.remove_item('Bed elevation')
+#         self.plot.remove_item('Left bank')
+#         self.plot.remove_item('Right bank')
+#         self.plot.remove_item('Peak') 
+
+        for i in range(self.plot.plot.legend.layout.rowCount()):
+           for j in range(self.plot.plot.legend.layout.columnCount()): 
+                vb = self.plot.plot.legend.layout.itemAt(i,j)
+                self.plot.plot.legend.layout.removeItem(vb)
+
+        for i in range(len(self.plot.items)):
+            self.plot.plot.legend.scene().removeItem(i)               
+                
+        self.plot.plot.legend = None 
+            
+#         self.plot.plot.legend.items = []
         self.plot.plot.addLegend()
         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-        self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
+#         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+        self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
         self.plot.plot.setLabel('bottom', text='Channel length')
         self.plot.plot.setLabel('left', text='Elevation')
+#         self.plot.removeItem('Bed elevation')
+#         self.plot.removeItem('Left bank')
+#         self.plot.removeItem('Right bank')
+#         self.plot.remove_item('Peak')
         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
-
+#         except Exception:
+#             Msge("ERROR 170719.0531: could not remove legend item!", "Error") 
         
 
 

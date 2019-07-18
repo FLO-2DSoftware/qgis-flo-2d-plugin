@@ -24,12 +24,6 @@ from ..flo2d_tools.grid_tools import poly2grid
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 
 uiDialog, qtBaseClass = load_ui('infil_editor')
-uiDialog_glob, qtBaseClass_glob = load_ui('infil_global')
-uiDialog_chan, qtBaseClass_chan = load_ui('infil_chan')
-uiDialog_green, qtBaseClass_green = load_ui('infil_green_ampt')
-uiDialog_scs, qtBaseClass_scs = load_ui('infil_scs')
-
-
 class InfilEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, lyrs):
@@ -132,7 +126,10 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.con.commit()
         self.infil_lyr.triggerRepaint()
 
-    def show_global_params(self):
+    def show_global_params(self):  
+        
+        self.iglobal.populate_infilglobals()
+        
         ok = self.iglobal.exec_()
         if ok:
             self.iglobal.save_imethod()
@@ -575,7 +572,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn('WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check data in your input layers.')
 
-
+uiDialog_glob, qtBaseClass_glob = load_ui('infil_global')
 class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
 
     global_changed = pyqtSignal(int)
@@ -585,6 +582,8 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         uiDialog_glob.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
+        self.con = self.iface.f2d['con']
+        self.gutils = GeoPackageUtils(self.con, self.iface)
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.chan_dlg = ChannelDialog(self.iface, self.lyrs)
@@ -595,7 +594,33 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         self.horton_grp.toggled.connect(self.horton_checked)
         self.cb_infchan.stateChanged.connect(self.infchan_changed)
         self.chan_btn.clicked.connect(self.show_channel_dialog)
+        
+#         self.populate_infilglobals()
+        
+    def populate_infilglobals(self):
+        
+        qry = '''SELECT infmethod, abstr, sati, satf, poros, soild, infchan, hydcall, soilall,
+                hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya FROM infil'''
 
+        infil_glob = self.gutils.execute(qry).fetchone()  
+        
+        if infil_glob:
+            self.spin_abstr.setValue(infil_glob[1])
+            self.spin_sati.setValue(infil_glob[2])
+            self.spin_satf.setValue(infil_glob[3])
+            self.spin_poros.setValue(infil_glob[4])
+            self.spin_soild.setValue(infil_glob[5])
+            self.cb_infchan.setChecked(infil_glob[6])
+            self.spin_hydcall.setValue(infil_glob[7])
+            self.spin_soilall.setValue(infil_glob[8])
+            self.spin_hydcadj.setValue(infil_glob[9])
+            self.spin_hydcxx.setValue(infil_glob[10])
+            self.spin_scsnall.setValue(infil_glob[11])
+            self.spin_abstr1.setValue(infil_glob[12])
+            self.spin_fhortoni.setValue(infil_glob[13])
+            self.spin_fhortonf.setValue(infil_glob[14])
+            self.spin_decaya.setValue(infil_glob[15])
+          
     def show_channel_dialog(self):
         hydcxx = self.spin_hydcxx.value()
         self.chan_dlg.set_chan_model(hydcxx)
@@ -656,7 +681,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
             self.spin_hydcxx.setDisabled(True)
             self.chan_btn.setDisabled(True)
 
-
+uiDialog_chan, qtBaseClass_chan = load_ui('infil_chan')
 class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
 
     def __init__(self, iface, lyrs):
@@ -711,7 +736,7 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
             cur.executemany(qry, data_rows)
             self.con.commit()
 
-
+uiDialog_green, qtBaseClass_green = load_ui('infil_green_ampt')
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
     def __init__(self, iface, lyrs):
@@ -827,6 +852,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value('ga_land_rtimpl') is None else s.value('ga_land_rtimpl'))
             self.rtimpl_cbo.setCurrentIndex(val)  
 
+uiDialog_scs, qtBaseClass_scs = load_ui('infil_scs')
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
 
     def __init__(self, iface, lyrs):

@@ -48,11 +48,6 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
-# from gui.dlg_gutterimport SamplingGutter
-
-
-# 0854
-
 
 class Flo2D(object):
 
@@ -103,7 +98,7 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
-        self.dlg_inflow_editor = None
+
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
 
@@ -330,6 +325,7 @@ class Flo2D(object):
                                                 # a QMainWindow or floated as a top-level window on the desktop.
         self.f2d_plot_dock.setWindowTitle(u'FLO-2D Plot')
         self.f2d_plot = PlotWidget()
+        self.f2d_plot.plot.legend = None
         self.f2d_plot.setSizeHint(500, 200)
         self.f2d_plot_dock.setWidget(self.f2d_plot)  # Sets 'f2d_plot_dock' as wrapper its child 'f2d_plot'
         self.f2d_plot_dock.dockLocationChanged.connect(self.f2d_plot_dock_save_area)
@@ -371,10 +367,11 @@ class Flo2D(object):
         ta = s.value('table_dock/area', Qt.BottomDockWidgetArea, type=int)
         pa = s.value('plot_dock/area', Qt.BottomDockWidgetArea, type=int)
         ga = s.value('grid_info_dock/area', Qt.TopDockWidgetArea, type=int)
-        self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+        
         self.iface.addDockWidget(ma, self.f2d_dock)
-        self.iface.addDockWidget(pa, self.f2d_plot_dock)
         self.iface.addDockWidget(ta, self.f2d_table_dock)
+        self.iface.addDockWidget(pa, self.f2d_plot_dock)
+        self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
 
     def unload(self):
         """
@@ -1356,15 +1353,7 @@ class Flo2D(object):
         
         QApplication.restoreOverrideCursor()
 
-
-
-
 ########################################
-
-
-
-
-
               
     @connection_required
     def import_from_gpkg(self):
@@ -1707,8 +1696,104 @@ class Flo2D(object):
     def restore_settings(self):
         pass
 
-    @staticmethod
-    def show_help():
+#     @staticmethod
+    def show_help(self):
+#         self.uc.bar_info("Coming soon!")
+#         self.uc.show_info('Coming soon!')
+#         return     
+#         pth = os.path.dirname(os.path.abspath(__file__))
+#         help_file = 'file:///{0}/help/index.html'.format(pth)      
+#         QDesktopServices.openUrl(QUrl(help_file))
+        
+        
         pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = 'file:///{0}/help/index.html'.format(pth)
-        QDesktopServices.openUrl(QUrl(help_file))
+        help_file = 'file:///{0}/help/FLO-2D Plugin Users Manual.pdf'.format(pth)  
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+        
+#         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = 'file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf'.format(pth)  
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+         
+#         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = 'file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf'.format(pth)      
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

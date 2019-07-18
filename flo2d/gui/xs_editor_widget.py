@@ -32,7 +32,6 @@ from collections import OrderedDict
 from math import isnan
 
 uiDialog, qtBaseClass = load_ui('schematized_channels_info')
-
 class ShematizedChannelsInfo(qtBaseClass, uiDialog):
 
     def __init__(self, iface):
@@ -91,7 +90,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        
         self.plot = plot
+        
         self.table = table
         self.tview = table.tview
         self.lyrs = lyrs
@@ -109,7 +110,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.populate_xsec_type_cbo()
         self.xi, self.yi = [[], []]
-        self.create_plot()
+#         self.create_plot()
         self.xs_data_model = StandardItemModel()
         self.tview.setModel(self.xs_data_model)
         self.uc = UserCommunication(iface, 'FLO-2D')
@@ -280,6 +281,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not self.xs_cbo.count():
             return
 
+#         self.setup_plot()
+#         self.plot = PlotWidget()
+#         create_f2d_plot_dock()
+        
+        
         fid = self.xs_cbo.itemData(idx)
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
@@ -302,6 +308,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.table.connect_delete(False) # disable data or row delete function if table editor
         self.xs_data_model.clear()
         self.tview.undoStack.clear()
+        
         if not xy:
             self.plot.clear()
             self.xs_data_model.setHorizontalHeaderLabels(['Value'])
@@ -348,7 +355,19 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         Create initial plot.
         """
         self.plot.clear()
+        
+#         try:
+#             self.plot.legend.scene().removeItem(self.plot.legend)  
+#         except:
+#             pass
+        
+        self.plot.remove_item('Cross-section')
+        self.plot.plot.addLegend()
+#         self.plot.plot.legend.items = []
         self.plot.add_item('Cross-section', [[], []], col=QColor("#0018d4"))
+        self.plot.plot.setTitle(title='Cross Section - {}'.format(self.xs_cbo.currentText()))
+        self.plot.plot.setLabel('bottom', text='Station')
+        self.plot.plot.setLabel('left', text='Elevation')
 
     def update_plot(self):
         """

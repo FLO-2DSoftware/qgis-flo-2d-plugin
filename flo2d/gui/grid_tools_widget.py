@@ -600,7 +600,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def eval_gutter(self):
         grid_empty = self.gutils.is_table_empty('grid')
         if grid_empty:
-            self.uc.bar_warn('There is no grid. Please, create it before evaluating the shallow-n values.')
+            self.uc.bar_warn('There is no grid. Please, create it before evaluating the gutter values.')
             return
         if not self.lyrs.save_edits_and_proceed('Gutter Areas'): # Gutter polygons in User Layer, save them or cancel them.
                 return        

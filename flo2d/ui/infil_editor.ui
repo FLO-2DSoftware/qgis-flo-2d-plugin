@@ -483,7 +483,7 @@
       <item row="1" column="2">
        <widget class="QDoubleSpinBox" name="spin_scsn">
         <property name="decimals">
-         <number>4</number>
+         <number>0</number>
         </property>
        </widget>
       </item>

@@ -527,7 +527,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             mult_area_sql += [(geom,) + tuple(row[1:])]
             cells_sql += [(i, gid,) +  tuple(row[1:])]
         self.gutils.disable_geom_triggers()
-        self.batch_execute(mult_sql, mult_area_sql, cells_sql) # No need to include cells_sql, a trigger does the job. 
+        self.batch_execute(mult_sql, mult_area_sql, cells_sql)
         self.gutils.enable_geom_triggers()       
         pass
         
@@ -669,47 +669,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
             'gsedconmax', 'gd50df', 'gunfcdf'
         ]
-        
-#             'ibreachsedeqn', 'gbratio', 'gweircoef', 'gbreachtime', 'gzu', 'gzd', 'gzc', 'gcrestwidth', 'gcrestlength',
-#             'gbrbotwidmax', 'gbrtopwidmax', 'gbrbottomel', 'gd50c', 'gporc', 'guwc', 'gcnc', 'gafrc', 'gcohc', 'gunfcc',
-#             'gd50s', 'gpors', 'guws', 'gcns', 'gafrs', 'gcohs', 'gunfcs', 'ggrasslength', 'ggrasscond', 'ggrassvmaxp',
-#             'gsedconmax', 'gd50df', 'gunfcdf'    
-#         
-#             ibreachsedeqn  = ?, 
-#             gbratio  = ?, 
-#             gweircoef  = ?,  
-#             gbreachtime  = ?, 
-#             useglobaldata = ?,
-#             gzu  = ?, 
-#             gzd  = ? , 
-#             gzc  = ? , 
-#             gcrestwidth  = ? , 
-#             gcrestlength  = ? ,
-#             gbrbotwidmax  = ? , 
-#             gbrtopwidmax  = ?, 
-#             gbrbottomel  = ?, 
-#             gd50c  = ? , 
-#             gporc  = ? , 
-#             guwc  = ? , 
-#             gcnc  = ?, 
-#             gafrc  = ?, 
-#             gcohc  = ?, 
-#             gunfcc  = ? ,
-#             gd50s  = ? , 
-#             gpors  = ?  , 
-#             guws  = ? , 
-#             gcns  = ? , 
-#             gafrs  = ? , 
-#             gcohs  = ? , 
-#             gunfcs  = ? , 
-#             ggrasslength  = ? , 
-#             ggrasscond  = ? , 
-#             ggrassvmaxp  = ? ,
-#             gsedconmax  = ? , 
-#             gd50df  = ? , 
-#             gunfcdf  = ? ;        
-#         
-#         
+              
         
         local = [
             'geom', 'ibreachdir', 'zu', 'zd', 'zc', 'crestwidth', 'crestlength', 'brbotwidmax', 'brtopwidmax',
@@ -1301,7 +1261,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
-            return False
+            return False        
      
     def export_evapor(self, outdir):
         # check if there is any evaporation defined.

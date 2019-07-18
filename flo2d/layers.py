@@ -451,6 +451,13 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
+            ('infil', {
+                'name': 'Infil Globals',
+                'sgroup': "Infiltration Tables",
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': True
+            }),
             ('infil_cells_green', {
                 'name': 'Cells Green Ampt',
                 'sgroup': "Infiltration Tables",
