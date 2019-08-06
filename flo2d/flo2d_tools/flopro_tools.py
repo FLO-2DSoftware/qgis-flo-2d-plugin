@@ -96,3 +96,23 @@ class ChannelNInterpolatorExecutor(object):
 
     def run(self):
         return self.execute_chanNInterpolator()    
+
+
+class TailingsDamBreachExecutor(object):
+
+    TAILINGS_EXE = 'Tailings Dam Breach.exe'
+
+    def __init__(self, tailings_dir, project_dir):
+        self.tailings_dir = tailings_dir
+        self.tailings_exe = os.path.join(tailings_dir, self.TAILINGS_EXE)
+        self.project_dir = project_dir
+
+    def execute_tailings(self):
+        with cd(self.project_dir):
+            proc = Popen(self.tailings_exe)
+            proc.wait()
+            return proc.returncode
+
+    def run(self):
+        return self.execute_tailings()
+    

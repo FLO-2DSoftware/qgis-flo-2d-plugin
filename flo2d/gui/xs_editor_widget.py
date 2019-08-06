@@ -508,7 +508,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There are no User Cross Sections! Please digitize them before running the tool.')
             return
         if not self.gutils.is_table_empty('chan'):
-            if not self.uc.question('There are already Schematised Channel Segments (Left Banks) and Cross Sections. Overwrite them?'):
+            if not self.uc.question('There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?'):
                 return
 
         # Get an instance of the ChannelsSchematizer class:
@@ -870,8 +870,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         res = [x if x is not None else '' for x in self.gutils.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
 
                         if typ == "N":
-                            res.insert(1, fcn)    # Add 'fcn' (comming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(2, xlen)  # Add Â´xlen' (comming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                            res.insert(1, fcn)    # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(2, xlen)  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                             if user_xs_fid == previous_xs:
                                 res.insert(3, 0)
                                 non_surveyed += 1
@@ -880,8 +880,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 surveyed += 1
                                 previous_xs = user_xs_fid
                         else:
-                            res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(xlen_idx, xlen)  # Add Â´xlen' (comming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                            res.insert(fcn_idx, fcn)    # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(xlen_idx, xlen)  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
 
                         c.write(line.format(*res))
 
@@ -1239,6 +1239,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return        
 
         dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
+        dlg.debug_run_btn.setVisible(False)
+        dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
         ok = dlg.exec_()
         if not ok:
             return
@@ -1249,7 +1251,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             if (return_code == 0):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn('WARNING 060319.1757: Channel n-values interpolated into CHAN.DAT file!\n\n')
-                
+                 
             elif return_code == -999:
                 self.uc.show_warn("WARNING 060319.1758: Interpolation of channel n-values could not be performed!\n\n" +
                                   "File\n\n" + os.path.join(project_dir, 'CHAN.DAT\n\n') +  
@@ -1260,9 +1262,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                   'Program finished with return code ' + str(return_code) + '.' +
                                   '\n\nCheck content and format of file\n\n' +
                                   os.path.join(project_dir, "CHAN.DAT"))                  
-              
-                
-
+               
         except Exception as e:
             self.uc.log_info(repr(e))               
             self.uc.show_error('ERROR 060319.1631: Interpolation of channel n-values failed!\n'

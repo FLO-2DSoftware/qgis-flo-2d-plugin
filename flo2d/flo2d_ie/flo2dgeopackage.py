@@ -1362,8 +1362,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                                     # line (format to write), fcn_idx (?), and xlen_idx (?)
                         res = [x if x is not None else '' for x in self.execute(sql, (eid,)).fetchone()]    # 'res' is a list of values depending on 'typ' (R,V,T, or N).
 
-                        res.insert(fcn_idx, fcn)    # Add 'fcn' (comming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                        res.insert(xlen_idx, xlen)  # Add ´xlen' (comming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                        res.insert(fcn_idx, fcn)    # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                        res.insert(xlen_idx, xlen)  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
     

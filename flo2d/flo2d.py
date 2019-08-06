@@ -31,7 +31,7 @@ from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.grid_tools import grid_has_empty_elev
 from .flo2d_tools.schematic_tools import generate_schematic_levees
-from .flo2d_tools.flopro_tools import FLOPROExecutor
+from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
@@ -292,7 +292,13 @@ class Flo2D(object):
             text=self.tr(u'HAZUS'),
             callback=lambda: self.show_hazus_dialog(),
             parent=self.iface.mainWindow())
-        
+
+        self.add_action(
+            os.path.join(self.plugin_dir, 'img/tailings dam breach.svg'),
+            text=self.tr(u'Tailings Dam Tool'),
+            callback=self.run_tailingsdambreach,
+            parent=self.iface.mainWindow())
+
         self.add_action(
             os.path.join(self.plugin_dir, 'img/issue.svg'),
             text=self.tr(u'Warnings and Errors'),
@@ -506,25 +512,15 @@ class Flo2D(object):
             s.setValue('FLO-2D/last_flopro_project', os.path.dirname(gpkg_path))
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(gpkg_path))
 
-#     def show_settings(self):
-#         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-#         dlg_settings.show()
-#         result = dlg_settings.exec_()
-#         if result and dlg_settings.con:
-#             dlg_settings.write()
-#             self.con = dlg_settings.con
-#             self.iface.f2d['con'] = self.con
-#             self.gutils = dlg_settings.gutils
-#             self.crs = dlg_settings.crs
-#             self.write_proj_entry('gpkg', self.gutils.get_gpkg_path().replace('\\', '/'))
-#             self.setup_dock_widgets()
 
     def run_flopro(self):
         dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
+        dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")        
         ok = dlg.exec_()
         if not ok:
             return
         flo2d_dir, project_dir = dlg.get_parameters()
+        
         if sys.platform != 'win32':
             self.uc.bar_warn('Could not run simulation under current operation system!')
             return
@@ -538,6 +534,39 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn('Running simulation failed!')
+            
+    def run_tailingsdambreach(self):
+        dlg = ExternalProgramFLO2D(self.iface, "Run Tailings Dam Breach model")
+        dlg.debug_run_btn.setVisible(False)
+        dlg.exec_folder_lbl.setText("FLO-2D Folder (Tailings Dam Breach.exe)")
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
+        
+        if sys.platform != 'win32':
+            self.uc.bar_warn('Could not run Tailings Dam Breach program under current operation system!')
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if os.path.isfile(flo2d_dir + '\Tailings Dam Breach.exe'):                  
+                tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
+                return_code = tailings.run()
+                if (return_code != 0):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_warn('ERROR 240719.1601: Tailings Dam Breach failed!\n\n' +
+                                      'Program finished with return code ' + str(return_code))
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info('Tailings Dam Tool has been closed.\n\n' +
+                                      'If a new INFLOW.DAT was created, import the data file into FLO-2D QGIS.')
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn('WARNING 240719.1607: Program Tailings Dam Breach.exe is not in directory\n\n' + flo2d_dir)
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(repr(e))
+            self.uc.bar_warn('Tailings Dam Breach.exe failed!')        
 
     def load_gpkg_from_proj(self):
         """
