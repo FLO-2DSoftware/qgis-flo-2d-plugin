@@ -19,9 +19,7 @@ from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
 
-
 uiDialog, qtBaseClass = load_ui('struct_editor')
-
 
 class StructEditorWidget(qtBaseClass, uiDialog):
 
@@ -182,7 +180,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         qry = 'SELECT * FROM struct WHERE geom IS NOT NULL;'
         exist_struct = self.gutils.execute(qry).fetchone()
         if exist_struct:
-            if not self.uc.question('There are some schematised structures created already. Overwrite them?'):
+            if not self.uc.question('There are some schematized structures created already. Overwrite them?'):
                 return
         del_qry = 'DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);'
         self.gutils.execute(del_qry)
