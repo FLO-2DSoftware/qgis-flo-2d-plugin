@@ -361,7 +361,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #         except:
 #             pass
         
-        self.plot.remove_item('Cross-section')
+#         self.plot.remove_item('Cross-section')
         self.plot.plot.addLegend()
 #         self.plot.plot.legend.items = []
         self.plot.add_item('Cross-section', [[], []], col=QColor("#0018d4"))

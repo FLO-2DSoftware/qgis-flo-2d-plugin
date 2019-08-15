@@ -331,10 +331,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             s = QSettings()
             last_dir = s.value('FLO-2D/lastGdsDir', '')
             if not os.path.isfile(last_dir + '\CHAN.DAT'):
-                self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
                 return
             if not os.path.isfile(last_dir + '\CHANBANK.DAT'):
-                self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\nCHANBANK.DAT doesn't exist.")
+                self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
                 return
 
             chan_sql = ['''INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES''', 5]

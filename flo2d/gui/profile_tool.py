@@ -112,9 +112,10 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot_channel_data()
 
     def plot_channel_data(self):
+        
         if not self.chan_seg:
             return
-#         try:
+        self.plot.clear()
         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
         for st, data in self.chan_seg.profiles.items():
             sta.append(data['station'])
@@ -123,41 +124,69 @@ class ProfileTool(qtBaseClass, uiDialog):
             bed.append(data['bed_elev'])
             water.append(data['water'])
             peak.append(data['peak']+data['bed_elev'])
-        
-        self.plot.clear()          
-
-#         self.plot.remove_item('Bed elevation')
-#         self.plot.remove_item('Left bank')
-#         self.plot.remove_item('Right bank')
-#         self.plot.remove_item('Peak') 
-
-        for i in range(self.plot.plot.legend.layout.rowCount()):
-           for j in range(self.plot.plot.legend.layout.columnCount()): 
-                vb = self.plot.plot.legend.layout.itemAt(i,j)
-                self.plot.plot.legend.layout.removeItem(vb)
-
-        for i in range(len(self.plot.items)):
-            self.plot.plot.legend.scene().removeItem(i)               
-                
-        self.plot.plot.legend = None 
-            
-#         self.plot.plot.legend.items = []
+        self.plot.clear()
         self.plot.plot.addLegend()
         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-#         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-        self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
+        self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
         self.plot.plot.setLabel('bottom', text='Channel length')
         self.plot.plot.setLabel('left', text='Elevation')
-#         self.plot.removeItem('Bed elevation')
-#         self.plot.removeItem('Left bank')
-#         self.plot.removeItem('Right bank')
-#         self.plot.remove_item('Peak')
-        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
-#         except Exception:
-#             Msge("ERROR 170719.0531: could not remove legend item!", "Error") 
+        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)        
+        
+        
+        
+        
+        
+        
+#         if not self.chan_seg:
+#             return
+# #         try:
+#         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
+#         for st, data in self.chan_seg.profiles.items():
+#             sta.append(data['station'])
+#             lb.append(data['lbank_elev'])
+#             rb.append(data['rbank_elev'])
+#             bed.append(data['bed_elev'])
+#             water.append(data['water'])
+#             peak.append(data['peak']+data['bed_elev'])
+#          
+#         self.plot.clear()          
+#  
+# #         self.plot.remove_item('Bed elevation')
+# #         self.plot.remove_item('Left bank')
+# #         self.plot.remove_item('Right bank')
+# #         self.plot.remove_item('Peak') 
+#  
+#         for i in range(self.plot.plot.legend.layout.rowCount()):
+#            for j in range(self.plot.plot.legend.layout.columnCount()): 
+#                 vb = self.plot.plot.legend.layout.itemAt(i,j)
+#                 self.plot.plot.legend.layout.removeItem(vb)
+#  
+#         for i in range(len(self.plot.items)):
+#             self.plot.plot.legend.scene().removeItem(i)               
+#                  
+#         self.plot.plot.legend = None 
+#              
+# #         self.plot.plot.legend.items = []
+#         self.plot.plot.addLegend()
+#         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+#         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+#         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+# #         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
+#         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
+#         self.plot.plot.setLabel('bottom', text='Channel length')
+#         self.plot.plot.setLabel('left', text='Elevation')
+# #         self.plot.removeItem('Bed elevation')
+# #         self.plot.removeItem('Left bank')
+# #         self.plot.removeItem('Right bank')
+# #         self.plot.remove_item('Peak')
+#         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
+# #         except Exception:
+# #             Msge("ERROR 170719.0531: could not remove legend item!", "Error") 
         
 
 
