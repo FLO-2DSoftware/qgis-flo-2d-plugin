@@ -497,7 +497,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
         self.plot.add_item('Original Mud', [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
         self.plot.add_item('Current Mud', [self.ot, self.om], col=QColor("#884800"))
-        self.plot.remove_item('Original Discharge')
+#         self.plot.remove_item('Original Discharge')
 #         self.plot.remove_item('Current Discharge')
 #         self.plot.remove_item('Original Mud')
 #         self.plot.remove_item('Current Mud')

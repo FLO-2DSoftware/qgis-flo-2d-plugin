@@ -245,6 +245,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 #         QApplication.setOverrideCursor(Qt.ArrowCursor)
         self.uc.log_info('{0:.3f} seconds => loading layers'.format(time.time() - start_time))
+        
+        self.iface.actionPan().trigger()   
 
     def connect(self, gpkg_path=None):
         """
