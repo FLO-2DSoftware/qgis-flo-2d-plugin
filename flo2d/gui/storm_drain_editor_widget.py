@@ -468,7 +468,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             Each element of the dictionary is a list of all the lines following the group name [xxxx] in the .INP file.
             
             """
-
             
             storm_drain = StormDrainProject(self.iface, swmm_file)
 
@@ -507,6 +506,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             """
 
+            
             # Transfer data from "storm_drain.INP_dict" to "user_swmm_user" layer:
             remove_features(self.user_swmm_nodes_lyr)
             fields = self.user_swmm_nodes_lyr.fields()
@@ -516,7 +516,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 feat = QgsFeature()
                 feat.setFields(fields)
 
-                if 'subcatchment' in values:
+#                 if 'subcatchment' in values:
+#                     sd_type = 'I'
+                if name[0] == 'I':
                     sd_type = 'I'
                 elif 'out_type' in values:
                     sd_type = 'O'
@@ -611,7 +613,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
              
             """
-
+            
             # Transfer data from "storm_drain.INP_dict" to "user_swmm_conduits" layer:
             remove_features(self.user_swmm_conduits_lyr)
             fields = self.user_swmm_conduits_lyr.fields()
@@ -702,13 +704,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 new_conduits.append(feat)
 
-                if new_conduits is not None:
-                    self.user_swmm_conduits_lyr.startEditing()
-                    self.user_swmm_conduits_lyr.addFeatures(new_conduits)
-                    self.user_swmm_conduits_lyr.commitChanges()
-                    self.user_swmm_conduits_lyr.updateExtents()
-                    self.user_swmm_conduits_lyr.triggerRepaint()
-                    self.user_swmm_conduits_lyr.removeSelection()
+            if new_conduits is not None:
+                self.user_swmm_conduits_lyr.startEditing()
+                self.user_swmm_conduits_lyr.addFeatures(new_conduits)
+                self.user_swmm_conduits_lyr.commitChanges()
+                self.user_swmm_conduits_lyr.updateExtents()
+                self.user_swmm_conduits_lyr.triggerRepaint()
+                self.user_swmm_conduits_lyr.removeSelection()
 
             QApplication.restoreOverrideCursor()
 
@@ -722,8 +724,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                        self.uc.show_warn("WARNING 060319.1733: The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
                                             
                 self.uc.show_info("Importing Storm Drain data finished!\n\n" +
-                                  "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
-                                  "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                                  str(len(new_nodes)) + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer, and\n" +  
+                                  str(len(new_conduits)) + " conduits in the 'Storm Drain Conduits' layer, (see the 'User Layers' group).\n\n"
+                                  "Click the 'Inlets/Junctions', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                                   "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
 
         except Exception as e:

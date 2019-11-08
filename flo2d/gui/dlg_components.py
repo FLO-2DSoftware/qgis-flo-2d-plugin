@@ -44,81 +44,107 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         
         if self.in_or_out == "in":
+            
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
-            
+            self.mannings_n_and_Topo_chbox.setVisible(False)  
+                      
+#             # Check if MANNINGS_N.DAT exist:
+#             if not os.path.isfile(last_dir + '\MANNINGS_N.DAT') or  os.path.getsize(last_dir + '\MANNINGS_N.DAT') == 0:
+#                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N_DAT is missing or empty!") 
+# 
+#             else:    
+
             if os.path.isfile(last_dir + '\CHAN.DAT'):
-                self.channels_chbox.setChecked(True)
-                self.channels_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\CHAN.DAT') > 0:
+                    self.channels_chbox.setChecked(True)
+                    self.channels_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\ARF.DAT'):
-                self.reduction_factors_chbox.setChecked(True)
-                self.reduction_factors_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\ARF.DAT') > 0:
+                    self.reduction_factors_chbox.setChecked(True)
+                    self.reduction_factors_chbox.setEnabled(True)
                 
             if os.path.isfile(last_dir + '\STREET.DAT'):
-                self.streets_chbox.setChecked(True)
-                self.streets_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\STREET.DAT') > 0:
+                    self.streets_chbox.setChecked(True)
+                    self.streets_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\OUTFLOW.DAT'):
-                self.outflow_elements_chbox.setChecked(True)
-                self.outflow_elements_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\OUTFLOW.DAT') > 0:
+                    self.outflow_elements_chbox.setChecked(True)
+                    self.outflow_elements_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\INFLOW.DAT'):
-                self.inflow_elements_chbox.setChecked(True)
-                self.inflow_elements_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\INFLOW.DAT') > 0:
+                    self.inflow_elements_chbox.setChecked(True)
+                    self.inflow_elements_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\LEVEE.DAT'):
-                self.levees_chbox.setChecked(True)
-                self.levees_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\LEVEE.DAT') > 0:
+                    self.levees_chbox.setChecked(True)
+                    self.levees_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\MULT.DAT'):
-                self.multiple_channels_chbox.setChecked(True)
-                self.multiple_channels_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\MULT.DAT') > 0:
+                    self.multiple_channels_chbox.setChecked(True)
+                    self.multiple_channels_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\BREACH.DAT'):
-                self.breach_chbox.setChecked(True)
-                self.breach_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\BREACH.DAT') > 0:
+                    self.breach_chbox.setChecked(True)
+                    self.breach_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\GUTTER.DAT'):
-                self.gutters_chbox.setChecked(True)
-                self.gutters_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\GUTTER.DAT') > 0:
+                    self.gutters_chbox.setChecked(True)
+                    self.gutters_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\INFIL.DAT'):
-                self.infiltration_chbox.setChecked(True)
-                self.infiltration_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\INFIL.DAT') > 0:
+                    self.infiltration_chbox.setChecked(True)
+                    self.infiltration_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\FPXSEC.DAT'):
-                self.floodplain_xs_chbox.setChecked(True)
-                self.floodplain_xs_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\FPXSEC.DAT') > 0:
+                    self.floodplain_xs_chbox.setChecked(True)
+                    self.floodplain_xs_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\SED.DAT'):
-                self.mud_and_sed_chbox.setChecked(True)
-                self.mud_and_sed_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\SED.DAT') > 0:
+                    self.mud_and_sed_chbox.setChecked(True)
+                    self.mud_and_sed_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\EVAPOR.DAT'):
-                self.evaporation_chbox.setChecked(True)
-                self.evaporation_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\EVAPOR.DAT') > 0:
+                    self.evaporation_chbox.setChecked(True)
+                    self.evaporation_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\HYSTRUC.DAT'):
-                self.hydr_struct_chbox.setChecked(True)
-                self.hydr_struct_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\HYSTRUC.DAT') > 0:
+                    self.hydr_struct_chbox.setChecked(True)
+                    self.hydr_struct_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\RAIN.DAT'):
-                self.rain_chbox.setChecked(True)
-                self.rain_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\RAIN.DAT') > 0:
+                    self.rain_chbox.setChecked(True)
+                    self.rain_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\SWMMFLO.DAT'):
-                self.storm_drain_chbox.setChecked(True)
-                self.storm_drain_chbox.setEnabled(True)
+                if os.path.getsize(last_dir + '\SWMMFLO.DAT') > 0:
+                    self.storm_drain_chbox.setChecked(True)
+                    self.storm_drain_chbox.setEnabled(True)
     
             if os.path.isfile(last_dir + '\TOLSPATIAL.DAT'):
-                self.spatial_tolerance_chbox.setChecked(True)      
-                self.spatial_tolerance_chbox.setEnabled(True)      
+                if os.path.getsize(last_dir + '\TOLSPATIAL.DAT') > 0:
+                    self.spatial_tolerance_chbox.setChecked(True)      
+                    self.spatial_tolerance_chbox.setEnabled(True)      
     
             if os.path.isfile(last_dir + '\FPFROUDE.DAT'):
-                self.spatial_froude_chbox.setChecked(True)            
-                self.spatial_froude_chbox.setEnabled(True)  
-                
+                if os.path.getsize(last_dir + '\FPFROUDE.DAT') > 0:
+                    self.spatial_froude_chbox.setChecked(True)            
+                    self.spatial_froude_chbox.setEnabled(True) 
+
         elif self.in_or_out == "out":  
             self.setWindowTitle("FLO-2D Components to Export")
             
