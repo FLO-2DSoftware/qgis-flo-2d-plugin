@@ -35,7 +35,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.scan_project_dir(fpath)
         self.cell_size = self.parser.calculate_cellsize()
         if self.cell_size == 0:
-            self.uc.bar_error('ERROR 060319.1604: Cell size is 0 - something went wrong! Does TOPO.DAT file exists or is empty?')
+            self.uc.show_info('ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exists or is empty?')
             return False
         else:
             pass
@@ -1227,18 +1227,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 gen = [x if x is not None else '' for x in infil_row[1:]]
                 v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
                 i.write(line1.format(v1))
-                for val, line in zip([v2, v3, v4], [line2, line3, line4]):
-                    if any(val) is True:
-                        i.write(line.format(*val))
+                if v1 == 1 or v1 == 3:
+                  
+                    i.write(line2.format(*v2))
+                    i.write(line3.format(*v3))
+                    if v2[5] == 1:
+                        i.write(line4.format(*v4))
+#                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
+# #                         if any(val) is True:
+#                             i.write(line.format(*val))
+# #                         else:
+# #                             pass
+                    for row in self.execute(infil_r_sql):
+                        row = [x if x is not None else '' for x in row]
+                        i.write(line4ab.format(*row))
+                if v1 == 2 or v1 ==3:
+                    if any(v5) is True:
+                        i.write(line5.format(*v5))
                     else:
                         pass
-                for row in self.execute(infil_r_sql):
-                    row = [x if x is not None else '' for x in row]
-                    i.write(line4ab.format(*row))
-                if any(v5) is True:
-                    i.write(line5.format(*v5))
-                else:
-                    pass
                 for gid, iid in self.execute(icell_green_sql):
                     for row in self.execute(iarea_green_sql, (iid,)):
                         i.write(line6.format(gid, *row))
@@ -1463,10 +1470,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     vals2 = [x if x is not None and x != '' else 0.0 for x in stru[8:11]]
                     vals = vals1 + vals2
                     h.write(line1.format(*vals))
-                    for qry, line in pairs:
-                        for row in self.execute(qry, (fid,)):
-                            subvals = [x if x is not None else '' for x in row[2:]]
-                            h.write(line.format(*subvals))
+                    type = stru[4]
+                    for i, (qry, line) in enumerate(pairs):
+                        if (type == 0 and i == 0) or (type == 1 and i == 2) or (type == 2 and i == 3) or i == 1 or i > 3:
+                            for row in self.execute(qry, (fid,)):
+                                subvals = [x if x is not None else '' for x in row[2:]]
+                                h.write(line.format(*subvals))                        
+
+#                         for row in self.execute(qry, (fid,)):
+#                             subvals = [x if x is not None else '' for x in row[2:]]
+#                             h.write(line.format(*subvals))
                     
             return True  
               

@@ -34,7 +34,7 @@ from ..flo2d_tools.grid_tools import grid_has_empty_elev
 from qgis.PyQt.QtGui import QColor
 # from ..flo2d_tools.conflicts import Conflicts
 
-uiDialog, qtBaseClass = load_ui('errors')
+uiDialog, qtBaseClass = load_ui('errors_2')
 class ErrorsDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs):
@@ -48,10 +48,13 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         self.gutils = None
         self.errors = []
         self.debug_directory = ""
-#         self.component1_cbo.setCurrentIndex(1)
+
         self.setup_connection()
-        self.import_DEBUG_btn.clicked.connect(self.import_DEBUG_file)
-        self.errors_in_current_project_btn.clicked.connect(self.errors_in_current_project)
+        self.create_conflicts_layer_chck.setVisible(False)
+        self.errors_OK_btn.accepted.connect(self.errors_OK)
+
+        self.debug_file_radio.clicked.connect(self.DEBUG_file_clicked)
+        self.current_project_radio.clicked.connect(self.current_project_clicked)
         
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -62,28 +65,54 @@ class ErrorsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)        
 
     def import_DEBUG_file(self):
-        try:        
-            dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
-            dlg_issues.exec_()
- 
-        except ValueError:  
-            # Forced error during contructor to stop showing dialog.
-            pass      
-
-    def errors_in_current_project(self):
-        if self.component1_cbo.currentText() == "" and self.component2_cbo.currentText() == "":
-            self.uc.show_info("Select a component!")
-        else:    
-            try:   
-                QApplication.setOverrideCursor(Qt.WaitCursor)     
-                dlg_conflicts = ConflictsDialog(self.con, self.iface, self.lyrs, 
-                                                self.n_issues_sbox, self.component1_cbo.currentText(), self.component2_cbo.currentText())
-                QApplication.restoreOverrideCursor()
-                dlg_conflicts.exec_() 
-            except ValueError:  
-                # Forced error during contructor to stop showing dialog.
-                pass           
-
+        DEBUG_dir = QFileDialog.getExistingDirectory(None, 'Select FLO-2D program folder', directory=self.debug_file_lineEdit.text())
+        if not DEBUG_dir:
+            return
+        self.debug_file_lineEdit.setText(DEBUG_dir)
+        s = QSettings()
+        s.setValue('FLO-2D/last_DEBUG', DEBUG_dir)       
+        
+    def DEBUG_file_clicked(self):
+        if self.debug_file_radio.isChecked():
+#             self.debug_frame.setDisabled(False)   
+            self.current_project_frame.setDisabled(True)   
+#         else:    
+#             self.debug_frame.enabled = False   
+#             self.current_project_frame.enabled = True
+                
+    def current_project_clicked(self):
+        if self.current_project_radio.isChecked():
+#             self.debug_frame.setDisabled(True)   
+            self.current_project_frame.setDisabled(False)   
+#         else:
+#             self.debug_frame.enabled = True   
+#             self.current_project_frame.enabled = False             
+                   
+    
+    def errors_OK(self):
+        if self.current_project_radio.isChecked():
+            if self.component1_cbo.currentText() == "" and self.component2_cbo.currentText() == "":
+                self.uc.show_info("Select a component!")
+            else:    
+                try:   
+                    QApplication.setOverrideCursor(Qt.WaitCursor)     
+                    dlg_conflicts = ConflictsDialog(self.con, self.iface, self.lyrs, 
+                                                    self.n_issues_sbox, self.component1_cbo.currentText(), self.component2_cbo.currentText())
+                    QApplication.restoreOverrideCursor()
+                    dlg_conflicts.exec_() 
+                    return True
+                except ValueError:  
+                    # Forced error during contructor to stop showing dialog.
+                    pass  
+        else:
+                try:        
+                    dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
+                    dlg_issues.exec_()
+          
+                except ValueError:  
+                    # Forced error during contructor to stop showing dialog.
+                    pass                
+                
 
 uiDialog, qtBaseClass = load_ui('issues')
 class IssuesDialog(qtBaseClass, uiDialog):
@@ -415,7 +444,7 @@ class IssuesDialog(qtBaseClass, uiDialog):
             self.description_tblw.selectRow(0)
             cell  = self.description_tblw.item(0,0).text()
             self.find_cell(cell) 
-                                                    
+                                                            
         QApplication.restoreOverrideCursor() 
                        
     def elements_cbo_activated(self):
@@ -1345,7 +1374,8 @@ class ConflictsDialog(qtBaseClass, uiDialog):
                       "2 or more Streets in same cell") 
         
         
-        self.setWindowTitle("Errors and Warnings for " + self.issue1 + " with " + self.issue2)
+        self.setWindowTitle("Errors and Warnings for: " + self.issue1 + " with " + self.issue2)
+#         self.setWindowTitle("Errors and Warnings for: " + self.issue1 + " with " + self.issue2)
         
 #############################                
     def get_n_cells(self, table, cell, n):
@@ -1415,7 +1445,9 @@ class ConflictsDialog(qtBaseClass, uiDialog):
             self.description_tblw.selectRow(0)
             cell  = self.description_tblw.item(0,0).text()
             self.find_cell(cell)
-             
+        
+#         self.setWindowTitle("Errors and Warnings for: " + comp1 + " with " + comp2)  
+           
         QApplication.restoreOverrideCursor()   
          
     def elements_cbo_activated(self):

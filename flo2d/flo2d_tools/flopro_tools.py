@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-from subprocess import Popen
+from subprocess import Popen, PIPE, STDOUT
 from contextlib import contextmanager
 
 
@@ -109,7 +109,9 @@ class TailingsDamBreachExecutor(object):
 
     def execute_tailings(self):
         with cd(self.project_dir):
-            proc = Popen(self.tailings_exe)
+#             proc = subprocess.call(self.tailings_exe, shell=True)
+#             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
             proc.wait()
             return proc.returncode
 

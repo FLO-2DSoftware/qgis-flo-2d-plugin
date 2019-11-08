@@ -565,8 +565,11 @@ class Flo2D(object):
                 self.uc.show_warn('WARNING 240719.1607: Program Tailings Dam Breach.exe is not in directory\n\n' + flo2d_dir)
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.log_info(repr(e))
-            self.uc.bar_warn('Tailings Dam Breach.exe failed!')        
+            
+            self.uc.show_error("ERROR 201019.0917: 'Tailings Dam Breach.exe failed!"
+                       +'\n__________________________________________________', e)            
+#             self.uc.log_info(repr(e))
+#             self.uc.bar_warn('Tailings Dam Breach.exe failed!')        
 
     def load_gpkg_from_proj(self):
         """
@@ -725,6 +728,12 @@ class Flo2D(object):
                 else:
                     self.uc.bar_info('Import cancelled', dur=3)
                     return
+
+            # Check if MANNINGS_N.DAT exist:
+            if not os.path.isfile(last_dir + '\MANNINGS_N.DAT') or  os.path.getsize(last_dir + '\MANNINGS_N.DAT') == 0:
+                self.uc.show_info("ERROR 241019.1821: file MANNINGS_N_DAT is missing or empty!") 
+                return
+
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in" )
             ok = dlg_components.exec_()
@@ -1618,8 +1627,30 @@ class Flo2D(object):
         if self.gutils.is_table_empty('grid'):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return 
-        dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
-        dlg_errors.exec_()    
+        
+        dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs) 
+        dlg_errors.show()
+        while True:
+            ok = dlg_errors.exec_() 
+            if ok:
+                break
+#                 if dlg_errors.current_project_radio.isChecked():
+#                     break
+#                 elif dlg_errors.debug_file_lineEdit.text() == "":
+#                     self.uc.show_warn("Select a DEBUG file!")
+#                 else:
+#                     break    
+            else:
+                return 
+
+#         try:
+#             QApplication.setOverrideCursor(Qt.WaitCursor)
+# 
+#             QApplication.restoreOverrideCursor()
+# 
+#         except Exception as e:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_warn('ERROR 221019.0653: unable to process warnings and errors!')          
         
         
     def schematize_levees(self):
