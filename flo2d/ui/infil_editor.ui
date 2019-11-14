@@ -303,6 +303,9 @@
            <property name="text">
             <string>Soil Moisture Deficit</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
            <property name="wordWrap">
             <bool>true</bool>
            </property>
@@ -313,12 +316,18 @@
            <property name="decimals">
             <number>4</number>
            </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="spin_dtheta">
            <property name="decimals">
             <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -327,12 +336,18 @@
            <property name="decimals">
             <number>4</number>
            </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>Capillary Suction</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -344,12 +359,18 @@
            <property name="decimals">
             <number>4</number>
            </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_2">
            <property name="text">
             <string>Hydraulic Conduct.</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -361,6 +382,9 @@
            <property name="text">
             <string>Rainfall Abstraction</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
            <property name="wordWrap">
             <bool>true</bool>
            </property>
@@ -370,6 +394,9 @@
           <widget class="QLabel" name="label_6">
            <property name="text">
             <string>Impervious Area</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -381,12 +408,18 @@
            <property name="decimals">
             <number>4</number>
            </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
+           </property>
           </widget>
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_7">
            <property name="text">
             <string>Soil Depth</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -397,6 +430,9 @@
           <widget class="QDoubleSpinBox" name="spin_soil_depth">
            <property name="decimals">
             <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -429,6 +465,9 @@
           <widget class="QDoubleSpinBox" name="spin_hydconch">
            <property name="decimals">
             <number>4</number>
+           </property>
+           <property name="maximum">
+            <double>100000.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -485,6 +524,9 @@
         <property name="decimals">
          <number>0</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="1" column="0">
@@ -533,6 +575,9 @@
         <property name="text">
          <string>Initial Rate</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -542,6 +587,9 @@
        <widget class="QLabel" name="label_11">
         <property name="text">
          <string>Final Rate</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -553,6 +601,9 @@
         <property name="text">
          <string>Decay Coeff.</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -563,6 +614,9 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="3">
@@ -570,12 +624,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="5">
        <widget class="QDoubleSpinBox" name="spin_deca">
         <property name="decimals">
          <number>4</number>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
         </property>
        </widget>
       </item>

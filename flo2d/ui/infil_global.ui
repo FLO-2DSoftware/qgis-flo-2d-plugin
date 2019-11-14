@@ -40,6 +40,9 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="4" column="1">
@@ -86,6 +89,9 @@
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hydraulic conductivity adjustment variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -96,12 +102,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="3" column="2">
        <widget class="QLabel" name="label_8">
         <property name="text">
          <string>Soil Depth</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -113,12 +125,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>Average global floodplain hydraulic conductivity</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -130,12 +148,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_7">
         <property name="text">
          <string>Soil Suction</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -147,12 +171,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
          <string>Soil Porosity</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -164,6 +194,9 @@
         <property name="text">
          <string>Initial Abstraction</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -174,6 +207,9 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -181,12 +217,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="2">
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Initial Saturation</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -198,6 +240,9 @@
         <property name="text">
          <string>Final Saturation</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -208,12 +253,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="1" column="3">
        <widget class="QDoubleSpinBox" name="spin_satf">
         <property name="decimals">
          <number>4</number>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -246,6 +297,9 @@
         <property name="decimals">
          <number>0</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="4">
@@ -253,12 +307,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="3">
        <widget class="QLabel" name="label_11">
         <property name="text">
          <string>Abstraction</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -269,6 +329,9 @@
        <widget class="QLabel" name="label_10">
         <property name="text">
          <string>Curve Number</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -314,6 +377,9 @@
         <property name="text">
          <string>Final Rate</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
         <property name="wordWrap">
          <bool>true</bool>
         </property>
@@ -324,12 +390,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="6">
        <widget class="QLabel" name="label_14">
         <property name="text">
          <string>Decay Coeff.</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -341,6 +413,9 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="7">
@@ -348,12 +423,18 @@
         <property name="decimals">
          <number>4</number>
         </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>Initial Rate</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
