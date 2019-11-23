@@ -385,6 +385,7 @@ class StormDrainProject(object):
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):
         try:
+            subcatchments = None
             sub_cols = ['subcatchment', 'raingage', 'outlet', 'total_area', 'imperv', 'width', 'slope', 'curb_length', 'snow_pack']
             subcatchments = self.select_this_INP_group('subc')
             if subcatchments is not None:
@@ -393,9 +394,12 @@ class StormDrainProject(object):
                         continue
                     sub_dict = dict(zip_longest(sub_cols, sub.split())) # creates dictionary 'sub_dict' with column names defined in 'sub_cols'
                     out = sub_dict.pop('outlet')   # out is the value of the key, i.e. "I37CP1WTRADL"
-                    self.INP_nodes[out].update(sub_dict)  # Adds new values (from "sub_dict" , that include the "sub_cols") to an already existing key in dictionary INP_nodes.
+                    if out is not None:
+                        self.INP_nodes[out].update(sub_dict)  # Adds new values (from "sub_dict" , that include the "sub_cols") to an already existing key in dictionary INP_nodes.
         except Exception as e:
             self.uc.show_error("ERROR 080618.0456: couldn't update the inlets/junctions component using [SUBCATCHMENT] group from storm drain .INP file!", e)
+        finally:
+            return subcatchments
 
     def add_OUTFALLS_to_INP_nodes_dictionary(self):
         try:
@@ -422,6 +426,7 @@ class StormDrainProject(object):
                         continue
                     jun_dict = dict(zip_longest(jun_cols, jun.split()))
                     junction = jun_dict.pop('junction')
-                    self.INP_nodes[junction].update(jun_dict) # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
+                    if junction is not None:
+                        self.INP_nodes[junction].update(jun_dict) # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
         except Exception as e:
             self.uc.show_error("ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!", e)

@@ -440,8 +440,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         data = self.parser.parse_hystruct()
         nodes = slice(3, 5)
         for i, hs in enumerate(data, 1):
-            params = hs[:-1]
-            elems = hs[-1]
+            params = hs[:-1]   # Line 'S' (first line of next structure)
+            elems = hs[-1]     # Lines 'C', 'R', 'I', 'F', and/ or 'D' (rest of lines of next structure)
             geom = self.build_linestring(params[nodes])
             typ = list(elems.keys())[0] if len(elems) == 1 else 'C'
             hystruc_sql += [(geom, typ) + tuple(params)]
@@ -1430,8 +1430,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                              
 
     def export_hystruc(self, outdir):
-        # check if there is any hydraulic structure defined.
         try:
+            # check if there is any hydraulic structure defined.
             if self.is_table_empty('struct'):
                 return False
             hystruct_sql = '''SELECT * FROM struct ORDER BY fid;'''

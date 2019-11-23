@@ -950,7 +950,7 @@ class Layers(object):
                 'readonly': True
             }),
             
-          # Channel  Tables:
+          # Multiple Channel  Tables:
 
             ('mult', {
                 'name': 'Multiple Channels Global Parameters (mult)',
@@ -968,7 +968,60 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'visible': False,
                 'readonly': False
-            })   
+            }), 
+
+          # Multiple Structures Tables:
+
+            ('struct', {
+                'name': '(struct)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+
+            ('rat_curves', {
+                'name': '(rat_curves)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),   
+
+            ('repl_rat_curves', {
+                'name': '(repl_rat_curves)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+
+            ('rat_table', {
+                'name': '(rat_table)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }), 
+            
+            ('culvert_equations', {
+                'name': '(culvert_equations)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+
+            ('storm_drains', {
+                'name': '(storm_drains)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            })             
+            
+            
+            
             
 #             ('trigger_control', {
 #                 'name': 'Triggers',

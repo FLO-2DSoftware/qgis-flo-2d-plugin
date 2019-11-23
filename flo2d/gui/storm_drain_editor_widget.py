@@ -382,7 +382,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 sd_type = feat['sd_type']
                 name = feat['name']
                 rt_fid = feat['rt_fid']
-                if sd_type == 'I':
+                if sd_type == 'I' or sd_type == 'J':
                     intype = feat['intype']
                     if intype == 4 and rt_fid is not None:
                         rt_updates.append((grid_fid, rt_fid))
@@ -468,7 +468,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             Each element of the dictionary is a list of all the lines following the group name [xxxx] in the .INP file.
             
             """
-            
+            subcatchments = None
             storm_drain = StormDrainProject(self.iface, swmm_file)
 
             if storm_drain.split_INP_groups_dictionary_by_tags() <= 1:
@@ -483,7 +483,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_warn("WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!")
                 return
             else:
-                storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
+                subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
                 storm_drain.add_OUTFALLS_to_INP_nodes_dictionary()
                 storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
 
@@ -511,21 +511,33 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_nodes_lyr)
             fields = self.user_swmm_nodes_lyr.fields()
             new_nodes = []
-            for name, values in list(storm_drain.INP_nodes.items()):  # "INP_nodes dictionary contains attributes names and
-                                                                # values taken from the .INP file.
+            for name, values in list(storm_drain.INP_nodes.items()):    # "INP_nodes dictionary contains attributes names and
+                                                                        # values taken from the .INP file.
                 feat = QgsFeature()
                 feat.setFields(fields)
 
-#                 if 'subcatchment' in values:
-#                     sd_type = 'I'
-                if name[0] == 'I':
-                    sd_type = 'I'
-                elif 'out_type' in values:
-                    sd_type = 'O'
-                # else:
-                #     sd_type = 'J'
-                else:
-                    continue
+                if subcatchments is not None:
+                    if 'subcatchment' in values:
+                            sd_type = 'I'  
+                    elif 'out_type' in values:
+                        sd_type = 'O'                         
+                    elif name[0] == 'I':
+                        continue  # Only consider inlets in [SUBCATCHMENTS]
+                    else:
+                        sd_type = 'J'   
+                         
+                else:                          
+                    if name[0] == 'I':
+                        if 'junction_invert_elev' in values:  # if 'junction_invert_elev' is there => it was read from [JUNCTIONS]
+                            sd_type = 'I'  
+                        else:
+                            continue  
+                    elif 'out_type' in values:
+                        sd_type = 'O'
+                    else:
+                        sd_type = 'J'
+#                 else:
+#                     continue
 
                 max_depth = float(values['max_depth']) if 'max_depth' in values else 0
                 junction_invert_elev = float(values['junction_invert_elev']) if 'junction_invert_elev' in values else 0
@@ -833,7 +845,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write('\n;;-------------- ---------- ---------- ---------- ---------- ----------')
     
                         SD_junctions_sql = '''SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
-                                          FROM user_swmm_nodes WHERE sd_type = "I" ORDER BY fid;'''
+                                          FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "J" ORDER BY fid;'''
                         line = '\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}'
                         junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
                         if not junctions_rows:
@@ -1072,7 +1084,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         #  See if there are any Inlet nodes:
-        qry = '''SELECT * FROM user_swmm_nodes WHERE sd_type = 'I';'''
+        qry = '''SELECT * FROM user_swmm_nodes WHERE sd_type = 'I' or sd_type = 'J';'''
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.bar_warn("No inlets defined in 'Storm Drain Nodes' User Layer!")
