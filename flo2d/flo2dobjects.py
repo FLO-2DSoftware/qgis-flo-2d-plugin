@@ -1258,9 +1258,15 @@ class Structure(GeoPackageUtils):
             for i, row in enumerate(curv):
                 res.append(row)
                 # check if a replacement curve is defined
-                try:
-                    if repl[i][0]:
-                        res += repl[i]
+                try: 
+                    for row2 in repl:
+                        if row2 is not None:
+                            del res[-1]
+                            res.append(row + row2) 
+                            break
+
+#                     if repl[i][0]:
+#                         res += repl[i]
                 except Exception as e:
                     pass
             if not res:

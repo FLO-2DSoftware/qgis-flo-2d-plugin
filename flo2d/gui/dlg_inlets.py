@@ -280,7 +280,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         swmm_clogging_factor,
                         swmm_time_for_clogging,
                         rt_name           
-                FROM user_swmm_nodes WHERE sd_type= 'I';'''
+                FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';'''
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.bar_warn("No inlets defined in 'Storm Drain Nodes' User Layer!")
