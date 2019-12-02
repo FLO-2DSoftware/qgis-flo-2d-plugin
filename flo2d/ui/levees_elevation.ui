@@ -99,7 +99,7 @@
       <item>
        <widget class="QCheckBox" name="elev_lines_chbox">
         <property name="text">
-         <string>Levee user lines</string>
+         <string>User levee lines</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -122,7 +122,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Import external 3D lines</string>
+      <string>Import external 3D levee lines</string>
      </property>
     </widget>
    </item>
