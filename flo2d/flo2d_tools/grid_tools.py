@@ -1115,7 +1115,7 @@ def highlight_selected_xsection_b(layer, xs_id):
 #     self.chan_elems.selectByIds(self.feat_selection)
 
 
-
+ 
 
 
 

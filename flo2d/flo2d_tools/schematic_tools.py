@@ -226,9 +226,10 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     oh = sh / 2.414
     schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
 
-    del_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
-    ins_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
+    del_levees_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
+    ins_levees_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
                  VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
+    del_levee_failures_sql = '''DELETE FROM levee_failure'''
 
     # create levee segments for distinct levee directions in each grid element
     grid_levee_seg = {}
@@ -251,8 +252,9 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                         lid,
                         'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
                     ))
-    gutils.con.execute(del_sql)
-    gutils.con.executemany(ins_sql, data)
+    gutils.con.execute(del_levees_sql)
+    gutils.con.execute(del_levee_failures_sql)
+    gutils.con.executemany(ins_levees_sql, data)
     gutils.con.commit()
 
 

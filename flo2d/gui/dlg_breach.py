@@ -8,13 +8,14 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import Qt
-from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication, QInputDialog
-from .ui_utils import load_ui, set_icon
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication, QInputDialog, QDialogButtonBox
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
 from pickle import FALSE
+from qgis.PyQt.QtGui import QColor
+from qgis.core import * 
 
 uiDialog_global, qtBaseClass = load_ui('global_breach_data')
 uiDialog_individual_breach, qtBaseClass = load_ui('individual_breach_data')
@@ -557,8 +558,18 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
         self.gutils = None
-
+        self.ext = self.iface.mapCanvas().extent()
+        self.grid_lyr = self.lyrs.data['grid']['qlyr']
+        
+        set_icon(self.zoom_in_btn, 'zoom_in.svg')
+        set_icon(self.zoom_out_btn, 'zoom_out.svg')
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+         
         self.setup_connection()
+        
+        self.individual_levee_buttonBox.button(QDialogButtonBox.Save).setText("Save This")
+        self.individual_levee_buttonBox.accepted.connect(self.save_individual_levee_data)
         
         self.individual_levee_element_cbo.currentIndexChanged.connect(self.individual_levee_element_cbo_currentIndexChanged)
         self.N_chbox.stateChanged.connect(self.N_chbox_checked)
@@ -569,10 +580,13 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.SE_chbox.stateChanged.connect(self.SE_chbox_checked)
         self.SW_chbox.stateChanged.connect(self.SW_chbox_checked)
         self.NW_chbox.stateChanged.connect(self.NW_chbox_checked)
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
         
-        self.populate_individual_breach_dialog()
+        self.populate_individual_levees_dialog()
 
-
+        QApplication.restoreOverrideCursor()
+        
     def setup_connection(self):
         con = self.iface.f2d['con']
         if con is None:
@@ -581,7 +595,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
-    def populate_individual_breach_dialog(self):
+    def populate_individual_levees_dialog(self):
         
         qry_levee_cells = '''SELECT grid_fid, ldir, levcrest, user_line_fid FROM levee_data ORDER BY grid_fid'''
         levee_rows = self.gutils.execute(qry_levee_cells).fetchall() 
@@ -598,8 +612,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             qry_levee_cell = '''SELECT ldir, levcrest FROM levee_data WHERE grid_fid = ?'''
             
             self.clear_all_directions()
-            levee_grid = self.individual_levee_element_cbo.currentText()
-            levees_for_this_grid = self.gutils.execute(qry_levee_cell, (levee_grid,)).fetchall()  
+            cell = self.individual_levee_element_cbo.currentText()
+            levees_for_this_grid = self.gutils.execute(qry_levee_cell, (cell,)).fetchall()  
             for levee in levees_for_this_grid:
                 dir = levee[0]
                 crest_elev = levee[1]
@@ -636,13 +650,13 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     self.NW_dbox.setEnabled(True)  
                     self.NW_dbox.setValue(float_or_zero(crest_elev))            
             
-            grid_elev =  self.gutils.execute('SELECT elevation FROM grid WHERE fid = ?', (levee_grid,)).fetchone()[0]        
+            grid_elev =  self.gutils.execute('SELECT elevation FROM grid WHERE fid = ?', (cell,)).fetchone()[0]        
             self.grid_elevation_lbl.setText(str(grid_elev))
             
             levee_failure_qry = '''SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
                                    FROM levee_failure 
                                    WHERE grid_fid = ?'''
-            failure = self.gutils.execute(levee_failure_qry, (levee_grid,)).fetchone()
+            failure = self.gutils.execute(levee_failure_qry, (cell,)).fetchone()
             if failure:
                 self.levee_failure_grp.setChecked(True)
                 self.failure_elevation_dbox.setValue(float_or_zero(failure[0]))
@@ -653,13 +667,268 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 self.failure_horizontal_rate_dbox.setValue(float_or_zero(failure[5]))                                                               
             else:
                 self.levee_failure_grp.setChecked(False)                    
+
+            # Find elevations of adjacent cells:
+            
+                try: 
+                    sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;'''
+                    cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+                    if self.gutils.get_cont_par('METRIC') == '1':
+                        unit = "   mts"
+                    else:
+                        unit = "   ft"   
+
+                    if self.grid_lyr is not None:
+                        if cell != '':
+                            cell = int(cell)
+                            if len(self.grid_lyr) >= cell and cell > 0:
+                                self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                                xx, yy = self.currentCell.geometry().centroid().asPoint()
+                                
+                                 # North cell:
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "N")
+                                
+                               
+#                                 y = yy  +  cell_size
+#                                 x = xx
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.N_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.N_lbl.setText("(boundary)")         
+#                                 else:
+#                                     self.N_lbl.setText("(boundary)")   
+                                    
+                                # NorthEast cell:
+                                
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "NE")                                
+                                
+#                                 y = yy  +  cell_size
+#                                 x = xx  +  cell_size
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.NE_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.NE_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.NE_lbl.setText("(boundary)") 
+                                                                                                                                                       
+                                # East cell:
+                                
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "E")                                
+                                
+#                                 x = xx +  cell_size
+#                                 y = yy
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.E_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.E_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.E_lbl.setText("(boundary)") 
+                                    
+                                # SouthEast cell:
+                                
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "SE")                                
+                                
+#                                 y = yy  -  cell_size
+#                                 x = xx  +  cell_size
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.SE_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.SE_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.SE_lbl.setText("(boundary)") 
+                                    
+                                                                                                                      
+                                # South cell:
+                                
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "S")                                
+                                
+#                                 y = yy  -  cell_size
+#                                 x = xx
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.S_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.S_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.S_lbl.setText("(boundary)") 
+                                    
+                                    
+                                # SouthWest cell:
+                                
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "SW")                                
+                                
+#                                 y = yy  -  cell_size
+#                                 x = xx  -  cell_size
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.SW_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.SW_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.SW_lbl.setText("(boundary)") 
+                                    
+                                 # West cell:
+                                 
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "W")                                 
+                                 
+#                                 y = yy
+#                                 x = xx  -  cell_size
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.W_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.W_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.W_lbl.setText("(boundary)")                                                                                                                         
+                                    
+                                 # NorthWest cell:
+                                 
+                                self.show_adjecent_elevations(xx, yy, cell_size, unit, "NW")                                 
+                                 
+#                                 y = yy  +  cell_size
+#                                 x = xx  -  cell_size
+#                                 if x >= self.ext.xMinimum() and x <= self.ext.xMaximum() and y >= self.ext.yMinimum() and  y <= self.ext.yMaximum():
+#                                     grid = self.gutils.grid_on_point(x, y)
+#                                     if grid is not None:
+#                                         elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                                         self.NW_lbl.setText(str(elev) +  unit)
+#                                     else:
+#                                         self.NW_lbl.setText("(boundary)")                                              
+#                                 else:
+#                                     self.NW_lbl.setText("(boundary)")  
+                                    
+                                
+                                self.highlight_cell(cell)
+                                
+                            else:
+                                self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')  
+                                                                                    
+                except ValueError:
+                    self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')  
+                    pass              
+            
+            
             
             
         except Exception as e:                
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 280319.1510: could not load levee data!"
                        +'\n__________________________________________________', e)  
-            return False             
+            return False    
+        
+
+    def show_adjecent_elevations(self, xx, yy, cell_size, unit, dir):
+        sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+        
+        if dir == "N":
+            # North cell:
+            y = yy  +  cell_size
+            x = xx
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.N_lbl.setText(str(elev) +  unit)
+            else:
+                self.N_lbl.setText("(boundary)")         
+              
+        elif dir == "NE":
+            # NorthEast cell:
+            y = yy  +  cell_size
+            x = xx  +  cell_size
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.NE_lbl.setText(str(elev) +  unit)
+            else:
+                self.NE_lbl.setText("(boundary)")                                              
+            
+        elif dir == "E":
+            # East cell:
+            x = xx +  cell_size
+            y = yy
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.E_lbl.setText(str(elev) +  unit)
+            else:
+                self.E_lbl.setText("(boundary)")   
+                                               
+        elif dir == "SE":
+            # SouthEast cell:
+            y = yy  -  cell_size
+            x = xx  +  cell_size
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.SE_lbl.setText(str(elev) +  unit)
+            else:
+                self.SE_lbl.setText("(boundary)")               
+            
+        elif dir == "S":
+            # South cell:
+            y = yy  -  cell_size
+            x = xx
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.S_lbl.setText(str(elev) +  unit)
+            else:
+                self.S_lbl.setText("(boundary)")               
+
+        elif dir == "SW":
+            # SouthWest cell:
+            y = yy  -  cell_size
+            x = xx  -  cell_size
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.SW_lbl.setText(str(elev) +  unit)
+            else:
+                self.SW_lbl.setText("(boundary)")                
+
+        elif dir == "W":
+             # West cell:
+            y = yy
+            x = xx  -  cell_size
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.W_lbl.setText(str(elev) +  unit)
+            else:
+                self.W_lbl.setText("(boundary)")                 
+            
+        elif dir == "NW":
+             # NorthWest cell:
+            y = yy  +  cell_size
+            x = xx  -  cell_size
+            grid = self.gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                self.NW_lbl.setText(str(elev) +  unit)
+            else:
+                self.NW_lbl.setText("(boundary)")             
+            
+        else :   
+            self.uc.bar_warn('Invalid direction!')              
+                 
 
     def clear_all_directions(self): 
        self.N_chbox.setChecked(False)
@@ -718,7 +987,6 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         """
         Save changes to individual levee.
         """     
-
          
         levee_grid = self.individual_levee_element_cbo.currentText()     
                  
@@ -817,6 +1085,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 if self.gutils.execute(select_qry, (levee_grid, 8)).fetchone():   
                     self.gutils.execute(delete_qry, (levee_grid, 8))                               
         
+            self.uc.bar_info('Individual Levee Data for cell ' + levee_grid + ' saved.')
+            
+            
         except Exception as e:                
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 280319.1651.2015: update of Individual Levee Data failed!"
@@ -879,17 +1150,65 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                        +'\n__________________________________________________', e)  
             return False 
 
+    def highlight_cell(self, cell):
+        try: 
+            grid = self.lyrs.data['grid']['qlyr']
+            if grid is not None:
+                if grid:
+                    if cell != '':
+                        cell = int(cell)
+                        if len(grid) >= cell and cell > 0:
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                            x, y = feat.geometry().centroid().asPoint()
+                            self.lyrs.zoom_to_all()
+                            center_canvas(self.iface, x, y)
+                            zoom(self.iface, 0.45)
+                            
+                        else:
+                            self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
+                            self.lyrs.clear_rubber()                            
+                    else:
+                        self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
+                        self.lyrs.clear_rubber()              
+        except ValueError:
+            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
+            self.lyrs.clear_rubber()    
+            pass 
+
+    def zoom_in(self):
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface,  0.4)
+            self.update_extent()
+            
+    def zoom_out(self):
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)        
+            zoom(self.iface,  -0.4) 
+            self.update_extent()
+        
+    def update_extent(self):  
+        self.ext = self.iface.mapCanvas().extent()  
+
+      
+                
 
 
+                                                                                                                                                       
 
+                                           
+                                    
+                                                                                                                      
+                                           
+                                    
 
-
-
-
-
-
-
-
+                                                                                  
+                                         
+                                     
+                                             
 
 
 
