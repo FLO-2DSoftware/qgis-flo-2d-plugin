@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>479</width>
-    <height>508</height>
+    <width>467</width>
+    <height>578</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -19,24 +19,11 @@
   <property name="windowTitle">
    <string>Individual Levee Data</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_9">
+  <layout class="QGridLayout" name="gridLayout_19">
    <item row="0" column="0">
-    <layout class="QGridLayout" name="gridLayout_8">
+    <layout class="QGridLayout" name="gridLayout_18">
      <item row="0" column="0">
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>110</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_5">
+      <layout class="QGridLayout" name="gridLayout_14">
        <item row="0" column="0">
         <widget class="QLabel" name="label_12">
          <property name="sizePolicy">
@@ -61,78 +48,275 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
          <property name="inputMethodHints">
           <set>Qt::ImhNone</set>
+         </property>
+         <property name="editable">
+          <bool>false</bool>
          </property>
          <property name="maxVisibleItems">
           <number>40</number>
          </property>
+         <property name="minimumContentsLength">
+          <number>0</number>
+         </property>
          <property name="duplicatesEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="frame">
           <bool>false</bool>
          </property>
         </widget>
        </item>
+       <item row="0" column="2">
+        <layout class="QGridLayout" name="gridLayout_9">
+         <item row="0" column="0">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>22</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="1">
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="cell_to_find_le">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>73</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>73</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="find_cell_btn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>28</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="3">
+        <layout class="QGridLayout" name="gridLayout_10">
+         <item row="0" column="1">
+          <widget class="QPushButton" name="zoom_in_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>Zoom In</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>2</number>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="zoom_out_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>Zoom Out</string>
+           </property>
+           <property name="toolTipDuration">
+            <number>2</number>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
       </layout>
      </item>
-     <item row="0" column="2">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="zoom_in_btn">
-       <property name="toolTip">
-        <string>Zoom In</string>
-       </property>
-       <property name="toolTipDuration">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="4">
-      <widget class="QPushButton" name="zoom_out_btn">
-       <property name="toolTip">
-        <string>Zoom Out</string>
-       </property>
-       <property name="toolTipDuration">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
+     <item row="1" column="0">
+      <layout class="QGridLayout" name="gridLayout_17">
+       <item row="0" column="0">
+        <layout class="QGridLayout" name="gridLayout_16">
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="gridLayout_11">
+           <item row="0" column="0">
+            <widget class="QLabel" name="previous_levees_lbl">
+             <property name="text">
+              <string>Previous</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QPushButton" name="previous_levees_btn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>25</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>25</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>../img/arrow_4.svg</normaloff>../img/arrow_4.svg</iconset>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="0" column="1">
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="0" column="0">
+            <widget class="QPushButton" name="next_levees_btn">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>25</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>25</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>../img/arrow_2.svg</normaloff>../img/arrow_2.svg</iconset>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="next_levees_lbl">
+             <property name="text">
+              <string>Next</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="1">
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>238</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
@@ -143,6 +327,12 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>449</width>
+       <height>234</height>
+      </size>
      </property>
      <property name="font">
       <font>
@@ -174,7 +364,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>North West</string>
+              <string>North West (8)</string>
              </property>
             </widget>
            </item>
@@ -187,33 +377,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>North</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QCheckBox" name="NE_chbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>North East</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QDoubleSpinBox" name="NW_dbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximum">
-              <double>99999.000000000000000</double>
+              <string>North (1)</string>
              </property>
             </widget>
            </item>
@@ -230,16 +394,16 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="2">
-            <widget class="QDoubleSpinBox" name="NE_dbox">
+           <item row="2" column="2">
+            <widget class="QCheckBox" name="E_chbox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="maximum">
-              <double>99999.000000000000000</double>
+             <property name="text">
+              <string>East (2)</string>
              </property>
             </widget>
            </item>
@@ -252,20 +416,20 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>West</string>
+              <string>West (4)</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="2">
-            <widget class="QCheckBox" name="E_chbox">
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="NE_dbox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="text">
-              <string>East</string>
+             <property name="maximum">
+              <double>99999.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -295,19 +459,6 @@
              </property>
             </widget>
            </item>
-           <item row="4" column="0">
-            <widget class="QCheckBox" name="SW_chbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>South West</string>
-             </property>
-            </widget>
-           </item>
            <item row="4" column="1">
             <widget class="QCheckBox" name="S_chbox">
              <property name="sizePolicy">
@@ -317,20 +468,20 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>South</string>
+              <string>South (3)</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="2">
-            <widget class="QCheckBox" name="SE_chbox">
+           <item row="5" column="1">
+            <widget class="QDoubleSpinBox" name="S_dbox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="text">
-              <string>South East</string>
+             <property name="maximum">
+              <double>99999.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -347,16 +498,29 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="S_dbox">
+           <item row="4" column="2">
+            <widget class="QCheckBox" name="SE_chbox">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="maximum">
-              <double>99999.000000000000000</double>
+             <property name="text">
+              <string>South East (6)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QCheckBox" name="SW_chbox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>South West (7)</string>
              </property>
             </widget>
            </item>
@@ -426,33 +590,35 @@
              </property>
             </widget>
            </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="NW_dbox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximum">
+              <double>99999.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="NE_chbox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>North East (5)</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="SW_lbl">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <italic>true</italic>
-          <bold>true</bold>
-          <kerning>true</kerning>
-         </font>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <property name="text">
-         <string>6578453345   ft</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -472,31 +638,7 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string>1234567   ft</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="NE_lbl">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <italic>true</italic>
-          <bold>true</bold>
-          <kerning>true</kerning>
-         </font>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <property name="text">
-         <string>6543218   ft</string>
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -520,7 +662,7 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string>12345   ft</string>
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -530,8 +672,8 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="W_lbl">
+      <item row="2" column="0">
+       <widget class="QLabel" name="SW_lbl">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -547,15 +689,15 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string>45   ft</string>
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="S_lbl">
+      <item row="0" column="2">
+       <widget class="QLabel" name="NE_lbl">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -571,7 +713,7 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string> 66666666   ft</string>
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -595,7 +737,31 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string>876535353   ft</string>
+         <string>(unknown)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="S_lbl">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <italic>true</italic>
+          <bold>true</bold>
+          <kerning>true</kerning>
+         </font>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <property name="text">
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -619,7 +785,31 @@
          <enum>QFrame::Raised</enum>
         </property>
         <property name="text">
-         <string>4345567   ft</string>
+         <string>(unknown)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="W_lbl">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <italic>true</italic>
+          <bold>true</bold>
+          <kerning>true</kerning>
+         </font>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <property name="text">
+         <string>(unknown)</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -711,6 +901,24 @@
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="0">
            <widget class="QDoubleSpinBox" name="failure_elevation_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="maximum">
              <double>99999.000000000000000</double>
             </property>
@@ -718,6 +926,24 @@
           </item>
           <item row="1" column="0">
            <widget class="QDoubleSpinBox" name="failure_duration_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="minimum">
              <double>-99.000000000000000</double>
             </property>
@@ -725,6 +951,24 @@
           </item>
           <item row="2" column="0">
            <widget class="QDoubleSpinBox" name="failure_base_elevation_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="maximum">
              <double>99999.000000000000000</double>
             </property>
@@ -732,6 +976,24 @@
           </item>
           <item row="3" column="0">
            <widget class="QDoubleSpinBox" name="failure_max_width_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="maximum">
              <double>99999.000000000000000</double>
             </property>
@@ -739,6 +1001,24 @@
           </item>
           <item row="4" column="0">
            <widget class="QDoubleSpinBox" name="failure_vertical_rate_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="minimum">
              <double>0.000000000000000</double>
             </property>
@@ -749,6 +1029,24 @@
           </item>
           <item row="5" column="0">
            <widget class="QDoubleSpinBox" name="failure_horizontal_rate_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>71</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="maximum">
              <double>9999.000000000000000</double>
             </property>
@@ -762,57 +1060,219 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QDialogButtonBox" name="individual_levee_buttonBox">
-     <property name="font">
-      <font>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-     </property>
-     <property name="centerButtons">
-      <bool>false</bool>
-     </property>
-    </widget>
+    <layout class="QGridLayout" name="gridLayout_15">
+     <item row="0" column="0">
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>254</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="1">
+      <layout class="QGridLayout" name="gridLayout_12">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="levee_data_save_btn">
+         <property name="text">
+          <string>Apply Change</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="levee_data_close_btn">
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text">
+          <string>Close</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>individual_levee_element_cbo</tabstop>
+  <tabstop>cell_to_find_le</tabstop>
+  <tabstop>find_cell_btn</tabstop>
+  <tabstop>previous_levees_btn</tabstop>
+  <tabstop>next_levees_btn</tabstop>
+  <tabstop>NW_chbox</tabstop>
+  <tabstop>NW_dbox</tabstop>
+  <tabstop>N_chbox</tabstop>
+  <tabstop>N_dbox</tabstop>
+  <tabstop>NE_chbox</tabstop>
+  <tabstop>NE_dbox</tabstop>
+  <tabstop>W_chbox</tabstop>
+  <tabstop>W_dbox</tabstop>
+  <tabstop>E_chbox</tabstop>
+  <tabstop>E_dbox</tabstop>
+  <tabstop>SW_chbox</tabstop>
+  <tabstop>SW_dbox</tabstop>
+  <tabstop>S_chbox</tabstop>
+  <tabstop>S_dbox</tabstop>
+  <tabstop>SE_chbox</tabstop>
+  <tabstop>SE_dbox</tabstop>
+  <tabstop>levee_failure_grp</tabstop>
+  <tabstop>failure_elevation_dbox</tabstop>
+  <tabstop>failure_duration_dbox</tabstop>
+  <tabstop>failure_base_elevation_dbox</tabstop>
+  <tabstop>failure_max_width_dbox</tabstop>
+  <tabstop>failure_vertical_rate_dbox</tabstop>
+  <tabstop>failure_horizontal_rate_dbox</tabstop>
+  <tabstop>levee_data_save_btn</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
-   <sender>individual_levee_buttonBox</sender>
-   <signal>rejected()</signal>
+   <sender>levee_data_close_btn</sender>
+   <signal>clicked()</signal>
    <receiver>individual_breach_data_dlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>103</x>
-     <y>492</y>
+     <x>455</x>
+     <y>553</y>
     </hint>
     <hint type="destinationlabel">
-     <x>141</x>
-     <y>501</y>
+     <x>251</x>
+     <y>479</y>
     </hint>
    </hints>
   </connection>
   <connection>
-   <sender>individual_levee_buttonBox</sender>
-   <signal>clicked(QAbstractButton*)</signal>
-   <receiver>individual_breach_data_dlg</receiver>
-   <slot>exec()</slot>
+   <sender>NW_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>NW_dbox</receiver>
+   <slot>setFocus()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>203</x>
-     <y>477</y>
+     <x>157</x>
+     <y>144</y>
     </hint>
     <hint type="destinationlabel">
-     <x>441</x>
-     <y>465</y>
+     <x>149</x>
+     <y>171</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>N_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>N_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>224</x>
+     <y>142</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>229</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>NE_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>NE_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>307</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>307</x>
+     <y>167</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>W_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>W_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>130</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>134</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>E_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>E_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>291</x>
+     <y>191</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>219</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SW_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>SW_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>238</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>153</x>
+     <y>258</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>S_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>S_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>224</x>
+     <y>239</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>227</x>
+     <y>259</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SE_chbox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>SE_dbox</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>321</x>
+     <y>238</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>337</x>
+     <y>267</y>
     </hint>
    </hints>
   </connection>

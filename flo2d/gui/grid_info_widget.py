@@ -10,16 +10,15 @@
 
 from math import sqrt
 from qgis.core import QgsFeatureRequest
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import QSize, Qt
 from .ui_utils import load_ui, center_canvas, set_icon
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
 
+
 uiDialog, qtBaseClass = load_ui('grid_info_widget')
-
-
 class GridInfoWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, plot, table, lyrs):
@@ -41,6 +40,10 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.mann_default = None
         self.d1 = []
         self.d2 = []
+        
+        validator = QIntValidator()
+        self.idEdit.setValidator(validator)        
+        
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
         
@@ -130,7 +133,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
         
     def find_cell(self):
-        try: 
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)  
             grid = self.lyrs.data['grid']['qlyr']
             if grid is not None:
                 if grid:
@@ -150,7 +154,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                         self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
                         self.lyrs.clear_rubber()              
         except ValueError:
-            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
+            self.uc.bar_warn('Cell ' + str(cell) + ' is not valid.')
             self.lyrs.clear_rubber()    
             pass          
-      
+        finally:
+            QApplication.restoreOverrideCursor()      

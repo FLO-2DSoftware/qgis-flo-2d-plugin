@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>392</width>
-    <height>278</height>
+    <width>230</width>
+    <height>118</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -22,273 +22,27 @@
   <property name="windowTitle">
    <string>Warnings and Errors</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0">
     <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the source of warnings and errors: either 'DEBUG file' or 'Current project':&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the source of warnings and errors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QRadioButton" name="debug_file_radio">
-     <property name="text">
-      <string>DEBUG file        </string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <layout class="QGridLayout" name="gridLayout_7">
-     <item row="1" column="0">
-      <widget class="QFrame" name="current_project_frame">
-       <property name="enabled">
-        <bool>false</bool>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QRadioButton" name="debug_file_radio">
+       <property name="text">
+        <string>DEBUG file        </string>
        </property>
-       <property name="frameShape">
-        <enum>QFrame::Box</enum>
+       <property name="checked">
+        <bool>true</bool>
        </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="2" column="0">
-         <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
-           <widget class="QComboBox" name="component1_cbo">
-            <property name="maxVisibleItems">
-             <number>20</number>
-            </property>
-            <item>
-             <property name="text">
-              <string>All</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Inflows</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Outflows</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Reduction Factors</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Full ARF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Partial ARF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>WRF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Hydr. Structures</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channels (Left Bank)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channels (Right Bank)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Levees</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Mult. Channels</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Storm Drain Inlets</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Storm Drain Outfalls</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Streets</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Inner Channels</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="component2_cbo">
-            <property name="maxVisibleItems">
-             <number>20</number>
-            </property>
-            <item>
-             <property name="text">
-              <string>All</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Inflows</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Outflows</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Reduction Factors</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Full ARF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Partial ARF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>WRF</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Hydr. Structures</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channels (Left Bank)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channels (Right Bank)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Levees</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Mult. Channels</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Storm Drain Inlets</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Storm Drain Outfalls</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Streets</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Inner Channel</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="1" column="0" colspan="2">
-           <widget class="QCheckBox" name="create_conflicts_layer_chck">
-            <property name="text">
-             <string>Create layer for current conflicts</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="1">
-           <widget class="QSpinBox" name="n_issues_sbox">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="maximum">
-             <number>1000000</number>
-            </property>
-            <property name="value">
-             <number>100</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Max.  number of issues</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Select conflicts between these 2 components</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
       </widget>
      </item>
-     <item row="0" column="0">
+     <item row="0" column="1">
       <widget class="QRadioButton" name="current_project_radio">
        <property name="text">
         <string>Current project</string>
@@ -297,23 +51,7 @@
      </item>
     </layout>
    </item>
-   <item row="3" column="0" colspan="2">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Fixed</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>446</width>
-       <height>14</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="5" column="1">
+   <item row="2" column="0">
     <widget class="QDialogButtonBox" name="errors_OK_btn">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -336,7 +74,6 @@
   <zorder>label_4</zorder>
   <zorder>errors_OK_btn</zorder>
   <zorder>debug_file_radio</zorder>
-  <zorder>current_project_radio</zorder>
  </widget>
  <resources/>
  <connections>

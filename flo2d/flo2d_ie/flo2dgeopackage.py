@@ -498,7 +498,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables('blocked_cells')
         head, data = self.parser.parse_arf()
-        cont_sql += [('arfblockmod',) + tuple(head)]
+        cont_sql += [('IARFBLOCKMOD',) + tuple(head)]
         gids = (x[0] for x in chain(data['T'], data['PB']))
         cells = self.grid_centroids(gids, buffers=True)
 
@@ -1534,7 +1534,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty('arfwrf'):
                 return False
-            cont_sql = '''SELECT name, value FROM cont WHERE name = 'arfblockmod';'''
+            cont_sql = '''SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';'''
             tbc_sql = '''SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;'''
             
             pbc_sql = '''SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -1547,8 +1547,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line3 = '{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n'
             option = self.execute(cont_sql).fetchone()
             if option is None:
-                # TODO: We need to implement correct export of 'arfblockmod'
-                option = ('arfblockmod', 0)
+                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
+                option = ('IARFBLOCKMOD', 0)
     
             arf = os.path.join(outdir, 'ARF.DAT')
             with open(arf, 'w') as a:

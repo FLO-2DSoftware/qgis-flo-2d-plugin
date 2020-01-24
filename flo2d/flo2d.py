@@ -24,7 +24,7 @@ from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 from .layers import Layers
 from .user_communication import UserCommunication
-from .geopackage_utils import connection_required, database_disconnect
+from .geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.info_tool import InfoTool
@@ -1551,7 +1551,7 @@ class Flo2D(object):
         # check for grid elements with null elevation
         null_elev_nr = grid_has_empty_elev(self.gutils)
         if null_elev_nr:
-            msg = 'WARNING 060319.1805: The grid has {} elements with null elevation.\n' \
+            msg = 'WARNING 060319.1805: The grid has {} elements with null elevation.\n\n' \
                   'Levee elevation tool requires that all grid elements have elevation defined.'
             self.uc.show_warn(msg.format(null_elev_nr))
             return
@@ -1565,7 +1565,7 @@ class Flo2D(object):
         # show the dialog
         dlg_levee_elev = LeveesToolDialog(self.con, self.iface, self.lyrs)
         dlg_levee_elev.show()
-        
+         
         while True:
             ok = dlg_levee_elev.exec_()
             if ok:
@@ -1576,18 +1576,30 @@ class Flo2D(object):
                         self.uc.show_warn('WARNING 060319.1831: Levee user lines required!')
             else:
                 return       
-        
+         
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.schematize_levees()
+            n_elements, n_levee_directions, n_fail_features = self.schematize_levees()
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info('Values assigned to the Schematic Levees layer!')
+        
+
+            levees = self.lyrs.data['levee_data']['qlyr']
+            idx = levees.fields().indexOf('grid_fid')
+            values = levees.uniqueValues(idx)
+            
+            info = ('Values assigned to the Schematic Levees layer!' + 
+                    '\n\nThere are now ' + str(len(values)) + ' grid elements with levees,'  + 
+                    '\nwith ' + str(n_levee_directions) + ' levee directions,' + 
+                    '\nof which, ' + str(n_fail_features) + ' have failure data.')
+            if n_fail_features > n_levee_directions:
+                info += '\n\n(WARNING 191219.1649: Please review the input User Levee Lines. There may be more than one line intersecting grid elements)'
+            self.uc.show_info(info)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('WARNING 060319.1806: Assigning values aborted! Please check your crest elevation source layers.')
+            self.uc.show_error('ERROR 060319.1806: Assigning values aborted! Please check your crest elevation source layers.\n', e)
 
     @connection_required
     def show_hazus_dialog(self):
@@ -1657,12 +1669,17 @@ class Flo2D(object):
         """
         Generate schematic lines for user defined levee lines.
         """
-        levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
-        grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
-        generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
-        levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
-        if levee_schem:
-            levee_schem.triggerRepaint()
+        try:
+            levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
+            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
+            n_elements, n_levee_directions, n_fail_features = generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
+            levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
+            if levee_schem:
+                levee_schem.triggerRepaint()
+            return  n_elements, n_levee_directions, n_fail_features  
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error('ERROR 030120.0723: unable to process user levees!\n', e)        
 
     @connection_required
     def schematic2user(self):
@@ -1777,8 +1794,6 @@ class Flo2D(object):
 #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = 'file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf'.format(pth)      
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))        
-
-
 
 
 

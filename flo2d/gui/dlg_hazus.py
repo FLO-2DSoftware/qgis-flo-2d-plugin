@@ -614,29 +614,6 @@ class HazusDialog(qtBaseClass, uiDialog):
                                     )  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
                                 '''
 
-        # insert_flow_depth_statistics = '''INSERT INTO buildings_stats
-        #                             (   building_ID,
-        #                                 avg_grnd_elev,
-        #                                 min_grnd_elev,
-        #                                 max_grnd_elev,
-        #
-        #                             )  VALUES (?,?,?,?,?,?,?);
-        #                         '''
-        #
-        #
-        # update_water_elev_statistics = '''UPDATE buildings_stats
-        #                                 SET avg_water_elev = ?,
-        #                                     min_water_elev = ?,
-        #                                     max_water_elev = ?
-        #                                 WHERE building_ID = ?;
-        #                             '''
-        #
-        # update_flow_depth_statistics = '''UPDATE buildings_stats
-        #                                 SET avg_depth = ?,
-        #                                     min_depth = ?,
-        #                                     max_depth = ?
-        #                                 WHERE building_ID = ?;
-        #                             '''
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -658,8 +635,6 @@ class HazusDialog(qtBaseClass, uiDialog):
             i = 1
 
             building = next(building_fts)
-            # geo = building.geometry().asPolygon()
-            # poly = QgsGeometry.fromPolygonXY (geo)
 
             id0 = building[ID_field]
             elev = building[elev_field]
@@ -682,9 +657,6 @@ class HazusDialog(qtBaseClass, uiDialog):
                 while i < n_features:
 
                     building = next(building_fts)
-                    # geo = building.geometry().asPolygon()
-                    # poly = geo.asPolygon()
-                    # poly = QgsGeometry.fromPolygonXY (geo)
 
                     i += 1
                     id1 = building[ID_field]

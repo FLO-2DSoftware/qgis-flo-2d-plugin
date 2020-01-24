@@ -7,20 +7,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-# from qgis.PyQt.QtCore import Qt
-# from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
-# from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication
-# from .ui_utils import load_ui
-# from ..geopackage_utils import GeoPackageUtils
-# from ..user_communication import UserCommunication
-# from ..utils import float_or_zero, int_or_zero
-
-import os
+import os, time
 from qgis.core import * 
 from qgis.PyQt.QtCore import Qt, QSettings, QVariant, QModelIndex
-# ( QgsFields, QgsField, QgsFeature, QgsVectorFileWriter, QgsFeatureRequest, 
-#                         QgsWkbTypes, QgsGeometry, QgsPointXY, QgsProject, QgsVectorLayer )
-from qgis.PyQt.QtWidgets import (QApplication, QDialogButtonBox, QInputDialog, QFileDialog, 
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
+from qgis.PyQt.QtWidgets import (QApplication, QDialogButtonBox, QInputDialog, QFileDialog, QProgressDialog, QPushButton,
                                 QTableWidgetItem, QListView, QComboBox, QTableView, QCompleter, QTableWidget, qApp )
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_show_n_cells
 from .table_editor_widget import StandardItemModel, StandardItem
@@ -32,6 +23,8 @@ from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
 from qgis.PyQt.QtGui import QColor
+
+
 # from ..flo2d_tools.conflicts import Conflicts
 
 uiDialog, qtBaseClass = load_ui('errors_2')
@@ -50,11 +43,11 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         self.debug_directory = ""
 
         self.setup_connection()
-        self.create_conflicts_layer_chck.setVisible(False)
+#         self.create_conflicts_layer_chck.setVisible(False)
         self.errors_OK_btn.accepted.connect(self.errors_OK)
 
-        self.debug_file_radio.clicked.connect(self.DEBUG_file_clicked)
-        self.current_project_radio.clicked.connect(self.current_project_clicked)
+#         self.debug_file_radio.clicked.connect(self.DEBUG_file_clicked)
+#         self.current_project_radio.clicked.connect(self.current_project_clicked)
         
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -72,18 +65,18 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         s = QSettings()
         s.setValue('FLO-2D/last_DEBUG', DEBUG_dir)       
         
-    def DEBUG_file_clicked(self):
-        if self.debug_file_radio.isChecked():
+#     def DEBUG_file_clicked(self):
+#         if self.debug_file_radio.isChecked():
 #             self.debug_frame.setDisabled(False)   
-            self.current_project_frame.setDisabled(True)   
+#             self.current_project_frame.setDisabled(True)   
 #         else:    
 #             self.debug_frame.enabled = False   
 #             self.current_project_frame.enabled = True
                 
-    def current_project_clicked(self):
-        if self.current_project_radio.isChecked():
+#      def current_project_clicked(self):
+#         if self.current_project_radio.isChecked():
 #             self.debug_frame.setDisabled(True)   
-            self.current_project_frame.setDisabled(False)   
+#             self.current_project_frame.setDisabled(True)   
 #         else:
 #             self.debug_frame.enabled = True   
 #             self.current_project_frame.enabled = False             
@@ -91,31 +84,39 @@ class ErrorsDialog(qtBaseClass, uiDialog):
     
     def errors_OK(self):
         if self.current_project_radio.isChecked():
-            if self.component1_cbo.currentText() == "" and self.component2_cbo.currentText() == "":
-                self.uc.show_info("Select a component!")
-            else:    
+#             if self.component1_cbo.currentText() == "" and self.component2_cbo.currentText() == "":
+#                 self.uc.show_info("Select a component!")
+#             else:    
                 try:   
-                    QApplication.setOverrideCursor(Qt.WaitCursor)     
-                    dlg_conflicts = ConflictsDialog(self.con, self.iface, self.lyrs, 
-                                                    self.n_issues_sbox, self.component1_cbo.currentText(), self.component2_cbo.currentText())
+                    QApplication.setOverrideCursor(Qt.WaitCursor) 
+                    dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 
+                                                    "1000000", "All", "All")
+                        
+#                     dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 
+#                                                     self.n_issues_sbox, self.component1_cbo.currentText(), self.component2_cbo.currentText())
                     QApplication.restoreOverrideCursor()
-                    dlg_conflicts.exec_() 
+                    dlg_conflicts.exec_()
+                    self.lyrs.clear_rubber()    
                     return True
                 except ValueError:  
                     # Forced error during contructor to stop showing dialog.
                     pass  
         else:
-                try:        
-                    dlg_issues = IssuesDialog(self.con, self.iface, self.lyrs)
+                try:  
+                        
+                    dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)
                     dlg_issues.exec_()
-          
+                    self.lyrs.clear_rubber()
+                    QApplication.restoreOverrideCursor()
+                    
                 except ValueError:  
                     # Forced error during contructor to stop showing dialog.
+                    QApplication.restoreOverrideCursor()
                     pass                
                 
 
 uiDialog, qtBaseClass = load_ui('issues')
-class IssuesDialog(qtBaseClass, uiDialog):
+class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -126,22 +127,35 @@ class IssuesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
         self.gutils = None
-        self.errors = []
         self.ext = self.iface.mapCanvas().extent()
+        self.n_grid_issues = 1000
+        self.errors = []
+        self.cells = []
         self.currentCell = None        
         self.debug_directory = ""
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
         set_icon(self.zoom_in_btn, 'zoom_in.svg')
         set_icon(self.zoom_out_btn, 'zoom_out.svg')
-        
+        set_icon(self.previous_grid_issues_btn, 'arrow_4.svg')
+        set_icon(self.next_grid_issues_btn, 'arrow_2.svg') 
+        self.previous_grid_issues_lbl.setText("Previous " + str(self.n_grid_issues))
+        self.next_grid_issues_lbl.setText("Next " + str(self.n_grid_issues))
+
         self.setup_connection()
         self.issues_codes_cbo.activated.connect(self.codes_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)    
         self.elements_cbo.activated.connect(self.elements_cbo_activated)        
-#         self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
         self.zoom_in_btn.clicked.connect(self.zoom_in)
         self.zoom_out_btn.clicked.connect(self.zoom_out)
+        self.next_grid_issues_btn.clicked.connect(self.load_next_combo)
+        self.previous_grid_issues_btn.clicked.connect(self.load_previous_combo) 
+        
+        self.previous_grid_issues_lbl.setVisible(False) 
+        self.next_grid_issues_lbl.setVisible(False)  
+        self.previous_grid_issues_btn.setVisible(False) 
+        self.next_grid_issues_btn.setVisible(False)         
         
         self.description_tblw.setSortingEnabled(False)
         self.description_tblw.setColumnWidth(2,550)
@@ -149,20 +163,25 @@ class IssuesDialog(qtBaseClass, uiDialog):
               
         if (not self.populate_issues()):
             raise ValueError('Not a legal file!')
-        self.import_other_issues_files()
-#         self.populate_elements_cbo()
-#         self.populate_errors_cbo()
+        else:
+           
+#             self.populate_elements_cbo()
+#             self.populate_errors_cbo()
+    
+            self.issues_codes_cbo.setCurrentIndex(1)
+            self.loadIssues()
+            
+            if self.currentCell:
+                x, y = self.currentCell.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+                cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+                zoom_show_n_cells(iface, cell_size, 30)
+                self.update_extent()        
 
-        self.issues_codes_cbo.setCurrentIndex(1)
-        self.loadIssues()
-        
-        if self.currentCell:
-            x, y = self.currentCell.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
-            cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
-            zoom_show_n_cells(iface, cell_size, 30)
-            self.update_extent()        
-      
+            self.import_other_issues_files()
+            
+            self.uc.clear_bar_messages()
+            QApplication.restoreOverrideCursor()        
         
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -185,10 +204,10 @@ class IssuesDialog(qtBaseClass, uiDialog):
         
         last_dir = s.value('FLO-2D/lastDEBUGDir', s.value('FLO-2D/lastGdsDir'))
         debug_file, __ = QFileDialog.getOpenFileName(
-            None,
-            'Select DEBUG file to import',
-            directory=last_dir,
-            filter='(DEBUG* debug*')
+                                        None,
+                                        'Select DEBUG file to import',
+                                        directory=last_dir,
+                                        filter='(DEBUG* debug*')
         if not debug_file:
             return False
 
@@ -203,29 +222,62 @@ class IssuesDialog(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
                 qApp.processEvents()    
                 s.setValue('FLO-2D/lastDEBUGDir', debug_file)
-                self.debug_directory = os.path.dirname(debug_file)     
+                self.debug_directory = os.path.dirname(debug_file)  
+
+
+                self.elements_cbo.clear()
+                self.elements_cbo.addItem(" ")
+
+                self.errors_cbo.clear()
+                self.errors_cbo.addItem(" ")
+  
+                seen = set(self.cells)
                 with open(debug_file, 'r') as f1:
-                    build = next(f1)
+#                     build = next(f1)
                     for line in f1:
                         row = line.split(',') 
                         if len(row) == 3: 
-                            self.errors.append([row[0], row[1], row[2].strip()]) 
-                if (self.errors):      
-                    self.setWindowTitle("Error and Warnings in    " + os.path.basename(debug_file))
-                    QApplication.restoreOverrideCursor()  
+                            self.errors.append([row[0].strip(), row[1].strip(), row[2].strip()]) 
+#                             self.errors.append([row[0], row[1], row[2]]) 
+# #                             if self.errors_cbo.findText(row[1].strip()) == -1:
+# #                                 self.errors_cbo.addItem(row[1].strip())                              
+# 
+                            if row[0].strip() not in seen:
+#                             if row[0].strip() not in self.cells:
+                                seen.add(row[0].strip())
+                                self.cells.append(int(row[0].strip()))
+                            
+
+                i = 0   
+                self.cells.sort()                 
+                for cell in self.cells:
+                    self.elements_cbo.addItem(str(cell))
+                    
+#                     if i <= self.n_grid_issues:  
+#                         self.elements_cbo.addItem(cell)
+#                         i += 1
+#                     else:    
+#                         break
+                        
+#                 self.errors_cbo.model().sort(0) 
+                               
+                if (self.errors):  
+                    QApplication.restoreOverrideCursor()       
+                    self.setWindowTitle(str(len(self.errors)) + " Errors and Warnings in " + os.path.basename(debug_file) + " for " + str(len(self.cells)) + " cells")
                     return True                        
                 else:
-                    self.uc.show_warn("Format of file " + os.path.basename(debug_file) + " is incorrect!")
+                    QApplication.restoreOverrideCursor() 
+                    self.uc.show_warn("There are no errors in file " + os.path.basename(debug_file) + ".\nIs its format correct?")
                     return False     
-                QApplication.restoreOverrideCursor() 
         except UnicodeDecodeError:
-             # non-text dat    
+             # non-text dat:    
             self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
             return False
  
     def import_other_issues_files(self):
             dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
             ok = dlg_issues_files.exec_()
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
             if ok:
                 if dlg_issues_files.files:
                     if "Depressed" in dlg_issues_files.files:
@@ -334,20 +386,29 @@ class IssuesDialog(qtBaseClass, uiDialog):
 
 
     def populate_elements_cbo(self):
+
         self.elements_cbo.clear()
         self.elements_cbo.addItem(" ")
         for x in self.errors:
             if self.elements_cbo.findText(x[0].strip()) == -1:
                 self.elements_cbo.addItem(x[0].strip())
-        self.elements_cbo.model().sort(0)
+#         self.elements_cbo.model().sort(0)
+
+
+#         self.uc.clear_bar_messages()
+#         QApplication.restoreOverrideCursor()
+        
                 
     def populate_errors_cbo(self):
+#         QApplication.setOverrideCursor(Qt.WaitCursor) 
         self.errors_cbo.clear()
         self.errors_cbo.addItem(" ")
         for x in self.errors:
             if self.errors_cbo.findText(x[1].strip()) == -1:
                 self.errors_cbo.addItem(x[1].strip())
-        self.errors_cbo.model().sort(0)        
+        self.errors_cbo.model().sort(0) 
+        
+#         QApplication.restoreOverrideCursor()       
                 
     def codes_cbo_activated(self): 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -489,6 +550,31 @@ class IssuesDialog(qtBaseClass, uiDialog):
                     self.description_tblw.setItem(rowPosition , 2, itm) 
             self.elements_cbo.setCurrentIndex(0)
             self.issues_codes_cbo.setCurrentIndex(0)
+
+    def load_next_combo(self):
+        self.previous_grid_issues_btn.setEnabled(True) 
+        self.elements_cbo.setCurrentIndex(self.elements_cbo.count() - 1)
+        last =  self.elements_cbo.currentText()
+        row = [y[0] for y in self.levee_rows].index(int(last))
+        if len(self.levee_rows) > row:
+            self.elements_cbo.clear()
+            for i in range (row  + 1, row  + 1 + self.n_levees):
+                if i ==  len(self.levee_rows):
+                   self.next_grid_issues_btn.setEnabled(False)     
+                   break
+                self.elements_cbo.addItem(str(self.levee_rows[i][0]))             
+         
+    def load_previous_combo(self):
+        self.next_grid_issues_btn.setEnabled(True)
+        self.elements_cbo.setCurrentIndex(0)
+        first =  self.elements_cbo.currentText()
+        row = [y[0] for y in self.levee_rows].index(int(first))
+        self.elements_cbo.clear()
+        for i in range (row - self.n_levees, row ):
+            self.elements_cbo.addItem(str(self.levee_rows[i][0])) 
+        if row - self.n_levees == 0:   
+               self.previous_grid_issues_btn.setEnabled(False)   
+
             
     def find_cell_clicked(self):
         cell = self.elements_cbo.currentText()
@@ -496,6 +582,7 @@ class IssuesDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try: 
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
             grid = self.lyrs.data['grid']['qlyr']
             if grid is not None:
                 if grid:
@@ -521,9 +608,11 @@ class IssuesDialog(qtBaseClass, uiDialog):
                         else:
                              self.lyrs.clear_rubber()
         except ValueError:
-            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
+            self.uc.bar_warn('Cell ' + str(cell) + ' is not valid.')
             self.lyrs.clear_rubber()    
-            pass  
+            pass 
+        finally:
+            QApplication.restoreOverrideCursor()   
             
             
     def description_tblw_cell_clicked(self, row, column):
@@ -532,17 +621,21 @@ class IssuesDialog(qtBaseClass, uiDialog):
  
     def zoom_in(self):
         if self.currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)  
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface,  0.4)
             self.update_extent()
+            QApplication.restoreOverrideCursor()    
             
     def zoom_out(self):
         if self.currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)  
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)        
             zoom(self.iface,  -0.4) 
-            self.update_extent()  
+            self.update_extent() 
+            QApplication.restoreOverrideCursor()     
                 
     def update_extent(self):  
         self.ext = self.iface.mapCanvas().extent() 
@@ -558,15 +651,13 @@ class IssuesDialog(qtBaseClass, uiDialog):
             f = QgsFields()
             for field in fields:
                 f.append(QgsField(field[0], QVariant.Int if field[1] == 'I' else QVariant.Double if field[1] == 'D'  else QVariant.String))
-
-#                 f.append(QgsField("min_elev", QVariant.Double))
             
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             if writer.hasError() != QgsVectorFileWriter.NoError:
-                self.uc.bar_error("Error when creating shapefile: " + shapefile)
+                self.uc.bar_error("ERROR 201919.0451: Error when creating shapefile: " + shapefile)
             
             # add features:
             for feat in features:
@@ -578,7 +669,6 @@ class IssuesDialog(qtBaseClass, uiDialog):
                    non_coord_feats.append( int(feat[i]) if fields[i-2][1] == 'I' else float(feat[i]) if fields[i-2][1] == 'D' else feat[i])
                 
                 fet.setAttributes(non_coord_feats)
-#                 fet.setAttributes([int(feat[2]), float(feat[3])])
                 writer.addFeature(fet)
             
             # delete the writer to flush features to disk
@@ -648,9 +738,9 @@ class IssuesFiles(qtBaseClass, uiDialog):
             self.files.append('Rim')
 
 uiDialog, qtBaseClass = load_ui('conflicts')
-class ConflictsDialog(qtBaseClass, uiDialog):
+class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, con, iface, lyrs, numErrors, issue1, issue2):
+    def __init__(self, con, iface, lyrs, numErrors = 1000000, issue1 = "All", issue2 = "All"):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -676,7 +766,7 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         self.component2_cbo.activated.connect(self.component2_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)    
         self.elements_cbo.activated.connect(self.elements_cbo_activated)        
-#         self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.copy_btn.clicked.connect(self.copy_to_clipboard)        
         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
         self.zoom_in_btn.clicked.connect(self.zoom_in)
@@ -687,8 +777,8 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         self.description_tblw.resizeRowsToContents()
         
         self.populate_issues()
-#         self.populate_elements_cbo()
-#         self.populate_errors_cbo()
+        self.populate_elements_cbo()
+        self.populate_errors_cbo()
         self.errors_cbo.setCurrentIndex(0)
         self.errors_cbo_activated()
         
@@ -712,357 +802,6 @@ class ConflictsDialog(qtBaseClass, uiDialog):
 
     def populate_issues(self):
    
-# TODO: review this!!
-#         repeats = self.conflict_outfall_partialARF()
-#         if repeats:
-#             for r in repeats:
-#                 self.errors.append([str(r), "Storm Drain Outfalls", "Partial ARF", "Storm Drain Outfalls(s) and partial ARF in same cell"])         
-#  
-#         repeats = self.conflict_inlet_partialARF()
-#         if repeats:
-#             for r in repeats:
-#                 self.errors.append([str(r), "Storm Drain Inlets", "Partial ARF", "Storm Drain Inlets(s) and partial ARF in same cell"])         
-
-#....................................................................................    
-#         topN = self.numErrors    
-# 
-#         inflow_cells = self.get_n_cells("inflow_cells","grid_fid", topN)
-#         outflow_cells = self.get_n_cells("outflow_cells", "grid_fid",  topN)
-#         reduction_cells = self.get_n_cells("blocked_cells", "grid_fid", topN)
-#         hyd_struct_in_cells = self.get_n_cells("struct", "inflonod", topN)
-#         hyd_struct_out_cells = self.get_n_cells("struct", "outflonod", topN)        
-#         chennels_left_cells = self.get_n_cells("chan_elems", "fid", topN)
-#         channels_right_cells = self.get_n_cells("chan_elems", "rbankgrid", topN)
-#         levees_cells = self.get_n_cells("levee_data", "grid_fid", topN)
-#         mult_channels_cells = self.get_n_cells("mult_cells", "grid_fid", topN)
-#         storm_inlets_cells = self.get_n_cells("swmmflo", "swmm_jt", topN)
-#         storm_outfalls_cells = self.get_n_cells("swmmoutf", "grid_fid", topN)
-#         street_cells = self.get_n_cells("street_seg", "igridn", topN)
-# 
-#     # Inflow conflicts:
-#         sql = '''SELECT grid_fid FROM inflow_cells 
-#                 WHERE grid_fid IN 
-#                 (
-#                     SELECT grid_fid
-#                     FROM inflow_cells
-#                     INTERSECT
-#                     SELECT grid_fid
-#                     FROM outflow_cells
-#                 )'''    
-#         rows = self.gutils.execute(sql).fetchall() 
-#         
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Inflows" , inflow_cells, 
-#                       "2 or more inflows in same cell")   
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Outflows", outflow_cells, 
-#                       "Inflow and outflow in same cell") 
-#         
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Reduction Factors" , reduction_cells, 
-#                       "Inflow and Reduction Factors in same cell (check partial ARF, full ARF, or WRF)")        
-#         
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Inflow and Hyd. Struct in-cell in same cell")        
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Hydr. Structures" , hyd_struct_out_cells, 
-#                       "Inflow and Hyd. Struct out-cell in same cell")        
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Channels (Left Bank)" , chennels_left_cells, 
-#                       "Inflow and Channel Left Bank in same cell")        
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Inflow and Channel Right Bank in same cell")   
-#         
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Levees" , levees_cells,
-#                       "Inflow and levee in same cell")  
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Mult. Channels" , mult_channels_cells,
-#                       "Inflow and Multiple Channels in same cell")  
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Storm Drain Inlets" ,  storm_inlets_cells,
-#                       "Inflow and Storm Drain Inlet in same cell")  
-# 
-#         n_conflits = self.conflict3("Inflows", inflow_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Inflow and Storm Drain Outfall in same cell") 
-#         
-#         
-#     # Outflow conflicts: 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Outflows", outflow_cells, 
-#                       "2 or more outflows in same cell")        
-# 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Reduction Factors" , reduction_cells, 
-#                       "Outflow and Reduction Factors in same cell (check partial ARF, full ARF, or WRF)")  
-#                 
-# #         repeats = self.conflict_outflow_fullARF()
-# #         if repeats:
-# #             for r in repeats:
-# #                 self.errors.append([str(r), "Outflows", "Full ARF", "Outflow(s) and full ARF in same cell"])                   
-# #          
-# #         repeats = self.conflict_outflow_partialARF()
-# #         if repeats:
-# #             for r in repeats:
-# #                 self.errors.append([str(r), "Outflows", "Partial ARF", "Outflow(s) and partial ARF in same cell"])                   
-#         
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Outflow and Hyd. Struct in-cell in same cell")        
-# 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Hydr. Structures" , hyd_struct_out_cells, 
-#                       "Outflow and Hyd. Struct out-cell in same cell")  
-# 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Channels (Left Bank)" , chennels_left_cells, 
-#                       "Outflow and Channel Left Bank in same cell")        
-# 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Outflow and Channel Right Bank in same cell")   
-#                 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Levees" , levees_cells, 
-#                       "Outflow and levee in same cell") 
-#         
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Outflow and Multiple Channels in same cell") 
-# 
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Outflow and Storm Drain Inlet in same cell")  
-#  
-#         n_conflits = self.conflict3("Outflows", outflow_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Outflow and Storm Drain Outfall in same cell") 
-# 
-#         n_conflits = self.conflict3( "Outflows" , outflow_cells, 
-#                        "Streets", street_cells, 
-#                        "Outflow and Street in same cell")
-#         
-#     # Reduction Factors conflicts: 
-#         
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Reduction Factors" , reduction_cells, 
-#                       "Duplicate Reduction Factors in same cell (check partial ARF, full ARF, or WRF)")  
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Reduction Factors and Hyd. Struct in-cell in same cell (not recomended)")            
-#         
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Hydr. Structures" , hyd_struct_out_cells, 
-#                       "Reduction Factors and Hyd. Struc out-cell in same cell (not recomended)")         
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Channels (Left Bank)" , chennels_left_cells, 
-#                       "Reduction Factors and Channel Left Bank in same cell")        
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Reduction Factors and Channel Right Bank in same cell")   
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Levees" , levees_cells, 
-#                       "Reduction Factors and Levees in same cell (not recomended)")         
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Reduction Factors and Multiple Channels in same cell (not recomended)")         
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Reduction Factors and Storm Drain Inlet in same cell (not recomended)") 
-# 
-#         n_conflits = self.conflict3("Reduction Factors", reduction_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Reduction Factors and Storm Drain Outfall in same cell (not recomended)") 
-#         
-#     # Full ARF conflicts: 
-#     # Partial ARF conflicts: 
-#     # WRF conflicts:
-# 
-#     # Hydraulic Structures conflicts:
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells,
-#                       "Hydr. Structures" , hyd_struct_in_cells, 
-#                       "More than one Hyd. Struct in-cell in same element")            
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells,
-#                       "Hydr. Structures" , hyd_struct_out_cells, 
-#                       "Hyd. Struct in-cell and Hyd. Struct out-cell in same element")  
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells,
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Hyd. Struc in-cell and Channel Right Bank in same cell")   
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Levees" , levees_cells, 
-#                       "Hyd. Struc in-cell and Levee in same element (not recomended)")         
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Hyd. Struc in-cell and Multiple Channel in same cell")  
-#                
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Hyd. Struc in-cell and Storm Drain Inlet in same cell")         
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_in_cells, 
-#                       "Streets", street_cells, 
-#                       "Hyd. Struct in-cell and Street in same cell")         
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells,
-#                       "Streets", street_cells, 
-#                       "Hyd. Struct out-cell and Streett in same cell") 
-#         
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells, 
-#                       "Hydr. Structures" , hyd_struct_out_cells, 
-#                       "More than one Hyd. Struc out-cell in same element")         
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells,
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Hyd. Struc out-cell and Channel Right Bank in same cell")   
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells,
-#                       "Levees" , levees_cells,
-#                       "Hyd. Struct out-cell and Levee in same element (not recomended)")           
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells,
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Hyd. Struct out-cell and Multiple Channel in same cell")  
-# 
-#         n_conflits = self.conflict3("Hydr. Structures" , hyd_struct_out_cells,
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Hyd. Struct out-cell and Storm Drain Outlet in same cell (not recomended)")  
-#         
-#         
-#     # Channels conflicts:
-#     
-# 
-#         n_conflits = self.conflict3("Channels (Left Bank)" , chennels_left_cells, 
-#                       "Channels (Left Bank)" , chennels_left_cells, 
-#                       "2 or more Channel Left Banks in same cell")        
-# 
-#         n_conflits = self.conflict3("Channels (Left Bank)" , chennels_left_cells, 
-#                       "Channels (Right Bank)" , channels_right_cells, 
-#                       "Channel Left Bank and Channel Right Bank in same cell")        
-# 
-# 
-#         n_conflits = self.conflict3("Channels (Left Bank)" , chennels_left_cells, 
-#                       "Levees" , levees_cells, 
-#                       "Channel Left Banks and Levee in same cell")        
-# 
-#         n_conflits = self.conflict3("Channels (Left Bank)" , chennels_left_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Channel Left Banks and Multiple Channel in same cell")        
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Channel Right Bank and Storm Drain Inlet same cell") 
-# 
-#         n_conflits = self.conflict3("Channels (Left Bank)" , chennels_left_cells, 
-#                       "Streets", street_cells, 
-#                       "Channel Left Banks and Street in same cell")        
-# 
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                       "Streets", street_cells, 
-#                       "Channel Right Bank and Street in same cell")  
-#         
-#         # TODO: left bank and right bank are in same attribute, this is wrong!!
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                        "Channels (Right Bank)" , channels_right_cells, 
-#                       "2 or more Channel Right Banks in same cell")   
-# 
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                       "Levees" , levees_cells, 
-#                       "Channel Right Bank and Levee in same cell")   
-# 
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Channel Right Bank and Multiple Channel same cell") 
-# 
-#         n_conflits = self.conflict3("Channels (Right Bank)" , channels_right_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Channel Right Bank and Storm Drain Outfall same cell") 
-#               
-#     # Right bank Channels conflicts:
-#     
-#     
-#     # Levee conflicts:
-# 
-#         n_conflits = self.conflict3("Levees" , levees_cells, 
-#                       "Levees" , levees_cells, 
-#                       "2 or more Levees in same cell")  
-# 
-#         n_conflits = self.conflict3("Levees" , levees_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "Levee and Multiple Channels in same cell")  
-# 
-#         n_conflits = self.conflict3("Levees" , levees_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Levee and Strom Drain Inlet in same cell")  
-# 
-#         n_conflits = self.conflict3("Levees" , levees_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Levee and Strom Drain Outfall in same cell")  
-# 
-#     # Multiple Channels conflicts:
-# 
-# 
-#         n_conflits = self.conflict3("Mult. Channels" , mult_channels_cells, 
-#                       "Mult. Channels" , mult_channels_cells, 
-#                       "2 or more Multiple Channels in same cell") 
-# 
-#         n_conflits = self.conflict3("Mult. Channels" , mult_channels_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Multiple Channels and Storm Drain Inlet in same cell")  
-# 
-#         n_conflits = self.conflict3("Mult. Channels" , mult_channels_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Multiple Channels and Strom Drain Outfall in same cell") 
-# 
-#         n_conflits = self.conflict3("Mult. Channels" , mult_channels_cells, 
-#                       "Streets", street_cells, 
-#                       "Multiple Channels and Street in same cell") 
-# 
-#     
-#     # Storm Drain inlets conflicts:
-#         
-#         n_conflits = self.conflict3("Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Storm Drain Inlets" , storm_inlets_cells, 
-#                       "2 or more Storm Drain Inlets in same cell")         
-# 
-#         n_conflits = self.conflict3("Storm Drain Inlets" , storm_inlets_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Storm Drain Inlet and Storm Drain Outfall in same cell")         
-#   
-#            
-#     # Storm Drain outfalls conflicts:
-# 
-#         n_conflits = self.conflict3("Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "Storm Drain Outfalls" , storm_outfalls_cells, 
-#                       "2 or more Storm Drain Outfalls in same cell")            
-#         
-#     # Street conflicts:
-# 
-#         n_conflits = self.conflict3("Streets", street_cells,  
-#                       "Streets", street_cells, 
-#                       "2 or more Streets in same cell") 
-#............................................................        
-        
-        
-                   
-#############################
     # Inflow conflicts:
 
         self.conflict4("Inflows", "inflow_cells", "grid_fid", 
@@ -1117,17 +856,7 @@ class ConflictsDialog(qtBaseClass, uiDialog):
 
         self.conflict4("Outflows", "outflow_cells", "grid_fid", 
                       "Reduction Factors" , "blocked_cells", "grid_fid", 
-                      "Outflow and Reduction Factors in same cell (check partial ARF, full ARF, or WRF)")  
-                
-#         repeats = self.conflict_outflow_fullARF()
-#         if repeats:
-#             for r in repeats:
-#                 self.errors.append([str(r), "Outflows", "Full ARF", "Outflow(s) and full ARF in same cell"])                   
-#          
-#         repeats = self.conflict_outflow_partialARF()
-#         if repeats:
-#             for r in repeats:
-#                 self.errors.append([str(r), "Outflows", "Partial ARF", "Outflow(s) and partial ARF in same cell"])                   
+                      "Outflow and Reduction Factors in same cell (check partial ARF, full ARF, or WRF)")                  
         
         self.conflict4("Outflows", "outflow_cells", "grid_fid", 
                       "Hydr. Structures" , "struct", "inflonod", 
@@ -1375,9 +1104,69 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         
         
         self.setWindowTitle("Errors and Warnings for: " + self.issue1 + " with " + self.issue2)
-#         self.setWindowTitle("Errors and Warnings for: " + self.issue1 + " with " + self.issue2)
         
-#############################                
+        self.create_current_conflicts_layer()
+        
+    def create_current_conflicts_layer(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+        
+        s = QSettings()
+        lastDir = s.value('FLO-2D/lastGdsDir', '')
+        qApp.processEvents() 
+        features = []    
+        for e in self.errors: 
+            pnt = self.gutils.single_centroid(e[0]) 
+            pt = QgsGeometry().fromWkt(pnt).asPoint()
+            features.append([pt.x(), pt.y(), e[0], e[3]])    
+
+        shapefile = lastDir + "/Current Conflicts.shp"
+        name = "Current Conflicts"
+        fields = [ ['X', 'I'], ['Y', 'I'],['cell','I'], ['description','S']]
+        if self.create_current_conflicts_points_shapefile(shapefile, name, fields, features):
+            vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+        QApplication.restoreOverrideCursor()         
+
+
+    def create_current_conflicts_points_shapefile(self, shapefile, name, fields, features):
+        try: 
+            lyr = QgsProject.instance().mapLayersByName(name)
+            
+            if lyr:
+                QgsProject.instance().removeMapLayers([lyr[0].id()])
+
+            # define fields for feature attributes. A QgsFields object is needed
+            f = QgsFields()
+            f.append( QgsField(fields[2][0],  QVariant.Int))
+            f.append( QgsField(fields[3][0],  QVariant.String))
+            
+            mapCanvas = self.iface.mapCanvas()
+            my_crs = mapCanvas.mapSettings().destinationCrs()
+            QgsVectorFileWriter.deleteShapeFile(shapefile)
+            writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
+            if writer.hasError() != QgsVectorFileWriter.NoError:
+                self.uc.bar_error("ERROR 201919.0451: Error when creating shapefile: " + shapefile)
+            
+            # add features:
+            for feat in features:
+                attr = []
+                fet = QgsFeature()
+                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]),float(feat[1]))))
+                non_coord_feats =[]
+                non_coord_feats.append(feat[2])
+                non_coord_feats.append(feat[3])
+                fet.setAttributes(non_coord_feats)
+                writer.addFeature(fet)
+            
+            # delete the writer to flush features to disk
+            del writer
+            return True
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 190519.0442: error while creating layer  " + name  + "!\n", e)     
+            return False  
+        
+                 
     def get_n_cells(self, table, cell, n):
         sqr = "SELECT {0} FROM {1} ORDER BY {0} LIMIT {2}".format(cell, table, n.text())
         return self.gutils.execute(sqr).fetchall()        
@@ -1502,6 +1291,7 @@ class ConflictsDialog(qtBaseClass, uiDialog):
 
     def find_cell(self, cell):
         try: 
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
             grid = self.lyrs.data['grid']['qlyr']
             if grid is not None:
                 if grid:
@@ -1519,9 +1309,11 @@ class ConflictsDialog(qtBaseClass, uiDialog):
                     else:
                             self.lyrs.clear_rubber()              
         except ValueError:
-            self.uc.bar_warn('Cell ' + str(cell) + ' not valid.')
+            self.uc.bar_warn('Cell ' + str(cell) + ' is not valid.')
             self.lyrs.clear_rubber()    
             pass  
+        finally:
+            QApplication.restoreOverrideCursor()
             
             
     def description_tblw_cell_clicked(self, row, column):
@@ -1595,27 +1387,6 @@ class ConflictsDialog(qtBaseClass, uiDialog):
         
         rows1 = self.gutils.execute(sqr1).fetchall()
         rows2 = self.gutils.execute(sqr2).fetchall()        
-        
-        
-#         r1 = self.gutils.execute(sqr1).fetchall()
-#         r2 = self.gutils.execute(sqr2).fetchall()        
-#         
-#         size1 = len(r1)
-#         size2 = len(r2) 
-#         
-#         grid = self.lyrs.data['grid']['qlyr']
-#         for i in range(size1):
-#             feat = next(grid.getFeatures(QgsFeatureRequest(r1[i][0])))
-#             x, y = feat.geometry().centroid().asPoint()  
-#             if x >  self.ext.xMinimum() and x  < self.ext.xMaximum() and y > self.ext.yMinimum() and y < self.ext.yMaximum():
-#                 rows1.append(r1[i][0])     
-#  
-#         for i in range(size2):
-#             feat = next(grid.getFeatures(QgsFeatureRequest(r2[i][0])))
-#             x, y = feat.geometry().centroid().asPoint()  
-#             if x >  self.ext.xMinimum() and x  < self.ext.xMaximum() and y > self.ext.yMinimum() and y < self.ext.yMaximum():
-#                 rows2.append(r2[i][0])         
-
     
         size1 = len(rows1)
         size2 = len(rows2) 

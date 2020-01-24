@@ -16,7 +16,6 @@ from qgis.PyQt.QtWidgets import QFileDialog, QApplication
 from ..flo2d_tools.flopro_tools import FLOPROExecutor
 
 uiDialog, qtBaseClass = load_ui('flopro')
-
 class ExternalProgramFLO2D(qtBaseClass, uiDialog):
 
     def __init__(self, iface, title):

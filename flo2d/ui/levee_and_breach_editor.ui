@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>458</width>
-    <height>457</height>
+    <height>495</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -25,143 +25,177 @@
   <property name="windowTitle">
    <string>FLO-2D Widget</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_17">
+  <layout class="QGridLayout" name="gridLayout_9">
    <item row="0" column="0">
     <widget class="QGroupBox" name="levees_grp">
      <property name="title">
       <string>Levees</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_16">
-      <item row="0" column="0">
-       <spacer name="horizontalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>23</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1" colspan="3">
-       <widget class="QGroupBox" name="levee_global_conditions_grp">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>83</height>
-         </size>
-        </property>
-        <property name="title">
-         <string>Levee global conditions</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-        <layout class="QGridLayout" name="gridLayout_14">
-         <item row="0" column="0">
-          <widget class="QGroupBox" name="groupBoxGlobalFailureMode">
-           <property name="title">
-            <string>Global Failure Mode</string>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_15">
-            <item row="0" column="0">
-             <layout class="QGridLayout" name="gridLayout_8">
-              <item row="0" column="0">
-               <widget class="QRadioButton" name="no_failure_radio">
-                <property name="text">
-                 <string>No failure</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QRadioButton" name="prescribed_failure_radio">
-                <property name="text">
-                 <string>Prescribed Failure</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2">
-               <widget class="QRadioButton" name="breach_failure_radio">
-                <property name="text">
-                 <string>Breach Failure</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <layout class="QGridLayout" name="gridLayout_12">
+     <layout class="QGridLayout" name="gridLayout_19">
+      <item row="0" column="0" colspan="3">
+       <layout class="QGridLayout" name="gridLayout_18">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_17">
+          <item row="0" column="0">
+           <widget class="QToolButton" name="levee_elevation_tool_btn">
+            <property name="toolTip">
+             <string>Levee Elevation Tool</string>
+            </property>
+            <property name="text">
+             <string>Levee Elevation Tool</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/set_levee_elev.svg</normaloff>../img/set_levee_elev.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>78</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <widget class="QGroupBox" name="levee_global_conditions_grp">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>83</height>
+           </size>
+          </property>
+          <property name="title">
+           <string>Levee global conditions</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_16">
            <item row="0" column="0">
-            <widget class="QLabel" name="label_20">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Increment in crest elevation for all levee elements</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QDoubleSpinBox" name="crest_increment_dbox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::UpDownArrows</enum>
-             </property>
-             <property name="decimals">
-              <number>4</number>
-             </property>
-             <property name="maximum">
-              <double>9999999.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>1.000000000000000</double>
-             </property>
-            </widget>
+            <layout class="QGridLayout" name="gridLayout_14">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="groupBoxGlobalFailureMode">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="title">
+                <string>Global Failure Mode</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_15">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gridLayout_8">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SetFixedSize</enum>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QRadioButton" name="no_failure_radio">
+                    <property name="text">
+                     <string>No failure</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QRadioButton" name="prescribed_failure_radio">
+                    <property name="text">
+                     <string>Prescribed Failure</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <widget class="QRadioButton" name="breach_failure_radio">
+                    <property name="text">
+                     <string>Breach Failure</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <layout class="QGridLayout" name="gridLayout_12">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetFixedSize</enum>
+               </property>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_20">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Increment in crest elevation for all levee elements</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="crest_increment_dbox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="buttonSymbols">
+                  <enum>QAbstractSpinBox::UpDownArrows</enum>
+                 </property>
+                 <property name="decimals">
+                  <number>4</number>
+                 </property>
+                 <property name="maximum">
+                  <double>9999999.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>1.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
            </item>
           </layout>
-         </item>
-        </layout>
-       </widget>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="0" column="4">
-       <spacer name="horizontalSpacer_7">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>23</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="1" column="0" colspan="2">
+      <item row="1" column="0">
        <spacer name="horizontalSpacer_8">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -174,14 +208,14 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="2">
+      <item row="1" column="1">
        <widget class="QPushButton" name="show_levees_btn">
         <property name="text">
          <string>Levee Grid Elements</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3" colspan="2">
+      <item row="1" column="2">
        <spacer name="horizontalSpacer_9">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -211,7 +245,7 @@
         <item row="0" column="0">
          <widget class="QToolButton" name="create_breach_location_btn">
           <property name="toolTip">
-           <string>Add breach location</string>
+           <string>Add Breach Location</string>
           </property>
           <property name="text">
            <string/>
@@ -234,7 +268,7 @@
         <item row="0" column="1">
          <widget class="QToolButton" name="save_breach_location_btn">
           <property name="toolTip">
-           <string>Save breach edits</string>
+           <string>Save Breach Edits</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -254,7 +288,7 @@
         <item row="0" column="2">
          <widget class="QToolButton" name="revert_breach_changes_btn">
           <property name="toolTip">
-           <string>Revert breach edits</string>
+           <string>Revert Breach Edits</string>
           </property>
           <property name="text">
            <string>...</string>

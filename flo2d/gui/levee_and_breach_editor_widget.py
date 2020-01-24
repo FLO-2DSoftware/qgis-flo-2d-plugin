@@ -7,6 +7,8 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
+from qgis.PyQt.QtCore import Qt
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -27,6 +29,9 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.grid_lyr = None
+        
+        set_icon(self.levee_elevation_tool_btn, 'set_levee_elev.svg')
+        self.levee_elevation_tool_btn.clicked.connect(self.levee_elevation_tool)        
         
         set_icon(self.create_breach_location_btn, 'mActionCapturePoint.svg')
         self.create_breach_location_btn.clicked.connect(self.create_point_breach)
@@ -91,6 +96,8 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
         self.enable_breach_group()
 
+    def levee_elevation_tool(self):
+        return 
     def create_point_breach(self):
         if not self.lyrs.enter_edit_mode('breach'):
             return
@@ -111,25 +118,14 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty('levee_data'): 
             self.uc.bar_info("There aren't cells with levees defined!") 
             self.uc.show_info("There are no Levees defined in Schematic layers!\n\n" +
-                              "Use the 'Levee elevation tool' in the FLO-2D tool bar to create Schematic levees from User levees Lines.")            
+                              "Use the 'Levee Elevation Tool' in the FLO-2D tool bar to create Schematic levees from User levees Lines.")            
             return   
-
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
         dlg_individual_levees = IndividualLeveesDialog(self.iface, self.lyrs)
+        QApplication.restoreOverrideCursor()
         close = dlg_individual_levees.exec_()
         self.lyrs.clear_rubber()   
-            
-            
-            
-#             try:
-#                 if dlg_individual_levees.save_individual_levee_data():
-#                     self.uc.bar_info('Individual Levee Data saved.')
-#                 else:
-#                      self.uc.bar_info('Saving of Individual Levee Data failed!.')    
-#             except Exception as e:                
-#                 QApplication.restoreOverrideCursor()
-#                 self.uc.show_error("ERROR 240319.0959: assignment of Individual Levee Data failed!"
-#                            +'\n__________________________________________________', e)         
-        
                                        
     def show_global_breach_dialog(self):
         """

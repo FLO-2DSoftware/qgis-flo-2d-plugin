@@ -69,6 +69,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['TIMTEP', {'label': 'Time Series Output Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 2}],
         ['TOUT', {'label': 'Output Data Interval', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': float('inf'), 'dec': 2}],
         ['XARF', {'label': 'Global Area Reduction', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
+        ['IARFBLOCKMOD', {'label': 'Global ARF=1 Revision', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
         ['XCONC', {'label': 'Global Sediment Concentration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.50, 'dec': 2}],
         ['COURANTC', {'label': 'Courant Stability C', 'type': 'r', 'dat': 'TOLER', 'min': 0.2, 'max': 1, 'dec': 1}],
         ['COURANTFP', {'label': 'Courant Stability FP', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],

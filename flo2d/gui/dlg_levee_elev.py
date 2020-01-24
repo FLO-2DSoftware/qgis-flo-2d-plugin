@@ -11,16 +11,15 @@
 import os
 import traceback
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox
+from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox, QApplication
 from .ui_utils import load_ui
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
+from ..gui.dlg_walls_shapefile import WallsShapefile
 
 uiDialog, qtBaseClass = load_ui('levees_elevation')
-
-
 class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, lyrs):
@@ -36,7 +35,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.corrector.setup_layers()
         self.methods = {}
         
-        self.buttonBox.button(QDialogButtonBox.Ok).setText("Create Levees")
+        self.levees_tool_buttonBox.button(QDialogButtonBox.Ok).setText("Create Schematic Layers from User Levees")
         # connections
         self.elev_polygons_chbox.stateChanged.connect(self.polygons_checked)
         self.elev_points_chbox.stateChanged.connect(self.points_checked)
@@ -45,8 +44,9 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         self.enable_sources()
         self.browse_btn.clicked.connect(self.get_xyz_file)
         self.xyz_line.textChanged.connect(self.activate_import)
-        self.import_btn.clicked.connect(self.run_import_z)
-        self.buttonBox.accepted.connect(self.check_sources)
+        self.import_levee_lines_btn.clicked.connect(self.run_import_z)
+        self.create_walls_btn.clicked.connect(self.create_walls)
+        self.levees_tool_buttonBox.accepted.connect(self.check_sources)
 
     def enable_sources(self):
         # Check presence of layers:
@@ -86,9 +86,9 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
 
     def activate_import(self):
         if self.xyz_line.text():
-            self.import_btn.setEnabled(True)
+            self.import_levee_lines_btn.setEnabled(True)
         else:
-            self.import_btn.setDisabled(True)
+            self.import_levee_lines_btn.setDisabled(True)
 
     def run_import_z(self):
         try:
@@ -98,6 +98,19 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn('Could not import 3D levee lines data!')
+
+    def create_walls(self):
+        dlg_walls_shapefile = WallsShapefile(self.con, self.iface, self.lyrs)
+        save = dlg_walls_shapefile.exec_()
+        
+        QApplication.restoreOverrideCursor()
+#         if save:
+#             try:
+#                 if dlg_walls_shapefile.saveSelected:
+#                     self.uc.bar_info("Walls saved.")
+# 
+#             except Exception as e:
+#                 self.uc.bar_error("ERROR while saving walls!.")        
 
     def check_sources(self):
         if not self.methods:

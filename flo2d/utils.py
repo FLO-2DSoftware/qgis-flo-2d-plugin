@@ -73,15 +73,19 @@ def float_or_zero(value):
         return 0
     if type(value) is float:
         return value
+    if type(value) is int:
+        return float(value)  
     if type(value) is str:
         if value == "":
             return 0
         elif value == "None":
             return 0
         else:
-            return float(value)  
+            return float(value) 
+    if not is_number(value): 
+        return 0.0   
     elif value.text() == "":
-        return 0
+        return 0.0
     else:
         return float(value.text())
 

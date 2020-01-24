@@ -13,8 +13,8 @@ from collections import OrderedDict
 from itertools import zip_longest, chain
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.schema2user_tools import remove_features
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
 class RASProject(GeoPackageUtils):
 

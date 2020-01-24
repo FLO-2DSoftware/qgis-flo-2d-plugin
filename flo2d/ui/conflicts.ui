@@ -460,7 +460,7 @@
    <item row="2" column="2" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Close</set>
      </property>
     </widget>
    </item>
@@ -470,17 +470,17 @@
  <connections>
   <connection>
    <sender>buttonBox</sender>
-   <signal>accepted()</signal>
+   <signal>rejected()</signal>
    <receiver>Dialog</receiver>
-   <slot>accept()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>525</x>
-     <y>373</y>
+     <x>715</x>
+     <y>393</y>
     </hint>
     <hint type="destinationlabel">
-     <x>247</x>
-     <y>361</y>
+     <x>312</x>
+     <y>389</y>
     </hint>
    </hints>
   </connection>

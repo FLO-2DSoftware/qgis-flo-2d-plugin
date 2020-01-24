@@ -2196,7 +2196,14 @@ CREATE TABLE "user_levee_lines" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "elev" REAL DEFAULT 0.0,
-    "correction" REAL DEFAULT 0.0
+    "correction" REAL DEFAULT 0.0,
+    "failElev" REAL, --  the maximum elevation of the prescribed levee failure
+    "failDepth" REAL, --  
+    "failDuration" REAL, -- the duration (hr) that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth
+    "failBaseElev" REAL, -- the prescribed final failure elevation
+    "failMaxWidth" REAL, --  the maximum breach width
+    "failVRate" REAL, --  the rate of vertical levee failure
+    "failHRate" REAL --  the rate at which the levee breach widens
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);

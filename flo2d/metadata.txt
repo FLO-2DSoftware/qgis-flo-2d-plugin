@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.8.8
+version=0.9.0
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,9 +9,19 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=<p>
+ <p>0.9.0
+ - Creates Levees from walls shapefile. New dialog to select levee (walls) failure fields from shapefile. Individual Levees dialog includes adjacent cells elevations and zoom in and out to selected levee cell
+ <p>0.8.9
+ - Fixes Storm Drain: [JUNTIONS] group in imported correctly from .INP files
+ - Fixes Structures Editor: Rating selection (Rating Table, Rating Curve, or Culvert Equation) not lost when changed. 'Replacement rating curve' variables not lost when editing and writing HYSTRUCT.DAT
+ - Dialogs: numerical data expanded for larger values and more decimals
+ - New tool to call external Tailings Dam Breach program
+ - Fixes Infiltration: Check boxes in Global Infiltration parameters and their data correctly saved internally and to INFIL.DAT
+ - Help icon in FLO-2D tools opens 3 Manuals: Users Manual, Technical Reference Manual, and Workshop Lessons
+ - Rain editor prompts readings of .DAT files as well of .TXT files in ASCII format
  <p>0.8.8
  - Added export dialog to select components
- - Added gutter globals dialog
+ - Added Gutter Globals dialog
  <p>0.8.7
  - Added Errors/Warnings/Conflicts checks in QGIS prior to running model
  - Run model in debug mode and read error/warnings/conflicts file from QGIS

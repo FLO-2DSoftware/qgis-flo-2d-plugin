@@ -370,7 +370,7 @@ class StormDrainProject(object):
 
     def add_XSECTIONS_to_INP_conduits_dictionary(self):
         try:
-            xsections_cols = ['conduit_name', 'xsections_shape', 'xsections_barrels', 'xsections_max_depth', 'xsections_geom2', 'xsections_geom3', 'xsections_geom4']
+            xsections_cols = ['conduit_name', 'xsections_shape', 'xsections_max_depth', 'xsections_geom2', 'xsections_geom3', 'xsections_geom4', 'xsections_barrels']
             xsections = self.select_this_INP_group('xsections')
             if xsections is not None:
                 for xs in xsections:

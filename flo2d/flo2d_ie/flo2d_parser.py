@@ -58,7 +58,7 @@ class ParseDAT(object):
             ['ICHANNEL', 'MSTREET', 'LEVEE', 'IWRFS', 'IMULTC'],
             ['IRAIN', 'INFIL', 'IEVAP', 'MUD', 'ISED', 'IMODFLOW', 'SWMM'],
             ['IHYDRSTRUCT', 'IFLOODWAY', 'IDEBRV'],
-            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
+            ['AMANN', 'DEPTHDUR', 'XCONC', 'XARF', 'IARFBLOCKMOD', 'FROUDL', 'SHALLOWN', 'ENCROACH'],
             ['NOPRTFP', 'DEPRESSDEPTH'],
             ['NOPRTC'],
             ['ITIMTEP', 'TIMTEP'],

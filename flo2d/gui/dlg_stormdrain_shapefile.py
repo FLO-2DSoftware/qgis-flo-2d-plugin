@@ -15,13 +15,11 @@ from qgis.PyQt.QtWidgets import QApplication, QComboBox
 from qgis.PyQt.QtCore import QSettings
 
 from .ui_utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
+from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
 from ..flo2d_tools.schema2user_tools import remove_features
 
 uiDialog, qtBaseClass = load_ui('stormdrain_shapefile')
-
-
 class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, layers, tables):
@@ -641,13 +639,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit '" + conduit_name +"' !")
                             continue
                         
-                        line = geom.asPolyline()
-                        if line is None:
+                        points = extractPoints(geom)
+                        if points is None:
                             QApplication.restoreOverrideCursor()
                             self.uc.show_warn("WARNING 060319.1702: Conduit " + name + " is faulty!")
                             continue
                                                 
-                        new_geom = QgsGeometry.fromPolylineXY(line)
+                        new_geom = QgsGeometry.fromPolylineXY(points)
                         feat.setGeometry(new_geom)
 
                         feat.setAttribute('conduit_name', conduit_name)

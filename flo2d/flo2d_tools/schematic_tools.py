@@ -153,110 +153,233 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
     else:
         return pts, None
 
+def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
+    try:
+        # octagon nodes to sides map
+        octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
+        levee_dir_pts = {
+            1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
+            2: (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
+            3: (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
+            4: (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
+            5: (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
+            6: (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
+            7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
+            8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
+        }
+        lid_gid_elev = fid_from_grid(gutils, 'user_levee_lines', None, False, False, 'elevation')
+        cell_size = float(gutils.get_cont_par('CELLSIZE'))
+        scale = 0.9
+        # square half
+        sh = cell_size * 0.5 * scale
+        # octagon half
+        oh = sh / 2.414
+        schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
+    
+        del_levees_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
+        ins_levees_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
+                     VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
+        del_levee_failures_sql = '''DELETE FROM levee_failure'''
+        
+        levee_failure_qry = '''SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
+                                FROM levee_failure 
+                                WHERE grid_fid = ?'''
+        
+        ins_levees_failure_sql = '''INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
+                                                          levbase, failwidthmax, failrate, failwidrate)
+                                     VALUES (?,?,?,?,?,?,?,?);'''
+    
+        # create levee segments for distinct levee directions in each grid element
+        grid_levee_seg = {}
+        data = []
+        fail_data = []
+        for gid, gdata in schem_lines.items():
+            
+            elev = gdata['elev']
+            grid_levee_seg[gid] = {}
+            grid_levee_seg[gid]['sides'] = {}
+            grid_levee_seg[gid]['centroid'] = gdata['centroid']
+            for lid, sides in gdata['lines'].items():
+                for side in sides:
+                    if side not in list(grid_levee_seg[gid]['sides'].keys()):
+                        grid_levee_seg[gid]['sides'][side] = lid
+                        ldir = octagon_levee_dirs[side]
+                        c = gdata['centroid']
+                        data.append((
+                            gid,
+                            ldir,
+                            elev,
+                            lid,
+                            'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
+                        ))
+                   
+                        fail_qry = '''SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
+                        FROM user_levee_lines 
+                        WHERE fid = ?'''
+                        fail = gutils.con.execute(fail_qry, (lid,)).fetchone() 
+                        if fail:
+                            if not all(v == 0 for v in fail):
+                                fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+                        
+                        
+                        
+#                     fail = gutils.con.execute(levee_failure_qry, (gid,)).fetchone()    
+#                     if fail:    
+#                         
+                        
+                        
+#                     fail = gutils.con.execute(levee_failure_qry, (gid,)).fetchall()       
+#                     if fail: 
+#                         for f in fail: 
+#                             if (gid, ldir, f[0], f[1],  f[2],  f[3],  f[4],  f[5]) not in fail_data:  
+#                                 fail_data.append( (gid, ldir, f[0], f[1],  f[2],  f[3],  f[4],  f[5]) )
+                    
+        gutils.con.execute(del_levees_sql)
+        gutils.con.executemany(ins_levees_sql, data)
+        
+        gutils.con.execute(del_levee_failures_sql)
+        gutils.con.executemany(ins_levees_failure_sql, fail_data)
+        
+        gutils.con.commit()
+        
+        return len(schem_lines), len(data), len(fail_data)
+    except Exception as e:
+        self.uc.show_error('ERROR 291219.0428: Error while creating schematic levees octagons!.\n', e)
+
+#...............................
+
+# def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
+#     # octagon nodes to sides map
+#     octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
+#     levee_dir_pts = {
+#         1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
+#         2: (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
+#         3: (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
+#         4: (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
+#         5: (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
+#         6: (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
+#         7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
+#         8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
+#     }
+#     lid_gid_elev = fid_from_grid(gutils, 'user_levee_lines', None, False, False, 'elevation')
+#     cell_size = float(gutils.get_cont_par('CELLSIZE'))
+#     scale = 0.9
+#     # square half
+#     sh = cell_size * 0.5 * scale
+#     # octagon half
+#     oh = sh / 2.414
+#     schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
+# 
+#     del_levees_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
+#     ins_levees_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
+#                  VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
+#     del_levee_failures_sql = '''DELETE FROM levee_failure'''
+# 
+#     # create levee segments for distinct levee directions in each grid element
+#     grid_levee_seg = {}
+#     data = []
+#     for gid, gdata in schem_lines.items():
+#         elev = gdata['elev']
+#         grid_levee_seg[gid] = {}
+#         grid_levee_seg[gid]['sides'] = {}
+#         grid_levee_seg[gid]['centroid'] = gdata['centroid']
+#         for lid, sides in gdata['lines'].items():
+#             for side in sides:
+#                 if side not in list(grid_levee_seg[gid]['sides'].keys()):
+#                     grid_levee_seg[gid]['sides'][side] = lid
+#                     ldir = octagon_levee_dirs[side]
+#                     c = gdata['centroid']
+#                     data.append((
+#                         gid,
+#                         ldir,
+#                         elev,
+#                         lid,
+#                         'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
+#                     ))
+#     gutils.con.execute(del_levees_sql)
+#     gutils.con.execute(del_levee_failures_sql)
+#     gutils.con.executemany(ins_levees_sql, data)
+#     gutils.con.commit()
+
+#....................................
+
+
 
 def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
-    schem_lines = {}
-    gids = []
-    nv = QgsVector(0, 1)
-    # for each line crossing a grid element
-    for lid, gid, elev in lid_gid_elev:
-        pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
-        if gid not in gids:
-            schem_lines[gid] = {}
-            schem_lines[gid]['lines'] = {}
-            schem_lines[gid]['centroid'] = c
-            schem_lines[gid]['elev'] = elev
-            gids.append(gid)
-        else:
-            pass
-        sides = []
-        # for each entry and leaving point pair
-        for pts_pair in pts:
-            p1, p2 = pts_pair
-            c_p1 = p1 - c
-            c_p2 = p2 - c
-            a = c_p1.angle(c_p2)
-            a = 2 * pi + a if a < 0 else a
-            # drawing direction (is it clockwise?)
-            cw = a >= pi
-            c_p1_a = c_p1.angle(nv)
-            c_p1_a = 2 * pi + c_p1_a if c_p1_a < 0 else c_p1_a
-            c_p2_a = c_p2.angle(nv)
-            c_p2_a = 2 * pi + c_p2_a if c_p2_a < 0 else c_p2_a
-            # nearest octagon nodes
-            n1 = int(c_p1_a / (pi / 4)) % 8
-            n2 = int(c_p2_a / (pi / 4)) % 8
-            # if entry and leaving octagon node are identical, skip the pair (no levee seg)
-            if n1 == n2:
-                continue
+    try:
+        schem_lines = {}
+        gids = []
+        nv = QgsVector(0, 1)
+        # for each line crossing a grid element
+        for lid, gid, elev in lid_gid_elev:
+            pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
+            if gid not in gids:
+                schem_lines[gid] = {}
+                schem_lines[gid]['lines'] = {}
+                schem_lines[gid]['centroid'] = c
+                schem_lines[gid]['elev'] = elev
+                gids.append(gid)
             else:
                 pass
-            # starting and ending octagon side for current pts pair
-            s1 = (n1 + 1 if cw else n1) % 8
-            s2 = (n2 if cw else n2 + 1) % 8
-            # add sides from s1 to s2 for creating the segments
-            sides.append(s2)
-            while s1 != s2:
-                sides.insert(0, s1)
-                s1 = (s1 + 1 if cw else s1 - 1) % 8
-        sides = set(sides)
-        schem_lines[gid]['lines'][lid] = sides
-    return schem_lines
+            sides = []
+            # for each entry and leaving point pair
+            for pts_pair in pts:
+                p1, p2 = pts_pair
+                c_p1 = p1 - c
+                c_p2 = p2 - c
+                a = c_p1.angle(c_p2)
+                a = 2 * pi + a if a < 0 else a
+                # drawing direction (is it clockwise?)
+                cw = a >= pi
+                c_p1_a = c_p1.angle(nv)
+                c_p1_a = 2 * pi + c_p1_a if c_p1_a < 0 else c_p1_a
+                c_p2_a = c_p2.angle(nv)
+                c_p2_a = 2 * pi + c_p2_a if c_p2_a < 0 else c_p2_a
+                # nearest octagon nodes
+                n1 = int(c_p1_a / (pi / 4)) % 8
+                n2 = int(c_p2_a / (pi / 4)) % 8
+                # if entry and leaving octagon node are identical, skip the pair (no levee seg)
+                if n1 == n2:
+                    continue
+                else:
+                    pass
+                # starting and ending octagon side for current pts pair
+                s1 = (n1 + 1 if cw else n1) % 8
+                s2 = (n2 if cw else n2 + 1) % 8
+                # add sides from s1 to s2 for creating the segments
+                sides.append(s2)
+                while s1 != s2:
+                    sides.insert(0, s1)
+                    s1 = (s1 + 1 if cw else s1 - 1) % 8
+            sides = set(sides)
+            schem_lines[gid]['lines'][lid] = sides
+        return schem_lines
+    except Exception as e:
+        self.uc.show_error('ERROR 030120.0731: Error while creating schematic levees!.\n', e)
 
+        
+def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
+    """
+    Take line from (x1,y1) to (x2,y2) and generate list of cell coordinates
+    covered by the line within the given grid.
+    """
 
-def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
-    # octagon nodes to sides map
-    octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
-    levee_dir_pts = {
-        1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
-        2: (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
-        3: (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
-        4: (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
-        5: (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
-        6: (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
-        7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
-        8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half))
-    }
-    lid_gid_elev = fid_from_grid(gutils, 'user_levee_lines', None, False, False, 'elevation')
-    cell_size = float(gutils.get_cont_par('CELLSIZE'))
-    scale = 0.9
-    # square half
-    sh = cell_size * 0.5 * scale
-    # octagon half
-    oh = sh / 2.414
-    schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
+    def float_to_int_coords(x, y):
+        xt = int(round((x + offset_x) / float(cell_size)))
+        yt = int(round((y + offset_y) / float(cell_size)))
+        return xt, yt
 
-    del_levees_sql = '''DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;'''
-    ins_levees_sql = '''INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
-                 VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));'''
-    del_levee_failures_sql = '''DELETE FROM levee_failure'''
+    def int_to_float_coords(xt, yt):
+        x = xt * cell_size - offset_x
+        y = yt * cell_size - offset_y
+        return x, y
 
-    # create levee segments for distinct levee directions in each grid element
-    grid_levee_seg = {}
-    data = []
-    for gid, gdata in schem_lines.items():
-        elev = gdata['elev']
-        grid_levee_seg[gid] = {}
-        grid_levee_seg[gid]['sides'] = {}
-        grid_levee_seg[gid]['centroid'] = gdata['centroid']
-        for lid, sides in gdata['lines'].items():
-            for side in sides:
-                if side not in list(grid_levee_seg[gid]['sides'].keys()):
-                    grid_levee_seg[gid]['sides'][side] = lid
-                    ldir = octagon_levee_dirs[side]
-                    c = gdata['centroid']
-                    data.append((
-                        gid,
-                        ldir,
-                        elev,
-                        lid,
-                        'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
-                    ))
-    gutils.con.execute(del_levees_sql)
-    gutils.con.execute(del_levee_failures_sql)
-    gutils.con.executemany(ins_levees_sql, data)
-    gutils.con.commit()
+    xt1, yt1 = float_to_int_coords(x1, y1)
+    xt2, yt2 = float_to_int_coords(x2, y2)
 
+    points = bresenham_line(xt1, yt1, xt2, yt2)
+
+    return [int_to_float_coords(x, y) for x, y in points]
 
 # Line schematizing tools
 def bresenham_line(x1, y1, x2, y2):
@@ -305,31 +428,6 @@ def bresenham_line(x1, y1, x2, y2):
         points.reverse()
     return points
 
-
-def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):
-    """
-    Take line from (x1,y1) to (x2,y2) and generate list of cell coordinates
-    covered by the line within the given grid.
-    """
-
-    def float_to_int_coords(x, y):
-        xt = int(round((x + offset_x) / float(cell_size)))
-        yt = int(round((y + offset_y) / float(cell_size)))
-        return xt, yt
-
-    def int_to_float_coords(xt, yt):
-        x = xt * cell_size - offset_x
-        y = yt * cell_size - offset_y
-        return x, y
-
-    xt1, yt1 = float_to_int_coords(x1, y1)
-    xt2, yt2 = float_to_int_coords(x2, y2)
-
-    points = bresenham_line(xt1, yt1, xt2, yt2)
-
-    return [int_to_float_coords(x, y) for x, y in points]
-
-
 def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get_id=False):
     """
     Generator for finding grid centroids coordinates for each schematized line segment.
@@ -358,7 +456,6 @@ def schematize_lines(lines, cell_size, offset_x, offset_y, feats_only=False, get
                 yield line.id(), segment
             else:
                 yield segment
-
 
 def inject_points(line_geom, points):
     """
