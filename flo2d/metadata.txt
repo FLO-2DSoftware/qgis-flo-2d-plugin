@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=<p>
+ <p>0.9.1
+ - Individual levees dialog highlights failure directions with colors.
+   Changes to failure data saved for all modified directions for selected cell.
+   Buttons to load 1000 elements at a time, back and forward.
+ - Errors and warnings dialogs simplified. Faster loading of grid numbers dropdown list.
+ - IARFBLOCKMOD variable included in Control Parameters dialog
  <p>0.9.0
  - Creates Levees from walls shapefile. New dialog to select levee (walls) failure fields from shapefile. Individual Levees dialog includes adjacent cells elevations and zoom in and out to selected levee cell
  <p>0.8.9
