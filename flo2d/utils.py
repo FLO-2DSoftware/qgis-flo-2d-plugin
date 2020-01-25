@@ -69,25 +69,27 @@ def is_true(s):
     return s in ['True', 'true', '1', 'T', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
 
 def float_or_zero(value):
-    if value is None:
-        return 0
-    if type(value) is float:
-        return value
-    if type(value) is int:
-        return float(value)  
-    if type(value) is str:
-        if value == "":
+    try: 
+        if value is None:
             return 0
-        elif value == "None":
-            return 0
+        if type(value) is float:
+            return value
+        if type(value) is int:
+            return float(value)  
+        if type(value) is str:
+            if value == "":
+                return 0
+            elif value == "None":
+                return 0
+            else:
+                return float(value) 
+        if value.text() == "":
+            return 0.0
         else:
-            return float(value) 
-    if not is_number(value): 
-        return 0.0   
-    elif value.text() == "":
+            return float(value.text())
+    except Exception:
         return 0.0
-    else:
-        return float(value.text())
+            
 
 def int_or_zero(value):
 #     if value is None:
