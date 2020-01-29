@@ -238,7 +238,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.rating_types = OrderedDict([
             (0, 'Rating curve'),
             (1, 'Rating table'),
-            (2, 'Culvert equation')
+            (2, 'Culvert equation'),
+            (3, 'Bridge routine')
         ])
         for typ, name in self.rating_types.items():
             self.rating_cbo.addItem(name, typ)
@@ -310,28 +311,33 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         }
 
     def show_table_data(self):
-        if not self.struct:
-            return
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.data_model)
-        self.struct_data = self.struct.get_table_data()
-        self.data_model.clear()
-        if self.struct.icurvtable == '':
-            self.struct.icurvtable = 0
-        self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-        tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
-        for row in self.struct_data:
-            items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
-            self.data_model.appendRow(items)
-        rc = self.data_model.rowCount()
-        if rc < 10:
-            for row in range(rc, 10 + 1):
-                items = [StandardItem(x) for x in ('',) * tab_col_nr]
+        try: 
+            if self.rating_cbo.currentIndex() == 3: # Bridge routine
+                return
+            if not self.struct:
+                return
+            self.tview.undoStack.clear()
+            self.tview.setModel(self.data_model)
+            self.struct_data = self.struct.get_table_data()
+            self.data_model.clear()
+            if self.struct.icurvtable == '':
+                self.struct.icurvtable = 0
+            self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+            tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
+            for row in self.struct_data:
+                items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
                 self.data_model.appendRow(items)
-        self.tview.resizeColumnsToContents()
-        for i in range(self.data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        self.tview.horizontalHeader().setStretchLastSection(True)
+            rc = self.data_model.rowCount()
+            if rc < 10:
+                for row in range(rc, 10 + 1):
+                    items = [StandardItem(x) for x in ('',) * tab_col_nr]
+                    self.data_model.appendRow(items)
+            self.tview.resizeColumnsToContents()
+            for i in range(self.data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            self.tview.horizontalHeader().setStretchLastSection(True)
+        except Exception:
+            self.uc.bar_error("ERROR 290120.0652: can't show table!")
 
     def save_data(self):
         data = []

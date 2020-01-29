@@ -447,8 +447,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         s = QSettings()
-        last_dir = s.value('FLO-2D/lastGpkgDir', '')
-        # last_dir = s.value('FLO-2D/lastSWMMDir', '')
+#         last_dir = s.value('FLO-2D/lastGpkgDir', '')
+        last_dir = s.value('FLO-2D/lastSWMMDir', '')
         swmm_file, __ = QFileDialog.getOpenFileName(
             None,
             'Select SWMM input file to import data',

@@ -344,6 +344,13 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="bridge_variables_btn">
+          <property name="text">
+           <string>Bridge variables</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>

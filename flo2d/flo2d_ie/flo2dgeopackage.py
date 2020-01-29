@@ -1449,12 +1449,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line6 = 'D' + '  {}' * 2 + '\n'
     
             pairs = [
-                [ratc_sql, line2],
-                [repl_ratc_sql, line3],
-                [ratt_sql, line4],
-                [culvert_sql, line5],
-                [storm_sql, line6]
-                ]
+                        [ratc_sql, line2],        # rating curve  ('C' lines)
+                        [repl_ratc_sql, line3],   # rating curve replacement ('R' lines)
+                        [ratt_sql, line4],        # rating table ('T' lines)
+                        [culvert_sql, line5],     # culvert equation ('F' lines)
+                        [storm_sql, line6]        # storm drains ('D' lines)
+                    ]
     
             hystruc_rows = self.execute(hystruct_sql).fetchall()
             if not hystruc_rows:
@@ -1470,24 +1470,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     vals2 = [x if x is not None and x != '' else 0.0 for x in stru[8:11]]
                     vals = vals1 + vals2
                     h.write(line1.format(*vals))
-                    type = stru[4]
+                    type = stru[4] #  0: rating curve
+                                   #  1: rating table
+                                   #  2: culvert equation
+                                   #  3: bridge routine
                     for i, (qry, line) in enumerate(pairs):
-                        if (type == 0 and i == 0) or (type == 1 and i == 2) or (type == 2 and i == 3) or i == 1 or i > 3:
+#                         if (type == 0 and i == 0) or (type == 1 and i == 2) or (type == 2 and i == 3) or i == 1 or i > 3:
+                        if  (    (type == 0 and i == 0) or (type == 0 and i == 1)  # rating curve has 2 lines: 'C' and 'R'
+                              or (type == 1 and i == 2) # rating table
+                              or (type == 2 and i == 3) # culvert equation
+                              or i == 4 # storm drains
+                            ):
                             for row in self.execute(qry, (fid,)):
-                                subvals = [x if x is not None else '' for x in row[2:]]
-                                h.write(line.format(*subvals))                        
-
-#                         for row in self.execute(qry, (fid,)):
-#                             subvals = [x if x is not None else '' for x in row[2:]]
-#                             h.write(line.format(*subvals))
+                                if row:
+                                    subvals = [x if x is not None else '0.0' for x in row[2:]]
+                                    h.write(line.format(*subvals))                        
                     
             return True  
               
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
-            return False
-                                 
+            return False                                
 
     def export_street(self, outdir):
         # check if there is any street defined.

@@ -44,6 +44,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.previous_type = -1
 
         set_icon(self.change_name_btn, 'change_name.svg')
+        set_icon(self.external_inflow_btn, 'external_inflow.svg')
 #         set_icon(self.show_table_btn, 'show_cont_table.svg')
 #         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
 #         set_icon(self.add_rtable_btn, 'add_bc_data.svg')
@@ -75,6 +76,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.initial_depth_dbox.valueChanged.connect(self.initial_depth_dbox_valueChanged)
         self.surcharge_depth_dbox.valueChanged.connect(self.surcharge_depth_dbox_valueChanged)
         self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
+        self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
+#         self.external_inflow_btn.clicked.connect(self.external_inflow_)
         self.inlet_drain_type_cbo.currentIndexChanged.connect(self.inlet_drain_type_cbo_currentIndexChanged)
         self.length_dbox.valueChanged.connect(self.length_dbox_valueChanged)
         self.width_dbox.valueChanged.connect(self.width_dbox_valueChanged)
@@ -149,6 +152,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def ponded_area_dbox_valueChanged(self):
         self.box_valueChanged(self.ponded_area_dbox, 6)
 
+    def external_inflow_checked(self):
+        self.external_inflow_btn.setEnabled(self.external_inflow_chbox.isChecked())
+        
     def inlet_drain_type_cbo_currentIndexChanged(self):
         row = self.inlet_cbo.currentIndex()
         item = QTableWidgetItem()
