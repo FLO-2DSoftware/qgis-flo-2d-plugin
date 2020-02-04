@@ -1018,9 +1018,23 @@ class Layers(object):
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
-            })             
+            }), 
             
+            ('bridge_variables', {
+                'name': '(bridge_variables)',
+                'sgroup': 'Hydraulic Structures Tables',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            })
             
+#             ('bridge_variables', {
+#                 'name': '(bridge_variables)',
+#                 'sgroup': 'Hydraulic Structures Tables',
+#                 'styles': None,
+#                 'attrs_edit_widgets': {},
+#                 'readonly': False
+#             })              
             
             
 #             ('trigger_control', {

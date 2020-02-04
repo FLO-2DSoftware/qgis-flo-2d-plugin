@@ -346,6 +346,9 @@
         </item>
         <item>
          <widget class="QPushButton" name="bridge_variables_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Bridge variables</string>
           </property>

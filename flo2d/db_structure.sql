@@ -1115,6 +1115,37 @@ CREATE TABLE "storm_drains" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('storm_drains', 'aspatial');
 
+CREATE TABLE "bridge_variables" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "IBTYPE"  INTEGER,  -- Type of bridge configuration (see Appendix figures) 
+    "COEFF" REAL, -- Overall bridge discharge coefficient – assigned or computed (default = 0.) 
+    "C_PRIME_USER" REAL, -- Baseline bridge discharge coefficient to be adjusted with detail coefficients 
+    "KF_COEF" REAL, -- Froude number coefficient – assigned or computed (= 0.) 
+    "KWW_COEF" REAL, -- Wingwall coefficient – assigned or computed (= 0.) 
+    "KPHI_COEF" REAL, -- Flow angle with bridge coefficient – assigned or computed (= 0.) 
+    "KY_COEF" REAL, -- Coefficient associated with sloping embankments and vertical abutments (= 0.) 
+    "KX_COEF" REAL, -- Coefficient associated with sloping abutments – assigned or computed (= 0.) 
+    "KJ_COEF" REAL, -- Coefficient associated with pier and piles – assigned or computer (= 0.) 
+    "BOPENING" REAL, -- Bridge opening width (ft or m). See Figure 7. 
+    "BLENGTH" REAL, -- Bridge length from upstream edge to downstream abutment (ft or m) 
+    "BN_VALUE" REAL, -- Bridge reach n-value (typical channel n-value for the bridge cross section) 
+    "UPLENGTH12" REAL, -- Distance to upstream cross section unaffected by bridge backwater (ft or m) 
+    "LOWCHORD" REAL, -- Average elevation of the low chord (ft or m). 
+    "DECKHT" REAL, -- Average elevation of the top of the deck railing for overtop flow (ft or m) 
+    "DECKLENGTH" REAL, -- Deck weir length (ft or m). 
+    "PIERWIDTH" REAL, -- Combined pier or pile cross section width (flow blockage width in ft or m) 
+    "SLUICECOEFADJ" REAL, -- Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0 
+    "ORIFICECOEFADJ" REAL, -- Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0 
+    "COEFFWEIRB" REAL, -- Weir coefficient for flow over the bridge deck. For metric: COEFFWIERB x 0.552 
+    "WINGWALL_ANGLE" REAL, -- Angle the wingwall makes with the abutment perpendicular to the flow 
+    "PHI_ANGLE" REAL, -- Angle the flow makes with the bridge alignment perpendicular to the flow 
+    "LBTOEABUT" REAL, -- Toe elevation of the left abutment (ft or m) 
+    "RBTOEABUT" REAL -- Toe elevation of the right abutment (ft or m)
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('bridge_variables', 'aspatial');
+
+
 
 CREATE VIEW struct_types AS
 SELECT DISTINCT 'C' as type, struct_fid FROM rat_curves

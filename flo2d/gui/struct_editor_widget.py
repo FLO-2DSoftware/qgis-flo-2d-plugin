@@ -18,6 +18,7 @@ from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem
 from math import isnan
+from ..gui.dlg_bridges import BridgesDialog
 
 uiDialog, qtBaseClass = load_ui('struct_editor')
 
@@ -64,7 +65,32 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.ref_head_elev_sbox.editingFinished.connect(self.save_head_ref_elev)
         self.culvert_len_sbox.editingFinished.connect(self.save_culvert_len)
         self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
+        self.bridge_variables_btn.clicked.connect(self.show_bridge)
+ 
+         
+        
+    def show_bridge(self):
+        """
+        Shows bridge dialog.
 
+        """
+#         # See if bridge table is empty:
+#         if self.gutils.is_table_empty('bridge_variables'):
+#             self.uc.show_warn('Bridge table is empty!' + 'There is no data for this structure.')
+#             return
+# 
+#         #  See if current structure is in the bridge table:
+           
+
+        dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
+        dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
+        save = dlg_bridge.exec_()
+        if save:
+            if dlg_bridge.save_bridge_variables():
+                self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
+            else:
+                self.uc.bar_warn('Could not save bridge variables!') 
+        
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         if not self.iface.f2d['con']:
             return
@@ -147,7 +173,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.icurvtable = idx
             self.struct.set_row()
         self.show_table_data()
-
+        self.bridge_variables_btn.setEnabled(self.rating_cbo.currentIndex() == 3) # Bridge routine?
+            
+                
     def twater_changed(self, idx):
         if not self.struct:
             return
@@ -177,6 +205,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.clear_stormdrain_data()
 
     def schematize_struct(self):
+        if not self.gutils.execute('SELECT * FROM user_struct;').fetchone():
+            self.uc.show_warn("WARNING 040220.0728: there are no user structures to schematize!")
+            return            
+        
         qry = 'SELECT * FROM struct WHERE geom IS NOT NULL;'
         exist_struct = self.gutils.execute(qry).fetchone()
         if exist_struct:
@@ -409,3 +441,4 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.data['struct']['qlyr']
         ]
         self.lyrs.repaint_layers()
+

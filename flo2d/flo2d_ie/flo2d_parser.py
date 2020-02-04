@@ -405,7 +405,8 @@ class ParseDAT(object):
         hystruct = self.dat_files['HYSTRUC.DAT']
         par = self.single_parser(hystruct)
         data = []
-        chars = {'S': 10, 'C': 6, 'R': 6, 'T': 4, 'F': 6, 'D': 3}
+        chars = {'S': 10, 'C': 6, 'R': 6, 'T': 4, 'F': 6, 'D': 3, 'B': 15}
+        firstB = True
         for row in par:
             char = row[0]
             self.fix_row_size(row, chars[char])
@@ -413,6 +414,13 @@ class ParseDAT(object):
                 params = defaultdict(list)
                 row.append(params)
                 data.append(row[1:])
+            elif char == 'B':
+                if firstB:
+                    row = row[:10]
+                    firstB = False
+                else:
+                    firstB = True    
+                data[-1][-1][char].append(row[1:])
             else:
                 data[-1][-1][char].append(row[1:])
         return data

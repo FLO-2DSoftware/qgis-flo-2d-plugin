@@ -1225,6 +1225,8 @@ class Structure(GeoPackageUtils):
         self.execute(qry, (self.fid,))
         qry = 'DELETE FROM struct WHERE fid=?'
         self.execute(qry, (self.fid,))
+        qry = 'DELETE FROM bridge_variables WHERE struct_fid=?'
+        self.execute(qry, (self.fid,))        
 
     def get_stormdrain(self):
         qry = 'SELECT stormdmax FROM storm_drains WHERE struct_fid = ?;'
