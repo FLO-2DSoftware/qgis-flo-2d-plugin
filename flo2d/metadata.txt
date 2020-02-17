@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.9.2
+version=0.9.3
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,9 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.9.3
+ - Manning-n values: grid intersection with shapefile polygons.
+   Values averaged according to areas of intersection.
  <p>0.9.2
  - Hydraulic structures include bridges
  <p>0.9.1

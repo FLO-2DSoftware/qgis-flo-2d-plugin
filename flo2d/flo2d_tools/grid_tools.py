@@ -804,8 +804,17 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     else:
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-    gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
-    gutils.con.commit()
+    
+    manning_values = poly2poly_geos(grid, roughness,  None, column_name)
+    
+    for gid, values in manning_values:
+        if values:
+            manning = sum(ma * subarea for ma, subarea in values)
+            manning =  "{0:.4}".format(manning)
+            gutils.execute(qry,(manning, gid),)
+
+#     gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
+#     gutils.con.commit()
 
 
 def modify_elevation(gutils, grid, elev):
