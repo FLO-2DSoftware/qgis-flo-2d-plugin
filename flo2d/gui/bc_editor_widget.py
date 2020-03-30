@@ -493,14 +493,15 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         Create initial plot.
         """
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()
+                
         self.plot.add_item('Original Discharge', [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
         self.plot.add_item('Current Discharge', [self.ot, self.od], col=QColor("#0018d4"))
         self.plot.add_item('Original Mud', [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
         self.plot.add_item('Current Mud', [self.ot, self.om], col=QColor("#884800"))
-#         self.plot.remove_item('Original Discharge')
-#         self.plot.remove_item('Current Discharge')
-#         self.plot.remove_item('Original Mud')
-#         self.plot.remove_item('Current Mud')
+
         
     def update_inflow_plot(self):
         """
@@ -739,6 +740,10 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         Create initial plot for the current outflow type.
         """
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend() 
+        
         self.plot_item_name = None
         if self.outflow.typ in [5, 6, 7, 8]:
             self.plot_item_name = 'Time'

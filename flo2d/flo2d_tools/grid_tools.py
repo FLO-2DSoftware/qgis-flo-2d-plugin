@@ -11,13 +11,13 @@ import os
 import sys
 import math
 import uuid
-from qgis.PyQt.QtWidgets import QMessageBox
+import time
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication 
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsFeedback, NULL
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
-
 
 # GRID classes
 class TINInterpolator(object):
@@ -453,10 +453,14 @@ def build_grid(boundary, cell_size):
     feature = next(biter)
     geom = feature.geometry()
     bbox = geom.boundingBox()
-    xmin = math.floor(bbox.xMinimum())
-    xmax = math.ceil(bbox.xMaximum())
-    ymax = math.ceil(bbox.yMaximum())
-    ymin = math.floor(bbox.yMinimum())
+    xmin = (bbox.xMinimum())
+    xmax = (bbox.xMaximum())
+    ymax = (bbox.yMaximum())
+    ymin = (bbox.yMinimum())    
+#     xmin = math.floor(bbox.xMinimum())
+#     xmax = math.ceil(bbox.xMaximum())
+#     ymax = math.ceil(bbox.yMaximum())
+#     ymin = math.floor(bbox.yMinimum())
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -609,6 +613,42 @@ def poly2poly_geos(base_polygons, polygons, request, *columns):
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)
         yield base_fid, base_parts
+
+def grid_roughness(grid, gridArea, roughness, col):
+    """
+    Generator which calculates grid polygons intersections with Manning layer.
+    """
+    manningFeatures, index = intersection_spatial_index(roughness)
+    gridFeatures = grid.getFeatures() 
+    
+    for gridFeat in gridFeatures:
+        gridGeom = gridFeat.geometry()
+        fids = index.intersects(gridGeom.boundingBox())
+        if not fids:
+            continue
+        gridFid = gridFeat.id()
+#         gridArea = gridGeom.area()
+        gridGeomGeos = gridGeom.constGet() # constant abstract geometry primitive (faster than get() method)
+        gridGeomEngine = QgsGeometry.createGeometryEngine(gridGeomGeos)
+        gridGeomEngine.prepareGeometry() # Prepares the geometry, so that subsequent calls to spatial relation methods are much faster.
+        gridParts = []
+        for fid in fids:
+            f, manningGeomEngine = manningFeatures[fid]
+            inter = manningGeomEngine.intersects(gridGeomGeos)
+            if inter is False:
+                continue
+            if manningGeomEngine.contains(gridGeomGeos):
+                subarea = 1
+            elif gridGeomEngine.contains(f.geometry().constGet()):
+                subarea = manningGeomEngine.area() / gridArea
+            else:
+                intersection_geom = manningGeomEngine.intersection(gridGeomGeos)
+                if not intersection_geom:
+                    continue
+                subarea = intersection_geom.area() / gridArea
+            values = tuple((f[col], subarea))
+            gridParts.append(values)
+        yield gridFid, gridParts
 
 
 def grid_sections(grid, polygons, request, *columns):
@@ -794,10 +834,12 @@ def square_grid(gutils, boundary):
         pass
 
 
-def update_roughness(gutils, grid, roughness, column_name, reset=False):
+def evaluate_roughness(gutils, grid, roughness, column_name, reset=False):
     """
     Updating roughness values inside 'grid' table.
     """
+    start_time = time.time()
+    
     if reset is True:
         default = gutils.get_cont_par('MANNING')
         gutils.execute('UPDATE grid SET n_value=?;', (default,))
@@ -805,18 +847,39 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
     
-    manning_values = poly2poly_geos(grid, roughness,  None, column_name)
-    
+    # Areas of intersection:
+    cellSize = float(gutils.get_cont_par('CELLSIZE'))
+    gridArea = cellSize * cellSize
+    manning_values = grid_roughness(grid, gridArea, roughness,column_name)   
     for gid, values in manning_values:
         if values:
-            manning = sum(ma * subarea for ma, subarea in values)
+            manning = float(sum(ma * subarea for ma, subarea in values))
+#             manning =  manning if type(manning) is float else float(manning)
             manning =  "{0:.4}".format(manning)
             gutils.execute(qry,(manning, gid),)
 
+    # Centroids
 #     gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
 #     gutils.con.commit()
 
+    end_time = time.time()
+    QApplication.restoreOverrideCursor()     
+    debugMsg('\t{0:.3f} seconds'.format(end_time - start_time))
 
+
+# def update_roughness(gutils, grid, roughness, column_name, reset=False):
+#     """
+#     Updating roughness values inside 'grid' table.
+#     """
+#     if reset is True:
+#         default = gutils.get_cont_par('MANNING')
+#         gutils.execute('UPDATE grid SET n_value=?;', (default,))
+#     else:
+#         pass
+#     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+#     gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
+#     gutils.con.commit()
+#     
 def modify_elevation(gutils, grid, elev):
     """
     Modifying elevation values inside 'grid' table.
@@ -1111,6 +1174,268 @@ def highlight_selected_xsection_b(layer, xs_id):
     layer.selectByIds(feat_selection)
 
  
+# def adjacent_grid_elevations(cell):
+#     sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+#     if self.grid_lyr is not None:
+#         if cell != '':
+#             cell = int(cell)
+#             if self.grid_count >= cell and cell > 0:
+#                 self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+#                 xx, yy = self.currentCell.geometry().centroid().asPoint()
+#                 
+#                 elevs = []
+#                 # North cell:
+#                 y = yy  +  cell_size
+#                 x = xx
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     N_elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 else: 
+#                     N_elev = -999
+#                 elevs.append(N_elev)     
+#                                    
+#                 
+#                 # NorthEast cell                      
+#                 y = yy  +  cell_size
+#                 x = xx  +  cell_size
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                    NE_elev  = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 else:
+#                    NE_elev  = -999    
+#                                                              
+#                 # East cell:   
+#                 x = xx +  cell_size
+#                 y = yy
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                     self.E_lbl.setText(str(elev) +  unit)
+#                 else:
+#                     E_elev = -999                      
+#            
+#                 # SouthEast cell:    
+#                 y = yy  -  cell_size
+#                 x = xx  +  cell_size
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 else: 
+#                     SE_elev = -999                          
+#                                                                       
+#                 # South cell: 
+#                 y = yy  -  cell_size
+#                 x = xx
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 else:
+#                     S_elev = -999                              
+# 
+#                 # SouthWest cell:
+#                 y = yy  -  cell_size
+#                 x = xx  -  cell_size
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 else:                
+#                     SW_elev = -999                               
+#                     
+#                  # West cell:
+#                 y = yy
+#                 x = xx  -  cell_size
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                     self.W_lbl.setText(str(elev) +  unit)
+#                 else:               
+#                     W_elev = -999                                                                                                                                                      
+#                     
+#                  # NorthWest cell:
+#                 y = yy  +  cell_size
+#                 x = xx  -  cell_size
+#                 grid = self.gutils.grid_on_point(x, y)
+#                 if grid is not None:
+#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                     self.NW_lbl.setText(str(elev) +  unit)
+#                 else:                 
+#                     NW_elev = -999 
+#                     
+#                 return []           
+# 
+# 
+# 
+#     def get_adjacent_cell_elevation(self, xx, yy, cell_size, unit, dir):
+#         sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+#         elev = - 999
+#         if dir == "N":
+#             # North cell:
+#             y = yy  +  cell_size
+#             x = xx
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.N_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.N_lbl.setText("(boundary)")         
+#               
+#         elif dir == "NE":
+#             # NorthEast cell:
+#             y = yy  +  cell_size
+#             x = xx  +  cell_size
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.NE_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.NE_lbl.setText("(boundary)")                                              
+#             
+#         elif dir == "E":
+#             # East cell:
+#             x = xx +  cell_size
+#             y = yy
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.E_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.E_lbl.setText("(boundary)")   
+#                                                
+#         elif dir == "SE":
+#             # SouthEast cell:
+#             y = yy  -  cell_size
+#             x = xx  +  cell_size
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.SE_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.SE_lbl.setText("(boundary)")               
+#             
+#         elif dir == "S":
+#             # South cell:
+#             y = yy  -  cell_size
+#             x = xx
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.S_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.S_lbl.setText("(boundary)")               
+# 
+#         elif dir == "SW":
+#             # SouthWest cell:
+#             y = yy  -  cell_size
+#             x = xx  -  cell_size
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.SW_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.SW_lbl.setText("(boundary)")                
+# 
+#         elif dir == "W":
+#              # West cell:
+#             y = yy
+#             x = xx  -  cell_size
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.W_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.W_lbl.setText("(boundary)")                 
+#             
+#         elif dir == "NW":
+#              # NorthWest cell:
+#             y = yy  +  cell_size
+#             x = xx  -  cell_size
+#             grid = self.gutils.grid_on_point(x, y)
+#             if grid is not None:
+#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#                 self.NW_lbl.setText(str(elev) +  unit)
+#             else:
+#                 self.NW_lbl.setText("(boundary)")             
+#             
+#         else :   
+#             self.uc.bar_warn('Invalid direction!')              
+#         
+#         return elev
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

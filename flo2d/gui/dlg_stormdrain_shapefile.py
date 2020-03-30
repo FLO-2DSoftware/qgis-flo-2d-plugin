@@ -19,7 +19,7 @@ from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
 from ..flo2d_tools.schema2user_tools import remove_features
 
-uiDialog, qtBaseClass = load_ui('stormdrain_shapefile')
+uiDialog, qtBaseClass = load_ui('storm_drain_shapefile')
 class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface, layers, tables):

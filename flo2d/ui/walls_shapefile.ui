@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>384</width>
-    <height>490</height>
+    <width>396</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,64 +19,78 @@
   <property name="windowTitle">
    <string>Select Wall Fields and Create Levee Lines for Walls</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_16">
+  <layout class="QGridLayout" name="gridLayout_10">
    <item row="0" column="0" colspan="2">
-    <layout class="QGridLayout" name="gridLayout_10">
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_21">
+    <layout class="QGridLayout" name="gridLayout_9">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_31">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;(only visible polyline layers with at least one feature are shown)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>Select wall lines from this polyline layer</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_9">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_31">
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
-         <property name="text">
-          <string>Select wall lines from this polyline layer</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="walls_shapefile_cbo">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>224</width>
-           <height>20</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="walls_shapefile_cbo">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>224</width>
+         <height>20</height>
+        </size>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
    <item row="1" column="0" colspan="2">
+    <widget class="QLabel" name="label_21">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;(only visible polyline layers with at least one feature are shown)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="walls_fields_groupBox">
      <property name="title">
       <string>Wall Fields Selection</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_14">
+     <layout class="QGridLayout" name="gridLayout_11">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
          <widget class="QLabel" name="label_22">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <italic>false</italic>
@@ -110,6 +124,9 @@
           <property name="editable">
            <bool>false</bool>
           </property>
+          <property name="maxVisibleItems">
+           <number>15</number>
+          </property>
          </widget>
         </item>
         <item row="0" column="2">
@@ -131,12 +148,26 @@
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item row="1" column="0">
-       <layout class="QGridLayout" name="gridLayout_8">
-        <item row="0" column="0">
+        <item row="1" column="0">
          <widget class="QLabel" name="label_23">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <italic>false</italic>
@@ -150,7 +181,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="1" column="1">
          <widget class="QgsFieldComboBox" name="name_FieldCbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -170,9 +201,12 @@
           <property name="editable">
            <bool>false</bool>
           </property>
+          <property name="maxVisibleItems">
+           <number>15</number>
+          </property>
          </widget>
         </item>
-        <item row="0" column="2">
+        <item row="1" column="2">
          <widget class="QPushButton" name="clear_name_btn">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -191,12 +225,26 @@
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item row="2" column="0">
-       <layout class="QGridLayout" name="gridLayout_11">
-        <item row="0" column="0">
+        <item row="2" column="0">
          <widget class="QLabel" name="label_24">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>113</width>
+            <height>23</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <italic>false</italic>
@@ -210,7 +258,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="2" column="1">
          <widget class="QgsFieldComboBox" name="correction_FieldCbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -230,9 +278,12 @@
           <property name="editable">
            <bool>false</bool>
           </property>
+          <property name="maxVisibleItems">
+           <number>15</number>
+          </property>
          </widget>
         </item>
-        <item row="0" column="2">
+        <item row="2" column="2">
          <widget class="QPushButton" name="clear_correction_btn">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -253,69 +304,82 @@
         </item>
        </layout>
       </item>
-      <item row="3" column="0">
+      <item row="1" column="0">
        <widget class="QGroupBox" name="failure_groupBox">
         <property name="title">
          <string>Levee Failure</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_12">
+        <layout class="QGridLayout" name="gridLayout_8">
          <item row="0" column="0">
-          <layout class="QGridLayout" name="gridLayout_2">
+          <layout class="QGridLayout" name="gridLayout_17">
            <item row="0" column="0">
-            <widget class="QLabel" name="label_47">
-             <property name="font">
-              <font>
-               <italic>false</italic>
-              </font>
-             </property>
-             <property name="text">
-              <string>Failure Height</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="0" column="0">
+              <widget class="QRadioButton" name="fail_elev_radio">
+               <property name="text">
+                <string>Failure Elevation</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QRadioButton" name="fail_depth_radio">
+               <property name="text">
+                <string>Failure Depth</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item row="0" column="1">
-            <widget class="QgsFieldComboBox" name="failure_height_FieldCbo">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>193</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="inputMethodHints">
-              <set>Qt::ImhNone</set>
-             </property>
-             <property name="editable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="clear_failure_height_btn">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>25</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>x</string>
-             </property>
-            </widget>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0">
+              <widget class="QgsFieldComboBox" name="failure_height_FieldCbo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>193</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="inputMethodHints">
+                <set>Qt::ImhNone</set>
+               </property>
+               <property name="editable">
+                <bool>false</bool>
+               </property>
+               <property name="maxVisibleItems">
+                <number>15</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QPushButton" name="clear_failure_height_btn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>x</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>
@@ -355,6 +419,9 @@
              </property>
              <property name="editable">
               <bool>false</bool>
+             </property>
+             <property name="maxVisibleItems">
+              <number>15</number>
              </property>
             </widget>
            </item>
@@ -410,6 +477,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="maxVisibleItems">
+              <number>15</number>
+             </property>
             </widget>
            </item>
            <item row="0" column="2">
@@ -464,6 +534,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="maxVisibleItems">
+              <number>15</number>
+             </property>
             </widget>
            </item>
            <item row="0" column="2">
@@ -517,6 +590,9 @@
                <width>193</width>
                <height>20</height>
               </size>
+             </property>
+             <property name="maxVisibleItems">
+              <number>15</number>
              </property>
             </widget>
            </item>
@@ -578,6 +654,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="maxVisibleItems">
+              <number>15</number>
+             </property>
             </widget>
            </item>
            <item row="0" column="2">
@@ -604,7 +683,7 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="2" column="0">
        <layout class="QGridLayout" name="gridLayout_13">
         <item row="0" column="0">
          <spacer name="horizontalSpacer">
@@ -631,7 +710,7 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="3" column="0">
     <widget class="QCheckBox" name="levees_append_chbox">
      <property name="text">
       <string>Add these walls to current 
@@ -639,7 +718,7 @@ User Levee Lines layer</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
+   <item row="3" column="1">
     <layout class="QGridLayout" name="gridLayout_15">
      <item row="0" column="0">
       <spacer name="horizontalSpacer_2">
@@ -656,6 +735,9 @@ User Levee Lines layer</string>
      </item>
      <item row="0" column="1">
       <widget class="QDialogButtonBox" name="walls_to_levees_buttonbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="standardButtons">
         <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
        </property>
@@ -681,12 +763,12 @@ User Levee Lines layer</string>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>255</x>
-     <y>362</y>
+     <x>266</x>
+     <y>516</y>
     </hint>
     <hint type="destinationlabel">
-     <x>169</x>
-     <y>369</y>
+     <x>68</x>
+     <y>55</y>
     </hint>
    </hints>
   </connection>
@@ -697,12 +779,12 @@ User Levee Lines layer</string>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>342</x>
-     <y>360</y>
+     <x>350</x>
+     <y>514</y>
     </hint>
     <hint type="destinationlabel">
      <x>313</x>
-     <y>380</y>
+     <y>47</y>
     </hint>
    </hints>
   </connection>

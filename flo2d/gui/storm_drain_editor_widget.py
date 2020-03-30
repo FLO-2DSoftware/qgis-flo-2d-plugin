@@ -79,6 +79,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.grid_lyr = None
         self.user_swmm_nodes_lyr = None
         self.user_swmm_conduits_lyr = None
+        self.swmm_inflows_lyr = None
+        self.swmm_inflow_patterns_lyr = None
+        self.swmm_inflows_time_series_lyr = None
         self.schema_inlets = None
         self.schema_outlets = None
         self.all_schema = []
@@ -150,6 +153,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.grid_lyr = self.lyrs.data['grid']['qlyr']
             self.user_swmm_nodes_lyr = self.lyrs.data['user_swmm_nodes']['qlyr']
             self.user_swmm_conduits_lyr = self.lyrs.data['user_swmm_conduits']['qlyr']
+            self.swmm_inflows_lyr = self.lyrs.data['swmm_inflows']['qlyr']
+            self.swmm_inflow_patterns_lyr = self.lyrs.data['swmm_inflow_patterns']['qlyr']
+            self.swmm_inflows_time_series_lyr = self.lyrs.data['swmm_inflow_time_series']['qlyr']
             self.schema_inlets = self.lyrs.data['swmmflo']['qlyr']
             self.schema_outlets = self.lyrs.data['swmmoutf']['qlyr']
             self.all_schema += [self.schema_inlets, self.schema_outlets]
@@ -491,6 +497,89 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
                 storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
+                
+                # External inflows into table swmm_inflows:
+                storm_drain.create_INP_inflows_dictionary_with_inflows()
+                try:
+                    remove_features(self.swmm_inflows_lyr)
+                    insert_inflows_sql = '''INSERT INTO swmm_inflows 
+                                            (   node_name, 
+                                                constituent, 
+                                                baseline, 
+                                                pattern_name, 
+                                                time_series_name, 
+                                                scale_factor
+                                            ) 
+                                            VALUES (?, ?, ?, ?, ?, ?);'''
+                    for name, values in list(storm_drain.INP_inflows.items()):
+                        constituent = values['constituent'].upper() if 'cosntituent' in values else 'FLOW'
+                        baseline = values['baseline'] if values['baseline'] is not None else 0.0
+                        pattern_name = values['pattern_name'] if 'pattern_name' in values else '?'    
+                        time_series_name = values['time_series_name'] if 'time_series_name' in values else '?'    
+                        scale_factor = values['scale_factor'] if values['scale_factor'] is not None else 0.0
+                        
+                        self.gutils.execute(insert_inflows_sql, (name, constituent, baseline, pattern_name, time_series_name, scale_factor))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!"
+                               +'\n__________________________________________________', e)                         
+
+
+                # Inflows patterns into table swmm_inflow_patterns:
+                storm_drain.create_INP_patterns_list_with_patterns()
+                try:
+                    description = ""
+                    remove_features(self.swmm_inflow_patterns_lyr)
+                    insert_patterns_sql = '''INSERT INTO swmm_inflow_patterns
+                                            (   pattern_name, 
+                                                pattern_description, 
+                                                hour, 
+                                                multiplier
+                                            ) 
+                                            VALUES (?, ?, ?, ?);'''
+                    i = 0
+                    for pattern in storm_drain.INP_patterns: 
+                                              
+                        if pattern[2][1] == 'HOURLY': 
+                            name =  pattern[1][1] 
+                            description = pattern[0][1]
+                            for j in range(1,7):
+                                i += 1
+                                hour =  str(i)
+                                multiplier =  pattern[j+2][1]
+                                self.gutils.execute(insert_patterns_sql, (name, description, hour, multiplier))
+                            if i == 24:
+                                i = 0  
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 280219.1046: Reading storm drain paterns from SWMM input data failed!"
+                               +'\n__________________________________________________', e)     
+
+                # Inflow time series into table swmm_time_series:
+                storm_drain.create_INP_time_series_list_with_time_series()
+                try:
+                    remove_features(self.swmm_inflows_time_series_lyr)
+                    insert_times_sql = '''INSERT INTO swmm_inflow_time_series 
+                                            (   time_series_name, 
+                                                time_series_description, 
+                                                time_series_file
+                                            ) 
+                                            VALUES (?, ?, ?);'''
+                    for time in storm_drain.INP_timeseries:      
+                            name =  time[1][1] 
+                            description = time[0][1]
+                            description2 = description.replace('"','')
+                            file = time[3][1]
+                            file2 = file.replace('"','')
+                            self.gutils.execute(insert_times_sql, (name, description, file2.strip()))
+
+ 
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 290220.1727: Reading storm drain timeseries from SWMM input data failed!"
+                               +'\n__________________________________________________', e)   
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -506,7 +595,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             """
 
-            
             # Transfer data from "storm_drain.INP_dict" to "user_swmm_user" layer:
             remove_features(self.user_swmm_nodes_lyr)
             fields = self.user_swmm_nodes_lyr.fields()
@@ -536,8 +624,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         sd_type = 'O'
                     else:
                         sd_type = 'J'
-#                 else:
-#                     continue
 
                 max_depth = float(values['max_depth']) if 'max_depth' in values else 0
                 junction_invert_elev = float(values['junction_invert_elev']) if 'junction_invert_elev' in values else 0
@@ -724,26 +810,72 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.user_swmm_conduits_lyr.triggerRepaint()
                 self.user_swmm_conduits_lyr.removeSelection()
 
-            QApplication.restoreOverrideCursor()
-
-            if len(new_nodes) == 0 and len(new_conduits) == 0:
-                self.uc.show_info("No nodes or conduits were defined in file\n\n" + swmm_file)
-            else:
-                if conduit_inlets_not_found != "":
-                       self.uc.show_warn("WARNING 060319.1732: The following conduit inlets were not found!\n\n" + conduit_inlets_not_found) 
-
-                if conduit_outlets_not_found != "":
-                       self.uc.show_warn("WARNING 060319.1733: The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
-                                            
-                self.uc.show_info("Importing Storm Drain data finished!\n\n" +
-                                  str(len(new_nodes)) + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer, and\n" +  
-                                  str(len(new_conduits)) + " conduits in the 'Storm Drain Conduits' layer, (see the 'User Layers' group).\n\n"
-                                  "Click the 'Inlets/Junctions', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-                                  "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
-
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error('ERROR 050618.1804: creation of Storm Drain Conduits layer failed!', e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        QApplication.restoreOverrideCursor()
+
+        if len(new_nodes) == 0 and len(new_conduits) == 0:
+            self.uc.show_info("No nodes or conduits were defined in file\n\n" + swmm_file)
+        else:
+            if conduit_inlets_not_found != "":
+                   self.uc.show_warn("WARNING 060319.1732: The following conduit inlets were not found!\n\n" + conduit_inlets_not_found) 
+
+            if conduit_outlets_not_found != "":
+                   self.uc.show_warn("WARNING 060319.1733: The following conduit outlets were not found!\n\n" + conduit_outlets_not_found)   
+                                        
+            self.uc.show_info("Importing Storm Drain data finished!\n\n" +
+                              str(len(new_nodes)) + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer, and\n" +  
+                              str(len(new_conduits)) + " conduits in the 'Storm Drain Conduits' layer, (see the 'User Layers' group).\n\n"
+                              "Click the 'Inlets/Junctions', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                              "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
+
+
 
     def export_storm_drain_INP_file(self):
         """
@@ -1009,7 +1141,126 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
                         return
+                    
+                    # INFLOWS ###################################################
+                    try:
+                        swmm_inp_file.write('\n')
+                        swmm_inp_file.write('\n[INFLOWS]')
+                        swmm_inp_file.write('\n;;                                                 Param    Units    Scale    Baseline Baseline')
+                        swmm_inp_file.write('\n;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern ')
+                        swmm_inp_file.write('\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------')
+
+                        SD_inflows_sql =  '''SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
+                                          FROM swmm_inflows ORDER BY fid;'''
     
+                        line = '\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}'
+                        inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
+                        if not inflows_rows:
+                            pass
+                        else:
+                            for row in inflows_rows:
+                                lrow = [row[0], row[1], row[4] if row[3] is not None else "?", row[1], "1.0", row[5], row[2], row[3] if row[3] is not None else "?"]
+                                swmm_inp_file.write(line.format(*lrow))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
+                        return                    
+                    
+                    
+                    # TIMESERIES ###################################################
+                    try:
+                        swmm_inp_file.write('\n')
+                        swmm_inp_file.write('\n[TIMESERIES]')
+                        swmm_inp_file.write('\n;;Name           Date       Time       Value     ')
+                        swmm_inp_file.write('\n;;-------------- ---------- ---------- ----------')
+
+                        SD_inflow_time_series_sql =  '''SELECT time_series_name, time_series_description, time_series_file
+                                          FROM swmm_inflow_time_series ORDER BY fid;'''
+    
+                        line1 = '\n;{0:16}'
+                        line2 = '\n{0:16} {1:<10} {2:<50}'
+                        time_series_rows = self.gutils.execute(SD_inflow_time_series_sql).fetchall()
+                        if not time_series_rows:
+                            pass
+                        else:
+                            for row in time_series_rows:
+                                lrow1 = [row[1]]
+                                swmm_inp_file.write(line1.format(*lrow1))
+                                lrow2 = [row[0], "FILE" , row[2].strip()]
+                                swmm_inp_file.write(line2.format(*lrow2))
+                                swmm_inp_file.write("\n")
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)
+                        return                    
+                    
+                    # PATTERNS ###################################################
+                    try:
+                        swmm_inp_file.write('\n')
+                        swmm_inp_file.write('\n[PATTERNS]')
+                        swmm_inp_file.write('\n;;Name           Type       Multipliers')
+                        swmm_inp_file.write('\n;;-------------- ---------- -----------')
+
+    
+                        SD_inflow_patterns_sql =  '''SELECT pattern_name, pattern_description, hour, multiplier
+                                          FROM swmm_inflow_patterns ORDER BY fid;'''
+                        
+                        line0 = '\n;{0:16}'
+                        line1 = '\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {6:<10.2f}'
+                        pattern_rows = self.gutils.execute(SD_inflow_patterns_sql).fetchall()
+                        if not pattern_rows:
+                            pass
+                        else:
+                            i = 1
+                            for row in pattern_rows:
+                                # First line:
+                                if i == 1: # Beginning of first line:
+                                    lrow0 = [row[1]]
+                                    swmm_inp_file.write(line0.format(*lrow0)) 
+                                    lrow1 = [row[0], "HOURLY", row[3]]
+                                    i += 1
+                                elif i < 7: # Rest of first line:
+                                    lrow1.append(row[3])
+                                    i += 1
+                                elif i == 7:
+                                    swmm_inp_file.write(line1.format(*lrow1))
+                                    lrow1 = [row[0], "   ", row[3]] 
+                                    i += 1
+                               
+                                # Second line    
+                                elif i > 7 and i < 13:
+                                    lrow1.append(row[3])
+                                    i += 1                                            
+                                elif i == 13:
+                                    swmm_inp_file.write(line1.format(*lrow1))
+                                    lrow1 = [row[0], "   ", row[3]] 
+                                    i += 1
+                                
+                                # Third line:    
+                                elif i > 13 and i < 19:
+                                    lrow1.append(row[3])
+                                    i += 1                                            
+                                elif i == 19:
+                                    swmm_inp_file.write(line1.format(*lrow1))
+                                    lrow1 = [row[0], "   ", row[3]] 
+                                    i += 1
+                                
+                                # Fourth line:                                      
+                                elif i > 19 and i < 24:
+                                    lrow1.append(row[3])
+                                    i += 1                                            
+                                elif i == 24:
+                                    swmm_inp_file.write(line1.format(*lrow1))
+                                    lrow1 = [row[0], "   ", row[3]] 
+                                    i = 1
+
+                                    swmm_inp_file.write("\n")
+                                    
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!", e)
+                        return                     
+
                     # CONTROLS ##################################################
                     items = self.select_this_INP_group(INP_groups, 'controls')
                     swmm_inp_file.write('\n\n[CONTROLS]')
@@ -1018,12 +1269,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write("\n" + line)
                     else:
                         swmm_inp_file.write('\n')
-    
+                        
+                        
+                    # FUTURE GROUPS ##################################################
                     future_groups = ["FILES", "RAINGAGES", "HYDROGRAPHS", "PROFILES", "EVAPORATION", "TEMPERATURE", "SUBCATCHMENTS",
                                       "SUBAREAS", "INFILTRATION", "AQUIFERS", "GROUNDWATER", "SNOWPACKS", "DIVIDERS",
                                       "STORAGE", "PUMPS", "ORIFICES", "WEIRS", "OUTLETS", "TRANSECTS", "POLLUTANTS",
-                                      "LANDUSES", "COVERAGES", "BUILDUP", "WASHOFF", "TREATMENT", "INFLOWS", "DWF",
-                                       "PATTERNS", "RDII", "LOADINGS",  "CURVES", "TIMESERIES"]
+                                      "LANDUSES", "COVERAGES", "BUILDUP", "WASHOFF", "TREATMENT",  "DWF",
+                                      "RDII", "LOADINGS", "CURVES"]
     
                     for group in future_groups:
                         items = self.select_this_INP_group(INP_groups, group.lower())
@@ -1038,7 +1291,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                   str(len(conduits_rows)) +    "\t[CONDUITS]\n" +
                                   str(len(xsections_rows)) +   "\t[XSECTIONS]\n" +
                                   str(len(losses_rows)) +      "\t[LOSSES]\n" +
-                                  str(len(coordinates_rows)) + "\t[COORDINATES]"
+                                  str(len(coordinates_rows)) + "\t[COORDINATES]\n" +
+                                  str(len(inflows_rows)) +     "\t[INFLOWS]\n" +
+                                  str(len(time_series_rows)) + "\t[TIMESERIES]\n" +
+                                  str(int(len(pattern_rows)/24)) + "\t[PATTERNS]"
                                   )
                 if no_in_out_conduits != 0:
                         self.uc.show_warn("WARNING 060319.1734: " + str(no_in_out_conduits) + " conduits have no inlet and/or outlet! The value '?' was assigned to them.\n" + 
@@ -1287,7 +1543,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
 
     def create_plot(self):
+        
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()   
+             
         self.plot_item_name = 'Rating Tables'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 

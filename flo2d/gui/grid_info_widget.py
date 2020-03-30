@@ -119,7 +119,12 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.update_plot()
 
     def create_plot(self):
+        
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()         
+        
         self.plot_item_name = 'Grid realtime rainfall'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
@@ -147,6 +152,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                             x, y = feat.geometry().centroid().asPoint()
                             self.lyrs.zoom_to_all()
                             center_canvas(self.iface, x, y)
+                            self.mannEdit.setText(str(feat['n_value']))
+                            self.elevEdit.setText(str(feat['elevation']))
+                            self.cellEdit.setText(str(sqrt(feat.geometry().area())))
                         else:
                             self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
                             self.lyrs.clear_rubber()                            

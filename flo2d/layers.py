@@ -28,6 +28,7 @@ from qgis.gui import QgsRubberBand
 from .utils import is_number, get_file_path
 from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
 from .user_communication import UserCommunication
+from qgis.PyQt.QtWidgets import QApplication
 
 
 class Layers(object):
@@ -418,8 +419,29 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
-
-
+            ('swmm_inflows', {
+                'name': 'Storm Drain Inflows',
+                'sgroup': 'Storm Drain',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('swmm_inflow_patterns', {
+                'name': 'Storm Drain Inflow Patterns',
+                'sgroup': 'Storm Drain',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            ('swmm_inflow_time_series', {
+                'name': 'Storm Drain Time Series',
+                'sgroup': 'Storm Drain',
+                'styles': None,
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),
+            
+              
           # Infiltration Layers
 
 
@@ -1053,78 +1075,87 @@ class Layers(object):
             self.data[lyr]['qlyr'] = None
 
     def load_layer(self, table, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider='ogr'):
-        # check if the layer is already loaded
-        lyr_exists = self.layer_exists_in_group(uri, group)
-        if not lyr_exists:
-            start_time = time.time()
-            vlayer = QgsVectorLayer(uri, name, provider)
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - create QgsVectorLayer'.format(time.time() - start_time, name))
-            if not vlayer.isValid():
-                msg = 'WARNING 060319.1821: Unable to load layer {}'.format(name)
-                self.uc.show_warn(msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool.")
-                raise Flo2dLayerInvalid(msg)
-
-            start_time = time.time()
-            QgsProject.instance().addMapLayer(vlayer, False)
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
-            # get target tree group
-            start_time = time.time()
-            if subgroup:
-                grp = self.get_subgroup(group, subgroup)
-                if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
-                    grp.setExpanded(False)
+        try:
+            # check if the layer is already loaded
+            lyr_exists = self.layer_exists_in_group(uri, group)
+            if not lyr_exists:
+                start_time = time.time()
+                vlayer = QgsVectorLayer(uri, name, provider)
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - create QgsVectorLayer'.format(time.time() - start_time, name))
+                if not vlayer.isValid():
+                    QApplication.restoreOverrideCursor()
+                    msg = 'WARNING 060319.1821: Unable to load layer {}'.format(name)
+                    self.uc.show_warn(msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool.")
+                    raise Flo2dLayerInvalid(msg)
+    
+                start_time = time.time()
+                QgsProject.instance().addMapLayer(vlayer, False)
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to registry'.format(time.time() - start_time, name))
+                # get target tree group
+                start_time = time.time()
+                if subgroup:
+                    grp = self.get_subgroup(group, subgroup)
+                    if not subgroup == 'User Layers' and not subgroup == 'Schematic Layers':
+                        grp.setExpanded(False)
+                    else:
+                        pass
                 else:
+                    grp = self.get_group(group)
+                # add layer to the tree group
+                tree_lyr = grp.addLayer(vlayer)
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to layer group'.format(time.time() - start_time, name))
+            else:
+                start_time = time.time()
+                tree_lyr = self.get_layer_tree_item(lyr_exists)
+                self.update_layer_extents(tree_lyr.layer())
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - only update extents'.format(time.time() - start_time, name))
+            self.data[table]['qlyr'] = tree_lyr.layer()
+    
+            # set visibility
+            if not lyr_exists:
+                if visible:
+                    vis = Qt.Checked
+                else:
+                    vis = Qt.Unchecked
+                tree_lyr.setItemVisibilityChecked(vis)
+                tree_lyr.setExpanded(False)
+            # preserve layer visibility for existing layers
+    
+            # set style
+            if style:
+                start_time = time.time()
+                style_path = get_file_path("styles", style)
+                if os.path.isfile(style_path):
+                    err_msg, res = self.data[table]['qlyr'].loadNamedStyle(style_path)
+                    if not res:
+                        QApplication.restoreOverrideCursor()
+                        msg = 'Unable to load style for layer {}.\n{}'.format(name, err_msg)
+                        raise Flo2dError(msg)
+                else:
+                    QApplication.restoreOverrideCursor()
+                    raise Flo2dError('Unable to load style file {}'.format(style_path))
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - set style'.format(time.time() - start_time, name))
+    
+            # check if the layer should be 'readonly'
+    
+            if readonly:
+                start_time = time.time()
+                try:
+                    # check if the signal is already connected
+                    self.data[table]['qlyr'].beforeEditingStarted.disconnect(self.warn_readonly)
+                except TypeError:
                     pass
+                self.data[table]['qlyr'].beforeEditingStarted.connect(self.warn_readonly)
+                self.uc.log_info('\t{0:.3f} seconds => loading {1} - set readonly'.format(time.time() - start_time, name))
             else:
-                grp = self.get_group(group)
-            # add layer to the tree group
-            tree_lyr = grp.addLayer(vlayer)
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - add to layer group'.format(time.time() - start_time, name))
-        else:
-            start_time = time.time()
-            tree_lyr = self.get_layer_tree_item(lyr_exists)
-            self.update_layer_extents(tree_lyr.layer())
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - only update extents'.format(time.time() - start_time, name))
-        self.data[table]['qlyr'] = tree_lyr.layer()
-
-        # set visibility
-        if not lyr_exists:
-            if visible:
-                vis = Qt.Checked
-            else:
-                vis = Qt.Unchecked
-            tree_lyr.setItemVisibilityChecked(vis)
-            tree_lyr.setExpanded(False)
-        # preserve layer visibility for existing layers
-
-        # set style
-        if style:
-            start_time = time.time()
-            style_path = get_file_path("styles", style)
-            if os.path.isfile(style_path):
-                err_msg, res = self.data[table]['qlyr'].loadNamedStyle(style_path)
-                if not res:
-                    msg = 'Unable to load style for layer {}.\n{}'.format(name, err_msg)
-                    raise Flo2dError(msg)
-            else:
-                raise Flo2dError('Unable to load style file {}'.format(style_path))
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set style'.format(time.time() - start_time, name))
-
-        # check if the layer should be 'readonly'
-
-        if readonly:
-            start_time = time.time()
-            try:
-                # check if the signal is already connected
-                self.data[table]['qlyr'].beforeEditingStarted.disconnect(self.warn_readonly)
-            except TypeError:
                 pass
-            self.data[table]['qlyr'].beforeEditingStarted.connect(self.warn_readonly)
-            self.uc.log_info('\t{0:.3f} seconds => loading {1} - set readonly'.format(time.time() - start_time, name))
-        else:
-            pass
-
-        return self.data[table]['qlyr'].id()
+    
+            return self.data[table]['qlyr'].id()
+        
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            msg = 'Unable to load  layer {}.'.format(table)
+            self.uc.bar_warn(msg)     
 
     def warn_readonly(self):
         self.uc.bar_warn('All changes to this layer can be overwritten by changes in the User Layer.')
@@ -1428,59 +1459,66 @@ class Layers(object):
             raise Flo2dNotString(msg)
 
     def load_all_layers(self, gutils):
+        
         self.gutils = gutils
         self.clear_legend_selection()
         group = 'FLO-2D_{}'.format(os.path.basename(self.gutils.path).replace('.gpkg', ''))
         self.collapse_all_flo2d_groups()
         self.group = group
-
+        
         for lyr in self.data:
-            start_time = time.time()
-            data = self.data[lyr]
-            if data['styles']:
-                lstyle = data['styles'][0]
-            else:
-                lstyle = None
-            uri = self.gutils.path + '|layername={}'.format(lyr)
             try:
-                lyr_is_on = data['visible']
+                start_time = time.time()
+                data = self.data[lyr]
+                if data['styles']:
+                    lstyle = data['styles'][0]
+                else:
+                    lstyle = None
+                uri = self.gutils.path + '|layername={}'.format(lyr)
+                try:
+                    lyr_is_on = data['visible']
+                except Exception as e:
+                    lyr_is_on = True
+                lyr_id = self.load_layer(
+                    lyr,
+                    uri,
+                    group,
+                    data['name'],
+                    style=lstyle,
+                    subgroup=data['sgroup'],
+                    visible=lyr_is_on,
+                    readonly=data['readonly']
+                )
+                l = self.get_layer_tree_item(lyr_id).layer()
+                if lyr == 'blocked_cells':
+                    self.update_style_blocked(lyr_id)
+                if data['attrs_edit_widgets']:
+                    for attr, widget_data in data['attrs_edit_widgets'].items():
+                        attr_idx = l.fields().lookupField(attr)
+                        l.setEditorWidgetSetup(attr_idx, QgsEditorWidgetSetup(widget_data['name'], widget_data['config']))
+                else:
+                    pass # no attributes edit widgets config
+                # set attributes default value, if any
+                try:
+                    dvs = data['attrs_defaults']
+                except Exception as e:
+                    dvs = None
+                if dvs:
+                    for attr, val in dvs.items():
+                        field = l.fields().field(attr)
+                        field.setDefaultValueDefinition(QgsDefaultValue(val))
+                else:
+                    pass
+                self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
+
             except Exception as e:
-                lyr_is_on = True
-            lyr_id = self.load_layer(
-                lyr,
-                uri,
-                group,
-                data['name'],
-                style=lstyle,
-                subgroup=data['sgroup'],
-                visible=lyr_is_on,
-                readonly=data['readonly']
-            )
-            l = self.get_layer_tree_item(lyr_id).layer()
-            if lyr == 'blocked_cells':
-                self.update_style_blocked(lyr_id)
-            if data['attrs_edit_widgets']:
-                for attr, widget_data in data['attrs_edit_widgets'].items():
-                    attr_idx = l.fields().lookupField(attr)
-                    l.setEditorWidgetSetup(attr_idx, QgsEditorWidgetSetup(widget_data['name'], widget_data['config']))
-            else:
-                pass # no attributes edit widgets config
-            # set attributes default value, if any
-            try:
-                dvs = data['attrs_defaults']
-            except Exception as e:
-                dvs = None
-            if dvs:
-                for attr, val in dvs.items():
-                    field = l.fields().field(attr)
-                    field.setDefaultValueDefinition(QgsDefaultValue(val))
-            else:
-                pass
-            self.uc.log_info('{0:.3f} seconds => total loading {1} '.format(time.time() - start_time, data['name']))
+                QApplication.restoreOverrideCursor()
+                msg = 'Unable to load  layer {}.'.format(lyr)
+                self.uc.bar_warn(msg)      
 
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
-        self.expand_flo2d_subgroup(group, 'User Layers')
+        self.expand_flo2d_subgroup(group, 'User Layers')            
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par('CELLSIZE')

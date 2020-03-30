@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.9.3
+version=0.9.7
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,9 +9,22 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.9.7
+ - Plots: delete previous legend from previous plot
+ - Levees from walls: select elevation or depth fields from walls shapefile.
+ - Storm Drain dialog for external inflows, patterns, and time series.
+ - Warnings and Errors tool: create DEBUG and current issues points layer.
+ - Sampling Manning's values from polygon shapefile: intercept grid with areas and assign average.
+ <p>0.9.6
+ - Grid creation: corrects shifting of grid from computational domain. 
+ <p>0.9.5
+ - Storm Drain: external inflows data read/writen to .INP files. Operations included to define external inflows to storm drain nodes. 
+ <p>0.9.4
+ - DEBUG errors: points layer "DEBUG" created. 
+   DEBUG errors dialog: dropdown list of error numbers enabled with ascending error numbers.
  <p>0.9.3
- - Manning-n values: grid intersection with shapefile polygons.
-   Values averaged according to areas of intersection.
+ - Manning-n values: grid intersection with shapefile polygons:
+   values averaged according to areas of intersection.
  <p>0.9.2
  - Hydraulic structures include bridges
  <p>0.9.1

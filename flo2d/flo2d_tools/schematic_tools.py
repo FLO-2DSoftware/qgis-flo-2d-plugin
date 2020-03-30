@@ -213,14 +213,18 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                             'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
                         ))
                    
-                        fail_qry = '''SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
+                        select_fail_qry = '''SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
                         FROM user_levee_lines 
                         WHERE fid = ?'''
-                        fail = gutils.con.execute(fail_qry, (lid,)).fetchone() 
+                        fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone() 
                         if fail:
                             if not all(v == 0 for v in fail):
-                                fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
-                        
+                                if not fail[0] == 0.0:
+                                    # failElev selected, use it.
+                                    fail_data.append( (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+                                else:
+                                    # failDepth selected, use adjacent cell elevations to calculate fail elevation.
+                                    fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
                         
                         
 #                     fail = gutils.con.execute(levee_failure_qry, (gid,)).fetchone()    

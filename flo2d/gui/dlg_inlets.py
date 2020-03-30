@@ -7,9 +7,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt.QtCore import Qt
+import os
+from qgis.PyQt.QtCore import Qt, QSettings
 from ..flo2dobjects import InletRatingTable
-from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication
+from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication, QFileDialog
 from qgis.PyQt.QtGui import QColor
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
@@ -63,8 +64,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
        
         self.setup_connection()
         
-        
-        
         self.inlet_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_inlet_in_table)
         self.inlets_buttonBox.accepted.connect(self.save_inlets)
         self.save_this_inlet_btn.clicked.connect(self.save_inlets)
@@ -77,7 +76,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.surcharge_depth_dbox.valueChanged.connect(self.surcharge_depth_dbox_valueChanged)
         self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
         self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
-#         self.external_inflow_btn.clicked.connect(self.external_inflow_)
+        self.external_inflow_btn.clicked.connect(self.show_external_inflow_dlg)
         self.inlet_drain_type_cbo.currentIndexChanged.connect(self.inlet_drain_type_cbo_currentIndexChanged)
         self.length_dbox.valueChanged.connect(self.length_dbox_valueChanged)
         self.width_dbox.valueChanged.connect(self.width_dbox_valueChanged)
@@ -153,7 +152,30 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.box_valueChanged(self.ponded_area_dbox, 6)
 
     def external_inflow_checked(self):
-        self.external_inflow_btn.setEnabled(self.external_inflow_chbox.isChecked())
+        # Is there an external inflow for this node?
+        inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"  
+        node = self.inlet_cbo.currentText()                                               
+        inflow = self.gutils.execute(inflow_sql, (node,)).fetchone()        
+        
+        enabled = self.external_inflow_chbox.isChecked()
+        self.external_inflow_btn.setEnabled(enabled)
+        if enabled:
+            if not inflow:
+                insert_sql = '''INSERT INTO swmm_inflows 
+                                (   node_name, 
+                                    constituent, 
+                                    baseline, 
+                                    pattern_name, 
+                                    time_series_name, 
+                                    scale_factor
+                                ) 
+                                VALUES (?, ?, ?, ?, ?, ?);'''
+                self.gutils.execute(insert_sql, (node, "FLOW", 0.0, "", "", 1.0)) 
+        else:
+            if inflow:
+                delete_sql = "DELETE FROM swmm_inflows WHERE node_name = ?"
+                self.gutils.execute(delete_sql, (node,))                
+
         
     def inlet_drain_type_cbo_currentIndexChanged(self):
         row = self.inlet_cbo.currentIndex()
@@ -285,7 +307,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         curbheight,
                         swmm_clogging_factor,
                         swmm_time_for_clogging,
-                        rt_name           
+                        rt_name          
                 FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';'''
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
@@ -385,7 +407,17 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             rt_name = self.inlets_tblw.item(row, 16)
             rt_name = rt_name.text() if  rt_name.text() is not None else ""
             idx = self.rating_table_cbo.findText(rt_name)
-            self.rating_table_cbo.setCurrentIndex(idx)                                                 
+            self.rating_table_cbo.setCurrentIndex(idx) 
+            
+        # Is there an external inflow for this node?
+        inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"                                                  
+        inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+        if inflow:
+            self.external_inflow_chbox.setChecked(True)
+            self.external_inflow_btn.setEnabled(True)
+        else:    
+            self.external_inflow_chbox.setChecked(False)
+            self.external_inflow_btn.setEnabled(False)        
             
     def save_inlets(self):
         """
@@ -750,7 +782,12 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 #         self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
 # 
     def create_plot(self):
+
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()         
+        
         self.plot_item_name = 'Rating Tables'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 # 
@@ -766,6 +803,396 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def update_rating_tables_in_storm_drain_widget(self):
         self.populate_rtables_data()
         pass
+
+    def show_external_inflow_dlg(self):
+        dlg_external_inflow = ExternalInflowsDialog(self.iface, self.inlet_cbo.currentText() ) 
+        dlg_external_inflow.setWindowTitle("Inlet/Junction "  + self.inlet_cbo.currentText())
+        save = dlg_external_inflow.exec_()
+        if save:
+            self.uc.bar_info("Storm Drain external inflow saved for inlet " +  self.inlet_cbo.currentText())
+        
+uiDialog, qtBaseClass = load_ui('storm_drain_external_inflows')
+class ExternalInflowsDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, iface, node):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.node = node
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+        
+        self.swmm_select_pattern_btn.clicked.connect(self.select_inflow_pattern)
+        self.swmm_select_time_series_btn.clicked.connect(self.select_time_series)
+        self.external_inflows_buttonBox.accepted.connect(self.save_external_inflow_variables)
+        
+        self.setup_connection()
+        self.populate_external_inflows()
+         
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            
+    def populate_external_inflows(self):
+        baseline_names_sql = "SELECT DISTINCT pattern_name FROM swmm_inflow_patterns GROUP BY pattern_name"
+        names = self.gutils.execute(baseline_names_sql).fetchall() 
+        if names:
+            for name in names:
+                self.swmm_inflow_pattern_cbo.addItem(name[0])
+            self.swmm_inflow_pattern_cbo.addItem("")    
+
+        time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+        names = self.gutils.execute(time_names_sql).fetchall() 
+        if names:
+            for name in names:
+                self.swmm_inflow_time_series_cbo.addItem(name[0])
+            self.swmm_inflow_time_series_cbo.addItem("") 
+
+        inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
+        inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
+        if inflow:
+            self.swmm_inflow_baseline_dbox.setValue(inflow[1])
+            idx = self.swmm_inflow_pattern_cbo.findText(inflow[2])
+            if idx > 0:
+               self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
+            else:
+                self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!",5)
+                self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)     
+            idx = self.swmm_inflow_time_series_cbo.findText(inflow[3])
+            if idx > 0:
+               self.swmm_inflow_time_series_cbo.setCurrentIndex(idx) 
+            self.swmm_inflow_scale_factor_dbox.setValue(inflow[4])               
+            
+        
+        
+    def select_inflow_pattern(self):
+        pattern_name = self.swmm_inflow_pattern_cbo.currentText()
+        dlg_inflow_pattern = InflowPatternDialog(self.iface, pattern_name)
+        save = dlg_inflow_pattern.exec_()
+
+        pattern_name = dlg_inflow_pattern.get_name()
+        if pattern_name != "":
+            # Reload baseline list and select the one saved:
+            
+            baseline_names_sql = "SELECT DISTINCT pattern_name FROM swmm_inflow_patterns GROUP BY pattern_name"
+            names = self.gutils.execute(baseline_names_sql).fetchall() 
+            if names:
+                self.swmm_inflow_pattern_cbo.clear()
+                for name in names:
+                    self.swmm_inflow_pattern_cbo.addItem(name[0])
+                self.swmm_inflow_pattern_cbo.addItem("")
+                
+                idx = self.swmm_inflow_pattern_cbo.findText(pattern_name)
+                self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)        
+
+    def select_time_series(self):
+        time_series_name = self.swmm_inflow_time_series_cbo.currentText()
+        dlg_inflow_time_series = InflowTimeSeriesDialog(self.iface, time_series_name)
+        save = dlg_inflow_time_series.exec_()
+
+        time_series_name = dlg_inflow_time_series.get_name()
+        if time_series_name != "":
+            # Reload time series list and select the one saved:
+            
+            time_series_names_sql = "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+            names = self.gutils.execute(time_series_names_sql).fetchall() 
+            if names:
+                self.swmm_inflow_time_series_cbo.clear()
+                for name in names:
+                    self.swmm_inflow_time_series_cbo.addItem(name[0])
+                self.swmm_inflow_time_series_cbo.addItem("")
+                
+                idx = self.swmm_inflow_time_series_cbo.findText(time_series_name)
+                self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)        
+            
+    
+    def save_external_inflow_variables(self):
+        """
+        Save changes to external inflows variables.
+        """
+        
+        baseline = self.swmm_inflow_baseline_dbox.value()
+        pattern = self.swmm_inflow_pattern_cbo.currentText()
+        file = self.swmm_inflow_time_series_cbo.currentText()
+        scale = self.swmm_inflow_scale_factor_dbox.value()        
+    
+        exists_sql = "SELECT fid FROM swmm_inflows WHERE node_name = ?;"
+        exists = self.gutils.execute(exists_sql, (self.node,)).fetchone()
+        if exists:
+            update_sql = '''UPDATE swmm_inflows
+                        SET
+                            constituent = ?,
+                            baseline = ?, 
+                            pattern_name = ?, 
+                            time_series_name = ?,
+                            scale_factor = ?
+                        WHERE
+                            node_name = ?;'''
+        
+            self.gutils.execute(update_sql, ("FLOW", baseline, pattern, file, scale, self.node)) 
+        else:
+            insert_sql = '''INSERT INTO swmm_inflows 
+                            (   node_name, 
+                                constituent, 
+                                baseline, 
+                                pattern_name, 
+                                time_series_name, 
+                                scale_factor
+                            ) 
+                            VALUES (?,?,?,?,?,?); '''
+            self.gutils.execute(insert_sql, (self.node, "FLOW", baseline, pattern, file, scale)) 
+          
+uiDialog, qtBaseClass = load_ui('storm_drain_inflow_pattern')
+class InflowPatternDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, iface, pattern_name):
+        qtBaseClass.__init__(self)
+        
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.pattern_name = pattern_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+
+        self.setup_connection()
+        
+        self.pattern_buttonBox.accepted.connect(self.save_pattern)
+        
+        self.populate_pattern_dialog()
+                 
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            
+    def populate_pattern_dialog(self):
+        if self.pattern_name == "":             
+            SIMUL = 24                  
+            self.multipliers_tblw.setRowCount(SIMUL)
+            for i in range(SIMUL):
+                itm = QTableWidgetItem()
+                itm.setData(Qt.EditRole, "1.0")                 
+                self.multipliers_tblw.setItem(i , 0, itm)
+        else:
+            select_sql = "SELECT * FROM swmm_inflow_patterns WHERE pattern_name = ?" 
+            rows = self.gutils.execute(select_sql, (self.pattern_name,)).fetchall()
+            if rows:
+                for i, row in enumerate(rows): 
+                   self.name_le.setText(row[1]) 
+                   self.description_le.setText(row[2])
+                   itm = QTableWidgetItem()
+                   itm.setData(Qt.EditRole, row[4])                 
+                   self.multipliers_tblw.setItem(i , 0, itm)
+            else:
+                self.name_le.setText(self.pattern_name)
+                SIMUL = 24                  
+                self.multipliers_tblw.setRowCount(SIMUL)
+                for i in range(SIMUL):
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, "1.0")                 
+                    self.multipliers_tblw.setItem(i , 0, itm)                       
+
+    def save_pattern(self):
+        if self.name_le.text() == "":
+            self.uc.bar_warn("Pattern name required!",2)
+            self.pattern_name = ""
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Pattern description required!",2) 
+            self.pattern_name = ""
+        else:
+            delete_sql = "DELETE FROM swmm_inflow_patterns WHERE pattern_name = ?"
+            self.gutils.execute(delete_sql, (self.name_le.text(),))
+            insert_sql = "INSERT INTO swmm_inflow_patterns (pattern_name, pattern_description, hour, multiplier) VALUES (?, ?, ? ,?);"
+            for i in range(1, 25):
+                self.gutils.execute(insert_sql,(self.name_le.text(), self.description_le.text(), str(i), self.multipliers_tblw.item(i-1, 0).text(),))
+            
+            self.uc.bar_info("Inflow Pattern " + self.name_le.text() + " saved.",2)
+            self.pattern_name = self.name_le.text()           
+            self.close()  
+                 
+    def get_name(self):
+        return self.pattern_name
+            
+uiDialog, qtBaseClass = load_ui('storm_drain_inflow_time_series')
+class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, iface, time_series_name):
+        qtBaseClass.__init__(self)
+        
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.time_series_name = time_series_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+
+        self.setup_connection()
+        
+        self.time_series_buttonBox.accepted.connect(self.save_time_series)
+        self.select_time_series_btn.clicked.connect(self.select_time_series_file)
+        
+        self.populate_time_series_dialog()
+                 
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            
+ 
+    def populate_time_series_dialog(self):
+        if self.time_series_name == "":
+            pass
+        else:
+            select_sql = "SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?" 
+            rows = self.gutils.execute(select_sql, (self.time_series_name,)).fetchall()
+            if rows:
+                for row in rows: 
+                   self.name_le.setText(row[1]) 
+                   self.description_le.setText(row[2])
+                   self.file_le.setText(row[3])
+            else:
+                self.name_le.setText(self.time_series_name)
+                 
+    def select_time_series_file(self):
+        self.uc.clear_bar_messages()
+ 
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        time_series_file, __ = QFileDialog.getOpenFileName(
+            None,
+            'Select time series data file',
+            directory=last_dir)
+        if not time_series_file:
+            return
+        s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(time_series_file))
+        self.file_le.setText(time_series_file) 
+        
+        # For future use
+        try:
+            pass
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
+            return   
+              
+    def save_time_series(self):  
+        if self.name_le.text() == "":
+           self.uc.bar_warn("Time Series name required!",2)
+           self.time_series_name = ""
+        elif self.description_le.text() == "":
+           self.uc.bar_warn("Time Series description required!",2) 
+           self.time_series_name = ""
+        elif self.file_le.text() == "":
+           self.uc.bar_warn("Data file name required!",2) 
+           return False
+        else:
+            delete_sql = "DELETE FROM swmm_inflow_time_series WHERE time_series_name = ?"
+            self.gutils.execute(delete_sql, (self.name_le.text(),))
+            insert_sql = "INSERT INTO swmm_inflow_time_series (time_series_name, time_series_description, time_series_file) VALUES (?, ?, ?);"
+            self.gutils.execute(insert_sql,(self.name_le.text(), self.description_le.text(), self.file_le.text(),))
+            
+            self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.",2) 
+            self.time_series_name = self.name_le.text()    
+            self.close()  
+  
+    def get_name(self):
+        return self.time_series_name
+       
+
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+           
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         

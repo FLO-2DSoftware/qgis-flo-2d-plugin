@@ -355,15 +355,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         Create initial plot.
         """
         self.plot.clear()
-        
-#         try:
-#             self.plot.legend.scene().removeItem(self.plot.legend)  
-#         except:
-#             pass
-        
-#         self.plot.remove_item('Cross-section')
-        self.plot.plot.addLegend()
-#         self.plot.plot.legend.items = []
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend() 
+
         self.plot.add_item('Cross-section', [[], []], col=QColor("#0018d4"))
         self.plot.plot.setTitle(title='Cross Section - {}'.format(self.xs_cbo.currentText()))
         self.plot.plot.setLabel('bottom', text='Station')

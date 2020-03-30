@@ -211,6 +211,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         Create initial plot.
         """
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()         
+        
         self.plot_item_name = 'Rain timeseries'
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 

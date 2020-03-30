@@ -1119,14 +1119,14 @@ CREATE TABLE "bridge_variables" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "struct_fid" INTEGER, -- structure fid, for which the data are defined
     "IBTYPE"  INTEGER,  -- Type of bridge configuration (see Appendix figures) 
-    "COEFF" REAL, -- Overall bridge discharge coefficient – assigned or computed (default = 0.) 
+    "COEFF" REAL, -- Overall bridge discharge coefficient , assigned or computed (default = 0.) 
     "C_PRIME_USER" REAL, -- Baseline bridge discharge coefficient to be adjusted with detail coefficients 
-    "KF_COEF" REAL, -- Froude number coefficient – assigned or computed (= 0.) 
-    "KWW_COEF" REAL, -- Wingwall coefficient – assigned or computed (= 0.) 
-    "KPHI_COEF" REAL, -- Flow angle with bridge coefficient – assigned or computed (= 0.) 
+    "KF_COEF" REAL, -- Froude number coefficient , assigned or computed (= 0.) 
+    "KWW_COEF" REAL, -- Wingwall coefficient , assigned or computed (= 0.) 
+    "KPHI_COEF" REAL, -- Flow angle with bridge coefficient , assigned or computed (= 0.) 
     "KY_COEF" REAL, -- Coefficient associated with sloping embankments and vertical abutments (= 0.) 
-    "KX_COEF" REAL, -- Coefficient associated with sloping abutments – assigned or computed (= 0.) 
-    "KJ_COEF" REAL, -- Coefficient associated with pier and piles – assigned or computer (= 0.) 
+    "KX_COEF" REAL, -- Coefficient associated with sloping abutments , assigned or computed (= 0.) 
+    "KJ_COEF" REAL, -- Coefficient associated with pier and piles , assigned or computer (= 0.) 
     "BOPENING" REAL, -- Bridge opening width (ft or m). See Figure 7. 
     "BLENGTH" REAL, -- Bridge length from upstream edge to downstream abutment (ft or m) 
     "BN_VALUE" REAL, -- Bridge reach n-value (typical channel n-value for the bridge cross section) 
@@ -1437,15 +1437,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_delete"
         DELETE FROM "mult_cells" WHERE line_fid = OLD."fid";
     END;
 
-
-
 -----------------------------------------------------
-
-
-
-
-
-
 
 -- LEVEE.DAT
 
@@ -1541,6 +1533,8 @@ CREATE TABLE "user_swmm_nodes" (
     "name" TEXT,
     "intype" INTEGER DEFAULT 1, --FLO-2D Drain Type
 
+    "external_inflow" INTEGER DEFAULT 0, --
+    
     --VARIABLES FROM .INP [JUNCTIONS]:   
 	    "junction_invert_elev" REAL DEFAULT 0,
 	    "max_depth" REAL DEFAULT 0,
@@ -1593,6 +1587,37 @@ CREATE TRIGGER "default_swmm_name"
         SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT)) 
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
+
+
+CREATE TABLE "swmm_inflows" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "node_name" TEXT, -- name of inlet in table swmm_user_nodes
+    "constituent" TEXT DEFAULT 'FLOW', -- 'parameter' in [INFLOWS] in .INP file
+    "baseline" REAL DEFAULT 0.0, -- 
+    "pattern_name" TEXT, -- name of pattern in [PATTERNS] in .INP file
+    "time_series_name" TEXT,
+    "scale_factor" REAL DEFAULT 0.0
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_inflows', 'aspatial');
+
+
+CREATE TABLE "swmm_inflow_patterns" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "pattern_name" TEXT, -- 
+    "pattern_description" TEXT, -- 
+    "hour" REAL, -- repeat for each hour for each inlet_fid
+    "multiplier" REAL -- one for each hour
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_inflow_patterns', 'aspatial');
+
+
+CREATE TABLE "swmm_inflow_time_series" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "time_series_name" TEXT, -- 
+    "time_series_description" TEXT, -- 
+    "time_series_file" TEXT -- 
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_inflow_time_series', 'aspatial');
     
 CREATE TABLE "user_swmm_conduits" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -2228,13 +2253,13 @@ CREATE TABLE "user_levee_lines" (
     "name" TEXT,
     "elev" REAL DEFAULT 0.0,
     "correction" REAL DEFAULT 0.0,
-    "failElev" REAL, --  the maximum elevation of the prescribed levee failure
-    "failDepth" REAL, --  
-    "failDuration" REAL, -- the duration (hr) that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth
-    "failBaseElev" REAL, -- the prescribed final failure elevation
-    "failMaxWidth" REAL, --  the maximum breach width
-    "failVRate" REAL, --  the rate of vertical levee failure
-    "failHRate" REAL --  the rate at which the levee breach widens
+    "failElev" REAL  DEFAULT 0.0, --  the maximum elevation of the prescribed levee failure
+    "failDepth" REAL DEFAULT 0.0, --  
+    "failDuration" REAL DEFAULT 0.0, -- the duration (hr) that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth
+    "failBaseElev" REAL DEFAULT 0.0, -- the prescribed final failure elevation
+    "failMaxWidth" REAL DEFAULT 0.0, --  the maximum breach width
+    "failVRate" REAL DEFAULT 0.0, --  the rate of vertical levee failure
+    "failHRate" REAL DEFAULT 0.0 --  the rate at which the levee breach widens
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);

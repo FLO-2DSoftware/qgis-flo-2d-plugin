@@ -112,7 +112,35 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot_channel_data()
 
     def plot_channel_data(self):
-        
+
+#         if not self.chan_seg:
+#             return
+#         self.plot.clear()
+#         sta, lb, rb, bed = [], [], [], []
+#         for st, data in self.chan_seg.profiles.items():
+#             sta.append(data['station'])
+#             lb.append(data['lbank_elev'])
+#             rb.append(data['rbank_elev'])
+#             bed.append(data['bed_elev'])
+# #         self.legend.scene().removeItem(self.legend)
+# 
+# #         if self.plot.plot.scene() is not None:
+# #             objects = list(self.plot.plot.scene().items())
+# #             for obj in objects:
+# #                 if self.plot.plot.scene() is not None:
+# #                     self.plot.plot.scene().removeItem(obj)
+# #         self.plot.clear()
+#         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+#         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+#         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+#         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
+#         self.plot.plot.setLabel('bottom', text='Channel length')
+#         self.plot.plot.setLabel('left', text='Elevation')
+
+
+
+
+#      ...........................................   
         if not self.chan_seg:
             return
         self.plot.clear()
@@ -124,7 +152,35 @@ class ProfileTool(qtBaseClass, uiDialog):
             bed.append(data['bed_elev'])
             water.append(data['water'])
             peak.append(data['peak']+data['bed_elev'])
-        self.plot.clear()
+            
+#         self.plot.items.clear()
+#         legend.scene().removeItem(legend)
+#         self.legend.scene().removeItem(self.legend)
+#         self.plot.plot.legend.scene().removeItem(self.plot.legend)
+  
+#         for i in range(len(self.plot.items)):
+#             self.plot.plot.legend.scene().removeItem(i)               
+#                  
+#         self.plot.plot.legend = None 
+#              
+# #         self.plot.plot.legend.items = []
+  
+#         if self.plot.plot.scene() is not None:
+#             objects = list(self.plot.plot.scene().items())
+#             for obj in objects:
+#                 if self.plot.plot.scene() is not None:
+#                     self.plot.plot.scene().removeItem(obj)
+
+  
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+#             self.plot.remove_item('Bed elevation')
+#             self.plot.remove_item('Left bank')
+#             self.plot.remove_item('Right bank')
+#             self.plot.remove_item('Peak')
+#             self.plot.plot.legend.items.clear()
+
+
         self.plot.plot.addLegend()
         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
@@ -135,7 +191,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.plot.plot.setLabel('bottom', text='Channel length')
         self.plot.plot.setLabel('left', text='Elevation')
         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)        
-        
+# .........................................
         
         
         
@@ -281,7 +337,12 @@ class ProfileTool(qtBaseClass, uiDialog):
                 axis_x.append(station)
                 axis_y.append(val)
         self.plot_data = [axis_x, axis_y]
+        
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()         
+        
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
         self.plot.plot.setLabel('bottom', text='Distance along feature ({0})'.format(self.fid))
@@ -307,7 +368,12 @@ class ProfileTool(qtBaseClass, uiDialog):
             axis_x.append(pos)
             axis_y.append(schema_data)
         self.plot_data = [axis_x, axis_y]
+
         self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()         
+        
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
         self.plot.plot.setLabel('bottom', text='Distance along feature ({0})'.format(self.fid))

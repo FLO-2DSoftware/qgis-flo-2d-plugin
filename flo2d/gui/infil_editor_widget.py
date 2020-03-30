@@ -599,43 +599,48 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         
     def populate_infilglobals(self):
         
+        
         qry = '''SELECT infmethod, abstr, sati, satf, poros, soild, infchan, hydcall, soilall,
                 hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya FROM infil'''
 
-        infil_glob = self.gutils.execute(qry).fetchone()  
-        
-        if infil_glob:
-            self.spin_abstr.setValue(infil_glob[1] if infil_glob[1] is not None else 0.0)
-            self.spin_sati.setValue(infil_glob[2] if infil_glob[2] is not None else 0.7)
-            self.spin_satf.setValue(infil_glob[3] if infil_glob[3] is not None else 1.0)
-            self.spin_poros.setValue(infil_glob[4] if infil_glob[4] is not None else 0.4)
-            self.spin_soild.setValue(infil_glob[5] if infil_glob[5] is not None else 0.0)
-            self.cb_infchan.setChecked(infil_glob[6] if infil_glob[6] is not None else 0)
-            self.spin_hydcall.setValue(infil_glob[7] if infil_glob[7] is not None else 0.1)
-            self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
-            self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.1)
-            self.spin_hydcxx.setValue(infil_glob[10] if infil_glob[10] is not None else 0.1)
-            self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99.0)
-            self.spin_abstr1.setValue(infil_glob[12] if infil_glob[12] is not None else 0.0)
-            self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
-            self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)
-            self.spin_decaya.setValue(infil_glob[15] if infil_glob[15] is not None else 0.0)  
-        else:
-            self.spin_abstr.setValue(0.0)
-            self.spin_sati.setValue(0.7)
-            self.spin_satf.setValue(1.0)
-            self.spin_poros.setValue(0.4)
-            self.spin_soild.setValue(0.0)
-            self.cb_infchan.setChecked(0)
-            self.spin_hydcall.setValue(0.1)
-            self.spin_soilall.setValue(4.3)
-            self.spin_hydcadj.setValue(0.1)
-            self.spin_hydcxx.setValue(0.1)
-            self.spin_scsnall.setValue(99.0)
-            self.spin_abstr1.setValue(0.0)
-            self.spin_fhortoni.setValue(0.0)
-            self.spin_fhortonf.setValue(0.0)
-            self.spin_decaya.setValue(0.0)              
+        try:
+            infil_glob = self.gutils.execute(qry).fetchone()  
+            
+            if infil_glob:
+                self.spin_abstr.setValue(infil_glob[1] if infil_glob[1] is not None else 0.0)
+                self.spin_sati.setValue(infil_glob[2] if infil_glob[2] is not None else 0.7)
+                self.spin_satf.setValue(infil_glob[3] if infil_glob[3] is not None else 1.0)
+                self.spin_poros.setValue(infil_glob[4] if infil_glob[4] is not None else 0.4)
+                self.spin_soild.setValue(infil_glob[5] if infil_glob[5] is not None else 0.0)
+                self.cb_infchan.setChecked(infil_glob[6] if infil_glob[6] is not None else 0)
+                self.spin_hydcall.setValue(infil_glob[7] if infil_glob[7] is not None else 0.1)
+                self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
+                self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.1)
+                self.spin_hydcxx.setValue(infil_glob[10] if infil_glob[10] is not None else 0.1)
+                self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99.0)
+                self.spin_abstr1.setValue(infil_glob[12] if infil_glob[12] is not None else 0.0)
+                self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
+                self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)
+                self.spin_decaya.setValue(infil_glob[15] if infil_glob[15] is not None else 0.0)  
+            else:
+                self.spin_abstr.setValue(0.0)
+                self.spin_sati.setValue(0.7)
+                self.spin_satf.setValue(1.0)
+                self.spin_poros.setValue(0.4)
+                self.spin_soild.setValue(0.0)
+                self.cb_infchan.setChecked(0)
+                self.spin_hydcall.setValue(0.1)
+                self.spin_soilall.setValue(4.3)
+                self.spin_hydcadj.setValue(0.1)
+                self.spin_hydcxx.setValue(0.1)
+                self.spin_scsnall.setValue(99.0)
+                self.spin_abstr1.setValue(0.0)
+                self.spin_fhortoni.setValue(0.0)
+                self.spin_fhortonf.setValue(0.0)
+                self.spin_decaya.setValue(0.0)   
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn('ERROR 280320.1625: load of infiltration globals failed!')                           
             
                     
           

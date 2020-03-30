@@ -645,14 +645,14 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.SW_dbox.installEventFilter(self)
         self.NW_dbox.installEventFilter(self)
         
-        self.N_chbox.installEventFilter(self)
-        self.E_chbox.installEventFilter(self)
-        self.S_chbox.installEventFilter(self)
-        self.W_chbox.installEventFilter(self)
-        self.NE_chbox.installEventFilter(self)
-        self.SE_chbox.installEventFilter(self)
-        self.SW_chbox.installEventFilter(self)
-        self.NW_chbox.installEventFilter(self)        
+#         self.N_chbox.installEventFilter(self)
+#         self.E_chbox.installEventFilter(self)
+#         self.S_chbox.installEventFilter(self)
+#         self.W_chbox.installEventFilter(self)
+#         self.NE_chbox.installEventFilter(self)
+#         self.SE_chbox.installEventFilter(self)
+#         self.SW_chbox.installEventFilter(self)
+#         self.NW_chbox.installEventFilter(self)        
         
         self.levee_failure_grp.installEventFilter(self)
         self.failure_elevation_dbox.installEventFilter(self)
@@ -748,56 +748,56 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             styleSheet = ""
             cell = self.individual_levee_element_cbo.currentText()
             if name == "NW_dbox":
-                t = "North West "
+                t = "North West (8) "
                 styleSheet = "background-color: rgb(255,255,132)"
                 widget.setStyleSheet(styleSheet)
                 self.load_grid_failure(cell, 8)
                 self.previousDirection = 8    
                  
             elif name == "N_dbox":
-                t = "North " 
+                t = "North (1) " 
                 styleSheet = "background-color: rgb(255,187,187)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 1)    
                 self.previousDirection = 1
                                    
             elif name == "NE_dbox":
-                t = "North East " 
+                t = "North East (5) " 
                 styleSheet = "background-color: rgb(250,237,173)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 5)    
                 self.previousDirection = 5
                                    
             elif name  == "E_dbox":
-                t = "East "
+                t = "East (2) "
                 styleSheet = "background-color: rgb(231,244,136)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 2)    
                 self.previousDirection = 2
                                    
             elif name == "SE_dbox":
-                t = "South East "
+                t = "South East (6) "
                 styleSheet = "background-color: rgb(255,179,102)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 6)    
                 self.previousDirection = 6
                                     
             elif name == "S_dbox":
-                t = "South " 
+                t = "South (3) " 
                 styleSheet = "background-color: rgb(217,179,255)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 3)    
                 self.previousDirection = 3
                                    
             elif name == "SW_dbox":
-                t = "South West "
+                t = "South West (7) "
                 styleSheet = "background-color: rgb(180,209,241)"
                 widget.setStyleSheet(styleSheet)    
                 self.load_grid_failure(cell, 7)    
                 self.previousDirection = 7
                                         
             elif name == "W_dbox":
-                t = "West "  
+                t = "West (4) "  
                 styleSheet = "background-color: rgb(193,193,255)"
                 widget.setStyleSheet(styleSheet)      
                 self.load_grid_failure(cell, 4)    
@@ -811,7 +811,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 self.failure_vertical_rate_dbox.setStyleSheet(styleSheet)
                 self.failure_horizontal_rate_dbox.setStyleSheet(styleSheet)
              
-                self.levee_failure_grp.setTitle(t + "Levee failure")
+                self.levee_failure_grp.setTitle(t + " levee failure")
 #                 self.levee_failure_grp.setChecked(True)
                 
             self.previousWidget = name
@@ -979,30 +979,33 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                             xx, yy = self.currentCell.geometry().centroid().asPoint()
                             
                              # North cell:
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "N")
+                            N_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "N")
                             
                             # NorthEast cell:
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "NE")                                
+                            NE_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NE")                                
                                                                                   
                             # East cell:                                
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "E")                                
+                            E_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "E")                                
                                 
                             # SouthEast cell:                                
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "SE")                                
+                            SE_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SE")                                
                                                                                   
                             # South cell:                               
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "S")                                
+                            S_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "S")                                
             
                             # SouthWest cell:
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "SW")                                
+                            SW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SW")                                
                                 
                              # West cell:
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "W")                                                                                                                                                    
+                            W_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "W")                                                                                                                                                    
                                 
                              # NorthWest cell:
-                            self.show_adjecent_elevations(xx, yy, cell_size, unit, "NW")                                 
+                            NW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NW")                                 
                              
-                           
+                            highest_elev = max(N_elev, NE_elev, E_elev, SE_elev, S_elev, SW_elev, W_elev, NW_elev)
+                             
+                            self.uc.show_info("Highest adjacent elevation: " + str(highest_elev))
+                            
                             self.highlight_cell(cell)
                             
                         else:
@@ -1021,9 +1024,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             QApplication.restoreOverrideCursor()       
         
 
-    def show_adjecent_elevations(self, xx, yy, cell_size, unit, dir):
+    def get_adjacent_cell_elevation(self, xx, yy, cell_size, unit, dir):
         sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
-        
+        elev = - 999
         if dir == "N":
             # North cell:
             y = yy  +  cell_size
@@ -1114,7 +1117,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             
         else :   
             self.uc.bar_warn('Invalid direction!')              
-                 
+        
+        return elev
 
     def clear_all_directions(self): 
        self.N_chbox.setChecked(False)

@@ -166,7 +166,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         else:
            
 #             self.populate_elements_cbo()
-#             self.populate_errors_cbo()
+            self.populate_errors_cbo()
     
             self.issues_codes_cbo.setCurrentIndex(1)
             self.loadIssues()
@@ -220,7 +220,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 return False   
             else:  
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
-                qApp.processEvents()    
+                qApp.processEvents() 
+                features = [] 
+                grid = self.lyrs.data['grid']['qlyr']                    
                 s.setValue('FLO-2D/lastDEBUGDir', debug_file)
                 self.debug_directory = os.path.dirname(debug_file)  
 
@@ -233,34 +235,30 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
   
                 seen = set(self.cells)
                 with open(debug_file, 'r') as f1:
-#                     build = next(f1)
                     for line in f1:
                         row = line.split(',') 
                         if len(row) == 3: 
-                            self.errors.append([row[0].strip(), row[1].strip(), row[2].strip()]) 
-#                             self.errors.append([row[0], row[1], row[2]]) 
-# #                             if self.errors_cbo.findText(row[1].strip()) == -1:
-# #                                 self.errors_cbo.addItem(row[1].strip())                              
-# 
-                            if row[0].strip() not in seen:
-#                             if row[0].strip() not in self.cells:
-                                seen.add(row[0].strip())
-                                self.cells.append(int(row[0].strip()))
-                            
+                            cell = row[0].strip()
+                            iCell = int(cell)
+                            if len(grid) >= iCell and iCell > 0:
+                                self.errors.append([cell, row[1].strip(), row[2].strip()]) 
+                                if row[0].strip() not in seen:
+                                    seen.add(cell)
+                                    self.cells.append(iCell)
+                                    feat = next(grid.getFeatures(QgsFeatureRequest(iCell)))
+                                    x, y = feat.geometry().centroid().asPoint()
+                                    features.append( [x, y, iCell, row[2].strip()] ) # x, y, cell, description
+                                    
+                shapefile = self.debug_directory + "/DEBUG.shp"
+                name = "DEBUG"
+                fields = [['cell','I'],  ['description','S']]
+                if self.create_points_shapefile(shapefile, name, fields, features):
+                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
 
-                i = 0   
                 self.cells.sort()                 
                 for cell in self.cells:
                     self.elements_cbo.addItem(str(cell))
-                    
-#                     if i <= self.n_grid_issues:  
-#                         self.elements_cbo.addItem(cell)
-#                         i += 1
-#                     else:    
-#                         break
-                        
-#                 self.errors_cbo.model().sort(0) 
-                               
+                              
                 if (self.errors):  
                     QApplication.restoreOverrideCursor()       
                     self.setWindowTitle(str(len(self.errors)) + " Errors and Warnings in " + os.path.basename(debug_file) + " for " + str(len(self.cells)) + " cells")
@@ -287,10 +285,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         elif (os.path.getsize(file) == 0):   
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:   
-                            lyr = self.lyrs.get_layer_by_name('Depressed Elements', self.lyrs.group)                       
-#                             if lyr:
-#                                 self.uc.show_info("Layer 'Depressed Elements' already exists!")         
-#                             else:                                               
+                            lyr = self.lyrs.get_layer_by_name('Depressed Elements', self.lyrs.group)                                                                   
                             try:
                                 QApplication.setOverrideCursor(Qt.WaitCursor) 
                                 qApp.processEvents() 
@@ -321,30 +316,27 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else: 
                             lyr = self.lyrs.get_layer_by_name('Channel Bank Elev Differences', self.lyrs.group)                        
-#                             if lyr:
-#                                 self.uc.show_info("Layer 'Channel Bank Elev Differences' already exists!")         
-#                             else:  
-                        try:
-                            QApplication.setOverrideCursor(Qt.WaitCursor) 
-                            qApp.processEvents() 
-                            features = []  
-                            with open(file, 'r') as f:
-                                for _ in range(6):
-                                    next(f)
-                                for row in f:
-                                    values  = row.split()
-                                    self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
-
-                                    features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
-                            shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
-                            name = "Channel Bank Elev Differences"
-                            fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
-                            if self.create_points_shapefile(shapefile, name, fields, features):
-                                vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
-                            QApplication.restoreOverrideCursor()            
-                        except Exception as e:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)                               
+                            try:
+                                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                                qApp.processEvents() 
+                                features = []  
+                                with open(file, 'r') as f:
+                                    for _ in range(6):
+                                        next(f)
+                                    for row in f:
+                                        values  = row.split()
+                                        self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
+    
+                                        features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
+                                shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
+                                name = "Channel Bank Elev Differences"
+                                fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
+                                if self.create_points_shapefile(shapefile, name, fields, features):
+                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+                                QApplication.restoreOverrideCursor()            
+                            except Exception as e:
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)                               
                     
                     if "Rim" in dlg_issues_files.files:
                         file = self.debug_directory + "/FPRIMELEV.OUT"
@@ -353,10 +345,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         elif (os.path.getsize(file) == 0):   
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:  
-                            lyr = self.lyrs.get_layer_by_name('Flooplain Rim Differences', self.lyrs.group)                        
-#                             if lyr:
-#                                 self.uc.show_info("Layer 'Flooplain Rim Differences' already exists!")         
-#                             else:  
+                            lyr = self.lyrs.get_layer_by_name('Flooplain Rim Differences', self.lyrs.group)                         
                             try:
                                 QApplication.setOverrideCursor(Qt.WaitCursor) 
                                 qApp.processEvents() 
@@ -401,12 +390,25 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 
     def populate_errors_cbo(self):
 #         QApplication.setOverrideCursor(Qt.WaitCursor) 
-        self.errors_cbo.clear()
-        self.errors_cbo.addItem(" ")
+
+        singleErrors = []
         for x in self.errors:
-            if self.errors_cbo.findText(x[1].strip()) == -1:
-                self.errors_cbo.addItem(x[1].strip())
-        self.errors_cbo.model().sort(0) 
+            err = int(x[1].strip())
+            if err not in singleErrors:    
+                singleErrors.append(err)
+        
+        singleErrors.sort()                 
+        for error in singleErrors:
+            self.errors_cbo.addItem(str(error))
+
+
+
+#         self.errors_cbo.clear()
+#         self.errors_cbo.addItem(" ")
+#         for x in self.errors:
+#             if self.errors_cbo.findText(x[1].strip()) == -1:
+#                 self.errors_cbo.addItem(x[1].strip())
+#         self.errors_cbo.model().sort(0) 
         
 #         QApplication.restoreOverrideCursor()       
                 

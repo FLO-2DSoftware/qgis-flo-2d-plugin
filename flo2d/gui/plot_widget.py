@@ -188,77 +188,11 @@ class PlotWidget(QWidget):
         self.items[name].setData(x, y)
  
     def remove_item(self, name):
-#         try:
         if self.plot.legend:
-#             self.plot.legend.items = []
             if name in self.items:
                 self.plot.removeItem(self.items[name])
                 self.plot.plot.legend.scene().removeItem(self.items[name])
-#         except:
-#             pass
-#         except exception:
-#             msge("error 160719.1708: could not remove legend item named '" + name + "'!", "error")         
- 
-#     def addItem(self, item, name):
-#         """
-#         Add a new entry to the legend. 
-# 
-#         ==============  ========================================================
-#         **Arguments:**
-#         item            A PlotDataItem from which the line and point style
-#                         of the item will be determined or an instance of
-#                         ItemSample (or a subclass), allowing the item display
-#                         to be customized.
-#         title           The title to display for this item. Simple HTML allowed.
-#         ==============  ========================================================
-#         """
-#         label = LabelItem(name)
-#         if isinstance(item, ItemSample):
-#             sample = item
-#         else:
-#             sample = ItemSample(item)        
-#         row = self.layout.rowCount()
-#         self.items.append((sample, label))
-#         self.layout.addItem(sample, row, 0)
-#         self.layout.addItem(label, row, 1)
-#         self.updateSize()
- 
- 
-#     def removeItem(self, name):
-#         """
-#         Removes one item from the legend. 
-#  
-#         =========== ========================================================
-#         Arguments
-#         title       The title displayed for this item.
-#         =========== ========================================================
-#         """
-#         # Thanks, Ulrich!
-#         # cycle for a match
-#         for sample, label in self.items:
-#             if label.text == name:  # hit
-#                 self.items.remove( (sample, label) )    # remove from itemlist
-#                 self.layout.removeItem(sample)          # remove from layout
-#                 sample.close()                          # remove from drawing
-#                 self.layout.removeItem(label)
-#                 label.close()
-#                 self.updateSize()                       # redraq box
-
-#     def updateSize(self):
-#         if self.size is not None:
-#             return
-#             
-#         height = 0
-#         width = 0
-#         #print("-------")
-#         for sample, label in self.items:
-#             height += max(sample.height(), label.height()) + 3
-#             width = max(width, sample.width()+label.width())
-#             #print(width, height)
-#         #print width, height
-#         self.setGeometry(0, 0, width+25, height)  
-                      
-    # specific plot items:
+                
  
     def add_org_bed_plot(self, data):
         x, y = data

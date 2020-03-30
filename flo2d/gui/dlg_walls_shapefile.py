@@ -54,7 +54,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
         
         self.clear_all_walls_attributes_btn.clicked.connect(self.clear_all_walls_attributes)
 
-        self.walls_to_levees_buttonbox.accepted.connect(self.create_user_levees_from_walls_shapefile)
+#         self.walls_to_levees_buttonbox.accepted.connect(self.create_user_levees_from_walls_shapefile)
         
         self.setup_layers_comboxes()
         
@@ -140,6 +140,24 @@ class WallsShapefile(qtBaseClass, uiDialog):
         self.vertical_fail_rate_FieldCbo.setCurrentIndex(-1)
         self.horizontal_fail_rate_FieldCbo.setCurrentIndex(-1)
 
+    def accept(self):
+        if (self.crest_elevation_FieldCbo.currentText() == "" or 
+            self.name_FieldCbo.currentText()  == "" or 
+            self.correction_FieldCbo.currentText()  == "" or 
+            self.failure_height_FieldCbo.currentText()  == "" or 
+            self.duration_FieldCbo.currentText()  == "" or 
+            self.base_elevation_FieldCbo.currentText()  == "" or 
+            self.maximum_width_FieldCbo.currentText()  == "" or 
+            self.vertical_fail_rate_FieldCbo.currentText()  == "" or 
+            self.horizontal_fail_rate_FieldCbo.currentText() == ""  ):
+            
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("All fields must be selected!")
+            return
+        
+        self.close()
+        self.create_user_levees_from_walls_shapefile()
+        
     def create_user_levees_from_walls_shapefile(self):
         self.uc.clear_bar_messages()
 
@@ -166,8 +184,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor) 
             try:
 
-                walls_shapefile = self.walls_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(walls_shapefile, self.lyrs.group).layer()          
+                walls_sf = self.walls_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(walls_sf, self.lyrs.group).layer()          
                 wall_shapefile_feats = lyr.getFeatures()
 
             except Exception as e:
@@ -213,9 +231,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         failVRate = float_or_zero(item)                 
                          
                         item = feat[self.horizontal_fail_rate_FieldCbo.currentText()]
-                        failHRate = float_or_zero(item)                         
-                        
-            
+                        failHRate = float_or_zero(item)  
+
                         levee_feat = QgsFeature()
                         levee_feat.setFields(levee_lines_fields)
                         
@@ -247,8 +264,12 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         levee_feat.setAttribute('correction', correction)
                         
                         # Failure Data:
-                        levee_feat.setAttribute('failElev', failElev)
-                        levee_feat.setAttribute('failDepth', failElev)
+                        if self.fail_elev_radio.isChecked():
+                            levee_feat.setAttribute('failElev', failElev)
+                            levee_feat.setAttribute('failDepth', 0.0)
+                        else:
+                            levee_feat.setAttribute('failElev', 0.0)
+                            levee_feat.setAttribute('failDepth', failElev)                              
                         levee_feat.setAttribute('failDuration', failDuration)
                         levee_feat.setAttribute('failBaseElev', failBaseElev)
                         levee_feat.setAttribute('failMaxWidth', failMaxWidth)
@@ -267,6 +288,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                                                     'Would you like to continue?'):
                                 return
                             else:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
                                 self.gutils.clear_tables('user_levee_lines', 'levee_failure')
                                 self.current_user_lines = -self.current_user_lines
                                 
@@ -375,6 +397,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
 #                     return
                         
                 QApplication.restoreOverrideCursor()
+                
                 if self.current_user_lines < 0:
                     info = "Creation of User Levee Lines from walls finished!\n\n" + str(len(new_levee_lines_feats)) + " lines were added."
                     info += "\n\nAnd " +  str(-self.current_user_lines) + " previous User Levee Lines were deleted." 
@@ -385,6 +408,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     info = "Creation of User Levee Lines from walls finished!\n\n" + str(len(new_levee_lines_feats)) + " lines were added to the User Levee Lines layer."          
                 
                 info += "\n\nYou can now use the 'Levee Elevation Tool' to intersect the User Levee Lines with the grid system to create the levee directions for each cell."  
+                
+                QApplication.restoreOverrideCursor()
                 self.uc.show_info(info)                
                 
                 QApplication.restoreOverrideCursor()
