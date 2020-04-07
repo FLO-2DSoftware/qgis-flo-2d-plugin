@@ -541,22 +541,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(general_sql, streets_sql, seg_sql, elem_sql)
 
     def import_arf(self):
-        cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
-        cells_sql = ['''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                   wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
-
-        self.clear_tables('blocked_cells')
-        head, data = self.parser.parse_arf()
-        cont_sql += [('IARFBLOCKMOD',) + tuple(head)]
-        gids = (x[0] for x in chain(data['T'], data['PB']))
-        cells = self.grid_centroids(gids, buffers=True)
-
-        for i, row in enumerate(chain(data['T'], data['PB']), 1):
-            gid = row[0]
-            centroid = cells[gid]
-            cells_sql += [(centroid, i) + tuple(row)]
-
-        self.batch_execute(cont_sql, cells_sql)
+        try:
+            cont_sql = ['''INSERT INTO cont (name, value) VALUES''', 2]
+            cells_sql = ['''INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                       wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES''', 12]
+    
+            self.clear_tables('blocked_cells')
+            head, data = self.parser.parse_arf()
+            cont_sql += [('IARFBLOCKMOD',) + tuple(head)]
+            gids = (x[0] for x in chain(data['T'], data['PB']))
+            cells = self.grid_centroids(gids, buffers=True)
+    
+            for i, row in enumerate(chain(data['T'], data['PB']), 1):
+                gid = row[0]
+                centroid = cells[gid]
+                cells_sql += [(centroid, i) + tuple(row)]
+    
+            self.batch_execute(cont_sql, cells_sql)
+        
+        except Exception as e:
+            self.uc.show_error("ERROR 050420.1720.0701: couldn't import ARF.DAT file!"
+                                +'\n__________________________________________________', e)          
+        
 
     def import_mult(self):
         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
@@ -1630,10 +1636,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Totally blocked grid elements:
                 for row in self.execute(tbc_sql):
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    cllapse = collapse[0]
-                    cllapse =[cllapse if cllapse is not None else 0]
+                    if collapse:
+                        cll = collapse[0]
+                    else:
+                        cll = 0   
+                    cll =[cll if cll is not None else 0]
                     cell = row[0]
-                    if cllapse[0] == 1:
+                    if cll[0] == 1:
                         cell  = -cell
                     a.write(line2.format(cell))
                     
@@ -1644,10 +1653,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     any_blocked = sum(row) -row[0] -row[1]
                     if any_blocked > 0:
                         collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                        cllapse = collapse[0]
-                        cllapse =[cllapse if cllapse is not None else 0]
+                        if collapse:
+                            cll = collapse[0]
+                        else:
+                            cll = 0                          
+                        cll =[cll if cll is not None else 0]
                         cell = row[0]
-                        if cllapse[0] == 1:
+                        if cll[0] == 1:
                             cell  = -cell
                         a.write(line3.format(cell, *row[2:]))
     #                     a.write(line3.format(*row))

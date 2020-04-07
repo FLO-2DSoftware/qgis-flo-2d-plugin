@@ -15,6 +15,7 @@ from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
+from ..flo2d_tools.grid_tools import adjacent_grid_elevations
 from pickle import FALSE
 from qgis.core import * 
 from datetime import datetime
@@ -588,7 +589,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.grid_count = len(list(self.grid_lyr.getFeatures()))
         set_icon(self.zoom_in_btn, 'zoom_in.svg')
         set_icon(self.zoom_out_btn, 'zoom_out.svg')
-        set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
+        set_icon(self.find_levee_cell_btn, 'eye-svgrepo-com.svg')
         set_icon(self.previous_levees_btn, 'arrow_4.svg')
         set_icon(self.next_levees_btn, 'arrow_2.svg') 
         self.previous_levees_lbl.setText("Previous " + str(self.n_levees))
@@ -603,7 +604,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.cell_to_find_le.setValidator(validator)
 
         self.levee_data_save_btn.clicked.connect(self.save_individual_levee_data)
-        self.find_cell_btn.clicked.connect(self.find_cell)
+        self.find_levee_cell_btn.clicked.connect(self.find_levee_cell)
         
         
         self.individual_levee_element_cbo.currentIndexChanged.connect(self.individual_levee_element_cbo_currentIndexChanged)
@@ -632,7 +633,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
         self.individual_levee_element_cbo.installEventFilter(self)  
         self.cell_to_find_le.installEventFilter(self)
-        self.find_cell_btn.installEventFilter(self)
+        self.find_levee_cell_btn.installEventFilter(self)
         self.previous_levees_btn.installEventFilter(self)
         self.next_levees_btn.installEventFilter(self)
 
@@ -903,8 +904,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 self.failureData[f[0]] = [True, f[1], f[2], f[3], f[4], f[5], f[6]]            
             
             qry_levee_cell = '''SELECT ldir, levcrest FROM levee_data WHERE grid_fid = ?'''
-            levees_for_this_grid = self.gutils.execute(qry_levee_cell, (cell,)).fetchall()  
-            for levee in levees_for_this_grid:
+            levees_for_this_cell = self.gutils.execute(qry_levee_cell, (cell,)).fetchall()  
+            for levee in levees_for_this_cell:
                 dir = levee[0]
                 crest_elev = levee[1]
                 if dir == 1:
@@ -959,7 +960,6 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             else:
                 self.levee_failure_grp.setChecked(False)  
          
-
             self.cell_to_find_le.setText(str(cell))
             
             # Find elevations of adjacent cells:
@@ -971,45 +971,65 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 else:
                     unit = "   ft"   
             
-                if self.grid_lyr is not None:
-                    if cell != '':
-                        cell = int(cell)
-                        if self.grid_count >= cell and cell > 0:
-                            self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                            xx, yy = self.currentCell.geometry().centroid().asPoint()
+#                 if self.grid_lyr is not None:
+#                     if cell != '':
+                        
+                elevs = adjacent_grid_elevations(self.gutils, self.grid_lyr, cell, cell_size)
+                
+                cell = int(cell)
+                if self.grid_count >= cell and cell > 0:
+                    self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                    xx, yy = self.currentCell.geometry().centroid().asPoint()
+                    
+                     # North cell:
+                    N_elev = elevs[0] 
+#                             N_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "N")
+                    self.N_lbl.setText(str(N_elev) +  unit if N_elev !=  -999 else "(boundary)") 
+                    
+                    
+                    # NorthEast cell:
+                    NE_elev = elevs[1]
+#                             NE_elev =  self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NE")                                
+                    self.NE_lbl.setText(str(NE_elev) +  unit if NE_elev !=  -999 else "(boundary)") 
+                                                                          
+                    # East cell:   
+                    E_elev =  elevs[2]                           
+#                             E_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "E")                                
+                    self.E_lbl.setText(str(E_elev) +  unit if E_elev !=  -999 else "(boundary)") 
+                        
+                    # SouthEast cell:  
+                    SE_elev = elevs[3]                             
+#                             SE_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SE")                                
+                    self.SE_lbl.setText(str(SE_elev) +  unit if SE_elev !=  -999 else "(boundary)") 
+                                                                          
+                    # South cell:   
+                    S_elev =  elevs[4]                          
+#                             S_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "S")                                
+                    self.S_lbl.setText(str(S_elev) +  unit if S_elev !=  -999 else "(boundary)") 
+    
+                    # SouthWest cell:
+                    SW_elev = elevs[5]
+#                             SW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SW")                                
+                    self.SW_lbl.setText(str(SW_elev) +  unit if SW_elev !=  -999 else "(boundary)") 
+                        
+                     # West cell:
+                    W_elev = elevs[6] 
+#                             W_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "W")                                                                                                                                                    
+                    self.W_lbl.setText(str(W_elev) +  unit if W_elev !=  -999 else "(boundary)") 
+                        
+                     # NorthWest cell:
+                    NW_elev = elevs[7] 
+#                             NW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NW")                                 
+                    self.NW_lbl.setText(str(NW_elev) +  unit if NW_elev !=  -999 else "(boundary)") 
+                     
+#                             highest_elev = max(N_elev, NE_elev, E_elev, SE_elev, S_elev, SW_elev, W_elev, NW_elev)
+#                              
+#                             self.uc.show_info("Highest adjacent elevation: " + str(highest_elev))
+                    
+                    self.highlight_cell(cell)
                             
-                             # North cell:
-                            N_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "N")
-                            
-                            # NorthEast cell:
-                            NE_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NE")                                
-                                                                                  
-                            # East cell:                                
-                            E_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "E")                                
-                                
-                            # SouthEast cell:                                
-                            SE_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SE")                                
-                                                                                  
-                            # South cell:                               
-                            S_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "S")                                
-            
-                            # SouthWest cell:
-                            SW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "SW")                                
-                                
-                             # West cell:
-                            W_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "W")                                                                                                                                                    
-                                
-                             # NorthWest cell:
-                            NW_elev = self.get_adjacent_cell_elevation(xx, yy, cell_size, unit, "NW")                                 
-                             
-                            highest_elev = max(N_elev, NE_elev, E_elev, SE_elev, S_elev, SW_elev, W_elev, NW_elev)
-                             
-                            self.uc.show_info("Highest adjacent elevation: " + str(highest_elev))
-                            
-                            self.highlight_cell(cell)
-                            
-                        else:
-                            self.uc.bar_warn('ERROR 031219.0708: Cell ' + str(cell) + ' is not valid.')  
+#                         else:
+#                             self.uc.bar_warn('ERROR 031219.0708: Cell ' + str(cell) + ' is not valid.')  
                                                                                 
             except ValueError:
                 self.uc.bar_warn('ERROR 031219.0709: Cell ' + str(cell) + ' is not valid.')  
@@ -1591,7 +1611,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     def update_extent(self):  
         self.ext = self.iface.mapCanvas().extent()  
 
-    def find_cell(self):
+    def find_levee_cell(self):
         try: 
             QApplication.setOverrideCursor(Qt.WaitCursor) 
             if self.grid_lyr is not None:
@@ -1606,6 +1626,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                                 if idx_combo == -1:
                                     self.uc.bar_warn('WARNING 221219.1138: Cell ' + str(cell) + ' not in this group!.')  
                                     frac, whole = modf(idx_all / self.n_levees)
+                                    
+                                    self.individual_levee_element_cbo.blockSignals(True)
+                                    
                                     self.individual_levee_element_cbo.clear()
                                     begin = int(whole) * self.n_levees 
                                     for i in range (begin, begin + self.n_levees):
@@ -1614,7 +1637,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                                         self.individual_levee_element_cbo.addItem(str(self.levee_rows[i][0])) 
                                     idx_combo = self.individual_levee_element_cbo.findText(str(cell))
                                     
-                                    # Set arrows:
+                                    # Set arrows in dialog:
                                     if whole == 0:
                                        self.previous_levees_btn.setEnabled(False)   
                                        self.next_levees_btn.setEnabled(True)
@@ -1623,7 +1646,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                                         self.next_levees_btn.setEnabled(True)
                                     elif whole >= len(self.levee_rows)/ self.n_levees:
                                         self.previous_levees_btn.setEnabled(True)
-                                        self.next_levees_btn.setEnabled(False)                                        
+                                        self.next_levees_btn.setEnabled(False) 
+                                        
+                                    self.individual_levee_element_cbo.blockSignals(False)                                           
                                                                              
                                 self.individual_levee_element_cbo.setCurrentIndex(idx_combo)                          
                             else:
@@ -1633,7 +1658,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     else:
                         self.uc.bar_warn('WARNING 221219.1136: Cell ' + str(cell) + ' not found.')             
         except ValueError:
-            self.uc.bar_warn('WARNING 221219.1135: Cell ' + str(cell) + ' is not valid.') 
+            self.uc.bar_warn('WARNING 221219.1135: Cell ' + str(cell) + ' is not a levee cell.') 
             pass   
         finally:
             QApplication.restoreOverrideCursor()       

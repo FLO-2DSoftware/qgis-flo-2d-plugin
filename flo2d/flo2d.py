@@ -21,6 +21,7 @@ from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp
 from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
+from datetime import datetime
 
 from .layers import Layers
 from .user_communication import UserCommunication
@@ -1670,12 +1671,19 @@ class Flo2D(object):
         Generate schematic lines for user defined levee lines.
         """
         try:
+            start = datetime.now()        
+            
             levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             n_elements, n_levee_directions, n_fail_features = generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
             levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
             if levee_schem:
                 levee_schem.triggerRepaint()
+                
+            end = datetime.now()                
+            time_taken = end - start
+            self.uc.show_info("Time lo load levee cells. " + str(time_taken))                
+
             return  n_elements, n_levee_directions, n_fail_features  
         except Exception as e:
             QApplication.restoreOverrideCursor()

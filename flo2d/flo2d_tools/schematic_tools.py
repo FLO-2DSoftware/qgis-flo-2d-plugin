@@ -15,7 +15,7 @@ from operator import itemgetter
 
 from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPointXY
 
-from .grid_tools import spatial_index, fid_from_grid
+from .grid_tools import spatial_index, fid_from_grid, adjacent_grid_elevations, three_adjacent_grid_elevations
 from ..geopackage_utils import GeoPackageUtils
 
 
@@ -155,6 +155,7 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
 
 def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     try:
+           
         # octagon nodes to sides map
         octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
         levee_dir_pts = {
@@ -188,55 +189,51 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         ins_levees_failure_sql = '''INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
                                                           levbase, failwidthmax, failrate, failwidrate)
                                      VALUES (?,?,?,?,?,?,?,?);'''
+        
+        select_fail_qry = '''SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
+                            FROM user_levee_lines 
+                            WHERE fid = ?'''        
+        
     
         # create levee segments for distinct levee directions in each grid element
         grid_levee_seg = {}
         data = []
         fail_data = []
         for gid, gdata in schem_lines.items():
-            
+               
             elev = gdata['elev']
             grid_levee_seg[gid] = {}
             grid_levee_seg[gid]['sides'] = {}
             grid_levee_seg[gid]['centroid'] = gdata['centroid']
             for lid, sides in gdata['lines'].items():
-                for side in sides:
-                    if side not in list(grid_levee_seg[gid]['sides'].keys()):
-                        grid_levee_seg[gid]['sides'][side] = lid
-                        ldir = octagon_levee_dirs[side]
-                        c = gdata['centroid']
-                        data.append((
-                            gid,
-                            ldir,
-                            elev,
-                            lid,
-                            'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
-                        ))
-                   
-                        select_fail_qry = '''SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
-                        FROM user_levee_lines 
-                        WHERE fid = ?'''
-                        fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone() 
-                        if fail:
-                            if not all(v == 0 for v in fail):
-                                if not fail[0] == 0.0:
-                                    # failElev selected, use it.
-                                    fail_data.append( (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6]) )
-                                else:
-                                    # failDepth selected, use adjacent cell elevations to calculate fail elevation.
-                                    fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+                if sides:
+                    for side in sides:
+                        if side not in list(grid_levee_seg[gid]['sides'].keys()):
+                             
+                            grid_levee_seg[gid]['sides'][side] = lid
+                            ldir = octagon_levee_dirs[side]
+                            c = gdata['centroid']
+                            data.append((
+                                gid,
+                                ldir,
+                                elev,
+                                lid,
+                                'LINESTRING({0} {1}, {2} {3})'.format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh))
+                            ))
+                    
+                            fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone() 
+                            if fail:
+                                if not all(v == 0 for v in fail):
+                                    if not fail[0] == 0.0:
+                                        # failElev selected, use it.
+                                        fail_data.append( (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+                                    else:
+                                        # failDepth selected, use adjacent cell elevations to calculate fail elevation.
+                                        
+                                        max_elev = max(three_adjacent_grid_elevations(gutils, grid_lyr, gid, ldir, cell_size))                                  
+                                        fail_data.append( (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+    #                                     fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
                         
-                        
-#                     fail = gutils.con.execute(levee_failure_qry, (gid,)).fetchone()    
-#                     if fail:    
-#                         
-                        
-                        
-#                     fail = gutils.con.execute(levee_failure_qry, (gid,)).fetchall()       
-#                     if fail: 
-#                         for f in fail: 
-#                             if (gid, ldir, f[0], f[1],  f[2],  f[3],  f[4],  f[5]) not in fail_data:  
-#                                 fail_data.append( (gid, ldir, f[0], f[1],  f[2],  f[3],  f[4],  f[5]) )
                     
         gutils.con.execute(del_levees_sql)
         gutils.con.executemany(ins_levees_sql, data)
@@ -245,7 +242,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         gutils.con.executemany(ins_levees_failure_sql, fail_data)
         
         gutils.con.commit()
-        
+     
         return len(schem_lines), len(data), len(fail_data)
     except Exception as e:
         self.uc.show_error('ERROR 291219.0428: Error while creating schematic levees octagons!.\n', e)

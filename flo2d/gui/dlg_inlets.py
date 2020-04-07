@@ -858,12 +858,16 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
             self.swmm_inflow_baseline_dbox.setValue(inflow[1])
-            idx = self.swmm_inflow_pattern_cbo.findText(inflow[2])
-            if idx > 0:
-               self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
+            if inflow[2] != "":
+                idx = self.swmm_inflow_pattern_cbo.findText(inflow[2])
+                if idx > 0:
+                   self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
+                else:
+                    self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!",5)
+                    self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
             else:
-                self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!",5)
-                self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)     
+               self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)  
+                           
             idx = self.swmm_inflow_time_series_cbo.findText(inflow[3])
             if idx > 0:
                self.swmm_inflow_time_series_cbo.setCurrentIndex(idx) 

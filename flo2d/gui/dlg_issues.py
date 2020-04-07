@@ -237,7 +237,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 with open(debug_file, 'r') as f1:
                     for line in f1:
                         row = line.split(',') 
-                        if len(row) == 3: 
+                        if len(row) >= 3: 
                             cell = row[0].strip()
                             iCell = int(cell)
                             if len(grid) >= iCell and iCell > 0:
@@ -265,7 +265,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     return True                        
                 else:
                     QApplication.restoreOverrideCursor() 
-                    self.uc.show_warn("There are no errors in file " + os.path.basename(debug_file) + ".\nIs its format correct?")
+                    self.uc.show_warn("There are no debug errors reported in file " + os.path.basename(debug_file) + ".\nIs its format correct?")
                     return False     
         except UnicodeDecodeError:
              # non-text dat:    

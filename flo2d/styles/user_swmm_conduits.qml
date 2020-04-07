@@ -94,7 +94,7 @@
           <prop k="head_thickness_unit" v="MM"/>
           <prop k="head_thickness_unit_scale" v="0,0,0,0,0,0"/>
           <prop k="head_type" v="0"/>
-          <prop k="is_curved" v="1"/>
+          <prop k="is_curved" v="0"/>
           <prop k="is_repeated" v="1"/>
           <prop k="offset" v="0"/>
           <prop k="offset_unit" v="MM"/>

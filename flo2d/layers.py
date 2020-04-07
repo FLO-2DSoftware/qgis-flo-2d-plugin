@@ -997,7 +997,7 @@ class Layers(object):
             ('struct', {
                 'name': '(struct)',
                 'sgroup': 'Hydraulic Structures Tables',
-                'styles': None,
+                'styles': ['struc.qml'],
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),

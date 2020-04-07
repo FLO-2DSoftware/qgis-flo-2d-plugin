@@ -1174,94 +1174,440 @@ def highlight_selected_xsection_b(layer, xs_id):
     layer.selectByIds(feat_selection)
 
  
-# def adjacent_grid_elevations(cell):
-#     sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
-#     if self.grid_lyr is not None:
+def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
+    sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+    if grid_lyr is not None:
+        if cell != '':
+            cell = int(cell)
+            grid_count = len(list(grid_lyr.getFeatures()))
+            if grid_count >= cell and cell > 0:
+                currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                xx, yy = currentCell.geometry().centroid().asPoint()
+                 
+                elevs = []
+                # North cell:
+                y = yy  +  cell_size
+                x = xx
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    N_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else: 
+                    N_elev = -999
+                elevs.append(N_elev)     
+                                    
+                 
+                # NorthEast cell                      
+                y = yy  +  cell_size
+                x = xx  +  cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                   NE_elev  = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:
+                   NE_elev  = -999 
+                elevs.append(NE_elev)        
+                                                              
+                # East cell:   
+                x = xx +  cell_size
+                y = yy
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    E_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:
+                    E_elev = -999                      
+                elevs.append(E_elev)  
+                            
+                # SouthEast cell:    
+                y = yy  -  cell_size
+                x = xx  +  cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    SE_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else: 
+                    SE_elev = -999   
+                elevs.append(SE_elev)  
+                                                                       
+                # South cell: 
+                y = yy  -  cell_size
+                x = xx
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    S_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:
+                    S_elev = -999  
+                elevs.append(S_elev)  
+ 
+                # SouthWest cell:
+                y = yy  -  cell_size
+                x = xx  -  cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    SW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:                
+                    SW_elev = -999                               
+                elevs.append(SW_elev)
+                                     
+                 # West cell:
+                y = yy
+                x = xx  -  cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    W_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:               
+                    W_elev = -999                                                                                                                                                      
+                elevs.append(W_elev)
+                                     
+                 # NorthWest cell:
+                y = yy  +  cell_size
+                x = xx  -  cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is not None:
+                    NW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                else:                 
+                    NW_elev = -999 
+                elevs.append(NW_elev)
+                                     
+                return elevs   
+            
+def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size):
+    
+#     if grid_lyr is not None:
 #         if cell != '':
 #             cell = int(cell)
-#             if self.grid_count >= cell and cell > 0:
-#                 self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-#                 xx, yy = self.currentCell.geometry().centroid().asPoint()
-#                 
-#                 elevs = []
-#                 # North cell:
-#                 y = yy  +  cell_size
-#                 x = xx
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     N_elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 else: 
-#                     N_elev = -999
-#                 elevs.append(N_elev)     
-#                                    
-#                 
-#                 # NorthEast cell                      
-#                 y = yy  +  cell_size
-#                 x = xx  +  cell_size
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                    NE_elev  = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 else:
-#                    NE_elev  = -999    
-#                                                              
-#                 # East cell:   
-#                 x = xx +  cell_size
-#                 y = yy
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                     self.E_lbl.setText(str(elev) +  unit)
-#                 else:
-#                     E_elev = -999                      
-#            
-#                 # SouthEast cell:    
-#                 y = yy  -  cell_size
-#                 x = xx  +  cell_size
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 else: 
-#                     SE_elev = -999                          
-#                                                                       
-#                 # South cell: 
-#                 y = yy  -  cell_size
-#                 x = xx
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 else:
-#                     S_elev = -999                              
-# 
-#                 # SouthWest cell:
-#                 y = yy  -  cell_size
-#                 x = xx  -  cell_size
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 else:                
-#                     SW_elev = -999                               
+#             grid_count = len(list(grid_lyr.getFeatures()))
+#             if grid_count >= cell and cell > 0:
+
+    try:
+        # Expects a cell number inside the computational domain.
+        sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+        currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+        xx, yy = currentCell.geometry().centroid().asPoint()
+         
+        elevs = []
+        
+        if direction == 1: # North => NW, N, NE
+             # NorthWest cell:
+            y = yy  +  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])
+            else: 
+                elevs.append(-99999)                  
+            
+            # North cell:
+            y = yy  +  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )  
+     
+            # NorthEast cell:                      
+            y = yy  +  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )  
+          
+        elif direction == 2: # East => NE, E, SE   
+            # NorthEast cell:                      
+            y = yy  +  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )  
+                
+         # East cell:   
+            x = xx +  cell_size
+            y = yy
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )  
+            
+            # SouthEast cell:    
+            y = yy  -  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )  
+          
+        elif direction == 3: # South => SE, S, SW    
+            # SouthEast cell:    
+            y = yy  -  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )  
+    
+            # South cell: 
+            y = yy  -  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )  
+    
+            # SouthWest cell:
+            y = yy  -  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:   
+                elevs.append(-99999)               
+    
+        elif direction == 4: # West => SW, W, NW  
+            # SouthWest cell:
+            y = yy  -  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:      
+                elevs.append(-99999 )            
+    
+             # West cell:
+            y = yy
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:       
+                elevs.append(-99999 )          
+                 
+             # NorthWest cell:
+            y = yy  +  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:    
+                elevs.append(-99999 )               
+          
+        elif direction == 5: # NorthEast => N, NE, E   
+            # North cell:
+            y = yy  +  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )     
+                            
+            # NorthEast cell:                      
+            y = yy  +  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )     
+                            
+            # East cell:   
+            x = xx +  cell_size
+            y = yy
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])       
+            else:
+                elevs.append(-99999 )    
+           
+        elif direction == 6: # SouthEast => E, SE, S
+            # East cell:   
+            x = xx +  cell_size
+            y = yy
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )    
+                
+            # SouthEast cell:    
+            y = yy  -  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )    
+      
+            # South cell: 
+            y = yy  -  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )    
+      
+        elif direction == 7: # SouthWest => S, SW, W
+            # South cell: 
+            y = yy  -  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:
+                elevs.append(-99999 )    
+         
+            # SouthWest cell:
+            y = yy  -  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:     
+                elevs.append(-99999 )               
+       
+             # West cell:
+            y = yy
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:  
+                elevs.append(-99999 )                 
+            
+        elif direction == 8: # NorthWest => W, NW, N  
+             # West cell:
+            y = yy
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:                                                                                                                                                                   
+                elevs.append(-99999)           
+    
+             # NorthWest cell:
+            y = yy  +  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else:   
+                elevs.append(-99999 )                  
+              
+            # North cell:
+            y = yy  +  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elevs.append(gutils.execute(sel_elev_qry, (grid,)).fetchone()[0])  
+            else: 
+                elevs.append(-99999 )    
+         
+        return elevs            
+    except:
+        show_error('ERROR 040420.1715: could not evaluate adjacent cell elevation!')
+        
+        
+        
+        
+        
+#.......................................................           
+        
+#         # North cell:
+#         y = yy  +  cell_size
+#         x = xx
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             N_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else: 
+#             N_elev = -999
+#         elevs.append(N_elev)     
+#                             
+#          
+#         # NorthEast cell:                      
+#         y = yy  +  cell_size
+#         x = xx  +  cell_size
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#            NE_elev  = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:
+#            NE_elev  = -999 
+#         elevs.append(NE_elev)        
+#                                                       
+#         # East cell:   
+#         x = xx +  cell_size
+#         y = yy
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             E_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:
+#             E_elev = -999                      
+#         elevs.append(E_elev)  
 #                     
-#                  # West cell:
-#                 y = yy
-#                 x = xx  -  cell_size
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                     self.W_lbl.setText(str(elev) +  unit)
-#                 else:               
-#                     W_elev = -999                                                                                                                                                      
-#                     
-#                  # NorthWest cell:
-#                 y = yy  +  cell_size
-#                 x = xx  -  cell_size
-#                 grid = self.gutils.grid_on_point(x, y)
-#                 if grid is not None:
-#                     elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                     self.NW_lbl.setText(str(elev) +  unit)
-#                 else:                 
-#                     NW_elev = -999 
-#                     
-#                 return []           
+#         # SouthEast cell:    
+#         y = yy  -  cell_size
+#         x = xx  +  cell_size
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             SE_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else: 
+#             SE_elev = -999   
+#         elevs.append(SE_elev)  
+#                                                                
+#         # South cell: 
+#         y = yy  -  cell_size
+#         x = xx
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             S_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:
+#             S_elev = -999  
+#         elevs.append(S_elev)  
+#         
+#         # SouthWest cell:
+#         y = yy  -  cell_size
+#         x = xx  -  cell_size
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             SW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:                
+#             SW_elev = -999                               
+#         elevs.append(SW_elev)
+#                              
+#          # West cell:
+#         y = yy
+#         x = xx  -  cell_size
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             W_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:               
+#             W_elev = -999                                                                                                                                                      
+#         elevs.append(W_elev)
+#                              
+#          # NorthWest cell:
+#         y = yy  +  cell_size
+#         x = xx  -  cell_size
+#         grid = gutils.grid_on_point(x, y)
+#         if grid is not None:
+#             NW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+#         else:                 
+#             NW_elev = -999 
+#         elevs.append(NW_elev)
+#                          
+#     return elevs     
+
+#..............................................
+
+
+
+
+
+     
 # 
 # 
 # 

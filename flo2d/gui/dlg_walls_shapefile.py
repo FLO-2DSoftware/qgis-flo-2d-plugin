@@ -13,7 +13,7 @@ from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, QgsRectangle
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
 from qgis.PyQt.QtCore import Qt, QSettings
-from ..flo2d_tools.grid_tools import fid_from_grid
+from ..flo2d_tools.grid_tools import fid_from_grid, adjacent_grid_elevations
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
@@ -267,9 +267,10 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         if self.fail_elev_radio.isChecked():
                             levee_feat.setAttribute('failElev', failElev)
                             levee_feat.setAttribute('failDepth', 0.0)
-                        else:
+                        else:  # use depth => compute fail from highest adjacent cell elevation.
                             levee_feat.setAttribute('failElev', 0.0)
-                            levee_feat.setAttribute('failDepth', failElev)                              
+                            levee_feat.setAttribute('failDepth', failElev) 
+
                         levee_feat.setAttribute('failDuration', failDuration)
                         levee_feat.setAttribute('failBaseElev', failBaseElev)
                         levee_feat.setAttribute('failMaxWidth', failMaxWidth)

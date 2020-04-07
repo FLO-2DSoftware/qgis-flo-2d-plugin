@@ -432,19 +432,21 @@ class StormDrainProject(object):
                     if junction is not None:
                         self.INP_nodes[junction].update(jun_dict) # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
         except Exception as e:
-            self.uc.show_error("ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!", e)
-
+            self.uc.show_error("ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!\n" +
+                               "                   Are the coordinates missing?"
+                                +'\n__________________________________________________', e)   
 
     def create_INP_inflows_dictionary_with_inflows(self):
         try:
             inflows_cols = ['node_name', 'constituent', 'time_series_name', 'param_type', 'units_factor' ,'scale_factor',  'baseline',  'pattern_name']
             inflows = self.select_this_INP_group('inflow')
-            for infl in inflows:
-                if not infl or infl[0] in self.ignore:
-                    continue
-                inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
-                inflow = inflow_dict.pop('node_name')
-                self.INP_inflows[inflow] = inflow_dict
+            if inflows:
+                for infl in inflows:
+                    if not infl or infl[0] in self.ignore:
+                        continue
+                    inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
+                    inflow = inflow_dict.pop('node_name')
+                    self.INP_inflows[inflow] = inflow_dict
         except Exception as e:
             self.uc.bar_warn('Reading inflows from SWMM input data failed!')
 
@@ -453,43 +455,45 @@ class StormDrainProject(object):
     def create_INP_patterns_list_with_patterns(self):
         try:
             pattern_cols = ['pattern_name', 'type', 'mult1', 'mult2', 'mult3', 'mult4', 'mult5', 'mult6', 'mult7' ]
-            patterns = self.select_this_INP_group('pattern')  
-            for patt in patterns:
-                if not patt or patt[:2] in ';;\n':
-                    continue
-                if patt[0] == ';':
-                    descr = patt[1:]
-                    continue
-                pattSplit = patt.split()
-                type = pattSplit[1].upper().strip()
-                if type in ['HOURLY', 'MONTHLY', 'DAILY', 'WEEKEND']:
-                   pattern_list = list(zip_longest(pattern_cols, pattSplit))
-                else:
-                    pattSplit.insert(1, pattern_list[2][1])
-                    pattern_list = list(zip_longest(pattern_cols, pattSplit))
-                pattern_list.insert(0, ['description', descr])    
-                self.INP_patterns.append(pattern_list)
+            patterns = self.select_this_INP_group('pattern') 
+            if patterns: 
+                for patt in patterns:
+                    if not patt or patt[:2] in ';;\n':
+                        continue
+                    if patt[0] == ';':
+                        descr = patt[1:]
+                        continue
+                    pattSplit = patt.split()
+                    type = pattSplit[1].upper().strip()
+                    if type in ['HOURLY', 'MONTHLY', 'DAILY', 'WEEKEND']:
+                       pattern_list = list(zip_longest(pattern_cols, pattSplit))
+                    else:
+                        pattSplit.insert(1, pattern_list[2][1])
+                        pattern_list = list(zip_longest(pattern_cols, pattSplit))
+                    pattern_list.insert(0, ['description', descr])    
+                    self.INP_patterns.append(pattern_list)
         except Exception as e:
             self.uc.bar_warn('Reading patterns from SWMM input data failed!')
 
     def create_INP_time_series_list_with_time_series(self):
         try:
             time_cols = ['time_series_name', 'file', 'file_name']
-            times = self.select_this_INP_group('timeseries')  
-            for time in times:
-                if not time or time[:2] in ';;\n':
-                    continue
-                if time[0] == ';':
-                    descr = time[1:]
-                    continue
-                timeSplit = time.split()
-                type = timeSplit[1].upper().strip()
-                if type == "FILE":
-                   time_list = list(zip_longest(time_cols, timeSplit))
-                else:
-                    continue
-                time_list.insert(0, ['description', descr])    
-                self.INP_timeseries.append(time_list)
+            times = self.select_this_INP_group('timeseries') 
+            if times: 
+                for time in times:
+                    if not time or time[:2] in ';;\n':
+                        continue
+                    if time[0] == ';':
+                        descr = time[1:]
+                        continue
+                    timeSplit = time.split()
+                    type = timeSplit[1].upper().strip()
+                    if type == "FILE":
+                       time_list = list(zip_longest(time_cols, timeSplit))
+                    else:
+                        continue
+                    time_list.insert(0, ['description', descr])    
+                    self.INP_timeseries.append(time_list)
         except Exception as e:
             self.uc.bar_warn('Reading time series from SWMM input data failed!')
 
