@@ -12,10 +12,10 @@ import sys
 import math
 import uuid
 import time
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication 
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog 
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsFeedback, NULL
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsRectangle, QgsFeedback, NULL
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
 
@@ -367,15 +367,14 @@ def spatial_centroids_index(vlayer):
         index.insertFeature(feat_copy)
     return allfeatures, index
 
-
-def intersection_spatial_index(vlayer):
+def intersection_spatial_index(vlayer, request = None):
     """
     Creating optimized for intersections spatial index over collection of features.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
     max_fid = max(vlayer.allFeatureIds()) + 1
-    for feat in vlayer.getFeatures():
+    for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         geom = feat.geometry()
         new_geoms = divide_geom(geom)
         new_fid = True if len(new_geoms) > 1 else False
@@ -394,6 +393,34 @@ def intersection_spatial_index(vlayer):
             index.insertFeature(feat_copy)
 
     return allfeatures, index
+
+
+# def intersection_spatial_index(vlayer):
+#     """
+#     Creating optimized for intersections spatial index over collection of features.
+#     """
+#     allfeatures = {}
+#     index = QgsSpatialIndex()
+#     max_fid = max(vlayer.allFeatureIds()) + 1
+#     for feat in vlayer.getFeatures():
+#         geom = feat.geometry()
+#         new_geoms = divide_geom(geom)
+#         new_fid = True if len(new_geoms) > 1 else False
+#         for g in new_geoms:
+#             engine = QgsGeometry.createGeometryEngine(g.constGet())
+#             engine.prepareGeometry()
+#             feat_copy = QgsFeature(feat)
+#             feat_copy.setGeometry(g)
+#             if new_fid is True:
+#                 fid = max_fid
+#                 feat_copy.setId(fid)
+#                 max_fid += 1
+#             else:
+#                 fid = feat.id()
+#             allfeatures[fid] = (feat_copy, engine)
+#             index.insertFeature(feat_copy)
+# 
+#     return allfeatures, index
 
 
 def count_polygon_vertices(geom):
@@ -581,9 +608,11 @@ def poly2poly(base_polygons, polygons, request, area_percent, *columns):
 def poly2poly_geos(base_polygons, polygons, request, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
+    
     """
-    allfeatures, index = intersection_spatial_index(polygons)
-
+    allfeatures, index = intersection_spatial_index(polygons, request)
+#     allfeatures, index = intersection_spatial_index(polygons)
+    
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
         base_geom = feat.geometry()
@@ -879,7 +908,102 @@ def evaluate_roughness(gutils, grid, roughness, column_name, reset=False):
 #     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
 #     gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
 #     gutils.con.commit()
-#     
+#  
+
+def update_roughness(gutils, grid, roughness, column_name, reset=False):
+    """
+    Updating roughness values inside 'grid' table.
+    """
+    startTime = time.time()
+    
+    if reset is True:
+        default = gutils.get_cont_par('MANNING')
+        gutils.execute('UPDATE grid SET n_value=?;', (default,))
+    else:
+        pass
+    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+
+    gridCount = grid.featureCount()
+    
+    cellsize = float(gutils.get_cont_par('CELLSIZE'))
+    globalnValue = float(gutils.get_cont_par('MANNING'))
+
+    print ("Default n-value: %s" % globalnValue)
+
+    gridDimPerAnalysisRegion = 100
+    gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+    gridExt = grid.extent()
+    ySpan = gridExt.yMaximum() - gridExt.yMinimum()
+    xSpan = gridExt.xMaximum() - gridExt.xMinimum()
+
+    colCount = math.ceil( xSpan / (gridDimPerAnalysisRegion * cellsize))
+    rowCount = math.ceil( ySpan / (gridDimPerAnalysisRegion * cellsize))
+    
+    # segment the grid ext to create analysis regions
+    regionCount = rowCount * colCount
+    print ("Processing in %s regions" % regionCount)
+
+    # create progress bar
+    progDialog = QProgressDialog('n-Value Progress (by area - timing will be uneven)', 'Cancel', 0, 100)
+    progDialog.setModal(True)
+
+    progress = 0.0
+
+    # slice into rows by region count
+    breakVar = False # cause a break if it's true
+    for row in range(rowCount):
+        yMin = gridExt.yMinimum() + ySpan / rowCount * row
+        yMax = gridExt.yMinimum() + ySpan / rowCount * (row +1)
+        if breakVar == True:
+            break
+        for col in range(colCount):
+            progress = ((row * colCount + col) / regionCount) * 100.0
+            print ("Processing region %s (percent)" % progress)
+            progDialog.setValue(progress)
+            # catch cancellations here
+            if progDialog.wasCanceled():
+                breakVar = True
+                break
+            
+            xMin = gridExt.xMinimum() + xSpan / colCount * col
+            xMax = gridExt.xMinimum() + xSpan / colCount * (col +1)
+            
+            queryRect = QgsRectangle(
+                xMin,
+                yMin,
+                xMax,
+                yMax
+                ) # xmin, ymin, xmax, ymax
+
+            request = QgsFeatureRequest(queryRect)
+            manning_values = poly2poly_geos(grid, roughness,  request, column_name)
+                         
+
+            gridCount = 0
+            writeVals = []
+            for gid, values in manning_values:
+                gridCount += 1
+                if gridCount % 1000 == 0:
+                    print ("Processing %s" % gridCount)
+                if values:
+                    manning = sum(ma * subarea for ma, subarea in values)
+                    manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
+                    manning =  "{0:.4}".format(manning)
+                    writeVals.append((manning, gid))
+                    #gutils.execute(qry,(manning, gid),)
+            print ("Writing %s values to db" % len(writeVals))
+            if len(writeVals) > 0:
+                gutils.con.executemany(qry, writeVals)
+                print ("committing to db")
+                gutils.con.commit()
+
+    endTime = time.time()
+    print ("total write Time: %s min" % ((endTime - startTime)/60.0))
+    
+    QApplication.restoreOverrideCursor()     
+    debugMsg('\t{0:.3f} seconds'.format(endTime - startTime))
+
+   
 def modify_elevation(gutils, grid, elev):
     """
     Modifying elevation values inside 'grid' table.

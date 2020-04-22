@@ -814,50 +814,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error('ERROR 050618.1804: creation of Storm Drain Conduits layer failed!', e)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         QApplication.restoreOverrideCursor()
 
         if len(new_nodes) == 0 and len(new_conduits) == 0:
@@ -904,6 +860,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(swmm_file))
+            last_dir = s.value('FLO-2D/lastSWMMDir', '')
 
             if (os.path.isfile(swmm_file)):
                 # File exist, therefore import groups:           
@@ -1186,7 +1143,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             for row in time_series_rows:
                                 lrow1 = [row[1]]
                                 swmm_inp_file.write(line1.format(*lrow1))
-                                lrow2 = [row[0], "FILE" , row[2].strip()]
+                                fileName = os.path.basename(row[2].strip())
+                                file = '"'  + last_dir + '/' + fileName + '"'
+                                lrow2 = [row[0], "FILE" , file]
                                 swmm_inp_file.write(line2.format(*lrow2))
                                 swmm_inp_file.write("\n")
                     except Exception as e:

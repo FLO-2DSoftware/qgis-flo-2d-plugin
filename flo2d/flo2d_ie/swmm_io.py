@@ -489,7 +489,9 @@ class StormDrainProject(object):
                     timeSplit = time.split()
                     type = timeSplit[1].upper().strip()
                     if type == "FILE":
-                       time_list = list(zip_longest(time_cols, timeSplit))
+                        timeSplit2 = time.split('"')
+                        timeSplit =[timeSplit[0], timeSplit[1], timeSplit2[1]]
+                        time_list = list(zip_longest(time_cols, timeSplit))
                     else:
                         continue
                     time_list.insert(0, ['description', descr])    

@@ -240,14 +240,22 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         if len(row) >= 3: 
                             cell = row[0].strip()
                             iCell = int(cell)
+                            if iCell <= 0:
+                                iCell = 1
+                                cell = "1"
                             if len(grid) >= iCell and iCell > 0:
-                                self.errors.append([cell, row[1].strip(), row[2].strip()]) 
-                                if row[0].strip() not in seen:
+                                
+                                description = ', '.join(row[2:]).strip()
+                                self.errors.append([cell, row[1].strip(), description]) 
+#                                 self.errors.append([cell, row[1].strip(), row[2].strip()]) 
+                                # Create points for issues layer:                              
+                                if cell not in seen:
                                     seen.add(cell)
                                     self.cells.append(iCell)
                                     feat = next(grid.getFeatures(QgsFeatureRequest(iCell)))
                                     x, y = feat.geometry().centroid().asPoint()
-                                    features.append( [x, y, iCell, row[2].strip()] ) # x, y, cell, description
+                                    features.append( [x, y, iCell, description] ) # x, y, cell, description
+#                                     features.append( [x, y, iCell, row[2].strip()] ) # x, y, cell, description
                                     
                 shapefile = self.debug_directory + "/DEBUG.shp"
                 name = "DEBUG"
@@ -281,8 +289,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     if "Depressed" in dlg_issues_files.files:
                         file = self.debug_directory + "/DEPRESSED_ELEMENTS.OUT"
                         if (not os.path.isfile(file)):
-                            self.uc.show_warn(os.path.basename(file) + " is being used by another process!")   
-                        elif (os.path.getsize(file) == 0):   
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 090420.0807: " + os.path.basename(file) + " is being used by another process!")   
+                        elif (os.path.getsize(file) == 0):
+                            QApplication.restoreOverrideCursor()   
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:   
                             lyr = self.lyrs.get_layer_by_name('Depressed Elements', self.lyrs.group)                                                                   
@@ -295,24 +305,31 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                         next(f)
                                     for row in f:
                                         values  = row.split()
-                                        self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
-                                         
-                                        features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
-                                shapefile = self.debug_directory + "/Depressed Elements.shp"
-                                name = "Depressed Elements"
-                                fields = [['cell','I'], ['min_elev','D']]
-                                if self.create_points_shapefile(shapefile, name, fields, features):
-                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
-                                QApplication.restoreOverrideCursor()         
+                                        if values:
+                                            self.errors.append([values[0], "9001", "DEPRESSED_ELEMENTS.OUT : Depressed Element by " + values[3]]) 
+                                             
+                                            features.append( [values[1], values[2], values[0], values[3]] ) # x, y, cell, elev
                             except Exception as e:
                                 QApplication.restoreOverrideCursor()
-                                self.uc.show_error("ERROR 170519.0700: error while reading \n" + file  + "!\n", e)                
+                                self.close()
+                                self.uc.show_error("ERROR 170519.0700: error while reading \n" + file  + "!\n", e)  
+                                
+                            finally:
+                                if features:
+                                    shapefile = self.debug_directory + "/Depressed Elements.shp"
+                                    name = "Depressed Elements"
+                                    fields = [['cell','I'], ['min_elev','D']]
+                                    if self.create_points_shapefile(shapefile, name, fields, features):
+                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+                                    QApplication.restoreOverrideCursor()                                                   
                     
                     if "Channels" in dlg_issues_files.files:
                         file = self.debug_directory + "/CHANBANKEL.CHK"
                         if (not os.path.isfile(file)):
-                            self.uc.show_warn(os.path.basename(file) + " is being used by another process!")   
-                        elif (os.path.getsize(file) == 0):   
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 090420.0808: " + os.path.basename(file) + " is being used by another process!")   
+                        elif (os.path.getsize(file) == 0):
+                            QApplication.restoreOverrideCursor()   
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else: 
                             lyr = self.lyrs.get_layer_by_name('Channel Bank Elev Differences', self.lyrs.group)                        
@@ -325,24 +342,32 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                         next(f)
                                     for row in f:
                                         values  = row.split()
-                                        self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
-    
-                                        features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
-                                shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
-                                name = "Channel Bank Elev Differences"
-                                fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
-                                if self.create_points_shapefile(shapefile, name, fields, features):
-                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
-                                QApplication.restoreOverrideCursor()            
+                                        if values:
+                                            self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])   
+        
+                                            features.append( [values[1], values[2], values[0], values[3], values[4], values[5], values[6]] ) # x, y, cell, etc
+           
                             except Exception as e:
                                 QApplication.restoreOverrideCursor()
-                                self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)                               
+                                self.close()
+                                self.uc.show_error("ERROR 170519.0704: error while reading " + file  + "!\n", e)  
+                                
+                            finally:
+                                if features:
+                                    shapefile = self.debug_directory + "/Channel Bank Elev Differences.shp"
+                                    name = "Channel Bank Elev Differences"
+                                    fields = [['cell','I'], ['bank_elev','D'], ['floodplain_elev','D'], ['difference','D'], ['LB_RB','S']]
+                                    if self.create_points_shapefile(shapefile, name, fields, features):
+                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+                                    QApplication.restoreOverrideCursor()                                                                  
                     
                     if "Rim" in dlg_issues_files.files:
                         file = self.debug_directory + "/FPRIMELEV.OUT"
                         if (not os.path.isfile(file)):
-                            self.uc.show_warn(os.path.basename(file) + " is being used by another process!")   
-                        elif (os.path.getsize(file) == 0):   
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 090420.0806: "  + os.path.basename(file) + " is being used by another process!")   
+                        elif (os.path.getsize(file) == 0):
+                            QApplication.restoreOverrideCursor()   
                             self.uc.show_warn(os.path.basename(file) + " is empty!")
                         else:  
                             lyr = self.lyrs.get_layer_by_name('Flooplain Rim Differences', self.lyrs.group)                         
@@ -356,23 +381,28 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                          next(f)
                                     for row in f:
                                         values  = row.split()
-                                        self.errors.append([values[0], "9003", "FPRIMELEV.OUT : Floodplain - Rim = " + values[3]]) 
-                                        
-                                        cell = int(values[0])
-                                        feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                                        x, y = feat.geometry().centroid().asPoint()
-                                        
-                                        features.append( [ x, y , values[0], values[1], values[2], values[3], values[4]] ) # x, y, cell, etc
-                                shapefile = self.debug_directory + "/Flooplain Rim Differences.shp"
-                                name = "Flooplain Rim Differences"
-                                fields = [['cell','I'], ['floodplain_elev','D'], ['rim_elev','D'], ['difference','D'], ['new_floodplain_elev','D']]
-                                if self.create_points_shapefile(shapefile, name, fields, features):
-                                    vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')                                         
-                                QApplication.restoreOverrideCursor()    
+                                        if values:
+                                            if values[0] != 'GRID':
+                                                self.errors.append([values[0], "9003", "FPRIMELEV.OUT : Floodplain - Rim = " + values[3]]) 
+                                                cell = int(values[0])
+                                                feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                                                x, y = feat.geometry().centroid().asPoint()
+                                                
+                                                features.append( [ x, y , values[0], values[1], values[2], values[3], values[4]] ) # x, y, cell, etc
+
                             except Exception as e:
                                 QApplication.restoreOverrideCursor()
-                                self.uc.show_error("ERROR 170519.0705: error while reading " + file  + "!\n", e)                                                                     
-
+                                self.close()
+                                self.uc.show_error("ERROR 170519.0705: error while reading " + file  + "!\n", e)    
+                                
+                            finally: 
+                                if features:                                                                    
+                                    shapefile = self.debug_directory + "/Flooplain Rim Differences.shp"
+                                    name = "Flooplain Rim Differences"
+                                    fields = [['cell','I'], ['floodplain_elev','D'], ['rim_elev','D'], ['difference','D'], ['new_floodplain_elev','D']]
+                                    if self.create_points_shapefile(shapefile, name, fields, features):
+                                        vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')                                            
+                                    QApplication.restoreOverrideCursor()  
 
     def populate_elements_cbo(self):
 

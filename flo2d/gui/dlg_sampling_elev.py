@@ -49,6 +49,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.populate_raster_cbo()
         self.populate_alg_cbo()
+        self.populate_ovr_cbo()
         self.src_nodata = -9999
         self.probe_raster = None
         self.radiusSBox.setHidden(True)
@@ -103,6 +104,17 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         for m in sorted(met.keys()):
             self.algCbo.addItem(met[m], m)
             self.algCbo.setCurrentIndex(0)
+    def populate_ovr_cbo(self):
+        # Populate overview use algorithm combobox
+
+        met = {
+            "AUTO": "Automatic Selection of Overview level",
+            "NONE": "Use raw input resolution only"
+            }
+
+        for m in sorted(met.keys()):
+            self.ovrCbo.addItem(met[m], m)
+            self.ovrCbo.setCurrentIndex(0)
 
     def get_worp_opts_data(self):
         """
@@ -151,6 +163,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             '-te {}'.format(' '.join([str(c) for c in self.output_bounds])),
             '-te_srs "{}"'.format(self.out_srs),
             '-s_srs "{}"'.format(self.src_srs),
+            '-ovr {}'.format(self.ovrCbo.itemData(self.ovrCbo.currentIndex())),
             '-dstnodata {}'.format(self.src_nodata),
             '-r {}'.format(self.algCbo.itemData(self.algCbo.currentIndex())),
             '-co COMPRESS=LZW',
@@ -161,6 +174,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         else:
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(' '.join([opt for opt in opts]), self.src_raster, self.out_raster)
+        print (cmd)
         proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
         out = proc.communicate()
         for line in out:

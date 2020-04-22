@@ -15,7 +15,7 @@ from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
 from qgis.PyQt.QtWidgets import QApplication, QInputDialog
-from ..flo2d_tools.grid_tools import (square_grid, evaluate_roughness, evaluate_arfwrf,
+from ..flo2d_tools.grid_tools import (square_grid, evaluate_roughness, update_roughness, evaluate_arfwrf,
                                       evaluate_spatial_tolerance, evaluate_spatial_froude,
                                       evaluate_spatial_shallow, evaluate_spatial_gutter,
                                       evaluate_spatial_noexchange, ZonalStatistics, ZonalStatisticsOther)
@@ -329,7 +329,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
 #             field = rough_lyr.fields().field(nfield)
-            evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+#             evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Assigning roughness finished!')
         except Exception as e:
