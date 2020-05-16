@@ -928,7 +928,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     cellsize = float(gutils.get_cont_par('CELLSIZE'))
     globalnValue = float(gutils.get_cont_par('MANNING'))
 
-    print ("Default n-value: %s" % globalnValue)
+#     print ("Default n-value: %s" % globalnValue)
 
     gridDimPerAnalysisRegion = 100
     gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
@@ -941,7 +941,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     
     # segment the grid ext to create analysis regions
     regionCount = rowCount * colCount
-    print ("Processing in %s regions" % regionCount)
+#     print ("Processing in %s regions" % regionCount)
 
     # create progress bar
     progDialog = QProgressDialog('n-Value Progress (by area - timing will be uneven)', 'Cancel', 0, 100)
@@ -958,7 +958,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
             break
         for col in range(colCount):
             progress = ((row * colCount + col) / regionCount) * 100.0
-            print ("Processing region %s (percent)" % progress)
+#             print ("Processing region %s (percent)" % progress)
             progDialog.setValue(progress)
             # catch cancellations here
             if progDialog.wasCanceled():
@@ -983,25 +983,27 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
             writeVals = []
             for gid, values in manning_values:
                 gridCount += 1
-                if gridCount % 1000 == 0:
-                    print ("Processing %s" % gridCount)
+#                 if gridCount % 1000 == 0:
+#                     print ("Processing %s" % gridCount)
                 if values:
                     manning = sum(ma * subarea for ma, subarea in values)
                     manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
                     manning =  "{0:.4}".format(manning)
                     writeVals.append((manning, gid))
                     #gutils.execute(qry,(manning, gid),)
-            print ("Writing %s values to db" % len(writeVals))
+#             print ("Writing %s values to db" % len(writeVals))
             if len(writeVals) > 0:
                 gutils.con.executemany(qry, writeVals)
-                print ("committing to db")
+#                 print ("committing to db")
                 gutils.con.commit()
 
+    progDialog.close()
+    
     endTime = time.time()
-    print ("total write Time: %s min" % ((endTime - startTime)/60.0))
+#     print ("total write Time: %s min" % ((endTime - startTime)/60.0))
     
     QApplication.restoreOverrideCursor()     
-    debugMsg('\t{0:.3f} seconds'.format(endTime - startTime))
+    debugMsg("{0:.3f} seconds sampling Manning's values".format(endTime - startTime))
 
    
 def modify_elevation(gutils, grid, elev):
@@ -1446,7 +1448,7 @@ def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size)
             else:
                 elevs.append(-99999 )  
                 
-         # East cell:   
+            # East cell:   
             x = xx +  cell_size
             y = yy
             grid = gutils.grid_on_point(x, y)
@@ -1728,8 +1730,85 @@ def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size)
 #..............................................
 
 
-
-
+def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
+    try:
+        sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
+        currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+        xx, yy = currentCell.geometry().centroid().asPoint()
+        
+        
+        elev = - 999
+        if dir == 1:  # "N"
+            # North cell:
+            y = yy  +  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+     
+              
+        elif dir == 5: # "NE"
+            # NorthEast cell:
+            y = yy  +  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]                                        
+            
+        elif dir == 2:  # "E"
+            # East cell:
+            x = xx +  cell_size
+            y = yy
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                               
+        elif dir == 6: # "SE"
+            # SouthEast cell:
+            y = yy  -  cell_size
+            x = xx  +  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]              
+            
+        elif dir == 3: # "S"
+            # South cell:
+            y = yy  -  cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]             
+    
+        elif dir == 7: # "SW"
+            # SouthWest cell:
+            y = yy  -  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]             
+    
+        elif dir == 4: # "W"
+             # West cell:
+            y = yy
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]              
+            
+        elif dir == 8: # "NW"
+             # NorthWest cell:
+            y = yy  +  cell_size
+            x = xx  -  cell_size
+            grid = gutils.grid_on_point(x, y)
+            if grid is not None:
+                elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]            
+            
+        else :   
+            show_error('ERROR 160520.1650: Invalid direction!')              
+        
+        return elev
+    except:
+        show_error('ERROR 160520.1644: could not evaluate adjacent cell elevation!')
 
      
 # 

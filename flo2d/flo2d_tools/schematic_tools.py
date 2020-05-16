@@ -15,7 +15,7 @@ from operator import itemgetter
 
 from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPointXY
 
-from .grid_tools import spatial_index, fid_from_grid, adjacent_grid_elevations, three_adjacent_grid_elevations
+from .grid_tools import spatial_index, fid_from_grid, adjacent_grid_elevations, three_adjacent_grid_elevations, get_adjacent_cell_elevation
 from ..geopackage_utils import GeoPackageUtils
 
 
@@ -230,9 +230,14 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                     else:
                                         # failDepth selected, use adjacent cell elevations to calculate fail elevation.
                                         
-                                        max_elev = max(three_adjacent_grid_elevations(gutils, grid_lyr, gid, ldir, cell_size))                                  
+                                        
+                                        adj_elev = get_adjacent_cell_elevation(gutils, grid_lyr, gid, ldir, cell_size) 
+                                        grid_elev = gutils.grid_value(gid, 'elevation')                                        
+                                        max_elev = max(adj_elev, grid_elev)
+                                                                               
                                         fail_data.append( (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
-    #                                     fail_data.append( (gid, ldir, fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+#                                         max_elev = max(three_adjacent_grid_elevations(gutils, grid_lyr, gid, ldir, cell_size))                                  
+#                                         fail_data.append( (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
                         
                     
         gutils.con.execute(del_levees_sql)

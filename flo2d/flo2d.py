@@ -1579,13 +1579,17 @@ class Flo2D(object):
                 return       
          
         try:
+            start = datetime.now()      
             QApplication.setOverrideCursor(Qt.WaitCursor)
             n_elements, n_levee_directions, n_fail_features = self.schematize_levees()
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
         
-
+            end = datetime.now()                
+            time_taken = end - start            
+            self.uc.show_info("Time to schematize levee cells. " + str(time_taken))  
+             
             levees = self.lyrs.data['levee_data']['qlyr']
             idx = levees.fields().indexOf('grid_fid')
             values = levees.uniqueValues(idx)
@@ -1597,6 +1601,7 @@ class Flo2D(object):
             if n_fail_features > n_levee_directions:
                 info += '\n\n(WARNING 191219.1649: Please review the input User Levee Lines. There may be more than one line intersecting grid elements)'
             self.uc.show_info(info)
+   
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
@@ -1671,7 +1676,7 @@ class Flo2D(object):
         Generate schematic lines for user defined levee lines.
         """
         try:
-            start = datetime.now()        
+#             start = datetime.now()        
             
             levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
@@ -1680,9 +1685,9 @@ class Flo2D(object):
             if levee_schem:
                 levee_schem.triggerRepaint()
                 
-            end = datetime.now()                
-            time_taken = end - start
-            self.uc.show_info("Time lo load levee cells. " + str(time_taken))                
+#             end = datetime.now()                
+#             time_taken = end - start
+#             self.uc.show_info("Time to schematize levee cells. " + str(time_taken))                
 
             return  n_elements, n_levee_directions, n_fail_features  
         except Exception as e:
