@@ -1810,111 +1810,43 @@ def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error('ERROR 160520.1644: could not evaluate adjacent cell elevation!')
 
-     
-# 
-# 
-# 
-#     def get_adjacent_cell_elevation(self, xx, yy, cell_size, unit, dir):
-#         sel_elev_qry = '''SELECT elevation FROM grid WHERE fid = ?;''' 
-#         elev = - 999
-#         if dir == "N":
-#             # North cell:
-#             y = yy  +  cell_size
-#             x = xx
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.N_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.N_lbl.setText("(boundary)")         
-#               
-#         elif dir == "NE":
-#             # NorthEast cell:
-#             y = yy  +  cell_size
-#             x = xx  +  cell_size
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.NE_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.NE_lbl.setText("(boundary)")                                              
-#             
-#         elif dir == "E":
-#             # East cell:
-#             x = xx +  cell_size
-#             y = yy
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.E_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.E_lbl.setText("(boundary)")   
-#                                                
-#         elif dir == "SE":
-#             # SouthEast cell:
-#             y = yy  -  cell_size
-#             x = xx  +  cell_size
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.SE_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.SE_lbl.setText("(boundary)")               
-#             
-#         elif dir == "S":
-#             # South cell:
-#             y = yy  -  cell_size
-#             x = xx
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.S_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.S_lbl.setText("(boundary)")               
-# 
-#         elif dir == "SW":
-#             # SouthWest cell:
-#             y = yy  -  cell_size
-#             x = xx  -  cell_size
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.SW_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.SW_lbl.setText("(boundary)")                
-# 
-#         elif dir == "W":
-#              # West cell:
-#             y = yy
-#             x = xx  -  cell_size
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.W_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.W_lbl.setText("(boundary)")                 
-#             
-#         elif dir == "NW":
-#              # NorthWest cell:
-#             y = yy  +  cell_size
-#             x = xx  -  cell_size
-#             grid = self.gutils.grid_on_point(x, y)
-#             if grid is not None:
-#                 elev = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#                 self.NW_lbl.setText(str(elev) +  unit)
-#             else:
-#                 self.NW_lbl.setText("(boundary)")             
-#             
-#         else :   
-#             self.uc.bar_warn('Invalid direction!')              
-#         
-#         return elev
+def dirID(dir):               
+    if dir == 1:  # "N"
+       # North cell:
+       ID = "N"
+    
+    elif dir == 5: # "NE"
+       # NorthEast cell:
+       ID = "NE"
+                      
+    elif dir == 2:  # "E"
+       # East cell:
+       ID = "E"
+                                            
+    elif dir == 6: # "SE"
+       # SouthEast cell:
+       ID = "SE"
+         
+    elif dir == 3: # "S"
+       # South cell:
+       ID = "S"
+      
+    elif dir == 7: # "SW"
+       # SouthWest cell:
+       ID = "SW"
+       
+    elif dir == 4: # "W"
+        # West cell:
+        ID = "W"
+         
+    elif dir == 8: # "NW"
+        # NorthWest cell:
+        ID = "NW"
 
-
-
-
-
-
+    else:
+        ID = "?"  
+        
+    return ID      
 
 
 

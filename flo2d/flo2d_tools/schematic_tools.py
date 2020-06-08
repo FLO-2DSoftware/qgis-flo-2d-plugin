@@ -17,7 +17,8 @@ from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector,
 
 from .grid_tools import spatial_index, fid_from_grid, adjacent_grid_elevations, three_adjacent_grid_elevations, get_adjacent_cell_elevation
 from ..geopackage_utils import GeoPackageUtils
-
+from ..user_communication import UserCommunication
+from qgis.PyQt.QtWidgets import QApplication
 
 # Levees tools
 def get_intervals(line_feature, point_features, col_value, buffer_size):
@@ -251,6 +252,113 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         return len(schem_lines), len(data), len(fail_data)
     except Exception as e:
         self.uc.show_error('ERROR 291219.0428: Error while creating schematic levees octagons!.\n', e)
+
+def delete_levee_directions_duplicates(gutils, levees, grid_lyr):
+    """
+    Eliminate levee opposite directions. Select the one with highest crest elevation.
+    """
+    try:
+        cell_size = float(gutils.get_cont_par('CELLSIZE'))
+        levees_qry = 'SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid'
+        sel_levee_qry = 'SELECT levcrest FROM levee_data WHERE grid_fid = ? AND ldir = ?'
+        delete_qry = 'DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?'            
+        delete_failure_qry = 'DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;'    
+            
+        levees = gutils.execute(levees_qry).fetchall()       
+        toDelete = []
+        for nextLevee in levees:
+#         for nextLevee in levees.getFeatures():
+            
+#             cell = nextLevee[1]
+#             dir = nextLevee[2]
+#             crest = nextLevee[3]  
+                      
+            cell = nextLevee[0]
+            dir = nextLevee[1]
+            crest = nextLevee[2]
+            
+            oppositeCrest = None
+            cellFeat = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+            xx, yy = cellFeat.geometry().centroid().asPoint()
+            if dir == 1:  # "N"
+               # North cell:
+               y = yy  +  cell_size
+               x = xx
+               dirOpp = 3
+            
+            elif dir == 5: # "NE"
+               # NorthEast cell:
+               y = yy  +  cell_size
+               x = xx  +  cell_size                           
+               dirOpp = 7
+                              
+            elif dir == 2:  # "E"
+               # East cell:
+               y = yy
+               x = xx +  cell_size
+               dirOpp = 4
+                                                    
+            elif dir == 6: # "SE"
+               # SouthEast cell:
+               y = yy  -  cell_size
+               x = xx  +  cell_size  
+               dirOpp = 8
+                 
+            elif dir == 3: # "S"
+               # South cell:
+               y = yy  -  cell_size
+               x = xx
+               dirOpp = 1
+              
+            elif dir == 7: # "SW"
+               # SouthWest cell:
+               y = yy  -  cell_size
+               x = xx  -  cell_size  
+               dirOpp = 5
+              
+            elif dir == 4: # "W"
+                # West cell:
+               y = yy
+               x = xx  -  cell_size    
+               dirOpp = 2
+                 
+            elif dir == 8: # "NW"
+                # NorthWest cell:
+               y = yy  +  cell_size
+               x = xx  -  cell_size   
+               dirOpp = 6
+              
+            else:
+                X = -99
+                y = -99   
+
+            oppositeCell = gutils.grid_on_point(x, y)
+            if oppositeCell is not None:
+                oppositeCrest = gutils.execute(sel_levee_qry, (oppositeCell,dirOpp)).fetchone()            
+                if oppositeCrest:
+                    if crest < oppositeCrest[0]:    
+                        toDelete.append((cell,dir))
+#                         gutils.execute(delete_qry, (cell,dir)) 
+
+                    elif crest == oppositeCrest[0]: 
+                         # Arbitrary delete high cell number to avoid duplicate later.
+                        if oppositeCell > cell:
+                            toDelete.append((oppositeCell,dirOpp))                                                   
+#                            gutils.execute(delete_qry, (oppositeCell,dir))  
+                        else:
+                            toDelete.append((cell,dir))                                                   
+#                            gutils.execute(delete_qry, (oppositeCell,dir))                                                                               
+                    else:
+                        toDelete.append((oppositeCell,dirOpp))                                                   
+#                         gutils.execute(delete_qry, (oppositeCell,dir)) 
+
+        toDelete = list(set(toDelete))
+        toDelete.sort()
+        return toDelete
+        
+    except Exception as e:
+        QApplication.restoreOverrideCursor()
+        self.uc.show_error('ERROR 040620.0648: unable to eliminate duplicate levee directions!\n', e)   
 
 #...............................
 
