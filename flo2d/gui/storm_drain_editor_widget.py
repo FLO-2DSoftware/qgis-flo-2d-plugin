@@ -353,6 +353,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
 
+        self.schematize_inlets_and_outfalls()
+#         self.schematize_conduits() 
+            
+    def schematize_inlets_and_outfalls(self):
         qry_inlet = '''
         INSERT INTO swmmflo
         (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
@@ -362,7 +366,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         INSERT INTO swmmoutf
         (geom, grid_fid, name, outf_flo)
         VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
+        
         qry_rt_update = '''UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;'''
+        
         try:
 
             if self.gutils.is_table_empty('user_swmm_nodes'):
@@ -419,7 +425,78 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                "Attribute (inlet or outlet) missing.\n\n" +
                                "Please check user Storm Drain Nodes layer.")
             self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
-                               +'\n__________________________________________________', e)            
+                               +'\n__________________________________________________', e)   
+                    
+    def schematize_conduits(self):  
+        qry_inlet = '''
+        INSERT INTO swmmflo
+        (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
+        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?,?);'''     
+        
+        qry_outlet = '''
+        INSERT INTO swmmoutf
+        (geom, grid_fid, name, outf_flo)
+        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
+        
+        qry_rt_update = '''UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;'''
+        
+        try:
+
+            if self.gutils.is_table_empty('user_swmm_nodes'):
+                self.uc.bar_warn("There are no storm drain components (inlets/outfalls) defined in layer Storm Drain Nodes (User Layers)")
+                return
+
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            inlets = []
+            outlets = []
+            rt_updates = []
+            feats = self.user_swmm_nodes_lyr.getFeatures()
+            for feat in feats:
+                geom = feat.geometry()
+                if geom is None:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_critical("ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n" +
+                               "Geometry (inlet or outlet) missing.\n\n" +
+                               "Please check user Storm Drain Nodes layer.")
+                    return
+                point = geom.asPoint()
+                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                sd_type = feat['sd_type']
+                name = feat['name']
+                rt_fid = feat['rt_fid']
+                if sd_type == 'I' or sd_type == 'J':
+                    intype = feat['intype']
+                    if intype == 4 and rt_fid is not None:
+                        rt_updates.append((grid_fid, rt_fid))
+                    row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
+                    row[10] = int('0' if row[9] == 'False' else '1')
+                    row = [0 if v == NULL else v for v in row]
+                    inlets.append(row)
+                elif sd_type == 'O':
+                    row = [grid_fid, grid_fid, name] + [feat[col] for col in self.outlet_columns]
+                    outlets.append(row)
+                else:
+                    raise ValueError
+            self.gutils.clear_tables('swmmflo', 'swmmoutf')
+            cur = self.con.cursor()
+            cur.executemany(qry_inlet, inlets)
+            cur.executemany(qry_outlet, outlets)
+            cur.executemany(qry_rt_update, rt_updates)
+            self.con.commit()
+            self.repaint_schema()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Schematizing of Storm Drains finished!\n\n" +
+                             "The 'Storm Drain-SD Inlets' and 'Storm Drain-SD Outfalls' layers were updated.\n\n" +
+                             "(NOTE: the 'Export GDS files' tool will write those layer atributes into the SWMMFLO.DAT and SWMMOUTF.DAT files)")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.show_critical("ERROR 060319.1832: Schematizing of Storm Drains failed!\n\n" +
+                               "Attribute (inlet or outlet) missing.\n\n" +
+                               "Please check user Storm Drain Nodes layer.")
+            self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
+                               +'\n__________________________________________________', e)                          
 
     def simulate_stormdrain(self):
         if self.simulate_stormdrain_chbox.isChecked():

@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.0
+version=0.10.1
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.1
+  - Delete levee directions duplicates
  <p>0.10.0
   - Individual levee direction failure calculated using adjacent cell elevation.
  <p>0.9.9

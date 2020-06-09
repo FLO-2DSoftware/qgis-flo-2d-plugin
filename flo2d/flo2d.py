@@ -31,7 +31,7 @@ from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.grid_tools import grid_has_empty_elev
-from .flo2d_tools.schematic_tools import generate_schematic_levees
+from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_levee_directions_duplicates
 from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
@@ -49,6 +49,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
+from .flo2d_tools.grid_tools import dirID
 
 class Flo2D(object):
 
@@ -1579,16 +1580,53 @@ class Flo2D(object):
                 return       
          
         try:
-            start = datetime.now()      
+#             start = datetime.now()      
             QApplication.setOverrideCursor(Qt.WaitCursor)
             n_elements, n_levee_directions, n_fail_features = self.schematize_levees()
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
             QApplication.restoreOverrideCursor()
-        
-            end = datetime.now()                
-            time_taken = end - start            
-            self.uc.show_info("Time to schematize levee cells. " + str(time_taken))  
+
+            # Delete duplicates:
+            grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
+            q  = False
+            if n_elements > 0:
+                dletes = "Cell , Direction\n---------------\n"
+                levees = self.lyrs.data['levee_data']['qlyr']
+                leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr) 
+                if len(leveesToDelete) > 0:
+                    k = 0
+                    for levee in leveesToDelete:
+                         k += 1
+                         if k <= 3:
+                            dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
+                         elif k == 4:  
+                             dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")" 
+                         elif k > 4:
+                            dletes += "\n" + '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
+                            k = 1
+
+                    QApplication.restoreOverrideCursor()
+                    q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' + 
+                                            'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')                   
+                    if q:
+                        delete_levees_qry = 'DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?'
+                        delete_failure_qry = 'DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;'  
+                        for levee in leveesToDelete:
+                            self.gutils.execute(delete_levees_qry, (levee[0], levee[1])) 
+                            self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))   
+                        levees.triggerRepaint()
+                                 
+                levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
+                if levee_schem:
+                    levee_schem.triggerRepaint()
+            if q:
+                n_levee_directions -= len(leveesToDelete)
+                n_fail_features -= len(leveesToDelete)
+
+#             end = datetime.now()                
+#             time_taken = end - start            
+#             self.uc.show_info("Time to schematize levee cells. " + str(time_taken))  
              
             levees = self.lyrs.data['levee_data']['qlyr']
             idx = levees.fields().indexOf('grid_fid')
@@ -1676,19 +1714,44 @@ class Flo2D(object):
         Generate schematic lines for user defined levee lines.
         """
         try:
-#             start = datetime.now()        
-            
             levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             n_elements, n_levee_directions, n_fail_features = generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
-            levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
-            if levee_schem:
-                levee_schem.triggerRepaint()
+#             q  = False
+#             if n_elements > 0:
+#                 dletes = "Cell, Direction\n---------------\n"
+#                 levees = self.lyrs.data['levee_data']['qlyr']
+#                 leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr) 
+#                 if len(leveesToDelete) > 0:
+#                     k = 0
+#                     for levee in leveesToDelete:
+#                          k += 1
+#                          if k <= 3:
+#                             dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
+#                          elif k == 4:  
+#                              dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")" 
+#                          elif k > 4:
+#                             dletes += "\n" + '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
+#                             k = 1
+# 
+#                     QApplication.restoreOverrideCursor()
+#                     q = self.uc.question('There are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' + 
+#                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')                   
+#                     if q:
+#                         delete_levees_qry = 'DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?'
+#                         delete_failure_qry = 'DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;'  
+#                         for levee in leveesToDelete:
+#                             self.gutils.execute(delete_levees_qry, (levee[0], levee[1])) 
+#                             self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))   
+#                         levees.triggerRepaint()
+#                                  
+#                 levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
+#                 if levee_schem:
+#                     levee_schem.triggerRepaint()
+#             if q:
+#                 n_levee_directions -= len(leveesToDelete)
+#                 n_fail_features -= len(leveesToDelete)
                 
-#             end = datetime.now()                
-#             time_taken = end - start
-#             self.uc.show_info("Time to schematize levee cells. " + str(time_taken))                
-
             return  n_elements, n_levee_directions, n_fail_features  
         except Exception as e:
             QApplication.restoreOverrideCursor()
