@@ -196,7 +196,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                             WHERE fid = ?'''        
         
     
-        # create levee segments for distinct levee directions in each grid element
+        # Create levee segments for distinct levee directions in each grid element
         grid_levee_seg = {}
         data = []
         fail_data = []
@@ -228,17 +228,16 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                     if not fail[0] == 0.0:
                                         # failElev selected, use it.
                                         fail_data.append( (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6]) )
-                                    else:
+                                    elif not fail[1] == 0.0:
                                         # failDepth selected, use adjacent cell elevations to calculate fail elevation.
                                         
-                                        
-                                        adj_elev = get_adjacent_cell_elevation(gutils, grid_lyr, gid, ldir, cell_size) 
+                                        adj_cell, adj_elev = get_adjacent_cell_elevation(gutils, grid_lyr, gid, ldir, cell_size) 
                                         grid_elev = gutils.grid_value(gid, 'elevation')                                        
                                         max_elev = max(adj_elev, grid_elev)
                                                                                
                                         fail_data.append( (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
-#                                         max_elev = max(three_adjacent_grid_elevations(gutils, grid_lyr, gid, ldir, cell_size))                                  
-#                                         fail_data.append( (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6]) )
+                                    else: # do not set failure data for this direction.
+                                        pass
                         
                     
         gutils.con.execute(del_levees_sql)

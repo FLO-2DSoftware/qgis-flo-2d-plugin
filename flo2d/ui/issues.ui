@@ -364,7 +364,7 @@
             <string>Zoom In</string>
            </property>
            <property name="toolTipDuration">
-            <number>2</number>
+            <number>-1</number>
            </property>
            <property name="text">
             <string/>
@@ -381,7 +381,7 @@
             <string>Zoom Out</string>
            </property>
            <property name="toolTipDuration">
-            <number>2</number>
+            <number>-1</number>
            </property>
            <property name="text">
             <string/>

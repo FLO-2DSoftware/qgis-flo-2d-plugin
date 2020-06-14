@@ -996,7 +996,7 @@ class Layers(object):
 
             ('struct', {
                 'name': '(struct)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': ['struc.qml'],
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1004,7 +1004,7 @@ class Layers(object):
 
             ('rat_curves', {
                 'name': '(rat_curves)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1012,7 +1012,7 @@ class Layers(object):
 
             ('repl_rat_curves', {
                 'name': '(repl_rat_curves)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1020,7 +1020,7 @@ class Layers(object):
 
             ('rat_table', {
                 'name': '(rat_table)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1028,7 +1028,7 @@ class Layers(object):
             
             ('culvert_equations', {
                 'name': '(culvert_equations)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1036,7 +1036,7 @@ class Layers(object):
 
             ('storm_drains', {
                 'name': '(storm_drains)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
@@ -1044,31 +1044,11 @@ class Layers(object):
             
             ('bridge_variables', {
                 'name': '(bridge_variables)',
-                'sgroup': 'Hydraulic Structures Tables',
+                'sgroup': 'Hydraulic Structures',
                 'styles': None,
                 'attrs_edit_widgets': {},
                 'readonly': False
-            })
-            
-#             ('bridge_variables', {
-#                 'name': '(bridge_variables)',
-#                 'sgroup': 'Hydraulic Structures Tables',
-#                 'styles': None,
-#                 'attrs_edit_widgets': {},
-#                 'readonly': False
-#             })              
-            
-            
-#             ('trigger_control', {
-#                 'name': 'Triggers',
-#                 'sgroup': 'Triggers control table',
-#                 'styles': None,
-#                 'attrs_edit_widgets': {},
-#                 'visible': False,
-#                 'readonly': False
-#             })                 
-                    
-
+            })        
         ])
         # set QGIS layer (qlyr) to None for each table
         for lyr in self.data:

@@ -102,15 +102,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
     def create_walls(self):
         dlg_walls_shapefile = WallsShapefile(self.con, self.iface, self.lyrs)
         save = dlg_walls_shapefile.exec_()
-        
-        QApplication.restoreOverrideCursor()
-#         if save:
-#             try:
-#                 if dlg_walls_shapefile.saveSelected:
-#                     self.uc.bar_info("Walls saved.")
-# 
-#             except Exception as e:
-#                 self.uc.bar_error("ERROR while saving walls!.")        
+        QApplication.restoreOverrideCursor()      
 
     def check_sources(self):
         if not self.methods:

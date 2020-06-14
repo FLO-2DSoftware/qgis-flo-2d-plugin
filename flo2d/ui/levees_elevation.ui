@@ -43,6 +43,9 @@
         <property name="text">
          <string>User elevation polygons</string>
         </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
       <item>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>230</width>
-    <height>118</height>
+    <width>282</width>
+    <height>167</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,7 @@
    <string>Warnings and Errors</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="0">
+   <item row="0" column="0" colspan="3">
     <widget class="QLabel" name="label_4">
      <property name="text">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the source of warnings and errors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -31,6 +31,19 @@
     </widget>
    </item>
    <item row="1" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>74</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="1">
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QRadioButton" name="debug_file_radio">
@@ -42,16 +55,49 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="0">
       <widget class="QRadioButton" name="current_project_radio">
        <property name="text">
         <string>Current project</string>
        </property>
       </widget>
      </item>
+     <item row="2" column="0">
+      <widget class="QRadioButton" name="levee_crest_radio">
+       <property name="text">
+        <string>Levee crests</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
+   <item row="1" column="2">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>73</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
    <item row="2" column="0">
+    <spacer name="horizontalSpacer_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>74</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="1" colspan="2">
     <widget class="QDialogButtonBox" name="errors_OK_btn">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -71,9 +117,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>label_4</zorder>
-  <zorder>errors_OK_btn</zorder>
-  <zorder>debug_file_radio</zorder>
  </widget>
  <resources/>
  <connections>

@@ -50,12 +50,10 @@ class WallsShapefile(qtBaseClass, uiDialog):
         self.clear_base_elevation_btn.clicked.connect(self.clear_base_elevation)        
         self.clear_maximum_width_btn.clicked.connect(self.clear_maximum_width)              
         self.clear_vertical_fail_rate_btn.clicked.connect(self.clear_vertical_fail_rate) 
-        self.clear_horizontal_fail_rate_btn.clicked.connect(self.clear_horizontal_fail_rate)    
+        self.clear_horizontal_fail_rate_btn.clicked.connect(self.clear_horizontal_fail_rate)  
         
         self.clear_all_walls_attributes_btn.clicked.connect(self.clear_all_walls_attributes)
 
-#         self.walls_to_levees_buttonbox.accepted.connect(self.create_user_levees_from_walls_shapefile)
-        
         self.setup_layers_comboxes()
         
         self.restore_storm_drain_shapefile_fields()
@@ -200,8 +198,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 levee_lines_fields = self.user_levee_lines_lyr.fields()
                 new_levee_lines_feats = []                
                  
-                for feat in wall_shapefile_feats:
-#                 for i, feat in enumerate(wall_shapefile_feats, start=1):    
+                for feat in wall_shapefile_feats:  
                     # Set new levee lines:
                     
                         item = feat[self.crest_elevation_FieldCbo.currentText()]
@@ -213,7 +210,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         item = feat[self.correction_FieldCbo.currentText()]
                         correction = float(item) if item and item != "" else 0.0
                     
-                        
                         # Set failure:          
                         item = feat[self.failure_height_FieldCbo.currentText()]
                         failElev = float_or_zero(item)
@@ -236,7 +232,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         levee_feat = QgsFeature()
                         levee_feat.setFields(levee_lines_fields)
                         
-#                         field_index = layer.fields().indexFromName(field_name)
                         if levee_lines_fields.indexFromName('failDuration') == -1:
                             QApplication.restoreOverrideCursor()  
                             self.uc.show_warn("ERROR 060120.0629.: fields missing!\nThe User Levee Lines layer do not have all the required fields.\n\n" +
@@ -264,20 +259,23 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         levee_feat.setAttribute('correction', correction)
                         
                         # Failure Data:
-                        if self.fail_elev_radio.isChecked():
-                            levee_feat.setAttribute('failElev', failElev)
-                            levee_feat.setAttribute('failDepth', 0.0)
-                        else:  # use depth => compute fail from highest adjacent cell elevation.
+                        if self.failure_groupBox.isChecked():
+                            if self.fail_elev_radio.isChecked():
+                                levee_feat.setAttribute('failElev', failElev)
+                                levee_feat.setAttribute('failDepth', 0.0)
+                            else:  # use depth => compute fail from highest adjacent cell elevation.
+                                levee_feat.setAttribute('failElev', 0.0)
+                                levee_feat.setAttribute('failDepth', failElev) 
+                        else:
                             levee_feat.setAttribute('failElev', 0.0)
-                            levee_feat.setAttribute('failDepth', failElev) 
-
+                            levee_feat.setAttribute('failDepth', 0.0) 
+                                                           
                         levee_feat.setAttribute('failDuration', failDuration)
                         levee_feat.setAttribute('failBaseElev', failBaseElev)
                         levee_feat.setAttribute('failMaxWidth', failMaxWidth)
                         levee_feat.setAttribute('failVRate', failVRate)
                         levee_feat.setAttribute('failHRate', failHRate)
-                        
-               
+                            
                         new_levee_lines_feats.append(levee_feat)
 
                 QApplication.restoreOverrideCursor()  
@@ -309,93 +307,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.user_levee_lines_lyr.updateExtents()
                 self.user_levee_lines_lyr.triggerRepaint()
                 self.user_levee_lines_lyr.removeSelection()
-
-#                 try:  # Add features to 'levee_failure' layer:
-#                     qry_wall_cells = '''
-#                     SELECT
-#                         grid.fid, grid.elevation, user_levee_lines.fid, user_levee_lines.elev, user_levee_lines.correction
-#                     FROM
-#                         grid AS grid, user_levee_lines AS user_levee_lines
-#                     WHERE grid.ROWID IN (
-#                             SELECT id FROM rtree_grid_geom
-#                             WHERE
-#                                 ST_MinX(GeomFromGPB(user_levee_lines.geom)) <= maxx AND
-#                                 ST_MaxX(GeomFromGPB(user_levee_lines.geom)) >= minx AND
-#                                 ST_MinY(GeomFromGPB(user_levee_lines.geom)) <= maxy AND
-#                                 ST_MaxY(GeomFromGPB(user_levee_lines.geom)) >= miny)
-#                     AND
-#                         ST_Intersects(GeomFromGPB(grid.geom), GeomFromGPB(user_levee_lines.geom))
-#                     ORDER BY user_levee_lines.fid;'''
-#   
-#     
-#                     lyr = self.lyrs.get_layer_by_name(walls_shapefile, self.lyrs.group).layer()          
-#                     wall_shapefile_feats = lyr.getFeatures()
-#                    
-#                     previous_wall_cell = -999
-#                     new_levee_failure_feats = []
-#                     failure_fields = self.levee_failure_lyr.fields()
-#                     
-#                     wall_cells = self.gutils.execute(qry_wall_cells).fetchall()
-#                     for wall in wall_cells:
-#                         if wall[0] != previous_wall_cell:
-#                             previous_wall_cell = wall[0]
-#                             
-# #                             if wall[0] == 11472:
-# #                                 pass
-#                             try:        
-#                                 f = next(wall_shapefile_feats)
-#                             except StopIteration:
-#                                 break 
-#                                                    
-#                         # Set new failure records:          
-#                         item = f[self.failure_height_FieldCbo.currentText()]
-#                         failure = float_or_zero(item)
-#                          
-#                         item = f[self.duration_FieldCbo.currentText()]
-#                         duration = float_or_zero(item)
-#                          
-#                         item = f[self.base_elevation_FieldCbo.currentText()]
-#                         base_elevation = float_or_zero(item)
-#                          
-#                         item = f[self.maximum_width_FieldCbo.currentText()]
-#                         maximum_width = float_or_zero(item)
-#                          
-#                         item = f[self.vertical_fail_rate_FieldCbo.currentText()]
-#                         vertical_fail_rate = float_or_zero(item)                 
-#                          
-#                         item = f[self.horizontal_fail_rate_FieldCbo.currentText()]
-#                         horizontal_fail_rate = float_or_zero(item)             
-#                             
-# #                             if (failure != 0.0 or duration != 0.0 or base_elevation != 0.0 or 
-# #                                 maximum_width != 0.0 or  vertical_fail_rate != 0.0 or horizontal_fail_rate != 0.0):
-# #                                 # add feature if one value is not zero:
-#                                 
-#                         failure_feat = QgsFeature()
-#                         failure_feat.setFields(failure_fields)        
-#                           
-#                         failure_feat.setAttribute('grid_fid', wall[0])                              
-#                         failure_feat.setAttribute('failevel', failure)
-#                         failure_feat.setAttribute('failtime', duration)
-#                         failure_feat.setAttribute('levbase', base_elevation)
-#                         failure_feat.setAttribute('failwidthmax', maximum_width)
-#                         failure_feat.setAttribute('failrate', vertical_fail_rate)
-#                         failure_feat.setAttribute('failwidrate', horizontal_fail_rate)
-#                                             
-#                         new_levee_failure_feats.append(failure_feat)
-#      
-#                     # Add features to Levee failure table:                                                        
-#                     self.levee_failure_lyr.startEditing()
-#                     self.levee_failure_lyr.addFeatures(new_levee_failure_feats)
-#                     self.levee_failure_lyr.commitChanges()
-#                     self.levee_failure_lyr.updateExtents()
-#                     self.levee_failure_lyr.triggerRepaint()
-#                     self.levee_failure_lyr.removeSelection()
-# 
-# 
-#                 except Exception as e:
-#                     QApplication.restoreOverrideCursor()
-#                     self.uc.show_error('ERROR 030120.1713: creation of "levee_failure" layer failed!\n', e)
-#                     return
                         
                 QApplication.restoreOverrideCursor()
                 

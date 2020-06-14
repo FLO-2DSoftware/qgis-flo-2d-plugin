@@ -15,9 +15,9 @@ import sys
 import time
 import traceback
 
-from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl
-from qgis.PyQt.QtGui import QIcon, QDesktopServices
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp 
+from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
+from qgis.PyQt.QtGui import QIcon, QDesktopServices 
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy  
 from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
@@ -732,7 +732,7 @@ class Flo2D(object):
                     return
 
             # Check if MANNINGS_N.DAT exist:
-            if not os.path.isfile(last_dir + '\MANNINGS_N.DAT') or  os.path.getsize(last_dir + '\MANNINGS_N.DAT') == 0:
+            if not os.path.isfile(dir_name + '\MANNINGS_N.DAT') or  os.path.getsize(dir_name + '\MANNINGS_N.DAT') == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N_DAT is missing or empty!") 
                 return
 
@@ -1585,31 +1585,82 @@ class Flo2D(object):
             n_elements, n_levee_directions, n_fail_features = self.schematize_levees()
             for no in sorted(dlg_levee_elev.methods):
                 dlg_levee_elev.methods[no]()
-            QApplication.restoreOverrideCursor()
 
             # Delete duplicates:
             grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             q  = False
             if n_elements > 0:
-                dletes = "Cell , Direction\n---------------\n"
+                dletes = "Cell - Direction\n---------------\n"
                 levees = self.lyrs.data['levee_data']['qlyr']
                 leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr) 
                 if len(leveesToDelete) > 0:
                     k = 0
+                    i = 0
                     for levee in leveesToDelete:
-                         k += 1
-                         if k <= 3:
-                            dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
-                         elif k == 4:  
-                             dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")" 
-                         elif k > 4:
-                            dletes += "\n" + '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
-                            k = 1
+                        k += 1
+                        
+                        i += 1                              
 
+                        if i < 50: 
+                            if k <= 3:
+                               dletes += '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1]))) + '\t'
+                            elif k == 4:  
+                               dletes += '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1])))
+                            elif k > 4:
+                               dletes += '\n' + '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1]))) + '\t'
+                               k = 1  
+                        
+                        else:  
+                            if k <= 3:
+                               dletes += '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1]))) + '\t'
+                            elif k == 4:  
+                               dletes += '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1])))
+                            elif k > 4:
+                               dletes += '\n' + '{:<25}'.format('{:>10}-{:1}({:2})'.format(str(levee[0]), str(levee[1]), dirID(levee[1]))) + '\t'
+                               k = 1                                                    
+
+                    
+                    dletes += '\n\nWould you like to delete them?'
+                    
+#                     dletes = Qt.convertFromPlainText(dletes)
                     QApplication.restoreOverrideCursor()
-                    q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' + 
-                                            'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')                   
-                    if q:
+                    
+                    m = QMessageBox()
+                    title = 'Duplicate Opposite Levee Directions'.center(170)                    
+                    m.setWindowTitle(title)
+                    m.setText('There are ' + str(len(leveesToDelete)) + ' levees directions duplicated. ' +
+                                'They have lower crest elevation than the opposite direction.\n\n' + 
+                                     'Would you like to delete them?')                    
+                    m.setDetailedText(dletes)
+                    m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+                    m.setDefaultButton(QMessageBox.Yes)                    
+                    
+                    # Spacer                        width, height, h policy, v policy
+                    horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred , QSizePolicy.Preferred )
+#                     verticalSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)     
+                    layout = m.layout()
+                    layout.addItem(horizontalSpacer)               
+#                     layout.addItem(verticalSpacer)    
+                                                         
+#                     m.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding);
+#                     m.setSizePolicy(QSizePolicy.Maximum,QSizePolicy.Maximum);
+#                     m.setFixedHeight(12000);
+#                     m.setFixedWidth(12000);                   
+                    
+#                     m.setFixedSize(2000, 1000);
+#                     m.setBaseSize(QSize(2000, 1000))
+#                     m.setMinimumSize(1000,1000)
+
+
+                    
+
+#                     m.setInformativeText(dletes + '\n\nWould you like to delete them?')
+                    q = m.exec_()      
+                    if q == QMessageBox.Yes: 
+
+#                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' + 
+#                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')                   
+#                     if q:
                         delete_levees_qry = 'DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?'
                         delete_failure_qry = 'DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;'  
                         for levee in leveesToDelete:
@@ -1623,6 +1674,8 @@ class Flo2D(object):
             if q:
                 n_levee_directions -= len(leveesToDelete)
                 n_fail_features -= len(leveesToDelete)
+                if n_fail_features < 0:
+                    n_fail_features = 0
 
 #             end = datetime.now()                
 #             time_taken = end - start            
@@ -1717,41 +1770,7 @@ class Flo2D(object):
             levee_lyr = self.lyrs.get_layer_by_name('Levee Lines', group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name('Grid', group=self.lyrs.group).layer()
             n_elements, n_levee_directions, n_fail_features = generate_schematic_levees(self.gutils, levee_lyr, grid_lyr)
-#             q  = False
-#             if n_elements > 0:
-#                 dletes = "Cell, Direction\n---------------\n"
-#                 levees = self.lyrs.data['levee_data']['qlyr']
-#                 leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr) 
-#                 if len(leveesToDelete) > 0:
-#                     k = 0
-#                     for levee in leveesToDelete:
-#                          k += 1
-#                          if k <= 3:
-#                             dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
-#                          elif k == 4:  
-#                              dletes += '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")" 
-#                          elif k > 4:
-#                             dletes += "\n" + '{:>7}'.format(str(levee[0])) + " ," + str(levee[1]) + " (" + dirID(levee[1]) + ")\t"
-#                             k = 1
-# 
-#                     QApplication.restoreOverrideCursor()
-#                     q = self.uc.question('There are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' + 
-#                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')                   
-#                     if q:
-#                         delete_levees_qry = 'DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?'
-#                         delete_failure_qry = 'DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;'  
-#                         for levee in leveesToDelete:
-#                             self.gutils.execute(delete_levees_qry, (levee[0], levee[1])) 
-#                             self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))   
-#                         levees.triggerRepaint()
-#                                  
-#                 levee_schem = self.lyrs.get_layer_by_name('Levees', group=self.lyrs.group).layer()
-#                 if levee_schem:
-#                     levee_schem.triggerRepaint()
-#             if q:
-#                 n_levee_directions -= len(leveesToDelete)
-#                 n_fail_features -= len(leveesToDelete)
-                
+               
             return  n_elements, n_levee_directions, n_fail_features  
         except Exception as e:
             QApplication.restoreOverrideCursor()

@@ -63,19 +63,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="import_data_btn">
-         <property name="maximumSize">
-          <size>
-           <width>60</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Import</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="delete_btn">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">

@@ -863,7 +863,7 @@ def square_grid(gutils, boundary):
         pass
 
 
-def evaluate_roughness(gutils, grid, roughness, column_name, reset=False):
+def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
     """
@@ -876,20 +876,20 @@ def evaluate_roughness(gutils, grid, roughness, column_name, reset=False):
         pass
     qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
     
-    # Areas of intersection:
-    cellSize = float(gutils.get_cont_par('CELLSIZE'))
-    gridArea = cellSize * cellSize
-    manning_values = grid_roughness(grid, gridArea, roughness,column_name)   
-    for gid, values in manning_values:
-        if values:
-            manning = float(sum(ma * subarea for ma, subarea in values))
-#             manning =  manning if type(manning) is float else float(manning)
-            manning =  "{0:.4}".format(manning)
-            gutils.execute(qry,(manning, gid),)
-
-    # Centroids
-#     gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
-#     gutils.con.commit()
+    if method == "Areas":
+        # Areas of intersection:
+        cellSize = float(gutils.get_cont_par('CELLSIZE'))
+        gridArea = cellSize * cellSize
+        manning_values = grid_roughness(grid, gridArea, roughness,column_name)   
+        for gid, values in manning_values:
+            if values:
+                manning = float(sum(ma * subarea for ma, subarea in values))
+                manning =  "{0:.4}".format(manning)
+                gutils.execute(qry,(manning, gid),)
+    else:            
+        # Centroids
+        gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
+        gutils.con.commit()
 
     end_time = time.time()
     QApplication.restoreOverrideCursor()     
@@ -978,7 +978,6 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
             request = QgsFeatureRequest(queryRect)
             manning_values = poly2poly_geos(grid, roughness,  request, column_name)
                          
-
             gridCount = 0
             writeVals = []
             for gid, values in manning_values:
@@ -1806,7 +1805,7 @@ def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
         else :   
             show_error('ERROR 160520.1650: Invalid direction!')              
         
-        return elev
+        return grid, elev
     except:
         show_error('ERROR 160520.1644: could not evaluate adjacent cell elevation!')
 

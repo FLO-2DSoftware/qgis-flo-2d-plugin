@@ -311,9 +311,16 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
 
         if mann_dlg.allGridElemsRadio.isChecked():
+            if  mann_dlg.current_lyr is None:
+                self.uc.show_warn('A polygons layer must be selected !')
+                return                
             rough_lyr = mann_dlg.current_lyr
             nfield = mann_dlg.srcFieldCbo.currentText()
-            flag = True
+            if nfield == "":
+                self.uc.show_warn('A roughness coefficient field must be selected !')
+                return 
+            else:                  
+                flag = True
         else:
             rough_name = 'Roughness'
             rough_lyr = self.lyrs.get_layer_by_name(rough_name, group=self.lyrs.group).layer()
@@ -329,8 +336,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
 #             field = rough_lyr.fields().field(nfield)
-            update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
-#             evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+#             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
+            if mann_dlg.intersect_cell_rectangle_radio.isChecked():
+                method = "Areas"
+            else:
+                method = "Centroids"    
+            evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, method,  reset=flag)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Assigning roughness finished!')
         except Exception as e:

@@ -21,7 +21,7 @@ from ..user_communication import UserCommunication
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
-from ..flo2d_tools.grid_tools import grid_has_empty_elev
+from ..flo2d_tools.grid_tools import grid_has_empty_elev, get_adjacent_cell_elevation
 from qgis.PyQt.QtGui import QColor
 
 
@@ -64,36 +64,13 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         self.debug_file_lineEdit.setText(DEBUG_dir)
         s = QSettings()
         s.setValue('FLO-2D/last_DEBUG', DEBUG_dir)       
-        
-#     def DEBUG_file_clicked(self):
-#         if self.debug_file_radio.isChecked():
-#             self.debug_frame.setDisabled(False)   
-#             self.current_project_frame.setDisabled(True)   
-#         else:    
-#             self.debug_frame.enabled = False   
-#             self.current_project_frame.enabled = True
-                
-#      def current_project_clicked(self):
-#         if self.current_project_radio.isChecked():
-#             self.debug_frame.setDisabled(True)   
-#             self.current_project_frame.setDisabled(True)   
-#         else:
-#             self.debug_frame.enabled = True   
-#             self.current_project_frame.enabled = False             
-                   
-    
+              
     def errors_OK(self):
         if self.current_project_radio.isChecked():
-#             if self.component1_cbo.currentText() == "" and self.component2_cbo.currentText() == "":
-#                 self.uc.show_info("Select a component!")
-#             else:    
                 try:   
                     QApplication.setOverrideCursor(Qt.WaitCursor) 
                     dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 
                                                     "1000000", "All", "All")
-                        
-#                     dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 
-#                                                     self.n_issues_sbox, self.component1_cbo.currentText(), self.component2_cbo.currentText())
                     QApplication.restoreOverrideCursor()
                     dlg_conflicts.exec_()
                     self.lyrs.clear_rubber()    
@@ -101,9 +78,8 @@ class ErrorsDialog(qtBaseClass, uiDialog):
                 except ValueError:  
                     # Forced error during contructor to stop showing dialog.
                     pass  
-        else:
+        elif self.debug_file_radio.isChecked():
                 try:  
-                        
                     dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)
                     dlg_issues.exec_()
                     self.lyrs.clear_rubber()
@@ -112,9 +88,20 @@ class ErrorsDialog(qtBaseClass, uiDialog):
                 except ValueError:  
                     # Forced error during contructor to stop showing dialog.
                     QApplication.restoreOverrideCursor()
-                    pass                
+                    pass  
                 
-
+        else: # Levee crests:
+                try:   
+                    QApplication.setOverrideCursor(Qt.WaitCursor) 
+                    dlg_levee_crests = LeveeCrestsDialog(self.con, self.iface, self.lyrs)
+                    QApplication.restoreOverrideCursor()
+                    dlg_levee_crests.exec_()
+                    self.lyrs.clear_rubber()    
+                    return True
+                except ValueError:  
+                    # Forced error during contructor to stop showing dialog.
+                    pass  
+                                  
 uiDialog, qtBaseClass = load_ui('issues')
 class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
@@ -1670,81 +1657,360 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                         break
             return repeated 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+uiDialog, qtBaseClass = load_ui('levee_crests')
+class LeveeCrestsDialog(qtBaseClass, uiDialog):
+
+    def __init__(self, con, iface, lyrs):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.con = None
+        self.gutils = None
+        self.levee_crests = []              
+        self.ext = self.iface.mapCanvas().extent()
+        self.currentCell = None
+        self.debug_directory = ""
+        set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
+        set_icon(self.zoom_in_btn, 'zoom_in.svg')
+        set_icon(self.zoom_out_btn, 'zoom_out.svg')
+        set_icon(self.copy_btn, 'copy.svg')
+        
+        self.setup_connection()
+
+        self.elements_cbo.activated.connect(self.elements_cbo_activated)        
+        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        self.copy_btn.clicked.connect(self.copy_to_clipboard)        
+        self.crest_tblw.cellClicked.connect(self.description_tblw_cell_clicked)       
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+        
+        self.crest_tblw.setSortingEnabled(False)
+        self.crest_tblw.resizeRowsToContents()
+        
+        self.populate_levee_crests()
+        self.populate_elements_cbo()
+        self.loadLeveeCrests()
+
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+            zoom_show_n_cells(iface, cell_size, 30)
+            self.update_extent()
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)                                                            
+
+    def populate_levee_crests(self):
+        levees = self.gutils.execute("SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, ldir").fetchall()
+        if not levees: 
+            pass
+        else:
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            cellsize = float(self.gutils.get_cont_par('CELLSIZE'))            
+            
+            for i in range(len(levees)): 
+                cell = levees[i][0]
+                dir = levees[i][1]
+                crest = levees[i][2]
+
+                elev = self.gutils.grid_value(cell, 'elevation')     
+
+                adj_cell, adj_elev = get_adjacent_cell_elevation(self.gutils, grid_lyr, cell, dir, cellsize) 
+                if adj_cell is not None and adj_elev != -999:                                     
+                    if crest < elev or crest < adj_cell:
+                        self.levee_crests.append([ str(i), cell, dir, crest, elev, adj_cell, adj_elev ])                       
+        
+        self.setWindowTitle("Levee Crests lower than cell elevations")
+        
+        self.create_levee_crests_conflicts_layer()
+        
+    def create_levee_crests_conflicts_layer(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+        
+        s = QSettings()
+        lastDir = s.value('FLO-2D/lastGdsDir', '')
+        qApp.processEvents() 
+        features = []    
+        for e in self.levee_crests: 
+            pnt = self.gutils.single_centroid(e[1]) 
+            pt = QgsGeometry().fromWkt(pnt).asPoint()
+            features.append([pt.x(), pt.y(), e[1], e[2], e[3], e[4], e[5], e[6]])    
+
+        shapefile = lastDir + "/Levee Crests Conflicts.shp"
+        name = "Levee Crests Conflicts"
+        fields = [ ['X', 'I'], ['Y', 'I'],['Cell','I'], ['Direction','I'],['Crest Elev','D'], ['Cell Elev','D'],['Oppos. Cell','I'], ['Oppos. Elev','D']]
+        if self.create_levee_crests_conflicts_points_shapefile(shapefile, name, fields, features):
+            vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr') 
+        QApplication.restoreOverrideCursor()         
+
+
+    def create_levee_crests_conflicts_points_shapefile(self, shapefile, name, fields, features):
+        try: 
+            lyr = QgsProject.instance().mapLayersByName(name)
+            
+            if lyr:
+                QgsProject.instance().removeMapLayers([lyr[0].id()])
+
+            # define fields for feature attributes. A QgsFields object is needed
+            f = QgsFields()
+            f.append( QgsField(fields[2][0],  QVariant.Int))
+            f.append( QgsField(fields[3][0],  QVariant.Int))
+            f.append( QgsField(fields[4][0],  QVariant.Double))
+            f.append( QgsField(fields[5][0],  QVariant.Double))
+            f.append( QgsField(fields[6][0],  QVariant.Int))
+            f.append( QgsField(fields[7][0],  QVariant.Double))
+                                                            
+            mapCanvas = self.iface.mapCanvas()
+            my_crs = mapCanvas.mapSettings().destinationCrs()
+            QgsVectorFileWriter.deleteShapeFile(shapefile)
+            writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
+            if writer.hasError() != QgsVectorFileWriter.NoError:
+                self.uc.bar_error("ERROR 140619.0922: Error when creating shapefile: " + shapefile)
+            
+            # add features:
+            for feat in features:
+                attr = []
+                fet = QgsFeature()
+                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]),float(feat[1]))))
+                non_coord_feats =[]
+                non_coord_feats.append(feat[2])
+                non_coord_feats.append(feat[3])
+                non_coord_feats.append(feat[4])
+                non_coord_feats.append(feat[5])                
+                non_coord_feats.append(feat[6])
+                non_coord_feats.append(feat[7])
+
+                fet.setAttributes(non_coord_feats)
+                writer.addFeature(fet)
+            
+            # delete the writer to flush features to disk
+            del writer
+            return True
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 140619.0923: error while creating layer  " + name  + "!\n", e)     
+            return False  
+        
+                 
+    def get_n_cells(self, table, cell, n):
+        sqr = "SELECT {0} FROM {1} ORDER BY {0} LIMIT {2}".format(cell, table, n.text())
+        return self.gutils.execute(sqr).fetchall()        
+          
+    def populate_elements_cbo(self):
+        self.elements_cbo.clear()
+        self.elements_cbo.addItem("All ")
+        for x in self.levee_crests:
+            if self.elements_cbo.findText(str(x[1])) == -1:
+                self.elements_cbo.addItem(str(x[1]))
+        self.elements_cbo.model().sort(1)
+                
+    def populate_errors_cbo(self):
+        self.errors_cbo.clear()
+        self.errors_cbo.addItem(" ")
+        self.errors_cbo.addItem("All")
+        for x in self.levee_crests:
+            if self.errors_cbo.findText(x[1].strip()) == -1:
+                self.errors_cbo.addItem(x[1].strip())
+            if self.errors_cbo.findText(x[2].strip()) == -1:
+                self.errors_cbo.addItem(x[2].strip())                
+        self.errors_cbo.model().sort(0)                                          
+        
+    def loadLeveeCrests(self): 
+        QApplication.setOverrideCursor(Qt.WaitCursor) 
+        self.crest_tblw.setRowCount(0)
+
+        color1 =  Qt.white
+        element = -999
+        for item in self.levee_crests:
+            
+            if item[1] != element:
+                if color1 == Qt.yellow:
+                    color1 = Qt.white
+                    color2 = Qt.lightGray
+                else:
+                   color1 = Qt.yellow
+                   color2 = Qt.darkYellow     
+                element =  item[1]
+            
+            rowPosition = self.crest_tblw.rowCount()
+            self.crest_tblw.insertRow(rowPosition) 
+              
+            itm = QTableWidgetItem()
+            itm.setBackground(color1);
+            itm.setData(Qt.EditRole, item[0].strip())                 
+            self.crest_tblw.setItem(rowPosition , 0, itm)
+
+            itm = QTableWidgetItem() 
+            itm.setBackground(color1);
+            itm.setData(Qt.EditRole, item[1])  
+            self.crest_tblw.setItem(rowPosition , 0, itm)
+            
+            itm = QTableWidgetItem() 
+            itm.setBackground(color1);
+            itm.setData(Qt.EditRole, item[2])  
+            self.crest_tblw.setItem(rowPosition , 1, itm)
+
+            itm = QTableWidgetItem() 
+            itm.setBackground(color1);
+            itm.setData(Qt.EditRole, item[3])  
+            self.crest_tblw.setItem(rowPosition , 2, itm)  
+
+            itm = QTableWidgetItem() 
+            itm.setBackground(color1);
+            itm.setData(Qt.EditRole, item[4])  
+            self.crest_tblw.setItem(rowPosition , 3, itm)
+            
+            itm = QTableWidgetItem() 
+            itm.setBackground(color2);
+            itm.setData(Qt.EditRole, item[5])  
+            self.crest_tblw.setItem(rowPosition , 4, itm)
+
+            itm = QTableWidgetItem() 
+            itm.setBackground(color2);
+            itm.setData(Qt.EditRole, item[6])  
+            self.crest_tblw.setItem(rowPosition , 5, itm)  
+
+            self.elements_cbo.setCurrentIndex(0)
+            if self.crest_tblw.rowCount() > 0:
+                self.crest_tblw.selectRow(0)
+                cell  = self.crest_tblw.item(0,0).text()
+                self.find_cell(cell)
+           
+        QApplication.restoreOverrideCursor()   
+         
+    def elements_cbo_activated(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)   
+        self.crest_tblw.setRowCount(0)
+        nElems = self.elements_cbo.count()
+        if nElems > 0:
+            cell = self.elements_cbo.currentText().strip()
+            if cell == "All":
+                self.loadLeveeCrests()
+            else:
+                for item in self.levee_crests:
+                    if str(item[1]) == cell:
+                        rowPosition = self.crest_tblw.rowCount()
+                        self.crest_tblw.insertRow(rowPosition) 
+    
+                        itm = QTableWidgetItem()
+                        itm.setData(Qt.EditRole, item[0].strip())                 
+                        self.crest_tblw.setItem(rowPosition , 0, itm)
+            
+                        itm = QTableWidgetItem() 
+                        itm.setData(Qt.EditRole, item[1])  
+                        self.crest_tblw.setItem(rowPosition , 0, itm)
+                        
+                        itm = QTableWidgetItem() 
+                        itm.setData(Qt.EditRole, item[2])  
+                        self.crest_tblw.setItem(rowPosition , 1, itm)
+            
+                        itm = QTableWidgetItem() 
+                        itm.setData(Qt.EditRole, item[3])  
+                        self.crest_tblw.setItem(rowPosition , 2, itm)  
+            
+                        itm = QTableWidgetItem() 
+                        itm.setData(Qt.EditRole, item[4])  
+                        self.crest_tblw.setItem(rowPosition , 3, itm)
+                        
+                        itm = QTableWidgetItem()
+                        itm.setBackground(Qt.lightGray); 
+                        itm.setData(Qt.EditRole, item[5])  
+                        self.crest_tblw.setItem(rowPosition , 4, itm)
+            
+                        itm = QTableWidgetItem() 
+                        itm.setBackground(Qt.lightGray);
+                        itm.setData(Qt.EditRole, item[6])  
+                        self.crest_tblw.setItem(rowPosition , 5, itm) 
+                        
+                self.find_cell(cell)             
+        QApplication.restoreOverrideCursor()
+        
+    def errors_cbo_activated(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)   
+        self.crest_tblw.setRowCount(0)
+        nElems = self.errors_cbo.count()
+        if nElems > 0:
+            for item in self.levee_crests:
+                if ( item[1].strip() == self.errors_cbo.currentText().strip() or
+                     item[2].strip() == self.errors_cbo.currentText().strip() or  
+                     self.errors_cbo.currentText().strip() == "All"): 
+                    
+                    rowPosition = self.crest_tblw.rowCount()
+                    self.crest_tblw.insertRow(rowPosition)   
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, item[0].strip())                 
+                    self.crest_tblw.setItem(rowPosition , 0, itm)
+                    itm = QTableWidgetItem() 
+                    itm.setData(Qt.EditRole, item[3])  
+                    self.crest_tblw.setItem(rowPosition , 2, itm) 
+                else:
+                    self.lyrs.clear_rubber()       
+        self.component1_cbo.setCurrentIndex(0)
+        self.component2_cbo.setCurrentIndex(0)
+        QApplication.restoreOverrideCursor()
+        
+    def find_cell_clicked(self):
+        cell = self.elements_cbo.currentText()
+        self.find_cell(cell)   
+
+    def find_cell(self, cell):
+        try: 
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
+            grid = self.lyrs.data['grid']['qlyr']
+            if grid is not None:
+                if grid:
+                    if cell != '':
+                        cell = int(cell)
+                        if len(grid) >= cell and cell > 0:
+                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                            self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                            x, y = self.currentCell.geometry().centroid().asPoint()
+                            if x < self.ext.xMinimum() or x > self.ext.xMaximum() or y < self.ext.yMinimum() or y > self.ext.yMaximum():
+                                center_canvas(self.iface, x, y)
+                                self.update_extent()
+                        else:
+                                self.lyrs.clear_rubber()                          
+                    else:
+                            self.lyrs.clear_rubber()              
+        except ValueError:
+            self.uc.bar_warn('Cell ' + str(cell) + ' is not valid.')
+            self.lyrs.clear_rubber()    
+            pass  
+        finally:
+            QApplication.restoreOverrideCursor()
+            
+            
+    def description_tblw_cell_clicked(self, row, column):
+        cell  = self.crest_tblw.item(row,0).text()
+        self.find_cell(cell)        
+ 
+    def zoom_in(self):
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface,  0.4)
+            self.update_extent()
+            
+    def zoom_out(self):
+        if self.currentCell:
+            x, y = self.currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)        
+            zoom(self.iface,  -0.4) 
+            self.update_extent()
+        
+    def update_extent(self):  
+        self.ext = self.iface.mapCanvas().extent()                 
+
+    def copy_to_clipboard(self):
+        copy_tablewidget_selection(self.crest_tblw)
 
