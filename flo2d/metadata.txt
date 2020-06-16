@@ -15,6 +15,7 @@ changelog=
   - Change layer name: 'Hydraulic Structures Table' to 'Hydraulic Structures'
   - Fix 'MANNINGS_N_DAT is missing' when loading project.
   - 'No Failure' option when creating User Levees from walls shapefile.
+  - Floodplain cross sections set name when created.
  <p>0.10.1
   - Delete levee directions duplicates
  <p>0.10.0

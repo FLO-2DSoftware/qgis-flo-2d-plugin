@@ -844,14 +844,14 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         names = self.gutils.execute(baseline_names_sql).fetchall() 
         if names:
             for name in names:
-                self.swmm_inflow_pattern_cbo.addItem(name[0])
+                self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
             self.swmm_inflow_pattern_cbo.addItem("")    
 
         time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
         names = self.gutils.execute(time_names_sql).fetchall() 
         if names:
             for name in names:
-                self.swmm_inflow_time_series_cbo.addItem(name[0])
+                self.swmm_inflow_time_series_cbo.addItem(name[0].strip())
             self.swmm_inflow_time_series_cbo.addItem("") 
 
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
@@ -859,12 +859,12 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         if inflow:
             self.swmm_inflow_baseline_dbox.setValue(inflow[1])
             if inflow[2] != "":
-                idx = self.swmm_inflow_pattern_cbo.findText(inflow[2])
-                if idx > 0:
-                   self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
-                else:
+                idx = self.swmm_inflow_pattern_cbo.findText(inflow[2].strip())
+                if idx == -1:
                     self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!",5)
-                    self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
+                    self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)                    
+                else:
+                    self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
             else:
                self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)  
                            

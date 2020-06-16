@@ -1267,35 +1267,7 @@ class Flo2D(object):
             'export_shallowNSpatial',
             'export_mannings_n_topo',
             ]
-
-#         if options['ICHANNEL'] == '0':
-#             export_calls.remove('export_chan')
-#             export_calls.remove('export_xsec')
-#         if options['IEVAP'] == '0':
-#             export_calls.remove('export_evapor')
-#         if options['IHYDRSTRUCT'] == '0':
-#             export_calls.remove('export_hystruc')
-#         if options['IMULTC'] == '0':
-#             export_calls.remove('export_mult')
-#         if options['INFIL'] == '0':
-#             export_calls.remove('export_infil')
-#         if options['IRAIN'] == '0':
-#             export_calls.remove('export_rain')
-#             export_calls.remove('export_raincell')
-#         if options['ISED'] == '0' and options['MUD'] == '0':
-#             export_calls.remove('export_sed')
-#         if options['IWRFS'] == '0':
-#             export_calls.remove('export_arf')
-#         if options['LEVEE'] == '0':
-#             export_calls.remove('export_levee')
-#         if options['MSTREET'] == '0':
-#             export_calls.remove('export_street')
-#         if options['SWMM'] == '0':
-#             export_calls.remove('export_swmmflo')
-#             export_calls.remove('export_swmmflort')
-#             export_calls.remove('export_swmmoutf')
-
-
+        
 ########################################
         dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
         ok = dlg_components.exec_()

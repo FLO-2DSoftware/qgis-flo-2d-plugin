@@ -2066,6 +2066,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_fpxsec',
 SELECT gpkgAddGeometryColumn('user_fpxsec', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_fpxsec', 'geom');
 
+CREATE TRIGGER "default_user_fpxsec"
+    AFTER INSERT ON "user_fpxsec"
+    BEGIN
+        UPDATE "user_fpxsec"
+        SET name = ('Floodplain XS-' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
+
 CREATE TABLE "user_model_boundary" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "cell_size" REAL
