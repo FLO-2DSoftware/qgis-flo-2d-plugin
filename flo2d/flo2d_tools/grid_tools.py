@@ -867,33 +867,48 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
     """
     Updating roughness values inside 'grid' table.
     """
-    start_time = time.time()
     
-    if reset is True:
-        default = gutils.get_cont_par('MANNING')
-        gutils.execute('UPDATE grid SET n_value=?;', (default,))
-    else:
-        pass
-    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+    try: 
     
-    if method == "Areas":
-        # Areas of intersection:
-        cellSize = float(gutils.get_cont_par('CELLSIZE'))
-        gridArea = cellSize * cellSize
-        manning_values = grid_roughness(grid, gridArea, roughness,column_name)   
-        for gid, values in manning_values:
-            if values:
-                manning = float(sum(ma * subarea for ma, subarea in values))
-                manning =  "{0:.4}".format(manning)
-                gutils.execute(qry,(manning, gid),)
-    else:            
-        # Centroids
-        gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
-        gutils.con.commit()
-
-    end_time = time.time()
-    QApplication.restoreOverrideCursor()     
-    debugMsg('\t{0:.3f} seconds'.format(end_time - start_time))
+    
+    # start_time = time.time()
+        
+        if reset is True:
+            default = gutils.get_cont_par('MANNING')
+            gutils.execute('UPDATE grid SET n_value=?;', (default,))
+        else:
+            pass
+        qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
+        
+        if method == "Areas":
+            # Areas of intersection:
+            cellSize = float(gutils.get_cont_par('CELLSIZE'))
+            gridArea = cellSize * cellSize
+            if update_roughness(gutils, grid, roughness, column_name): 
+                return True       
+    #         manning_values = grid_roughness(grid, gridArea, roughness,column_name)   
+    #         for gid, values in manning_values:
+    #             if values:
+    #                 manning = float(sum(ma * subarea for ma, subarea in values))
+    #                 manning =  "{0:.4}".format(manning)
+    #                 gutils.execute(qry,(manning, gid),)
+        else:            
+            # Centroids
+            gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
+            gutils.con.commit()
+            return True
+    
+    #     end_time = time.time()
+    #     QApplication.restoreOverrideCursor()     
+    #     debugMsg('\t{0:.3f} seconds'.format(end_time - start_time))
+    
+        
+    except:
+        QApplication.restoreOverrideCursor()    
+        show_error("ERROR 190620.1154: Evaluation of Mannings's n-value failed!\n" 
+                   '_______________________________________________________________________________')  
+        return False
+ 
 
 
 # def update_roughness(gutils, grid, roughness, column_name, reset=False):
@@ -914,96 +929,104 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     """
     Updating roughness values inside 'grid' table.
     """
-    startTime = time.time()
+    try:
+    #     startTime = time.time()
+        
+        if reset is True:
+            default = gutils.get_cont_par('MANNING')
+            gutils.execute('UPDATE grid SET n_value=?;', (default,))
+        else:
+            pass
+        qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
     
-    if reset is True:
-        default = gutils.get_cont_par('MANNING')
-        gutils.execute('UPDATE grid SET n_value=?;', (default,))
-    else:
-        pass
-    qry = 'UPDATE grid SET n_value=? WHERE fid=?;'
-
-    gridCount = grid.featureCount()
+        gridCount = grid.featureCount()
+        
+        cellsize = float(gutils.get_cont_par('CELLSIZE'))
+        globalnValue = float(gutils.get_cont_par('MANNING'))
     
-    cellsize = float(gutils.get_cont_par('CELLSIZE'))
-    globalnValue = float(gutils.get_cont_par('MANNING'))
-
-#     print ("Default n-value: %s" % globalnValue)
-
-    gridDimPerAnalysisRegion = 100
-    gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
-    gridExt = grid.extent()
-    ySpan = gridExt.yMaximum() - gridExt.yMinimum()
-    xSpan = gridExt.xMaximum() - gridExt.xMinimum()
-
-    colCount = math.ceil( xSpan / (gridDimPerAnalysisRegion * cellsize))
-    rowCount = math.ceil( ySpan / (gridDimPerAnalysisRegion * cellsize))
+    #     print ("Default n-value: %s" % globalnValue)
     
-    # segment the grid ext to create analysis regions
-    regionCount = rowCount * colCount
-#     print ("Processing in %s regions" % regionCount)
-
-    # create progress bar
-    progDialog = QProgressDialog('n-Value Progress (by area - timing will be uneven)', 'Cancel', 0, 100)
-    progDialog.setModal(True)
-
-    progress = 0.0
-
-    # slice into rows by region count
-    breakVar = False # cause a break if it's true
-    for row in range(rowCount):
-        yMin = gridExt.yMinimum() + ySpan / rowCount * row
-        yMax = gridExt.yMinimum() + ySpan / rowCount * (row +1)
-        if breakVar == True:
-            break
-        for col in range(colCount):
-            progress = ((row * colCount + col) / regionCount) * 100.0
-#             print ("Processing region %s (percent)" % progress)
-            progDialog.setValue(progress)
-            # catch cancellations here
-            if progDialog.wasCanceled():
-                breakVar = True
+        gridDimPerAnalysisRegion = 100
+        gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+        gridExt = grid.extent()
+        ySpan = gridExt.yMaximum() - gridExt.yMinimum()
+        xSpan = gridExt.xMaximum() - gridExt.xMinimum()
+    
+        colCount = math.ceil( xSpan / (gridDimPerAnalysisRegion * cellsize))
+        rowCount = math.ceil( ySpan / (gridDimPerAnalysisRegion * cellsize))
+        
+        # segment the grid ext to create analysis regions
+        regionCount = rowCount * colCount
+    #     print ("Processing in %s regions" % regionCount)
+    
+        # create progress bar
+        progDialog = QProgressDialog('n-Value Progress (by area - timing will be uneven)', 'Cancel', 0, 100)
+        progDialog.setModal(True)
+    
+        progress = 0.0
+    
+        # slice into rows by region count
+        breakVar = False # cause a break if it's true
+        for row in range(rowCount):
+            yMin = gridExt.yMinimum() + ySpan / rowCount * row
+            yMax = gridExt.yMinimum() + ySpan / rowCount * (row +1)
+            if breakVar == True:
                 break
-            
-            xMin = gridExt.xMinimum() + xSpan / colCount * col
-            xMax = gridExt.xMinimum() + xSpan / colCount * (col +1)
-            
-            queryRect = QgsRectangle(
-                xMin,
-                yMin,
-                xMax,
-                yMax
-                ) # xmin, ymin, xmax, ymax
-
-            request = QgsFeatureRequest(queryRect)
-            manning_values = poly2poly_geos(grid, roughness,  request, column_name)
-                         
-            gridCount = 0
-            writeVals = []
-            for gid, values in manning_values:
-                gridCount += 1
-#                 if gridCount % 1000 == 0:
-#                     print ("Processing %s" % gridCount)
-                if values:
-                    manning = sum(ma * subarea for ma, subarea in values)
-                    manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
-                    manning =  "{0:.4}".format(manning)
-                    writeVals.append((manning, gid))
-                    #gutils.execute(qry,(manning, gid),)
-#             print ("Writing %s values to db" % len(writeVals))
-            if len(writeVals) > 0:
-                gutils.con.executemany(qry, writeVals)
-#                 print ("committing to db")
-                gutils.con.commit()
-
-    progDialog.close()
+            for col in range(colCount):
+                progress = ((row * colCount + col) / regionCount) * 100.0
+    #             print ("Processing region %s (percent)" % progress)
+                progDialog.setValue(progress)
+                # catch cancellations here
+                if progDialog.wasCanceled():
+                    breakVar = True
+                    break
+                
+                xMin = gridExt.xMinimum() + xSpan / colCount * col
+                xMax = gridExt.xMinimum() + xSpan / colCount * (col +1)
+                
+                queryRect = QgsRectangle(
+                    xMin,
+                    yMin,
+                    xMax,
+                    yMax
+                    ) # xmin, ymin, xmax, ymax
     
-    endTime = time.time()
-#     print ("total write Time: %s min" % ((endTime - startTime)/60.0))
+                request = QgsFeatureRequest(queryRect)
+                manning_values = poly2poly_geos(grid, roughness,  request, column_name)
+                             
+                gridCount = 0
+                writeVals = []
+                for gid, values in manning_values:
+                    gridCount += 1
+    #                 if gridCount % 1000 == 0:
+    #                     print ("Processing %s" % gridCount)
+                    if values:
+                        manning = sum(ma * subarea for ma, subarea in values)
+                        manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
+                        manning =  "{0:.4}".format(manning)
+                        writeVals.append((manning, gid))
+                        #gutils.execute(qry,(manning, gid),)
+    #             print ("Writing %s values to db" % len(writeVals))
+                if len(writeVals) > 0:
+                    gutils.con.executemany(qry, writeVals)
+    #                 print ("committing to db")
+                    gutils.con.commit()
     
-    QApplication.restoreOverrideCursor()     
-    debugMsg("{0:.3f} seconds sampling Manning's values".format(endTime - startTime))
+        progDialog.close()
+        
+        return True
+    #     endTime = time.time()
+    # #     print ("total write Time: %s min" % ((endTime - startTime)/60.0))
+    #     
+    #     QApplication.restoreOverrideCursor()     
+    #     debugMsg("{0:.3f} seconds sampling Manning's values".format(endTime - startTime))
 
+        
+    except:
+        QApplication.restoreOverrideCursor()    
+        show_error("ERROR 190620.1158: Evaluation of Mannings's n-value failed!\n" 
+                   '_______________________________________________________________________________')   
+        return False
    
 def modify_elevation(gutils, grid, elev):
     """

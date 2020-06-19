@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import traceback
+import time
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -332,7 +333,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             else:
                 pass
       # Assign values:
+        
         try:
+            start_time = time.time()
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data['grid']['qlyr']
 #             field = rough_lyr.fields().field(nfield)
@@ -341,9 +344,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 method = "Areas"
             else:
                 method = "Centroids"    
-            evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, method,  reset=flag)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info('Assigning roughness finished!')
+            if evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, method,  reset=flag):
+                end_time = time.time()
+                QApplication.restoreOverrideCursor()     
+    #             debugMsg('\t{0:.3f} seconds'.format(end_time - start_time))
+                
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info('Assigning roughness finished!\n\n' +
+                                  '\t{0:.3f} seconds'.format(end_time - start_time))
+            else:
+                pass
+            
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
