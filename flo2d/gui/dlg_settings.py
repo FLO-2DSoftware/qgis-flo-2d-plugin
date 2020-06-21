@@ -63,6 +63,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
             'COURANTFP': 0.6,
             'COURANTST': 0.6,
             'NOPRTC': 2,
+            'SHALLOWN': 0.2,
+            'TOLGLOBAL' : 0.004,
             'NOPRTFP': 2
         }
         qry = '''INSERT INTO cont (name, value, note) VALUES (?,?,?);'''

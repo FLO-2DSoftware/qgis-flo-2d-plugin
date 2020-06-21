@@ -130,6 +130,9 @@
                 <property name="toolTip">
                  <string>NOPRTFP</string>
                 </property>
+                <property name="currentIndex">
+                 <number>2</number>
+                </property>
                 <item>
                  <property name="text">
                   <string>0</string>
@@ -184,6 +187,9 @@
                 </property>
                 <property name="toolTip">
                  <string>NOPRTC</string>
+                </property>
+                <property name="currentIndex">
+                 <number>2</number>
                 </property>
                 <item>
                  <property name="text">
@@ -502,6 +508,9 @@
               </property>
               <property name="whatsThis">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="value">
+               <double>0.100000000000000</double>
               </property>
              </widget>
             </item>
@@ -914,6 +923,9 @@
                 <property name="singleStep">
                  <double>0.010000000000000</double>
                 </property>
+                <property name="value">
+                 <double>0.200000000000000</double>
+                </property>
                </widget>
               </item>
               <item>
@@ -1302,7 +1314,7 @@
         <rect>
          <x>220</x>
          <y>70</y>
-         <width>256</width>
+         <width>262</width>
          <height>248</height>
         </rect>
        </property>
@@ -1574,11 +1586,17 @@
                <property name="toolTip">
                 <string>TOLGLOBAL</string>
                </property>
+               <property name="decimals">
+                <number>4</number>
+               </property>
                <property name="maximum">
                 <double>0.500000000000000</double>
                </property>
                <property name="singleStep">
                 <double>0.100000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000400000000000</double>
                </property>
               </widget>
              </item>

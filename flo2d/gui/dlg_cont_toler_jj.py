@@ -37,10 +37,10 @@ except AttributeError:
 class ContToler_JJ(qtBaseClass, uiDialog):
 
     PARAMS = OrderedDict([
-        ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT', 'min': -99, 'max': float('inf'), 'dec': 1}],
+        ['AMANN', {'label': 'Increment n Value at runtime', 'type': 'r', 'dat': 'CONT', 'min': 0.00, 'max': float('inf'), 'dec': 2}],
         ['DEPTHDUR', {'label': 'Depth Duration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 100, 'dec': 3}],
         ['ENCROACH', {'label': 'Encroachment Analysis Depth', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 10, 'dec': 1}],
-        ['FROUDL', {'label': 'Global Limiting Froude', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 5, 'dec': 1}],
+        ['FROUDL', {'label': 'Global Limiting Froude', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 5, 'dec': 2}],
         ['GRAPTIM', {'label': 'Graphical Update Interval', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
         ['IBACKUP', {'label': 'Backup Switch', 'type': 's2', 'dat': 'CONT'}],
         ['ICHANNEL', {'label': 'Channel Switch', 'type': 's', 'dat': 'CONT'}],
@@ -60,9 +60,9 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['METRIC', {'label': 'Metric Switch', 'type': 's', 'dat': 'CONT'}],
         ['MSTREET', {'label': 'Street Switch', 'type': 's', 'dat': 'CONT'}],
         ['MUD', {'label': 'Mudflow Switch', 'type': 's', 'dat': 'CONT'}],
-        ['NOPRTC', {'label': 'Detailed Channel Output Options', 'type': 's2', 'dat': 'CONT'}],
-        ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT'}],
-        ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.4, 'dec': 2}],
+        ['NOPRTC', {'label': 'Detailed Channel Output Options', 'type': 's2', 'dat': 'CONT', 'min': 2}],
+        ['NOPRTFP', {'label': 'Detailed Floodplain Output Options', 'type': 's3', 'dat': 'CONT', 'min': 2}],
+        ['SHALLOWN', {'label': 'Shallow n Value', 'type': 'r', 'dat': 'CONT', 'min': 0.00, 'max': 0.4, 'dec': 2}],
         ['SIMUL', {'label': 'Simulation Time', 'type': 'r', 'dat': 'CONT', 'min': 0.01, 'max': float('inf'), 'dec': 2}],
         ['DEPRESSDEPTH', {'label': 'Depress Depth', 'type': 'r', 'dat': 'CONT', 'min': 0.00, 'max': float('inf'), 'dec': 2}],
         ['SWMM', {'label': 'Storm Drain Switch', 'type': 's', 'dat': 'CONT'}],
@@ -71,14 +71,14 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['XARF', {'label': 'Global Area Reduction', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
         ['IARFBLOCKMOD', {'label': 'Global ARF=1 Revision', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 1, 'dec': 2}],
         ['XCONC', {'label': 'Global Sediment Concentration', 'type': 'r', 'dat': 'CONT', 'min': 0, 'max': 0.50, 'dec': 2}],
-        ['COURANTC', {'label': 'Courant Stability C', 'type': 'r', 'dat': 'TOLER', 'min': 0.2, 'max': 1, 'dec': 1}],
+        ['COURANTC', {'label': 'Courant Stability C', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],
         ['COURANTFP', {'label': 'Courant Stability FP', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],
         ['COURANTST', {'label': 'Courant Stability St', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 1, 'dec': 1}],
         ['COURCHAR_C', {'label': 'Stability Line 2 Character', 'type': 'c', 'dat': 'TOLER'}],
         ['COURCHAR_T', {'label': 'Stability Line 3 Character', 'type': 'c', 'dat': 'TOLER'}],
         ['DEPTOL', {'label': 'Percent Change in Depth', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 1}],
-        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0.01, 'max': 100, 'dec': 2}],
-        ['TOLGLOBAL', {'label': 'Low flow exchange limit', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 4}],
+        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0.1, 'max': 100, 'dec': 2}],
+        ['TOLGLOBAL', {'label': 'Low flow exchange limit', 'type': 'r', 'dat': 'TOLER', 'min': 0.000, 'max': 0.5, 'dec': 4}],
         ['WAVEMAX', {'label': 'Wavemax Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 2, 'dec': 2}]
     ])
 

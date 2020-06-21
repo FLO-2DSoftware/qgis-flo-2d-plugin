@@ -59,7 +59,7 @@ class ContTolerDialog(qtBaseClass, uiDialog):
         ['COURCHAR_C', {'label': 'Stability Line 2 Character', 'type': 'c', 'dat': 'TOLER'}],
         ['COURCHAR_T', {'label': 'Stability Line 3 Character', 'type': 'c', 'dat': 'TOLER'}],
         ['DEPTOL', {'label': 'Percent Change in Depth', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 1}],
-        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0.01, 'max': 100, 'dec': 2}],
+        ['TIME_ACCEL', {'label': 'Timestep Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0.1, 'max': 100, 'dec': 2}],
         ['TOLGLOBAL', {'label': 'Low flow exchange limit', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 0.5, 'dec': 4}],
         ['WAVEMAX', {'label': 'Wavemax Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 2, 'dec': 2}]
     ])
