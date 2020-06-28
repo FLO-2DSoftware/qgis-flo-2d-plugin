@@ -1759,6 +1759,8 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
             
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
+                
+            QgsVectorFileWriter.deleteShapeFile(shapefile)    
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
@@ -1771,12 +1773,13 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                                                             
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
-            QgsVectorFileWriter.deleteShapeFile(shapefile)
+            
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
+            
             if writer.hasError() != QgsVectorFileWriter.NoError:
                 self.uc.bar_error("ERROR 140619.0922: Error when creating shapefile: " + shapefile)
             
-            # add features:
+            # Add features:
             for feat in features:
                 attr = []
                 fet = QgsFeature()

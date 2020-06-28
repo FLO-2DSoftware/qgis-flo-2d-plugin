@@ -11,10 +11,13 @@
 import os
 import traceback
 from collections import OrderedDict
-from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QCheckBox, QDoubleSpinBox, QInputDialog, QFileDialog, qApp
 from qgis.PyQt.QtGui import QColor
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, NULL
+from qgis.core import ( QgsFeature, QgsGeometry, QgsPointXY, NULL, QgsProject, QgsVectorFileWriter, 
+                        QgsFields, QgsField, QgsWkbTypes, QgsSymbolLayerRegistry, QgsMarkerSymbol, 
+                        QgsLineSymbol, QgsSingleSymbolRenderer, QgsArrowSymbolLayer, QgsVectorLayer,
+                        QgsFillSymbol)
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -25,7 +28,6 @@ from ..utils import is_number, m_fdata, is_true
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan, modf
 from datetime import date, time, timedelta
-
 from ..gui.dlg_outfalls import OutfallNodesDialog
 from ..gui.dlg_inlets import InletNodesDialog
 from ..gui.dlg_conduits import ConduitsDialog
@@ -110,7 +112,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
-        set_icon(self.schema_btn, 'schematize_res.svg')
+        set_icon(self.schema_storm_drain_btn, 'schematize_res.svg')
 
 
         set_icon(self.show_table_btn, 'show_cont_table.svg')
@@ -122,7 +124,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.save_changes_btn.clicked.connect(self.save_swmm_edits)
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_cur_swmm)
-        self.schema_btn.clicked.connect(self.schematize_swmm)
+        self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         
         self.show_table_btn.clicked.connect(self.populate_rtables_data)
         self.remove_rtable_btn.clicked.connect(self.delete_rtables)
@@ -353,8 +355,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn('There is no grid! Please create it before running tool.')
             return
 
-        self.schematize_inlets_and_outfalls()
-#         self.schematize_conduits() 
+        if self.schematize_inlets_and_outfalls():
+            self.uc.show_info("Schematizing of Storm Drains Inlets and Outfalls finished!\n\n" +
+                             "The 'Storm Drain-SD Inlets' and 'Storm Drain-SD Outfalls' layers were updated.\n\n" +
+                             "(NOTE: the 'Export GDS files' tool will write those layer atributes into the SWMMFLO.DAT and SWMMOUTF.DAT files)")            
+        else:
+            self.uc.show_critical("ERROR 060319.1832: Schematizing of Storm Drains failed!\n\n" +
+                               "Attribute (inlet or outlet) missing.\n\n" +
+                               "Please check user Storm Drain Nodes layer.")
+                
+             
+        if self.schematize_conduits():
+            self.uc.show_info("Schematizing of Storm Drains Conduits finished!\n\n" +   
+                              "'SD Conduits' layer was created.")                 
             
     def schematize_inlets_and_outfalls(self):
         qry_inlet = '''
@@ -373,7 +386,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             if self.gutils.is_table_empty('user_swmm_nodes'):
                 self.uc.bar_warn("There are no storm drain components (inlets/outfalls) defined in layer Storm Drain Nodes (User Layers)")
-                return
+                return False
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -388,7 +401,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_critical("ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n" +
                                "Geometry (inlet or outlet) missing.\n\n" +
                                "Please check user Storm Drain Nodes layer.")
-                    return
+                    return False
                 point = geom.asPoint()
                 grid_fid = self.gutils.grid_on_point(point.x(), point.y())
                 sd_type = feat['sd_type']
@@ -415,88 +428,134 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.con.commit()
             self.repaint_schema()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Schematizing of Storm Drains finished!\n\n" +
-                             "The 'Storm Drain-SD Inlets' and 'Storm Drain-SD Outfalls' layers were updated.\n\n" +
-                             "(NOTE: the 'Export GDS files' tool will write those layer atributes into the SWMMFLO.DAT and SWMMOUTF.DAT files)")
+            return True
+        
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_critical("ERROR 060319.1832: Schematizing of Storm Drains failed!\n\n" +
-                               "Attribute (inlet or outlet) missing.\n\n" +
-                               "Please check user Storm Drain Nodes layer.")
-            self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
-                               +'\n__________________________________________________', e)   
+            self.uc.show_error('ERROR 301118..0541: Schematizing Inlets and Outfalls Storm Drains failed!.'
+                               +'\n__________________________________________________', e)               
+            return False
+
                     
     def schematize_conduits(self):  
-        qry_inlet = '''
-        INSERT INTO swmmflo
-        (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
-        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?,?);'''     
-        
-        qry_outlet = '''
-        INSERT INTO swmmoutf
-        (geom, grid_fid, name, outf_flo)
-        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?);'''
-        
-        qry_rt_update = '''UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;'''
-        
-        try:
+        try: 
+            
+            if self.gutils.is_table_empty('user_swmm_conduits'):
+                self.uc.bar_warn("There are no storm drain components (conduits) defined in layer Storm Drain Conduits (User Layers)")
+                return False            
 
-            if self.gutils.is_table_empty('user_swmm_nodes'):
-                self.uc.bar_warn("There are no storm drain components (inlets/outfalls) defined in layer Storm Drain Nodes (User Layers)")
-                return
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
+            
+            s = QSettings()
+            lastDir = s.value('FLO-2D/lastGdsDir', '')
+            qApp.processEvents()         
+    
+            shapefile = lastDir + "/SD Conduits.shp"
+            name = "SD Conduits"            
+            
+            lyr = QgsProject.instance().mapLayersByName(name)
+             
+            if lyr:
+                QgsProject.instance().removeMapLayers([lyr[0].id()])
+                 
+            QgsVectorFileWriter.deleteShapeFile(shapefile)    
+            # define fields for feature attributes. A QgsFields object is needed
+            fields = QgsFields()
+            fields.append(QgsField('name', QVariant.String))
+            fields.append(QgsField('inlet', QVariant.String))
+            fields.append(QgsField('outlet', QVariant.String))
+            fields.append(QgsField('length', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('manning', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('inlet_off', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('outlet_off', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('init_flow', QVariant.Double, "double", 10, 4))      
+            fields.append(QgsField('max_flow', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('inletLoss', QVariant.Double, "double", 10, 4)) 
+            fields.append(QgsField('outletLoss', QVariant.Double, "double", 10, 4)) 
+            fields.append(QgsField('meanLoss', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('flapLoss', QVariant.Bool))
+            fields.append(QgsField('XSshape', QVariant.String))
+            fields.append(QgsField('XSMaxDepth', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('XSgeom2', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('XSgeom3', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('XSgeom4', QVariant.Double, "double", 10, 4))
+            fields.append(QgsField('XSbarrels', QVariant.Int, "int", 10, 4))
+                  
+                                     
+            mapCanvas = self.iface.mapCanvas()
+            my_crs = mapCanvas.mapSettings().destinationCrs()
+               
+            writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.LineString, my_crs, "ESRI Shapefile")
+               
+            if writer.hasError() != QgsVectorFileWriter.NoError:
+                self.uc.bar_error("ERROR 220620.1721.0922: Error when creating shapefile: " + shapefile)
+                return false
+               
+            # Add features: 
+            conduits_lyr = self.lyrs.data['user_swmm_conduits']['qlyr']
+            conduits_feats = conduits_lyr.getFeatures()                 
+            for feat in conduits_feats: 
+                line_geom = feat.geometry().asPolyline()
+                start = line_geom[0]
+                end = line_geom[-1]  
+                
+                fet = QgsFeature()
+                fet.setFields(fields)
+                fet.setGeometry(QgsGeometry.fromPolylineXY( [start, end] ))              
+                non_coord_feats =[]
+                non_coord_feats.append(feat[1])
+                non_coord_feats.append(feat[2])
+                non_coord_feats.append(feat[3])
+                non_coord_feats.append(feat[4])                
+                non_coord_feats.append(feat[5])
+                non_coord_feats.append(feat[6])
+                non_coord_feats.append(feat[7])
+                non_coord_feats.append(feat[8])
+                non_coord_feats.append(feat[9])
+                non_coord_feats.append(feat[10])
+                non_coord_feats.append(feat[11])
+                non_coord_feats.append(feat[12])                
+                non_coord_feats.append(feat[13])
+                non_coord_feats.append(feat[14])
+                non_coord_feats.append(feat[15])
+                non_coord_feats.append(feat[16])                
+                non_coord_feats.append(feat[17])
+                non_coord_feats.append(feat[18])
+                non_coord_feats.append(feat[19]) 
+                                    
+                fet.setAttributes(non_coord_feats)
+                writer.addFeature(fet)            
+                
+            # delete the writer to flush features to disk
+            del writer
+               
+            vlayer = self.iface.addVectorLayer(shapefile, "" , 'ogr')  
+#             symbol = QgsLineSymbol.createSimple({ 'color': 'red', 'capstyle' : 'arrow', 'line_style': 'solid'})
+#             vlayer.setRenderer(QgsSingleSymbolRenderer(symbol))   
+ 
+            sym = vlayer.renderer().symbol()
+            sym_layer = QgsArrowSymbolLayer.create(
+               {
+                    "arrow_width": "0.05",
+                    "arrow_width_at_start": "0.05",
+                    "head_length": "0",
+                    "head_thickness": "0"
+               }
+            )
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
-            inlets = []
-            outlets = []
-            rt_updates = []
-            feats = self.user_swmm_nodes_lyr.getFeatures()
-            for feat in feats:
-                geom = feat.geometry()
-                if geom is None:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_critical("ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n" +
-                               "Geometry (inlet or outlet) missing.\n\n" +
-                               "Please check user Storm Drain Nodes layer.")
-                    return
-                point = geom.asPoint()
-                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-                sd_type = feat['sd_type']
-                name = feat['name']
-                rt_fid = feat['rt_fid']
-                if sd_type == 'I' or sd_type == 'J':
-                    intype = feat['intype']
-                    if intype == 4 and rt_fid is not None:
-                        rt_updates.append((grid_fid, rt_fid))
-                    row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
-                    row[10] = int('0' if row[9] == 'False' else '1')
-                    row = [0 if v == NULL else v for v in row]
-                    inlets.append(row)
-                elif sd_type == 'O':
-                    row = [grid_fid, grid_fid, name] + [feat[col] for col in self.outlet_columns]
-                    outlets.append(row)
-                else:
-                    raise ValueError
-            self.gutils.clear_tables('swmmflo', 'swmmoutf')
-            cur = self.con.cursor()
-            cur.executemany(qry_inlet, inlets)
-            cur.executemany(qry_outlet, outlets)
-            cur.executemany(qry_rt_update, rt_updates)
-            self.con.commit()
-            self.repaint_schema()
+            sym.changeSymbolLayer(0, sym_layer)
+            
+            # show the change
+            vlayer.triggerRepaint()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Schematizing of Storm Drains finished!\n\n" +
-                             "The 'Storm Drain-SD Inlets' and 'Storm Drain-SD Outfalls' layers were updated.\n\n" +
-                             "(NOTE: the 'Export GDS files' tool will write those layer atributes into the SWMMFLO.DAT and SWMMOUTF.DAT files)")
+            return True         
+             
         except Exception as e:
-            self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_critical("ERROR 060319.1832: Schematizing of Storm Drains failed!\n\n" +
-                               "Attribute (inlet or outlet) missing.\n\n" +
-                               "Please check user Storm Drain Nodes layer.")
-            self.uc.show_error('ERROR 301118..0541: Schematizing of Storm Drains failed!.'
-                               +'\n__________________________________________________', e)                          
+            self.uc.show_error("ERROR 220620.1648: error while creating layer " + name  + "!\n", e)             
+            return False
+              
 
     def simulate_stormdrain(self):
         if self.simulate_stormdrain_chbox.isChecked():
@@ -782,7 +841,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
             """
-            Creates Storm Drain Conduits layer.
+            Creates Storm Drain Conduits layer (Users layers)
              
             Creates "user_swmm_conduits" layer with attributes taken from
             the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
@@ -842,18 +901,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 y2 = float(storm_drain.INP_nodes[conduit_outlet]['y'])
                 geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1,y1),QgsPointXY(x2,y2)])
                 feat.setGeometry(geom)
-
-                # elev = 0
-                #
-                # if 'x' in values:
-                #     x = float(values['x'])
-                #     y = float(values['y'])
-                #     gid = self.gutils.grid_on_point(x, y)
-                #     elev = self.gutils.grid_value(gid, 'elevation')
-                #     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
-                #     feat.setAttribute('grid', gid)
-                #
-                #     feat.setAttribute('ge_elev', elev)
 
                 feat.setAttribute('conduit_name', name)
                 feat.setAttribute('conduit_inlet', conduit_inlet)

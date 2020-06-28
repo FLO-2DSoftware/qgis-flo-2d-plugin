@@ -66,7 +66,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
 
         set_icon(self.create_point_btn, 'mActionCapturePoint.svg')
         set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        set_icon(self.schema_btn, 'schematize_res.svg')
+        set_icon(self.schema_storm_drain_btn, 'schematize_res.svg')
         set_icon(self.revert_changes_btn, 'mActionUndo.svg')
         set_icon(self.delete_btn, 'mActionDeleteSelected.svg')
 
@@ -81,7 +81,7 @@ class SWMMEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_cur_swmm)
         self.change_name_btn.clicked.connect(self.rename_swmm)
-        self.schema_btn.clicked.connect(self.schematize_swmm)
+        self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.import_inp.clicked.connect(self.import_swmm_INP_file)
         self.update_inp.clicked.connect(self.update_swmm_INP_file)
         self.recalculate_btn.clicked.connect(self.recalculate_max_depth)

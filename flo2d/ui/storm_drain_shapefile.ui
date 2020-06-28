@@ -23,7 +23,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <attribute name="title">
@@ -1861,7 +1861,7 @@
                <item row="2" column="0">
                 <widget class="QLabel" name="label_40">
                  <property name="text">
-                  <string>Inital Flow</string>
+                  <string>Initial Flow</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

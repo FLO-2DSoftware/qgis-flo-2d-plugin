@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
+from qgis.core import QgsFeatureRequest, QgsFields, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
 from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
