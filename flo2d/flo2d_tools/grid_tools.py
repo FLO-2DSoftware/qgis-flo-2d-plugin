@@ -427,9 +427,7 @@ def count_polygon_vertices(geom):
     """
     Function for counting polygon vertices.
     """
-    c = 0
-    for part in geom.asPolygon():
-        c += len(part)
+    c = sum(1 for _ in geom.vertices())
     return c
 
 
