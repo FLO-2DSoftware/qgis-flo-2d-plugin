@@ -32,9 +32,9 @@ class TINInterpolator(object):
         index = self.lyr.fields().lookupField(self.field_name)
         self.lyr_data = QgsInterpolator.LayerData()
         self.lyr_data.interpolationAttribute = index
-        self.lyr_data.vectorLayer = self.lyr
-        self.lyr_data.mInputType = 0
-        self.lyr_data.zCoordInterpolation = False
+        self.lyr_data.source = self.lyr
+        self.lyr_data.sourceType = 0
+        self.lyr_data.useZValue = False
         self.interpolator = QgsTinInterpolator([self.lyr_data])
 
     def tin_at_xy(self, x, y):
@@ -334,8 +334,7 @@ def show_error(msg):
     
 
 def polygons_statistics(vlayer, rlayer, statistics):
-    rlayer_src = rlayer.source()
-    zonalstats = QgsZonalStatistics(vlayer, rlayer_src, '', 1, statistics)
+    zonalstats = QgsZonalStatistics(vlayer, rlayer, '', 1, statistics)
     res = zonalstats.calculateStatistics(None)
     return res
 
