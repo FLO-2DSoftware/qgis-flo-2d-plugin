@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.3
+version=0.10.4
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,9 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.4
+  - New tab in Control Variables dialog: IARFBLOCKMOD placed in Global Variables tab.
+  - CONT.DAT 5th. line variables are AMANN DEPTHDUR XCONC XARF FROUDL SHALLOWN ENCROACH
  <p>0.10.3
   - Schematic Storm Drain Conduits 'SC Conduits' layer created from Storm Drain Editor widget.
  <p>0.10.2
