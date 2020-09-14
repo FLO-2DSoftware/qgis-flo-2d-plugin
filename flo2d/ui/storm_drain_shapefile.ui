@@ -23,7 +23,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <attribute name="title">
@@ -184,6 +184,9 @@
               <property name="editable">
                <bool>false</bool>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="1" column="0">
@@ -199,6 +202,9 @@
               </property>
               <property name="editable">
                <bool>false</bool>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -216,6 +222,9 @@
               <property name="editable">
                <bool>false</bool>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="3" column="0">
@@ -225,6 +234,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -236,6 +248,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="5" column="0">
@@ -245,6 +260,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -259,6 +277,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="7" column="0">
@@ -268,6 +289,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -603,6 +627,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="0" column="0">
@@ -612,6 +639,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -623,6 +653,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="6" column="0">
@@ -632,6 +665,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -643,6 +679,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="5" column="0">
@@ -653,6 +692,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="2" column="0">
@@ -662,6 +704,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -851,7 +896,7 @@
         <item row="1" column="0" colspan="3">
          <widget class="QLabel" name="label_24">
           <property name="text">
-           <string>(*: fields for SWMMFLO.DAT           #: fields for  SDCLOGGING.DAT)</string>
+           <string>*  fields for SWMMFLO.DAT           #  fields for SDCLOGGING.DAT</string>
           </property>
           <property name="wordWrap">
            <bool>false</bool>
@@ -1203,6 +1248,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="2" column="0">
@@ -1212,6 +1260,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1223,6 +1274,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="4" column="0">
@@ -1232,6 +1286,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1243,6 +1300,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="5" column="0">
@@ -1252,6 +1312,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1263,6 +1326,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="7" column="0">
@@ -1272,6 +1338,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1653,6 +1722,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="1" column="0">
@@ -1662,6 +1734,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1673,6 +1748,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="3" column="0">
@@ -1683,6 +1761,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
              </widget>
             </item>
             <item row="4" column="0">
@@ -1692,6 +1773,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
               </property>
              </widget>
             </item>
@@ -1890,6 +1974,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="1" column="0">
@@ -1899,6 +1986,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -1910,6 +2000,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="3" column="0">
@@ -1919,6 +2012,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -2145,6 +2241,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="1" column="0">
@@ -2154,6 +2253,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -2165,6 +2267,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="3" column="0">
@@ -2174,6 +2279,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -2185,6 +2293,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="5" column="0">
@@ -2194,6 +2305,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -2420,6 +2534,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="1" column="0">
@@ -2429,6 +2546,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>
@@ -2440,6 +2560,9 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
+                 </property>
                 </widget>
                </item>
                <item row="3" column="0">
@@ -2449,6 +2572,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
+                 </property>
+                 <property name="maxVisibleItems">
+                  <number>20</number>
                  </property>
                 </widget>
                </item>

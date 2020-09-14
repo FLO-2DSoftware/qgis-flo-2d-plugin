@@ -32,10 +32,16 @@
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>301</width>
+     <height>441</height>
+    </size>
    </property>
    <property name="title">
     <string>[ OPTIONS ]</string>
@@ -327,6 +333,13 @@
      </property>
      <property name="displayFormat">
       <string>HH:mm:ss</string>
+     </property>
+     <property name="time">
+      <time>
+       <hour>0</hour>
+       <minute>30</minute>
+       <second>0</second>
+      </time>
      </property>
     </widget>
     <widget class="QComboBox" name="inertial_damping_cbo">
@@ -648,30 +661,38 @@
     <rect>
      <x>10</x>
      <y>20</y>
-     <width>491</width>
+     <width>501</width>
      <height>91</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>501</width>
+     <height>91</height>
+    </size>
    </property>
    <property name="title">
     <string>[ TITLE ]</string>
    </property>
-   <widget class="QTextEdit" name="titleTextEdit">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>461</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="html">
-     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
+     <widget class="QTextEdit" name="titleTextEdit">
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;INP file created by FLO-2D&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-    </property>
-   </widget>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="9"/>

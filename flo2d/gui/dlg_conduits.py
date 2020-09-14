@@ -351,7 +351,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             self.average_losses_dbox.setValue(data if data is not None else 0)
 
                         elif element == 19:
-                            self.flap_gate_chbox.setChecked(1 if is_true(data) else 0)
+                            self.flap_gate_chbox.setChecked(True if is_true(data) else False)
 
                     if element > 0:    # For this row omit fid number
                         if element == 1 or element == 2 or element == 3:

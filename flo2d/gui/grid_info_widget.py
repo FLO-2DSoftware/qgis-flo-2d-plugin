@@ -13,7 +13,7 @@ from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import QSize, Qt
-from .ui_utils import load_ui, center_canvas, set_icon
+from .ui_utils import load_ui, center_canvas, set_icon, zoom
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
 
@@ -149,9 +149,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                         if len(grid) >= cell and cell > 0:
                             self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
                             feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                            x, y = feat.geometry().centroid().asPoint()
-                            self.lyrs.zoom_to_all()
+                            x, y = feat.geometry().centroid().asPoint()                           
                             center_canvas(self.iface, x, y)
+                            zoom(self.iface,  0.4)
                             self.mannEdit.setText(str(feat['n_value']))
                             self.elevEdit.setText(str(feat['elevation']))
                             self.cellEdit.setText(str(sqrt(feat.geometry().area())))

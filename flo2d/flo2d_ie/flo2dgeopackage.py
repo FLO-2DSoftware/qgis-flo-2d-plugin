@@ -90,37 +90,55 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells_sql = ['''INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES''', 2]
         ts_sql = ['''INSERT INTO inflow_time_series (fid, name) VALUES''', 2]
         tsd_sql = ['''INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES''', 4]
-        reservoirs_sql = ['''INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES''', 3]
 
+        try: # See if n_value exists in table
+            self.execute('SELECT n_value FROM reservoirs')
+            # Yes, n_value exists.
+            reservoirs_sql = ['''INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES''', 5]
+            with_n_value = True
+        except:
+            # n_value doesn't exist.
+            reservoirs_sql = ['''INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES''', 3]
+            with_n_value = False
+            
         try:
             self.clear_tables('inflow', 'inflow_cells', 'reservoirs', 'inflow_time_series', 'inflow_time_series_data')
             head, inf, res = self.parser.parse_inflow()
-            cont_sql += [
-                ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
-                ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
-            ]
+            if not head == None:
+                cont_sql += [
+                    ('IDEPLT', head['IDEPLT'], self.PARAMETER_DESCRIPTION['IDEPLT']),
+                    ('IHOURDAILY', head['IHOURDAILY'], self.PARAMETER_DESCRIPTION['IHOURDAILY'])
+                ]
+
+                for i, gid in enumerate(inf, 1):
+                    row = inf[gid]['row']
+                    inflow_sql += [(i, row[0], row[1], i)]
+                    cells_sql += [(i, gid)]
+                    if inf[gid]['time_series']:
+                        ts_sql += [(i,'Time series ' + str(i))]
+                        for n in inf[gid]['time_series']:
+                            tsd_sql += [(i,) + tuple(n[1:])]
+                            
+                self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql)
+                qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);'''
+                self.execute(qry)  
+                
             gids = list(res.keys())
-            cells = self.grid_centroids(gids, buffers=True)
-            for i, gid in enumerate(inf, 1):
-                row = inf[gid]['row']
-                inflow_sql += [(i, row[0], row[1], i)]
-                cells_sql += [(i, gid)]
-                if inf[gid]['time_series']:
-                    ts_sql += [(i,'Time series ' + str(i))]
-                    for n in inf[gid]['time_series']:
-                        tsd_sql += [(i,) + tuple(n[1:])]
-    
+            cells = self.grid_centroids(gids, buffers=True)        
             for gid in res:
                 row = res[gid]['row']
-                wsel = row[-1] if len(row) == 3 else None
-                reservoirs_sql += [(row[1], wsel, cells[gid])]
-    
-            self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql, reservoirs_sql)
-            qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);'''
-            self.execute(qry)
-            qry = '''UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);'''
-            self.execute(qry)
+                wsel = row[-1] if len(row) == 3 else row[-2] if len(row) == 4 else 0.0
+                n_value = row[-1] if len(row) == 4 else 0.25
+                use_n_value = True if len(row) == 4 else False
+                if with_n_value:
+                    reservoirs_sql += [(row[1], wsel, n_value, use_n_value, cells[gid])] 
+                else:
+                    reservoirs_sql += [(row[1], wsel, cells[gid])]
 
+            self.batch_execute(reservoirs_sql)
+            qry = '''UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);'''
+            self.execute(qry)                
+                
         except Exception:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('ERROR 070719.1051: Import inflow failed!.')
@@ -991,18 +1009,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_inflow(self, outdir):
         # check if there are any inflows defined
         try:
-            if self.is_table_empty('inflow'):
+            if self.is_table_empty('inflow') and self.is_table_empty('reservoirs'):
                 return False
             cont_sql = '''SELECT value FROM cont WHERE name = ?;'''
             inflow_sql = '''SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;'''
             inflow_cells_sql = '''SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;'''
             ts_data_sql = '''SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;'''
-            reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;'''
     
             head_line = ' {0: <15} {1}'
             inf_line = '\n{0: <15} {1: <15} {2}'
-            tsd_line = '\nH              {0: <15} {1: <15} {2}'
-            res_line = '\nR              {0: <15} {1}'
+            tsd_line = '\nH   {0: <15} {1: <15} {2}'
     
             ideplt = self.execute(cont_sql, ('IDEPLT',)).fetchone()
             ihourdaily = self.execute(cont_sql, ('IHOURDAILY',)).fetchone()
@@ -1020,29 +1036,73 @@ class Flo2dGeoPackage(GeoPackageUtils):
             
             warning = ""
             with open(inflow, 'w') as i:
-                i.write(head_line.format(ihourdaily[0], ideplt[0]))
-                for iid, gid in self.execute(inflow_cells_sql):
-    
-                    if previous_iid != iid:
-                        row = self.execute(inflow_sql, (iid,)).fetchone()   
-                        if row:
-                            row = [x if x is not None and x is not '' else 0 for x in row]
-                            previous_oid = iid
+                if not self.is_table_empty('inflow'): 
+                    i.write(head_line.format(ihourdaily[0], ideplt[0]))
+                    for iid, gid in self.execute(inflow_cells_sql):
+        
+                        if previous_iid != iid:
+                            row = self.execute(inflow_sql, (iid,)).fetchone()   
+                            if row:
+                                row = [x if x is not None and x is not '' else 0 for x in row]
+                                previous_oid = iid
+                            else:
+                                warning += "Data for inflow in cell " + str(gid) + " not found in 'Inflow' table (wrong inflow 'id' "  + str(iid) + " in 'Inflow Cells' table).\n"
+                                continue                          
                         else:
-                            warning += "Data for inflow in cell " + str(gid) + " not found in 'Inflow' table (wrong inflow 'id' "  + str(iid) + " in 'Inflow Cells' table).\n"
-                            continue                          
-                    else:
-                        pass
-    
-                    fid, ts_fid, ident, inoutfc = row # ident is 'F' or 'C'
-                    i.write(inf_line.format(ident, inoutfc, gid))
-                    series = self.execute(ts_data_sql, (ts_fid,))
-                    for tsd_row in series:
-                        tsd_row = [x if x is not None else '' for x in tsd_row]
-                        i.write(tsd_line.format(*tsd_row).rstrip())
-                for res in self.execute(reservoirs_sql):
-                    res = [x if x is not None else '' for x in res]
-                    i.write(res_line.format(*res).rstrip())
+                            pass
+        
+                        fid, ts_fid, ident, inoutfc = row # ident is 'F' or 'C'
+                        i.write(inf_line.format(ident, inoutfc, gid))
+                        series = self.execute(ts_data_sql, (ts_fid,))
+                        for tsd_row in series:
+                            tsd_row = [x if x is not None else '' for x in tsd_row]
+                            i.write(tsd_line.format(*tsd_row).rstrip())
+                            
+                if not self.is_table_empty('reservoirs'):
+                    try: # See if n_value exists in table
+                        self.execute('SELECT n_value FROM reservoirs')
+                        
+                        # Yes, n_value exists.
+                        n_value_exists = True
+                        reservoirs_sql = '''SELECT grid_fid, wsel, n_value, use_n_value FROM reservoirs ORDER BY fid;'''
+                        res_line1a = '\nR   {0: <15} {1:<10.2f} {2:<10.2f}' 
+                        res_line1b = '\nR   {0: <15} {1:<10.2f}'
+                        res_line2a = 'R     {0: <15} {1:<10.2f} {2:<10.2f} \n' 
+                        res_line2b = 'R     {0: <15} {1:<10.2f} \n'
+                                                
+#                         res_line1a = '\nR   {0: <15} {1: <15} {2:}'   
+#                         res_line1b = '\nR   {0: <15} {1: <15}'
+#                         res_line2a = 'R     {0: <15} {1: <15} {2} \n' 
+#                         res_line2b = 'R     {0: <15} {1: <15} \n' 
+                        
+                        for res in self.execute(reservoirs_sql):
+                            res = [x if x is not None else '' for x in res]
+                            
+                            if self.is_table_empty('inflow'):
+                                if res[3] == 1: # write n value
+                                    i.write(res_line2a.format(*res))
+                                else: # do not write n value
+                                    i.write(res_line2b.format(*res))    
+                            else:
+                                if res[3] == 1: # write n value
+                                    i.write(res_line1a.format(*res)) 
+                                else:
+                                    i.write(res_line1b.format(*res))                         
+                        
+                                               
+                    except:  # n_value doesn't exist.
+                        n_value_exists = False
+                        reservoirs_sql = '''SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;'''
+                        res_line1 = '\nR    {0: <15} {1}'
+                        res_line2 = 'R      {0: <15} {1} \n'   
+                                                         
+                        for res in self.execute(reservoirs_sql):
+                            res = [x if x is not None else '' for x in res]
+                             
+                            if self.is_table_empty('inflow'): 
+                                i.write(res_line2.format(*res))
+                            else:
+                                i.write(res_line1.format(*res))  
 
             QApplication.restoreOverrideCursor()    
             if warning != "":

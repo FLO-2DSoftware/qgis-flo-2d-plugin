@@ -9,7 +9,7 @@
 
 
 from qgis.PyQt.QtWidgets import QDialogButtonBox 
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
 from qgis.PyQt.QtCore import QSettings
@@ -352,6 +352,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         load_outfalls = False
         load_conduits = False
 
+        unit = int(self.gutils.get_cont_par('METRIC'))
+        
         for combo_inlet in self.inlets_fields_groupBox.findChildren(QComboBox):
             if combo_inlet.currentIndex() != -1:
                 load_inlets = True
@@ -386,7 +388,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
                                                 
                     inlets_shapefile_fts = lyr.getFeatures()
-
+                    modified = 0
                     for f in inlets_shapefile_fts:
                         grid = 0
                         sd_type = "I"
@@ -448,6 +450,40 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute('swmm_length', swmm_length)
                         feat.setAttribute('swmm_width', swmm_width)
                         feat.setAttribute('swmm_height', swmm_height)
+                    
+                        # Check valid ranges and maybe assign defaults inlet type:
+                       
+                        if intype in {1,3,5}:
+                            if unit == 1: # Metric
+                                if 0.10 <= swmm_coeff <= 3.50:
+                                    # OK
+                                    pass
+                                else:
+                                   swmm_coeff = 1.60
+                                   modified += 1
+                            else: # English
+                                if 2.85 <= swmm_coeff <= 3.30:
+                                    # OK
+                                    pass
+                                else:
+                                   swmm_coeff = 3.00
+                                   modified += 1
+                        elif intype == 2:
+                            if unit == 1: # Metric
+                                if 0.10 <= swmm_coeff <= 3.50:
+                                    # OK
+                                    pass
+                                else:
+                                   swmm_coeff = 1.25
+                                   modified += 1
+                            else: # English
+                                if 0.5 <= swmm_coeff <= 3.50:
+                                    # OK
+                                    pass
+                                else:                                                                                 
+                                    swmm_coeff = 2.30
+                                    modified += 1
+
                         feat.setAttribute('swmm_coeff', swmm_coeff)
                         feat.setAttribute('swmm_feature', swmm_feature)
                         feat.setAttribute('curbheight', curbheight)
@@ -481,7 +517,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     if outside_inlets != "":
                        self.uc.show_warn("WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n" + outside_inlets) 
                         
-
+                    if modified > 0:
+                            self.uc.bar_warn('WARNING 050820.1901: ' + str(modified) + ' Weir Coefficients in shapefile were outside valid ranges. '+ str(modified) + ' default values assigned!')
+                            
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed!"
@@ -613,18 +651,18 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         conduit_inlet_offset = f[self.conduit_inlet_offset_FieldCbo.currentText()] if self.conduit_inlet_offset_FieldCbo.currentText() != "" else 0
                         conduit_outlet_offset = f[self.conduit_outlet_offset_FieldCbo.currentText()] if self.conduit_outlet_offset_FieldCbo.currentText() != "" else 0
                         conduit_shape = f[self.conduit_shape_FieldCbo.currentText()] if self.conduit_shape_FieldCbo.currentText() != "" else 0
-                        conduit_max_depth = f[self.conduit_max_depth_FieldCbo.currentText()] if self.conduit_max_depth_FieldCbo.currentText() != "" else 0
-                        conduit_geom2 = f[self.conduit_geom2_FieldCbo.currentText()] if self.conduit_geom2_FieldCbo.currentText() != "" else 0
-                        conduit_geom3 = f[self.conduit_geom3_FieldCbo.currentText()] if self.conduit_geom3_FieldCbo.currentText() != "" else 0
-                        conduit_geom4 = f[self.conduit_geom4_FieldCbo.currentText()] if self.conduit_geom4_FieldCbo.currentText() != "" else 0
+                        conduit_max_depth = f[self.conduit_max_depth_FieldCbo.currentText()] if self.conduit_max_depth_FieldCbo.currentText() != "" else 0.0
+                        conduit_geom2 = f[self.conduit_geom2_FieldCbo.currentText()] if self.conduit_geom2_FieldCbo.currentText() != "" else 0.0
+                        conduit_geom3 = f[self.conduit_geom3_FieldCbo.currentText()] if self.conduit_geom3_FieldCbo.currentText() != "" else 0.0
+                        conduit_geom4 = f[self.conduit_geom4_FieldCbo.currentText()] if self.conduit_geom4_FieldCbo.currentText() != "" else 0.0
                         conduit_barrels = f[self.conduit_barrels_FieldCbo.currentText()] if self.conduit_barrels_FieldCbo.currentText() != "" else 0
-                        conduit_length  = f[self.conduit_length_FieldCbo.currentText()] if self.conduit_length_FieldCbo.currentText() != "" else 0
-                        conduit_manning  = f[self.conduit_manning_FieldCbo.currentText()] if self.conduit_manning_FieldCbo.currentText() != "" else 0
-                        conduit_init_flow = f[self.conduit_initial_flow_FieldCbo.currentText()] if self.conduit_initial_flow_FieldCbo.currentText() != "" else 0
-                        conduit_max_flow = f[self.conduit_max_flow_FieldCbo.currentText()] if self.conduit_max_flow_FieldCbo.currentText() != "" else 0
-                        conduit_entry_loss = f[self.conduit_entry_loss_FieldCbo.currentText()] if self.conduit_entry_loss_FieldCbo.currentText() != "" else 0
-                        conduit_exit_loss = f[self.conduit_exit_loss_FieldCbo.currentText()] if self.conduit_exit_loss_FieldCbo.currentText() != "" else 0
-                        conduit_loss_average = f[self.conduit_average_loss_FieldCbo.currentText()] if self.conduit_average_loss_FieldCbo.currentText() != "" else 0
+                        conduit_length  = f[self.conduit_length_FieldCbo.currentText()] if self.conduit_length_FieldCbo.currentText() != "" else 0.0
+                        conduit_manning  = f[self.conduit_manning_FieldCbo.currentText()] if self.conduit_manning_FieldCbo.currentText() != "" else 0.0
+                        conduit_init_flow = f[self.conduit_initial_flow_FieldCbo.currentText()] if self.conduit_initial_flow_FieldCbo.currentText() != "" else 0.0
+                        conduit_max_flow = f[self.conduit_max_flow_FieldCbo.currentText()] if self.conduit_max_flow_FieldCbo.currentText() != "" else 0.0
+                        conduit_entry_loss = f[self.conduit_entry_loss_FieldCbo.currentText()] if self.conduit_entry_loss_FieldCbo.currentText() != "" else 0.0
+                        conduit_exit_loss = f[self.conduit_exit_loss_FieldCbo.currentText()] if self.conduit_exit_loss_FieldCbo.currentText() != "" else 0.0
+                        conduit_loss_average = f[self.conduit_average_loss_FieldCbo.currentText()] if self.conduit_average_loss_FieldCbo.currentText() != "" else 0.0
                         conduits_flap_gate = f[self.conduit_flap_gate_FieldCbo.currentText()] if self.conduit_flap_gate_FieldCbo.currentText() != "" else 0
 
                         if conduit_inlet == "?" or conduit_outlet == "?":
@@ -651,22 +689,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute('conduit_name', conduit_name)
                         feat.setAttribute('conduit_inlet',conduit_inlet )
                         feat.setAttribute('conduit_outlet',conduit_outlet )
-                        feat.setAttribute('conduit_inlet_offset', conduit_inlet_offset)
-                        feat.setAttribute('conduit_outlet_offset', conduit_outlet_offset)
-                        feat.setAttribute('conduit_length', conduit_length)
-                        feat.setAttribute('conduit_manning', conduit_manning)
-                        feat.setAttribute('conduit_init_flow', conduit_init_flow)
-                        feat.setAttribute('conduit_max_flow', conduit_max_flow)
-                        feat.setAttribute('losses_inlet', conduit_entry_loss)
-                        feat.setAttribute('losses_outlet', conduit_exit_loss)
-                        feat.setAttribute('losses_average', conduit_loss_average)
-                        feat.setAttribute('losses_flapgate', conduits_flap_gate)
+                        feat.setAttribute('conduit_inlet_offset', conduit_inlet_offset if conduit_inlet_offset != NULL else 0.0)
+                        feat.setAttribute('conduit_outlet_offset', conduit_outlet_offset  if conduit_outlet_offset != NULL else 0.0)
+                        feat.setAttribute('conduit_length', conduit_length if conduit_length != NULL else 0.0)
+                        feat.setAttribute('conduit_manning', conduit_manning   if conduit_manning != NULL else 0.0)
+                        feat.setAttribute('conduit_init_flow', conduit_init_flow  if conduit_init_flow != NULL else 0.0)
+                        feat.setAttribute('conduit_max_flow', conduit_max_flow if conduit_max_flow  != NULL else 0.0)
+                        feat.setAttribute('losses_inlet', conduit_entry_loss  if conduit_entry_loss != NULL else 0.0)
+                        feat.setAttribute('losses_outlet', conduit_exit_loss  if conduit_exit_loss != NULL else 0.0)
+                        feat.setAttribute('losses_average', conduit_loss_average  if conduit_loss_average != NULL else 0.0)
+                        feat.setAttribute('losses_flapgate', conduits_flap_gate if conduits_flap_gate != NULL else 0)
                         feat.setAttribute('xsections_shape', 'CIRCULAR')
-                        feat.setAttribute('xsections_barrels', conduit_barrels)
-                        feat.setAttribute('xsections_max_depth', conduit_max_depth)
-                        feat.setAttribute('xsections_geom2', conduit_geom2)
-                        feat.setAttribute('xsections_geom3', conduit_geom3)
-                        feat.setAttribute('xsections_geom4', conduit_geom4)
+                        feat.setAttribute('xsections_barrels', conduit_barrels  if conduit_barrels != NULL else 0)
+                        feat.setAttribute('xsections_max_depth', conduit_max_depth  if conduit_max_depth != NULL else 0.0)
+                        feat.setAttribute('xsections_geom2', conduit_geom2 if conduit_geom2 != NULL else 0.0)
+                        feat.setAttribute('xsections_geom3', conduit_geom3 if conduit_geom3 != NULL else 0.0)
+                        feat.setAttribute('xsections_geom4', conduit_geom4 if conduit_geom4 != NULL else 0.0)
 
                         new_feats.append(feat)
 

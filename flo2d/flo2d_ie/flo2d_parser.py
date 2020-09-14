@@ -194,24 +194,62 @@ class ParseDAT(object):
     def parse_inflow(self):
         inflow = self.dat_files['INFLOW.DAT']
         par = self.single_parser(inflow)
-        head = dict(list(zip(['IHOURDAILY', 'IDEPLT'], next(par))))
-        inf = OrderedDict()
-        res = OrderedDict()
-        gid = None
-        for row in par:
-            char = row[0]
-            if char == 'C' or char == 'F':
-                gid = row[-1]
-                inf[gid] = OrderedDict([('row', row), ('time_series', [])])
-            elif char == 'H':
-                self.fix_row_size(row, 4)
-                inf[gid]['time_series'].append(row)
-            elif char == 'R':
+        nxt = next(par)
+        if not nxt[0] == "R":
+            head = dict(list(zip(['IHOURDAILY', 'IDEPLT'], nxt)))
+            inf = OrderedDict()
+            res = OrderedDict()
+            gid = None
+            for row in par:
+                char = row[0]
+                if char == 'C' or char == 'F':
+                    gid = row[-1]
+                    inf[gid] = OrderedDict([('row', row), ('time_series', [])])
+                elif char == 'H':
+                    self.fix_row_size(row, 4)
+                    inf[gid]['time_series'].append(row)
+                elif char == 'R':
+                    gid = row[1]
+                    res[gid] = OrderedDict([('row', row)])
+                else:
+                    pass
+        else:
+            head, inf, res = None, None, OrderedDict()
+            gid = nxt[1]
+            res[gid] = OrderedDict([('row', nxt)])               
+            for row in par:
                 gid = row[1]
-                res[gid] = OrderedDict([('row', row)])
-            else:
-                pass
+                res[gid] = OrderedDict([('row', row)])        
         return head, inf, res
+
+
+#         inflow = self.dat_files['INFLOW.DAT']
+#         par = self.single_parser(inflow)
+#         head = dict(list(zip(['IHOURDAILY', 'IDEPLT'], next(par))))
+#         inf = OrderedDict()
+#         res = OrderedDict()
+#         gid = None
+#         for row in par:
+#             char = row[0]
+#             if char == 'C' or char == 'F':
+#                 gid = row[-1]
+#                 inf[gid] = OrderedDict([('row', row), ('time_series', [])])
+#             elif char == 'H':
+#                 self.fix_row_size(row, 4)
+#                 inf[gid]['time_series'].append(row)
+#             elif char == 'R':
+#                 gid = row[1]
+#                 res[gid] = OrderedDict([('row', row)])
+#             else:
+#                 pass
+#         return head, inf, res
+
+
+
+
+
+
+
 
     def parse_outflow(self):
         outflow = self.dat_files['OUTFLOW.DAT']

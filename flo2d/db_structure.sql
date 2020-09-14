@@ -144,7 +144,9 @@ CREATE TABLE "reservoirs" (
     "user_res_fid" INTEGER,
     "name" TEXT,
     "grid_fid" INTEGER,
-    "wsel" REAL,
+    "wsel" REAL DEFAULT 0.0,
+    "n_value" REAL DEFAULT 0.25,  
+    "use_n_value" INTEGER, 
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
@@ -2699,7 +2701,9 @@ CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_delete"
 CREATE TABLE "user_reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
-    "wsel" REAL,
+    "wsel" REAL DEFAULT 0.0,
+    "n_value" REAL DEFAULT 0.25, 
+    "use_n_value" INTEGER, 
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);

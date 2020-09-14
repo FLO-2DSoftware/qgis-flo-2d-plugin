@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright ? 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -42,6 +42,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
+        self.file_lbl.setText(last_dir)
         
         if self.in_or_out == "in":
             
@@ -205,7 +206,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.outflow_elements_chbox.setChecked(True)
                 self.outflow_elements_chbox.setEnabled(True)
     
-            if not self.gutils.is_table_empty('inflow'):    
+            if not self.gutils.is_table_empty('inflow') or not self.gutils.is_table_empty('reservoirs'):    
                 self.inflow_elements_chbox.setChecked(True)
                 self.inflow_elements_chbox.setEnabled(True)
     

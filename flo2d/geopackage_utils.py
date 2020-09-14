@@ -549,7 +549,9 @@ class GeoPackageUtils(object):
     def fill_empty_reservoir_names(self):
         qry = '''UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)
-
+        qry = '''UPDATE user_reservoirs SET wsel = 0.0 WHERE wsel IS NULL;'''
+        self.execute(qry)
+        
     def fill_empty_inflow_names(self):
         qry = '''UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text) WHERE name IS NULL;'''
         self.execute(qry)

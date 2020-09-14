@@ -105,6 +105,11 @@ class StormDrainProject(object):
             for tag, part in list(self.INP_groups.items()): # The iterator self.INP_groups.items() contains all groups of .INP file
                 part[0] = '[{}]'.format(tag)
                 swmm_inp_file.write('\n'.join(part))
+                
+#         with open(self.inp_file, 'w') as swmm_inp_file:
+#             for tag, part in list(self.INP_groups.items()): # The iterator self.INP_groups.items() contains all groups of .INP file
+#                 part[0] = '[{}]'.format(tag)
+#                 swmm_inp_file.write('\n'.join(part))                
 
     def update_JUNCTIONS_in_INP_groups_dictionary(self, junctions_dict):
         """

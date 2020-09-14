@@ -168,13 +168,20 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_res(self):
         del_qry = 'DELETE FROM reservoirs;'
-        ins_qry = '''INSERT INTO reservoirs (user_res_fid, grid_fid, geom)
+        ins_qry = '''INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel, n_value, use_n_value, geom)
                     SELECT
-                        ur.fid, g.fid, g.geom
+                        ur.fid, ur.name, g.fid, ur.wsel, ur.n_value, ur.use_n_value, g.geom
                     FROM
                         grid AS g, user_reservoirs AS ur
                     WHERE
-                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));'''
+                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));'''        
+#         ins_qry = '''INSERT INTO reservoirs (user_res_fid, grid_fid, geom)
+#                     SELECT
+#                         ur.fid, g.fid, g.geom
+#                     FROM
+#                         grid AS g, user_reservoirs AS ur
+#                     WHERE
+#                         ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));'''
         self.gutils.execute(del_qry)
         self.gutils.execute(ins_qry)
         self.repaint_reservoirs()

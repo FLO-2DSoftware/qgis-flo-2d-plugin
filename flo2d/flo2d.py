@@ -1356,12 +1356,12 @@ class Flo2D(object):
                     self.call_IO_methods(export_calls, True, outdir)   # The strings list 'export_calls', contains the names of
                                                                     # the methods in the class Flo2dGeoPackage to export (write) the
                                                                     # FLO-2D .DAT files
-                    self.uc.bar_info('Flo2D model exported', dur=3)
+                    self.uc.bar_info('Flo2D model exported to ' + outdir, dur=3)
                     QApplication.restoreOverrideCursor()
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_used != '':
-                        self.uc.show_info("Files exported:\n\n" + self.files_used)  
+                        self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)  
         
         QApplication.restoreOverrideCursor()
 

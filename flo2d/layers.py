@@ -175,7 +175,9 @@ class Layers(object):
                 'name': 'Reservoirs',
                 'sgroup': 'User Layers',
                 'styles': ['user_reservoirs.qml'],
-                'attrs_edit_widgets': {},
+                'attrs_edit_widgets': {
+                    'use_n_value': {'name': 'CheckBox', 'config': {u'CheckedState': 1, u'UncheckedState': 0}}
+                    },
                 'module': ['all'],
                 'readonly': False
             }),

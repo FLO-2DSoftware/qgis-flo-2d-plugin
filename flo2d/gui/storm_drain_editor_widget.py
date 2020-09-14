@@ -96,7 +96,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         ]
 
         self.inlet_columns = ['intype', 'swmm_length', 'swmm_width', 'swmm_height', 'swmm_coeff', 'swmm_feature', 'flapgate', 'curbheight']
-        self.outlet_columns = ['outf_flo']
+        self.outlet_columns = ['swmm_allow_discharge']
 
         self.inletRT = None
         self.plot = plot
@@ -412,11 +412,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if intype == 4 and rt_fid is not None:
                         rt_updates.append((grid_fid, rt_fid))
                     row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
-                    row[10] = int('0' if row[9] == 'False' else '1')
+                    row[10] = int('1' if is_true(row[9]) else '0')
                     row = [0 if v == NULL else v for v in row]
                     inlets.append(row)
                 elif sd_type == 'O':
-                    row = [grid_fid, grid_fid, name] + [feat[col] for col in self.outlet_columns]
+                    outf_flo = 1 if is_true(feat['swmm_allow_discharge']) else 0
+#                     outf_flo = 1 if is_true([feat[col] for col in self.outlet_columns]) else 0
+                    row = [grid_fid, grid_fid, name, outf_flo]
                     outlets.append(row)
                 else:
                     raise ValueError
@@ -1154,8 +1156,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         if not xsections_rows:
                             pass
                         else:
+                            no_xs = 0
+                            
                             for row in xsections_rows:
+                                lrow = list(row)
+                                lrow = ( "?" if lrow[0] is None or lrow[0] == "" else lrow[0], 
+                                        "?" if lrow[1] is None or lrow[0] == "" else lrow[1], 
+                                        "?" if lrow[2] is None or lrow[0] == "" else lrow[2], 
+                                        "?" if lrow[3] is None or lrow[0] == "" else lrow[3], 
+                                        "?" if lrow[4] is None or lrow[0] == "" else lrow[4], 
+                                        "?" if lrow[5] is None or lrow[0] == "" else lrow[5], 
+                                        "?" if lrow[6] is None or lrow[0] == "" else lrow[6])
+                                if row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?" or row[4] == "?" or row[5] == "?" or row[6] == "?":
+                                    no_xs += 1 
+                                lrow = (lrow[0], lrow[1],
+                                        0.0 if lrow[2] == "?" else lrow[2], 
+                                        0.0 if lrow[3] == "?" else lrow[3], 
+                                        0.0 if lrow[4] == "?" else lrow[4], 
+                                        0.0 if lrow[5] == "?" else lrow[5], 
+                                        0.0 if lrow[6] == "?" else lrow[6])
+                                row = tuple(lrow)   
                                 swmm_inp_file.write(line.format(*row))
+                                    
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1621: error while exporting [XSECTIONS] to .INP file!", e)
@@ -1349,7 +1371,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write('\n\n[CONTROLS]')
                     if items is not None:
                         for line in items[1:]:
-                            swmm_inp_file.write("\n" + line)
+                            if line != "":
+                                swmm_inp_file.write("\n" + line)
                     else:
                         swmm_inp_file.write('\n')
                         
@@ -1364,10 +1387,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     for group in future_groups:
                         items = self.select_this_INP_group(INP_groups, group.lower())
                         if items is not None:
-                            swmm_inp_file.write("\n[" + group + "]")
+                            swmm_inp_file.write("\n\n[" + group + "]")
                             for line in items[1:]:
-                                swmm_inp_file.write("\n" + line)
-    
+                                if line != "":
+                                    swmm_inp_file.write("\n" + line)
+                                
+                    file = last_dir + '/SWMM.INI'
+                    with open(file, 'w') as ini_file:
+                        ini_file.write("[SWMM5]")
+                        ini_file.write("\nVersion=50022")
+                        ini_file.write("\n[Results]")
+                        ini_file.write("\nSaved=1")
+                        ini_file.write("\nCurrent=1")
+
                 self.uc.show_info(swmm_file + "\n\nfile saved with:\n\n" +
                                   str(len(junctions_rows)) +   "\t[JUNCTIONS]\n" +
                                   str(len(outfalls_rows)) +    "\t[OUTFALLS]\n" +
