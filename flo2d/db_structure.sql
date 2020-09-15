@@ -2144,7 +2144,7 @@ CREATE TRIGGER "default_user_xsections"
     AFTER INSERT ON "user_xsections"
     BEGIN
         UPDATE "user_xsections"
-        SET name = ('Cross-Section-' || cast(NEW."fid" AS TEXT)), fcn = 0.04, type = 'N'
+        SET name = ('Cross-Section-' || cast(NEW."fid" AS TEXT))
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
