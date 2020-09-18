@@ -1374,12 +1374,14 @@ class ChannelsSchematizer(GeoPackageUtils):
             xs_iter = iter(xsections_feats)
             up_feat = next(xs_iter)
             lo_feat = next(xs_iter)
-            intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+            intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg'],
+                                   up_feat['fid'], lo_feat['fid']))
             try:
                 while True:
                     up_feat = lo_feat
                     lo_feat = next(xs_iter)
-                    intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+                    intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg'],
+                                           up_feat['fid'], lo_feat['fid']))
             except StopIteration:
                 pass
         return intervals
@@ -1415,29 +1417,33 @@ class ChannelsSchematizer(GeoPackageUtils):
         for fid in seg_fids:
             seg_intervals = intervals[fid]
             seg_xs = xs_distances[fid]
+            firstXsFid=seg_xs[0][1]
             iseg_intervals = iter(seg_intervals)
             iseg_xs = iter(seg_xs)
-            start, end = next(iseg_intervals)
+            start, end, startXsFid, endXsFid = next(iseg_intervals)
             inter_ldist, inter_rdist = 0, 0
             xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
-            key = (fid, start, end)
+            key = (fid, startXsFid, endXsFid)
             try:
                 while True:
                     if nr_in_seg == start:
                         inter_ldist, inter_rdist = ldistance, rdistance
                         distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, xs_fid, fid, start, end, ldistance - inter_ldist, rdistance - inter_rdist)
+                        row = (xs_id, xs_fid, fid, startXsFid, endXsFid, ldistance - inter_ldist, rdistance - inter_rdist)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
                         distances[key]['inter_llen'] = ldistance - inter_ldist
                         distances[key]['inter_rlen'] = rdistance - inter_rdist
                         try:
-                            start, end = next(iseg_intervals)
+                            start, end, startXsFid, endXsFid = next(iseg_intervals)
                         except StopIteration:
                             start = end
+                            startXsFid = endXsFid
                             end = infinity
-                        key = (fid, start, end)
+                            endXsFid = infinity
+
+                        key = (fid, startXsFid, endXsFid)
                         continue
                     xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
