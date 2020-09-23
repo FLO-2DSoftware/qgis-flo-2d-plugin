@@ -344,14 +344,14 @@ class ChannelSegment(GeoPackageUtils):
             base_len = 0.5 * (ipars['up_lo_dist_left'] + ipars['up_lo_dist_right'])
             dist = 0.5 * (ipars['up_dist_left'] + ipars['up_dist_right'])
             icoef = dist / base_len
-            xsi = CrossSection(ipars['id'], self.con, self.iface)
-            xsi.get_row(by_id=True)
+            xsi = CrossSection(ipars['fid'], self.con, self.iface)
+            xsi.get_row()
 
             xsup = CrossSection(ipars['up_fid'], self.con, self.iface)
-            xsup.get_row(by_id=True)
+            xsup.get_row()
 
             xslo = CrossSection(ipars['lo_fid'], self.con, self.iface)
-            xslo.get_row(by_id=True)
+            xslo.get_row()
 
             if not xsup.type == 'N':
                 # parametric cross-section - adjust banks elev and depth
