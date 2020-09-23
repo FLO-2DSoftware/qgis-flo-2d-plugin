@@ -134,7 +134,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
-        self.schematize_xs_btn.clicked.connect(self.schematize_channels)
+        self.schematize_xs_btn.clicked.connect(self.schematize_channels_v2)
         self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
         self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
@@ -529,7 +529,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         # Create the Schematized Cross sections layer, with lines from schematized left bank cells.
         try:
-            cs.create_schematized_xsections()
+            cs.create_schematized_xsections_v2()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('WARNING 060319.1742: Schematizing failed while creating cross-sections! '
@@ -581,6 +581,54 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #
         info = ShematizedChannelsInfo(self.iface)
         close = info.exec_()
+
+    def schematize_channels_v2(self):
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
+        if self.gutils.is_table_empty('user_left_bank'):
+            if not self.gutils.is_table_empty('chan'):
+                if not self.uc.question('There are no user left bank lines.\n\n' +
+                                        'But there are schematized left banks and cross sections.\n' +
+                                        'Would you like to delete them?'):
+                    return
+                else:
+                    if self.uc.question('Are you sure you want to delete all channel data?'):
+                        self.gutils.clear_tables('user_left_bank', 'user_right_bank', 'user_xsections',
+                                                 'chan', 'rbank', 'chan_elems', 'chan_r', 'chan_v', 'chan_t', 'chan_n',
+                                                 'chan_confluences', 'user_noexchange_chan_areas', 'noexchange_chan_cells', 'chan_wsel')
+                    return
+            else:
+                self.uc.bar_warn('There are no User Left Bank lines! Please digitize them before running the tool.')
+                return
+        if self.gutils.is_table_empty('user_xsections'):
+            self.uc.bar_warn('There are no User Cross Sections! Please digitize them before running the tool.')
+            return
+        if not self.gutils.is_table_empty('chan'):
+            if not self.uc.question('There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?'):
+                return
+
+        # Get an instance of the ChannelsSchematizer class:
+        cs = ChannelsSchematizer(self.con, self.iface, self.lyrs)
+
+        # Create the Schematized Left Bank (Channel Segments), joining cells intersecting
+        # the User Left Bank Line, with arrows from one cell centroid to the next:
+        try:
+            cs.create_schematized_channels()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error('ERROR 060319.1611: Schematizing left bank lines failed !\n'
+                               'Please check your User Layers.\n\n'
+                               'Check that:\n\n'
+                               '   * For each User Left Bank line, the first cross section is\n'
+                               '     defined starting in the first grid cell.\n\n'
+                               '   * Each User Left Bank line has at least 2 cross sections\n'
+                               '     crossing it.\n\n'
+                               '   * All cross sections associated to a User Left Bank line\n'
+                               '     intersects (crossover) it.'
+                               '\n_________________________________________________', e)
+            return
+
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty('grid'):
