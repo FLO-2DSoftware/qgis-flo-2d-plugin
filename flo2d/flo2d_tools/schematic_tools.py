@@ -901,6 +901,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 if is_same_cross_sections:
                     # we've got the good one
                     right_bank_feature = rb
+                    right_bank_feature.setAttribute('chan_seg_fid', left_bank_feature.attribute('fid'))
                     found_right_bank_feature_id.append(right_bank_feature.id())
                     break
 
@@ -930,7 +931,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             right_bank_fid = -1
             right_bank_geom = QgsGeometry()
             if right_feat.isValid():
-                right_bank_fid = right_feat.id()
+                right_bank_fid = right_feat.attribute('chan_seg_fid')
                 right_bank_geom = QgsGeometry.fromPolylineXY(right_feat.geometry().asPolyline())
                 self.schematize_rightbanks(right_feat)
 
@@ -1050,51 +1051,48 @@ class ChannelsSchematizer(GeoPackageUtils):
                     start_left_node_idx = start_left_node[1]
 
                     end_right_node = user_right_bank_nodes[i+1]
-                    end_right_position = end_right_node[0]
                     end_right_node_idx = end_right_node[1]
                     end_left_node = user_left_bank_nodes[i+1]
-                    end_left_position = end_left_node[0]
                     end_left_node_idx = end_left_node[1]
 
-                    xs=sorted_xs[i]
+                    xs = sorted_xs[i]
                     vals = (start_left_position, start_right_position, lbank_fid, start_left_node_idx+1, xs.id(), False)
                     cross_section_definitions.append(vals)
 
-                    left_base_distance = left_schematized_geometry.lineLocatePoint(QgsGeometry(QgsPoint(start_left_position)))
-                    right_base_distance = rsegment_points.lineLocatePoint(QgsGeometry(QgsPoint(start_right_position)))
-                    left_length_between_xs = left_schematized_geometry.lineLocatePoint(QgsGeometry(QgsPoint(end_left_position))) - left_base_distance
-                    right_length_between_xs = rsegment_points.lineLocatePoint(QgsGeometry(QgsPoint(end_right_position))) - right_base_distance
-                    length_ratio = left_length_between_xs/right_length_between_xs
-
-                    idx_left = start_left_node_idx + 1
-                    idx_right = start_right_node_idx+1
                     left_bank_points = left_schematized_geometry.asPolyline()
                     right_bank_points = rsegment_points.asPolyline()
-                    while idx_left < end_left_node_idx:
-                        left_bank_interpolate_xs = left_bank_points[idx_left]
-                        left_distance = left_schematized_geometry.lineLocatePoint(
-                            QgsGeometry(QgsPoint(left_bank_interpolate_xs))) - left_base_distance
-                        needed_right_distance = left_distance/length_ratio
-                        right_bank_interpolate_xs = right_bank_points[idx_right]
-                        right_effective_distance = rsegment_points.lineLocatePoint(
-                            QgsGeometry(QgsPoint(right_bank_interpolate_xs))) - right_base_distance
-                        while right_effective_distance < needed_right_distance and idx_right<end_right_node_idx:
-                            idx_right=idx_right+1
-                            right_bank_interpolate_xs = right_bank_points[idx_right]
-                            right_effective_distance = rsegment_points.lineLocatePoint(
-                                QgsGeometry(QgsPoint(right_bank_interpolate_xs))) - right_base_distance
+                    idx_count_left = end_left_node_idx-start_left_node_idx
+                    idx_count_right = end_right_node_idx-start_right_node_idx
 
-                        # test which right position is the closer of the needed distance
-                        previous_distance = rsegment_points.lineLocatePoint(
-                            QgsGeometry(QgsPoint(right_bank_points[idx_right-1]))) - right_base_distance
+                    if idx_count_left <= idx_count_right:
+                        idx_step_left = 1.0
+                        idx_step_right = idx_count_right/idx_count_left
+                    else:
+                        idx_step_left = idx_count_left/idx_count_right
+                        idx_step_right = 1.0
 
-                        if abs(previous_distance-needed_right_distance) < abs(right_effective_distance-needed_right_distance):
-                            idx_right = idx_right - 1
-                            right_bank_interpolate_xs = right_bank_points[idx_right]
+                    idx_right = 1
 
-                        vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left+1, xs.id(), True)
-                        cross_section_definitions.append(vals)
-                        idx_left = idx_left + 1
+                    for index in range(1,idx_count_left):
+                        idx_left = index + start_left_node_idx
+                        if idx_count_left <= idx_count_right:
+                            idx_float_right = idx_step_right*index + start_right_node_idx
+                            right_bank_interpolate_xs = right_bank_points[int(idx_float_right)]
+                            left_bank_interpolate_xs = left_bank_points[idx_left]
+                            vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(),True)
+                            cross_section_definitions.append(vals)
+                        else:
+                            idx_float_left=idx_step_left*idx_right + start_left_node_idx
+                            left_bank_interpolate_xs = left_bank_points[idx_left]
+                            if int(idx_float_left) == idx_left:
+                                right_bank_interpolate_xs = right_bank_points[idx_right+start_right_node_idx]
+                                vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(),True)
+                                cross_section_definitions.append(vals)
+                                idx_right=idx_right+1
+                            else:
+                                vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left + 1, xs.id(), True)
+                                cross_section_definitions.append(vals)
+
 
                 end_right_node = user_right_bank_nodes[len(user_left_bank_nodes)-1]
                 end_right_position = end_right_node[0]
@@ -1102,7 +1100,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 end_left_position = end_left_node[0]
                 end_left_node_idx = end_left_node[1]
                 xs = sorted_xs[len(sorted_xs) - 1]
-                vals = (end_left_position, end_right_position, lbank_fid, end_left_node_idx, xs.id()+1, False)
+                vals = (end_left_position, end_right_position, lbank_fid, end_left_node_idx+1, xs.id(), False)
                 cross_section_definitions.append(vals)
 
             else:  # right bank is not valid, only consider left bank to define channel
@@ -1123,10 +1121,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                     left_bank_points = left_schematized_geometry.asPolyline()
                     while idx_left < end_left_node_idx:
                         left_bank_interpolate_xs = left_bank_points[idx_left]
-                        vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left+1, xs.id(), True)
+                        vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left, xs.id()+1, True)
                         cross_section_definitions.append(vals)
                         idx_left = idx_left + 1
 
+                end_left_node = user_left_bank_nodes[len(user_left_bank_nodes) - 1]
+                end_left_position = end_left_node[0]
+                end_left_node_idx = end_left_node[1]
+                xs = sorted_xs[len(sorted_xs) - 1]
                 vals = (end_left_position, QgsPointXY(), lbank_fid, end_left_node_idx+1, xs.id(), False)
                 cross_section_definitions.append(vals)
 
@@ -1230,7 +1232,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         Schematizing right bank and saving to GeoPackage.
         """
         try:
-            fid = rbank_feat.id()
+            fid = rbank_feat.attribute('chan_seg_fid')
             right_line = rbank_feat.geometry()
             insert_right_sql = '''
             INSERT INTO rbank 
@@ -1677,9 +1679,14 @@ class ChannelsSchematizer(GeoPackageUtils):
             left_req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(fid))
             right_req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(fid))
             lbank = next(self.schematized_lbank_lyr.getFeatures(left_req))
-            rbank = next(self.schematized_rbank_lyr.getFeatures(right_req))
+
+            try:
+                rbank = next(self.schematized_rbank_lyr.getFeatures(right_req))
+            except StopIteration:
+                rbank = None
             lbank_geom = lbank.geometry()
-            rbank_geom = rbank.geometry()
+            if rbank is not None:
+                rbank_geom = rbank.geometry()
             req = QgsFeatureRequest().setFilterExpression('"seg_fid" = {}'.format(fid))
             req.addOrderBy('"nr_in_seg"')
             xsections_feats = self.schematized_xsections_lyr.getFeatures(req)
@@ -1689,7 +1696,11 @@ class ChannelsSchematizer(GeoPackageUtils):
                 xs_start = QgsGeometry.fromPointXY(xs_geom_line[0])
                 xs_end = QgsGeometry.fromPointXY(xs_geom_line[-1])
                 ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
-                rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
+                if rbank is not None and xs_feat.attribute('rbankgrid') > 0:
+                    rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
+                else:
+                    rdist=-1
+
                 xs_distances[fid].append((xs_feat.id(), xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
         return xs_distances
 
@@ -1711,14 +1722,14 @@ class ChannelsSchematizer(GeoPackageUtils):
             try:
                 while True:
                     if nr_in_seg == start:
-                        inter_ldist, inter_rdist = ldistance, rdistance
+                        inter_ldist,inter_rdist = ldistance, rdistance
                         distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, xs_fid, fid, start_xs_fid, end_xs_fid, ldistance - inter_ldist, rdistance - inter_rdist)
+                        row = (xs_id, xs_fid, fid, start, end, ldistance - inter_ldist, (rdistance - inter_rdist) if rdistance >= 0 else -1)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
                         distances[key]['inter_llen'] = ldistance - inter_ldist
-                        distances[key]['inter_rlen'] = rdistance - inter_rdist
+                        distances[key]['inter_rlen'] = rdistance - inter_rdist if rdistance >= 0 else -1
                         try:
                             start, end, start_xs_fid, end_xs_fid = next(iseg_intervals)
                         except StopIteration:
@@ -1732,6 +1743,67 @@ class ChannelsSchematizer(GeoPackageUtils):
                     xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
                 pass
+
+        #for each interval check if there is isolated void right bank, if presents , interpolate
+        for key, interval in distances.items():
+            rows = interval['rows']
+            if not 'inter_rlen' in interval.keys():
+                continue
+            if interval['inter_rlen'] < 0:
+                continue  # means that interval doesn't have defined right bank, so nothing to do...
+
+            changed = False
+
+            i_start = 0
+            while i_start < len(rows):
+                # search for not defined right bank distance
+
+                row = rows[i_start]
+
+                if row[6] < 0:  # we've got an undefined right bank
+                    if i_start==0:
+                        left_start_distance=0
+                        right_start_distance=0
+                    else:
+                        start_row = rows[i_start-1]
+                        left_start_distance = start_row[5]
+                        right_start_distance = start_row[6]
+
+                    # search for next define right bank
+                    i_end = i_start + 1
+                    found = False
+                    while i_end < len(rows):
+                        row = rows[i_end]
+                        found = row[6] >= 0
+                        if not found:
+                            i_end = i_end + 1
+                        else:
+                            break
+
+                     # Now we've got the two extremity on the non define rigth bank --> interpolate
+                    changed = True
+                    if i_end == len(rows):
+                        left_end_distance = interval['inter_llen']
+                        right_end_distance = interval['inter_rlen']
+                    else:
+                        end_row = rows[i_end]
+                        left_end_distance = end_row[5]
+                        right_end_distance = end_row[6]
+
+                    interpolate_ratio = (right_end_distance-right_start_distance)/(left_end_distance-left_start_distance)
+                    for i in range(i_start, i_end):
+                        current_row = list(rows[i])
+                        left_distance = current_row[5]
+                        right_distance = (left_distance-left_start_distance)*interpolate_ratio+right_start_distance
+                        current_row[6]=right_distance
+                        rows[i] = tuple(current_row)
+                    i_start = i_end
+                else:
+                    i_start = i_start + 1
+
+            if changed:
+                interval['rows'] = rows
+
         return distances
 
     def make_distance_table(self):

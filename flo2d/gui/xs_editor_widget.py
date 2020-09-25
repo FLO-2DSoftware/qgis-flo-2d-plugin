@@ -629,6 +629,52 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                '\n_________________________________________________', e)
             return
 
+        try:
+            cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
+            cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
+
+            #             cs.create_xs_type_n_r_t_v_tables()
+            #             cs.create_schematized_rbank_lines_from_xs_tips()
+
+            self.gutils.create_xs_type_n_r_t_v_tables()
+
+            cs.copy_user_xs_data_to_schem()
+
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('WARNING 060319.1743: Schematizing failed while processing attributes! '
+                              'Please check your User Layers.')
+            return
+
+        if not self.gutils.is_table_empty('chan_elems'):
+            # try:
+                cs.make_distance_table()
+            # except Exception as e:
+            #     self.uc.log_info(traceback.format_exc())
+            #     self.uc.show_warn(
+            #         'WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
+            #         'Please check your User Layers.')
+            #     return
+        else:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn('WARNING 060319.1745: Schematizing failed while preparing interpolation table!\n\n'
+                              'Schematic Channel Cross Sections layer is empty!')
+            return
+
+        chan_schem = self.lyrs.data['chan']['qlyr']
+        chan_elems = self.lyrs.data['chan_elems']['qlyr']
+        rbank = self.lyrs.data['rbank']['qlyr']
+        confluences = self.lyrs.data['chan_confluences']['qlyr']
+        self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+        self.lyrs.repaint_layers()
+        idx = self.xs_cbo.currentIndex()
+        self.current_xsec_changed(idx)
+
+        # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
+        #
+        info = ShematizedChannelsInfo(self.iface)
+        close = info.exec_()
+
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty('grid'):

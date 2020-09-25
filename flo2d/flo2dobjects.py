@@ -342,7 +342,11 @@ class ChannelSegment(GeoPackageUtils):
                 continue
 
             base_len = 0.5 * (ipars['up_lo_dist_left'] + ipars['up_lo_dist_right'])
-            dist = 0.5 * (ipars['up_dist_left'] + ipars['up_dist_right'])
+            dist_left = ipars['up_dist_left']
+            dist_right = ipars['up_dist_right']
+            if dist_right < 0:  # case where there is no user defined right bank
+                dist_right=dist_left
+            dist = 0.5 * (dist_left + dist_right)
             icoef = dist / base_len
             xsi = CrossSection(ipars['fid'], self.con, self.iface)
             xsi.get_row()
