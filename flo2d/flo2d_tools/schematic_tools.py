@@ -1725,7 +1725,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                         inter_ldist,inter_rdist = ldistance, rdistance
                         distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, xs_fid, fid, start, end, ldistance - inter_ldist, (rdistance - inter_rdist) if rdistance >= 0 else -1)
+                        row = (xs_id, xs_fid, fid, start_xs_fid, end_xs_fid, ldistance - inter_ldist, (rdistance - inter_rdist) if rdistance >= 0 else -1)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
                         distances[key]['inter_llen'] = ldistance - inter_ldist
