@@ -15,7 +15,15 @@ import subprocess
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.PyQt.QtGui import QStandardItem, QColor
 from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QTableWidgetItem, QMessageBox, QPushButton
-from qgis.core import QgsFeatureRequest, QgsFeature, QgsGeometry
+from qgis.core import (QgsProject,
+                       QgsFeatureRequest,
+                       QgsFeature,
+                       QgsGeometry,
+                       QgsMapLayerProxyModel,
+                       QgsWkbTypes,
+                       QgsPointXY,
+                       QgsCoordinateTransform)
+from qgis.gui import QgsMapLayerComboBox
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils
@@ -144,6 +152,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
+        self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
+        self.sample_elevation_all_natural_btn.clicked.connect(self.sample_elevation_all_natural_cross_sections)
+        self.sample_elevation_current_R_T_V_btn.clicked.connect(self.sample_bank_elevation_current_RTV_cross_sections)
+        self.sample_elevation_all_R_T_V_btn.clicked.connect(self.sample_bank_elevation_all_RTV_cross_sections)
 
         # More connections:
         self.xs_cbo.activated.connect(self.current_xsec_changed)
@@ -153,6 +165,22 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
         self.table.after_delete.connect(self.save_xs_data)
+
+        self.raster_combobox = QgsMapLayerComboBox()
+        self.raster_combobox.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.raster_combobox.setEnabled(self.raster_radio_btn.isChecked())
+        self.source_raster_layout.addWidget(self.raster_combobox)
+        self.raster_radio_btn.toggled.connect(self.raster_combobox.setEnabled)
+        self.raster_radio_btn.toggled.connect(self.update_sample_elevation_btn)
+        self.update_sample_elevation_btn( self.raster_radio_btn.isChecked())
+
+    def update_sample_elevation_btn(self, is_checked):
+        if self.xs is not None:
+            row = self.xs.get_row()
+            chan_x_row = self.xs.get_chan_x_row()
+            typ = row['type']
+            self.sample_elevation_current_natural_btn.setEnabled(is_checked and typ == 'N')
+        self.sample_elevation_all_natural_btn.setEnabled(is_checked)
 
     def block_saving(self):
         try_disconnect(self.xs_data_model.dataChanged, self.save_xs_data)
@@ -299,16 +327,31 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         fcn = float(row['fcn']) if is_number(row['fcn']) else float(self.gutils.get_cont_par('MANNING'))
         self.xs_type_cbo.setCurrentIndex(self.xs_types[typ]['cbo_idx'])
         self.n_sbox.setValue(fcn)
+
+        self.update_table()
+
+        self.create_plot()
+        self.update_plot()
+
+        self.sample_elevation_current_R_T_V_btn.setEnabled(typ == 'R' or typ == 'T' or typ == 'V')
+        self.sample_elevation_current_natural_btn.setEnabled(typ == 'N' and self.raster_radio_btn.isChecked())
+
+        # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
+
+    def update_table(self):
+
+        row = self.xs.get_row()
         chan_x_row = self.xs.get_chan_x_row()
+        typ = row['type']
         if typ == 'N':
             xy = self.xs.get_chan_natural_data()
             self.table.connect_delete(True)
         else:
             xy = None
-            self.table.connect_delete(False) # disable data or row delete function if table editor
+            self.table.connect_delete(False)  # disable data or row delete function if table editor
         self.xs_data_model.clear()
         self.tview.undoStack.clear()
-        
+
         if not xy:
             self.plot.clear()
             self.xs_data_model.setHorizontalHeaderLabels(['Value'])
@@ -316,7 +359,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 item = StandardItem(str(val))
                 self.xs_data_model.appendRow(item)
             self.xs_data_model.setVerticalHeaderLabels(list(chan_x_row.keys()))
-            self.xs_data_model.removeRows(0,2) #excluding fid and user_xs_fid values
+            self.xs_data_model.removeRows(0, 2)  # excluding fid and user_xs_fid values
             self.tview.setModel(self.xs_data_model)
         else:
             self.xs_data_model.setHorizontalHeaderLabels(['Station', 'Elevation'])
@@ -337,10 +380,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         for i in range(2):
             self.tview.setColumnWidth(i, 100)
 
-        self.create_plot()
-        self.update_plot()
-
-        # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
 
     def cur_xsec_type_changed(self, idx):
         if not self.xs_cbo.count():
@@ -404,8 +443,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
         for i in range(self.xs_data_model.rowCount()):
-            self.xi.append(m_fdata(self.xs_data_model, i, 0))
-            self.yi.append(m_fdata(self.xs_data_model, i, 1))
+            x = m_fdata(self.xs_data_model, i, 0)
+            y = m_fdata(self.xs_data_model, i, 1)
+            if not isnan(x) and  not isnan(y):
+                self.xi.append(x)
+                self.yi.append(y)
 
     def save_n(self, n_val):
         if not self.xs_cbo.count():
@@ -1381,3 +1423,156 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.')
+
+    def effective_user_cross_section(self,fid,name):
+        """ Return the cross section split between banks """
+
+        user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
+        try:
+            feat = next(user_xs_lyr.getFeatures(QgsFeatureRequest(fid)))
+        except StopIteration:
+            self.uc.show_warn('WARNING 060319.XXX: Cross section ' + str(name) + ' has not geometry.')
+            return
+
+        # split the cross section between banks lines
+        xs_geometry = feat.geometry()
+        user_left_bank_layer = self.lyrs.data['user_left_bank']['qlyr']
+        left_bank_intersect = False
+        for left_bank_feature in user_left_bank_layer.getFeatures():
+            if left_bank_feature.geometry().intersects(xs_geometry):
+                left_bank_intersect = True
+                break
+
+        if not left_bank_intersect:
+            self.uc.show_warn(
+                'WARNING 060319.XXX: Cross section ' + str(name) + ' does not intersect with any left bank')
+            return
+
+        intersects = xs_geometry.intersection(left_bank_feature.geometry())
+        if intersects.wkbType == QgsWkbTypes.MultiPoint:
+            multi_point = intersects.asMultiPoint()
+            intersect_point = multi_point[0]
+        else:
+            intersect_point = intersects.asPoint()
+
+        dist, left_intersect_point, left_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
+            QgsPointXY(intersect_point))
+
+        user_right_bank_layer = self.lyrs.data['user_right_bank']['qlyr']
+        right_bank_intersect = False
+        for right_bank_feature in user_right_bank_layer.getFeatures():
+            if right_bank_feature.geometry().intersects(xs_geometry):
+                right_bank_intersect = True
+                break
+
+        xs_polyline = xs_geometry.asPolyline()
+        right_after_vertex_index = len(xs_polyline) - 1
+
+        if right_bank_intersect:
+            intersects = xs_geometry.intersection(right_bank_feature.geometry())
+            if intersects.wkbType == QgsWkbTypes.MultiPoint:
+                multi_point = intersects.asMultiPoint()
+                intersect_point = multi_point[0]
+            else:
+                intersect_point = intersects.asPoint()
+
+            dist, right_intersect_point, right_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
+                QgsPointXY(intersect_point))
+
+            last_vertex = right_intersect_point
+        else:
+            last_vertex = xs_polyline[-1]
+
+        xs_effective_cross_section = [left_intersect_point]
+        for i in range(left_after_vertex_index, right_after_vertex_index):
+            xs_effective_cross_section.append(xs_polyline[i])
+        xs_effective_cross_section.append(last_vertex)
+
+        return xs_effective_cross_section
+
+    def sample_bank_elevation_all_RTV_cross_sections(self):
+        if not self.uc.question('After this action, all bank elevations from cross sections R, T and V will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+
+        request = QgsFeatureRequest()
+        features = self.user_xs_lyr.getFeatures(request)
+        while True:
+            try:
+                feat = next(features)
+                self.sample_bank_elevation_cross_section(feat.attribute('fid'))
+            except StopIteration:
+                return
+
+    def sample_bank_elevation_current_RTV_cross_sections(self):
+        if not self.uc.question(
+                'After this action, bank elevations from current cross sections will be lost.\n'
+                'Do you want to proceed?'):
+            return
+
+        fid = int(self.xs_cbo.currentData())
+        self.sample_bank_elevation_cross_section(fid)
+
+    def sample_bank_elevation_cross_section(self, fid):
+        xs = UserCrossSection(fid, self.con, self.iface)
+        xs.get_row()
+        if xs.type == 'N':
+            return
+
+        effective_cross_section = self.effective_user_cross_section(xs.fid, xs.name)
+
+        if self.raster_radio_btn.isChecked():
+            raster_layer = self.raster_combobox.currentLayer()
+            if raster_layer is None:
+                return
+            transform = QgsCoordinateTransform(self.user_xs_lyr.crs(), raster_layer.crs(), QgsProject.instance())
+            xs.sample_bank_elevation_from_raster_layer(raster_layer, effective_cross_section, transform)
+        else:
+            grid_layer = self.lyrs.data['grid']['qlyr']
+            xs.sample_bank_elevation_from_grid(effective_cross_section, grid_layer)
+
+        self.update_table()
+        self.create_plot()
+        self.update_plot()
+
+    def sample_elevation_all_natural_cross_sections(self):
+        if not self.uc.question('After this action, all current natural cross section profiles will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+        request = QgsFeatureRequest()
+        request.setFilterExpression('"type"=\'N\'')
+        features = self.user_xs_lyr.getFeatures(request)
+        while True:
+            try:
+                feat = next(features)
+                self.sample_elevation_natural_cross_section(feat.attribute('fid'))
+            except StopIteration:
+                return
+
+    def sample_elevation_current_natural_cross_sections(self):
+        if not self.uc.question('After this action, current natural cross section profile will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+        fid = int(self.xs_cbo.currentData())
+        self.sample_elevation_natural_cross_section(fid)
+
+    def sample_elevation_natural_cross_section(self, fid):
+        raster_layer = self.raster_combobox.currentLayer()
+
+        if raster_layer is None:
+            return
+
+        xs = UserCrossSection(fid, self.con, self.iface)
+        xs.get_row()
+        if xs.type != 'N':
+            return
+
+        transform = QgsCoordinateTransform(self.user_xs_lyr.crs(),raster_layer.crs(), QgsProject.instance())
+        xs.sample_elevation_from_raster_layer(raster_layer,
+                                              self.effective_user_cross_section(xs.fid, xs.name),
+                                              transform)
+        self.update_table()
+        self.create_plot()
+        self.update_plot()
+
+

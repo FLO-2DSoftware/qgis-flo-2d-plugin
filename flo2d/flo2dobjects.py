@@ -13,7 +13,8 @@ from math import isnan
 from .errors import Flo2dError
 from .geopackage_utils import GeoPackageUtils
 from .utils import is_number
-
+from qgis.core import  QgsCsException, QgsRaster, QgsPointXY, QgsFeatureRequest, QgsRectangle
+from math import sqrt
 
 class CrossSection(GeoPackageUtils):
     """
@@ -264,6 +265,129 @@ class UserCrossSection(GeoPackageUtils):
         self.execute(qry_t)
         self.execute(qry_v)
         self.execute(qry_n)
+
+    def sample_elevation_from_raster_layer(self, raster_layer, cross_section_line, transform):
+        if raster_layer is None:
+            return
+        self.get_row()
+        if self.type == 'N':
+            xiyi = []
+            distance = 0
+            for i in range(len(cross_section_line)-1):
+                source_point_1 = cross_section_line[i]
+                source_point_2 = cross_section_line[i+1]
+                try:
+                    layer_point1 = transform.transform(source_point_1)
+                    layer_point2 = transform.transform(source_point_2)
+                except QgsCsException:
+                    layer_point1 = source_point_1
+                    layer_point2 = source_point_2
+
+                x1 = layer_point1.x()
+                y1 = layer_point1.y()
+                x2 = layer_point2.x()
+                y2 = layer_point2.y()
+
+                length_segment = sqrt((x2-x1)**2 + (y2-y1)**2)
+                # calculate points count on this segment
+                if abs(x2-x1) >= abs(y2-y1):
+                    point_count = int(abs(x2 - x1) / raster_layer.rasterUnitsPerPixelX()) - 1
+                else:
+                    point_count = int(abs(y2 - y1) / raster_layer.rasterUnitsPerPixelY()) - 1
+
+                if point_count < 0:
+                    point_count = 0
+
+                step_x = (x2 - x1) / (point_count+1)
+                step_y = (y2 - y1) / (point_count+1)
+
+                result = raster_layer.dataProvider().identify(layer_point1, QgsRaster.IdentifyFormatValue)
+
+                if result.isValid():
+                    value = result.results()
+                    xiyi.append((self.fid,
+                                distance,
+                                value[1]))
+
+                for step in range(1, point_count+1):
+                    x = x1+step_x * step
+                    y = y1+step_y * step
+
+                    result = raster_layer.dataProvider().identify(QgsPointXY(x,y), QgsRaster.IdentifyFormatValue)
+
+                    if result.isValid():
+                        value = result.results()
+                        xiyi.append((self.fid,
+                                    distance+sqrt((x-x1)**2+(y-y1)**2),
+                                    value[1]))
+
+                distance = distance + length_segment
+
+            self.set_chan_natural_data(xiyi)
+
+    def sample_bank_elevation_from_raster_layer(self, raster_layer, cross_section_line, transform):
+        if raster_layer is None:
+            return
+        self.get_row()
+        if self.type == 'N':
+            return
+
+        source_point_1 = cross_section_line[0]
+        source_point_2 = cross_section_line[-1]
+        try:
+            layer_point1 = transform.transform(source_point_1)
+            layer_point2 = transform.transform(source_point_2)
+        except QgsCsException:
+            layer_point1 = source_point_1
+            layer_point2 = source_point_2
+
+        result1 = raster_layer.dataProvider().identify(layer_point1, QgsRaster.IdentifyFormatValue)
+        result2 = raster_layer.dataProvider().identify(layer_point2, QgsRaster.IdentifyFormatValue)
+
+        tab = self.chan_x_tabs[self.type]
+        if result1.isValid():
+            value = result1.results()
+            qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
+            self.execute(qry, (value[1], self.fid,))
+
+        if result2.isValid():
+            value = result2.results()
+            qry = '''UPDATE {} SET bankelr = ? WHERE user_xs_fid = ?;'''.format(tab)
+            self.execute(qry, (value[1], self.fid,))
+
+    def sample_bank_elevation_from_grid(self, cross_section_line, grid_layer):
+
+        self.get_row()
+        if self.type == 'N':
+            return
+
+        point_1 = cross_section_line[0]
+        point_2 = cross_section_line[-1]
+
+        request = QgsFeatureRequest()
+        rect = QgsRectangle(point_1,point_1)
+        request.setFilterRect(rect)
+        request.setFlags(QgsFeatureRequest.ExactIntersect)
+        fit1 = grid_layer.getFeatures(request)
+
+        rect = QgsRectangle(point_2, point_2)
+        request.setFilterRect(rect)
+        fit2 = grid_layer.getFeatures(request)
+
+        tab = self.chan_x_tabs[self.type]
+
+        try:
+            elem1=next(fit1)
+            qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
+            self.execute(qry, (elem1.attribute('elevation'), self.fid,))
+        except StopIteration:
+            pass
+        try:
+            elem1=next(fit2)
+            qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
+            self.execute(qry, (elem1.attribute('elevation'), self.fid,))
+        except StopIteration:
+            pass
 
 
 class ChannelSegment(GeoPackageUtils):
