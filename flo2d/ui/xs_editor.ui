@@ -204,10 +204,10 @@
         <item>
          <widget class="QToolButton" name="sample_elevation_current_R_T_V_btn">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sample bank elevation for R,T or V cross section&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sample current bank elevation for R,T or V cross section&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="statusTip">
-           <string>Sample bank elevation for R,T or V cross section</string>
+           <string>Sample current bank elevation for R,T or V cross section</string>
           </property>
           <property name="text">
            <string>RTV</string>
@@ -226,6 +226,12 @@
         </item>
         <item>
          <widget class="QToolButton" name="sample_elevation_all_R_T_V_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sample bank elevation for all R,T or V cross sections&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Sample bank elevation for all R,T or V cross sections</string>
+          </property>
           <property name="text">
            <string>ARTV</string>
           </property>
@@ -243,6 +249,12 @@
         </item>
         <item>
          <widget class="QToolButton" name="sample_elevation_current_natural_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sample current natural cross section elevation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Sample current natural cross section elevation</string>
+          </property>
           <property name="text">
            <string>CN</string>
           </property>
@@ -260,6 +272,12 @@
         </item>
         <item>
          <widget class="QToolButton" name="sample_elevation_all_natural_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sample all natural cross sections elevation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="statusTip">
+           <string>Sample all natural cross sections elevation</string>
+          </property>
           <property name="text">
            <string>AN</string>
           </property>

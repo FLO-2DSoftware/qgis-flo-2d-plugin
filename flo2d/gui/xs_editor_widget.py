@@ -14,7 +14,14 @@ import sys
 import subprocess
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.PyQt.QtGui import QStandardItem, QColor
-from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QTableWidgetItem, QMessageBox, QPushButton
+from qgis.PyQt.QtWidgets import (QInputDialog,
+                                 QFileDialog,
+                                 QApplication,
+                                 QTableWidgetItem,
+                                 QMessageBox,
+                                 QPushButton,
+                                 QStyledItemDelegate)
+
 from qgis.core import (QgsProject,
                        QgsFeatureRequest,
                        QgsFeature,
@@ -92,6 +99,16 @@ class ShematizedChannelsInfo(qtBaseClass, uiDialog):
 
 uiDialog, qtBaseClass = load_ui('xs_editor')
 
+ChannelRole = Qt.UserRole + 1
+
+class CrossSectionDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super(CrossSectionDelegate, self).initStyleOption(option, index)
+        a=index.data(ChannelRole)
+        if index.data(ChannelRole):
+            option.font.setBold(True)
+            option.font.setItalic(True)
+
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, plot, table, lyrs):
@@ -116,6 +133,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.parser = ParseDAT()      
         
         self.setupUi(self)
+        delegate = CrossSectionDelegate(self.xs_cbo)
+        self.xs_cbo.setItemDelegate(delegate)
         self.populate_xsec_type_cbo()
         self.xi, self.yi = [[], []]
 #         self.create_plot()
@@ -158,7 +177,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.sample_elevation_all_R_T_V_btn.clicked.connect(self.sample_bank_elevation_all_RTV_cross_sections)
 
         # More connections:
-        self.xs_cbo.activated.connect(self.current_xsec_changed)
+        self.xs_cbo.activated.connect(self.current_cbo_xsec_index_changed)
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
@@ -201,7 +220,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def switch2selected(self):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo, use_fid=True)
-        self.current_xsec_changed(self.xs_cbo.currentIndex())
+        current_fid=self.xs_cbo.currentData()
+        self.current_xsec_changed(current_fid)
 
     def interp_bed_and_banks(self):
         qry = 'SELECT fid FROM chan;'
@@ -240,28 +260,95 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(1)
         qry = 'SELECT fid, name FROM user_xsections ORDER BY fid COLLATE NOCASE;'
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
+        user_xs_rows = self.gutils.execute(qry).fetchall()
+
+        if not user_xs_rows:
             self.xs_data_model.clear()
             self.tview.setModel(self.xs_data_model)
             self.plot.clear()
             return
-        cur_idx = 0 # Pointer to selected item in combo. See below. Depending on call of method,
-                    # it could be the first, the last, or a given one.
-        for i, row in enumerate(rows): # Cycles over pair (fid, name) of all user_xsections.
+
+        qry = 'SELECT seg_fid, nr_in_seg, user_xs_fid FROM chan_elems WHERE interpolated = 0;'
+        schematized_cross_section = self.gutils.execute(qry).fetchall()
+        schematized_channel_dict = dict()
+        user_xs_dict=dict()
+        # Construct channel dict
+        for i, row in enumerate(schematized_cross_section):
+            row = [x if x is not None else '' for x in row]
+            seg_fid, nr_in_seg, user_xs_fid = row
+            user_xs_dict[user_xs_fid]=seg_fid
+            if seg_fid in schematized_channel_dict:
+                schematized_channel_dict[seg_fid].append((user_xs_fid, nr_in_seg))
+            else:
+                schematized_channel_dict[seg_fid] = [(user_xs_fid, nr_in_seg)]
+
+        # Order the cross section in each channel
+        for channel, lst in schematized_channel_dict.items():
+            schematized_channel_dict[channel] = sorted(lst, key=lambda tup: tup[1])
+
+        qry = 'SELECT fid, name FROM user_left_bank;'
+        channel_names = self.gutils.execute(qry).fetchall()
+        channel_names_dict =dict()
+        for i, row in enumerate(channel_names):
+            row = [x if x is not None else '' for x in row]
+            seg_fid, name = row
+            channel_names_dict[seg_fid] = name
+
+        # search for not schematized cross section and construct name cross section dict
+        non_schematized_xs = []
+        xs_name_dict = dict()
+        for i, row in enumerate(user_xs_rows):
             row = [x if x is not None else '' for x in row]
             row_fid, name = row
-            self.xs_cbo.addItem(name, str(row_fid))
-            if fid:
-                if row_fid == int(fid):
-                    cur_idx = i
+            if row_fid not in user_xs_dict:
+                non_schematized_xs.append(row_fid)
+            xs_name_dict[row_fid] = name
+
+        if len(non_schematized_xs)>0 or len(schematized_channel_dict)>0:
+            cur_idx = 1 # Pointer to selected item in combo. See below. Depending on call of method,
+                    # it could be the first, the last, or a given one.
+        else:
+            cur_idx = 0
+
+        # ... and populate combo box, start with non schematized cross section
+        if len(non_schematized_xs)>0:
+            self.xs_cbo.addItem("Non Schematized")
+            row_index = self.xs_cbo.model().rowCount()-1
+            flags = self.xs_cbo.model().item(row_index).flags()
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
+            for xs_fid in non_schematized_xs:
+                name = xs_name_dict[xs_fid]
+                self.xs_cbo.addItem(name, str(xs_fid))
+                row_index = self.xs_cbo.model().rowCount()-1
+                self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
+
+        for channel, cross_sections in schematized_channel_dict.items():
+            channel_name = channel_names_dict[channel]
+            self.xs_cbo.addItem(channel_name)
+            row_index = self.xs_cbo.model().rowCount() - 1
+            flags = self.xs_cbo.model().item(row_index).flags()
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
+            for tup in cross_sections:
+                xs_fid = tup[0]
+                name = xs_name_dict[xs_fid]
+                self.xs_cbo.addItem(name, str(xs_fid))
+                row_index = self.xs_cbo.model().rowCount() - 1
+                self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
+
+                if fid:
+                    if xs_fid == int(fid):
+                        cur_idx = row_index
+
         if show_last_edited:
             cur_idx = i
+
         self.xs_cbo.setCurrentIndex(cur_idx)
         self.enable_widgets(False)
         if self.xs_cbo.count():
             self.enable_widgets()
-            self.current_xsec_changed(cur_idx)
+            self.current_xsec_changed(self.xs_cbo.currentData())
 
     def digitize_xsec(self, i):
         def_attr_exp = self.lyrs.data['user_xsections']['attrs_defaults']
@@ -301,7 +388,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         ]
         self.lyrs.repaint_layers()
 
-    def current_xsec_changed(self, idx=0):
+    def current_cbo_xsec_index_changed(self, idx=0):
+        if not self.xs_cbo.count():
+            return
+        fid = self.xs_cbo.currentData()
+        if fid is None:
+            fid = -1
+
+        self.current_xsec_changed(fid)
+
+    def current_xsec_changed(self, fid=-1):
         """
         User changed current xsection in the xsections list.
         Populate xsection data fields and update the plot.
@@ -313,8 +409,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #         self.plot = PlotWidget()
 #         create_f2d_plot_dock()
         
-        
-        fid = self.xs_cbo.itemData(idx)
+        if fid is None or fid == -1:
+            fid = self.xs_cbo.itemData(0)
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
         self.lyrs.clear_rubber()
@@ -386,8 +482,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         typ = self.xs_type_cbo.itemData(idx)
         self.xs.set_type(typ)
-        xs_cbo_idx = self.xs_cbo.currentIndex()
-        self.current_xsec_changed(xs_cbo_idx)
+        xs_cbo_fid = self.xs_cbo.currentData()
+        self.current_xsec_changed(xs_cbo_fid)
 
     def create_plot(self):
         """
@@ -616,8 +712,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         confluences = self.lyrs.data['chan_confluences']['qlyr']
         self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
         self.lyrs.repaint_layers()
-        idx = self.xs_cbo.currentIndex()
-        self.current_xsec_changed(idx)
+        current_fid = self.xs_cbo.currentData()
+        self.current_xsec_changed(current_fid)
         
         # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
 #
@@ -709,13 +805,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         confluences = self.lyrs.data['chan_confluences']['qlyr']
         self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
         self.lyrs.repaint_layers()
-        idx = self.xs_cbo.currentIndex()
-        self.current_xsec_changed(idx)
+        current_fid = self.xs_cbo.currentData()
+        self.current_xsec_changed(current_fid)
 
         # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
         #
         info = ShematizedChannelsInfo(self.iface)
         close = info.exec_()
+
+        self.populate_xsec_cbo()
 
 
     def schematize_right_banks(self):
@@ -1174,8 +1272,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                               'Please check your User Layers.')
             return
         else:
-            idx = self.xs_cbo.currentIndex()
-            self.current_xsec_changed(idx)
+            current_fid = self.xs_cbo.currentData()
+            self.current_xsec_changed(current_fid)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Interpolation of cross-sections values finished!')
 
