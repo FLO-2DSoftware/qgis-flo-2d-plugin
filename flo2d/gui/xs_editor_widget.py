@@ -771,9 +771,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
 
-            #             cs.create_xs_type_n_r_t_v_tables()
-            #             cs.create_schematized_rbank_lines_from_xs_tips()
-
             self.gutils.create_xs_type_n_r_t_v_tables()
 
             cs.copy_user_xs_data_to_schem()
@@ -785,14 +782,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         if not self.gutils.is_table_empty('chan_elems'):
-            # try:
+            try:
                 cs.make_distance_table()
-            # except Exception as e:
-            #     self.uc.log_info(traceback.format_exc())
-            #     self.uc.show_warn(
-            #         'WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
-            #         'Please check your User Layers.')
-            #     return
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_warn(
+                    'WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
+                    'Please check your User Layers.')
+                return
         else:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('WARNING 060319.1745: Schematizing failed while preparing interpolation table!\n\n'

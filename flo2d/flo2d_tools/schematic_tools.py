@@ -1291,8 +1291,8 @@ class ChannelsSchematizer(GeoPackageUtils):
             xs_geom = xs.geometry()
             intersects = xs_geom.intersection(bank_geom)
             if intersects.wkbType==QgsWkbTypes.MultiPoint:
-                multiPoint=intersects.asMultiPoint()
-                if len(multiPoint) > 0:
+                multi_point = intersects.asMultiPoint()
+                if len(multi_point) > 0:
                     crossing_points.append(intersects[0])
             else:
                 crossing_points.append(intersects.asPoint())
@@ -1744,7 +1744,6 @@ class ChannelsSchematizer(GeoPackageUtils):
             except StopIteration:
                 pass
 
-        #for each interval check if there is isolated void right bank, if presents , interpolate
         for key, interval in distances.items():
             rows = interval['rows']
             if not 'inter_rlen' in interval.keys():
