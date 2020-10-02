@@ -332,7 +332,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
             for tup in cross_sections:
                 xs_fid = tup[0]
-                name = xs_name_dict[xs_fid]
+                if xs_fid in xs_name_dict:
+                    name = xs_name_dict[xs_fid]
+                else :
+                    name = "undefined"
                 self.xs_cbo.addItem(name, str(xs_fid))
                 row_index = self.xs_cbo.model().rowCount() - 1
                 self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
