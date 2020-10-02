@@ -154,6 +154,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.confluences_btn, 'schematize_confluence.svg')
         set_icon(self.interpolate_channel_n_btn, 'interpolate_channel_n.svg')
         set_icon(self.rename_xs_btn, 'change_name.svg')
+        set_icon(self.sample_elevation_current_R_T_V_btn, 'sample_channel_current_RTV.svg')
+        set_icon(self.sample_elevation_all_R_T_V_btn, 'sample_channel_all_RTV.svg')
+        set_icon(self.sample_elevation_current_natural_btn, 'sample_channel_current_natural.svg')
+        set_icon(self.sample_elevation_all_natural_btn, 'sample_channel_all_natural.svg')
         # Connections:
 
         # Buttons connections:
