@@ -22,7 +22,7 @@
      <item row="0" column="0">
       <widget class="QToolButton" name="schematize_xs_btn">
        <property name="toolTip">
-        <string>Schematize left banks and cross sections</string>
+        <string>Schematize channel</string>
        </property>
        <property name="text">
         <string>...</string>

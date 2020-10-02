@@ -938,76 +938,12 @@ class ChannelsSchematizer(GeoPackageUtils):
             self.schematize_leftbanks(left_feat)
             self.banks_data.append((left_bank_fid, left_bank_geom, right_bank_fid, right_bank_geom, sorted_xs))
 
-        self.create_schematized_xsections_v2()
+        self.create_schematized_xsections()
 
         self.schematized_lbank_lyr.triggerRepaint()
         self.schematized_rbank_lyr.triggerRepaint()
 
     def create_schematized_xsections(self):
-        """
-        Schematizing cross sections.
-        """
-        insert_chan = '''
-        INSERT INTO chan_elems (geom, fid, rbankgrid, seg_fid, nr_in_seg, user_xs_fid, interpolated) VALUES
-        (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
-        for lbank_fid, lbank_geom, sorted_xs in self.banks_data: # For each channel segment get its id (lbanl_fid),
-                                                                # polyline of centroids of cells, and user cross sections
-                                                                # that intersect channel segment.
-            req = QgsFeatureRequest().setFilterExpression('"user_lbank_fid" = {}'.format(lbank_fid))
-            lsegment_feat = next(self.schematized_lbank_lyr.getFeatures(req)) #
-            lsegment_points = lsegment_feat.geometry().asPolyline() # List of the coordinates (x,y) of the vertices of the
-                                                                    # polyline of the schematized left bank line
-                                                                    # (where the tip of the arrow is).
-            # Finding left crossing points
-            left_points = self.bank_stations(sorted_xs, lbank_geom)
-            # Finding closest points to channel segment
-            left_nodes = self.closest_nodes(lsegment_points, left_points) # Coordinates (x,y) of centroid of cells intersecting
-                                                                          # nearest point to XS intersection with schematized left bank line.
-            vertex_idx = []
-            # Snapping user cross sections to channel segment
-            for xs, (lnode, idx) in zip(sorted_xs, left_nodes):
-                vertex_idx.append(idx)
-                move = lnode - QgsPointXY(xs.geometry().vertexAt(0))
-                end = QgsPointXY(xs.geometry().vertexAt(1))
-                self.shift_line_geom(xs, move) # Each user cross section 'xs' is moved (shifted) to begin at the
-                                               # centroid of nearest cell of schematiced left bank.
-
-                geom = xs.geometry()
-                polyline = geom.asPolyline()
-                polyline[1] = end
-                xs.setGeometry(QgsGeometry.fromPolylineXY(polyline))
-
-            # Rotating and schematizing user cross sections
-            self.schematize_xs(sorted_xs)
-            # Interpolating cross sections
-            inter_xs = self.interpolate_xs(lsegment_points, sorted_xs, vertex_idx)
-            # Clipping cross sections between each other
-            clipped_xs = self.clip_schema_xs(inter_xs)
-            # Saving schematized and interpolated cross sections
-            sqls = []
-            for i, (x1, y1, x2, y2, org_fid, interpolated) in enumerate(clipped_xs, 1):
-                try:
-                    lbankgrid = self.grid_on_point(x1, y1)
-                    rbankgrid = self.grid_on_point(x2, y2)
-                except Exception as e:
-                    self.uc.log_info(traceback.format_exc())
-                    continue
-#                 org_fid = 0 if interpolated  == 1 else org_fid   # JJ fix. Check it!!
-                vals = (lbankgrid, rbankgrid, lbank_fid, i, org_fid, interpolated)
-#                 vals_list = list(vals)
-#                 vals_list[4] = 0 if vals_list[5] == 1 else vals_list[4]
-#                 vals = tuple(vals_list)
-                sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
-            cursor = self.con.cursor()
-            for qry, vals in sqls:
-                try:
-                    cursor.execute(qry, vals)
-                except Exception as e:
-                    self.uc.log_info(traceback.format_exc())
-                    continue
-            self.con.commit()
-
-    def create_schematized_xsections_v2(self):
         """
         Schematizing cross sections.
         """
