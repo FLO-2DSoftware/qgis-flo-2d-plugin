@@ -1019,6 +1019,8 @@ class ChannelsSchematizer(GeoPackageUtils):
 
                     idx_right = 1
 
+                    right_bank_interpolate_xs=start_right_position
+
                     for index in range(1,idx_count_left):
                         idx_left = index + start_left_node_idx
                         if idx_count_left <= idx_count_right:
