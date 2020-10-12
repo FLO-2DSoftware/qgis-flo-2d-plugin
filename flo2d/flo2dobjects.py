@@ -379,13 +379,15 @@ class UserCrossSection(GeoPackageUtils):
         try:
             elem1=next(fit1)
             qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
-            self.execute(qry, (elem1.attribute('elevation'), self.fid,))
+            roundedValue = round(elem1.attribute('elevation'),2);
+            self.execute(qry, (roundedValue, self.fid,))
         except StopIteration:
             pass
         try:
-            elem1=next(fit2)
-            qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
-            self.execute(qry, (elem1.attribute('elevation'), self.fid,))
+            elem2=next(fit2)
+            qry = '''UPDATE {} SET bankelr = ? WHERE user_xs_fid = ?;'''.format(tab)
+            roundedValue = round(elem2.attribute('elevation'), 2);
+            self.execute(qry, (roundedValue, self.fid,))
         except StopIteration:
             pass
 
@@ -490,8 +492,8 @@ class ChannelSegment(GeoPackageUtils):
                     d_lbank_elev = xslo.profile_data['lbank_elev'] - xsup.profile_data['lbank_elev']
                     d_rbank_elev = xslo.profile_data['rbank_elev'] - xsup.profile_data['rbank_elev']
                     d_fcd = xslo.profile_data['fcd'] - xsup.profile_data['fcd']
-                    xsi.profile_data['lbank_elev'] = xsup.profile_data['lbank_elev'] + icoef * d_lbank_elev
-                    xsi.profile_data['rbank_elev'] = xsup.profile_data['rbank_elev'] + icoef * d_rbank_elev
+                    xsi.profile_data['lbank_elev'] = round(xsup.profile_data['lbank_elev'] + icoef * d_lbank_elev, 3)
+                    xsi.profile_data['rbank_elev'] = round(xsup.profile_data['rbank_elev'] + icoef * d_rbank_elev, 3)
                     xsi.profile_data['fcd'] = xsup.profile_data['fcd'] + icoef * d_fcd
                     xsi.set_profile_data()
                 except Flo2dError as e:
@@ -504,7 +506,7 @@ class ChannelSegment(GeoPackageUtils):
                     xslo.get_profile_data()
                     d_bed = xslo.profile_data['bed_elev'] - xsup.profile_data['bed_elev']
                     dh = icoef * d_bed
-                    xsi.shift_nxsec(dh)
+                    xsi.shift_nxsec(round(dh, 3))
                 except Flo2dError as e:
                     return False, repr(e)
                 except KeyError:
