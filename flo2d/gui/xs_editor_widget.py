@@ -338,8 +338,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 xs_fid = tup[0]
                 if xs_fid in xs_name_dict:
                     name = xs_name_dict[xs_fid]
-                else :
-                    name = "undefined"
+                else:
+                    continue
                 self.xs_cbo.addItem(name, str(xs_fid))
                 row_index = self.xs_cbo.model().rowCount() - 1
                 self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
@@ -612,7 +612,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         xs_idx = self.xs_cbo.currentIndex()
         cur_data = self.xs_cbo.itemData(xs_idx)
         if cur_data:
-            fid = int(cur_data[0])
+            fid = int(cur_data)
         else:
             return
         qry = '''DELETE FROM user_xsections WHERE fid = ?;'''
@@ -1075,8 +1075,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 s.setValue('FLO-2D/lastGdsDir', outdir)
                 xsec = os.path.join(outdir, 'XSEC.DAT')
                 with open(xsec, 'w') as x:
-                    for fid, name in user_xsections:
-                        x.write(xsec_line.format(fid, name))
+                    for fid, nxsecnum, name in chan_n:
+                        x.write(xsec_line.format(nxsecnum, name))
                         for xi, yi in self.gutils.execute(xsec_sql, (fid,)):
                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
                 QApplication.restoreOverrideCursor()

@@ -860,6 +860,8 @@ class ChannelsSchematizer(GeoPackageUtils):
          Schematizing banks and cross section.
         """
 
+        nxsecnum = []
+
         self.set_xs_features()  # Creates self.xsections_feats and self.xs_index of the user cross sections.
         feat_xs = []
         found_right_bank_feature_id = []
@@ -917,6 +919,9 @@ class ChannelsSchematizer(GeoPackageUtils):
                     raise Exception
 
             feat_xs.append((left_bank_feature, right_bank_feature, sorted_xs))
+            for xs in sorted_xs:
+                if xs.attribute("type") == 'N':
+                    nxsecnum.append(xs.attribute("fid"))
 
         if len(found_right_bank_feature_id) != self.user_rbank_lyr.featureCount():
             self.uc.show_warn('WARNING 060319.1633: At least one right bank was not used,\n'
@@ -942,6 +947,11 @@ class ChannelsSchematizer(GeoPackageUtils):
 
         self.schematized_lbank_lyr.triggerRepaint()
         self.schematized_rbank_lyr.triggerRepaint()
+
+        #update nxsecnum in user_chan_n table
+        for i in range(0, len(nxsecnum)):
+            sql = '''UPDATE user_chan_n SET nxsecnum = ? WHERE user_xs_fid = ?;'''
+            self.execute(sql, (i+1, nxsecnum[i]))
 
     def create_schematized_xsections(self):
         """
