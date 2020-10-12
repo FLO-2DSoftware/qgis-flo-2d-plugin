@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.6
+  - Storm Drain: conduit shapes to Upper Case, sort columns
  <p>0.10.5
   - Reservoirs with 'n_value' and 'use_n_value' fields. INFLOW.DAT read and write updated to account for R (reservoirs) lines.
  <p>0.10.4
