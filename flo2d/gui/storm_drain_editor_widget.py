@@ -84,6 +84,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_inflows_time_series_lyr = None
+        self.control_lyr  = None
         self.schema_inlets = None
         self.schema_outlets = None
         self.all_schema = []
@@ -158,6 +159,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.swmm_inflows_lyr = self.lyrs.data['swmm_inflows']['qlyr']
             self.swmm_inflow_patterns_lyr = self.lyrs.data['swmm_inflow_patterns']['qlyr']
             self.swmm_inflows_time_series_lyr = self.lyrs.data['swmm_inflow_time_series']['qlyr']
+            self.control_lyr = self.lyrs.data['cont']['qlyr']
             self.schema_inlets = self.lyrs.data['swmmflo']['qlyr']
             self.schema_outlets = self.lyrs.data['swmmoutf']['qlyr']
             self.all_schema += [self.schema_inlets, self.schema_outlets]

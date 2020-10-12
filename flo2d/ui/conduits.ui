@@ -754,14 +754,11 @@
     <property name="layoutDirection">
      <enum>Qt::LeftToRight</enum>
     </property>
-    <item>
-     <property name="text">
-      <string>Circular</string>
+    <property name="currentText">
+     <string>CIRCULAR</string>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Circular Force Main</string>
+    <property name="maxVisibleItems">
+     <number>25</number>
      </property>
     </item>
     <item>

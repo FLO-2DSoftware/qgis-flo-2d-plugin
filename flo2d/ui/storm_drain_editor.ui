@@ -107,7 +107,7 @@
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="QComboBox" name="rating_table_cbo">
+         <widget class="QComboBox" name="SD_rating_table_cbo">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -123,10 +123,6 @@
           </property>
           <property name="text">
            <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
           </property>
          </widget>
         </item>

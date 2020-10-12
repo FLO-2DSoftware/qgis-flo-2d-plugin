@@ -43,25 +43,11 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.plot_item_name = None
         self.d1, self.d2 = [[], []]
         self.previous_type = -1
+        self.block = False
 
         set_icon(self.change_name_btn, 'change_name.svg')
         set_icon(self.external_inflow_btn, 'external_inflow.svg')
-#         set_icon(self.show_table_btn, 'show_cont_table.svg')
-#         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
-#         set_icon(self.add_rtable_btn, 'add_bc_data.svg')
-#         set_icon(self.rename_rtable_btn, 'change_name.svg')
-#         self.show_table_btn.clicked.connect(self.populate_rtables_data)
-#         self.remove_rtable_btn.clicked.connect(self.delete_rtables)
-#         self.add_rtable_btn.clicked.connect(self.add_rtables)
-#         self.rename_rtable_btn.clicked.connect(self.rename_rtables)
 
-        
-
-#         self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
-#         self.table.before_paste.connect(self.block_saving)
-#         self.table.after_paste.connect(self.unblock_saving)
-#         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)        
-       
         self.setup_connection()
         
         self.inlet_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_inlet_in_table)

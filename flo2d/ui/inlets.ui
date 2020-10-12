@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -132,7 +132,7 @@
            </size>
           </property>
           <property name="duplicatesEnabled">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -364,7 +364,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../img/external_inflow.svg</normaloff>../img/external_inflow.svg</iconset>
+              <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/external_inflow.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/external_inflow.svg</iconset>
             </property>
             <property name="checkable">
              <bool>true</bool>

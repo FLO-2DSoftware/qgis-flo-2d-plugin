@@ -161,11 +161,11 @@ class InfiltrationCalculator(object):
                     avg_xksat = params['hydc']
                     rtimp_n = params['rtimpf']
                     eff = params['eff']
-    
+      
                     vc_parts = [(row[1], row[-1]) for row in values]
                     ia_parts = [(row[2], row[-1]) for row in values]
                     rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
-    
+      
                     dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
                     if self.vcCheck == True:
                         # perform vc adjusment
@@ -175,24 +175,25 @@ class InfiltrationCalculator(object):
                         xksatc = avg_xksat
 #                     xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)                   
                     iabstr = green_ampt.calculate_iabstr(ia_parts)
-                    
+                      
                     rtimpl = green_ampt.calculate_rtimp_l(rtimp_parts)
                     # perform summary rtimp calc = RTIMPl + EFF/100 * RTIMPn per FCDMC eq 4.6
                     rtimp = rtimpl + eff * rtimp_n
                     if rtimp > 1.0:
                         rtimp = 1.0
-    
+      
                     params['dtheta'] = dtheta
                     params['hydc'] = xksatc
                     params['abstrinf'] = iabstr
                     params['rtimpf'] = rtimp
                     params['luParts'] = len(values)
-                    
+                     
 #                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth,
 #                                         'theta': dtheta,' hydc': xksatc, 'abstrinf': iabstr, 'rtimpf': rtimp}
-                
+                 
                 except ValueError as e:
-                    raise ValueError('Calculation of land use variables failed for grid cell with fid: {}'.format(gid)) from e
+                    raise ValueError('Calculation of land use variables failed for grid cell with fid: {}'.format(gid))
+                
             if writeDiagnosticCSV == True:
                 # write a diagnostic CSV file with all fo the information for the calculations in it
                 diagCSVFolder = r'C:\temp'
@@ -258,7 +259,7 @@ class InfiltrationCalculator(object):
                 grid_cn = scs.calculate_scs_cn(values)
                 grid_params[gid] = {'scsn': grid_cn}
             except ValueError as e:
-                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid)) from e
+                raise ValueError('Calculation failed for grid cell with fid: {}'.format(gid))
 
         return grid_params
 
