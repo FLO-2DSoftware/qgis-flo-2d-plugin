@@ -1036,9 +1036,8 @@ class ChannelsSchematizer(GeoPackageUtils):
                                 cross_section_definitions.append(vals)
                                 idx_right=idx_right+1
                             else:
-                                vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left + 1, xs.id(), True)
+                                vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(), True)
                                 cross_section_definitions.append(vals)
-
 
                 end_right_node = user_right_bank_nodes[len(user_left_bank_nodes)-1]
                 end_right_position = end_right_node[0]
