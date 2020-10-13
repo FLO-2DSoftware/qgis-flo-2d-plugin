@@ -867,8 +867,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         found_right_bank_feature_id = []
         for left_bank_feature in self.user_lbank_lyr.getFeatures():  # For each channel segment.
             # Getting sorted cross section
-            sorted_xs = self.get_sorted_xs(
-                left_bank_feature)  # Selects XSs than intersect this channel segment, orders them from
+            sorted_xs = self.get_sorted_xs(left_bank_feature)  # Selects XSs than intersect this channel segment, orders them from
             # beginning of segment, checks than there are more than 2 CS, and
             # the first one intersects the line.
             if len(sorted_xs) < 2:
@@ -932,16 +931,35 @@ class ChannelsSchematizer(GeoPackageUtils):
         for left_feat, right_feat, sorted_xs in feat_xs:
             left_bank_fid = left_feat.id()
             left_bank_geom = QgsGeometry.fromPolylineXY(left_feat.geometry().asPolyline())
+            # before schematized bank, insert point on intersection with cross section
+            user_left_bank_positions = self.bank_stations(sorted_xs, left_bank_geom)
+            for intersection in user_left_bank_positions:
+                dist, x_y_position, vert_pos, left = left_bank_geom.closestSegmentWithContext(intersection)
+                left_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
+            left_feat.setGeometry(left_bank_geom);
 
             right_bank_fid = -1
             right_bank_geom = QgsGeometry()
             if right_feat.isValid():
                 right_bank_fid = right_feat.attribute('chan_seg_fid')
                 right_bank_geom = QgsGeometry.fromPolylineXY(right_feat.geometry().asPolyline())
+                # before schematized bank, insert point on intersection with cross section
+                user_right_bank_positions = self.bank_stations(sorted_xs, right_bank_geom)
+                for intersection in user_right_bank_positions:
+                    dist, x_y_position, vert_pos, left = right_bank_geom.closestSegmentWithContext(intersection)
+                    right_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
+                right_feat.setGeometry(right_bank_geom);
+
                 self.schematize_rightbanks(right_feat)
 
             self.schematize_leftbanks(left_feat)
-            self.banks_data.append((left_bank_fid, left_bank_geom, right_bank_fid, right_bank_geom, sorted_xs))
+            self.banks_data.append((left_bank_fid,
+                                    left_bank_geom,
+                                    right_bank_fid,
+                                    right_bank_geom,
+                                    sorted_xs,
+                                    user_left_bank_positions,
+                                    user_right_bank_positions))
 
         self.create_schematized_xsections()
 
@@ -962,12 +980,11 @@ class ChannelsSchematizer(GeoPackageUtils):
         (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
 
         cross_section_definitions = []
-        for lbank_fid, lbank_geom, rbank_fid, rbank_geom, sorted_xs in self.banks_data:
+        for lbank_fid, lbank_geom, rbank_fid, rbank_geom, sorted_xs, user_left_bank_positions, user_right_bank_positions in self.banks_data:
             req = QgsFeatureRequest().setFilterExpression('"user_lbank_fid" = {}'.format(lbank_fid))
             left_schematized_feat = next(self.schematized_lbank_lyr.getFeatures(req))
             left_schematized_geometry = left_schematized_feat.geometry()
 
-            user_left_bank_positions = self.bank_stations(sorted_xs, lbank_geom)
             # Finding closest points in the schematized left bank
             user_left_bank_nodes = self.closest_nodes(left_schematized_geometry, user_left_bank_positions)
 
@@ -979,7 +996,6 @@ class ChannelsSchematizer(GeoPackageUtils):
                 req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(rbank_fid))
                 rsegment_feat = next(self.schematized_rbank_lyr.getFeatures(req))
                 rsegment_points=rsegment_feat.geometry()
-                user_right_bank_positions=self.bank_stations(sorted_xs, rbank_geom)
                 user_right_bank_nodes=self.closest_nodes(rsegment_points, user_right_bank_positions)
 
                 if len(user_right_bank_nodes)!=len(user_left_bank_nodes):
