@@ -35,7 +35,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
+            <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/mActionCaptureLine.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/mActionCaptureLine.svg</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -58,7 +58,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+            <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/mActionDeleteSelected.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/mActionDeleteSelected.svg</iconset>
           </property>
           <property name="iconSize">
            <size>

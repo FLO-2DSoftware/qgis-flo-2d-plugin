@@ -756,119 +756,118 @@
     </property>
     <property name="currentText">
      <string>CIRCULAR</string>
-     </property>
+    </property>
     <property name="maxVisibleItems">
      <number>25</number>
+    </property>
+    <item>
+     <property name="text">
+      <string>CIRCULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Filled Circular</string>
+      <string>FORCE_MAIN</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Semi-Circular</string>
+      <string>FILLED_CIRCULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Closed</string>
+      <string>RECT_CLOSED</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Open</string>
+      <string>RECT_OPEN</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Triangular</string>
+      <string>TRAPEZOIDAL</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Round</string>
+      <string>TRIANGULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Trapezoidal</string>
+      <string>HORIZ_ELLIPSE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Triangular</string>
+      <string>VERT_ELLIPSE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Horizontal Ellipse</string>
+      <string>ARCH</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Vertical Ellipse</string>
+      <string>PARABOLIC</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Semi-Elliptical</string>
+      <string>POWER</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Basket Handle</string>
+      <string>RECT_TRIANGULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Modified Basket Handle</string>
+      <string>RECT_ROUND</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Arch</string>
+      <string>MODBASKETHANDLE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Parabolic</string>
+      <string>EGG</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Power</string>
+      <string>HORSESHOE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Egg</string>
+      <string>GOTHIC</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Horse Shoe</string>
+      <string>CATENARY</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Gothic</string>
+      <string>SEMIELLIPTICAL</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Catenary</string>
+      <string>BASKETHANDLE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Irregular</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Custom</string>
+      <string>SEMICIRCULAR</string>
      </property>
     </item>
    </widget>
