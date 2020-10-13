@@ -306,8 +306,8 @@ class UserCrossSection(GeoPackageUtils):
                 if result.isValid():
                     value = result.results()
                     xiyi.append((self.fid,
-                                distance,
-                                value[1]))
+                                round(distance, 2),
+                                round(value[1], 2)))
 
                 for step in range(1, point_count+1):
                     x = x1+step_x * step
@@ -318,8 +318,8 @@ class UserCrossSection(GeoPackageUtils):
                     if result.isValid():
                         value = result.results()
                         xiyi.append((self.fid,
-                                    distance+sqrt((x-x1)**2+(y-y1)**2),
-                                    value[1]))
+                                    round(distance+sqrt((x-x1)**2+(y-y1)**2), 2) ,
+                                    round(value[1],2)))
 
                 distance = distance + length_segment
 
@@ -348,12 +348,12 @@ class UserCrossSection(GeoPackageUtils):
         if result1.isValid():
             value = result1.results()
             qry = '''UPDATE {} SET bankell = ? WHERE user_xs_fid = ?;'''.format(tab)
-            self.execute(qry, (value[1], self.fid,))
+            self.execute(qry, (round(value[1], 2), self.fid,))
 
         if result2.isValid():
             value = result2.results()
             qry = '''UPDATE {} SET bankelr = ? WHERE user_xs_fid = ?;'''.format(tab)
-            self.execute(qry, (value[1], self.fid,))
+            self.execute(qry, (round(value[1], 2), self.fid,))
 
     def sample_bank_elevation_from_grid(self, cross_section_line, grid_layer):
 

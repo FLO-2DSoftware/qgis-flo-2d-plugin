@@ -964,6 +964,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
+        qry = 'SELECT user_xs_fid, nxsecnum FROM user_chan_n;'
+        natural_channel_section_number = self.gutils.execute(qry).fetchall()
+        natural_channel_section_number_dict = dict()
+        for i, row in enumerate(natural_channel_section_number):
+            row = [x if x is not None else '' for x in row]
+            user_xs_fid, nxsecum = row
+            natural_channel_section_number_dict[user_xs_fid] = nxsecum
+
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         outdir = QFileDialog.getExistingDirectory(None,
@@ -1007,7 +1015,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 res.insert(3, 0)
                                 non_surveyed += 1
                             else:
-                                res.insert(3, user_xs_fid)
+                                res.insert(3, natural_channel_section_number_dict[user_xs_fid])
                                 surveyed += 1
                                 previous_xs = user_xs_fid
                         else:
