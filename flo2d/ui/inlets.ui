@@ -620,6 +620,15 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+     </property>
+     <property name="dragEnabled">
+      <bool>false</bool>
+     </property>
+     <property name="dragDropMode">
+      <enum>QAbstractItemView::NoDragDrop</enum>
+     </property>
      <property name="alternatingRowColors">
       <bool>false</bool>
      </property>
@@ -629,13 +638,16 @@
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <property name="rowCount">
       <number>5</number>
      </property>
      <property name="columnCount">
       <number>17</number>
      </property>
-     <attribute name="horizontalHeaderHighlightSections">
+     <attribute name="verticalHeaderVisible">
       <bool>false</bool>
      </attribute>
      <row/>
