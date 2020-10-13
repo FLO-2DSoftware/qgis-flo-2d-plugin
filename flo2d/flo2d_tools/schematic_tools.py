@@ -938,6 +938,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 left_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
             left_feat.setGeometry(left_bank_geom);
 
+            user_right_bank_positions=[]
             right_bank_fid = -1
             right_bank_geom = QgsGeometry()
             if right_feat.isValid():
