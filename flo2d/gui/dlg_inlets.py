@@ -21,7 +21,7 @@ from math import isnan
 
 uiDialog, qtBaseClass = load_ui('inlets')
 class InletNodesDialog(qtBaseClass, uiDialog):
-
+    
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -31,7 +31,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, 'FLO-2D')
         self.con = None
         self.gutils = None
-
+        
         self.inlets_buttonBox.button(QDialogButtonBox.Save).setText("Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer")
         self.save_this_inlet_btn.setVisible(False)
         self.inletRT = None
@@ -46,8 +46,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.block = False
 
         set_icon(self.change_name_btn, 'change_name.svg')
-        set_icon(self.external_inflow_btn, 'external_inflow.svg')
-
+        set_icon(self.external_inflow_btn, 'external_inflow.svg')     
+       
         self.setup_connection()
         
         self.inlet_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_inlet_in_table)
@@ -71,15 +71,18 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.valueChanged.connect(self.curb_height_dbox_valueChanged)
         self.clogging_factor_dbox.valueChanged.connect(self.clogging_factor_dbox_valueChanged)
         self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
-        self.inlets_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
-        self.rating_table_cbo.currentIndexChanged.connect(self.rating_table_cbo_currentIndexChanged)
         
+        self.inlets_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
+        self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
+        
+        
+        self.rating_table_cbo.currentIndexChanged.connect(self.rating_table_cbo_currentIndexChanged)
         self.rating_table_cbo.setDuplicatesEnabled(False)
         
         self.set_header()
         
         self.populate_inlets()
-
+        
     def setup_connection(self):
         con = self.iface.f2d['con']
         if con is None:
@@ -89,27 +92,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.inletRT = InletRatingTable(self.con, self.iface)        
             self.populate_rtables()
-            
-    def set_header(self):
-        self.inlets_tblw.setHorizontalHeaderLabels(["Name",                  #INP  and FLO-2D. SWMMFLO.DAT: SWMM_JT
-                                                   "Grid Element",          #FLO-2D. SWMMFLO.DAT: SWMM_IDENT
-                                                   "Invert Elev.",          #INP
-                                                   "Max. Depth",            #INP
-                                                   "Init. Depth",          #INP
-                                                   "Surcharge Depth",      #INP
-                                                   "Ponded Area",          #INP
-                                                   "Inlet Drain Type",        #FLO-2D. SWMMFLO.DAT: INTYPE
-                                                   "Length/Perimeter *",      #FLO-2D. SWMMFLO.DAT: SWMMlenght
-                                                   "Width/Area *",            #FLO-2D. SWMMFLO.DAT: SWMMwidth
-                                                   "Height/Sag/Surch *",      #FLO-2D. SWMMFLO.DAT: SWMMheight
-                                                   "Weir Coeff *",            #FLO-2D. SWMMFLO.DAT: SWMMcoeff
-                                                   "Feature *",               #FLO-2D. SWMMFLO.DAT: FLAPGATE
-                                                   "Curb Height *",           #FLO-2D. SWMMFLO.DAT: CURBHEIGHT
-                                                   "Clogging Factor #",       #FLO-2D. SDCLOGGING.DAT
-                                                   "Time for Clogging #",     #FLO-2D. SDCLOGGING.DAT
-                                                   "Rating Table"
-                                                   ])    
-
+ 
     def populate_inlets(self):
                  
         qry = '''SELECT
@@ -133,7 +116,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';'''
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
-            self.uc.bar_warn("No inlets defined in 'Storm Drain Nodes' User Layer!")
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!")
             return
 
         self.inlets_tblw.setRowCount(0)
@@ -188,7 +172,39 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 if cell == 1 or cell == 2:
                         item.setFlags( Qt.ItemIsSelectable | Qt.ItemIsEnabled )
 
-                self.inlets_tblw.setItem(row_number, cell, item)
+                self.inlets_tblw.setItem(row_number, cell, item)  
+                
+        self.inlet_cbo.model().sort(0)    
+        self.inlet_cbo.setCurrentIndex(0)      
+          
+        self.inlets_tblw.sortItems(0, Qt.AscendingOrder)  
+        
+        self.inlets_tblw.selectRow(0) 
+ 
+    def onVerticalSectionClicked(self, logicalIndex):
+        self.inlets_tblw_cell_clicked(logicalIndex, 0)
+ 
+    def set_header(self):
+        self.inlets_tblw.setHorizontalHeaderLabels(["Name",                  #INP  and FLO-2D. SWMMFLO.DAT: SWMM_JT
+                                                   "Grid Element",          #FLO-2D. SWMMFLO.DAT: SWMM_IDENT
+                                                   "Invert Elev.",          #INP
+                                                   "Max. Depth",            #INP
+                                                   "Init. Depth",          #INP
+                                                   "Surcharge Depth",      #INP
+                                                   "Ponded Area",          #INP
+                                                   "Inlet Drain Type",        #FLO-2D. SWMMFLO.DAT: INTYPE
+                                                   "Length/Perimeter *",      #FLO-2D. SWMMFLO.DAT: SWMMlenght
+                                                   "Width/Area *",            #FLO-2D. SWMMFLO.DAT: SWMMwidth
+                                                   "Height/Sag/Surch *",      #FLO-2D. SWMMFLO.DAT: SWMMheight
+                                                   "Weir Coeff *",            #FLO-2D. SWMMFLO.DAT: SWMMcoeff
+                                                   "Feature *",               #FLO-2D. SWMMFLO.DAT: FLAPGATE
+                                                   "Curb Height *",           #FLO-2D. SWMMFLO.DAT: CURBHEIGHT
+                                                   "Clogging Factor #",       #FLO-2D. SDCLOGGING.DAT
+                                                   "Time for Clogging #",     #FLO-2D. SDCLOGGING.DAT
+                                                   "Rating Table"
+                                                   ])    
+
+
 
     def invert_connect(self):
         self.uc.show_info('Connection!')
@@ -209,64 +225,64 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.box_valueChanged(self.ponded_area_dbox, 6)
 
     def external_inflow_checked(self):
-        # Is there an external inflow for this node?
-        inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"  
-        node = self.inlet_cbo.currentText()                                               
-        inflow = self.gutils.execute(inflow_sql, (node,)).fetchone()        
-        
-        enabled = self.external_inflow_chbox.isChecked()
-        self.external_inflow_btn.setEnabled(enabled)
-        if enabled:
-            if not inflow:
-                insert_sql = '''INSERT INTO swmm_inflows 
-                                (   node_name, 
-                                    constituent, 
-                                    baseline, 
-                                    pattern_name, 
-                                    time_series_name, 
-                                    scale_factor
-                                ) 
-                                VALUES (?, ?, ?, ?, ?, ?);'''
-                self.gutils.execute(insert_sql, (node, "FLOW", 0.0, "", "", 1.0)) 
-        else:
-            if inflow:
-                delete_sql = "DELETE FROM swmm_inflows WHERE node_name = ?"
-                self.gutils.execute(delete_sql, (node,))                
+        if not self.block:
+            # Is there an external inflow for this node?
+            inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"  
+            node = self.inlet_cbo.currentText()                                               
+            inflow = self.gutils.execute(inflow_sql, (node,)).fetchone()        
+            
+            enabled = self.external_inflow_chbox.isChecked()
+            self.external_inflow_btn.setEnabled(enabled)
+            if enabled:
+                if not inflow:
+                    insert_sql = '''INSERT INTO swmm_inflows 
+                                    (   node_name, 
+                                        constituent, 
+                                        baseline, 
+                                        pattern_name, 
+                                        time_series_name, 
+                                        scale_factor
+                                    ) 
+                                    VALUES (?, ?, ?, ?, ?, ?);'''
+                    self.gutils.execute(insert_sql, (node, "FLOW", 0.0, "", "", 1.0)) 
+            else:
+                if inflow:
+                    delete_sql = "DELETE FROM swmm_inflows WHERE node_name = ?"
+                    self.gutils.execute(delete_sql, (node,))                
 
         
     def inlet_drain_type_cbo_currentIndexChanged(self):
-        row = self.inlet_cbo.currentIndex()
-        item = QTableWidgetItem()
-        item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex()+1)
-        self.inlets_tblw.setItem(row, 7, item)
-
-        if self.inlet_drain_type_cbo.currentIndex() + 1 == 4:
-            self.label_17.setEnabled(True)
-            self.rating_table_cbo.setEnabled(True)
-
-            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
-            self.length_dbox.setEnabled(False)
-            self.width_dbox.setEnabled(False)
-            self.height_dbox.setEnabled(False)
-            self.weir_coeff_dbox.setEnabled(False)
-            self.feature_sbox.setEnabled(False)
-            self.curb_height_dbox.setEnabled(False)
-            self.clogging_factor_dbox.setEnabled(False)
-            self.time_for_clogging_dbox.setEnabled(False)        
-            
-        else:
-            self.label_17.setEnabled(False)
-            self.rating_table_cbo.setEnabled(False)
-
-            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
-            self.length_dbox.setEnabled(True)
-            self.width_dbox.setEnabled(True)
-            self.height_dbox.setEnabled(True)
-            self.weir_coeff_dbox.setEnabled(True)
-            self.feature_sbox.setEnabled(True)
-            self.curb_height_dbox.setEnabled(True)
-            self.clogging_factor_dbox.setEnabled(True)
-            self.time_for_clogging_dbox.setEnabled(True)  
+#         if not self.block:
+            row = self.inlet_cbo.currentIndex()
+            item = QTableWidgetItem()
+            item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex()+1)
+            self.inlets_tblw.setItem(row, 7, item)
+    
+            if self.inlet_drain_type_cbo.currentIndex() + 1 == 4:
+                self.label_17.setEnabled(True)
+                self.rating_table_cbo.setEnabled(True)
+                # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
+                self.length_dbox.setEnabled(False)
+                self.width_dbox.setEnabled(False)
+                self.height_dbox.setEnabled(False)
+                self.weir_coeff_dbox.setEnabled(False)
+                self.feature_sbox.setEnabled(False)
+                self.curb_height_dbox.setEnabled(False)
+                self.clogging_factor_dbox.setEnabled(False)
+                self.time_for_clogging_dbox.setEnabled(False)        
+                
+            else:
+                self.label_17.setEnabled(False)
+                self.rating_table_cbo.setEnabled(False)
+                # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
+                self.length_dbox.setEnabled(True)
+                self.width_dbox.setEnabled(True)
+                self.height_dbox.setEnabled(True)
+                self.weir_coeff_dbox.setEnabled(True)
+                self.feature_sbox.setEnabled(True)
+                self.curb_height_dbox.setEnabled(True)
+                self.clogging_factor_dbox.setEnabled(True)
+                self.time_for_clogging_dbox.setEnabled(True)  
             
     def length_dbox_valueChanged(self):
         self.box_valueChanged(self.length_dbox, 8)
@@ -293,25 +309,32 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.box_valueChanged(self.time_for_clogging_dbox, 15)
 
     def box_valueChanged(self, widget, col):
-        row = self.inlet_cbo.currentIndex()
-        item = QTableWidgetItem()
-        item.setData(Qt.EditRole, widget.value())
-        self.inlets_tblw.setItem(row, col, item)
+        if not self.block:
+            row = self.inlet_cbo.currentIndex()
+            item = QTableWidgetItem()
+            item.setData(Qt.EditRole, widget.value())
+            self.inlets_tblw.setItem(row, col, item)
 
     def rating_table_cbo_currentIndexChanged(self):
-        row = self.inlet_cbo.currentIndex()
-        rt = self.rating_table_cbo.currentText()
-        item = QTableWidgetItem()
-        item.setData(Qt.EditRole, rt)
-        self.inlets_tblw.setItem(row, 16, item)
+        if not self.block:
+            row = self.inlet_cbo.currentIndex()
+            rt = self.rating_table_cbo.currentText()
+            item = QTableWidgetItem()
+            item.setData(Qt.EditRole, rt)
+            self.inlets_tblw.setItem(row, 16, item)
 
     def inlets_tblw_valueChanged(self, I, J):
         self.uc.show_info('TABLE CHANGED in ' + str(I) + '  ' + str(J))
 
     def inlets_tblw_cell_clicked(self, row, column):
+
         self.inlet_cbo.blockSignals(True)
-        self.inlet_cbo.setCurrentIndex(row)
+        name = self.inlets_tblw.item(row,0).text()
+        idx = self.inlet_cbo.findText(name)
+        self.inlet_cbo.setCurrentIndex(idx)
         self.inlet_cbo.blockSignals(False)
+        
+        self.block = True
 
         self.grid_element.setText(self.inlets_tblw.item(row,1).text())
         self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,2)))
@@ -335,45 +358,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row,15)))
         
         rt_name = self.inlets_tblw.item(row,16).text().strip()
-        rt_name = rt_name if rt_name is not None else 0
+        rt_name = rt_name if rt_name is not None else ""
         idx = self.rating_table_cbo.findText(rt_name)
-        self.rating_table_cbo.setCurrentIndex(idx)        
-          
-    def fill_individual_controls_with_current_inlet_in_table(self):
-        # Highlight row in table:
-        row = self.inlet_cbo.currentIndex()
-        self.inlets_tblw.selectRow(row)
-        inlet_type_index = -1
-        # Load controls with selected row in table:
-        item = QTableWidgetItem()
-        item = self.inlets_tblw.item(row, 1)
-        if item is not None:
-            self.grid_element.setText(str(item.text()))
-        self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
-        self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
-        self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
-        self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-        self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
-        item = self.inlets_tblw.item(row, 7) # Inlet type
-        if item is not None:
-            inlet_type_index  = int(item.text() if item.text() != "" else 1)
-            inlet_type_index = 4 if inlet_type_index > 4 else 0 if inlet_type_index < 0 else inlet_type_index-1
-            self.inlet_drain_type_cbo.setCurrentIndex(inlet_type_index)
-        self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
-        self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
-        self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
-        self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
-        self.feature_sbox.setValue(int_or_zero(self.inlets_tblw.item(row, 12)))
-        self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
-        self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
-        self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
-        
-        if inlet_type_index == 3:
-            rt_name = self.inlets_tblw.item(row, 16)
-            rt_name = rt_name.text() if  rt_name.text() is not None else ""
-            idx = self.rating_table_cbo.findText(rt_name)
-            self.rating_table_cbo.setCurrentIndex(idx) 
-            
+        self.rating_table_cbo.setCurrentIndex(idx)      
+
         # Is there an external inflow for this node?
         inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"                                                  
         inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
@@ -382,7 +370,72 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.external_inflow_btn.setEnabled(True)
         else:    
             self.external_inflow_chbox.setChecked(False)
-            self.external_inflow_btn.setEnabled(False)        
+            self.external_inflow_btn.setEnabled(False)  
+
+        self.block = False
+
+    def fill_individual_controls_with_current_inlet_in_table(self):
+        # Highlight row in table:
+        row = self.inlet_cbo.currentIndex()
+
+        rows = self.inlets_tblw.rowCount()
+        if rows <= 1:
+            return
+        
+        inlet = self.inlet_cbo.currentText()
+        found = False;
+        for i in range(0, rows):
+            if self.inlets_tblw.item(i, 0).text() == inlet:
+                # We have found our value so we can update 'i' row
+                found = True
+                break
+                
+        if found:
+            row = i 
+            self.inlets_tblw.selectRow(row)
+            inlet_type_index = -1
+            # Load controls with selected row in table:
+            item = QTableWidgetItem()
+            item = self.inlets_tblw.item(row, 1)
+            if item is not None:
+                self.grid_element.setText(str(item.text()))
+            self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
+            self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
+            self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
+            self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
+            self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+            item = self.inlets_tblw.item(row, 7) # Inlet type
+            if item is not None:
+                inlet_type_index  = int(item.text() if item.text() != "" else 1)
+                inlet_type_index = 4 if inlet_type_index > 4 else 0 if inlet_type_index < 0 else inlet_type_index-1
+                self.inlet_drain_type_cbo.setCurrentIndex(inlet_type_index)
+            self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
+            self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
+            self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
+            self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
+            self.feature_sbox.setValue(int_or_zero(self.inlets_tblw.item(row, 12)))
+            self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
+            self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
+            self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            
+            if inlet_type_index == 3:
+                rt_name = self.inlets_tblw.item(row, 16)
+                rt_name = rt_name.text() if  rt_name.text() is not None else ""
+                idx = self.rating_table_cbo.findText(rt_name)
+                self.rating_table_cbo.setCurrentIndex(idx) 
+                
+            # Is there an external inflow for this node?
+            inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"                                                  
+            inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+            if inflow:
+                self.external_inflow_chbox.setChecked(True)
+                self.external_inflow_btn.setEnabled(True)
+            else:    
+                self.external_inflow_chbox.setChecked(False)
+                self.external_inflow_btn.setEnabled(False)  
+             
+        else:
+            self.uc.bar_warn("Inlet/Junction not found!")               
             
     def save_inlets(self):
         """
@@ -501,6 +554,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 else:
                     rt_name = ''
                  
+                 
                 # Append grid number to rating table name if doesn't have it already. 
                 old_rt_name = rt_name 
                 if rt_name != '':
@@ -509,6 +563,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     else:    
                         head, sep, tail = rt_name.partition('.G') 
                         rt_name = head + '.G' + grid
+                                           
+        
                 
                 # See if rating table doesn't exists in swmmflort:
                 if intype == '4': # Rating table. 
@@ -520,7 +576,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                                 if row[1] != rt_name:
                                     type4.append((grid, rt_name))
                                 else:
-                                    # rating table exists in swmmflort, does it have pairs of values in swmmflort_data
+                                    # rating table exists in swmmflort, does it have pairs of values in swmmflort_data?
                                     data_qry = 'SELECT * FROM swmmflort_data WHERE swmm_rt_fid = ?'
                                     data = self.gutils.execute(data_qry, (row[2],)).fetchone()
                                     if data is None:
@@ -555,9 +611,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                                 fid
                             ))            
             
+            
             # Update 'user_swmm_nodes' table:
             self.gutils.execute_many(update_qry, inlets)
-
+            
             if type4:
                 for item in type4:
                     # Insert item into 'swmmflort' table:
@@ -577,71 +634,27 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     insert_data = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?,?,?);'
                     for d in data_base:
                         self.gutils.execute(insert_data, (fid_new_rt[0], d[0], d[1]))
-                    pass      
-                    
+                    pass               
+                   
             if no_rt > 0:   
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 020219.1836:\n\nThe following " + str(no_rt) + 
                                   " grid element(s) have inlet of type 4 (stage discharge with rating table) but don't have rating table assigned:\n"
-                                  + no_rt_names)          
-            
+                                  + no_rt_names)  
+              
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
                        +'\n__________________________________________________', e)                      
             
-    def populate_rtables(self):       
-
+    def populate_rtables(self):         
         self.rating_table_cbo.clear()
         for row in self.inletRT.get_rating_tables():
             rt_fid, name = [x if x is not None else '' for x in row]
             if name != '':
                 self.rating_table_cbo.addItem(name, rt_fid)                
 
-    def populate_rtables_data(self):
-        idx = self.rating_table_cbo.currentIndex()
-        rt_fid = self.rating_table_cbo.itemData(idx)
-        rt_name =  self.rating_table_cbo.itemText(idx)
-        if rt_fid is None:
-            self.uc.bar_warn("No rating table defined!")
-            return
- 
-        self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
-        if not self.inlet_series_data:
-            return
-        self.create_plot()
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.inlet_data_model)
-        self.inlet_data_model.clear()
-        self.inlet_data_model.setHorizontalHeaderLabels(['Depth', 'Q'])
-        self.d1, self.d1 = [[], []]
-        for row in self.inlet_series_data:
-            items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
-            self.inlet_data_model.appendRow(items)
-            self.d1.append(row[0] if not row[0] is None else float('NaN'))
-            self.d2.append(row[1] if not row[1] is None else float('NaN'))
-        rc = self.inlet_data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [StandardItem(x) for x in ('',) * 2]
-                self.inlet_data_model.appendRow(items)
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(2):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(self.inlet_data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        self.update_plot()
-
-    def add_rating_table_data(self, rt_fid, rows=5, fetch=False):
-        """
-        Add new rows to swmmflort_data for a given rt_fid.
-        """
-        qry = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, 0, 0);'
-        self.gutils.execute_many(qry, ([rt_fid],) * rows)
-        if fetch:
-            return self.get_rating_tables_data(rt_fid)
     def create_plot(self):
-
         self.plot.clear()
         if self.plot.plot.legend is not None:
             self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
@@ -658,10 +671,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.inlet_data_model, i, 0))
             self.d2.append(m_fdata(self.inlet_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
-             
-    def update_rating_tables_in_storm_drain_widget(self):
-        self.populate_rtables_data()
-        pass
 
     def show_external_inflow_dlg(self):
         dlg_external_inflow = ExternalInflowsDialog(self.iface, self.inlet_cbo.currentText() ) 
@@ -976,90 +985,4 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
     def get_name(self):
         return self.time_series_name
        
-
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-           
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         

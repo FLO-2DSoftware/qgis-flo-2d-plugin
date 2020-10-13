@@ -171,22 +171,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.outfalls_btn.clicked.connect(self.show_outfalls)
             self.inlets_btn.clicked.connect(self.show_inlets)
             self.conduits_btn.clicked.connect(self.show_conduits)
-
-            qry = '''SELECT value FROM cont WHERE name = 'SWMM';'''
-            row = self.gutils.execute(qry).fetchone()
-            if is_number(row[0]):
-                if row[0] == '0':
-                    self.simulate_stormdrain_chbox.setChecked(False)
-                else:
-                    self.simulate_stormdrain_chbox.setChecked(True)
+            self.control_lyr.editingStopped.connect(self.check_simulate_SD_1)
+#             self.control_lyr.attributeValueChanged.connect(self.check_simulate_SD_2)
+            
+            self.check_simulate_SD_1()
 
             self.populate_rtables()
             self.populate_rtables_data()
-            self.rating_table_cbo.activated.connect(self.populate_rtables_data)
-#             self.rating_table_cbo.showPopup.connect(self.populate_rtables())
-#             self.cbo_intype.activated.connect(self.check_intype)                    
+            self.SD_rating_table_cbo.activated.connect(self.populate_rtables_data)                 
                     
-
     def split_INP_into_groups_dictionary_by_tags_to_export(self, inp_file):
         """
         Creates an ordered dictionary INP_groups with all groups in [xxxx] .INP file.
@@ -336,7 +329,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
             swmm_dict['rt_fid'] = None
         elif sd_type == 'I' and intype == 4:
-            swmm_dict['rt_fid'] = self.rating_table_cbo.itemData(self.rating_table_cbo.currentIndex())
+            swmm_dict['rt_fid'] = self.SD_rating_table_cbo.itemData(self.SD_rating_table_cbo.currentIndex())
         else:
             pass
 
@@ -409,9 +402,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 sd_type = feat['sd_type']
                 name = feat['name']
                 rt_fid = feat['rt_fid']
+                rt_name = feat['rt_name']
                 if sd_type == 'I' or sd_type == 'J':
                     intype = feat['intype']
-                    if intype == 4 and rt_fid is not None:
+                    if intype == 4 and (rt_name is not None and rt_name != ""):
+#                     if intype == 4 and rt_fid is not None:
                         rt_updates.append((grid_fid, rt_fid))
                     row = [grid_fid, 'D', grid_fid, name] + [feat[col] for col in self.inlet_columns]
                     row[10] = int('1' if is_true(row[9]) else '0')
@@ -494,7 +489,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                
             if writer.hasError() != QgsVectorFileWriter.NoError:
                 self.uc.bar_error("ERROR 220620.1721.0922: Error when creating shapefile: " + shapefile)
-                return false
+                return False
                
             # Add features: 
             conduits_lyr = self.lyrs.data['user_swmm_conduits']['qlyr']
@@ -1426,7 +1421,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         # See if there are inlets:
         if self.gutils.is_table_empty('user_swmm_nodes'):
-            self.uc.bar_warn('User Layer "Storm Drain Nodes" is empty!. Import components from .INP file or shapefile, or schematize Storm Drains.')
+            self.uc.bar_warn('User Layer "Storm Drain Nodes" is empty!. Import components from .INP file or shapefile, or convert from schematized Storm Drains.')
             return
 
         #  See if there are any Outlet nodes:
@@ -1453,20 +1448,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         # See if table is empy:
         if self.gutils.is_table_empty('user_swmm_nodes'):
-            self.uc.bar_warn('User Layer "Storm Drain Nodes" is empty!. Import components from .INP file or shapefile, or schematize Storm Drains.')
+            self.uc.bar_warn('User Layer "Storm Drain Nodes" is empty!. Import components from .INP file or shapefile, or convert from schematized Storm Drains.')
             return
 
         #  See if there are any Inlet nodes:
         qry = '''SELECT * FROM user_swmm_nodes WHERE sd_type = 'I' or sd_type = 'J';'''
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
-            self.uc.bar_warn("No inlets defined in 'Storm Drain Nodes' User Layer!")
+            self.uc.show_info("WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!")            
             return
 
         dlg_inlets = InletNodesDialog(self.iface, self.plot, self.table, self.lyrs)
         save = dlg_inlets.exec_()
         if save:
             self.uc.show_info("Inlets saved to 'Storm Drain-Inlets' User Layer!\n\nSchematize it before saving into SWMMFLO.DAT.")
+            self.populate_rtables()
+    
+        
         elif not save:
             pass
         else:
@@ -1479,7 +1477,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         # See if there are conduits:
         if self.gutils.is_table_empty('user_swmm_conduits'):
-            self.uc.bar_warn('User Layer "Storm Drain Conduits" is empty!. Import components from .INP file or shapefile, or schematize Storm Drains.')
+            self.uc.bar_warn('User Layer "Storm Drain Conduits" is empty!. Import components from .INP file or shapefile..')
             return
 
         dlg_conduits = ConduitsDialog(self.iface, self.lyrs)
@@ -1516,7 +1514,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 if dlg_shapefile.saveSelected:
-                    self.uc.bar_info("Storm drain components (inlets, outfall, and/or conduits) from hydraulic layers saved.")
+                    self.uc.bar_info("Storm drain components (inlets, outfalls, and/or conduits) from hydraulic layers saved.")
 
             except Exception as e:
                 self.uc.bar_error("ERROR while saving storm drain components from hydraulic layers!.")
@@ -1544,15 +1542,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.populate_rtables() 
 
     def populate_rtables(self):
-        self.rating_table_cbo.clear()
+        self.SD_rating_table_cbo.clear()
         for row in self.inletRT.get_rating_tables():
             rt_fid, name = [x if x is not None else '' for x in row]
             if name != '':
-                self.rating_table_cbo.addItem(name, rt_fid)
+                self.SD_rating_table_cbo.addItem(name, rt_fid)
                 
     def populate_rtables_data(self):
-        idx = self.rating_table_cbo.currentIndex()
-        rt_fid = self.rating_table_cbo.itemData(idx)
+        idx = self.SD_rating_table_cbo.currentIndex()
+        rt_fid = self.SD_rating_table_cbo.itemData(idx)
         if rt_fid is None:
 #             self.uc.bar_warn("No rating table defined!")
             return
@@ -1582,22 +1580,36 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.inlet_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_plot()                
-                
-                
-              
 
+    def check_simulate_SD_1(self):
+        qry = '''SELECT value FROM cont WHERE name = 'SWMM';'''
+        row = self.gutils.execute(qry).fetchone()
+        if is_number(row[0]):
+            if row[0] == '0':
+                self.simulate_stormdrain_chbox.setChecked(False)
+            else:
+                self.simulate_stormdrain_chbox.setChecked(True)     
+     
+    def check_simulate_SD_2(self):
+        self.uc.bar_info("2222.")
+                
+
+                     
     def add_rtables(self):
         if not self.inletRT:
             return
-        self.inletRT.add_rating_table()
+        newRT = self.inletRT.add_rating_table()
         self.populate_rtables()
-        self.rating_table_cbo.setCurrentIndex(self.rating_table_cbo.count()-1)
+        newIdx = self.SD_rating_table_cbo.findText(newRT)
+        if not newIdx == -1:
+           self.SD_rating_table_cbo.setCurrentIndex(newIdx) 
+#         self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1)
         self.populate_rtables_data()
         
     def delete_rtables(self):
         if not self.inletRT:
             return
-        rt_name = self.rating_table_cbo.currentText()
+        rt_name = self.SD_rating_table_cbo.currentText()
         qry = '''SELECT grid_fid, name FROM swmmflort WHERE name = ?'''
         rts =  self.gutils.execute(qry, (rt_name,))
         for rt in rts: 
@@ -1606,41 +1618,41 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 q = 'WARNING 100319.1024:\n\nRating table "' +  rt_name + '" is not assigned to any grid element.\nDo you want to delete it?'
                 if not self.uc.question(q):
                     return        
-                idx = self.rating_table_cbo.currentIndex()
-                rt_fid = self.rating_table_cbo.itemData(idx)
-                self.inletRT.del_rating_table(rt_fid)  
+                idx = self.SD_rating_table_cbo.currentIndex()
+                rt_fid = self.SD_rating_table_cbo.itemData(idx)
+                self.inletRT.del_rating_table(rt_fid) 
+                self.populate_rtables() 
             else:
                 if self.uc.question("WARNING 040319.0444:\n\nRating table '"+ rt_name + 
                                   "' is assigned to grid element " + str(grid_fid) + ".\nDo you want to delete it?.\n"):
                     if self.uc.question("CONFIRM:  Delete rating table '"+ rt_name + 
                                       "' assigned to grid element " + str(grid_fid) + " ?"):                            
-                        idx = self.rating_table_cbo.currentIndex()
-                        rt_fid = self.rating_table_cbo.itemData(idx)
-                        self.inletRT.del_rating_table(rt_fid)                            
-        self.populate_rtables()
-
-
+                        idx = self.SD_rating_table_cbo.currentIndex()
+                        rt_fid = self.SD_rating_table_cbo.itemData(idx)
+                        self.inletRT.del_rating_table(rt_fid)  
+                        self.populate_rtables()                           
+        
     def rename_rtables(self):
         if not self.inletRT:
             return
         new_name, ok = QInputDialog.getText(None, 'Change rating table name', 'New name:')
         if not ok or not new_name:
             return
-        if not self.rating_table_cbo.findText(new_name) == -1:
+        if not self.SD_rating_table_cbo.findText(new_name) == -1:
             msg = 'WARNING 060319.1735: Rating table with name {} already exists in the database. Please, choose another name.'.format(
                 new_name)
             self.uc.show_warn(msg)
             return
-        idx = self.rating_table_cbo.currentIndex()
-        rt_fid = self.rating_table_cbo.itemData(idx)
+        idx = self.SD_rating_table_cbo.currentIndex()
+        rt_fid = self.SD_rating_table_cbo.itemData(idx)
         self.inletRT.set_rating_table_data_name(rt_fid, new_name)
         self.populate_rtables()
 
 
 
     def save_rtables_data(self):
-        idx = self.rating_table_cbo.currentIndex()
-        rt_fid = self.rating_table_cbo.itemData(idx)
+        idx = self.SD_rating_table_cbo.currentIndex()
+        rt_fid = self.SD_rating_table_cbo.itemData(idx)
         self.update_plot()
         rt_data = []
 
@@ -1656,7 +1668,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
             else:
                 pass
-        data_name = self.rating_table_cbo.currentText()
+        data_name = self.SD_rating_table_cbo.currentText()
         self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
 
     def create_plot(self):
