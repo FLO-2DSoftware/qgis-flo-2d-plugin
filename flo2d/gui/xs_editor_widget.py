@@ -14,8 +14,23 @@ import sys
 import subprocess
 from qgis.PyQt.QtCore import Qt, QSettings
 from qgis.PyQt.QtGui import QStandardItem, QColor
-from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QTableWidgetItem, QMessageBox, QPushButton
-from qgis.core import QgsFeatureRequest, QgsFeature, QgsGeometry
+from qgis.PyQt.QtWidgets import (QInputDialog,
+                                 QFileDialog,
+                                 QApplication,
+                                 QTableWidgetItem,
+                                 QMessageBox,
+                                 QPushButton,
+                                 QStyledItemDelegate)
+
+from qgis.core import (QgsProject,
+                       QgsFeatureRequest,
+                       QgsFeature,
+                       QgsGeometry,
+                       QgsMapLayerProxyModel,
+                       QgsWkbTypes,
+                       QgsPointXY,
+                       QgsCoordinateTransform)
+from qgis.gui import QgsMapLayerComboBox
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
 from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils
@@ -84,6 +99,16 @@ class ShematizedChannelsInfo(qtBaseClass, uiDialog):
 
 uiDialog, qtBaseClass = load_ui('xs_editor')
 
+ChannelRole = Qt.UserRole + 1
+
+class CrossSectionDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super(CrossSectionDelegate, self).initStyleOption(option, index)
+        a=index.data(ChannelRole)
+        if index.data(ChannelRole):
+            option.font.setBold(True)
+            option.font.setItalic(True)
+
 class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, plot, table, lyrs):
@@ -108,6 +133,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.parser = ParseDAT()      
         
         self.setupUi(self)
+        delegate = CrossSectionDelegate(self.xs_cbo)
+        self.xs_cbo.setItemDelegate(delegate)
         self.populate_xsec_type_cbo()
         self.xi, self.yi = [[], []]
 #         self.create_plot()
@@ -127,6 +154,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.confluences_btn, 'schematize_confluence.svg')
         set_icon(self.interpolate_channel_n_btn, 'interpolate_channel_n.svg')
         set_icon(self.rename_xs_btn, 'change_name.svg')
+        set_icon(self.sample_elevation_current_R_T_V_btn, 'sample_channel_current_RTV.svg')
+        set_icon(self.sample_elevation_all_R_T_V_btn, 'sample_channel_all_RTV.svg')
+        set_icon(self.sample_elevation_current_natural_btn, 'sample_channel_current_natural.svg')
+        set_icon(self.sample_elevation_all_natural_btn, 'sample_channel_all_natural.svg')
         # Connections:
 
         # Buttons connections:
@@ -144,15 +175,35 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
+        self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
+        self.sample_elevation_all_natural_btn.clicked.connect(self.sample_elevation_all_natural_cross_sections)
+        self.sample_elevation_current_R_T_V_btn.clicked.connect(self.sample_bank_elevation_current_RTV_cross_sections)
+        self.sample_elevation_all_R_T_V_btn.clicked.connect(self.sample_bank_elevation_all_RTV_cross_sections)
 
         # More connections:
-        self.xs_cbo.activated.connect(self.current_xsec_changed)
+        self.xs_cbo.activated.connect(self.current_cbo_xsec_index_changed)
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
         self.table.after_delete.connect(self.save_xs_data)
+
+        self.raster_combobox = QgsMapLayerComboBox()
+        self.raster_combobox.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.raster_combobox.setEnabled(self.raster_radio_btn.isChecked())
+        self.source_raster_layout.addWidget(self.raster_combobox)
+        self.raster_radio_btn.toggled.connect(self.raster_combobox.setEnabled)
+        self.raster_radio_btn.toggled.connect(self.update_sample_elevation_btn)
+        self.update_sample_elevation_btn( self.raster_radio_btn.isChecked())
+
+    def update_sample_elevation_btn(self, is_checked):
+        if self.xs is not None:
+            row = self.xs.get_row()
+            chan_x_row = self.xs.get_chan_x_row()
+            typ = row['type']
+            self.sample_elevation_current_natural_btn.setEnabled(is_checked and typ == 'N')
+        self.sample_elevation_all_natural_btn.setEnabled(is_checked)
 
     def block_saving(self):
         try_disconnect(self.xs_data_model.dataChanged, self.save_xs_data)
@@ -173,7 +224,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def switch2selected(self):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo, use_fid=True)
-        self.current_xsec_changed(self.xs_cbo.currentIndex())
+        current_fid=self.xs_cbo.currentData()
+        self.current_xsec_changed(current_fid)
 
     def interp_bed_and_banks(self):
         qry = 'SELECT fid FROM chan;'
@@ -212,28 +264,98 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(1)
         qry = 'SELECT fid, name FROM user_xsections ORDER BY fid COLLATE NOCASE;'
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
+        user_xs_rows = self.gutils.execute(qry).fetchall()
+
+        if not user_xs_rows:
             self.xs_data_model.clear()
             self.tview.setModel(self.xs_data_model)
             self.plot.clear()
             return
-        cur_idx = 0 # Pointer to selected item in combo. See below. Depending on call of method,
-                    # it could be the first, the last, or a given one.
-        for i, row in enumerate(rows): # Cycles over pair (fid, name) of all user_xsections.
+
+        qry = 'SELECT seg_fid, nr_in_seg, user_xs_fid FROM chan_elems WHERE interpolated = 0;'
+        schematized_cross_section = self.gutils.execute(qry).fetchall()
+        schematized_channel_dict = dict()
+        user_xs_dict=dict()
+        # Construct channel dict
+        for i, row in enumerate(schematized_cross_section):
+            row = [x if x is not None else '' for x in row]
+            seg_fid, nr_in_seg, user_xs_fid = row
+            user_xs_dict[user_xs_fid]=seg_fid
+            if seg_fid in schematized_channel_dict:
+                schematized_channel_dict[seg_fid].append((user_xs_fid, nr_in_seg))
+            else:
+                schematized_channel_dict[seg_fid] = [(user_xs_fid, nr_in_seg)]
+
+        # Order the cross section in each channel
+        for channel, lst in schematized_channel_dict.items():
+            schematized_channel_dict[channel] = sorted(lst, key=lambda tup: tup[1])
+
+        qry = 'SELECT fid, name FROM user_left_bank;'
+        channel_names = self.gutils.execute(qry).fetchall()
+        channel_names_dict =dict()
+        for i, row in enumerate(channel_names):
+            row = [x if x is not None else '' for x in row]
+            seg_fid, name = row
+            channel_names_dict[seg_fid] = name
+
+        # search for not schematized cross section and construct name cross section dict
+        non_schematized_xs = []
+        xs_name_dict = dict()
+        for i, row in enumerate(user_xs_rows):
             row = [x if x is not None else '' for x in row]
             row_fid, name = row
-            self.xs_cbo.addItem(name, str(row_fid))
-            if fid:
-                if row_fid == int(fid):
-                    cur_idx = i
+            if row_fid not in user_xs_dict:
+                non_schematized_xs.append(row_fid)
+            xs_name_dict[row_fid] = name
+
+        if len(non_schematized_xs)>0 or len(schematized_channel_dict)>0:
+            cur_idx = 1 # Pointer to selected item in combo. See below. Depending on call of method,
+                    # it could be the first, the last, or a given one.
+        else:
+            cur_idx = 0
+
+        # ... and populate combo box, start with non schematized cross section
+        if len(non_schematized_xs)>0:
+            self.xs_cbo.addItem("Non Schematized")
+            row_index = self.xs_cbo.model().rowCount()-1
+            flags = self.xs_cbo.model().item(row_index).flags()
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
+            for xs_fid in non_schematized_xs:
+                name = xs_name_dict[xs_fid]
+                self.xs_cbo.addItem(name, str(xs_fid))
+                row_index = self.xs_cbo.model().rowCount()-1
+                self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
+
+        for channel, cross_sections in schematized_channel_dict.items():
+            channel_name = channel_names_dict[channel]
+            self.xs_cbo.addItem(channel_name)
+            row_index = self.xs_cbo.model().rowCount() - 1
+            flags = self.xs_cbo.model().item(row_index).flags()
+            self.xs_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.xs_cbo.model().item(row_index).setData(True, ChannelRole)
+            for tup in cross_sections:
+                xs_fid = tup[0]
+                if xs_fid in xs_name_dict:
+                    name = xs_name_dict[xs_fid]
+                else:
+                    continue
+                self.xs_cbo.addItem(name, str(xs_fid))
+                row_index = self.xs_cbo.model().rowCount() - 1
+                self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
+
+                if fid:
+                    if xs_fid == int(fid):
+                        cur_idx = row_index
+
         if show_last_edited:
             cur_idx = i
+
         self.xs_cbo.setCurrentIndex(cur_idx)
         self.enable_widgets(False)
         if self.xs_cbo.count():
             self.enable_widgets()
-            self.current_xsec_changed(cur_idx)
+            self.current_xsec_changed(self.xs_cbo.currentData())
 
     def digitize_xsec(self, i):
         def_attr_exp = self.lyrs.data['user_xsections']['attrs_defaults']
@@ -273,7 +395,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         ]
         self.lyrs.repaint_layers()
 
-    def current_xsec_changed(self, idx=0):
+    def current_cbo_xsec_index_changed(self, idx=0):
+        if not self.xs_cbo.count():
+            return
+        fid = self.xs_cbo.currentData()
+        if fid is None:
+            fid = -1
+
+        self.current_xsec_changed(fid)
+
+    def current_xsec_changed(self, fid=-1):
         """
         User changed current xsection in the xsections list.
         Populate xsection data fields and update the plot.
@@ -285,8 +416,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 #         self.plot = PlotWidget()
 #         create_f2d_plot_dock()
         
-        
-        fid = self.xs_cbo.itemData(idx)
+        if fid is None or fid == -1:
+            fid = self.xs_cbo.itemData(0)
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
         self.lyrs.clear_rubber()
@@ -299,16 +430,31 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         fcn = float(row['fcn']) if is_number(row['fcn']) else float(self.gutils.get_cont_par('MANNING'))
         self.xs_type_cbo.setCurrentIndex(self.xs_types[typ]['cbo_idx'])
         self.n_sbox.setValue(fcn)
+
+        self.update_table()
+
+        self.create_plot()
+        self.update_plot()
+
+        self.sample_elevation_current_R_T_V_btn.setEnabled(typ == 'R' or typ == 'T' or typ == 'V')
+        self.sample_elevation_current_natural_btn.setEnabled(typ == 'N' and self.raster_radio_btn.isChecked())
+
+        # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
+
+    def update_table(self):
+
+        row = self.xs.get_row()
         chan_x_row = self.xs.get_chan_x_row()
+        typ = row['type']
         if typ == 'N':
             xy = self.xs.get_chan_natural_data()
             self.table.connect_delete(True)
         else:
             xy = None
-            self.table.connect_delete(False) # disable data or row delete function if table editor
+            self.table.connect_delete(False)  # disable data or row delete function if table editor
         self.xs_data_model.clear()
         self.tview.undoStack.clear()
-        
+
         if not xy:
             self.plot.clear()
             self.xs_data_model.setHorizontalHeaderLabels(['Value'])
@@ -316,7 +462,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 item = StandardItem(str(val))
                 self.xs_data_model.appendRow(item)
             self.xs_data_model.setVerticalHeaderLabels(list(chan_x_row.keys()))
-            self.xs_data_model.removeRows(0,2) #excluding fid and user_xs_fid values
+            self.xs_data_model.removeRows(0, 2)  # excluding fid and user_xs_fid values
             self.tview.setModel(self.xs_data_model)
         else:
             self.xs_data_model.setHorizontalHeaderLabels(['Station', 'Elevation'])
@@ -337,18 +483,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         for i in range(2):
             self.tview.setColumnWidth(i, 100)
 
-        self.create_plot()
-        self.update_plot()
-
-        # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
 
     def cur_xsec_type_changed(self, idx):
         if not self.xs_cbo.count():
             return
         typ = self.xs_type_cbo.itemData(idx)
         self.xs.set_type(typ)
-        xs_cbo_idx = self.xs_cbo.currentIndex()
-        self.current_xsec_changed(xs_cbo_idx)
+        xs_cbo_fid = self.xs_cbo.currentData()
+        self.current_xsec_changed(xs_cbo_fid)
 
     def create_plot(self):
         """
@@ -404,8 +546,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
         for i in range(self.xs_data_model.rowCount()):
-            self.xi.append(m_fdata(self.xs_data_model, i, 0))
-            self.yi.append(m_fdata(self.xs_data_model, i, 1))
+            x = m_fdata(self.xs_data_model, i, 0)
+            y = m_fdata(self.xs_data_model, i, 1)
+            if not isnan(x) and  not isnan(y):
+                self.xi.append(x)
+                self.yi.append(y)
 
     def save_n(self, n_val):
         if not self.xs_cbo.count():
@@ -467,7 +612,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         xs_idx = self.xs_cbo.currentIndex()
         cur_data = self.xs_cbo.itemData(xs_idx)
         if cur_data:
-            fid = int(cur_data[0])
+            fid = int(cur_data)
         else:
             return
         qry = '''DELETE FROM user_xsections WHERE fid = ?;'''
@@ -512,39 +657,26 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # Create the Schematized Left Bank (Channel Segments), joining cells intersecting
         # the User Left Bank Line, with arrows from one cell centroid to the next:
         try:
-            cs.create_schematized_channel_segments_aka_left_banks()
+            cs.create_schematized_channels()
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error('ERROR 060319.1611: Schematizing left bank lines failed !\n'
-                              'Please check your User Layers.\n\n'
-                              'Check that:\n\n'
-                              '   * For each User Left Bank line, the first cross section is\n'
-                              '     defined starting in the first grid cell.\n\n'
-                              '   * Each User Left Bank line has at least 2 cross sections\n'
-                              '     crossing it.\n\n'
-                              '   * All cross sections associated to a User Left Bank line\n'
-                              '     intersects (crossover) it.'
-                              '\n_________________________________________________', e)
-            return
-
-        # Create the Schematized Cross sections layer, with lines from schematized left bank cells.
-        try:
-            cs.create_schematized_xsections()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn('WARNING 060319.1742: Schematizing failed while creating cross-sections! '
-                              'Please check your User Layers.')
+                               'Please check your User Layers.\n\n'
+                               'Check that:\n\n'
+                               '   * For each User Left Bank line, the first cross section is\n'
+                               '     defined starting in the first grid cell.\n\n'
+                               '   * Each User Left Bank line has at least 2 cross sections\n'
+                               '     crossing it.\n\n'
+                               '   * All cross sections associated to a User Left Bank line\n'
+                               '     intersects (crossover) it.'
+                               '\n_________________________________________________', e)
             return
 
         try:
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
 
-#             cs.create_xs_type_n_r_t_v_tables()
-#             cs.create_schematized_rbank_lines_from_xs_tips()
-
             self.gutils.create_xs_type_n_r_t_v_tables()
-            self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
             cs.copy_user_xs_data_to_schem()
 
@@ -559,8 +691,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 cs.make_distance_table()
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn('WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
-                                  'Please check your User Layers.')
+                self.uc.show_warn(
+                    'WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n'
+                    'Please check your User Layers.')
                 return
         else:
             self.uc.log_info(traceback.format_exc())
@@ -574,13 +707,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         confluences = self.lyrs.data['chan_confluences']['qlyr']
         self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
         self.lyrs.repaint_layers()
-        idx = self.xs_cbo.currentIndex()
-        self.current_xsec_changed(idx)
-        
+        current_fid = self.xs_cbo.currentData()
+        self.current_xsec_changed(current_fid)
+
         # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
-#
+        #
         info = ShematizedChannelsInfo(self.iface)
         close = info.exec_()
+
+        self.populate_xsec_cbo()
+
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty('grid'):
@@ -828,6 +964,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         else:
             pass
 
+        qry = 'SELECT user_xs_fid, nxsecnum FROM user_chan_n;'
+        natural_channel_section_number = self.gutils.execute(qry).fetchall()
+        natural_channel_section_number_dict = dict()
+        for i, row in enumerate(natural_channel_section_number):
+            row = [x if x is not None else '' for x in row]
+            user_xs_fid, nxsecum = row
+            natural_channel_section_number_dict[user_xs_fid] = nxsecum
+
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')
         outdir = QFileDialog.getExistingDirectory(None,
@@ -871,7 +1015,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 res.insert(3, 0)
                                 non_surveyed += 1
                             else:
-                                res.insert(3, user_xs_fid)
+                                res.insert(3, natural_channel_section_number_dict[user_xs_fid])
                                 surveyed += 1
                                 previous_xs = user_xs_fid
                         else:
@@ -939,8 +1083,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 s.setValue('FLO-2D/lastGdsDir', outdir)
                 xsec = os.path.join(outdir, 'XSEC.DAT')
                 with open(xsec, 'w') as x:
-                    for fid, name in user_xsections:
-                        x.write(xsec_line.format(fid, name))
+                    for fid, nxsecnum, name in chan_n:
+                        x.write(xsec_line.format(nxsecnum, name))
                         for xi, yi in self.gutils.execute(xsec_sql, (fid,)):
                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
                 QApplication.restoreOverrideCursor()
@@ -1038,8 +1182,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                               'Please check your User Layers.')
             return
         else:
-            idx = self.xs_cbo.currentIndex()
-            self.current_xsec_changed(idx)
+            current_fid = self.xs_cbo.currentData()
+            self.current_xsec_changed(current_fid)
             QApplication.restoreOverrideCursor()
             self.uc.show_info('Interpolation of cross-sections values finished!')
 
@@ -1287,3 +1431,156 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn('WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.')
+
+    def effective_user_cross_section(self,fid,name):
+        """ Return the cross section split between banks """
+
+        user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
+        try:
+            feat = next(user_xs_lyr.getFeatures(QgsFeatureRequest(fid)))
+        except StopIteration:
+            self.uc.show_warn('WARNING 060319.XXX: Cross section ' + str(name) + ' has not geometry.')
+            return
+
+        # split the cross section between banks lines
+        xs_geometry = feat.geometry()
+        user_left_bank_layer = self.lyrs.data['user_left_bank']['qlyr']
+        left_bank_intersect = False
+        for left_bank_feature in user_left_bank_layer.getFeatures():
+            if left_bank_feature.geometry().intersects(xs_geometry):
+                left_bank_intersect = True
+                break
+
+        if not left_bank_intersect:
+            self.uc.show_warn(
+                'WARNING 060319.XXX: Cross section ' + str(name) + ' does not intersect with any left bank')
+            return
+
+        intersects = xs_geometry.intersection(left_bank_feature.geometry())
+        if intersects.wkbType == QgsWkbTypes.MultiPoint:
+            multi_point = intersects.asMultiPoint()
+            intersect_point = multi_point[0]
+        else:
+            intersect_point = intersects.asPoint()
+
+        dist, left_intersect_point, left_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
+            QgsPointXY(intersect_point))
+
+        user_right_bank_layer = self.lyrs.data['user_right_bank']['qlyr']
+        right_bank_intersect = False
+        for right_bank_feature in user_right_bank_layer.getFeatures():
+            if right_bank_feature.geometry().intersects(xs_geometry):
+                right_bank_intersect = True
+                break
+
+        xs_polyline = xs_geometry.asPolyline()
+        right_after_vertex_index = len(xs_polyline) - 1
+
+        if right_bank_intersect:
+            intersects = xs_geometry.intersection(right_bank_feature.geometry())
+            if intersects.wkbType == QgsWkbTypes.MultiPoint:
+                multi_point = intersects.asMultiPoint()
+                intersect_point = multi_point[0]
+            else:
+                intersect_point = intersects.asPoint()
+
+            dist, right_intersect_point, right_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
+                QgsPointXY(intersect_point))
+
+            last_vertex = right_intersect_point
+        else:
+            last_vertex = xs_polyline[-1]
+
+        xs_effective_cross_section = [left_intersect_point]
+        for i in range(left_after_vertex_index, right_after_vertex_index):
+            xs_effective_cross_section.append(xs_polyline[i])
+        xs_effective_cross_section.append(last_vertex)
+
+        return xs_effective_cross_section
+
+    def sample_bank_elevation_all_RTV_cross_sections(self):
+        if not self.uc.question('After this action, all bank elevations from cross sections R, T and V will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+
+        request = QgsFeatureRequest()
+        features = self.user_xs_lyr.getFeatures(request)
+        while True:
+            try:
+                feat = next(features)
+                self.sample_bank_elevation_cross_section(feat.attribute('fid'))
+            except StopIteration:
+                return
+
+    def sample_bank_elevation_current_RTV_cross_sections(self):
+        if not self.uc.question(
+                'After this action, bank elevations from current cross sections will be lost.\n'
+                'Do you want to proceed?'):
+            return
+
+        fid = int(self.xs_cbo.currentData())
+        self.sample_bank_elevation_cross_section(fid)
+
+    def sample_bank_elevation_cross_section(self, fid):
+        xs = UserCrossSection(fid, self.con, self.iface)
+        xs.get_row()
+        if xs.type == 'N':
+            return
+
+        effective_cross_section = self.effective_user_cross_section(xs.fid, xs.name)
+
+        if self.raster_radio_btn.isChecked():
+            raster_layer = self.raster_combobox.currentLayer()
+            if raster_layer is None:
+                return
+            transform = QgsCoordinateTransform(self.user_xs_lyr.crs(), raster_layer.crs(), QgsProject.instance())
+            xs.sample_bank_elevation_from_raster_layer(raster_layer, effective_cross_section, transform)
+        else:
+            grid_layer = self.lyrs.data['grid']['qlyr']
+            xs.sample_bank_elevation_from_grid(effective_cross_section, grid_layer)
+
+        self.update_table()
+        self.create_plot()
+        self.update_plot()
+
+    def sample_elevation_all_natural_cross_sections(self):
+        if not self.uc.question('After this action, all current natural cross section profiles will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+        request = QgsFeatureRequest()
+        request.setFilterExpression('"type"=\'N\'')
+        features = self.user_xs_lyr.getFeatures(request)
+        while True:
+            try:
+                feat = next(features)
+                self.sample_elevation_natural_cross_section(feat.attribute('fid'))
+            except StopIteration:
+                return
+
+    def sample_elevation_current_natural_cross_sections(self):
+        if not self.uc.question('After this action, current natural cross section profile will be lost.\n'
+                                'Do you want to proceed?'):
+            return
+        fid = int(self.xs_cbo.currentData())
+        self.sample_elevation_natural_cross_section(fid)
+
+    def sample_elevation_natural_cross_section(self, fid):
+        raster_layer = self.raster_combobox.currentLayer()
+
+        if raster_layer is None:
+            return
+
+        xs = UserCrossSection(fid, self.con, self.iface)
+        xs.get_row()
+        if xs.type != 'N':
+            return
+
+        transform = QgsCoordinateTransform(self.user_xs_lyr.crs(),raster_layer.crs(), QgsProject.instance())
+        xs.sample_elevation_from_raster_layer(raster_layer,
+                                              self.effective_user_cross_section(xs.fid, xs.name),
+                                              transform)
+        self.update_table()
+        self.create_plot()
+        self.update_plot()
+
+

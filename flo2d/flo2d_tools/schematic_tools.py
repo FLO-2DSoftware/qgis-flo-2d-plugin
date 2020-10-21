@@ -13,7 +13,7 @@ from collections import defaultdict, OrderedDict
 from math import pi, sqrt
 from operator import itemgetter
 
-from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPointXY
+from qgis.core import QgsSpatialIndex, QgsFeature, QgsFeatureRequest, QgsVector, QgsGeometry, QgsPointXY, QgsPoint, QgsWkbTypes
 
 from .grid_tools import spatial_index, fid_from_grid, adjacent_grid_elevations, three_adjacent_grid_elevations, get_adjacent_cell_elevation
 from ..geopackage_utils import GeoPackageUtils
@@ -800,36 +800,36 @@ class ChannelsSchematizer(GeoPackageUtils):
         cross_sections = [self.xsections_feats[fid] for fid in fids
                           if self.xsections_feats[fid].geometry().intersects(line)] # Selects cross sections that intersect this channel segment.
         cross_sections.sort(key=lambda cs: line.lineLocatePoint(cs.geometry().nearestPoint(line)))
-        line_start = QgsPointXY(line.vertexAt(0))
-        first_xs = cross_sections[0]
-        xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
-        if len(cross_sections) < 2:
-            self.uc.show_warn('WARNING 060319.1633: You need at least 2 cross-sections crossing left bank line!')
-            raise Exception
-        if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
-            return cross_sections
-        else:
-            msg = 'WARNING 060319.1617: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
-            # msg = msg.format(line_feat.id(), first_xs.id())
-            msg = msg.format(line_feat.attributes()[1], first_xs.attributes()[3])
-            self.uc.show_warn(msg)
-            raise Exception
+        return cross_sections
 
     def create_schematized_channel_segments_aka_left_banks(self):
         """
-        Schematizing left bank.
+        Schematizing banks and cross section.
         """
         # Creating spatial index on cross sections and finding proper one for each river center line
         self.set_xs_features()  # Creates self.xsections_feats and self.xs_index of the user cross sections.
         feat_xs = []
-        for feat in self.user_lbank_lyr.getFeatures():  # For each channel segment.
+        for left_bank_feature in self.user_lbank_lyr.getFeatures():  # For each channel segment.
             # Getting sorted cross section
-            sorted_xs = self.get_sorted_xs(feat) # Selects XSs than intersect this channel segment, orders them from
+            line_start = QgsPointXY(left_bank_feature.geometry().vertexAt(0))
+            sorted_xs = self.get_sorted_xs(left_bank_feature) # Selects XSs than intersect this channel segment, orders them from
                                                 # beginning of segment, checks than there are more than 2 CS, and
                                                 # the first one intersects the line.
-            feat_xs.append((feat, sorted_xs))
+            if len(sorted_xs) < 2:
+                self.uc.show_warn('WARNING 060319.1633: You need at least 2 cross-sections crossing left bank line!')
+                raise Exception
 
-        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
+            first_xs = sorted_xs[0]
+            xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
+
+            if self.grid_on_point(line_start.x(), line_start.y()) == self.grid_on_point(xs_start.x(), xs_start.y()):
+                feat_xs.append((left_bank_feature, sorted_xs))
+            else:
+                msg = 'WARNING 060319.1617: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
+                msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
+                self.uc.show_warn(msg)
+                raise Exception
+
         for feat, sorted_xs in feat_xs: # For each channel segment and the XSs that intersect them.
             lbank_fid = feat.id()
             lbank_geom = QgsGeometry.fromPolylineXY(feat.geometry().asPolyline())
@@ -855,6 +855,123 @@ class ChannelsSchematizer(GeoPackageUtils):
 
         self.schematized_rbank_lyr.triggerRepaint() # Remember to repaint. Will be repainted by QGIS when needed to force the update.
 
+    def create_schematized_channels(self):
+        """
+         Schematizing banks and cross section.
+        """
+
+        nxsecnum = []
+
+        self.set_xs_features()  # Creates self.xsections_feats and self.xs_index of the user cross sections.
+        feat_xs = []
+        found_right_bank_feature_id = []
+        for left_bank_feature in self.user_lbank_lyr.getFeatures():  # For each channel segment.
+            # Getting sorted cross section
+            sorted_xs = self.get_sorted_xs(left_bank_feature)  # Selects XSs than intersect this channel segment, orders them from
+            # beginning of segment, checks than there are more than 2 CS, and
+            # the first one intersects the line.
+            if len(sorted_xs) < 2:
+                self.uc.show_warn('WARNING 060319.1633: You need at least 2 cross-sections crossing left bank line!')
+                raise Exception
+
+            line_start = QgsPointXY(left_bank_feature.geometry().vertexAt(0))
+            first_xs = sorted_xs[0]
+            xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
+
+            if self.grid_on_point(line_start.x(), line_start.y()) != self.grid_on_point(xs_start.x(), xs_start.y()):
+                msg = 'WARNING 060319.1617: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
+                msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
+                self.uc.show_warn(msg)
+                raise Exception
+
+            # Now search for a right bank segment that intersect same cross sections
+            right_bank_feature=QgsFeature()
+            for rb in self.user_rbank_lyr.getFeatures():
+                if rb.id() in found_right_bank_feature_id:
+                    continue
+                intersected_cross_section = self.get_sorted_xs(rb)
+                # Check if are the same cross sections
+                if len(intersected_cross_section) != len(sorted_xs):
+                    continue
+                is_same_cross_sections = True
+                for i in range(0, len(intersected_cross_section) - 1):
+                    is_same_cross_sections &= intersected_cross_section[i].id() == sorted_xs[i].id()
+                    if not is_same_cross_sections:
+                        break
+
+                if is_same_cross_sections:
+                    # we've got the good one
+                    right_bank_feature = rb
+                    right_bank_feature.setAttribute('chan_seg_fid', left_bank_feature.attribute('fid'))
+                    found_right_bank_feature_id.append(right_bank_feature.id())
+                    break
+
+            if right_bank_feature.isValid():
+                line_start = QgsPointXY(right_bank_feature.geometry().vertexAt(0))
+                last_index = len(first_xs.geometry().asPolyline()) - 1
+                xs_end = QgsPointXY(first_xs.geometry().vertexAt(last_index))
+
+                if self.grid_on_point(line_start.x(), line_start.y()) != self.grid_on_point(xs_end.x(), xs_end.y()):
+                    msg = 'WARNING 060319.1617: Right bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!'
+                    msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
+                    self.uc.show_warn(msg)
+                    raise Exception
+
+            feat_xs.append((left_bank_feature, right_bank_feature, sorted_xs))
+            for xs in sorted_xs:
+                if xs.attribute("type") == 'N':
+                    nxsecnum.append(xs.attribute("fid"))
+
+        if len(found_right_bank_feature_id) != self.user_rbank_lyr.featureCount():
+            self.uc.show_warn('WARNING 060319.1633: At least one right bank was not used,\n'
+                              ' schematize channel will continue but check your user layers.')
+
+        # schematized banks (left bank and right bank if exists and is valid)
+        self.clear_tables('chan', 'chan_elems', 'rbank', 'chan_confluences')
+        for left_feat, right_feat, sorted_xs in feat_xs:
+            left_bank_fid = left_feat.id()
+            left_bank_geom = QgsGeometry.fromPolylineXY(left_feat.geometry().asPolyline())
+            # before schematized bank, insert point on intersection with cross section
+            user_left_bank_positions = self.bank_stations(sorted_xs, left_bank_geom)
+            for intersection in user_left_bank_positions:
+                dist, x_y_position, vert_pos, left = left_bank_geom.closestSegmentWithContext(intersection)
+                left_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
+            left_feat.setGeometry(left_bank_geom);
+
+            user_right_bank_positions=[]
+            right_bank_fid = -1
+            right_bank_geom = QgsGeometry()
+            if right_feat.isValid():
+                right_bank_fid = right_feat.attribute('chan_seg_fid')
+                right_bank_geom = QgsGeometry.fromPolylineXY(right_feat.geometry().asPolyline())
+                # before schematized bank, insert point on intersection with cross section
+                user_right_bank_positions = self.bank_stations(sorted_xs, right_bank_geom)
+                for intersection in user_right_bank_positions:
+                    dist, x_y_position, vert_pos, left = right_bank_geom.closestSegmentWithContext(intersection)
+                    right_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
+                right_feat.setGeometry(right_bank_geom);
+
+                self.schematize_rightbanks(right_feat)
+
+            self.schematize_leftbanks(left_feat)
+            self.banks_data.append((left_bank_fid,
+                                    left_bank_geom,
+                                    right_bank_fid,
+                                    right_bank_geom,
+                                    sorted_xs,
+                                    user_left_bank_positions,
+                                    user_right_bank_positions))
+
+        self.create_schematized_xsections()
+
+        self.schematized_lbank_lyr.triggerRepaint()
+        self.schematized_rbank_lyr.triggerRepaint()
+
+        #update nxsecnum in user_chan_n table
+        for i in range(0, len(nxsecnum)):
+            sql = '''UPDATE user_chan_n SET nxsecnum = ? WHERE user_xs_fid = ?;'''
+            self.execute(sql, (i+1, nxsecnum[i]))
+
     def create_schematized_xsections(self):
         """
         Schematizing cross sections.
@@ -862,62 +979,193 @@ class ChannelsSchematizer(GeoPackageUtils):
         insert_chan = '''
         INSERT INTO chan_elems (geom, fid, rbankgrid, seg_fid, nr_in_seg, user_xs_fid, interpolated) VALUES
         (AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})')),?,?,?,?,?,?);'''
-        for lbank_fid, lbank_geom, sorted_xs in self.banks_data: # For each channel segment get its id (lbanl_fid),
-                                                                # polyline of centroids of cells, and user cross sections
-                                                                # that intersect channel segment.
+
+        cross_section_definitions = []
+        for lbank_fid, lbank_geom, rbank_fid, rbank_geom, sorted_xs, user_left_bank_positions, user_right_bank_positions in self.banks_data:
             req = QgsFeatureRequest().setFilterExpression('"user_lbank_fid" = {}'.format(lbank_fid))
-            lsegment_feat = next(self.schematized_lbank_lyr.getFeatures(req)) #
-            lsegment_points = lsegment_feat.geometry().asPolyline() # List of the coordinates (x,y) of the vertices of the
-                                                                    # polyline of the schematized left bank line
-                                                                    # (where the tip of the arrow is).
-            # Finding left crossing points
-            left_points = self.bank_stations(sorted_xs, lbank_geom)
-            # Finding closest points to channel segment
-            left_nodes = self.closest_nodes(lsegment_points, left_points) # Coordinates (x,y) of centroid of cells intersecting
-                                                                          # nearest point to XS intersection with schematized left bank line.
-            vertex_idx = []
-            # Snapping user cross sections to channel segment
-            for xs, (lnode, idx) in zip(sorted_xs, left_nodes):
-                vertex_idx.append(idx)
-                move = lnode - QgsPointXY(xs.geometry().vertexAt(0))
-                end = QgsPointXY(xs.geometry().vertexAt(1))
-                self.shift_line_geom(xs, move) # Each user cross section 'xs' is moved (shifted) to begin at the
-                                               # centroid of nearest cell of schematiced left bank.
+            left_schematized_feat = next(self.schematized_lbank_lyr.getFeatures(req))
+            left_schematized_geometry = left_schematized_feat.geometry()
 
-                geom = xs.geometry()
-                polyline = geom.asPolyline()
-                polyline[1] = end
-                xs.setGeometry(QgsGeometry.fromPolylineXY(polyline))
+            # Finding closest points in the schematized left bank
+            user_left_bank_nodes = self.closest_nodes(left_schematized_geometry, user_left_bank_positions)
 
-            # Rotating and schematizing user cross sections
-            self.schematize_xs(sorted_xs)
-            # Interpolating cross sections
-            inter_xs = self.interpolate_xs(lsegment_points, sorted_xs, vertex_idx)
-            # Clipping cross sections between each other
-            clipped_xs = self.clip_schema_xs(inter_xs)
-            # Saving schematized and interpolated cross sections
-            sqls = []
-            for i, (x1, y1, x2, y2, org_fid, interpolated) in enumerate(clipped_xs, 1):
-                try:
-                    lbankgrid = self.grid_on_point(x1, y1)
-                    rbankgrid = self.grid_on_point(x2, y2)
-                except Exception as e:
-                    self.uc.log_info(traceback.format_exc())
-                    continue
-#                 org_fid = 0 if interpolated  == 1 else org_fid   # JJ fix. Check it!!
-                vals = (lbankgrid, rbankgrid, lbank_fid, i, org_fid, interpolated)
-#                 vals_list = list(vals)
-#                 vals_list[4] = 0 if vals_list[5] == 1 else vals_list[4]
-#                 vals = tuple(vals_list)
-                sqls.append((insert_chan.format(x1, y1, x2, y2), vals))
-            cursor = self.con.cursor()
-            for qry, vals in sqls:
-                try:
-                    cursor.execute(qry, vals)
-                except Exception as e:
-                    self.uc.log_info(traceback.format_exc())
-                    continue
-            self.con.commit()
+            #make sure the first cross section is connected with the first point of the bank
+            user_left_bank_nodes[0] = (QgsPointXY(left_schematized_geometry.vertexAt(0)), 0)
+
+            if rbank_fid >= 0:
+                # do the same with right bank
+                req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(rbank_fid))
+                rsegment_feat = next(self.schematized_rbank_lyr.getFeatures(req))
+                rsegment_points=rsegment_feat.geometry()
+                user_right_bank_nodes=self.closest_nodes(rsegment_points, user_right_bank_positions)
+
+                if len(user_right_bank_nodes)!=len(user_left_bank_nodes):
+                    # something got wrong...
+                    self.uc.show_warn('WARNING 060319.XXXX: Error during schematization')
+                    raise Exception
+
+                # create cross sections between banks
+                for i in range(len(user_left_bank_nodes)-1):
+                    start_right_node = user_right_bank_nodes[i]
+                    start_right_position = start_right_node[0]
+                    start_right_node_idx = start_right_node[1]
+                    start_left_node = user_left_bank_nodes[i]
+                    start_left_position = start_left_node[0]
+                    start_left_node_idx = start_left_node[1]
+
+                    end_right_node = user_right_bank_nodes[i+1]
+                    end_right_node_idx = end_right_node[1]
+                    end_left_node = user_left_bank_nodes[i+1]
+                    end_left_node_idx = end_left_node[1]
+
+                    xs = sorted_xs[i]
+                    vals = (start_left_position, start_right_position, lbank_fid, start_left_node_idx+1, xs.id(), False)
+                    cross_section_definitions.append(vals)
+
+                    left_bank_points = left_schematized_geometry.asPolyline()
+                    right_bank_points = rsegment_points.asPolyline()
+                    idx_count_left = end_left_node_idx-start_left_node_idx
+                    idx_count_right = end_right_node_idx-start_right_node_idx
+
+                    if idx_count_left <= idx_count_right:
+                        idx_step_left = 1.0
+                        idx_step_right = idx_count_right/idx_count_left
+                    else:
+                        idx_step_left = idx_count_left/idx_count_right
+                        idx_step_right = 1.0
+
+                    idx_right = 1
+
+                    right_bank_interpolate_xs=start_right_position
+
+                    for index in range(1,idx_count_left):
+                        idx_left = index + start_left_node_idx
+                        if idx_count_left <= idx_count_right:
+                            idx_float_right = idx_step_right*index + start_right_node_idx
+                            right_bank_interpolate_xs = right_bank_points[int(idx_float_right)]
+                            left_bank_interpolate_xs = left_bank_points[idx_left]
+                            vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(),True)
+                            cross_section_definitions.append(vals)
+                        else:
+                            idx_float_left=idx_step_left*idx_right + start_left_node_idx
+                            left_bank_interpolate_xs = left_bank_points[idx_left]
+                            if int(idx_float_left) == idx_left:
+                                right_bank_interpolate_xs = right_bank_points[idx_right+start_right_node_idx]
+                                vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(),True)
+                                cross_section_definitions.append(vals)
+                                idx_right=idx_right+1
+                            else:
+                                vals = (left_bank_interpolate_xs, right_bank_interpolate_xs, lbank_fid, idx_left + 1, xs.id(), True)
+                                cross_section_definitions.append(vals)
+
+                end_right_node = user_right_bank_nodes[len(user_left_bank_nodes)-1]
+                end_right_position = end_right_node[0]
+                end_left_node = user_left_bank_nodes[len(user_left_bank_nodes)-1]
+                end_left_position = end_left_node[0]
+                end_left_node_idx = end_left_node[1]
+                xs = sorted_xs[len(sorted_xs) - 1]
+                vals = (end_left_position, end_right_position, lbank_fid, end_left_node_idx+1, xs.id(), False)
+                cross_section_definitions.append(vals)
+
+            else:  # right bank is not valid, only consider left bank to define channel
+                for i in range(len(user_left_bank_nodes)-1):
+                    start_left_node = user_left_bank_nodes[i]
+                    start_left_position = start_left_node[0]
+                    start_left_node_idx = start_left_node[1]
+
+                    end_left_node = user_left_bank_nodes[i+1]
+                    end_left_position = end_left_node[0]
+                    end_left_node_idx = end_left_node[1]
+
+                    xs=sorted_xs[i]
+                    vals = (start_left_position, QgsPointXY(), lbank_fid, start_left_node_idx+1, xs.id(), False)
+                    cross_section_definitions.append(vals)
+
+                    idx_left = start_left_node_idx + 1
+                    left_bank_points = left_schematized_geometry.asPolyline()
+                    while idx_left < end_left_node_idx:
+                        left_bank_interpolate_xs = left_bank_points[idx_left]
+                        vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left, xs.id()+1, True)
+                        cross_section_definitions.append(vals)
+                        idx_left = idx_left + 1
+
+                end_left_node = user_left_bank_nodes[len(user_left_bank_nodes) - 1]
+                end_left_position = end_left_node[0]
+                end_left_node_idx = end_left_node[1]
+                xs = sorted_xs[len(sorted_xs) - 1]
+                vals = (end_left_position, QgsPointXY(), lbank_fid, end_left_node_idx+1, xs.id(), False)
+                cross_section_definitions.append(vals)
+
+        # Saving schematized and interpolated cross sections
+        sqls = []
+        prev_node_pos = QgsPointXY() #direction of the previous node used to give direction of xs with no right bank
+        for i in range(len(cross_section_definitions)):
+            pt1, pt2, lbank_fid, nr_in_seg, xs_fid, interpolated=cross_section_definitions[i]
+            try:
+                lbankgrid = self.grid_on_point(pt1.x(), pt1.y())
+                if not pt2.isEmpty():
+                    rbankgrid = self.grid_on_point(pt2.x(), pt2.y())
+                else:
+                    rbankgrid = 0
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+                continue
+            if lbankgrid == rbankgrid:
+                rbankgrid = 0
+
+            vals = (lbankgrid, rbankgrid, lbank_fid, nr_in_seg, xs_fid, interpolated)
+
+            if rbankgrid != 0:
+                geom_pt1 = pt1
+                geom_pt2 = pt2
+            else:
+                if nr_in_seg != 1:  # not the first cross section of the segment
+                    if pt1.x() > prev_node_pos.x():
+                        dy = self.cell_size/2
+                    elif pt1.x() == prev_node_pos.x():
+                        dy = 0
+                    else:
+                        dy = -self.cell_size/2
+
+                    if pt1.y() > prev_node_pos.y():
+                        dx = self.cell_size/2
+                    elif pt1.y() == prev_node_pos.y():
+                        dx = 0
+                    else:
+                        dx = - self.cell_size/2
+                else:
+                    next_definition = cross_section_definitions[i+1]
+                    next_point = next_definition[0]
+                    if next_point.x() > pt1.x():
+                        dy = self.cell_size/2
+                    elif next_point.x() == pt1.x():
+                        dy = 0
+                    else:
+                        dy = -self.cell_size/2
+
+                    if next_point.y() > pt1.y():
+                        dx = self.cell_size/2
+                    elif next_point.y() == pt1.y():
+                        dx = 0
+                    else:
+                        dx = - self.cell_size/2
+
+                geom_pt1 = QgsPointXY(pt1.x()-dx, pt1.y()+dy)
+                geom_pt2 = QgsPointXY(pt1.x()+dx, pt1.y()-dy)
+
+            prev_node_pos = pt1
+            sqls.append((insert_chan.format(geom_pt1.x(), geom_pt1.y(), geom_pt2.x(), geom_pt2.y()), vals))
+        cursor = self.con.cursor()
+        for qry, vals in sqls:
+            try:
+                cursor.execute(qry, vals)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+                continue
+        self.con.commit()
+
+        self.schematized_xsections_lyr.triggerRepaint()
+
 
     def schematize_leftbanks(self, lbank_feat):
         """
@@ -948,7 +1196,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         Schematizing right bank and saving to GeoPackage.
         """
         try:
-            fid = rbank_feat.id()
+            fid = rbank_feat.attribute('chan_seg_fid')
             right_line = rbank_feat.geometry()
             insert_right_sql = '''
             INSERT INTO rbank 
@@ -998,26 +1246,29 @@ class ChannelsSchematizer(GeoPackageUtils):
         feature.setGeometry(QgsGeometry.fromPolylineXY(polyline))
 
     @staticmethod
-    def bank_stations(sorted_xs, lbank_geom):
+    def bank_stations(sorted_xs, bank_geom):
         """
         Finding crossing points between bank lines and cross sections.
         """
-        left_points = []
+        crossing_points = []
         for xs in sorted_xs: # For each CS line.
             xs_geom = xs.geometry()
-            xs_line = xs_geom.asPolyline()
-            start = QgsGeometry.fromPointXY(xs_line[0]) # First point (start) of CS line.
-            left_cross = lbank_geom.nearestPoint(start) # Nearest point of left bank line to the start point of this CS.
-            left_points.append(left_cross.asPoint())
-        return left_points # Returns as many points as user cross sections intersecting this channel segment line.
+            intersects = xs_geom.intersection(bank_geom)
+            if intersects.wkbType==QgsWkbTypes.MultiPoint:
+                multi_point = intersects.asMultiPoint()
+                if len(multi_point) > 0:
+                    crossing_points.append(intersects[0])
+            else:
+                crossing_points.append(intersects.asPoint())
+
+        return crossing_points # Returns as many points as user cross sections intersecting this channel segment line.
 
     @staticmethod
     def closest_nodes(segment_points, bank_points):
         """
         Getting closest vertexes (with its indexes) to the bank points.
         """
-        segment_geom = QgsGeometry.fromPolylineXY(segment_points)
-        nodes = [segment_geom.closestVertex(pnt)[:2] for pnt in bank_points]
+        nodes = [segment_points.closestVertex(pnt)[:2] for pnt in bank_points]
         return nodes
 
     def schematize_xs_with_rotation(self, shifted_xs):
@@ -1374,12 +1625,14 @@ class ChannelsSchematizer(GeoPackageUtils):
             xs_iter = iter(xsections_feats)
             up_feat = next(xs_iter)
             lo_feat = next(xs_iter)
-            intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+            intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg'],
+                                   up_feat['fid'], lo_feat['fid']))
             try:
                 while True:
                     up_feat = lo_feat
                     lo_feat = next(xs_iter)
-                    intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg']))
+                    intervals[fid].append((up_feat['nr_in_seg'], lo_feat['nr_in_seg'],
+                                           up_feat['fid'], lo_feat['fid']))
             except StopIteration:
                 pass
         return intervals
@@ -1390,9 +1643,14 @@ class ChannelsSchematizer(GeoPackageUtils):
             left_req = QgsFeatureRequest().setFilterExpression('"fid" = {}'.format(fid))
             right_req = QgsFeatureRequest().setFilterExpression('"chan_seg_fid" = {}'.format(fid))
             lbank = next(self.schematized_lbank_lyr.getFeatures(left_req))
-            rbank = next(self.schematized_rbank_lyr.getFeatures(right_req))
+
+            try:
+                rbank = next(self.schematized_rbank_lyr.getFeatures(right_req))
+            except StopIteration:
+                rbank = None
             lbank_geom = lbank.geometry()
-            rbank_geom = rbank.geometry()
+            if rbank is not None:
+                rbank_geom = rbank.geometry()
             req = QgsFeatureRequest().setFilterExpression('"seg_fid" = {}'.format(fid))
             req.addOrderBy('"nr_in_seg"')
             xsections_feats = self.schematized_xsections_lyr.getFeatures(req)
@@ -1402,7 +1660,11 @@ class ChannelsSchematizer(GeoPackageUtils):
                 xs_start = QgsGeometry.fromPointXY(xs_geom_line[0])
                 xs_end = QgsGeometry.fromPointXY(xs_geom_line[-1])
                 ldist = lbank_geom.lineLocatePoint(xs_start.nearestPoint(lbank_geom))
-                rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
+                if rbank is not None and xs_feat.attribute('rbankgrid') > 0:
+                    rdist = rbank_geom.lineLocatePoint(xs_end.nearestPoint(rbank_geom))
+                else:
+                    rdist=-1
+
                 xs_distances[fid].append((xs_feat.id(), xs_feat['fid'], xs_feat['nr_in_seg'], ldist, rdist))
         return xs_distances
 
@@ -1417,31 +1679,94 @@ class ChannelsSchematizer(GeoPackageUtils):
             seg_xs = xs_distances[fid]
             iseg_intervals = iter(seg_intervals)
             iseg_xs = iter(seg_xs)
-            start, end = next(iseg_intervals)
+            start, end, start_xs_fid, end_xs_fid = next(iseg_intervals)
             inter_ldist, inter_rdist = 0, 0
             xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
-            key = (fid, start, end)
+            key = (fid, start_xs_fid, end_xs_fid)
             try:
                 while True:
                     if nr_in_seg == start:
-                        inter_ldist, inter_rdist = ldistance, rdistance
+                        inter_ldist,inter_rdist = ldistance, rdistance
                         distances[key] = {'rows': [], 'start_l': 0, 'start_r': 0}
                     elif start < nr_in_seg < end:
-                        row = (xs_id, xs_fid, fid, start, end, ldistance - inter_ldist, rdistance - inter_rdist)
+                        row = (xs_id, xs_fid, fid, start_xs_fid, end_xs_fid, ldistance - inter_ldist, (rdistance - inter_rdist) if rdistance >= 0 else -1)
                         distances[key]['rows'].append(row)
                     elif nr_in_seg == end:
                         distances[key]['inter_llen'] = ldistance - inter_ldist
-                        distances[key]['inter_rlen'] = rdistance - inter_rdist
+                        distances[key]['inter_rlen'] = rdistance - inter_rdist if rdistance >= 0 else -1
                         try:
-                            start, end = next(iseg_intervals)
+                            start, end, start_xs_fid, end_xs_fid = next(iseg_intervals)
                         except StopIteration:
                             start = end
+                            start_xs_fid = end_xs_fid
                             end = infinity
-                        key = (fid, start, end)
+                            end_xs_fid = infinity
+
+                        key = (fid, start_xs_fid, end_xs_fid)
                         continue
                     xs_id, xs_fid, nr_in_seg, ldistance, rdistance = next(iseg_xs)
             except StopIteration:
                 pass
+
+        for key, interval in distances.items():
+            rows = interval['rows']
+            if not 'inter_rlen' in interval.keys():
+                continue
+            if interval['inter_rlen'] < 0:
+                continue  # means that interval doesn't have defined right bank, so nothing to do...
+
+            changed = False
+
+            i_start = 0
+            while i_start < len(rows):
+                # search for not defined right bank distance
+
+                row = rows[i_start]
+
+                if row[6] < 0:  # we've got an undefined right bank
+                    if i_start==0:
+                        left_start_distance=0
+                        right_start_distance=0
+                    else:
+                        start_row = rows[i_start-1]
+                        left_start_distance = start_row[5]
+                        right_start_distance = start_row[6]
+
+                    # search for next define right bank
+                    i_end = i_start + 1
+                    found = False
+                    while i_end < len(rows):
+                        row = rows[i_end]
+                        found = row[6] >= 0
+                        if not found:
+                            i_end = i_end + 1
+                        else:
+                            break
+
+                     # Now we've got the two extremity on the non define rigth bank --> interpolate
+                    changed = True
+                    if i_end == len(rows):
+                        left_end_distance = interval['inter_llen']
+                        right_end_distance = interval['inter_rlen']
+                    else:
+                        end_row = rows[i_end]
+                        left_end_distance = end_row[5]
+                        right_end_distance = end_row[6]
+
+                    interpolate_ratio = (right_end_distance-right_start_distance)/(left_end_distance-left_start_distance)
+                    for i in range(i_start, i_end):
+                        current_row = list(rows[i])
+                        left_distance = current_row[5]
+                        right_distance = (left_distance-left_start_distance)*interpolate_ratio+right_start_distance
+                        current_row[6]=right_distance
+                        rows[i] = tuple(current_row)
+                    i_start = i_end
+                else:
+                    i_start = i_start + 1
+
+            if changed:
+                interval['rows'] = rows
+
         return distances
 
     def make_distance_table(self):
