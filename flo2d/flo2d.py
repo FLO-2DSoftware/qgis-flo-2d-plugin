@@ -1268,7 +1268,6 @@ class Flo2D(object):
             'export_mannings_n_topo',
             ]
         
-########################################
         dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
         ok = dlg_components.exec_()
         if ok:
@@ -1364,8 +1363,6 @@ class Flo2D(object):
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)  
         
         QApplication.restoreOverrideCursor()
-
-########################################
               
     @connection_required
     def import_from_gpkg(self):
@@ -1426,7 +1423,7 @@ class Flo2D(object):
     @connection_required
     def show_cont_toler(self):
         try:
-            dlg_control = ContToler_JJ(self.con, self.iface)
+            dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
             save = dlg_control.exec_()
             if save:
                 try:

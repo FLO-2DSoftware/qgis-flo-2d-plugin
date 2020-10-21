@@ -1,10 +1,15 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis hasScaleBasedVisibilityFlag="0" simplifyDrawingHints="0" readOnly="0" simplifyDrawingTol="1" simplifyAlgorithm="0" maxScale="0" simplifyLocal="1" simplifyMaxScale="1" version="3.2.2-Bonn" labelsEnabled="0" minScale="1e+8">
-  <renderer-v2 symbollevels="0" attr="sd_type" type="categorizedSymbol" enableorderby="0" forceraster="0">
+<qgis simplifyAlgorithm="0" simplifyDrawingTol="1" minScale="1e+08" version="3.10.9-A Coruña" simplifyDrawingHints="0" styleCategories="AllStyleCategories" readOnly="0" simplifyMaxScale="1" hasScaleBasedVisibilityFlag="0" maxScale="0" simplifyLocal="1" labelsEnabled="0">
+  <flags>
+    <Identifiable>1</Identifiable>
+    <Removable>1</Removable>
+    <Searchable>1</Searchable>
+  </flags>
+  <renderer-v2 attr="sd_type" enableorderby="0" type="categorizedSymbol" symbollevels="0" forceraster="0">
     <categories>
-      <category symbol="0" render="true" label="Inlets" value="I"/>
-      <category symbol="1" render="true" label="Outlets" value="O"/>
-      <category symbol="2" render="true" label="" value=""/>
+      <category label="Inlets" render="true" value="I" symbol="0"/>
+      <category label="Outlets" render="true" value="O" symbol="1"/>
+      <category label="Junctions" render="true" value="" symbol="2"/>
     </categories>
     <symbols>
       <symbol clip_to_extent="1" type="marker" name="0" alpha="1">

@@ -1865,8 +1865,6 @@
     </layout>
    </item>
   </layout>
-  <zorder>tab_widget</zorder>
-  <zorder>horizontalSpacer</zorder>
  </widget>
  <layoutdefault spacing="6" margin="9"/>
  <resources/>
@@ -1878,8 +1876,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>720</x>
-     <y>568</y>
+     <x>635</x>
+     <y>562</y>
     </hint>
     <hint type="destinationlabel">
      <x>365</x>

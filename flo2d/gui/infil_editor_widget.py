@@ -513,9 +513,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 
                 if non_intercepted:
+                    no_inter = ""
+                    for nope in non_intercepted:
+                        no_inter += "\n" + str(nope)     
                     self.uc.show_info("WARNING 150119.0354: Calculating Green-Ampt parameters finished, but \n"
                                         + str(len(non_intercepted)) + ' cells didn´t intercept the land use shapefile.\n' +
-                                      'Default values were assigned for the infiltration.')
+                                      'Default values were assigned for the infiltration.\n' + no_inter)
                 else:
                     self.uc.show_info('Calculating Green-Ampt parameters finished!')    
                     

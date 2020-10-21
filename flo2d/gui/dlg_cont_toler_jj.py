@@ -12,8 +12,8 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from collections import OrderedDict
-from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QApplication
-
+from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QApplication, qApp
+from PyQt5.QtCore import QCoreApplication
 
 uiDialog, qtBaseClass = load_ui('cont_toler_jj')
 
@@ -82,11 +82,12 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         ['WAVEMAX', {'label': 'Wavemax Sensitivity', 'type': 'r', 'dat': 'TOLER', 'min': 0, 'max': 2, 'dec': 2}]
     ])
 
-    def __init__(self, con, iface):
+    def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.con = con
         self.iface = iface
+        self.lyrs = lyrs
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, 'FLO-2D')
@@ -182,7 +183,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                         val = widget.currentIndex()
 
                 self.gutils.set_cont_par(key, val)
-
+                control_lyr = self.lyrs.data['cont']['qlyr']  
+                control_lyr.startEditing()   
+                control_lyr.commitChanges()        
+                QCoreApplication.processEvents() 
+                
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1806: Could not save FLO-2D parameters!!", e)

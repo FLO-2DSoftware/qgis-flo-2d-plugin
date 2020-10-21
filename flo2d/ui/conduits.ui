@@ -754,124 +754,120 @@
     <property name="layoutDirection">
      <enum>Qt::LeftToRight</enum>
     </property>
+    <property name="currentText">
+     <string>CIRCULAR</string>
+    </property>
+    <property name="maxVisibleItems">
+     <number>25</number>
+    </property>
     <item>
      <property name="text">
-      <string>Circular</string>
+      <string>CIRCULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Circular Force Main</string>
+      <string>FORCE_MAIN</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Filled Circular</string>
+      <string>FILLED_CIRCULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Semi-Circular</string>
+      <string>RECT_CLOSED</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Closed</string>
+      <string>RECT_OPEN</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Open</string>
+      <string>TRAPEZOIDAL</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Triangular</string>
+      <string>TRIANGULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Rectangular Round</string>
+      <string>HORIZ_ELLIPSE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Trapezoidal</string>
+      <string>VERT_ELLIPSE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Triangular</string>
+      <string>ARCH</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Horizontal Ellipse</string>
+      <string>PARABOLIC</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Vertical Ellipse</string>
+      <string>POWER</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Semi-Elliptical</string>
+      <string>RECT_TRIANGULAR</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Basket Handle</string>
+      <string>RECT_ROUND</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Modified Basket Handle</string>
+      <string>MODBASKETHANDLE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Arch</string>
+      <string>EGG</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Parabolic</string>
+      <string>HORSESHOE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Power</string>
+      <string>GOTHIC</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Egg</string>
+      <string>CATENARY</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Horse Shoe</string>
+      <string>SEMIELLIPTICAL</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Gothic</string>
+      <string>BASKETHANDLE</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Catenary</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Irregular</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Custom</string>
+      <string>SEMICIRCULAR</string>
      </property>
     </item>
    </widget>

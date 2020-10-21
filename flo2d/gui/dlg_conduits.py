@@ -55,30 +55,29 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.average_losses_dbox.valueChanged.connect(self.average_losses_dbox_valueChanged)
         self.flap_gate_chbox.stateChanged.connect(self.flap_gate_chbox_stateChanged)
 
-        self.shape = ('Circular',
-                      'Circular Force Main',
-                      'Filled Circular',
-                      'Semi-Circular',
-                      'Rectangular Closed',
-                      'Rectangular Open',
-                      'Rectangular Triangular',
-                      'Rectangular Round',
-                      'Trapezoidal',
-                      'Triangular',
-                      'Horizontal Ellipse',
-                      'Vertical Ellipse',
-                      'Semi-Elliptical',
-                      'Basket Handle',
-                      'Modified Basket Handle',
-                      'Arch',
-                      'Parabolic',
-                      'Power',
-                      'Egg',
-                      'Horse Shoe',
-                      'Gothic',
-                      'Catenary',
-                      'Irregular',
-                      'Custom')
+        self.shape = ('CIRCULAR',
+                      'FORCE_MAIN',
+                      'FILLED_CIRCULAR',
+                      'RECT_CLOSED',
+                      'RECT_OPEN',
+                      'TRAPEZOIDAL',
+                      'TRIANGULAR',
+                      'HORIZ_ELLIPSE',
+                      'VERT_ELLIPSE',
+                      'ARCH',
+                      'PARABOLIC',
+                      'POWER',
+                      'RECT_TRIANGULAR',
+                      'RECT_ROUND',
+                      'MODBASKETHANDLE',
+                      'EGG',
+                      'HORSESHOE',
+                      'GOTHIC',
+                      'CATENARY',
+                      'SEMIELLIPTICAL',
+                      'BASKETHANDLE',
+                      'SEMICIRCULAR'
+                      )
 
         # self.set_header()
         self.setup_connection()
@@ -227,10 +226,10 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             shape = self.conduits_tblw.item(row, 5).text()
             if shape.isdigit():
                 index = int(shape)-1
-                index = 23 if index > 23 else 0 if index < 0 else index
+                index = 21 if index > 21 else 0 if index < 0 else index
                 self.conduit_shape_cbo.setCurrentIndex(index)
             else:
-                shape = shape.title().strip()
+#                 shape = shape.title().strip()
                 index = self.shape.index(shape) if shape in self.shape else 0
                 self.conduit_shape_cbo.setCurrentIndex(index)
 
@@ -310,7 +309,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             if data.isdigit():
                                 self.conduit_shape_cbo.setCurrentIndex(data-1)
                             else:
-                                data = data.title().strip()
+#                                 data = data.title().strip()
                                 index = self.shape.index(data) if data in self.shape else -1
                                 self.conduit_shape_cbo.setCurrentIndex(index)
 
@@ -391,7 +390,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             if item is not None:
                 if item.text().isdigit():
                     index = int(item.text())
-                    index = 23 if index > 23 else 0 if index < 0 else index - 1
+                    index = 21 if index > 21 else 0 if index < 0 else index - 1
                     self.conduit_shape_cbo.setCurrentIndex(index)
                 else:
                     txt = item.text().capitalize()

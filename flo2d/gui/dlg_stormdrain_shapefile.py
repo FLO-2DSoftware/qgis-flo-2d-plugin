@@ -376,6 +376,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             # Load inlets from shapefile:
             if load_inlets:
+                mame = ""
                 try:
 
                     fields = self.user_swmm_nodes_lyr.fields()
@@ -411,6 +412,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat = QgsFeature()
                         feat.setFields(fields)
 
+                        if f.geometry() is None:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 280920.1816: Error processing geometry of inlet/junction '" + name + "' !")
+                            continue                            
+                            
                         geom = f.geometry()
                         if geom is None:
                             QApplication.restoreOverrideCursor()
