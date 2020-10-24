@@ -117,4 +117,32 @@ class TailingsDamBreachExecutor(object):
 
     def run(self):
         return self.execute_tailings()
+ 
+class MapperExecutor(object):
+
+    MAPPER_EXE = 'Mapper PRO.exe'
+
+    def __init__(self, mapper_dir, project_dir):
+        self.mapper_dir = mapper_dir
+        self.mapper_exe = os.path.join(mapper_dir, self.MAPPER_EXE)
+        self.project_dir = project_dir
+
+    def execute_mapper(self):
+        with cd(self.project_dir):
+            Popen(self.mapper_exe)
+
+    def run(self):
+        return self.execute_mapper()   
     
+class ProgramExecutor(object):
+    
+    def __init__(self, exe_dir, project_dir, exe_name):
+        self.exe = os.path.join(exe_dir, exe_name)
+        self.project_dir = project_dir
+
+    def execute_exe(self):
+        with cd(self.project_dir):
+            Popen(self.exe)
+
+    def run(self):
+        return self.execute_exe()       

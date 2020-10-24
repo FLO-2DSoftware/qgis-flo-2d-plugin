@@ -17,7 +17,7 @@ import traceback
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices 
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy  
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
 from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
@@ -32,7 +32,7 @@ from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.grid_tools import grid_has_empty_elev
 from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_levee_directions_duplicates
-from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor
+from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor, MapperExecutor, ProgramExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
@@ -170,14 +170,33 @@ class Flo2D(object):
             add_to_toolbar=True,
             status_tip=None,
             whats_this=None,
-            parent=None):
-
+            parent=None,
+            menu=None
+           ):
+                 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
+
         # INFO: action.triggered pass False to callback if it is decorated!
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
+        
+#         if menu is not None:
+#             popup = QMenu()
+#             for m in menu:
+#                 popup.addAction(m)       
+#             action.setMenu(popup)  
 
+        if menu is not None:
+            popup = QMenu()
+            for m in menu:
+                icon = QIcon(m[0])
+                act =  QAction(icon, m[1], parent)
+                act.triggered.connect(m[2])
+                popup.addAction(act)  
+                     
+            action.setMenu(popup)  
+            
         if status_tip is not None:
             action.setStatusTip(status_tip)
 
@@ -191,7 +210,7 @@ class Flo2D(object):
             self.iface.addPluginToMenu(
                 self.menu,
                 action)
-
+        
         self.actions.append(action)
         return action
 
@@ -209,7 +228,16 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, 'img/run_flopro.png'),
             text=self.tr(u'Run Simulation'),
             callback=self.run_flopro,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow(),
+            menu= (
+                    (os.path.join(self.plugin_dir, 'img/flo2d.svg'),'Run FLO-2D Pro', self.run_flopro), 
+                    (os.path.join(self.plugin_dir, 'img/profile_run2.svg'),'Run Profiles', self.run_profiles), 
+                    (os.path.join(self.plugin_dir, 'img/hydrog.svg'),'Run Hydrog', self.run_hydrog), 
+                    (os.path.join(self.plugin_dir, 'img/maxplot.svg'),'Run MaxPlot', self.run_maxplot), 
+                    (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_mapper2)
+#                     (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_program('Mapper PRO.Exe', 'Run Mapper', 'FLO-2D Folder (Mapper PRO.exe)'))
+                  )
+                )
 
         self.add_action(
             os.path.join(self.plugin_dir, 'img/gpkg2gpkg.svg'),
@@ -514,7 +542,6 @@ class Flo2D(object):
             s.setValue('FLO-2D/last_flopro_project', os.path.dirname(gpkg_path))
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(gpkg_path))
 
-
     def run_flopro(self):
         dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")        
@@ -569,10 +596,67 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             
             self.uc.show_error("ERROR 201019.0917: 'Tailings Dam Breach.exe failed!"
-                       +'\n__________________________________________________', e)            
-#             self.uc.log_info(repr(e))
-#             self.uc.bar_warn('Tailings Dam Breach.exe failed!')        
+                       +'\n__________________________________________________', e)                  
 
+    def run_mapper(self):
+        dlg = ExternalProgramFLO2D(self.iface, "Run Mapper")
+        dlg.debug_run_btn.setVisible(False)
+        dlg.exec_folder_lbl.setText("FLO-2D Folder (Mapper PRO.exe)")
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
+        
+        if sys.platform != 'win32':
+            self.uc.bar_warn('Could not run Mapper program under current operation system!')
+            return
+        try:
+            if os.path.isfile(flo2d_dir + '\Mapper PRO.exe'):                  
+                mapper = MapperExecutor(flo2d_dir, project_dir)
+                mapper.run()
+                self.uc.bar_info('Mapper started!', dur=3)
+            else:  
+                self.uc.show_warn('WARNING 241020.0424: Program Mapper PRO.exe is not in directory\n\n' + flo2d_dir)
+        except Exception as e:
+            self.uc.log_info(repr(e))
+            self.uc.bar_warn('Running Mapper failed!')     
+
+    def run_mapper2(self):
+        self.run_program('Mapper PRO.exe')
+
+    def run_profiles(self):
+        self.run_program('PROFILES.exe')     
+        
+    def run_hydrog(self):
+        self.run_program('HYDROG.exe')     
+        
+    def run_maxplot(self):
+        self.run_program('MAXPLOT.exe')     
+     
+        
+    def run_program(self, exe_name):
+        dlg = ExternalProgramFLO2D(self.iface, exe_name)
+        dlg.debug_run_btn.setVisible(False)
+        dlg.exec_folder_lbl.setText('FLO-2D Folder (' + exe_name + ')')
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
+        
+        if sys.platform != 'win32':
+            self.uc.bar_warn('Could not run ' +  exe_name + ' under current operation system!')
+            return
+        try:
+            if os.path.isfile(flo2d_dir + '\\' + exe_name):                 
+                program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
+                program.run()
+                self.uc.bar_info(exe_name + ' started!', dur=3)
+            else:  
+                self.uc.show_warn('WARNING 241020.0424: Program ' + exe_name +' is not in directory\n\n' + flo2d_dir)
+        except Exception as e:
+            self.uc.log_info(repr(e))
+            self.uc.bar_warn('Running ' + exe_name + ' failed!')              
+            
     def load_gpkg_from_proj(self):
         """
         If QGIS project has a gpkg path saved ask user if it should be loaded.
