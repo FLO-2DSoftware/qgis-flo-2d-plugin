@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="24"
+   height="24"
+   id="svg5692"
+   version="1.1"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   sodipodi:docname="maxplot.svg"
+   inkscape:export-filename="/media/home1/robert/svn/graphics/trunk/toolbar-icons/32x32/layer-vector.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <title
+     id="title2829">GIS icon theme 0.2</title>
+  <defs
+     id="defs5694">
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2998"
+       is_visible="true" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2990"
+       is_visible="true" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 16 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="32 : 16 : 1"
+       inkscape:persp3d-origin="16 : 10.666667 : 1"
+       id="perspective3486" />
+    <inkscape:perspective
+       id="perspective3496"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3600"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective7871"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective8710"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective9811"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective4762"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       id="linearGradient2831">
+      <stop
+         id="stop2833"
+         offset="0"
+         style="stop-color:#264976;stop-opacity:1;" />
+      <stop
+         style="stop-color:#3f689d;stop-opacity:1;"
+         offset="0.33333334"
+         id="stop2855" />
+      <stop
+         id="stop2835"
+         offset="1"
+         style="stop-color:#5689ca;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2380">
+      <stop
+         id="stop2382"
+         offset="0"
+         style="stop-color:#8cb0d8;stop-opacity:1;" />
+      <stop
+         id="stop2384"
+         offset="1"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2682">
+      <stop
+         id="stop2684"
+         offset="0"
+         style="stop-color:#2b5b95;stop-opacity:1;" />
+      <stop
+         id="stop2686"
+         offset="1"
+         style="stop-color:#5c8fce;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2402">
+      <stop
+         id="stop2404"
+         offset="0"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+      <stop
+         id="stop2406"
+         offset="1"
+         style="stop-color:#376da5;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="28.63"
+     inkscape:cx="11.885916"
+     inkscape:cy="14.016042"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     borderlayer="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1147"
+     inkscape:window-x="1432"
+     inkscape:window-y="600"
+     inkscape:window-maximized="1"
+     inkscape:snap-global="false"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-grids="false"
+     inkscape:snap-others="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid5700"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       dotted="true"
+       originx="2.5"
+       originy="2.5"
+       spacingx="1"
+       spacingy="1" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5697">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>GIS icon theme 0.2</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>GIS icons</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:coverage>GIS icons</dc:coverage>
+        <dc:description />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer"
+     style="display:inline"
+     transform="translate(0,-8)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.33333349px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       x="3.0191901"
+       y="15.495094"
+       id="text2914"><tspan
+         sodipodi:role="line"
+         id="tspan2912"
+         x="3.0191901"
+         y="20.360857"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;"
+       x="1.4592752"
+       y="17.05501"
+       id="text2922"><tspan
+         sodipodi:role="line"
+         id="tspan2920"
+         x="1.4592752"
+         y="26.786533"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.33333333px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;"
+       x="16.253305"
+       y="29.433689"
+       id="text2926"><tspan
+         sodipodi:role="line"
+         id="tspan2924"
+         x="16.253305"
+         y="39.165215"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.33333349px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       x="9.221097"
+       y="29.135872"
+       id="text2960"><tspan
+         sodipodi:role="line"
+         id="tspan2958"
+         x="9.221097"
+         y="34.001633" /></text>
+    <rect
+       style="fill:#008527;fill-rule:evenodd;fill-opacity:1"
+       id="rect3668"
+       width="24.065664"
+       height="23.960882"
+       x="-0.069856912"
+       y="8.1089764"
+       rx="1"
+       ry="1" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.21890354px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.00000012"
+       x="1.1875565"
+       y="23.903873"
+       id="text3672"
+       transform="scale(1.1088986,0.9017957)"><tspan
+         sodipodi:role="line"
+         id="tspan3670"
+         x="1.1875565"
+         y="23.903873"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.21890354px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:1.00000012">2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.37195206px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1"
+       x="10.857855"
+       y="30.850924"
+       id="text3676"
+       transform="scale(1.0588639,0.94440842)"><tspan
+         sodipodi:role="line"
+         id="tspan3674"
+         x="10.857855"
+         y="30.850924"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:12.37195206px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:1">D</tspan></text>
+  </g>
+</svg>
