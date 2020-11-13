@@ -1045,14 +1045,14 @@ CREATE TABLE "struct" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "type" TEXT, -- type of the structure, equal to the next line's STRUCHAR, decides in which table the data are stored (C for rating_curves table, R for repl_rat_curves, T for rat_table, F for culvert_equations, or D for storm_drains)
     "structname" TEXT, -- STRUCTNAME, name of the structure
-    "ifporchan" INTEGER, -- IFPORCHAN, switch, 0 for floodplain structure (shares discharge between 2 floodplain elements), 1 for channel structure (channel to channel), 2 for floodplain to channel, 3 for channel to floodplain
-    "icurvtable" INTEGER, -- ICURVTABLE, switch, 0 for rating curve, 1 for rating table, 2 for culvert equation
+    "ifporchan" INTEGER  DEFAULT 0, -- IFPORCHAN, switch, 0 for floodplain structure (shares discharge between 2 floodplain elements), 1 for channel structure (channel to channel), 2 for floodplain to channel, 3 for channel to floodplain
+    "icurvtable" INTEGER  DEFAULT 0, -- ICURVTABLE, switch, 0 for rating curve, 1 for rating table, 2 for culvert equation
     "inflonod" INTEGER, -- INFLONOD, grid element containing the structure or structure inlet
     "outflonod" INTEGER, -- OUTFLONOD, grid element receiving the structure discharge (structure outlet)
-    "inoutcont" INTEGER, -- INOUTCONT, 0 for no tailwater effects - compute discharge based on headwater, 1 for reduced discharge (no upstream flow allowed), 2 for reduced discharge and upstream flow allowed
-    "headrefel" REAL, -- HEADREFEL, reference elevation above which the headwater is determined, Set 0.0 to use existing channel bed
-    "clength" REAL, -- CLENGTH, culvert length,
-    "cdiameter" REAL, -- CDIAMETER, culvert diameter,
+    "inoutcont" INTEGER  DEFAULT 0, -- INOUTCONT, 0 for no tailwater effects - compute discharge based on headwater, 1 for reduced discharge (no upstream flow allowed), 2 for reduced discharge and upstream flow allowed
+    "headrefel" REAL DEFAULT 0.0, -- HEADREFEL, reference elevation above which the headwater is determined, Set 0.0 to use existing channel bed
+    "clength" REAL  DEFAULT 0.0, -- CLENGTH, culvert length,
+    "cdiameter" REAL DEFAULT 0.0, -- CDIAMETER, culvert diameter,
     "notes" TEXT -- structure notes
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('struct', 'features', 4326);

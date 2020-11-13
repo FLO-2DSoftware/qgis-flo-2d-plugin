@@ -8,22 +8,35 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt.QtWidgets import QInputDialog
-from qgis.core import QgsFeatureRequest
+import sys, os
+import csv
+import io
+from math import isnan
+from qgis.PyQt.QtWidgets import QInputDialog, QApplication, QFileDialog, QTableView
+from qgis.PyQt.QtCore import Qt, QSettings, QMimeData, QUrl, QItemSelection, QItemSelectionModel, QPersistentModelIndex, pyqtSignal
+from qgis.core import QgsFeatureRequest, QgsApplication
 from collections import OrderedDict
+from PyQt5.QtWidgets import QApplication
+from PyQt5 import QtGui
+from PyQt5.QtGui import QClipboard
+from qgis.PyQt import QtGui
+
 from .ui_utils import load_ui, center_canvas, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Structure
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem
-from math import isnan
 from ..gui.dlg_bridges import BridgesDialog
 
 uiDialog, qtBaseClass = load_ui('struct_editor')
 
 class StructEditorWidget(qtBaseClass, uiDialog):
 
+    before_paste = pyqtSignal()
+    after_paste = pyqtSignal()
+    after_delete = pyqtSignal()
+    
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -66,30 +79,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.culvert_len_sbox.editingFinished.connect(self.save_culvert_len)
         self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
         self.bridge_variables_btn.clicked.connect(self.show_bridge)
- 
-         
-        
-    def show_bridge(self):
-        """
-        Shows bridge dialog.
-
-        """
-#         # See if bridge table is empty:
-#         if self.gutils.is_table_empty('bridge_variables'):
-#             self.uc.show_warn('Bridge table is empty!' + 'There is no data for this structure.')
-#             return
-# 
-#         #  See if current structure is in the bridge table:
-           
-
-        dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
-        dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
-        save = dlg_bridge.exec_()
-        if save:
-            if dlg_bridge.save_bridge_variables():
-                self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
-            else:
-                self.uc.bar_warn('Could not save bridge variables!') 
+        self.import_rating_table_btn.clicked.connect(self.import_struct_table)
         
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         if not self.iface.f2d['con']:
@@ -173,8 +163,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.icurvtable = idx
             self.struct.set_row()
         self.show_table_data()
-        self.bridge_variables_btn.setEnabled(self.rating_cbo.currentIndex() == 3) # Bridge routine?
-            
+        self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3) # Bridge routine
+        self.import_rating_table_btn.setVisible(self.rating_cbo.currentIndex() == 1)
+#         self.rating_table_cbo.setEnabled(self.rating_cbo.currentIndex() == 1)
                 
     def twater_changed(self, idx):
         if not self.struct:
@@ -214,6 +205,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if exist_struct:
             if not self.uc.question('There are some schematized structures created already. Overwrite them?'):
                 return
+            
         del_qry = 'DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);'
         self.gutils.execute(del_qry)
         upd_cells_qry = '''UPDATE struct SET
@@ -275,6 +267,101 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         ])
         for typ, name in self.rating_types.items():
             self.rating_cbo.addItem(name, typ)
+
+    def import_struct_table(self):
+        try:
+            s = QSettings()
+            last_dir = s.value('FLO-2D/ImportStructTable', '')
+            table_file, __ = QFileDialog.getOpenFileName(
+                                            None,
+                                            'Select Rating table file to import',
+                                            directory=last_dir)
+            if not table_file:
+                return False
+    
+            try: 
+                if (not os.path.isfile(table_file)):
+                    self.uc.show_warn(os.path.basename(table_file) + " is being used by another process!")   
+                    return False   
+                elif (os.path.getsize(table_file) == 0):   
+                    self.uc.show_warn(os.path.basename(table_file) + " is empty!")    
+                    return False   
+                else:  
+                    QApplication.setOverrideCursor(Qt.WaitCursor)                 
+                    s.setValue('FLO-2D/ImportStructTable', table_file)
+
+                    self.show_table_data()  
+                                      
+                    # Copy file to clipboard:
+                    text = ""
+                    n_lines = 0
+                    with open(table_file, 'r') as f1:                        
+                        for line in f1:
+                            text = text + line
+                            n_lines += 1
+                    cb = QApplication.clipboard()
+                    cb.clear(mode=cb.Clipboard )
+                    cb.setText(text, mode=cb.Clipboard)
+
+                    # Remove all but first row of table:
+                    index1 = self.tview.model().index(1, 0)
+                    index2 = self.tview.model().index(self.tview.model().rowCount()-1, 2)                    
+                    itemSelection = QItemSelection(index1, index2)
+                    self.tview.selectionModel().select(itemSelection, QItemSelectionModel.Rows | QItemSelectionModel.Select)
+                    indices = []
+                    for i in self.tview.selectionModel().selectedRows():
+                        index = QPersistentModelIndex(i)
+                        indices.append(index)
+                    for i in indices:
+                        self.tview.model().removeRow(i.row())
+
+                    self.before_paste.emit()
+                    paste_str = QApplication.clipboard().text()
+                    rows = paste_str.split('\n')
+                    num_rows = len(rows) - 1
+                    num_cols = rows[0].count('\t') + 1
+                    
+                    index1 = self.tview.model().index(0, 0)
+                    index2 = self.tview.model().index(0, num_cols)                    
+                    itemSelection = QItemSelection(index1, index2)
+                    self.tview.selectionModel().select(itemSelection, QItemSelectionModel.Rows | QItemSelectionModel.Select)
+                     
+                    sel_ranges = self.tview.selectionModel().selection()
+                    
+                    
+                    if len(sel_ranges) == 1:
+                        top_left_idx = sel_ranges[0].topLeft()
+                        sel_col = top_left_idx.column()
+                        sel_row = top_left_idx.row()
+                        if sel_col + num_cols > self.tview.model().columnCount():
+                            QApplication.restoreOverrideCursor()
+                            self.uc.bar_warn('Too many columns to paste.')
+                            return
+                        if sel_row + num_rows > self.tview.model().rowCount():
+                            self.tview.model().insertRows(self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row))
+                            for i in range(self.tview.model().rowCount()):
+                                self.tview.setRowHeight(i, 20)
+                        for row in range(num_rows):
+                            columns = rows[row].split('\t')
+                            for i, col in enumerate(columns):
+                                if not is_number(col):
+                                    columns[i] = ''
+                            [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()) for col in range(len(columns))]
+                            for col in range(len(columns)):
+                                self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
+                        self.after_paste.emit()
+                        self.tview.model().dataChanged.emit(top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
+              
+
+                    QApplication.restoreOverrideCursor()
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 111120.1019: importing structures table failed!\n", e)
+
+        except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 111120.1020: importing structures table failed!\n", e)
 
     def change_struct_name(self):
         if not self.struct_cbo.count():
@@ -441,4 +528,69 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.data['struct']['qlyr']
         ]
         self.lyrs.repaint_layers()
+
+ 
+    def show_bridge(self):
+        """
+        Shows bridge dialog.
+
+        """
+
+        dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
+        dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
+        save = dlg_bridge.exec_()
+        if save:
+            if dlg_bridge.save_bridge_variables():
+                self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
+            else:
+                self.uc.bar_warn('Could not save bridge variables!') 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
