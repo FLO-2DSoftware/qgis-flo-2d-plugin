@@ -234,7 +234,7 @@ class Flo2D(object):
                     (os.path.join(self.plugin_dir, 'img/profile_run2.svg'),'Run Profiles', self.run_profiles), 
                     (os.path.join(self.plugin_dir, 'img/hydrog.svg'),'Run Hydrog', self.run_hydrog), 
                     (os.path.join(self.plugin_dir, 'img/maxplot.svg'),'Run MaxPlot', self.run_maxplot), 
-                    (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_mapper2)
+                    (os.path.join(self.plugin_dir, 'img/mapper2.svg'),'Run Mapper', self.run_mapper2)
 #                     (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_program('Mapper PRO.Exe', 'Run Mapper', 'FLO-2D Folder (Mapper PRO.exe)'))
                   )
                 )
