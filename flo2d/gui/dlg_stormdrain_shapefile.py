@@ -12,7 +12,7 @@ from qgis.PyQt.QtWidgets import QDialogButtonBox
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils, extractPoints
@@ -378,7 +378,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if load_inlets:
                 mame = ""
                 try:
-
+                    QApplication.setOverrideCursor(Qt.WaitCursor) 
                     fields = self.user_swmm_nodes_lyr.fields()
                     new_feats = []
                     outside_inlets = ""
@@ -535,7 +535,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             # Load outfalls from shapefile:
             if load_outfalls:
                 try:
-
+                    QApplication.setOverrideCursor(Qt.WaitCursor) 
                     fields = self.user_swmm_nodes_lyr.fields()
                     new_feats = []
                     outside_outfalls = ""
@@ -641,6 +641,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     
             if load_conduits:
                 try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor) 
                     fields = self.user_swmm_conduits_lyr.fields()
                     new_feats = []
 
@@ -738,7 +739,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     load_conduits = False
             
             self.save_storm_drain_shapefile_fields()
-
+            
+            QApplication.restoreOverrideCursor()
+            
             if (load_inlets or load_outfalls) and load_conduits:
                 self.uc.show_info("Importing Storm Drain nodes and conduits data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"

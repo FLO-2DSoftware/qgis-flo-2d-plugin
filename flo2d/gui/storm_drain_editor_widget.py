@@ -117,7 +117,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
 
         set_icon(self.show_table_btn, 'show_cont_table.svg')
-        set_icon(self.add_rtable_btn, 'add_bc_data.svg')
+        set_icon(self.add_one_rtable_btn, 'add_bc_data.svg')
         set_icon(self.remove_rtable_btn, 'mActionDeleteSelected.svg')
         set_icon(self.rename_rtable_btn, 'change_name.svg')
         
@@ -129,7 +129,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
         self.show_table_btn.clicked.connect(self.populate_rtables_data)
         self.remove_rtable_btn.clicked.connect(self.delete_rtables)
-        self.add_rtable_btn.clicked.connect(self.add_rtables)
+        self.add_one_rtable_btn.clicked.connect(self.add_one_rt)
         self.rename_rtable_btn.clicked.connect(self.rename_rtables)        
         
         
@@ -172,13 +172,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.inlets_btn.clicked.connect(self.show_inlets)
             self.conduits_btn.clicked.connect(self.show_conduits)
             self.control_lyr.editingStopped.connect(self.check_simulate_SD_1)
-#             self.control_lyr.attributeValueChanged.connect(self.check_simulate_SD_2)
-            
+            self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
+
             self.check_simulate_SD_1()
 
             self.populate_rtables()
             self.populate_rtables_data()
-            self.SD_rating_table_cbo.activated.connect(self.populate_rtables_data)                 
+            self.SD_rating_table_cbo.activated.connect(self.populate_rtables_data) 
+            self.SD_rating_table_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)  
                     
     def split_INP_into_groups_dictionary_by_tags_to_export(self, inp_file):
         """
@@ -488,7 +489,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.LineString, my_crs, "ESRI Shapefile")
                
             if writer.hasError() != QgsVectorFileWriter.NoError:
-                self.uc.bar_error("ERROR 220620.1721.0922: Error when creating shapefile: " + shapefile)
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("ERROR 220620.1719: error when creating shapefile: " + shapefile)
                 return False
                
             # Add features: 
@@ -1490,6 +1492,89 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.bar_warn('Could not save conduits! Please check if they are correct.')
                 return
 
+    def SD_import_rating_table(self):
+        """
+        Reads one or more rating table files.
+        Name of file is the same as a type 4 inlet. Uses file names to associate file with inlet names.
+        """
+        self.uc.clear_bar_messages()
+
+        if self.gutils.is_table_empty('user_model_boundary'):
+            self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
+            return
+        if self.gutils.is_table_empty('grid'):
+            self.uc.bar_warn('There is no grid! Please create it before running tool.')
+            return
+
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastSWMMDir', '')
+        rating_files, __ = QFileDialog.getOpenFileNames(       
+            None,
+            'Select rating table files input file to import data',
+            directory=last_dir,
+            filter= "(*.TXT *.DAT);;(*.TXT);;(*.DAT);;(*.*)"
+            )
+            
+        if not rating_files:
+            return
+        s.setValue('FLO-2D/lastSWMMDir', os.path.dirname(rating_files[0]))                
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            errors0 = []
+            errors1 = []
+            errors2 = []
+            errors3 = []
+            mistakes = []
+            goodRT = 0
+            for file in rating_files:
+                err0, err1, err2, err3 = self.check_RT_file(file)
+                if err0 == ""  and err1 == ""  and err2 == "" and err3 == "":
+                    goodRT += 1
+                    file_name, file_ext = os.path.splitext(os.path.basename(file))
+                    self.add_rtable(file_name)
+                    
+                    # Read depth and discharge from rating table file:
+                    swmm_fid = self.gutils.execute('SELECT fid FROM swmmflort WHERE name = ?', (file_name,)).fetchone()[0] 
+                    data_sql = 'INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?)'
+                    with open(file, 'r') as f1:
+                        for line in f1:
+                            row = line.split()
+                            if row:
+                                self.gutils.execute(data_sql, (swmm_fid, row[0], row[1]) )             
+                else:
+                    if err0:
+                        errors0.append(err0) 
+                    if err1:
+                        errors1.append(err1)
+                    if err2:
+                        errors2.append(err2)
+                    if err3:
+                        errors3.append(err3)    
+            if errors0:
+                errors0.append("\n")  
+            if errors1:
+                errors1.append("\n") 
+            if errors2:
+                errors2.append("\n")                           
+            mistakes = errors0 + errors1 + errors2 + errors3                                  
+            if len(mistakes) > 0:
+                with open(last_dir + "\Rating Tables Warnings.CHK", 'w') as error_file:
+                    for mstke in mistakes:
+                        error_file.write(mstke + "\n")             
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn("WARNING 181120.1629: some files were not read.\n\n" +
+                                  "See file  'Rating Tables Warnings.CHK'  for details.\n\n" + 
+                                  str(goodRT) + " rating tables were assigned to inlets with the same name.")
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(str(goodRT) + " rating tables were assigned to inlets with the same name.")
+            return
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 131120.1846: reading rating tables failed!", e)
+            return
+
+
     def import_hydraulics(self):
         """
         Shows import shapefile dialog.
@@ -1537,9 +1622,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.push(command)
             return True
 
-    def populate_rtables_and_data(self): 
-        self.populate_rtables_data()
+    def populate_rtables_and_data(self):
         self.populate_rtables() 
+        self.populate_rtables_data()
+         
 
     def populate_rtables(self):
         self.SD_rating_table_cbo.clear()
@@ -1589,23 +1675,82 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.simulate_stormdrain_chbox.setChecked(False)
             else:
                 self.simulate_stormdrain_chbox.setChecked(True)     
-     
-    def check_simulate_SD_2(self):
-        self.uc.bar_info("2222.")
-                
 
-                     
-    def add_rtables(self):
+    def check_RT_file(self, file):  
+        file_name, file_ext = os.path.splitext(os.path.basename(file))
+        assigned = ""
+        errors0 = ""
+        errors1 = ""
+        errors2 = ""
+        errors3 = ""
+        
+        # Is file empty?:
+        if (not os.path.isfile(file)):
+            errors0 = "File " + file_name + file_ext + " is being used by another process!" 
+            return errors0, errors1, errors2, errors3       
+        elif (os.path.getsize(file) == 0):   
+            errors0 = "File " + file_name + file_ext + " is empty!" 
+            return errors0, errors1, errors2, errors3             
+        
+        # Check 2 float values in columns:    
+        try:
+            with open(file, 'r') as f:
+                for line in f:
+                    row = line.split()
+                    if row:
+                        if len(row) != 2:
+                            errors1 = "File " + file_name + file_ext + " must have 2 columns in all lines!"
+                            return errors0, errors1, errors2, errors3                
+        except UnicodeDecodeError:
+            errors0 = "File " + file_name + file_ext + " is not a text file!" 
+            return errors0, errors1, errors2, errors3              
+                        
+        # Check there is an inlet with the same name:
+        user_inlet_qry = '''SELECT name, intype FROM user_swmm_nodes WHERE name = ?;'''  
+        row = self.gutils.execute(user_inlet_qry, (file_name,)).fetchone()
+        if not row:
+            errors2 = "There isn't an inlet with name "  + file_name
+        elif row[1] != 4:
+            errors3 = "Inlet " + file_name + " must be of type 4 (to use rating table)"                    
+        return errors0, errors1, errors2, errors3         
+
+    
+    def add_one_rt(self):  
+        self.add_single_rtable()
+
+    def add_single_rtable(self, name = None):
         if not self.inletRT:
             return
-        newRT = self.inletRT.add_rating_table()
+        newRT = self.inletRT.add_rating_table(name)
         self.populate_rtables()
         newIdx = self.SD_rating_table_cbo.findText(newRT)
-        if not newIdx == -1:
+        if newIdx == -1:
+           self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1) 
+        else:   
            self.SD_rating_table_cbo.setCurrentIndex(newIdx) 
-#         self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1)
-        self.populate_rtables_data()
+           self.populate_rtables_data() 
+
+                       
+    def add_rtable(self, name = None):
+        if not self.inletRT:
+            return
+        newRT = self.inletRT.add_rating_table(name)
+        self.populate_rtables()
+        newIdx = self.SD_rating_table_cbo.findText(newRT)
+        if newIdx == -1:
+           self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1) 
+        else:   
+           self.SD_rating_table_cbo.setCurrentIndex(newIdx) 
+#           self.populate_rtables_data()            
+ 
+    def refresh_SD_PlotAndTable(self):
+        idx = self.SD_rating_table_cbo.currentIndex()
+#         self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1) 
+#         self.SD_rating_table_cbo.setCurrentIndex(idx) 
         
+        
+        
+               
     def delete_rtables(self):
         if not self.inletRT:
             return

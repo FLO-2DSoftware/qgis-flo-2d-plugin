@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.7
+version=0.10.8
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.8
+  - Strom Drain: import rating table files and assign them to inlets type 4 (by file-inlet names).
  <p>0.10.7
   - Structures Editor: Default values for "struct" table; "Import Rating Table" in widget.
   - New Run Mapper icon in FLO-2D Toolbar

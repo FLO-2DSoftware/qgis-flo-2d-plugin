@@ -808,6 +808,9 @@
        <height>0</height>
       </size>
      </property>
+     <property name="maxVisibleItems">
+      <number>30</number>
+     </property>
     </widget>
    </item>
    <item row="0" column="2">

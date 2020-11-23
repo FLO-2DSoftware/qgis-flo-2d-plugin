@@ -470,8 +470,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             
             inlets = []
             type4 = []
-            no_rt = 0
-            no_rt_names = ""
+            no_rt_namesList = []
               
             for row in range(0, self.inlets_tblw.rowCount()):
                 item = QTableWidgetItem()
@@ -586,11 +585,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                                 type4.append((grid, rt_name))  
                         else:
                             type4.append((grid, rt_name))                    
-                    else:
-                        no_rt += 1
-                        no_rt_names += "\n" + grid + "   (" + name + ")"               
-            
-            
+                    else:            
+                        no_rt_namesList.append(grid.rjust(10) + "   (" + name + ")" )     
+                                                
                 inlets.append(( name,
                                 grid,
                                 invert_elev,
@@ -636,9 +633,13 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         self.gutils.execute(insert_data, (fid_new_rt[0], d[0], d[1]))
                     pass               
                    
-            if no_rt > 0:   
+            if len(no_rt_namesList) > 0:   
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info("WARNING 020219.1836:\n\nThe following " + str(no_rt) + 
+                no_rt_namesList.sort()
+                no_rt_names = ''
+                for name in no_rt_namesList:
+                    no_rt_names += "\n" + name     
+                self.uc.show_info("WARNING 020219.1836:\n\nThe following " + str(len(no_rt_namesList)) + 
                                   " grid element(s) have inlet of type 4 (stage discharge with rating table) but don't have rating table assigned:\n"
                                   + no_rt_names)  
               

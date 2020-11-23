@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
-    <height>287</height>
+    <width>389</width>
+    <height>321</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,169 +19,7 @@
   <property name="windowTitle">
    <string>FLO-2D Widget</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_5">
-   <item row="3" column="0" colspan="7">
-    <widget class="QGroupBox" name="components_group">
-     <property name="title">
-      <string>Components</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="inlets_btn">
-          <property name="text">
-           <string>Inlets/Junctions</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="outfalls_btn">
-          <property name="text">
-           <string>Outfalls</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="conduits_btn">
-          <property name="text">
-           <string>Conduits</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="7">
-    <widget class="QGroupBox" name="box_Inp">
-     <property name="title">
-      <string>.INP File</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="import_inp_btn">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>130</width>
-          <height>23</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Import SWMM.inp</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QToolButton" name="export_inp_btn">
-        <property name="minimumSize">
-         <size>
-          <width>130</width>
-          <height>23</height>
-         </size>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
-        </property>
-        <property name="text">
-         <string>Export SWMM.inp</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="7">
-    <widget class="QGroupBox" name="rating_tables_group">
-     <property name="title">
-      <string>Rating Tables</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="0" column="0">
-         <widget class="QComboBox" name="SD_rating_table_cbo">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QToolButton" name="show_table_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="toolTip">
-           <string>Show Inlet Rating Table</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QToolButton" name="add_rtable_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="toolTip">
-           <string>Add Inlet Rating Table</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QToolButton" name="remove_rtable_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="toolTip">
-           <string>Remove Inlet Rating Table</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4">
-         <widget class="QToolButton" name="rename_rtable_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="toolTip">
-           <string>Rename Inlet Rating Table</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
+  <layout class="QGridLayout" name="gridLayout_6">
    <item row="0" column="0">
     <widget class="QToolButton" name="create_point_btn">
      <property name="enabled">
@@ -196,6 +34,29 @@
      <property name="icon">
       <iconset>
        <normaloff>../../../../../img/mActionCapturePoint.png</normaloff>../../../../../img/mActionCapturePoint.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QToolButton" name="save_changes_btn">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>Save Current Storm Drain Points</string>
+     </property>
+     <property name="text">
+      <string>...</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../../../../../img/mActionSaveAllEdits.svg</normaloff>../../../../../img/mActionSaveAllEdits.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -225,29 +86,6 @@
      <property name="icon">
       <iconset>
        <normaloff>../../../../../img/mActionUndo.svg</normaloff>../../../../../img/mActionUndo.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>24</width>
-       <height>24</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QToolButton" name="save_changes_btn">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="toolTip">
-      <string>Save Current Storm Drain Points</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>../../../../../img/mActionSaveAllEdits.svg</normaloff>../../../../../img/mActionSaveAllEdits.svg</iconset>
      </property>
      <property name="iconSize">
       <size>
@@ -303,13 +141,6 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="6">
-    <widget class="QCheckBox" name="simulate_stormdrain_chbox">
-     <property name="text">
-      <string>Simulate Storm Drain</string>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="5">
     <spacer name="horizontalSpacer_3">
      <property name="orientation">
@@ -322,6 +153,13 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="0" column="6">
+    <widget class="QCheckBox" name="simulate_stormdrain_chbox">
+     <property name="text">
+      <string>Simulate Storm Drain</string>
+     </property>
+    </widget>
    </item>
    <item row="1" column="0" colspan="7">
     <layout class="QGridLayout" name="gridLayout">
@@ -362,6 +200,214 @@
       </spacer>
      </item>
     </layout>
+   </item>
+   <item row="2" column="0" colspan="7">
+    <widget class="QGroupBox" name="box_Inp">
+     <property name="title">
+      <string>.INP File</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="import_inp_btn">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Import SWMM.inp ...</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QToolButton" name="export_inp_btn">
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
+        <property name="text">
+         <string>Export SWMM.inp ...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="7">
+    <widget class="QGroupBox" name="components_group">
+     <property name="title">
+      <string>Components</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="inlets_btn">
+          <property name="text">
+           <string>Inlets/Junctions</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="outfalls_btn">
+          <property name="text">
+           <string>Outfalls</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="conduits_btn">
+          <property name="text">
+           <string>Conduits</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="7">
+    <widget class="QGroupBox" name="rating_tables_group">
+     <property name="title">
+      <string>Rating Tables</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QComboBox" name="SD_rating_table_cbo">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>235</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>500</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="maxVisibleItems">
+           <number>20</number>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QToolButton" name="show_table_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>Show Inlet Rating Table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QToolButton" name="add_one_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>Add Inlet Rating Table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QToolButton" name="remove_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>Remove Inlet Rating Table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <widget class="QToolButton" name="rename_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>Rename Inlet Rating Table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="import_rating_table_btn">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>120</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>105</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Import Rating Table ...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>

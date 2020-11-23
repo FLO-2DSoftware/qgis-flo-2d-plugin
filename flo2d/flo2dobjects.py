@@ -1468,15 +1468,28 @@ class InletRatingTable(GeoPackageUtils):
 #             rt = self.add_rating_table(fetch=True)
         return rt
 
-    def add_rating_table(self, name=None, fetch=False):
-        qry = '''INSERT INTO swmmflort (name) VALUES (?);'''
-        rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = '''UPDATE swmmflort SET name =  'Rating Table ' || cast(fid as text) WHERE fid = ?;'''
-        self.execute(name_qry, (rowid,))
-        if not name:
-            self.name = 'Rating Table {}'.format(rowid)
-        if fetch:
-            return self.get_rating_tables()
+    def add_rating_table(self, name=None):
+        if name==None:
+            qry = '''INSERT INTO swmmflort (name) VALUES (?);'''
+            rowid = self.execute(qry, (name,), get_rowid=True)
+            name_qry = '''UPDATE swmmflort SET name =  'Rating Table ' || cast(fid as text) WHERE fid = ?;'''
+            self.execute(name_qry, (rowid,))
+            if not name:
+                self.name = 'Rating Table {}'.format(rowid)
+            return self.name  
+        else:
+            sel_qry = 'SELECT fid FROM swmmflort WHERE name = ?;'
+            swmm_rt_fid = self.execute(sel_qry, (name,)).fetchone()
+            if swmm_rt_fid:    
+                del_qry2 ='DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;' 
+                self.execute(del_qry2, (swmm_rt_fid[0],))
+                del_qry = 'DELETE FROM swmmflort WHERE name = ?;'
+                self.execute(del_qry, (name,))
+            qry = '''INSERT INTO swmmflort (name) VALUES (?);'''
+            rowid = self.execute(qry, (name,), get_rowid=True)
+            name_qry = '''UPDATE swmmflort SET name =  ? WHERE fid = ?;'''    
+            self.execute(name_qry, (name, rowid,))
+            return name  
 
     def del_rating_table(self, rt_fid):
         qry = 'UPDATE user_swmm_nodes SET rt_fid = ? WHERE rt_fid = ?;'
