@@ -629,43 +629,44 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         if not self.lyrs.save_edits_and_proceed('Gutter Areas'): # Gutter polygons in User Layer, save them or cancel them.
                 return        
-            
+        if not self.lyrs.save_edits_and_proceed('Gutter Lines'): # Gutter polygons in User Layer, save them or cancel them.
+                return             
         else:
-            pass
-        
-        self.assign_gutter_globals()
-        self.iface.actionPan().trigger()          
+            pass         
 
-        if not self.gutils.is_table_empty('gutter_areas'): # Gutter polygons in User Layer
-            if not self.gutils.is_table_empty('gutter_cells'): # Gutter cells in Schematic Layer
-                q = 'There are some spatial gutter cells already defined in the database. Overwrite them?\n\n'
-                q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons ONLY.'
+        if not self.gutils.is_table_empty('gutter_areas') or not self.gutils.is_table_empty('gutter_lines'):
+            if not self.gutils.is_table_empty('gutter_cells'): # Gutter cells in Table Gutter Cells
+                q = 'There are some spatial gutter cells already defined in the database (in Table "Gutter Cells"). Overwrite them?\n\n'
+                q += 'Please, note that the new gutter values will be evaluated for existing gutter polygons and lines ONLY (from the User Layers).'
                 if not self.uc.question(q):
                     return
 
-        if self.gutils.is_table_empty('gutter_areas'): # Gutter polygons in User Layer
-            self.uc.show_warn("There are no gutter polygons in Gutter Areas (User Layers)!.\n\n" +
+        if self.gutils.is_table_empty('gutter_areas') and self.gutils.is_table_empty('gutter_lines'):
+            self.uc.show_warn("There are no gutter polygons or lines in Gutter Areas  and Gutter Lines (User Layers)!.\n\n" +
                               "Please digitize them to create Gutter Cells.")
            
         else: 
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 grid_lyr = self.lyrs.data['grid']['qlyr']
-                user_gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
-                evaluate_spatial_gutter(self.gutils, grid_lyr, user_gutter_lyr)
+                
+                user_gutter_areas_lyr = self.lyrs.data['gutter_areas']['qlyr']
+                user_gutter_lines_lyr = self.lyrs.data['gutter_lines']['qlyr']
+                evaluate_spatial_gutter(self.gutils, grid_lyr, user_gutter_areas_lyr, user_gutter_lines_lyr)
                 gutter_lyr = self.lyrs.data['gutter_areas']['qlyr']
                 gutter_lyr.reload()
                 self.lyrs.update_layer_extents(gutter_lyr)
-                # self.lyrs.update_style_blocked(shallow_lyr.id())
-                # self.iface.mapCanvas().clearCache()
-                # user_tol_lyr.triggerRepaint()
+
+                self.assign_gutter_globals()
+                self.iface.actionPan().trigger()                 
+                
                 QApplication.restoreOverrideCursor()
-    
                 self.uc.show_info('Spatial gutter values calculated into the Gutter Cells table!')
     
             except Exception as e:
+                QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
-                self.uc.show_warn('WARNING 060319.1720: Evaluation of spatial gutter failed! Please check your Gutter Areas (Schematic layer).')
+                self.uc.show_warn('WARNING 060319.1720: Evaluation of spatial gutter failed!\nPlease check "Gutter Areas" and "Gutter Lines" (User layers).')
                 QApplication.restoreOverrideCursor()
 
 
@@ -673,10 +674,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.globlyr = self.lyrs.data["gutter_globals"]['qlyr']
         self.iface.setActiveLayer(self.globlyr)
         self.globlyr.featureAdded.connect(self.feature_added)
+        
         self.globlyr.startEditing()
         self.iface.actionAddFeature().trigger()   
-
-#         self.lyrs.save_lyrs_edits('gutter_globals')
+        self.globlyr.removeSelection()
         
     # Define a function called when a feature is added to the layer
     def feature_added(self):

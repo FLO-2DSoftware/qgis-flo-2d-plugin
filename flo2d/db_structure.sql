@@ -1752,9 +1752,21 @@ SELECT gpkgAddGeometryColumn('gutter_areas', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('gutter_areas', 'geom');
 -- SELECT gpkgAddSpatialIndex('gutter_areas', 'geom')
 
+CREATE TABLE "gutter_lines" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "width" REAL DEFAULT 0.0, -- WIDSTR, channel width for individual grid elements
+    "height" REAL DEFAULT 0.0, -- CURBHT, maximum depth of multiple channels
+    "n_value" REAL DEFAULT 0.04, -- XNSTR, number of multiple channels assigned in a grid element
+    "direction" INTEGER DEFAULT 1 -- ICURBDIR, channel n-values for individual grid elements    
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('gutter_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('gutter_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('gutter_lines', 'geom');
+
 CREATE TABLE "gutter_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "area_fid" INTEGER, -- fid of area from gutter_areas table  
+    "area_fid" INTEGER, -- fid of area from gutter_areas layer 
+    "line_fid" INTEGER, -- fid of line from gutter_lines layer  
     "grid_fid" INTEGER -- equal to fid from grid table
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_cells', 'aspatial');

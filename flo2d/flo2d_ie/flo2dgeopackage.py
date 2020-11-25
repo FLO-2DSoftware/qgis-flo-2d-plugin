@@ -802,7 +802,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         gutter_areas_sql = ['''INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES''', 5]
         cells_sql = ['''INSERT INTO gutter_cells (area_fid, grid_fid) VALUES''', 2]
 
-        self.clear_tables('gutter_globals','gutter_areas', 'gutter_cells')
+        self.clear_tables('gutter_globals','gutter_areas', 'gutter_lines','gutter_cells')
         head, data = self.parser.parse_gutter()
         gutter_globals_sql += [tuple(head)]
         
@@ -1829,62 +1829,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
         
     def export_gutter(self, outdir):
         try:
-            # check if there is any gutters defined
+            # check if there are any gutters defined:
             if self.is_table_empty('gutter_cells'):
                 return  False
             if self.is_table_empty('gutter_globals'):
                 self.uc.show_info('Gutter Global values are missing!.\n\nDefault values will be assigned.')
                 update_qry = '''INSERT INTO gutter_globals (height, width, n_value) VALUES (?,?,?);'''
                 self.gutils.execute(update_qry, ('0.88', '0.99', '0.77'))
-#                 self.gutils.execute(update_qry, ('9.9', '8.8', '7.7'))
-#                 qry = '''UPDATE gutter_globals SET width = 0.99, height = 0.88, n_value = 0.77;'''
-#                 self.execute(qry)
-#                 self.uc.show_info('gutter globals filled')
 
             gutter_globals_sql = '''SELECT * FROM gutter_globals LIMIT 1;'''
             gutter_poly_sql = '''SELECT fid, width, height, n_value, direction FROM gutter_areas ORDER BY fid;'''
-            gutter_cells_sql = '''SELECT grid_fid FROM gutter_cells WHERE area_fid = ? ORDER BY grid_fid;'''
+            gutter_line_sql = '''SELECT fid, width, height, n_value, direction FROM gutter_lines ORDER BY fid;'''
+            gutter_area_cells_sql = '''SELECT grid_fid, area_fid FROM gutter_cells WHERE area_fid = ? ORDER BY grid_fid;'''
+            gutter_line_cells_sql = '''SELECT grid_fid, line_fid FROM gutter_cells WHERE line_fid = ? ORDER BY grid_fid;'''
 
             line1 = '{0} {1} {2}\n'
             line2 = 'G  ' +  '   {}' * 5 + '\n'
 
             head = self.execute(gutter_globals_sql).fetchone()
-            # self.uc.show_info('head')
-            # r.write(line1.format(*raincell_head))
-            # self.uc.show_info('globals width: %, height: %, n_value: %'  %  (head[0], head[1], head[2] ))
-            #
-            # if head is None:
-            #     return
-            # else:
-            #     pass
-            #
-            # Global gutter width or height must be greater than 0:
-            # if head[0]>0 or head[1]> 0:
-            #     pass
-            # else:
-            #     return
-            #
-            # A list of tuples (areafid,  width, height, n_value
-            # direction) for each gutter polygon:
 
+            # A list of tuples (areafid,  width, height, n_value, direction) for each gutter polygon:
             gutter_poly_rows = self.execute(gutter_poly_sql).fetchall()
-            if not gutter_poly_rows:
+
+            # A list of tuples (areafid,  width, height, n_value, direction) for each gutter line:
+            gutter_line_rows = self.execute(gutter_line_sql).fetchall()
+                        
+            if not gutter_poly_rows and not gutter_line_rows:
                 return  False
             else:
                 pass
-            # self.uc.show_info('after rows')
 
             gutter_dat = os.path.join(outdir, 'GUTTER.DAT')
 
             with open(gutter_dat,'w') as g:
-                # self.uc.show_info('opened')
                 g.write(line1.format(*head[1:]))
-                for fid, width, height, n_value, direction in gutter_poly_rows: # One tuple for each polygon.
-                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
-                    for row in self.execute(gutter_cells_sql, (fid,)): # Gets each cell number that pairs with area_fid.
-                        grid_ID = row[0]
-                        g.write(line2.format(grid_ID, width, height, n_value, direction))
-            
+                
+                if gutter_poly_rows:
+                    for fid, width, height, n_value, direction in gutter_poly_rows: # One tuple for each polygon.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
+                        for row in self.execute(gutter_area_cells_sql, (fid,)): # Gets each cell number that pairs with area_fid.
+                            grid_ID = row[0]
+                            area = row [1]
+                            if area: 
+                                g.write(line2.format(grid_ID, width, height, n_value, direction))
+                                
+                if gutter_line_rows:
+                    for fid, width, height, n_value, direction in gutter_line_rows: # One tuple for each line.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
+                        for row in self.execute(gutter_line_cells_sql, (fid,)): # Gets each cell number that pairs with line_fid.
+                            grid_ID = row[0]
+                            line = row [1]
+                            if line: 
+                                g.write(line2.format(grid_ID, width, height, n_value, direction))            
             return True
         
         except Exception:

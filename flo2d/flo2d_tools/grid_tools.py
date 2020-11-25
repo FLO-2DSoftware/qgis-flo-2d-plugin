@@ -756,12 +756,30 @@ def clustered_features(polygons, fields, *columns, **columns_map):
                 new_feat.setAttribute(col, val)
             yield new_feat
 
-def calculate_spatial_variable(grid, areas):
+def calculate_spatial_variable_from_polygons(grid, areas):
     """
     Generator which calculates values based on polygons representing values.
     """
-    #debugMsg("Inside calculate_spatial_variable 1")
     allfeatures, index = spatial_index(areas)
+    features = grid.getFeatures()
+    for feat in features:  #for each grid feature
+        geom = feat.geometry() #cell square (a polygon)
+        fids = index.intersects(geom.boundingBox()) 
+        for fid in fids:
+            f = allfeatures[fid]
+            fgeom = f.geometry()
+            inter = fgeom.intersects(geom)
+            if inter is True:
+                centroid = geom.centroid()
+                yield (f.id(), feat.id())
+            else:
+                pass
+
+def calculate_spatial_variable_from_lines(grid, lines):
+    """
+    Generator which calculates values based on lines representing values.
+    """
+    allfeatures, index = spatial_index(lines)
     features = grid.getFeatures()
     for feat in features:  #for each grid feature
         geom = feat.geometry() #cell square (a polygon)
@@ -771,8 +789,6 @@ def calculate_spatial_variable(grid, areas):
             fgeom = f.geometry()
             inter = fgeom.intersects(geom)
             if inter is True:
-                #areas_intersection = fgeom.intersection(geom)
-                #arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                 centroid = geom.centroid()
                 yield (f.id(), feat.id())
             else:
@@ -1179,7 +1195,7 @@ def evaluate_spatial_tolerance(gutils, grid, areas):
     qry_cells = ['''INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    for row in calculate_spatial_variable(grid, areas):
+    for row in calculate_spatial_variable_from_polygons(grid, areas):
         qry_cells.append(row)
 
     gutils.batch_execute(qry_cells)
@@ -1197,7 +1213,7 @@ def evaluate_spatial_froude(gutils, grid, areas):
     qry_cells = ['''INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    for row in calculate_spatial_variable(grid, areas):
+    for row in calculate_spatial_variable_from_polygons(grid, areas):
         qry_cells.append(row)
 
     gutils.batch_execute(qry_cells)
@@ -1211,25 +1227,30 @@ def evaluate_spatial_shallow(gutils, grid, areas):
     qry_cells = ['''INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    for row in calculate_spatial_variable(grid, areas):
+    for row in calculate_spatial_variable_from_polygons(grid, areas):
         qry_cells.append(row)
 
     gutils.batch_execute(qry_cells)
 
 
-def evaluate_spatial_gutter(gutils, grid, areas):
+def evaluate_spatial_gutter(gutils, grid, areas, lines):
     """
     Calculating and inserting gutter values into 'gutter_cells' table.
     """
     del_cells = 'DELETE FROM gutter_cells;'
-    qry_cells = ['''INSERT INTO gutter_cells (area_fid, grid_fid) VALUES''', 2]
-
+    insert_cells_from_polygons = ['''INSERT INTO gutter_cells (area_fid, grid_fid) VALUES''', 2]
+    insert_cells_from_lines = ['''INSERT INTO gutter_cells (line_fid, grid_fid) VALUES''', 2]
+    
     gutils.execute(del_cells)
-    for row in calculate_spatial_variable(grid, areas):
-        qry_cells.append(row)
-
-    gutils.batch_execute(qry_cells)
-
+    if areas:
+        for row in calculate_spatial_variable_from_polygons(grid, areas):
+            insert_cells_from_polygons.append(row)
+        gutils.batch_execute(insert_cells_from_polygons)
+        
+    if lines:
+        for row in calculate_spatial_variable_from_lines(grid, lines):
+            insert_cells_from_lines.append(row)
+        gutils.batch_execute(insert_cells_from_lines)        
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
     """
@@ -1239,7 +1260,7 @@ def evaluate_spatial_noexchange(gutils, grid, areas):
     qry_cells = ['''INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES''', 2]
 
     gutils.execute(del_cells)
-    for row in calculate_spatial_variable(grid, areas):
+    for row in calculate_spatial_variable_from_polygons(grid, areas):
         qry_cells.append(row)
 
     gutils.batch_execute(qry_cells)

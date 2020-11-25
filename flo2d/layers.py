@@ -247,6 +247,13 @@ class Layers(object):
                 'attrs_edit_widgets': {},
                 'readonly': False
             }),
+            ('gutter_lines', {
+                'name': 'Gutter Lines',
+                'sgroup': 'User Layers',
+                'styles': ['gutter_lines4.qml'],
+                'attrs_edit_widgets': {},
+                'readonly': False
+            }),            
             ('gutter_areas', {
                 'name': 'Gutter Areas',
                 'sgroup': 'User Layers',
