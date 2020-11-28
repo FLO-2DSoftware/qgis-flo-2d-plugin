@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright Â© 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@ from qgis.PyQt.QtCore import QSize, Qt
 from .ui_utils import load_ui, center_canvas, set_icon, zoom
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
-
+from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('grid_info_widget')
 class GridInfoWidget(qtBaseClass, uiDialog):
@@ -40,13 +40,20 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.mann_default = None
         self.d1 = []
         self.d2 = []
-        
+        self.setup_connection()
         validator = QIntValidator()
         self.idEdit.setValidator(validator)        
         
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, 'eye-svgrepo-com.svg')
-        
+
+    def setup_connection(self):
+        con = self.iface.f2d['con']
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)        
                 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -139,22 +146,31 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         
     def find_cell(self):
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)  
-            grid = self.lyrs.data['grid']['qlyr']
+            QApplication.setOverrideCursor(Qt.WaitCursor) 
+            self.uc.clear_bar_messages() 
+            if self.gutils.is_table_empty('grid'): 
+                self.uc.bar_warn('There is no grid! Please create it before running tool.')
+                return   
+            grid = self.lyrs.data['grid']['qlyr']  
             if grid is not None:
                 if grid:
                     cell = self.idEdit.text()
                     if cell != '':
                         cell = int(cell)
-                        if len(grid) >= cell and cell > 0:
-                            self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
-                            feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
-                            x, y = feat.geometry().centroid().asPoint()                           
-                            center_canvas(self.iface, x, y)
-                            zoom(self.iface,  0.4)
-                            self.mannEdit.setText(str(feat['n_value']))
-                            self.elevEdit.setText(str(feat['elevation']))
-                            self.cellEdit.setText(str(sqrt(feat.geometry().area())))
+                        n_cells = self.number_of_elements(grid)
+                        if  (n_cells > 0 and cell > 0):
+                            if cell <= n_cells:
+                                self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
+                                feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                                x, y = feat.geometry().centroid().asPoint()                           
+                                center_canvas(self.iface, x, y)
+                                zoom(self.iface,  0.4)
+                                self.mannEdit.setText(str(feat['n_value']))
+                                self.elevEdit.setText(str(feat['elevation']))
+                                self.cellEdit.setText(str(sqrt(feat.geometry().area())))
+                            else:
+                                self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
+                                self.lyrs.clear_rubber()                                  
                         else:
                             self.uc.bar_warn('Cell ' + str(cell) + ' not found.')
                             self.lyrs.clear_rubber()                            
@@ -166,4 +182,19 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()    
             pass          
         finally:
-            QApplication.restoreOverrideCursor()      
+            QApplication.restoreOverrideCursor()   
+            
+    def number_of_elements(self, layer): 
+        if len(layer) > 0:
+            return len(layer)
+        elif layer.featureCount() > 0:
+            return layer.featureCount()
+        else:
+            count_sql = '''SELECT COUNT(fid) FROM grid;'''
+            a = self.gutils.execute(count_sql).fetchone()[0]
+            if a:
+                return a
+            else:
+                return len(list(layer.getFeatures()))
+        
+         
