@@ -108,7 +108,7 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         # Populate overview use algorithm combobox
 
         met = {
-            "AUTO": "Automatic Selection of Overview level",
+#             "AUTO": "Automatic Selection of Overview level",
             "NONE": "Use raw input resolution only"
             }
 
