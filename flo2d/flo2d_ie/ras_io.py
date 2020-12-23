@@ -118,14 +118,12 @@ class RASProject(GeoPackageUtils):
                 fcn = xs_feat.attribute('fcn')
                 xs_feat.setAttribute('fcn', fcn if fcn is not None else 0.04)
                 user_xs_lyr.addFeature(xs_feat)
-
                 uchan_n_rows.append((xs_fid, nxsecnum, xs_key))
                 xs_elev = xs_data['elev']
                 for xi, yi in xs_elev:
                     uxsec_n_rows.append((nxsecnum, float(xi), float(yi)))
                 xs_fid += 1
                 nxsecnum += 1
-
             left_bank_geom = QgsGeometry().fromPolylineXY(left_bank_polyline)
             left_bank_feat.setGeometry(left_bank_geom)
             left_bank_feat.setAttribute('fid', seg_fid)
