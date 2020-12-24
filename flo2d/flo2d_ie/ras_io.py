@@ -16,6 +16,7 @@ from ..flo2d_tools.schema2user_tools import remove_features
 
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
+
 class RASProject(GeoPackageUtils):
 
     def __init__(self, con, iface, lyrs, prj_path=None, interpolated=False):
