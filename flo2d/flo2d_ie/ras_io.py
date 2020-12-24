@@ -107,8 +107,8 @@ class RASProject(GeoPackageUtils):
             for xs_key, xs_data in data['xs_data'].items():
                 xs_geom = self.create_xs_geometry(xs_data, limit)
                 xs_poly = xs_geom.asPolyline()
-                left_bank_polyline.append(QgsPointXY(xs_poly[0]))
-                right_bank_polyline.append(QgsPointXY(xs_poly[-1]))
+                left_bank_polyline.append(xs_poly[0])
+                right_bank_polyline.append(xs_poly[-1])
                 xs_feat = QgsFeature()
                 xs_feat.setFields(xs_fields)
                 xs_feat.setGeometry(xs_geom)
