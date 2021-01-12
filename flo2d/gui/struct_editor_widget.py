@@ -165,7 +165,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.show_table_data()
         self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3) # Bridge routine
         self.import_rating_table_btn.setVisible(self.rating_cbo.currentIndex() == 1)
-#         self.rating_table_cbo.setEnabled(self.rating_cbo.currentIndex() == 1)
                 
     def twater_changed(self, idx):
         if not self.struct:

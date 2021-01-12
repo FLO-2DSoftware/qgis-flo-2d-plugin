@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.11
+version=0.10.13
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,24 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.13
+  - Storm Drain:
+  -	  Info messages when importing GDS files to suggest creation (Schema to User) of computational domain and User Storm Drain data.
+  -   Import .INP file: check nodes and conduits outside domain and list them.
+  -   Import .INP file: Give option to create new complete Storm Drains User layers or keep existing and include new data.
+  -   Assign grid number from schematic SD Inlets and Outfalls to User Storm Drain Nodes.
+  -   Minimize, maximize components dialogs (Inlets, Outfalls, Conduits).
+  -   Redesign and reprogram of assignments of rating tables to type 4 inlets. Do not add suffix Gxxxx (xxxx: grid number), for instance.
+  -   Add Title and Legend to rating table plots.
+  -   Fix imports of [OUTFALLS] group in .INP files: spaces in strings for Outfall Type and Time Series.
+  -   Import/export SWMMFLORT.DAT with 'D' lines to include inlet name.
+  -   Make all SD related dialogs clean and adaptable to any Windows screen resolutions.
+  -   Remove obsolete modules: swmm_editor_widget.py' and 'swmm_editor.ui'.
+  -   Import components from shapefile: extended checks and messages for required fields.
+  -   Convert Schematic SD Inlets to user Storm Drains Nodes: include rating tables references (rt_fid).
+  -   Do not allow assignment of same Rating Table to 2 different inlets.
+ <p>0.10.12
+  - Storm Drain: Make REPORT_STEP in SWMM.INP equal to TOUT parameter (Output Interval of CONT.DAT.
  <p>0.10.11
   - Delete "Automatic Selection of Overview Level" from elevation sampling from raster.
  <p>0.10.10

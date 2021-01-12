@@ -84,6 +84,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.populate_conduits()
 
         self.conduits_tblw.cellClicked.connect(self.conduits_tblw_cell_clicked)
+        self.conduits_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
     def setup_connection(self):
         con = self.iface.f2d['con']
@@ -178,8 +179,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
     def checkbox_valueChanged(self, widget, col):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
-        item.setData(Qt.EditRole, widget.isChecked())
         self.conduits_tblw.setItem(row, col, item)
+        self.conduits_tblw.item(row, col).setText( "True" if widget.isChecked() else "False")
 
     def combo_valueChanged(self, widget, col):
         row = self.conduit_name_cbo.currentIndex()
@@ -360,6 +361,12 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0705: assignment of value from conduits users layer failed!.\n", e)
+
+ 
+    def onVerticalSectionClicked(self, logicalIndex):
+        self.conduits_tblw_cell_clicked(logicalIndex, 0)
+ 
+
 
     def fill_individual_controls_with_current_conduit_in_table(self):
         try:
