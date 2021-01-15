@@ -668,7 +668,7 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n\n'
-            msg += '{}\n\n Load the model?'.format(old_gpkg)
+            msg += '{}\n\n Load the model Test Delete?'.format(old_gpkg)
             
             if self.uc.question(msg):
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
@@ -1105,8 +1105,9 @@ class Flo2D(object):
             if empty:
                 self.uc.show_info("There is no grid defined!")
                 return
-
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
             if ok:
                 try:

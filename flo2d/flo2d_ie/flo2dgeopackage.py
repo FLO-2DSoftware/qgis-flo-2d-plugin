@@ -497,11 +497,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 'B': bridge_sql
             }
      
-             
+            n_cells = next(self.execute("SELECT COUNT(*) FROM grid;"))[0]
             data = self.parser.parse_hystruct()
             nodes = slice(3, 5)
+            cells_outside = ""
             for i, hs in enumerate(data, 1):
                 params = hs[:-1]   # Line 'S' (first line of next structure)
+                
+                cell_1 = int(params[nodes][0])
+                cell_2 = int(params[nodes][1])
+                if cell_1 > n_cells or cell_1 < 0 or cell_2 > n_cells or cell_2 < 0 : 
+                    cells_outside += " (" + str(cell_1) + ", " + str(cell_2) + ")\n"                    
+                    continue 
                 elems = hs[-1]     # Lines 'C', 'R', 'I', 'F', 'D' and/or 'B'(rest of lines of next structure)
                 if 'B' in elems:
                    elems =  { 'B' :[ elems.get('B')[0] + elems.get('B')[1] ]} 
@@ -516,6 +523,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql, bridge_sql)
             qry = '''UPDATE struct SET notes = 'imported';'''
             self.execute(qry)
+            
+            if cells_outside != "":
+                self.uc.show_warn("WARNING 120121.1913: Hydraulic structures cells in HYSTRUC.DAT outside the computational domain:\n\n" + cells_outside)   
              
         except Exception:
             QApplication.restoreOverrideCursor()

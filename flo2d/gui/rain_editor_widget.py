@@ -412,7 +412,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         if not self.plot_item_name:
             return
-        # self.plot.clear()
         self.d1, self.d2 = [[], []]
         for i in range(self.rain_data_model.rowCount()):
             self.d1.append(m_fdata(self.rain_data_model, i, 0))

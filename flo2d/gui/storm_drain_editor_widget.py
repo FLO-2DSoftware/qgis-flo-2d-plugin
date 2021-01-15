@@ -2071,12 +2071,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
            self.SD_rating_table_cbo.setCurrentIndex(newIdx)            
  
     def refresh_SD_PlotAndTable(self):
-        idx = self.SD_rating_table_cbo.currentIndex()
-#         self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1) 
-#         self.SD_rating_table_cbo.setCurrentIndex(idx) 
-        
-        
-        
+        idx = self.SD_rating_table_cbo.currentIndex()        
                
     def delete_rtables(self):
         if not self.inletRT:

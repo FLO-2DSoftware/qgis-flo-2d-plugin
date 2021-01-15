@@ -1384,9 +1384,9 @@ class Structure(GeoPackageUtils):
         if self.icurvtable == 0:
             # rating curve
             qry_curv = 'SELECT hdepexc, coefq, expq, coefa, expa FROM rat_curves WHERE struct_fid = ? ORDER BY hdepexc;'
-            curv = self.execute(qry_curv, (self.fid, ))
+            curv = self.execute(qry_curv, (self.fid, )).fetchall()
             qry_repl = 'SELECT repdep, rqcoef, rqexp, racoef, raexp FROM repl_rat_curves WHERE struct_fid = ? ORDER BY repdep;'
-            repl = self.execute(qry_repl, (self.fid,))
+            repl = self.execute(qry_repl, (self.fid,)).fetchall()
             for i, row in enumerate(curv):
                 res.append(row)
                 # check if a replacement curve is defined
@@ -1406,20 +1406,34 @@ class Structure(GeoPackageUtils):
         elif self.icurvtable == 1:
             # rating table
             qry_tab = 'SELECT hdepth, qtable, atable FROM rat_table WHERE struct_fid = ? ORDER BY hdepth;'
-            res = self.execute(qry_tab, (self.fid,))
+            res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
                 res = [''] * 3
         elif self.icurvtable == 2:
             # culvert equation
             qry_tab = 'SELECT typec, typeen, culvertn, ke, cubase FROM culvert_equations WHERE struct_fid = ?;'
-            res = self.execute(qry_tab, (self.fid,))
+            res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
-                res = [''] * 4
+                res = [''] * 5
         else:
             if not res:
                 res = [''] * 3
         self.table_data = res
         return res
+
+
+    def get_rating_tables_data(self, rt_fid):
+        qry = 'SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;'
+        rating_table_data = self.execute(qry, (rt_fid,)).fetchall()
+        if not rating_table_data:
+            # add a new time series
+            rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
+        return rating_table_data
+
+
+
+
+
 
     def set_table_data(self, data):
         if self.icurvtable == 0:
