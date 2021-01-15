@@ -668,7 +668,7 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
             msg += 'the following database file:\n\n'
-            msg += '{}\n\n Load the model Test Delete?'.format(old_gpkg)
+            msg += '{}\n\n Load the model?'.format(old_gpkg)
             
             if self.uc.question(msg):
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
