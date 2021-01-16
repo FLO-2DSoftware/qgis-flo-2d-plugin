@@ -7,7 +7,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
+from ..utils import is_true
 from qgis.PyQt.QtWidgets import QDialogButtonBox 
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
 from qgis.gui import QgsFieldComboBox
@@ -569,7 +569,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         intype = 1
                         outfall_invert_elev = f[self.outfall_invert_elevation_FieldCbo.currentText()] if self.outfall_invert_elevation_FieldCbo.currentText() != "" else ""
                         flapgate = f[self.outfall_flap_gate_FieldCbo.currentText()] if self.outfall_flap_gate_FieldCbo.currentText() != "" else ""
+                        flapgate = 'True' if is_true(flapgate) else 'False'
                         swmm_allow_discharge = f[self.outfall_allow_discharge_FieldCbo.currentText()] if self.outfall_allow_discharge_FieldCbo.currentText() != "" else ""
+                        swmm_allow_discharge = 'True' if is_true(swmm_allow_discharge) else 'False'
                         outfall_type = f[self.outfall_type_FieldCbo.currentText()] if self.outfall_type_FieldCbo.currentText() != "" else ""
 
                         # water_depth = f[self.outfall_water_depth_FieldCbo.currentText()] if self.outfall_water_depth_FieldCbo.currentText() != "" else ""
@@ -638,8 +640,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         new_feats.append(feat)
 
                     if new_feats:
-#                         if not self.outfall_append_chbox.isChecked():
-#                             remove_features(self.user_swmm_nodes_lyr)
+                        if not self.outfall_append_chbox.isChecked():
+                            remove_features(self.user_swmm_nodes_lyr)
     
                         self.user_swmm_nodes_lyr.startEditing()
                         self.user_swmm_nodes_lyr.addFeatures(new_feats)
