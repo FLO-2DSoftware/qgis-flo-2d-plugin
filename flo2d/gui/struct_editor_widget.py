@@ -456,13 +456,21 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 rt_fid = self.struct_cbo.itemData(idx)
                 rt_name = self.struct_cbo.currentText()
                 if rt_fid is None:
-                    return                 
+                    return 
 
             self.tview.undoStack.clear()
             self.tview.setModel(self.data_model)
             self.data_model.clear()
             self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
             self.d1, self.d2 = [[], []]
+            
+
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+            self.plot.plot.addLegend()   
+            self.plot.plot.setTitle('')          
+                       
             if self.struct.icurvtable == '':
                 self.struct.icurvtable = 0
             tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
