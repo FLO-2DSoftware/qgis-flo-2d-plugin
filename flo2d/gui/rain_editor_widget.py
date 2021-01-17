@@ -366,7 +366,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.tview.setModel(self.rain_data_model)
         self.rain_data_model.clear()
         self.rain_data_model.setHorizontalHeaderLabels(['Time', '% of Total Storm'])
-        self.d1, self.d1 = [[], []]
+        self.d1, self.d2 = [[], []]
         for row in self.rain_tseries_data:
             items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
             self.rain_data_model.appendRow(items)

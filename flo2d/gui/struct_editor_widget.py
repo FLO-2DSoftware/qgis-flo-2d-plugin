@@ -29,6 +29,7 @@ from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..gui.dlg_bridges import BridgesDialog
+from _ast import Or
 
 uiDialog, qtBaseClass = load_ui('struct_editor')
 
@@ -438,39 +439,43 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def show_table_data(self):
 #         try: 
-            if self.rating_cbo.currentIndex() == 3: # Bridge routine
+            if self.rating_cbo.currentIndex() == 3 : # Bridge routine
                 return
+            
             if not self.struct:
                 return
+            else:
+                self.struct_data = self.struct.get_table_data() 
+                if not self.struct_data:
+                    return   
+            
+            aRT = self.rating_cbo.currentIndex() == 1 # Rating Table
+            rt_name = ""
+            if aRT:
+                idx = self.struct_cbo.currentIndex()
+                rt_fid = self.struct_cbo.itemData(idx)
+                rt_name = self.struct_cbo.currentText()
+                if rt_fid is None:
+                    return                 
 
-            idx = self.struct_cbo.currentIndex()
-            rt_fid = self.struct_cbo.itemData(idx)
-            rt_name = self.struct_cbo.currentText()
-            if rt_fid is None:
-                return
-        
-            self.struct_data = self.struct.get_table_data() 
-            if not self.struct_data:
-                return  
-            self.create_plot(rt_name)                 
             self.tview.undoStack.clear()
             self.tview.setModel(self.data_model)
             self.data_model.clear()
             self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-            self.d1, self.d1 = [[], []]
+            self.d1, self.d2 = [[], []]
             if self.struct.icurvtable == '':
                 self.struct.icurvtable = 0
             tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
             for row in self.struct_data:
                 items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
-#                 items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
                 self.data_model.appendRow(items)
-                if row:
-                    self.d1.append(row[0] if not row[0] is None else float('NaN'))
-                    self.d2.append(row[1] if not row[1] is None else float('NaN')) 
-                else:                    
-                    self.d1.append(float('NaN'))
-                    self.d2.append(float('NaN'))  
+                if aRT:
+                    if row:
+                        self.d1.append(row[0] if not row[0] is None else float('NaN'))
+                        self.d2.append(row[1] if not row[1] is None else float('NaN')) 
+                    else:                    
+                        self.d1.append(float('NaN'))
+                        self.d2.append(float('NaN'))  
             rc = self.data_model.rowCount()
             if rc < 10:
                 for row in range(rc, 10 + 1):
@@ -481,85 +486,59 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.tview.resizeColumnsToContents()
             for i in range(self.data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-            self.update_plot()       
+                
+            if aRT:   
+                self.create_plot(rt_name)      
+                self.update_plot()  
+                 
 #         except Exception:
-#             self.uc.bar_error("ERROR 290120.0652: can't show table!")
+#             self.uc.bar_error("ERROR 290120.0652: can't show hydraulic structure table " + rt_name)
             
 
 
 
-
-
-            
-#         idx = self.SD_rating_table_cbo.currentIndex()
-#         rt_fid = self.SD_rating_table_cbo.itemData(idx)
-#         rt_name = self.SD_rating_table_cbo.currentText()
-#         if rt_fid is None:
-# #             self.uc.bar_warn("No rating table defined!")
+#     def show_table_data(self):
+#         if not self.struct:
 #             return
-#  
-#         self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
-#         if not self.inlet_series_data:
-#             return
-#         self.create_plot(rt_name)
 #         self.tview.undoStack.clear()
-#         self.tview.setModel(self.inlet_data_model)
-#         self.inlet_data_model.clear()
-#         self.inlet_data_model.setHorizontalHeaderLabels(['Depth', 'Q'])
-#         self.d1, self.d1 = [[], []]
-#         for row in self.inlet_series_data:
-#             items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
-#             self.inlet_data_model.appendRow(items)
-#             self.d1.append(row[0] if not row[0] is None else float('NaN'))
-#             self.d2.append(row[1] if not row[1] is None else float('NaN'))
-#         rc = self.inlet_data_model.rowCount()
-#         if rc < 500:
-#             for row in range(rc, 500 + 1):
-#                 items = [StandardItem(x) for x in ('',) * 2]
-#                 self.inlet_data_model.appendRow(items)
-#         self.tview.horizontalHeader().setStretchLastSection(True)
-#         for col in range(2):
-#             self.tview.setColumnWidth(col, 100)
-#         for i in range(self.inlet_data_model.rowCount()):
-#             self.tview.setRowHeight(i, 20)
-#         self.update_plot()            
-            
-
-
-
-
-
-
-#         try: 
-#             if self.rating_cbo.currentIndex() == 3: # Bridge routine
-#                 return
-#             if not self.struct:
-#                 return
-#             
-#             self.tview.undoStack.clear()
-#             self.tview.setModel(self.data_model)
-#             self.struct_data = self.struct.get_table_data()
-#             self.data_model.clear()
-#             if self.struct.icurvtable == '':
-#                 self.struct.icurvtable = 0
-#             self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-#             tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
-#             for row in self.struct_data:
-#                 items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
+#         self.tview.setModel(self.data_model)
+#         self.struct_data = self.struct.get_table_data()
+#         self.data_model.clear()
+#         if self.struct.icurvtable == '':
+#             self.struct.icurvtable = 0
+#         self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+#         tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
+#         for row in self.struct_data:
+#             items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
+#             self.data_model.appendRow(items)
+#         rc = self.data_model.rowCount()
+#         if rc < 10:
+#             for row in range(rc, 10 + 1):
+#                 items = [StandardItem(x) for x in ('',) * tab_col_nr]
 #                 self.data_model.appendRow(items)
-#             rc = self.data_model.rowCount()
-#             if rc < 10:
-#                 for row in range(rc, 10 + 1):
-#                     items = [StandardItem(x) for x in ('',) * tab_col_nr]
-#                     self.data_model.appendRow(items)
-#             self.tview.resizeColumnsToContents()
-#             for i in range(self.data_model.rowCount()):
-#                 self.tview.setRowHeight(i, 20)
-#             self.tview.horizontalHeader().setStretchLastSection(True)
-#         except Exception:
-#             self.uc.bar_error("ERROR 290120.0652: can't show table!")            
-            
-            
+#         self.tview.resizeColumnsToContents()
+#         for i in range(self.data_model.rowCount()):
+#             self.tview.setRowHeight(i, 20)
+#         self.tview.horizontalHeader().setStretchLastSection(True)
+
+
+    def create_plot(self, name):
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+        self.plot.plot.addLegend()   
+        self.plot_item_name = 'Rating Table:   ' + name
+        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+        self.plot.plot.setTitle('Rating Table   ' + name)
+
+    def update_plot(self):
+        if not self.plot_item_name:
+            return
+        self.d1, self.d2 = [[], []]
+        for i in range(self.data_model.rowCount()):
+            self.d1.append(m_fdata(self.data_model, i, 0))
+            self.d2.append(m_fdata(self.data_model, i, 1))
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])  
 
     def save_data(self):
         data = []
@@ -648,23 +627,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             else:
                 self.uc.bar_warn('Could not save bridge variables!') 
 
-    def create_plot(self, name):
-        self.plot.clear()
-        if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
-        self.plot.plot.addLegend()   
-        self.plot_item_name = 'Rating Table:   ' + name
-        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
-        self.plot.plot.setTitle('Rating Table   ' + name)
 
-    def update_plot(self):
-        if not self.plot_item_name:
-            return
-        self.d1, self.d2 = [[], []]
-        for i in range(self.data_model.rowCount()):
-            self.d1.append(m_fdata(self.data_model, i, 0))
-            self.d2.append(m_fdata(self.data_model, i, 1))
-        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
 
 

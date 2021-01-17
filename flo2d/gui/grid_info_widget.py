@@ -104,7 +104,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.tview.setModel(self.data_model)
         self.data_model.clear()
         self.data_model.setHorizontalHeaderLabels(['Time', 'Cumulative rainfall'])
-        self.d1, self.d1 = [[], []]
+        self.d1, self.d2 = [[], []]
         for row in rainfall:
             items = [QStandardItem('{:.4f}'.format(x)) if x is not None else QStandardItem('') for x in row]
             self.data_model.appendRow(items)
