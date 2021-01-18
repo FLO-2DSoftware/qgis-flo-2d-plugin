@@ -173,7 +173,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.struct.set_row()
         self.show_table_data()
         self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3) # Bridge routine
-        self.import_rating_table_btn.setVisible(self.rating_cbo.currentIndex() == 1)
+#         self.import_rating_table_btn.setVisible(self.rating_cbo.currentIndex() == 1)
                 
     def twater_changed(self, idx):
         if not self.struct:
@@ -280,96 +280,62 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         try:
             s = QSettings()
             last_dir = s.value('FLO-2D/ImportStructTable', '')
-            table_file, __ = QFileDialog.getOpenFileName(
-                                            None,
-                                            'Select Rating table file to import',
-                                            directory=last_dir)
-            if not table_file:
-                return False
+
+            rating_files, __ = QFileDialog.getOpenFileNames(       
+                None,
+                'Select rating table files input file to import data',
+                directory=last_dir,
+                filter= "(*.TXT *.DAT);;(*.TXT);;(*.DAT);;(*.*)"
+                )
+            
+            if not rating_files:
+                return
     
             try: 
-                if (not os.path.isfile(table_file)):
-                    self.uc.show_warn(os.path.basename(table_file) + " is being used by another process!")   
-                    return False   
-                elif (os.path.getsize(table_file) == 0):   
-                    self.uc.show_warn(os.path.basename(table_file) + " is empty!")    
-                    return False   
-                else:  
-                    QApplication.setOverrideCursor(Qt.WaitCursor)                 
-                    s.setValue('FLO-2D/ImportStructTable', table_file)
-
-                    self.show_table_data()  
-                                      
-                    # Copy file to clipboard:
-                    text = ""
-                    n_lines = 0
-                    with open(table_file, 'r') as f1:                        
-                        for line in f1:
-                            text = text + line
-                            n_lines += 1
-                    cb = QApplication.clipboard()
-                    cb.clear(mode=cb.Clipboard )
-                    cb.setText(text, mode=cb.Clipboard)
-
-                    # Remove all but first row of table:
-                    index1 = self.tview.model().index(1, 0)
-                    index2 = self.tview.model().index(self.tview.model().rowCount()-1, 2)                    
-                    itemSelection = QItemSelection(index1, index2)
-                    self.tview.selectionModel().select(itemSelection, QItemSelectionModel.Rows | QItemSelectionModel.Select)
-                    indices = []
-                    for i in self.tview.selectionModel().selectedRows():
-                        index = QPersistentModelIndex(i)
-                        indices.append(index)
-                    for i in indices:
-                        self.tview.model().removeRow(i.row())
-
-                    self.before_paste.emit()
-                    paste_str = QApplication.clipboard().text()
-                    rows = paste_str.split('\n')
-                    num_rows = len(rows) - 1
-                    num_cols = rows[0].count('\t') + 1
+                QApplication.setOverrideCursor(Qt.WaitCursor)                 
+                s.setValue('FLO-2D/ImportStructTable', os.path.dirname(rating_files[0]))
+                for file in rating_files:
+                    file_name, file_ext = os.path.splitext(os.path.basename(file))
                     
-                    index1 = self.tview.model().index(0, 0)
-                    index2 = self.tview.model().index(0, num_cols)                    
-                    itemSelection = QItemSelection(index1, index2)
-                    self.tview.selectionModel().select(itemSelection, QItemSelectionModel.Rows | QItemSelectionModel.Select)
+                    # See if there is structure with same name of file:
+                    row = self.gutils.execute('SELECT fid, icurvtable FROM struct WHERE structname  = ?', (file_name,)).fetchone()
                      
-                    sel_ranges = self.tview.selectionModel().selection()
-                    
-                    
-                    if len(sel_ranges) == 1:
-                        top_left_idx = sel_ranges[0].topLeft()
-                        sel_col = top_left_idx.column()
-                        sel_row = top_left_idx.row()
-                        if sel_col + num_cols > self.tview.model().columnCount():
+                    if row:
+                        # There is an structure with name 'file_name':
+                        struct_fid, icurvtable = row[0], row[1]
+                        # If there is a rating table for this structure delete it:
+                        self.gutils.execute("DELETE FROM rat_table WHERE struct_fid = ?;", (row[0],)) 
+                
+                        # Insert new rating table and assign it to this structure:                        
+                        with open(file, 'r') as f1:
+                            for line in f1:
+                                row = line.split()
+                                if row:
+                                    self.gutils.execute("INSERT INTO rat_table (struct_fid, hdepth, qtable) VALUES (?, ?, ?)", 
+                                                        (struct_fid, row[0], row[1]) )                              
+                        if icurvtable != 1:
+                            # The structure is not of type 'rating table'.
                             QApplication.restoreOverrideCursor()
-                            self.uc.bar_warn('Too many columns to paste.')
-                            return
-                        if sel_row + num_rows > self.tview.model().rowCount():
-                            self.tview.model().insertRows(self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row))
-                            for i in range(self.tview.model().rowCount()):
-                                self.tview.setRowHeight(i, 20)
-                        for row in range(num_rows):
-                            columns = rows[row].split('\t')
-                            for i, col in enumerate(columns):
-                                if not is_number(col):
-                                    columns[i] = ''
-                            [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()) for col in range(len(columns))]
-                            for col in range(len(columns)):
-                                self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
-                        self.after_paste.emit()
-                        self.tview.model().dataChanged.emit(top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
-              
-
-                    QApplication.restoreOverrideCursor()
+                            answer = self.uc.question("Structure '" + file_name + "' is not of rating type 'rating table'.\n\n" +
+                                                      "Would you like to change its type to 'rating table' (icurvtable = 1)?")
+                            if answer:  
+                                self.gutils.execute("UPDATE struct SET icurvtable = ? WHERE structname =?;", (1, file_name))
+                                self.rating_cbo.setCurrentIndex(1)
+                                 
+                            QApplication.setOverrideCursor(Qt.WaitCursor)  
+                    else:
+                        # There is no structure with name 'file_name'. 
+                        pass
+                        
+                QApplication.restoreOverrideCursor()
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 111120.1019: importing structures table failed!\n", e)
+                self.uc.show_error("ERROR 111120.1019: importing structures rating tables failed!\n", e)
 
         except Exception as e:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 111120.1020: importing structures table failed!\n", e)
+                self.uc.show_error("ERROR 111120.1020: importing structures rating tables failed!\n", e)
 
     def change_struct_name(self):
         if not self.struct_cbo.count():
@@ -439,7 +405,15 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def show_table_data(self):
 #         try: 
+
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+            self.plot.plot.addLegend()   
+            self.plot.plot.setTitle('')  
+
             if self.rating_cbo.currentIndex() == 3 : # Bridge routine
+              
                 return
             
             if not self.struct:
@@ -464,12 +438,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
             self.d1, self.d2 = [[], []]
             
-
-            self.plot.clear()
-            if self.plot.plot.legend is not None:
-                self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
-            self.plot.plot.addLegend()   
-            self.plot.plot.setTitle('')          
+#             self.plot.clear()
+#             if self.plot.plot.legend is not None:
+#                 self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
+#             self.plot.plot.addLegend()   
+#             self.plot.plot.setTitle('')          
                        
             if self.struct.icurvtable == '':
                 self.struct.icurvtable = 0
@@ -501,33 +474,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                  
 #         except Exception:
 #             self.uc.bar_error("ERROR 290120.0652: can't show hydraulic structure table " + rt_name)
-            
-
-
-
-#     def show_table_data(self):
-#         if not self.struct:
-#             return
-#         self.tview.undoStack.clear()
-#         self.tview.setModel(self.data_model)
-#         self.struct_data = self.struct.get_table_data()
-#         self.data_model.clear()
-#         if self.struct.icurvtable == '':
-#             self.struct.icurvtable = 0
-#         self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-#         tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
-#         for row in self.struct_data:
-#             items = [StandardItem(str(x)) if x is not None else StandardItem('') for x in row]
-#             self.data_model.appendRow(items)
-#         rc = self.data_model.rowCount()
-#         if rc < 10:
-#             for row in range(rc, 10 + 1):
-#                 items = [StandardItem(x) for x in ('',) * tab_col_nr]
-#                 self.data_model.appendRow(items)
-#         self.tview.resizeColumnsToContents()
-#         for i in range(self.data_model.rowCount()):
-#             self.tview.setRowHeight(i, 20)
-#         self.tview.horizontalHeader().setStretchLastSection(True)
 
 
     def create_plot(self, name):

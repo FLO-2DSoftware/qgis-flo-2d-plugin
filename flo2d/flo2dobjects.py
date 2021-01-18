@@ -1430,11 +1430,6 @@ class Structure(GeoPackageUtils):
             rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
         return rating_table_data
 
-
-
-
-
-
     def set_table_data(self, data):
         if self.icurvtable == 0:
             # rating curve
