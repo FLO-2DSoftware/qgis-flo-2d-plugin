@@ -369,16 +369,35 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 load_conduits = True
                 break
 
+        if load_inlets:
+            if self.inlets_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Inlet Name' field must be selected if the Inlets/Junctions component is picked!") 
+                return
+             
+        if load_outfalls:
+            if self.outfall_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Outfall Name' field must be selected if the Outfalls component is picked!") 
+                return 
+            
+        if load_conduits:
+            if self.conduit_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Conduit Name' field must be selected if the Conduits component is picked!") 
+                return
+            
         if not load_inlets and not load_outfalls and not load_conduits:
             self.uc.bar_warn("No data was selected!")
-            self.save_storm_drain_shapefile_fields()
-            
+            self.save_storm_drain_shapefile_fields()  
+                      
         else:
             # Load inlets from shapefile:
-            if load_inlets:
+            if load_inlets:                
                 mame = ""
                 try:
                     QApplication.setOverrideCursor(Qt.WaitCursor) 
+
                     fields = self.user_swmm_nodes_lyr.fields()
                     new_feats = []
                     outside_inlets = ""
@@ -413,27 +432,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setFields(fields)
 
                         if f.geometry() is None:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 280920.1816: Error processing geometry of inlet/junction '" + name + "' !")
+                            self.uc.show_warn("WARNING 280920.1816: Error processing geometry of inlet/junction  " + name )
                             continue                            
                             
                         geom = f.geometry()
-                        if geom is None:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 060319.1822: Error processing geometry of inlet/junction '" + name + "' !")
+                        if geom is None or geom.type() != 0:
+                            self.uc.show_warn("WARNING 060319.1822: Error processing geometry of inlet/junction  " + name )
                             continue
 
                         point = geom.asPoint()
                         if point is None:
-                            QApplication.restoreOverrideCursor()
                             self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
                             continue
-                        
+
                         cell = self.gutils.grid_on_point(point.x(), point.y())
                         if cell is None:
-                            QApplication.restoreOverrideCursor()
                             outside_inlets  += "\n" + name
-#                             self.uc.show_warn("Inlet/junction  " + name + "  is outside the computational domain!")
                             continue    
                                             
                         new_geom = QgsGeometry.fromPointXY(point)
@@ -449,7 +463,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute('surcharge_depth',  surcharge_depth)
                         feat.setAttribute('ponded_area',ponded_area)
                         feat.setAttribute('outfall_invert_elev', 0)
-                        feat.setAttribute('outfall_type', 'Normal')
+                        feat.setAttribute('outfall_type', 'NORMAL')
                         feat.setAttribute('tidal_curve', '...')
                         feat.setAttribute('time_series', '...')
                         feat.setAttribute('flapgate', 'False')
@@ -461,7 +475,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                        
                         if intype in {1,3,5}:
                             if unit == 1: # Metric
-                                if 0.10 <= swmm_coeff <= 3.50:
+                                if 1.3 <= swmm_coeff <= 1.9:
                                     # OK
                                     pass
                                 else:
@@ -476,19 +490,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                    modified += 1
                         elif intype == 2:
                             if unit == 1: # Metric
-                                if 0.10 <= swmm_coeff <= 3.50:
+                                if 1.0 <= swmm_coeff <= 1.6:
                                     # OK
                                     pass
                                 else:
                                    swmm_coeff = 1.25
                                    modified += 1
                             else: # English
-                                if 0.5 <= swmm_coeff <= 3.50:
+                                if 2.0 <= swmm_coeff <= 2.6:
                                     # OK
                                     pass
                                 else:                                                                                 
                                     swmm_coeff = 2.30
-                                    modified += 1
+                                    modified += 1     
 
                         feat.setAttribute('swmm_coeff', swmm_coeff)
                         feat.setAttribute('swmm_feature', swmm_feature)
@@ -507,28 +521,32 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute('difference', 0)
 
                         new_feats.append(feat)
-
-                    if not self.inlets_append_chbox.isChecked():
-                        remove_features(self.user_swmm_nodes_lyr)
-
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
-
+                    
+                    if new_feats:
+                        if not self.inlets_append_chbox.isChecked():
+                            remove_features(self.user_swmm_nodes_lyr)
+    
+                        self.user_swmm_nodes_lyr.startEditing()
+                        self.user_swmm_nodes_lyr.addFeatures(new_feats)
+                        self.user_swmm_nodes_lyr.commitChanges()
+                        self.user_swmm_nodes_lyr.updateExtents()
+                        self.user_swmm_nodes_lyr.triggerRepaint()
+                        self.user_swmm_nodes_lyr.removeSelection()
+                    else:
+                       load_inlets = False 
+                       
                     QApplication.restoreOverrideCursor()
                     
                     if outside_inlets != "":
                        self.uc.show_warn("WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n" + outside_inlets) 
                         
                     if modified > 0:
-                            self.uc.bar_warn('WARNING 050820.1901: ' + str(modified) + ' Weir Coefficients in shapefile were outside valid ranges. '+ str(modified) + ' default values assigned!')
+                            self.uc.bar_warn('WARNING 050820.1901: ' + str(modified) + ' Weir Coefficients in shapefile are outside valid ranges. ' +
+                                                                                         'Default values were assigned to ' + str(modified) + ' inlets!')
                             
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed!"
+                    self.uc.show_error("ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed after reading " + str(len(new_feats)) + " inlets!" 
                                +'\n__________________________________________________', e)
                     load_inlets = False
 
@@ -561,23 +579,24 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat = QgsFeature()
                         feat.setFields(fields)
 
+
+                        if f.geometry() is None:
+                            self.uc.show_warn("WARNING 261220.1013: Error processing geometry of outfall  " + name )
+                            continue                            
+                            
                         geom = f.geometry()
-                        if geom is None:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall'" + name + "' !")
+                        if geom is None or geom.type() != 0:                          
+                            self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall  " + name )
                             continue
                         
                         point = geom.asPoint()
                         if point is None:
-                            QApplication.restoreOverrideCursor()
                             self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
                             continue
                         
                         cell = self.gutils.grid_on_point(point.x(), point.y())
                         if cell is None:
-                            QApplication.restoreOverrideCursor()
                             outside_outfalls  += "\n" + name
-#                             self.uc.show_warn("Outfall  " + name + "  is outside the computational domain!")
                             continue                        
                         
                         new_geom = QgsGeometry.fromPointXY(point)
@@ -618,16 +637,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                         new_feats.append(feat)
 
-                    if not self.inlets_append_chbox.isChecked() and not load_inlets:
-                        remove_features(self.user_swmm_nodes_lyr)
-
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
-
+                    if new_feats:
+#                         if not self.outfall_append_chbox.isChecked():
+#                             remove_features(self.user_swmm_nodes_lyr)
+    
+                        self.user_swmm_nodes_lyr.startEditing()
+                        self.user_swmm_nodes_lyr.addFeatures(new_feats)
+                        self.user_swmm_nodes_lyr.commitChanges()
+                        self.user_swmm_nodes_lyr.updateExtents()
+                        self.user_swmm_nodes_lyr.triggerRepaint()
+                        self.user_swmm_nodes_lyr.removeSelection()
+                    else:
+                       load_outfalls = False                     
+                    
                     QApplication.restoreOverrideCursor()
 
                     if outside_outfalls != "":
@@ -635,7 +657,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                        
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed!"
+                    self.uc.show_error("ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed after reading " + str(len(new_feats)) + " outfalls!" 
                                +'\n__________________________________________________', e)                    
                     load_outfalls = False
                     
@@ -644,6 +666,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     QApplication.setOverrideCursor(Qt.WaitCursor) 
                     fields = self.user_swmm_conduits_lyr.fields()
                     new_feats = []
+                    outside_conduits = ""
 
                     conduits_shapefile = self.conduits_shapefile_cbo.currentText()
                     lyr = self.lyrs.get_layer_by_name(conduits_shapefile, self.lyrs.group).layer()
@@ -679,17 +702,27 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setFields(fields)
 
                         geom = f.geometry()
-                        if geom is None:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit '" + conduit_name +"' !")
+                        if geom is None or geom.type() != 1:                          
+#                             QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
                             continue
                         
                         points = extractPoints(geom)
                         if points is None:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 060319.1702: Conduit " + name + " is faulty!")
+#                             QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
                             continue
-                                                
+
+                        cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                        if cell is None:
+                            outside_conduits  += "\n" + conduit_name
+                            continue  
+
+                        cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                        if cell is None:
+                            outside_conduits  += "\n" + conduit_name
+                            continue 
+                 
                         new_geom = QgsGeometry.fromPolylineXY(points)
                         feat.setGeometry(new_geom)
 
@@ -715,26 +748,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                         new_feats.append(feat)
 
-                    if not self.conduits_append_chbox.isChecked():
-                        remove_features(self.user_swmm_conduits_lyr)
-
-                    self.user_swmm_conduits_lyr.startEditing()
-                    self.user_swmm_conduits_lyr.addFeatures(new_feats)
-                    self.user_swmm_conduits_lyr.commitChanges()
-                    self.user_swmm_conduits_lyr.updateExtents()
-                    self.user_swmm_conduits_lyr.triggerRepaint()
-                    self.user_swmm_conduits_lyr.removeSelection()
-
+                    if new_feats:
+                        if not self.conduits_append_chbox.isChecked():
+                            remove_features(self.user_swmm_conduits_lyr)
+    
+                        self.user_swmm_conduits_lyr.startEditing()
+                        self.user_swmm_conduits_lyr.addFeatures(new_feats)
+                        self.user_swmm_conduits_lyr.commitChanges()
+                        self.user_swmm_conduits_lyr.updateExtents()
+                        self.user_swmm_conduits_lyr.triggerRepaint()
+                        self.user_swmm_conduits_lyr.removeSelection()
+                    else:
+                       load_conduits = False 
+                       
                     QApplication.restoreOverrideCursor()
 
                     if no_in_out != 0:
                         self.uc.show_warn("WARNING 060319.1703: " + str(no_in_out) + " conduits have no inlet and/or outlet!\n\n" +
                                                            "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n" +
                                                            "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?" )                     
+
+                    if outside_conduits != "":
+                       self.uc.show_warn("WARNING 231220.0954: The following conduits are outside the computational domain!\n" + outside_conduits) 
+                    
                         
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.0500: creation of Storm Drain Conduits User layer failed!"
+                    self.uc.show_error("ERROR 070618.0500: creation of Storm Drain Conduits User layer failed after reading " + str(len(new_feats)) + " conduits!"
                                +'\n__________________________________________________', e)                    
                     load_conduits = False
             
@@ -745,18 +785,26 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if (load_inlets or load_outfalls) and load_conduits:
                 self.uc.show_info("Importing Storm Drain nodes and conduits data finished!\n\n" +
                                   "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
-                                  "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                                  "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
+                                  "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                                  "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                                         "later export the .DAT files used by the FLO-2D model.")
             elif not (load_inlets or load_outfalls) and load_conduits:
                 self.uc.show_info("Importing Storm Drain conduits data finished!\n\n" +
                                   "The 'Storm Drain Conduits' layer was created in the 'User Layers' group.\n\n"
-                                  "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                                  "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")   
+                                  "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                                  "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                                         "later export the .DAT files used by the FLO-2D model.")   
             elif (load_inlets or load_outfalls) and not load_conduits:
                 self.uc.show_info("Importing Storm Drain nodes data finished!\n\n" +
                                   "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
-                                  "Use the 'Inlets', 'Outlets', and 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                                  "NOTE: the 'Schematize Storm Drain Components' button will update the 'Storm Drain' layer group.")
+                                  "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                                  "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                                         "later export the .DAT files used by the FLO-2D model.")
+
+            else:
+                self.uc.show_info("No Storm Drain nodes or conduits selected!")               
+                
+                
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
 

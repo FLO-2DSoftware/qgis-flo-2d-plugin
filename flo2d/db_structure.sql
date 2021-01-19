@@ -1547,7 +1547,7 @@ CREATE TABLE "user_swmm_nodes" (
 
     --VARIABLES FROM .INP [OUTFALLS]:
     	"outfall_invert_elev" REAL DEFAULT 0,
-		"outfall_type" TEXT DEFAULT 'Normal',	 
+		"outfall_type" TEXT DEFAULT 'NORMAL',	 
 		"tidal_curve" TEXT DEFAULT '...',
 		"time_series" TEXT DEFAULT '...',
 	    "flapgate" TEXT DEFAULT 'False', 
@@ -1572,9 +1572,9 @@ CREATE TABLE "user_swmm_nodes" (
     "invert_elev_inp" REAL DEFAULT 0,
     "max_depth_inp" REAL DEFAULT 0,
     "rim_elev_inp" REAL DEFAULT 0,
-    "rim_elev" REAL DEFAULT 0,
-    "ge_elev" REAL DEFAULT 0,
-    "difference" REAL DEFAULT 0,
+    "rim_elev" REAL DEFAULT 0.00,
+    "ge_elev" REAL DEFAULT 0.00,
+    "difference" REAL DEFAULT 0.00,
     "notes" TEXT
 
 );
@@ -1653,7 +1653,7 @@ SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
 -- SWMMFLO.DAT
 
 CREATE TABLE "swmmflo" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "fid" INTEGER PRIMARY KEY NOT NULL,
     "swmmchar" TEXT, -- SWMMCHAR (D, N)
     "swmm_jt" INTEGER, -- SWMM_JT, fid of the grid element with storm drain inlet
     "swmm_iden" TEXT, -- SWMM_IDEN

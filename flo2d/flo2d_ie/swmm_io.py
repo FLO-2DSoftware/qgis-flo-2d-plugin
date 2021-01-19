@@ -64,7 +64,7 @@ class StormDrainProject(object):
             try:
                 return len(self.INP_groups["COORDINATES"])
             except Exception as e:
-                return 0
+                return 3
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -418,7 +418,23 @@ class StormDrainProject(object):
                 for out in outfalls:
                     if not out or out[0] in self.ignore:
                         continue
-                    out_dict = dict(zip_longest(out_cols, out.split()))
+                    items =  out.split()
+                    i0 = items[0]
+                    i1 = items[1]
+                    if items[2] == "TIDAL":
+                        i2 = "TIDAL CURVE"
+                    elif items[2] == "TIME":
+                        i2 = "TIME SERIES" 
+                    else:
+                        i2 = items[2]
+                    i3 = "..."   
+                    if "YES" in items:
+                        i4 = "True" 
+                    else:
+                        i4 = "False"      
+                        
+                    items = [i0, i1, i2, i3, i4]       
+                    out_dict = dict(zip_longest(out_cols, items))
                     outfall = out_dict.pop('outfall')
                     self.INP_nodes[outfall].update(out_dict)
         except Exception as e:

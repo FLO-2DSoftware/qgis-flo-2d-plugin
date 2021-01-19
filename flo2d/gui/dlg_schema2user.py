@@ -20,6 +20,7 @@ from ..flo2d_tools.schema2user_tools import (
 )
 from .ui_utils import load_ui
 from qgis.PyQt.QtWidgets import QApplication
+from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui('schema2user')
 
@@ -35,6 +36,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = uc
         self.methods = {}
+        self.gutils = GeoPackageUtils(self.con, self.iface)
 
         # connections
         self.ckbox_domain.stateChanged.connect(self.convert_domain_checked)
@@ -44,6 +46,12 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
         self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
+        
+        self.populate_components()
+        
+    def  populate_components(self):
+        if self.gutils.is_table_empty('swmmflo'):      
+            self.ckbox_swmm.setEnabled(False)
 
     def convert_domain_checked(self):
         if self.ckbox_domain.isChecked():

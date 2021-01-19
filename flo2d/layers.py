@@ -1297,8 +1297,8 @@ class Layers(object):
 
     def refresh_layers(self):
         for layer in self.iface.mapCanvas().layers():
-            layer.triggerRepaint()
-
+            layer.triggerRepaint()            
+            
     def connect_lyrs_reload(self, layer1, layer2):
         """
         Reload layer1 and update its extent when layer2 modifications are saved.

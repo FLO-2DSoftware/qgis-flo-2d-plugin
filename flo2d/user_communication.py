@@ -11,7 +11,7 @@
 # Unnecessary parens after u'print' keyword
 #pylint: disable=C0325
 import sys
-from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar
+from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsMessageLog, Qgis
 

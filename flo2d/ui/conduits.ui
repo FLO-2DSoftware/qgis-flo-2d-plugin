@@ -13,1035 +13,1175 @@
   <property name="windowTitle">
    <string>Conduits (as defined in 'Storm Drain Conduits' User Layer)</string>
   </property>
-  <widget class="QDialogButtonBox" name="conduits_buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>610</y>
-     <width>301</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>20</y>
-     <width>71</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Conduit Name:</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QTableWidget" name="conduits_tblw">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>334</y>
-     <width>671</width>
-     <height>257</height>
-    </rect>
-   </property>
-   <property name="selectionMode">
-    <enum>QAbstractItemView::SingleSelection</enum>
-   </property>
-   <property name="selectionBehavior">
-    <enum>QAbstractItemView::SelectRows</enum>
-   </property>
-   <property name="rowCount">
-    <number>5</number>
-   </property>
-   <property name="columnCount">
-    <number>19</number>
-   </property>
-   <row/>
-   <row/>
-   <row/>
-   <row/>
-   <row/>
-   <column>
-    <property name="text">
-     <string>Name</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>From Inlet</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>To Outlet</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Inlet Offset</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Outlet Offset</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Shape</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Barrels</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>MaxDepth-Geom1</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Geom2</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Geom3</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Geom4</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Length</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Manning's n</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Initial Flow</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Max. Flow</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Entry Loss Coeff.</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Exit Loss Coeff.</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Avrge. Loss Coeff.</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Flap Gate</string>
-    </property>
-   </column>
-   <item row="0" column="4">
-    <property name="text">
-     <string/>
-    </property>
-   </item>
-   <item row="0" column="6">
-    <property name="text">
-     <string/>
-    </property>
-    <property name="flags">
-     <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
-    </property>
-   </item>
-   <item row="0" column="7">
-    <property name="text">
-     <string/>
-    </property>
-    <property name="flags">
-     <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
-    </property>
-   </item>
-   <item row="0" column="15">
-    <property name="text">
-     <string/>
-    </property>
-    <property name="flags">
-     <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
-    </property>
-   </item>
-   <item row="0" column="16">
-    <property name="text">
-     <string/>
-    </property>
-    <property name="flags">
-     <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
-    </property>
-   </item>
-   <item row="0" column="17">
-    <property name="text">
-     <string/>
-    </property>
-   </item>
-  </widget>
-  <widget class="QComboBox" name="conduit_name_cbo">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>20</y>
-     <width>191</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>150</width>
-     <height>0</height>
-    </size>
-   </property>
-   <property name="editable">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="conduit_elev_grp">
-   <property name="geometry">
-    <rect>
-     <x>48</x>
-     <y>48</y>
-     <width>601</width>
-     <height>101</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Conduit Elevations</string>
-   </property>
-   <widget class="QWidget" name="layoutWidget_3">
-    <property name="geometry">
-     <rect>
-      <x>273</x>
-      <y>20</y>
-      <width>153</width>
-      <height>62</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_10">
+  <layout class="QGridLayout" name="gridLayout_21">
+   <item row="0" column="0" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_20">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetFixedSize</enum>
+     </property>
      <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_8">
-       <item row="0" column="0">
-        <widget class="QLabel" name="inlet_inv_lbl">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="font">
-          <font>
-           <italic>false</italic>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>Elevation at the bottom of the conduit</string>
-         </property>
-         <property name="text">
-          <string>Inlet Invert Elevation</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="outlet_inv_lbl">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="font">
-          <font>
-           <italic>false</italic>
-          </font>
-         </property>
-         <property name="toolTip">
-          <string>Surcharge depth for manholes.</string>
-         </property>
-         <property name="text">
-          <string>Outlet Invert Elevation</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_9">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="inlet_inv_dbox">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="outlet_inv_dbox">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget_4">
-    <property name="geometry">
-     <rect>
-      <x>440</x>
-      <y>20</y>
-      <width>151</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_13">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_11">
-       <item row="0" column="0">
-        <widget class="QLabel" name="inlet_offset_lbl">
-         <property name="toolTip">
-          <string>Positive offset depth at the inlet of the conduit</string>
-         </property>
-         <property name="midLineWidth">
-          <number>0</number>
-         </property>
-         <property name="text">
-          <string>Inlet Offset</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="outlet_off_lbl">
-         <property name="text">
-          <string>Outlet Offset</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_12">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="inlet_offset_dbox">
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="outlet_offset_dbox">
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>16</x>
-      <y>20</y>
-      <width>58</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="0">
-      <widget class="QLabel" name="to_node_lbl">
-       <property name="toolTip">
-        <string>ID of downstream node</string>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>To Outlet</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::PlainText</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="from_node_lbl">
-       <property name="toolTip">
-        <string>ID of upstream node</string>
-       </property>
-       <property name="text">
-        <string>From Inlet</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>20</y>
-      <width>171</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="0">
-      <widget class="QLabel" name="from_node_txt">
-       <property name="frameShape">
-        <enum>QFrame::Box</enum>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="to_node_txt">
-       <property name="frameShape">
-        <enum>QFrame::Box</enum>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="conduit_losses">
-   <property name="geometry">
-    <rect>
-     <x>496</x>
-     <y>160</y>
-     <width>201</width>
-     <height>153</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Conduit Losses</string>
-   </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>11</x>
-      <y>31</y>
-      <width>182</width>
-      <height>99</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_6">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_14">
-       <item row="0" column="0">
-        <widget class="QLabel" name="in_loss_lbl">
-         <property name="text">
-          <string>Entry Loss Coeff.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="out_loss_lbl">
-         <property name="text">
-          <string>Exit Loss Coeff.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="avg_loss_lbl">
-         <property name="text">
-          <string>Average Loss Coeff.</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_15">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="inlet_losses_dbox">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="outlet_losses_dbox">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="average_losses_dbox">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QCheckBox" name="flap_gate_chbox">
+      <widget class="QLabel" name="label">
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
-        <string>Flap Gate</string>
+        <string>Conduit Name:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="conduit_name_cbo">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>350</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="editable">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
     </layout>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="conduit_geometry_grp">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>160</y>
-     <width>313</width>
-     <height>153</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Conduit Geometry</string>
-   </property>
-   <widget class="QDoubleSpinBox" name="geom4_dbox">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>224</x>
-      <y>112</y>
-      <width>65</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Maximum width in feet or meters</string>
-    </property>
-    <property name="maximum">
-     <double>10000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QLabel" name="geom3_lbl_2">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>112</y>
-      <width>55</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Geom4</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="geom2_lbl_2">
-    <property name="geometry">
-     <rect>
-      <x>16</x>
-      <y>112</y>
-      <width>56</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Geom3</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="geom3_dbox">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>112</y>
-      <width>65</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Maximum depth feet or meters</string>
-    </property>
-    <property name="maximum">
-     <double>10000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QSpinBox" name="barrels_sbox">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>248</x>
-      <y>24</y>
-      <width>55</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="maximum">
-     <number>10000</number>
-    </property>
-   </widget>
-   <widget class="QLabel" name="geom2_lbl">
-    <property name="geometry">
-     <rect>
-      <x>16</x>
-      <y>72</y>
-      <width>56</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Max. Depth
+   </item>
+   <item row="1" column="0" colspan="3">
+    <widget class="QGroupBox" name="conduit_elev_grp">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>690</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Conduit Elevations</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item row="2" column="0">
+           <widget class="QLabel" name="to_node_lbl">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>56</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>ID of downstream node</string>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>To Outlet</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="from_node_lbl">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>56</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>ID of upstream node</string>
+            </property>
+            <property name="text">
+             <string>From Inlet</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="from_node_txt">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>169</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="to_node_txt">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>169</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_10">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_8">
+          <item row="0" column="0">
+           <widget class="QLabel" name="inlet_inv_lbl">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <italic>false</italic>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Elevation at the bottom of the conduit</string>
+            </property>
+            <property name="text">
+             <string>Inlet Invert Elevation</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="outlet_inv_lbl">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <italic>false</italic>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Surcharge depth for manholes.</string>
+            </property>
+            <property name="text">
+             <string>Outlet Invert Elevation</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_9">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="inlet_inv_dbox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>20</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="outlet_inv_dbox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>20</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="2">
+       <layout class="QGridLayout" name="gridLayout_13">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_11">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="inlet_offset_lbl">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>68</width>
+              <height>26</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Positive offset depth at the inlet of the conduit</string>
+            </property>
+            <property name="midLineWidth">
+             <number>0</number>
+            </property>
+            <property name="text">
+             <string>Inlet Offset</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="outlet_off_lbl">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>68</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Outlet Offset</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_12">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetFixedSize</enum>
+          </property>
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="inlet_offset_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="outlet_offset_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>71</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="conduit_geometry_grp">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>309</width>
+       <height>135</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Conduit Geometry</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_30">
+      <item row="0" column="0">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>36</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_16">
+        <item row="0" column="0">
+         <widget class="QLabel" name="conduit_shape_lbl">
+          <property name="font">
+           <font>
+            <italic>false</italic>
+           </font>
+          </property>
+          <property name="text">
+           <string>Conduit Shape</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="conduit_shape_cbo">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="currentText">
+           <string>CIRCULAR</string>
+          </property>
+          <property name="maxVisibleItems">
+           <number>25</number>
+          </property>
+          <item>
+           <property name="text">
+            <string>CIRCULAR</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>FORCE_MAIN</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>FILLED_CIRCULAR</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>RECT_CLOSED</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>RECT_OPEN</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>TRAPEZOIDAL</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>TRIANGULAR</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>HORIZ_ELLIPSE</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>VERT_ELLIPSE</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>ARCH</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>PARABOLIC</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>POWER</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>RECT_TRIANGULAR</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>RECT_ROUND</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>MODBASKETHANDLE</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>EGG</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>HORSESHOE</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>GOTHIC</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CATENARY</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>SEMIELLIPTICAL</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>BASKETHANDLE</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>SEMICIRCULAR</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="2">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>36</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <layout class="QGridLayout" name="gridLayout_29">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_28">
+          <item row="0" column="0">
+           <layout class="QGridLayout" name="gridLayout_22">
+            <item row="0" column="0">
+             <widget class="QLabel" name="geom2_lbl">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Max. Depth
 (Geom1)</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="max_depth_dbox">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>72</y>
-      <width>65</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Maximum depth feet or meters</string>
-    </property>
-    <property name="maximum">
-     <double>10000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QDoubleSpinBox" name="geom2_dbox">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>224</x>
-      <y>72</y>
-      <width>65</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Maximum width in feet or meters</string>
-    </property>
-    <property name="maximum">
-     <double>10000.000000000000000</double>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="conduit_shape_cbo">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>56</x>
-      <y>24</y>
-      <width>145</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>50</width>
-      <height>20</height>
-     </size>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="currentText">
-     <string>CIRCULAR</string>
-    </property>
-    <property name="maxVisibleItems">
-     <number>25</number>
-    </property>
-    <item>
-     <property name="text">
-      <string>CIRCULAR</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="max_depth_dbox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Maximum depth feet or meters</string>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
+           <layout class="QGridLayout" name="gridLayout_24">
+            <item row="0" column="0">
+             <widget class="QLabel" name="barrels_lbl">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Barrels</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="barrels_sbox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>71</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximum">
+               <number>10000</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_27">
+          <item row="0" column="0">
+           <layout class="QGridLayout" name="gridLayout_25">
+            <item row="0" column="0">
+             <widget class="QLabel" name="geom3_lbl">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Geom2</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="geom2_dbox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Maximum width in feet or meters</string>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
+           <layout class="QGridLayout" name="gridLayout_23">
+            <item row="0" column="0">
+             <widget class="QLabel" name="geom2_lbl_2">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Geom3</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="geom3_dbox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Maximum depth feet or meters</string>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="0">
+           <layout class="QGridLayout" name="gridLayout_26">
+            <item row="0" column="0">
+             <widget class="QLabel" name="geom3_lbl_2">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Geom4</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="geom4_dbox">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Maximum width in feet or meters</string>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>FORCE_MAIN</string>
+     <property name="title">
+      <string>Physical Properties</string>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>FILLED_CIRCULAR</string>
+     <layout class="QGridLayout" name="gridLayout_18">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_17">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="QLabel" name="length_lbl_2">
+            <property name="text">
+             <string>Length</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Manning's n</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Initial Flow</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Max. Flow</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="length_dbox">
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="mannings_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="initial_flow_dbox">
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QDoubleSpinBox" name="max_flow_dbox">
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QGroupBox" name="conduit_losses">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>RECT_CLOSED</string>
+     <property name="title">
+      <string>Conduit Losses</string>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>RECT_OPEN</string>
+     <layout class="QGridLayout" name="gridLayout_19">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_6">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_14">
+          <item row="0" column="0">
+           <widget class="QLabel" name="in_loss_lbl">
+            <property name="text">
+             <string>Entry Loss Coeff.</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="out_loss_lbl">
+            <property name="text">
+             <string>Exit Loss Coeff.</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="avg_loss_lbl">
+            <property name="text">
+             <string>Average Loss Coeff.</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_15">
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="inlet_losses_dbox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="outlet_losses_dbox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="average_losses_dbox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QCheckBox" name="flap_gate_chbox">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Flap Gate</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <widget class="QTableWidget" name="conduits_tblw">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>TRAPEZOIDAL</string>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>TRIANGULAR</string>
+     <property name="rowCount">
+      <number>5</number>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>HORIZ_ELLIPSE</string>
+     <property name="columnCount">
+      <number>19</number>
      </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>VERT_ELLIPSE</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>ARCH</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>PARABOLIC</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>POWER</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>RECT_TRIANGULAR</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>RECT_ROUND</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>MODBASKETHANDLE</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>EGG</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>HORSESHOE</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>GOTHIC</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>CATENARY</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>SEMIELLIPTICAL</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>BASKETHANDLE</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>SEMICIRCULAR</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="QLabel" name="conduit_shape_lbl">
-    <property name="geometry">
-     <rect>
-      <x>8</x>
-      <y>21</y>
-      <width>41</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Conduit Shape</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-    <property name="wordWrap">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QLabel" name="geom3_lbl">
-    <property name="geometry">
-     <rect>
-      <x>160</x>
-      <y>72</y>
-      <width>55</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Geom2</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="barrels_lbl">
-    <property name="geometry">
-     <rect>
-      <x>208</x>
-      <y>24</y>
-      <width>33</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <italic>false</italic>
-     </font>
-    </property>
-    <property name="text">
-     <string>Barrels</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QGroupBox" name="groupBox">
-   <property name="geometry">
-    <rect>
-     <x>328</x>
-     <y>160</y>
-     <width>161</width>
-     <height>153</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Physical Properties</string>
-   </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>8</x>
-      <y>30</y>
-      <width>145</width>
-      <height>102</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout_17">
-     <item row="0" column="0">
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QLabel" name="length_lbl_2">
-         <property name="text">
-          <string>Length</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Manning's n</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Initial Flow</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Max. Flow</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <column>
+      <property name="text">
+       <string>Name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>From Inlet</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>To Outlet</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Inlet Offset</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Outlet Offset</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Shape</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Barrels</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>MaxDepth-Geom1</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Geom2</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Geom3</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Geom4</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Length</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Manning's n</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Initial Flow</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Max. Flow</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Entry Loss Coeff.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Exit Loss Coeff.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Avrge. Loss Coeff.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Flap Gate</string>
+      </property>
+     </column>
+     <item row="0" column="4">
+      <property name="text">
+       <string/>
+      </property>
      </item>
-     <item row="0" column="1">
-      <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0">
-        <widget class="QDoubleSpinBox" name="length_dbox">
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QDoubleSpinBox" name="mannings_dbox">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QDoubleSpinBox" name="initial_flow_dbox">
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QDoubleSpinBox" name="max_flow_dbox">
-         <property name="maximum">
-          <double>10000.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <item row="0" column="6">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
+      </property>
      </item>
-    </layout>
-   </widget>
-  </widget>
+     <item row="0" column="7">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
+      </property>
+     </item>
+     <item row="0" column="15">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
+      </property>
+     </item>
+     <item row="0" column="16">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
+      </property>
+     </item>
+     <item row="0" column="17">
+      <property name="text">
+       <string/>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="4" column="2">
+    <widget class="QDialogButtonBox" name="conduits_buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections>

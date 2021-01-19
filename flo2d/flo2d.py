@@ -158,7 +158,7 @@ class Flo2D(object):
         
         self.f2d_widget.levee_and_breach_editor.setup_connection()
         
-        self.f2d_widget.multiple_channels_editor.setup_connection()
+        self.f2d_widget.multiple_channels_editor.setup_connection()        
 
     def add_action(
             self,
@@ -541,7 +541,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue('FLO-2D/last_flopro_project', os.path.dirname(gpkg_path))
             s.setValue('FLO-2D/lastGdsDir', os.path.dirname(gpkg_path))
-
+            
     def run_flopro(self):
         dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")        
@@ -667,7 +667,7 @@ class Flo2D(object):
         if old_gpkg:
             QApplication.restoreOverrideCursor()
             msg = 'This QGIS project was used to work with the FLO-2D plugin and\n'
-            msg += 'the following database file:\n'
+            msg += 'the following database file:\n\n'
             msg += '{}\n\n Load the model?'.format(old_gpkg)
             
             if self.uc.question(msg):
@@ -717,6 +717,8 @@ class Flo2D(object):
                 self.uc.bar_info('Loading last model cancelled', dur=3)
 
     def call_IO_methods(self, calls, debug, *args):
+        s = QSettings()
+        last_dir = s.value('FLO-2D/lastGdsDir', '')
         self.files_used = "CONT.DAT\n"
         self.files_not_used = ""
         n_found = 0        
@@ -730,10 +732,14 @@ class Flo2D(object):
                     self.files_not_used += dat + '\n'
                     continue
                 else:
-                    self.files_used += dat + '\n'
-                    if dat == "CHAN.DAT":
-                        self.files_used += "CHANBANK.DAT" + '\n'  
-                    pass
+                    if os.path.getsize(last_dir + "\\" + dat) > 0:                 
+                        self.files_used += dat + '\n'
+                        if dat == "CHAN.DAT":
+                            self.files_used += "CHANBANK.DAT" + '\n'  
+                        pass
+                    else:
+                        self.files_not_used += dat + '\n'
+                        continue
             
             try:
                 start_time = time.time()
@@ -754,7 +760,7 @@ class Flo2D(object):
                     self.uc.log_info(traceback.format_exc())
                 else:
                     raise
-
+        
     @connection_required
     def import_gds(self):
         """
@@ -817,7 +823,7 @@ class Flo2D(object):
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + '\MANNINGS_N.DAT') or  os.path.getsize(dir_name + '\MANNINGS_N.DAT') == 0:
-                self.uc.show_info("ERROR 241019.1821: file MANNINGS_N_DAT is missing or empty!") 
+                self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!") 
                 return
 
 
@@ -1031,8 +1037,10 @@ class Flo2D(object):
                     self.load_layers()
                     self.uc.bar_info('Flo2D model imported', dur=3)
                     self.gutils.enable_geom_triggers()
+                    
                     if 'import_chan' in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
+
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
@@ -1041,7 +1049,12 @@ class Flo2D(object):
                     QApplication.restoreOverrideCursor()
                     if self.files_used != '' or self.files_not_used != '':
                         self.uc.show_info("Files read by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
-
+                        
+                    if 'import_swmmflo' in import_calls:
+                        self.uc.show_info("To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion " +
+                                          "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n" +
+                                          "...and 'Import SWMM.INP' from the Storm Drain Editor widget.")                                     
+                                                
     @connection_required
     def import_selected_components(self):
         """
@@ -1303,16 +1316,44 @@ class Flo2D(object):
                     self.load_layers()
                     self.uc.bar_info('Flo2D model imported', dur=3)
                     self.gutils.enable_geom_triggers()
+                    
                     if 'import_chan' in import_calls:
-                        self.gutils.create_schematized_rbank_lines_from_xs_tips()
+                        self.gutils.create_schematized_rbank_lines_from_xs_tips() 
+                                                
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
-                    self.lyrs.zoom_to_all()
+                    self.lyrs.zoom_to_all()                 
 
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_used != '' or self.files_not_used != '':
                         self.uc.show_info("Files read by this project:\n\n" + self.files_used + "\n\nFiles not found or empty:\n\n" + self.files_not_used)
+                        
+                    if 'import_swmmflo' in import_calls:
+                        self.clean_rating_tables()
+                        
+                        if self.gutils.is_table_empty('user_model_boundary'):
+                            self.uc.show_info("To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion " +
+                                          "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n" +
+                                          "...and 'Import SWMM.INP' from the Storm Drain Editor widget.")                                     
+
+                        else:
+                            self.uc.show_info("To complete the Storm Drain functionality, the 'Storm Drains' conversion " +
+                                          "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n" +
+                                          "...and 'Import SWMM.INP' from the Storm Drain Editor widget.")   
+                            
+    def clean_rating_tables(self): 
+        remove_grid = []
+        grids = self.gutils.execute("SELECT DISTINCT grid_fid, name FROM swmmflort").fetchall() 
+        if grids:
+            for g in grids:
+                row = self.gutils.execute("SELECT fid FROM swmmflo WHERE swmm_jt = ?", (g[0],)).fetchall()
+                if not row:
+                    remove_grid.append(g)
+        
+        if remove_grid:
+            for rg in remove_grid:
+                self.gutils.execute("UPDATE swmmflort SET grid_fid = ?, name = ? WHERE grid_fid = ?", (None, rg[1], rg[0]))
 
     @connection_required
     def export_gds(self):
@@ -1443,8 +1484,14 @@ class Flo2D(object):
                     QApplication.restoreOverrideCursor()
                 finally:
                     QApplication.restoreOverrideCursor()
+                
                     if self.files_used != '':
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)  
+                        
+                    if self.f2g.export_messages != '':
+                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        self.uc.show_info(info)                         
+                        
         
         QApplication.restoreOverrideCursor()
               
@@ -1773,7 +1820,7 @@ class Flo2D(object):
             self.uc.bar_warn('WARNING 060319.1809: There are not any polygon layers selected (or visible)!')
             return
 
-        self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
+#         self.iface.mainWindow().setWindowTitle(s.value('FLO-2D/lastGpkgDir', ''))
 
         dlg_hazus = HazusDialog(self.con, self.iface, self.lyrs)
         save = dlg_hazus.exec_()
@@ -1842,11 +1889,14 @@ class Flo2D(object):
         else:
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        for no in sorted(converter_dlg.methods):
+        methods_numbers = sorted(converter_dlg.methods)
+        for no in methods_numbers:
             converter_dlg.methods[no]()
         self.setup_dock_widgets()
-        self.uc.bar_info('Converting Schematic Layers to User Layers finished!')
         QApplication.restoreOverrideCursor()
+        self.uc.show_info('Converting Schematic Layers to User Layers finished!')
+        if 8 in methods_numbers: # Storm Drains:
+            self.uc.show_info("To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget.")                                           
 
     @connection_required
     def user2schematic(self):

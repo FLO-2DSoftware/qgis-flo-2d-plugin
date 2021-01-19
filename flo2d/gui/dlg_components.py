@@ -52,7 +52,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                       
 #             # Check if MANNINGS_N.DAT exist:
 #             if not os.path.isfile(last_dir + '\MANNINGS_N.DAT') or  os.path.getsize(last_dir + '\MANNINGS_N.DAT') == 0:
-#                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N_DAT is missing or empty!") 
+#                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!") 
 # 
 #             else:    
 

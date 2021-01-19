@@ -29,6 +29,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = None
         self.chunksize = float('inf')
         self.gutils = GeoPackageUtils(con, iface)
+        self.export_messages = ""
         
     def set_parser(self, fpath):
         self.parser = ParseDAT()
@@ -841,16 +842,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
         swmmflort_sql = ['''INSERT INTO swmmflort (grid_fid, name) VALUES''', 2]
         data_sql = ['''INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES''', 3]
 
-        self.clear_tables('swmmflort', 'swmmflort_data')
         data = self.parser.parse_swmmflort() # Reads SWMMFLORT.DAT.
         for i, row in enumerate(data, 1):
-            gid, params = row
-            name = 'Rating Table {}'.format(i)
+
+            if len(row) == 2:
+                gid, params = row
+                name = 'Rating Table {}'.format(i)
+            elif len(row) == 3:
+                gid, inlet_name, params = row
+                name = RT_name
+            elif len(row) == 4:
+                gid, inlet_name, RT_name,  params = row                
+                name = RT_name     
+
             swmmflort_sql += [(gid, name)]
             for n in params:
                 data_sql += [(i,) + tuple(n)]
 
-        self.batch_execute(swmmflort_sql, data_sql)
+        if data_sql:
+            self.clear_tables('swmmflort', 'swmmflort_data')
+            self.batch_execute(swmmflort_sql, data_sql)
 
     def import_swmmoutf(self):
         swmmoutf_sql = ['''INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES''', 4]
@@ -1759,44 +1770,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
-            return False        
-        
-        
-        
-        
-        
-        
-#         # check if there is any multiple channel defined.
-#         try:
-#             if self.is_table_empty('mult'):
-#                 return False
-#             mult_sql = '''SELECT * FROM mult;'''
-#             mult_cell_sql = '''SELECT grid_fid, area_fid FROM mult_cells ORDER BY grid_fid;'''
-#             mult_area_sql = '''SELECT wdr, dm, nodchns, xnmult FROM mult_areas WHERE fid = ?;'''
-#     
-#             line1 = ' {}' * 8 + '\n'
-#             line2 = ' {}' * 5 + '\n'
-#     
-#             head = self.execute(mult_sql).fetchone()
-#             if head is None:
-#                 return  False
-#             else:
-#                 pass
-#             mult = os.path.join(outdir, 'MULT.DAT')
-#             with open(mult, 'w') as m:
-#                 m.write(line1.format(*head[1:]).replace('None', ''))
-#                 for gid, aid in self.execute(mult_cell_sql):
-#                     for row in self.execute(mult_area_sql, (aid,)):
-#                         vals = [x if x is not None else '' for x in row]
-#                         m.write(line2.format(gid, *vals))
-#                     
-#             return True  
-#               
-#         except Exception as e:
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
-#             return False
-                             
+            return False                                   
 
     def export_tolspatial(self, outdir):
         # check if there is any tolerance data defined.
@@ -2241,42 +2215,84 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
-            return False
-                             
+            return False           
 
     def export_swmmflort(self, outdir):
         # check if there is any SWMM rating data defined.
         try:
             if self.is_table_empty('swmmflort'):
-                return False
+                if os.path.isfile(outdir + '\SWMMFLORT.DAT'):
+                    m = "* There are no Rating Tables defined in the project, but there is\n"
+                    m += "  an old SWMMFLORT.DAT in the project directory\n  " +  outdir + "\n\n" 
+                    self.export_messages += m
+                    return False
+            
             swmmflort_sql = '''SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;'''
             data_sql = '''SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;'''
     
-            line1 = 'D {0}\n'
+#             line1 = 'D {0}\n'
+            line1 = 'D {0}  {1}\n'
             line2 = 'N {0}  {1}\n'
             errors = ""
-    
             swmmflort_rows = self.execute(swmmflort_sql).fetchall()
             if not swmmflort_rows:
                 return False
             else:
                 pass
             swmmflort = os.path.join(outdir, 'SWMMFLORT.DAT')
+            error_mentioned = False
             with open(swmmflort, 'w') as s:
-                for fid, gid, name in swmmflort_rows:
-                    if gid != "" and gid is not None:
-                            rows = self.execute(data_sql, (fid,)).fetchone()
-                            if not rows:
-                               errors += "\n" + str(gid) + "\t" + name
+                for fid, gid, rtname in swmmflort_rows:
+#                 for fid, gid, rtname in swmmflort_rows:                    
+                    rtname = rtname.strip()
+                    if gid is not None:
+                        if str(gid).strip() != "":
+                            if rtname is None or rtname == "":
+                                errors += "Grid element " + str(gid) + " has an empty rating table name.\n"          
                             else:
-                                s.write(line1.format(gid))
-                                for row in self.execute(data_sql, (fid,)):
-                                    s.write(line2.format(*row))
-            
+                                inlet_type = self.execute("SELECT intype FROM swmmflo WHERE swmm_jt = ?;", (gid,)).fetchone()
+                                if inlet_type is not None:
+                                     if inlet_type[0] == 4:
+                                        rows = self.execute(data_sql, (fid,)).fetchone()
+                                        if not rows:
+                                            inlet_name = self.execute("SELECT name FROM user_swmm_nodes WHERE grid = ?;", (gid,)).fetchone()
+                                            if inlet_name != None:
+                                                if inlet_name[0] == "":                                         
+                                                    errors += "* No data found for a rating table named '" + rtname + "' for grid element " + str(gid) + ".\n"
+                                                else:
+                                                    errors += "* No data found for a rating table named '" + rtname + "' for inlet '" +  inlet_name[0] + "' for grid element " + str(gid) + ".\n"    
+                                        else: 
+                                            if not self.gutils.is_table_empty('user_swmm_nodes'): 
+                                                inlet_name = self.execute("SELECT name FROM user_swmm_nodes WHERE grid = ?;", (gid,)).fetchone()
+                                                if inlet_name != None:
+                                                    if inlet_name[0] != "":
+                                                        s.write(line1.format(gid, inlet_name[0])) 
+#                                                         s.write(line1.format(gid))                                               
+#                                                         s.write(line1.format(gid, rtname, inlet_name[0]))
+                                                        table = self.execute(data_sql, (fid,)).fetchall()
+                                                        if table:    
+                                                            for row in table:
+                                                                s.write(line2.format(*row)) 
+                                                        else:
+                                                            errors += "Could not find data for rating table '" + rtname + "' for grid element " +  str(gid) + ".\n"  
+                                            else:
+                                                if not error_mentioned:
+                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"   
+                                                    error_mentioned = True  
+                                                                                 
+#                         else:
+#                             if rtname is None or rtname  == "":
+#                                 errors += "There is a rating table item with no grid and name assigned.\n"      
+#                             else:  
+#                                 errors += "A rating table item named '" + rtname + "' has no grid element assigned.\n"     
+#                     else: 
+#                         if rtname is None or rtname == "":
+#                              errors += "There is a rating table item with no grid and no name assigned.\n"                         
+#                         else:
+#                             errors += "A rating table item named '" + rtname + "' has no grid element assigned.\n"        
             if errors:
-                self.uc.show_info("WARNING 040319.0521:\n\nThe following cell(s) with inlet/junction of type 4 " + 
-                                  "(stage discharge with rating table) have empty rating table(s) (no data):\n\n"
-                                  "Cell\tTable\n" + errors)
+                self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+                
             return True  
               
         except Exception as e:
@@ -2288,6 +2304,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_swmmoutf(self, outdir):
         # check if there is any SWMM data defined.
         try:
+            
             if self.is_table_empty('swmmoutf'):
                 return False
             swmmoutf_sql = '''SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;'''
