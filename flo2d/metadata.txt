@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.13
+version=0.10.14
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.14
+  - Hydraulic Structures: Import multiple rating table files and assign them to structures with same name.
  <p>0.10.13
   - Storm Drain:
   -	  Info messages when importing GDS files to suggest creation (Schema to User) of computational domain and User Storm Drain data.

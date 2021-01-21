@@ -9,10 +9,11 @@
 # of the License, or (at your option) any later version
 
 import os
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings, Qt
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from qgis.PyQt.QtWidgets import QApplication
 
 uiDialog, qtBaseClass = load_ui('components')
 
@@ -22,6 +23,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, in_or_out):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        
         self.iface = iface
         self.setupUi(self)
         self.con = con
@@ -38,7 +42,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.setFixedSize(self.size())
 
         self.populate_components_dialog()
-
+        
+        QApplication.restoreOverrideCursor()
+        
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value('FLO-2D/lastGdsDir', '')

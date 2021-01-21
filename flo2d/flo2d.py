@@ -1105,8 +1105,9 @@ class Flo2D(object):
             if empty:
                 self.uc.show_info("There is no grid defined!")
                 return
-
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
             if ok:
                 try:

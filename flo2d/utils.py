@@ -66,7 +66,8 @@ def frange(start, stop=None, step=1):
 
 
 def is_true(s):
-    return s in ['True', 'true', '1', 'T', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']
+    s = str(s)
+    return s in ['True', 'true', 'TRUE', 'tRUE', 'trUE' , 'truE', '1', 'T', 't', 'y', 'Y', 'yes', 'YES', 'Yes', 'yES', 'yeS' ,' yeah', 'yup', 'certainly', 'uh-huh']
 
 def float_or_zero(value):
     try: 

@@ -1976,7 +1976,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.tview.setModel(self.inlet_data_model)
         self.inlet_data_model.clear()
         self.inlet_data_model.setHorizontalHeaderLabels(['Depth', 'Q'])
-        self.d1, self.d1 = [[], []]
+        self.d1, self.d2 = [[], []]
         for row in self.inlet_series_data:
             items = [StandardItem('{:.4f}'.format(x)) if x is not None else StandardItem('') for x in row]
             self.inlet_data_model.appendRow(items)
@@ -2071,12 +2071,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
            self.SD_rating_table_cbo.setCurrentIndex(newIdx)            
  
     def refresh_SD_PlotAndTable(self):
-        idx = self.SD_rating_table_cbo.currentIndex()
-#         self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count()-1) 
-#         self.SD_rating_table_cbo.setCurrentIndex(idx) 
-        
-        
-        
+        idx = self.SD_rating_table_cbo.currentIndex()        
                
     def delete_rtables(self):
         if not self.inletRT:
