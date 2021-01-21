@@ -1743,62 +1743,67 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
     def auto_assign_conduits_nodes(self):
-        # See if there are conduits:
-        if self.gutils.is_table_empty("user_swmm_conduits"):
-            msg = "User Layer \"Storm Drain Conduits\" is empty!\n\n"
-            msg += "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            self.uc.show_warn(msg)
+        """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+        proceed = self.uc.question("Do you want to overwrite Conduits Inlet and Outlet nodes names?")
+        if not proceed:
             return
-        conduit_fields = self.user_swmm_conduits_lyr.fields()
-        conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
-        conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
-        nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
-        buffer_distance, segments = 5.0, 5
-        conduit_nodes = {}
-        for feat in self.user_swmm_conduits_lyr.getFeatures():
-            fid = feat.id()
-            geom = feat.geometry()
-            geom_poly = geom.asPolyline()
-            start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
-            start_geom = QgsGeometry.fromPointXY(start_pnt)
-            end_geom = QgsGeometry.fromPointXY(end_pnt)
-            start_buffer = start_geom.buffer(buffer_distance, segments)
-            end_buffer = end_geom.buffer(buffer_distance, segments)
-            start_nodes, end_nodes = [], []
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            conduit_fields = self.user_swmm_conduits_lyr.fields()
+            conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
+            conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
+            nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
+            buffer_distance, segments = 5.0, 5
+            conduit_nodes = {}
+            for feat in self.user_swmm_conduits_lyr.getFeatures():
+                fid = feat.id()
+                geom = feat.geometry()
+                geom_poly = geom.asPolyline()
+                start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
+                start_geom = QgsGeometry.fromPointXY(start_pnt)
+                end_geom = QgsGeometry.fromPointXY(end_pnt)
+                start_buffer = start_geom.buffer(buffer_distance, segments)
+                end_buffer = end_geom.buffer(buffer_distance, segments)
+                start_nodes, end_nodes = [], []
 
-            start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
-            for node_id in start_nodes_ids:
-                node_feat = nodes_features[node_id]
-                if node_feat.geometry().within(start_buffer):
-                    start_nodes.append(node_feat)
+                start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
+                for node_id in start_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(start_buffer):
+                        start_nodes.append(node_feat)
 
-            end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
-            for node_id in end_nodes_ids:
-                node_feat = nodes_features[node_id]
-                if node_feat.geometry().within(end_buffer):
-                    end_nodes.append(node_feat)
+                end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
+                for node_id in end_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(end_buffer):
+                        end_nodes.append(node_feat)
 
-            start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
-            end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
-            closest_inlet_feat = start_nodes[0] if start_nodes else None
-            closest_outlet_feat = end_nodes[0] if end_nodes else None
-            if closest_inlet_feat is not None:
-                inlet_name = closest_inlet_feat["name"]
-            else:
-                inlet_name = None
-            if closest_outlet_feat is not None:
-                outlet_name = closest_outlet_feat["name"]
-            else:
-                outlet_name = None
-            conduit_nodes[fid] = inlet_name, outlet_name
+                start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
+                end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
+                closest_inlet_feat = start_nodes[0] if start_nodes else None
+                closest_outlet_feat = end_nodes[0] if end_nodes else None
+                if closest_inlet_feat is not None:
+                    inlet_name = closest_inlet_feat["name"]
+                else:
+                    inlet_name = None
+                if closest_outlet_feat is not None:
+                    outlet_name = closest_outlet_feat["name"]
+                else:
+                    outlet_name = None
+                conduit_nodes[fid] = inlet_name, outlet_name
 
-        self.user_swmm_conduits_lyr.startEditing()
-        for fid, (inlet_name, outlet_name) in conduit_nodes.items():
-            self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
-            self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
-        self.user_swmm_conduits_lyr.commitChanges()
-        self.user_swmm_conduits_lyr.triggerRepaint()
-        self.uc.show_info(f"Inlet and Outlet node names successfully assigned for the {len(conduit_nodes)} Conduits!")
+            self.user_swmm_conduits_lyr.startEditing()
+            for fid, (inlet_name, outlet_name) in conduit_nodes.items():
+                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
+                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
+            self.user_swmm_conduits_lyr.commitChanges()
+            self.user_swmm_conduits_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info(
+                f"Inlet and Outlet node names successfully assigned for the {len(conduit_nodes)} Conduits!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Couldn't assign Conduits nodes!", e)
 
     def SD_import_rating_table(self):
         """
