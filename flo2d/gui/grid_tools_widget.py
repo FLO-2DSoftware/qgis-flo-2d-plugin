@@ -27,6 +27,8 @@ from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 
 uiDialog, qtBaseClass = load_ui('grid_tools_widget')
+
+
 class GridToolsWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, lyrs):
@@ -312,7 +314,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
 
         if mann_dlg.allGridElemsRadio.isChecked():
-            if  mann_dlg.current_lyr is None:
+            if mann_dlg.current_lyr is None:
                 self.uc.show_warn('A polygons layer must be selected !')
                 return                
             rough_lyr = mann_dlg.current_lyr
@@ -332,8 +334,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
             else:
                 pass
-      # Assign values:
-        
+        #  Assign values:
         try:
             start_time = time.time()
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -343,7 +344,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if mann_dlg.intersect_cell_rectangle_radio.isChecked():
                 method = "Areas"
             else:
-                method = "Centroids"    
+                method = "Centroids"
             if evaluate_roughness(self.gutils, grid_lyr, rough_lyr, nfield, method,  reset=flag):
                 end_time = time.time()
                 QApplication.restoreOverrideCursor()     

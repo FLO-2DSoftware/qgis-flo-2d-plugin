@@ -16,6 +16,7 @@ from ..flo2d_tools.schema2user_tools import remove_features
 
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
+
 class RASProject(GeoPackageUtils):
 
     def __init__(self, con, iface, lyrs, prj_path=None, interpolated=False):
@@ -83,25 +84,32 @@ class RASProject(GeoPackageUtils):
 
     def write_xsections(self, ras_geometry, limit):
         user_lbank_lyr = self.lyrs.data['user_left_bank']['qlyr']
+        user_rbank_lyr = self.lyrs.data['user_right_bank']['qlyr']
         user_xs_lyr = self.lyrs.data['user_xsections']['qlyr']
         remove_features(user_lbank_lyr)
+        remove_features(user_rbank_lyr)
         remove_features(user_xs_lyr)
         self.clear_tables('user_chan_n', 'user_xsec_n_data')
-        river_fields = user_lbank_lyr.fields()
+        left_bank_fields = user_lbank_lyr.fields()
+        right_bank_fields = user_rbank_lyr.fields()
         xs_fields = user_xs_lyr.fields()
         xs_fid = self.get_max('user_xsections') + 1
         nxsecnum = self.get_max('user_chan_n', 'nxsecnum') + 1
         uchan_n_rows = []
         uxsec_n_rows = []
         user_lbank_lyr.startEditing()
+        user_rbank_lyr.startEditing()
         user_xs_lyr.startEditing()
-        for river_name, data in ras_geometry.items():
-            river_polyline = []
-            river_feat = QgsFeature()
-            river_feat.setFields(river_fields)
+        for seg_fid, (river_name, data) in enumerate(ras_geometry.items(), 1):
+            left_bank_polyline, right_bank_polyline = [], []
+            left_bank_feat, right_bank_feat = QgsFeature(), QgsFeature()
+            left_bank_feat.setFields(left_bank_fields)
+            right_bank_feat.setFields(right_bank_fields)
             for xs_key, xs_data in data['xs_data'].items():
                 xs_geom = self.create_xs_geometry(xs_data, limit)
-                river_polyline.append(QgsPointXY(xs_geom.vertexAt(0)))
+                xs_poly = xs_geom.asPolyline()
+                left_bank_polyline.append(xs_poly[0])
+                right_bank_polyline.append(xs_poly[-1])
                 xs_feat = QgsFeature()
                 xs_feat.setFields(xs_fields)
                 xs_feat.setGeometry(xs_geom)
@@ -111,18 +119,21 @@ class RASProject(GeoPackageUtils):
                 fcn = xs_feat.attribute('fcn')
                 xs_feat.setAttribute('fcn', fcn if fcn is not None else 0.04)
                 user_xs_lyr.addFeature(xs_feat)
-
                 uchan_n_rows.append((xs_fid, nxsecnum, xs_key))
                 xs_elev = xs_data['elev']
                 for xi, yi in xs_elev:
                     uxsec_n_rows.append((nxsecnum, float(xi), float(yi)))
                 xs_fid += 1
                 nxsecnum += 1
-
-            river_geom = QgsGeometry().fromPolylineXY(river_polyline)
-            river_feat.setGeometry(river_geom)
-            river_feat.setAttribute('name', river_name)
-            user_lbank_lyr.addFeature(river_feat)
+            left_bank_geom = QgsGeometry().fromPolylineXY(left_bank_polyline)
+            left_bank_feat.setGeometry(left_bank_geom)
+            left_bank_feat.setAttribute('fid', seg_fid)
+            left_bank_feat.setAttribute('name', river_name)
+            user_lbank_lyr.addFeature(left_bank_feat)
+            right_bank_geom = QgsGeometry().fromPolylineXY(right_bank_polyline)
+            right_bank_feat.setGeometry(right_bank_geom)
+            right_bank_feat.setAttribute('chan_seg_fid', seg_fid)
+            user_rbank_lyr.addFeature(right_bank_feat)
         cursor = self.con.cursor()
         cursor.executemany('INSERT INTO user_chan_n (user_xs_fid, nxsecnum, xsecname) VALUES (?,?,?);', uchan_n_rows)
         cursor.executemany('INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?,?,?);', uxsec_n_rows)
@@ -131,6 +142,10 @@ class RASProject(GeoPackageUtils):
         user_lbank_lyr.updateExtents()
         user_lbank_lyr.triggerRepaint()
         user_lbank_lyr.removeSelection()
+        user_rbank_lyr.commitChanges()
+        user_rbank_lyr.updateExtents()
+        user_rbank_lyr.triggerRepaint()
+        user_rbank_lyr.removeSelection()
         user_xs_lyr.commitChanges()
         user_xs_lyr.updateExtents()
         user_xs_lyr.triggerRepaint()
@@ -297,7 +312,7 @@ class RASGeometry(object):
                 points = list(zip_longest(*(iter(points_split),) * 2))
                 sta = int(sta_txt)
                 elev = list(zip_longest(*(iter(elev_split),) * 2))
-                man = [float(n) for n in man_txt.replace(',', ' ').split()]
+                man = [float(n) for n in man_txt.replace(',', ' ').replace('.', ' ').split()]
                 if length != len(points):
                     continue
                 xs_key = '{}_{}'.format(key, rm)

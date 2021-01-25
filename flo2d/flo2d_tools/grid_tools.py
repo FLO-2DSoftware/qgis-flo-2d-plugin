@@ -18,6 +18,8 @@ from subprocess import Popen, PIPE, STDOUT
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY, QgsSpatialIndex, QgsRasterLayer, QgsRaster, QgsFeatureRequest, QgsRectangle, QgsFeedback, NULL
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number
+from ..errors import GeometryValidityErrors
+
 
 # GRID classes
 class TINInterpolator(object):
@@ -366,7 +368,8 @@ def spatial_centroids_index(vlayer):
         index.insertFeature(feat_copy)
     return allfeatures, index
 
-def intersection_spatial_index(vlayer, request = None):
+
+def intersection_spatial_index(vlayer, request=None):
     """
     Creating optimized for intersections spatial index over collection of features.
     """
@@ -375,6 +378,12 @@ def intersection_spatial_index(vlayer, request = None):
     max_fid = max(vlayer.allFeatureIds()) + 1
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         geom = feat.geometry()
+        if not geom.isGeosValid():
+            geom = geom.buffer(0.0, 5)
+            if not geom.isGeosValid():
+                error_messages = [f"{ge.what()} at location: {ge.where().toString()}"
+                                  for ge in geom.validateGeometry(method=QgsGeometry.ValidatorGeos)]
+                raise GeometryValidityErrors("\n".join(error_messages))
         new_geoms = divide_geom(geom)
         new_fid = True if len(new_geoms) > 1 else False
         for g in new_geoms:
@@ -880,10 +889,7 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
     """
     Updating roughness values inside 'grid' table.
     """
-    
-    try: 
-    
-    
+    try:
     # start_time = time.time()
         
         if reset is True:
@@ -1850,6 +1856,7 @@ def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error('ERROR 160520.1644: could not evaluate adjacent cell elevation!')
 
+
 def dirID(dir):               
     if dir == 1:  # "N"
        # North cell:
@@ -1889,75 +1896,10 @@ def dirID(dir):
     return ID      
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def layer_geometry_is_valid(vlayer):
+    """Checking if all features geometries are GEOS valid."""
+    for feat in vlayer.getFeatures():
+        geom = feat.geometry()
+        if not geom.isGeosValid():
+            return False
+    return True

@@ -24,6 +24,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
+from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2dobjects import InletRatingTable
 from ..utils import is_number, m_fdata, is_true
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
@@ -36,6 +37,8 @@ from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from _ast import Pass
 
 uiDialog, qtBaseClass = load_ui('inp_groups')
+
+
 class INP_GroupsDialog(qtBaseClass, uiDialog):
 
     def __init__(self, con, iface):
@@ -60,7 +63,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
             self.start_date.setDate(today)
             self.report_start_date.setDate(today)
             self.end_date.setDate(today + timedelta(hours=simul_time))
-            self.end_time.setTime(time(int(whole),int(frac*60)))
+            self.end_time.setTime(time(int(whole), int(frac*60)))
             
             tout = float(self.gutils.get_cont_par('TOUT'))
             
@@ -78,7 +81,10 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
             self.uc.show_error('ERROR 310818.0824: error populating export storm drain INP dialog.'
                                +'\n__________________________________________________', e)     
 
+
 uiDialog, qtBaseClass = load_ui('storm_drain_editor')
+
+
 class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def __init__(self, iface, plot, table, lyrs):
@@ -96,7 +102,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_inflows_time_series_lyr = None
-        self.control_lyr  = None
+        self.control_lyr = None
         self.schema_inlets = None
         self.schema_outlets = None
         self.all_schema = []
@@ -183,6 +189,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.outfalls_btn.clicked.connect(self.show_outfalls)
             self.inlets_btn.clicked.connect(self.show_inlets)
             self.conduits_btn.clicked.connect(self.show_conduits)
+            self.assign_conduits_nodes_btn.clicked.connect(self.auto_assign_conduits_nodes)
             self.control_lyr.editingStopped.connect(self.check_simulate_SD_1)
             self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
 
@@ -1734,6 +1741,69 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.bar_warn('Could not save conduits! Please check if they are correct.')
                 return
+
+    def auto_assign_conduits_nodes(self):
+        """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+        proceed = self.uc.question("Do you want to overwrite Conduits Inlet and Outlet nodes names?")
+        if not proceed:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            conduit_fields = self.user_swmm_conduits_lyr.fields()
+            conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
+            conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
+            nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
+            buffer_distance, segments = 5.0, 5
+            conduit_nodes = {}
+            for feat in self.user_swmm_conduits_lyr.getFeatures():
+                fid = feat.id()
+                geom = feat.geometry()
+                geom_poly = geom.asPolyline()
+                start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
+                start_geom = QgsGeometry.fromPointXY(start_pnt)
+                end_geom = QgsGeometry.fromPointXY(end_pnt)
+                start_buffer = start_geom.buffer(buffer_distance, segments)
+                end_buffer = end_geom.buffer(buffer_distance, segments)
+                start_nodes, end_nodes = [], []
+
+                start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
+                for node_id in start_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(start_buffer):
+                        start_nodes.append(node_feat)
+
+                end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
+                for node_id in end_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(end_buffer):
+                        end_nodes.append(node_feat)
+
+                start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
+                end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
+                closest_inlet_feat = start_nodes[0] if start_nodes else None
+                closest_outlet_feat = end_nodes[0] if end_nodes else None
+                if closest_inlet_feat is not None:
+                    inlet_name = closest_inlet_feat["name"]
+                else:
+                    inlet_name = None
+                if closest_outlet_feat is not None:
+                    outlet_name = closest_outlet_feat["name"]
+                else:
+                    outlet_name = None
+                conduit_nodes[fid] = inlet_name, outlet_name
+
+            self.user_swmm_conduits_lyr.startEditing()
+            for fid, (inlet_name, outlet_name) in conduit_nodes.items():
+                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
+                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
+            self.user_swmm_conduits_lyr.commitChanges()
+            self.user_swmm_conduits_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info(
+                f"Inlet and Outlet node names successfully assigned for the {len(conduit_nodes)} Conduits!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Couldn't assign Conduits nodes!", e)
 
     def SD_import_rating_table(self):
         """

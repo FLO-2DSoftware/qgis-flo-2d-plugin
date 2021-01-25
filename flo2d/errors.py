@@ -41,3 +41,10 @@ class Flo2dQueryResultNull(Flo2dError):
     Raise when db query return None while a value(s) were expected.
     """
     pass
+
+
+class GeometryValidityErrors(Exception):
+    """
+    Raise when feature geometry contains validity errors.
+    """
+    pass
