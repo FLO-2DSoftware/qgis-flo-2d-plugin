@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright Â© 2016 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,15 +16,14 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaFPXSECConverter,
     SchemaGridConverter,
     SchemaInfiltrationConverter,
-    SchemaSWMMConverter
+    SchemaSWMMConverter,
 )
 from .ui_utils import load_ui
 
-uiDialog, qtBaseClass = load_ui('user2schema')
+uiDialog, qtBaseClass = load_ui("user2schema")
 
 
 class User2SchemaDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs, uc):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -46,8 +45,7 @@ class User2SchemaDialog(qtBaseClass, uiDialog):
         self.user_fpxsec_chbox.stateChanged.connect(self.convert_user_fpxsec_checked)
         self.user_infil_chbox.stateChanged.connect(self.convert_user_infil_checked)
         self.user_storm_drains_chbox.stateChanged.connect(self.convert_user_storm_drains_checked)
-        
-       
+
     def convert_user_bc_checked(self):
         if self.user_bc_chbox.isChecked():
             self.methods[1] = self.convert_user_bc
@@ -101,41 +99,39 @@ class User2SchemaDialog(qtBaseClass, uiDialog):
             self.methods[9] = self.convert_user_storm_drains
         else:
             self.methods.pop(9)
-            
-            
-    def convert_user_bc (self):
+
+    def convert_user_bc(self):
         self.message += "User boundary conditions converted!\n"
-        pass     
-            
-    def convert_user_streets (self):
+        pass
+
+    def convert_user_streets(self):
         self.message += "User streets converted!\n"
-        pass     
-    
-    def convert_user_channels (self):
+        pass
+
+    def convert_user_channels(self):
         self.message += "User channels converted!\n"
-        pass    
-     
-    def convert_user_levees (self):
+        pass
+
+    def convert_user_levees(self):
         self.message += "User levees converted!\n"
-        pass  
-       
-    def convert_user_structures (self):
+        pass
+
+    def convert_user_structures(self):
         self.message += "User structures converted!\n"
-        pass 
-        
-    def convert_user_reservoirs (self):
+        pass
+
+    def convert_user_reservoirs(self):
         self.message += "User reservoirs converted!\n"
-        pass  
-       
-    def convert_user_fpxsec (self):
+        pass
+
+    def convert_user_fpxsec(self):
         self.message += "User floodplain xsections converted!\n"
-        pass  
-       
-    def convert_user_infil (self):
+        pass
+
+    def convert_user_infil(self):
         self.message += "User infiltration converted!\n"
-        pass  
-       
-    def convert_user_storm_drains (self):
+        pass
+
+    def convert_user_storm_drains(self):
         self.message += "User storm drains converted!\n"
-        pass     
-             
+        pass

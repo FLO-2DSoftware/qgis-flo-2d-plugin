@@ -26,11 +26,10 @@ from .infil_editor_widget import InfilEditorWidget
 from .storm_drain_editor_widget import StormDrainEditorWidget
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui('f2d_widget')
+uiDialog, qtBaseClass = load_ui("f2d_widget")
 
 
 class FLO2DWidget(qtBaseClass, uiDialog):
-
     def __init__(self, iface, lyrs, plot, table):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -40,7 +39,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.plot = plot
         self.table = table
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.setup_grid_tools()
         self.setup_bc_editor()
         self.setup_ic_editor()
@@ -49,7 +48,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_rain_editor()
         self.setup_channels_editor()
         self.setup_xsec_editor()
-        self.setup_storm_drain_editor()       
+        self.setup_storm_drain_editor()
         self.setup_profile_tool()
         self.setup_fpxsec_editor()
         self.setup_infil_editor()
@@ -57,10 +56,20 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_multiple_channels_editor()
 
         self.cgroups = [
-            self.grid_tools_grp, self.bc_editor_grp, self.fpxsec_editor_grp, self.infil_editor_grp,
-            self.storm_drain_editor_grp, self.ic_editor_grp, self.street_editor_grp,
-            self.rain_editor_grp, self.channels_editor_grp, self.struct_editor_grp, self.xs_editor_grp, self.profile_tool_grp,
-            self.levee_and_breach_editor_grp, self.multiple_channels_editor_grp        
+            self.grid_tools_grp,
+            self.bc_editor_grp,
+            self.fpxsec_editor_grp,
+            self.infil_editor_grp,
+            self.storm_drain_editor_grp,
+            self.ic_editor_grp,
+            self.street_editor_grp,
+            self.rain_editor_grp,
+            self.channels_editor_grp,
+            self.struct_editor_grp,
+            self.xs_editor_grp,
+            self.profile_tool_grp,
+            self.levee_and_breach_editor_grp,
+            self.multiple_channels_editor_grp,
         ]
         self.set_collapsible_groups()
 
@@ -69,8 +78,8 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.expand_groups_btn.clicked.connect(self.expand_all_groups)
 
         # set icons
-        set_icon(self.collapse_groups_btn, 'collapse_groups.svg')
-        set_icon(self.expand_groups_btn, 'expand_groups.svg')
+        set_icon(self.collapse_groups_btn, "collapse_groups.svg")
+        set_icon(self.expand_groups_btn, "expand_groups.svg")
 
     def collapse_all_groups(self):
         for grp in self.cgroups:
@@ -113,7 +122,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.rain_editor_lout.addWidget(self.rain_editor)
 
     def setup_channels_editor(self):
-        self.channels_editor= ChannelsEditorWidget(self.iface, self.lyrs)
+        self.channels_editor = ChannelsEditorWidget(self.iface, self.lyrs)
         self.channels_editor_lout.addWidget(self.channels_editor)
 
     def setup_street_editor(self):
@@ -133,20 +142,20 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.infil_editor_lout.addWidget(self.infil_editor)
 
     def setup_storm_drain_editor(self):
-        self.storm_drain_editor = StormDrainEditorWidget(self.iface,  self.plot, self.table, self.lyrs)
+        self.storm_drain_editor = StormDrainEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.storm_drain_editor_lout.addWidget(self.storm_drain_editor)
-        
+
     def setup_levee_and_breach_editor(self):
-        self.levee_and_breach_editor= LeveeAndBreachEditorWidget(self.iface, self.lyrs)
-        self.levee_and_breach_lout.addWidget(self.levee_and_breach_editor)        
+        self.levee_and_breach_editor = LeveeAndBreachEditorWidget(self.iface, self.lyrs)
+        self.levee_and_breach_lout.addWidget(self.levee_and_breach_editor)
 
     def setup_multiple_channels_editor(self):
-        self.multiple_channels_editor= MultipleChannelsEditorWidget(self.iface, self.lyrs)
-        self.multiple_channels_lout.addWidget(self.multiple_channels_editor) 
+        self.multiple_channels_editor = MultipleChannelsEditorWidget(self.iface, self.lyrs)
+        self.multiple_channels_lout.addWidget(self.multiple_channels_editor)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:
-            grp.setSettingGroup('FLO2DWidget')
+            grp.setSettingGroup("FLO2DWidget")
             grp.setSaveCollapsedState(True)
             grp.setScrollOnExpand(True)
             grp.loadState()

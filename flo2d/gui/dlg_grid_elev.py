@@ -14,11 +14,10 @@ from .ui_utils import load_ui
 from qgis.core import QgsWkbTypes
 from ..geopackage_utils import GeoPackageUtils
 
-uiDialog, qtBaseClass = load_ui('grid_elevation')
+uiDialog, qtBaseClass = load_ui("grid_elevation")
 
 
 class GridCorrectionDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)

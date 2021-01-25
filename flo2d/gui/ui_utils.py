@@ -18,9 +18,7 @@ from qgis.core import QgsRectangle, NULL
 
 
 def load_ui(name):
-    ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                           '..', 'ui',
-                           name + '.ui')
+    ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", name + ".ui")
     return uic.loadUiType(ui_file)
 
 
@@ -38,49 +36,50 @@ def center_canvas(iface, x, y):
     mc.setExtent(rect)
     mc.refresh()
 
+
 def zoom(iface, porcentage):
-    canvas = iface.mapCanvas() 
+    canvas = iface.mapCanvas()
     extend = canvas.extent()
     xMin = extend.xMinimum()
     xMax = extend.xMaximum()
     yMin = extend.yMinimum()
     yMax = extend.yMaximum()
 
-    width = abs(xMin-xMax)
-    height = abs(yMin-yMax)
-    
+    width = abs(xMin - xMax)
+    height = abs(yMin - yMax)
+
     xMin = xMin + width * porcentage
     xMax = xMax - width * porcentage
-    yMin = yMin + height *porcentage
-    yMax = yMax - height * porcentage            
-    
-    rect = QgsRectangle(xMin, yMin, xMax, yMax)        
-    canvas.setExtent(rect) 
+    yMin = yMin + height * porcentage
+    yMax = yMax - height * porcentage
+
+    rect = QgsRectangle(xMin, yMin, xMax, yMax)
+    canvas.setExtent(rect)
     canvas.refresh()
 
+
 def zoom_show_n_cells(iface, cell_size, nCells):
-    canvas = iface.mapCanvas() 
+    canvas = iface.mapCanvas()
     extend = canvas.extent()
     xMin = extend.xMinimum()
     xMax = extend.xMaximum()
     yMin = extend.yMinimum()
     yMax = extend.yMaximum()
 
-    centerX = xMin + abs(xMin-xMax)/2
-    centerY = yMin + abs(yMin-yMax)/2
-    
-    d = (nCells/2)*cell_size
-    xMin = centerX  - d
-    xMax = centerX  + d
-    yMin = centerY  - d
-    yMax = centerY  + d
-    
-    rect = QgsRectangle(xMin, yMin, xMax, yMax)        
-    canvas.setExtent(rect) 
+    centerX = xMin + abs(xMin - xMax) / 2
+    centerY = yMin + abs(yMin - yMax) / 2
+
+    d = (nCells / 2) * cell_size
+    xMin = centerX - d
+    xMax = centerX + d
+    yMin = centerY - d
+    yMax = centerY + d
+
+    rect = QgsRectangle(xMin, yMin, xMax, yMax)
+    canvas.setExtent(rect)
     canvas.refresh()
 
 
-        
 def try_disconnect(signal, met):
     try:
         signal.disconnect(met)
@@ -90,20 +89,20 @@ def try_disconnect(signal, met):
 
 def set_icon(btn, icon_file):
     parent_dir = os.path.dirname(os.path.abspath(__file__))
-    idir = os.path.join(os.path.dirname(parent_dir), 'img')
+    idir = os.path.join(os.path.dirname(parent_dir), "img")
     btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
 
-def switch_to_selected(vlayer, combo_box, field='name', use_fid=False):
+def switch_to_selected(vlayer, combo_box, field="name", use_fid=False):
     if vlayer.selectedFeatureCount() == 1:
         feat = vlayer.selectedFeatures()[0]
         if use_fid is True:
-            text = str(feat['fid'])
+            text = str(feat["fid"])
             idx = combo_box.findData(text)
             combo_box.setCurrentIndex(idx)
         else:
             text = feat[field]
             if text == NULL:
-                text = ''
+                text = ""
             idx = combo_box.findText(text)
             combo_box.setCurrentIndex(idx)

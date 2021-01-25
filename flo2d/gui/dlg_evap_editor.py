@@ -14,14 +14,26 @@ from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Evaporation
 from .plot_widget import PlotWidget
 
-uiDialog, qtBaseClass = load_ui('evaporation_editor')
+uiDialog, qtBaseClass = load_ui("evaporation_editor")
 
 
-month_names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+month_names = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 
 
 class EvapEditorDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -60,15 +72,15 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
             self.timeCbo.addItem(str(i))
         self.evap = Evaporation(self.con, self.iface)
         row = self.evap.get_row()
-        self.monthCbo.setCurrentIndex(row['ievapmonth'])
-        self.dayCbo.setCurrentIndex(row['iday'])
-        self.timeCbo.setCurrentIndex(row['clocktime'])
+        self.monthCbo.setCurrentIndex(row["ievapmonth"])
+        self.dayCbo.setCurrentIndex(row["iday"])
+        self.timeCbo.setCurrentIndex(row["clocktime"])
         self.populate_monthly()
 
     def populate_monthly(self):
         monthly = self.evap.get_monthly()
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Month', 'Rate'])
+        model.setHorizontalHeaderLabels(["Month", "Rate"])
         for month, mevap in monthly:
             item = [QStandardItem(month), QStandardItem(str(mevap))]
             model.appendRow(item)
@@ -86,9 +98,9 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.evap.month = cur_month
         hourly = self.evap.get_hourly()
         model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Hour', 'Percentage'])
+        model.setHorizontalHeaderLabels(["Hour", "Percentage"])
         for row in hourly:
-            items = [QStandardItem(str(x)) if x is not None else QStandardItem('') for x in row]
+            items = [QStandardItem(str(x)) if x is not None else QStandardItem("") for x in row]
             model.appendRow(items)
         self.hourlyEvapTView.setModel(model)
         self.hourlyEvapTView.resizeColumnsToContents()

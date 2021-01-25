@@ -24,7 +24,7 @@ def cd(newdir):
 
 class FLOPROExecutor(object):
 
-    FLOPRO_EXE = 'FLOPRO.exe'
+    FLOPRO_EXE = "FLOPRO.exe"
 
     def __init__(self, flo2d_dir, project_dir):
         self.flo2d_dir = flo2d_dir
@@ -41,7 +41,7 @@ class FLOPROExecutor(object):
 
 class XSECInterpolatorExecutor(object):
 
-    INTERPOLATOR_EXE = 'INTERPOLATE.EXE'
+    INTERPOLATOR_EXE = "INTERPOLATE.EXE"
 
     def __init__(self, interpolator_dir, project_dir):
         self.interpolator_dir = interpolator_dir
@@ -60,7 +60,7 @@ class XSECInterpolatorExecutor(object):
 
 class ChanRightBankExecutor(object):
 
-    CHANRIGHTBANK_EXE = 'CHANRIGHTBANK.EXE'
+    CHANRIGHTBANK_EXE = "CHANRIGHTBANK.EXE"
 
     def __init__(self, chanrightbank_dir, project_dir):
         self.chanrightbank_dir = chanrightbank_dir
@@ -75,10 +75,11 @@ class ChanRightBankExecutor(object):
 
     def run(self):
         return self.execute_chanrightbank()
-    
+
+
 class ChannelNInterpolatorExecutor(object):
 
-    N_VALUE_INTERPOLATOR = 'CHAN N-VALUE INTERPOLATOR.EXE'
+    N_VALUE_INTERPOLATOR = "CHAN N-VALUE INTERPOLATOR.EXE"
 
     def __init__(self, channelNinterpolator_dir, project_dir):
         self.channelNinterpolator_dir = channelNinterpolator_dir
@@ -92,15 +93,15 @@ class ChannelNInterpolatorExecutor(object):
                 proc.wait()
                 return proc.returncode
         else:
-            return -999    
+            return -999
 
     def run(self):
-        return self.execute_chanNInterpolator()    
+        return self.execute_chanNInterpolator()
 
 
 class TailingsDamBreachExecutor(object):
 
-    TAILINGS_EXE = 'Tailings Dam Breach.exe'
+    TAILINGS_EXE = "Tailings Dam Breach.exe"
 
     def __init__(self, tailings_dir, project_dir):
         self.tailings_dir = tailings_dir
@@ -109,18 +110,26 @@ class TailingsDamBreachExecutor(object):
 
     def execute_tailings(self):
         with cd(self.project_dir):
-#             proc = subprocess.call(self.tailings_exe, shell=True)
-#             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
-            proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            #             proc = subprocess.call(self.tailings_exe, shell=True)
+            #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            proc = Popen(
+                self.tailings_exe,
+                shell=True,
+                stdin=open(os.devnull),
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
             proc.wait()
             return proc.returncode
 
     def run(self):
         return self.execute_tailings()
- 
+
+
 class MapperExecutor(object):
 
-    MAPPER_EXE = 'Mapper PRO.exe'
+    MAPPER_EXE = "Mapper PRO.exe"
 
     def __init__(self, mapper_dir, project_dir):
         self.mapper_dir = mapper_dir
@@ -132,10 +141,10 @@ class MapperExecutor(object):
             Popen(self.mapper_exe)
 
     def run(self):
-        return self.execute_mapper()   
-    
+        return self.execute_mapper()
+
+
 class ProgramExecutor(object):
-    
     def __init__(self, exe_dir, project_dir, exe_name):
         self.exe = os.path.join(exe_dir, exe_name)
         self.project_dir = project_dir
@@ -145,4 +154,4 @@ class ProgramExecutor(object):
             Popen(self.exe)
 
     def run(self):
-        return self.execute_exe()       
+        return self.execute_exe()

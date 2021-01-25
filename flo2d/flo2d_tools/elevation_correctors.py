@@ -17,9 +17,9 @@ from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
 
 class ElevationCorrector(object):
 
-    ELEVATION_FIELD = 'elev'
-    CORRECTION_FIELD = 'correction'
-    VIRTUAL_SUM = 'elev_correction'
+    ELEVATION_FIELD = "elev"
+    CORRECTION_FIELD = "correction"
+    VIRTUAL_SUM = "elev_correction"
 
     def __init__(self, gutils, lyrs):
         self.gutils = gutils
@@ -28,26 +28,26 @@ class ElevationCorrector(object):
         self.user_points = None
         self.user_polygons = None
 
-        self.filter_expression = ''
-        self.field_expression = '''
+        self.filter_expression = ""
+        self.field_expression = """
         CASE 
         WHEN ("{0}" IS NOT NULL AND "{1}" IS NULL) THEN "{0}" 
         WHEN ("{0}" IS NULL AND "{1}" IS NOT NULL) THEN "{1}" 
         WHEN ("{0}" is NOT NULL AND "{1}" IS NOT NULL) THEN "{0}" + "{1}"
         END
-        '''
+        """
 
     def setup_elevation_layers(self):
-        self.user_points = self.lyrs.data['user_elevation_points']['qlyr']
-        self.user_polygons = self.lyrs.data['user_elevation_polygons']['qlyr']
+        self.user_points = self.lyrs.data["user_elevation_points"]["qlyr"]
+        self.user_polygons = self.lyrs.data["user_elevation_polygons"]["qlyr"]
 
     def set_filter(self):
-        self.user_points.setSubsetString(self.filter_expression.format('user_elevation_points'))
-        self.user_polygons.setSubsetString(self.filter_expression.format('user_elevation_polygons'))
+        self.user_points.setSubsetString(self.filter_expression.format("user_elevation_points"))
+        self.user_polygons.setSubsetString(self.filter_expression.format("user_elevation_polygons"))
 
     def clear_filter(self):
-        self.user_points.setSubsetString('')
-        self.user_polygons.setSubsetString('')
+        self.user_points.setSubsetString("")
+        self.user_polygons.setSubsetString("")
 
     def add_virtual_sum(self, layer):
         expr = self.field_expression.format(self.ELEVATION_FIELD, self.CORRECTION_FIELD)
@@ -66,16 +66,16 @@ class ElevationCorrector(object):
             feats = [feat for feat in vlayer.getFeatures(request)]
         vtype = vlayer.geometryType()
         if vtype == QgsWkbTypes.PointGeometry:
-            uri_type = 'Point'
+            uri_type = "Point"
         elif vtype == QgsWkbTypes.LineGeometry:
-            uri_type = 'LineString'
+            uri_type = "LineString"
         elif vtype == QgsWkbTypes.PolygonGeometry:
-            uri_type = 'Polygon'
+            uri_type = "Polygon"
         else:
             return
         epsg = vlayer.crs().authid()
-        duplicate_name = '{}_duplicated'.format(vlayer.name())
-        mem_layer = QgsVectorLayer('{}?crs={}'.format(uri_type, epsg), duplicate_name, 'memory')
+        duplicate_name = "{}_duplicated".format(vlayer.name())
+        mem_layer = QgsVectorLayer("{}?crs={}".format(uri_type, epsg), duplicate_name, "memory")
         mem_layer_data = mem_layer.dataProvider()
         attr = vlayer.dataProvider().fields().toList()
         mem_layer_data.addAttributes(attr)
@@ -92,8 +92,8 @@ class ElevationCorrector(object):
         for feat in feats:
             feat.setGeometry(feat.geometry().centroid())
         epsg = vlayer.crs().authid()
-        centroids_name = '{}_centroids'.format(vlayer.name())
-        mem_layer = QgsVectorLayer('{}?crs={}'.format('Point', epsg), centroids_name, 'memory')
+        centroids_name = "{}_centroids".format(vlayer.name())
+        mem_layer = QgsVectorLayer("{}?crs={}".format("Point", epsg), centroids_name, "memory")
         mem_layer_data = mem_layer.dataProvider()
         attr = vlayer.dataProvider().fields().toList()
         mem_layer_data.addAttributes(attr)
@@ -103,7 +103,6 @@ class ElevationCorrector(object):
 
 
 class LeveesElevation(ElevationCorrector):
-
     def __init__(self, gutils, lyrs):
         super(LeveesElevation, self).__init__(gutils, lyrs)
         self.schema_levees = None
@@ -111,18 +110,18 @@ class LeveesElevation(ElevationCorrector):
 
     def setup_layers(self):
         self.setup_elevation_layers()
-        self.user_levees = self.lyrs.data['user_levee_lines']['qlyr']
-        self.schema_levees = self.lyrs.data['levee_data']['qlyr']
+        self.user_levees = self.lyrs.data["user_levee_lines"]["qlyr"]
+        self.schema_levees = self.lyrs.data["levee_data"]["qlyr"]
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'levees';"
 
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
             try:
-                qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
+                qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
                 intervals = get_intervals(feat, self.user_points.getFeatures(), self.ELEVATION_FIELD, search_buffer)
             except TypeError:
-                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;'
+                qry = "UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;"
                 intervals = get_intervals(feat, self.user_points.getFeatures(), self.CORRECTION_FIELD, search_buffer)
             interpolated = interpolate_along_line(feat, self.schema_levees.getFeatures(), intervals)
             try:
@@ -135,10 +134,10 @@ class LeveesElevation(ElevationCorrector):
     def elevation_from_lines(self):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
-            fid = feat['fid']
+            fid = feat["fid"]
             elev = feat[self.ELEVATION_FIELD]
             cor = feat[self.CORRECTION_FIELD]
-            qry = 'UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;'
+            qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
             if elev == NULL and cor == NULL:
                 continue
             elif elev != NULL and cor != NULL:
@@ -146,7 +145,7 @@ class LeveesElevation(ElevationCorrector):
             elif elev != NULL and cor == NULL:
                 val = elev
             elif elev == NULL and cor != NULL:
-                qry = 'UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;'
+                qry = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
                 val = cor
             else:
                 continue
@@ -155,9 +154,11 @@ class LeveesElevation(ElevationCorrector):
 
     def elevation_from_polygons(self):
         qry_values = []
-        qry = 'UPDATE levee_data SET levcrest = ? WHERE fid = ?;'
+        qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
         for feat in self.user_levees.getFeatures():
-            poly_values = polys2levees(feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD)
+            poly_values = polys2levees(
+                feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD
+            )
             for elev, fid in poly_values:
                 qry_values.append((round(elev, 3), fid))
         cur = self.gutils.con.cursor()
@@ -166,7 +167,6 @@ class LeveesElevation(ElevationCorrector):
 
 
 class GridElevation(ElevationCorrector):
-
     def __init__(self, gutils, lyrs):
         super(GridElevation, self).__init__(gutils, lyrs)
 
@@ -180,8 +180,8 @@ class GridElevation(ElevationCorrector):
     def setup_layers(self):
         self.setup_elevation_layers()
         self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeatureIds())
-        self.grid = self.lyrs.data['grid']['qlyr']
-        self.blocked_areas = self.lyrs.data['user_blocked_areas']['qlyr']
+        self.grid = self.lyrs.data["grid"]["qlyr"]
+        self.blocked_areas = self.lyrs.data["user_blocked_areas"]["qlyr"]
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
 
     def elevation_from_polygons(self):
@@ -189,20 +189,21 @@ class GridElevation(ElevationCorrector):
             request = self.request
         else:
             request = None
-        set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
-        set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
+        set_qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+        add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
+        set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
         cur = self.gutils.con.cursor()
         for el, cor, fid in poly2grid(
-                self.grid,
-                self.user_polygons,
-                request,
-                True,
-                False,
-                False,
-                self.threshold,
-                self.ELEVATION_FIELD,
-                self.CORRECTION_FIELD):
+            self.grid,
+            self.user_polygons,
+            request,
+            True,
+            False,
+            False,
+            self.threshold,
+            self.ELEVATION_FIELD,
+            self.CORRECTION_FIELD,
+        ):
 
             el_null = el == NULL
             cor_null = cor == NULL
@@ -228,11 +229,12 @@ class GridElevation(ElevationCorrector):
         self.add_virtual_sum(self.user_points)
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
-        grid_fids = [val[-1] for val in
-                     poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)]
+        grid_fids = [
+            val[-1] for val in poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)
+        ]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
-        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         for feat in self.grid.getFeatures(request):
             geom = feat.geometry()
             centroid = geom.centroid().asPoint()
@@ -250,7 +252,9 @@ class GridElevation(ElevationCorrector):
             request = self.request
         else:
             request = None
-        poly_feats = self.user_polygons.getFeatures() if self.only_selected is False else self.user_polygons.getFeatures(request)
+        poly_feats = (
+            self.user_polygons.getFeatures() if self.only_selected is False else self.user_polygons.getFeatures(request)
+        )
         user_lines = [feat.geometry().convertToType(QgsWkbTypes.LineGeometry) for feat in poly_feats]
         allfeatures, index = spatial_index(self.grid)
         boundary_grid_fids = []
@@ -265,13 +269,14 @@ class GridElevation(ElevationCorrector):
                     boundary_grid_fids.append(gid)
         boundary_request = QgsFeatureRequest().setFilterFids(boundary_grid_fids)
         grid_centroids = self.centroid_layer(self.grid, boundary_request)
-        tin = TINInterpolator(grid_centroids, 'elevation')
+        tin = TINInterpolator(grid_centroids, "elevation")
         tin.setup_layer_data()
-        grid_fids = [val[-1] for val in
-                     poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)]
+        grid_fids = [
+            val[-1] for val in poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)
+        ]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
-        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         for feat in self.grid.getFeatures(request):
             geom = feat.geometry()
             centroid = geom.centroid().asPoint()
@@ -284,21 +289,30 @@ class GridElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_within_arf(self, calculation_type):
-        if calculation_type == 'Mean':
-            def calculation_method(vals): return sum(vals) / len(vals)
-        elif calculation_type == 'Max':
-            def calculation_method(vals): return max(vals)
-        elif calculation_type == 'Min':
-            def calculation_method(vals): return min(vals)
+        if calculation_type == "Mean":
+
+            def calculation_method(vals):
+                return sum(vals) / len(vals)
+
+        elif calculation_type == "Max":
+
+            def calculation_method(vals):
+                return max(vals)
+
+        elif calculation_type == "Min":
+
+            def calculation_method(vals):
+                return min(vals)
+
         else:
             raise ValueError
         feats = self.grid.getFeatures()
         feat = next(feats)
         cell_size = feat.geometry().area()
         qry_values = []
-        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
-        for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, 'fid', 'elevation'):
+        for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, "fid", "elevation"):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
                 if area / cell_size < 0.9:
@@ -316,7 +330,6 @@ class GridElevation(ElevationCorrector):
 
 
 class ExternalElevation(ElevationCorrector):
-
     def __init__(self, gutils, lyrs):
         super(ExternalElevation, self).__init__(gutils, lyrs)
 
@@ -337,11 +350,11 @@ class ExternalElevation(ElevationCorrector):
 
     def setup_internal(self):
         self.setup_elevation_layers()
-        self.grid = self.lyrs.data['grid']['qlyr']
+        self.grid = self.lyrs.data["grid"]["qlyr"]
 
     def setup_external(self, polygon_lyr, predicate, only_selected=False, copy_features=False):
         self.polygons = polygon_lyr
-        self.only_centroids = True if predicate == 'centroids within polygons' else False
+        self.only_centroids = True if predicate == "centroids within polygons" else False
         self.only_selected = only_selected
         if self.only_selected is True:
             self.request = QgsFeatureRequest().setFilterFids(self.polygons.selectedFeatureIds())
@@ -368,7 +381,7 @@ class ExternalElevation(ElevationCorrector):
             new_feat.setGeometry(new_geom)
             for key, val in list(values.items()):
                 new_feat.setAttribute(key, val)
-            new_feat.setAttribute('membership', 'grid')
+            new_feat.setAttribute("membership", "grid")
             self.user_polygons.addFeature(new_feat)
         self.user_polygons.commitChanges()
         self.user_polygons.updateExtents()
@@ -376,18 +389,20 @@ class ExternalElevation(ElevationCorrector):
         self.user_polygons.removeSelection()
 
     def elevation_attributes(self):
-        set_qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
-        add_qry = 'UPDATE grid SET elevation = elevation + ? WHERE fid = ?;'
-        set_add_qry = 'UPDATE grid SET elevation = ? + ? WHERE fid = ?;'
-        poly_list = poly2grid(self.grid,
-                              self.polygons,
-                              self.request,
-                              self.only_centroids,
-                              True,
-                              False,
-                              self.threshold,
-                              self.elevation_field,
-                              self.correction_field)
+        set_qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+        add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
+        set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
+        poly_list = poly2grid(
+            self.grid,
+            self.polygons,
+            self.request,
+            self.only_centroids,
+            True,
+            False,
+            self.threshold,
+            self.elevation_field,
+            self.correction_field,
+        )
         fids = {}
         qry_values = []
         for fid, el, cor, gid in poly_list:
@@ -406,7 +421,7 @@ class ExternalElevation(ElevationCorrector):
             elif not el_null and not cor_null:
                 qry_values.append((set_add_qry, (el, cor, gid)))
 
-            fids[fid] = {'elev': el, 'correction': cor}
+            fids[fid] = {"elev": el, "correction": cor}
 
         cur = self.gutils.con.cursor()
         for qry, vals in qry_values:
@@ -416,16 +431,25 @@ class ExternalElevation(ElevationCorrector):
             self.import_features(fids)
 
     def elevation_grid_statistics(self):
-        if self.statistics == 'Mean':
-            def calculation_method(vals): return sum(vals) / len(vals)
-        elif self.statistics == 'Max':
-            def calculation_method(vals): return max(vals)
-        elif self.statistics == 'Min':
-            def calculation_method(vals): return min(vals)
+        if self.statistics == "Mean":
+
+            def calculation_method(vals):
+                return sum(vals) / len(vals)
+
+        elif self.statistics == "Max":
+
+            def calculation_method(vals):
+                return max(vals)
+
+        elif self.statistics == "Min":
+
+            def calculation_method(vals):
+                return min(vals)
+
         else:
             raise ValueError
         cur = self.gutils.con.cursor()
-        qry = 'UPDATE grid SET elevation = ? WHERE fid = ?;'
+        qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True, False, self.threshold)
         fids_grids = defaultdict(list)
         fids_elevs = {}
@@ -435,9 +459,9 @@ class ExternalElevation(ElevationCorrector):
             grid_request = QgsFeatureRequest().setFilterFids(grids_fids)
             elevs = []
             for grid_feat in self.grid.getFeatures(grid_request):
-                elevs.append(grid_feat['elevation'])
+                elevs.append(grid_feat["elevation"])
             elevation = round(calculation_method(elevs), 3)
-            fids_elevs[fid] = {'elev': elevation}
+            fids_elevs[fid] = {"elev": elevation}
             for g in grids_fids:
                 cur.execute(qry, (elevation, g))
         self.gutils.con.commit()
@@ -445,11 +469,11 @@ class ExternalElevation(ElevationCorrector):
             self.import_features(fids_elevs)
 
     def elevation_raster_statistics(self):
-        if self.statistics == 'Mean':
+        if self.statistics == "Mean":
             stats = QgsZonalStatistics.Mean
-        elif self.statistics == 'Max':
+        elif self.statistics == "Max":
             stats = QgsZonalStatistics.Max
-        elif self.statistics == 'Min':
+        elif self.statistics == "Min":
             stats = QgsZonalStatistics.Min
         else:
             raise ValueError

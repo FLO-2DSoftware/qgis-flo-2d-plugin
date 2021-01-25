@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 # Unnecessary parens after u'print' keyword
-#pylint: disable=C0325
+# pylint: disable=C0325
 import sys
 from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog
 from qgis.PyQt.QtCore import Qt
@@ -49,11 +49,23 @@ class UserCommunication(object):
             filename = exc_tb.tb_frame.f_code.co_filename
             function = exc_tb.tb_frame.f_code.co_name
             line = str(exc_tb.tb_lineno)
-            QMessageBox.critical(self.iface.mainWindow(), self.context, msg  + "\n\n" +
-                                 "Error:\n   " + str(exc_obj) + "\n\n" +
-                                 "In file:\n   " + filename + "\n\n" +
-                                 "In function:\n   " +  function  + "\n\n" +
-                                 "On line " + line)
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                self.context,
+                msg
+                + "\n\n"
+                + "Error:\n   "
+                + str(exc_obj)
+                + "\n\n"
+                + "In file:\n   "
+                + filename
+                + "\n\n"
+                + "In function:\n   "
+                + function
+                + "\n\n"
+                + "On line "
+                + line,
+            )
         else:
             print(msg)
 

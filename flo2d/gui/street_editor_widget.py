@@ -16,8 +16,8 @@ from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui('street_editor')
-uiDialog_pop, qtBaseClass_pop = load_ui('street_global')
+uiDialog, qtBaseClass = load_ui("street_editor")
+uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
 
 
 class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
@@ -27,30 +27,29 @@ class StreetGeneral(uiDialog_pop, qtBaseClass_pop):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
 
 
 class StreetEditorWidget(qtBaseClass, uiDialog):
-
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
         self.street_lyr = None
         self.street_idx = 0
 
         # Icons:
-        set_icon(self.create_street, 'mActionCaptureLine.svg')
-        set_icon(self.save_changes_btn, 'mActionSaveAllEdits.svg')
-        set_icon(self.schema_streets, 'schematize_streets.svg')
-        set_icon(self.revert_changes_btn, 'mActionUndo.svg')
-        set_icon(self.delete_street_btn, 'mActionDeleteSelected.svg')
-        set_icon(self.change_street_name_btn, 'change_name.svg')
+        set_icon(self.create_street, "mActionCaptureLine.svg")
+        set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
+        set_icon(self.schema_streets, "schematize_streets.svg")
+        set_icon(self.revert_changes_btn, "mActionUndo.svg")
+        set_icon(self.delete_street_btn, "mActionDeleteSelected.svg")
+        set_icon(self.change_street_name_btn, "change_name.svg")
 
         # Connections:
         self.create_street.clicked.connect(self.create_street_line)
@@ -63,13 +62,13 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.street_name_cbo.activated.connect(self.street_changed)
 
     def setup_connection(self):
-        con = self.iface.f2d['con']
+        con = self.iface.f2d["con"]
         if con is None:
             return
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.street_lyr = self.lyrs.data['user_streets']['qlyr']
+            self.street_lyr = self.lyrs.data["user_streets"]["qlyr"]
             self.street_lyr.editingStopped.connect(self.populate_streets)
             self.street_lyr.selectionChanged.connect(self.switch2selected)
 
@@ -79,7 +78,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
 
     def populate_streets(self):
         self.street_name_cbo.clear()
-        qry = '''SELECT fid, name, n_value, elevation, curb_height, street_width FROM user_streets ORDER BY fid;'''
+        qry = """SELECT fid, name, n_value, elevation, curb_height, street_width FROM user_streets ORDER BY fid;"""
         for street in self.gutils.execute(qry):
             name = street[1]
             self.street_name_cbo.addItem(name, street)
@@ -105,16 +104,16 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
 
     def create_street_line(self):
-        if not self.lyrs.enter_edit_mode('user_streets'):
+        if not self.lyrs.enter_edit_mode("user_streets"):
             return
 
     def save_street_edits(self):
         """
         Save changes of user street layer.
         """
-        before = self.gutils.count('user_streets')
-        self.lyrs.save_lyrs_edits('user_streets')
-        after = self.gutils.count('user_streets')
+        before = self.gutils.count("user_streets")
+        self.lyrs.save_lyrs_edits("user_streets")
+        after = self.gutils.count("user_streets")
         if after > before:
             self.street_idx = after - 1
         elif self.street_idx >= 0:
@@ -124,11 +123,11 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         self.populate_streets()
 
     def revert_edits(self):
-        self.lyrs.rollback_lyrs_edits('user_streets')
+        self.lyrs.rollback_lyrs_edits("user_streets")
         self.populate_streets()
 
     def save_attrs(self):
-        update_qry = '''
+        update_qry = """
         UPDATE user_streets
         SET
             name = ?,
@@ -136,7 +135,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             elevation = ?,
             curb_height = ?,
             street_width = ?
-        WHERE fid = ?;'''
+        WHERE fid = ?;"""
         fid = self.street_name_cbo.itemData(self.street_idx)[0]
         name = self.street_name_cbo.currentText()
         n = self.spin_n.value()
@@ -151,7 +150,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         """
         if not self.street_name_cbo.count():
             return
-        q = 'Are you sure, you want delete the current street line?'
+        q = "Are you sure, you want delete the current street line?"
         if not self.uc.question(q):
             return
         cur_data = self.street_name_cbo.itemData(self.street_idx)
@@ -159,7 +158,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             fid = cur_data[0]
         else:
             return
-        del_qry = 'DELETE FROM user_streets WHERE fid = ?;'
+        del_qry = "DELETE FROM user_streets WHERE fid = ?;"
         self.gutils.execute(del_qry, (fid,))
         self.street_lyr.triggerRepaint()
         if self.street_idx > 0:
@@ -169,16 +168,16 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
     def schematize_street_lines(self):
         if not self.lyrs.save_edits_and_proceed("Street Lines"):
             return
-        if self.gutils.is_table_empty('grid'):
+        if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        if self.gutils.is_table_empty('user_streets'):
+        if self.gutils.is_table_empty("user_streets"):
             self.uc.bar_warn("There is no any user streets to schematize! Please digitize them before running tool.")
             return
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         try:
             schematize_streets(self.gutils, self.street_lyr, cell_size)
-            streets_schem = self.street_lyr = self.lyrs.data['street_seg']['qlyr']
+            streets_schem = self.street_lyr = self.lyrs.data["street_seg"]["qlyr"]
             if streets_schem:
                 streets_schem.triggerRepaint()
             self.uc.show_info("Streets schematized!")
@@ -187,13 +186,13 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
 
     def change_street_name(self):
-        new_name, ok = QInputDialog.getText(None, 'Change street name', 'New name:')
+        new_name, ok = QInputDialog.getText(None, "Change street name", "New name:")
         if not ok or not new_name:
             return
         self.street_name_cbo.setItemText(self.street_idx, new_name)
 
     def set_general_params(self):
-        qry = '''SELECT strfno, strman, depx, widst, istrflo FROM street_general;'''
+        qry = """SELECT strfno, strman, depx, widst, istrflo FROM street_general;"""
         gen = self.gutils.execute(qry).fetchone()
         street_general = StreetGeneral(self.iface, self.lyrs)
         if gen is not None:
@@ -208,8 +207,8 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
                 street_general.inflow_to_street.setChecked(False)
         ok = street_general.exec_()
         if ok:
-            self.gutils.clear_tables('street_general')
-            update_qry = '''INSERT INTO street_general (strfno, strman, depx, widst, istrflo) VALUES (?,?,?,?,?);'''
+            self.gutils.clear_tables("street_general")
+            update_qry = """INSERT INTO street_general (strfno, strman, depx, widst, istrflo) VALUES (?,?,?,?,?);"""
             froude = street_general.global_froude.value()
             n = street_general.global_n.value()
             curb = street_general.global_curb.value()

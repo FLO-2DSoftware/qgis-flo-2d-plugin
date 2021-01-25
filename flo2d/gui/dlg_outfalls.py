@@ -15,18 +15,17 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui('outfalls')
+uiDialog, qtBaseClass = load_ui("outfalls")
 
 
 class OutfallNodesDialog(qtBaseClass, uiDialog):
-
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
 
@@ -35,7 +34,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.outfalls_buttonBox.accepted.connect(self.save_outfalls)
 
         # Connections from individual controls to particular cell in outfalls_tblw table widget:
-        #self.grid_element.valueChanged.connect(self.grid_element_valueChanged)
+        # self.grid_element.valueChanged.connect(self.grid_element_valueChanged)
         self.invert_elevation_dbox.valueChanged.connect(self.invert_elevation_dbox_valueChanged)
         self.flap_gate_chbox.stateChanged.connect(self.flap_gate_chbox_stateChanged)
         self.allow_discharge_chbox.stateChanged.connect(self.allow_discharge_chbox_stateChanged)
@@ -44,7 +43,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.tidal_curve_cbo.currentIndexChanged.connect(self.tidal_curve_cbo_currentIndexChanged)
         self.time_series_cbo.currentIndexChanged.connect(self.time_series_cbo_currentIndexChanged)
 
-        self.outfalls_tuple = ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES')
+        self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES")
         # self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
         # self.open_time_series_btn.clicked.connect(self.open_time_series)
         #
@@ -56,18 +55,21 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.outfalls_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
     def set_header(self):
-        self.outfalls_tblw.setHorizontalHeaderLabels(["Name",                #INP
-                                                      "Node" ,               #FLO-2D
-                                                      "Invert Elev.",        #INP
-                                                      "Flap Gate",           #INP #FLO-2D
-                                                      "Allow Discharge"      #FLO-2D                                                
-                                                      "Outfall Type",        #INP
-                                                      "Water Depth",         #
-                                                      "Tidal Curve",         #IN P
-                                                      "Time Series"])        #INP
+        self.outfalls_tblw.setHorizontalHeaderLabels(
+            [
+                "Name",  # INP
+                "Node",  # FLO-2D
+                "Invert Elev.",  # INP
+                "Flap Gate",  # INP #FLO-2D
+                "Allow Discharge" "Outfall Type",  # FLO-2D  # INP
+                "Water Depth",  #
+                "Tidal Curve",  # IN P
+                "Time Series",
+            ]
+        )  # INP
 
     def setup_connection(self):
-        con = self.iface.f2d['con']
+        con = self.iface.f2d["con"]
         if con is None:
             return
         else:
@@ -83,7 +85,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
     def populate_outfalls(self):
 
         try:
-            qry = '''SELECT fid,
+            qry = """SELECT fid,
                             name, 
                             grid, 
                             outfall_invert_elev,
@@ -93,21 +95,29 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             water_depth,
                             tidal_curve, 
                             time_series              
-                    FROM user_swmm_nodes WHERE sd_type = 'O';'''
+                    FROM user_swmm_nodes WHERE sd_type = 'O';"""
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             self.outfalls_tblw.setRowCount(0)
-            for row_number, row_data in enumerate(rows):       # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
+            for row_number, row_data in enumerate(
+                rows
+            ):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
 
                 self.outfalls_tblw.insertRow(row_number)
-                for col_number, data in enumerate(row_data):   # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
+                for col_number, data in enumerate(
+                    row_data
+                ):  # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
                     if col_number == 6 and data not in self.outfalls_tuple:
                         data = "NORMAL"
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, data if data is not None else 0)  # item gets value of data (as QTableWidgetItem Class)
+                    item.setData(
+                        Qt.DisplayRole, data if data is not None else 0
+                    )  # item gets value of data (as QTableWidgetItem Class)
 
                     # Fill the list of outfall names:
-                    if col_number == 1:   #We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
+                    if (
+                        col_number == 1
+                    ):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
                         self.outfall_cbo.addItem(data, row_data[0])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
@@ -126,11 +136,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             if data in self.outfalls_tuple:
                                 index = self.outfalls_tuple.index(data)
                             else:
-                                index =  0
+                                index = 0
                             self.outfall_type_cbo.setCurrentIndex(index)
                             data = self.outfall_type_cbo.currentText()
-                            if not data in ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES'):
-                               data = "NORMAL" 
+                            if not data in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
+                                data = "NORMAL"
                             item.setData(Qt.DisplayRole, data)
                         elif col_number == 7:
                             self.water_depth_dbox.setValue(data if data is not None else 0)
@@ -139,10 +149,17 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         elif col_number == 9:
                             self.time_series_cbo.setCurrentIndex(0)
 
-                    if col_number > 0:    # For this row disable some elements and omit fid number
-                        if col_number == 1 or col_number == 2 or col_number == 6 or col_number == 7 or col_number == 8 or col_number == 9:
-                            item.setFlags( Qt.ItemIsSelectable | Qt.ItemIsEnabled )
-                        self.outfalls_tblw.setItem(row_number, col_number-1, item)
+                    if col_number > 0:  # For this row disable some elements and omit fid number
+                        if (
+                            col_number == 1
+                            or col_number == 2
+                            or col_number == 6
+                            or col_number == 7
+                            or col_number == 8
+                            or col_number == 9
+                        ):
+                            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        self.outfalls_tblw.setItem(row_number, col_number - 1, item)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
@@ -167,7 +184,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.time_series_cbo.setEnabled(False)
         self.open_tidal_curve_btn.setEnabled(False)
         self.open_time_series_btn.setEnabled(False)
-        idx = self. outfall_type_cbo.currentIndex()
+        idx = self.outfall_type_cbo.currentIndex()
         if idx == 0:
             self.water_depth_dbox.setEnabled(True)
         elif idx == 3:
@@ -202,28 +219,28 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         row = self.outfall_cbo.currentIndex()
         item = QTableWidgetItem()
         self.outfalls_tblw.setItem(row, col, item)
-        self.outfalls_tblw.item(row, col).setText( "True" if widget.isChecked() else "False")
+        self.outfalls_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
     def combo_valueChanged(self, widget, col):
         row = self.outfall_cbo.currentIndex()
         item = QTableWidgetItem()
         data = widget.currentText()
-        item.setData(Qt.EditRole,data)
+        item.setData(Qt.EditRole, data)
         self.outfalls_tblw.setItem(row, col, item)
 
     def outfalls_tblw_cell_clicked(self, row, column):
         try:
             self.outfall_cbo.blockSignals(True)
 
-            name = self.outfalls_tblw.item(row,0).text()
+            name = self.outfalls_tblw.item(row, 0).text()
             idx = self.outfall_cbo.findText(name)
-            self.outfall_cbo.setCurrentIndex(idx)            
+            self.outfall_cbo.setCurrentIndex(idx)
 
             self.outfall_cbo.blockSignals(False)
 
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
             self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
-            self.flap_gate_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 3).text()) else False) 
+            self.flap_gate_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 3).text()) else False)
             self.allow_discharge_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 4).text()) else False)
             # Set index of outfall_type_cbo (a combo) depending of text contents:
             item = self.outfalls_tblw.item(row, 5)
@@ -235,12 +252,12 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 else:
                     itemTxt = "NORMAL"
                     index = self.outfall_type_cbo.findText(itemTxt)
-#                     if itemTxt == "":
-#                         index = 0
-#                     else:
-#                         if not itemTxt in ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES'):
-#                             itemTxt = "NORMAL" 
-#                         index = map(int, itemTxt)
+                #                     if itemTxt == "":
+                #                         index = 0
+                #                     else:
+                #                         if not itemTxt in ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES'):
+                #                             itemTxt = "NORMAL"
+                #                         index = map(int, itemTxt)
                 index = 4 if index > 4 else 0 if index < 0 else index
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()
@@ -270,15 +287,15 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         item = self.outfalls_tblw.item(row, 3)
         if item is not None:
             self.flap_gate_chbox.setChecked(True if is_true(item.text()) else False)
-                
-#                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' 
-#                                             or item.text() == 'Yes' or item.text() == 'yes' else False)
+
+        #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1'
+        #                                             or item.text() == 'Yes' or item.text() == 'yes' else False)
 
         item = self.outfalls_tblw.item(row, 4)
         if item is not None:
             self.allow_discharge_chbox.setChecked(True if is_true(item.text()) else False)
-                
-#                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
+
+        #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
 
         item = self.outfalls_tblw.item(row, 5)
         if item is not None:
@@ -291,12 +308,12 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 else:
                     if is_number(itemTxt):
                         index = itemTxt
-                    else:    
+                    else:
                         index = 0
             index = 4 if index > 4 else 0 if index < 0 else index
             self.outfall_type_cbo.setCurrentIndex(index)
             item = QTableWidgetItem()
-            item.setData(Qt.EditRole, self.outfall_type_cbo.currentText() )
+            item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
             self.outfalls_tblw.setItem(row, 5, item)
 
         self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
@@ -306,7 +323,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         Save changes of user_swmm_nodes layer.
         """
         # self.save_attrs()
-        update_qry = '''
+        update_qry = """
                         UPDATE user_swmm_nodes
                         SET
                             name = ?, 
@@ -318,7 +335,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             water_depth = ?,
                             tidal_curve = ?,
                             time_series = ?
-                        WHERE fid = ?;'''
+                        WHERE fid = ?;"""
 
         for row in range(0, self.outfalls_tblw.rowCount()):
             item = QTableWidgetItem()
@@ -339,7 +356,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             item = self.outfalls_tblw.item(row, 3)
             if item is not None:
-                flapgate= str(True if is_true(item.text()) else False)
+                flapgate = str(True if is_true(item.text()) else False)
 
             item = self.outfalls_tblw.item(row, 4)
             if item is not None:
@@ -348,8 +365,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 outfall_type = str(item.text())
-                if not outfall_type in ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES'):
-                    outfall_type = "NORMAL"                
+                if not outfall_type in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
+                    outfall_type = "NORMAL"
 
             item = self.outfalls_tblw.item(row, 6)
             if item is not None:
@@ -365,14 +382,18 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             time_series = str(item.text()) if item is not None else ""
             # time_series = ""
 
-            self.gutils.execute(update_qry, (name,
-                                             grid,
-                                             invert_elev,
-                                             flapgate,
-                                             allow_discharge,
-                                             outfall_type,
-                                             water_depth,
-                                             tidal_curve,
-                                             time_series,
-                                             fid
-                                             ))
+            self.gutils.execute(
+                update_qry,
+                (
+                    name,
+                    grid,
+                    invert_elev,
+                    flapgate,
+                    allow_discharge,
+                    outfall_type,
+                    water_depth,
+                    tidal_curve,
+                    time_series,
+                    fid,
+                ),
+            )

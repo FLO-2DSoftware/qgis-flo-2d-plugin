@@ -14,17 +14,17 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui('conduits')
+uiDialog, qtBaseClass = load_ui("conduits")
+
 
 class ConduitsDialog(qtBaseClass, uiDialog):
-
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
 
@@ -55,29 +55,30 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.average_losses_dbox.valueChanged.connect(self.average_losses_dbox_valueChanged)
         self.flap_gate_chbox.stateChanged.connect(self.flap_gate_chbox_stateChanged)
 
-        self.shape = ('CIRCULAR',
-                      'FORCE_MAIN',
-                      'FILLED_CIRCULAR',
-                      'RECT_CLOSED',
-                      'RECT_OPEN',
-                      'TRAPEZOIDAL',
-                      'TRIANGULAR',
-                      'HORIZ_ELLIPSE',
-                      'VERT_ELLIPSE',
-                      'ARCH',
-                      'PARABOLIC',
-                      'POWER',
-                      'RECT_TRIANGULAR',
-                      'RECT_ROUND',
-                      'MODBASKETHANDLE',
-                      'EGG',
-                      'HORSESHOE',
-                      'GOTHIC',
-                      'CATENARY',
-                      'SEMIELLIPTICAL',
-                      'BASKETHANDLE',
-                      'SEMICIRCULAR'
-                      )
+        self.shape = (
+            "CIRCULAR",
+            "FORCE_MAIN",
+            "FILLED_CIRCULAR",
+            "RECT_CLOSED",
+            "RECT_OPEN",
+            "TRAPEZOIDAL",
+            "TRIANGULAR",
+            "HORIZ_ELLIPSE",
+            "VERT_ELLIPSE",
+            "ARCH",
+            "PARABOLIC",
+            "POWER",
+            "RECT_TRIANGULAR",
+            "RECT_ROUND",
+            "MODBASKETHANDLE",
+            "EGG",
+            "HORSESHOE",
+            "GOTHIC",
+            "CATENARY",
+            "SEMIELLIPTICAL",
+            "BASKETHANDLE",
+            "SEMICIRCULAR",
+        )
 
         # self.set_header()
         self.setup_connection()
@@ -87,7 +88,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.conduits_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
     def setup_connection(self):
-        con = self.iface.f2d['con']
+        con = self.iface.f2d["con"]
         if con is None:
             return
         else:
@@ -180,7 +181,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
         self.conduits_tblw.setItem(row, col, item)
-        self.conduits_tblw.item(row, col).setText( "True" if widget.isChecked() else "False")
+        self.conduits_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
     def combo_valueChanged(self, widget, col):
         row = self.conduit_name_cbo.currentIndex()
@@ -226,11 +227,11 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
             shape = self.conduits_tblw.item(row, 5).text()
             if shape.isdigit():
-                index = int(shape)-1
+                index = int(shape) - 1
                 index = 21 if index > 21 else 0 if index < 0 else index
                 self.conduit_shape_cbo.setCurrentIndex(index)
             else:
-#                 shape = shape.title().strip()
+                #                 shape = shape.title().strip()
                 index = self.shape.index(shape) if shape in self.shape else 0
                 self.conduit_shape_cbo.setCurrentIndex(index)
 
@@ -248,14 +249,14 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.inlet_losses_dbox.setValue(float(self.conduits_tblw.item(row, 15).text()))
             self.outlet_losses_dbox.setValue(float(self.conduits_tblw.item(row, 16).text()))
             self.average_losses_dbox.setValue(float(self.conduits_tblw.item(row, 17).text()))
-            self.flap_gate_chbox.setChecked(True if self.conduits_tblw.item(row, 18).text() == 'True' else False)
+            self.flap_gate_chbox.setChecked(True if self.conduits_tblw.item(row, 18).text() == "True" else False)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0707: assignment of value failed!.\n", e)
 
     def populate_conduits(self):
-        qry = '''SELECT fid,
+        qry = """SELECT fid,
                         conduit_name,
                         conduit_inlet, 
                         conduit_outlet,
@@ -275,21 +276,21 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                         losses_outlet,
                         losses_average,
                         losses_flapgate
-                FROM user_swmm_conduits;'''
+                FROM user_swmm_conduits;"""
 
         try:
             rows = self.gutils.execute(qry).fetchall()
             self.conduits_tblw.setRowCount(0)
-            for row_number, row_data in enumerate(rows):     # In each iteration gets, for example:
-                                                             # ('C1',  'J3','O2', 2581, 123, 3, 32, 12.5, 2.34, 4.5, 7.0, 2.1, 0.04, 2.6, 0.87)
+            for row_number, row_data in enumerate(rows):  # In each iteration gets, for example:
+                # ('C1',  'J3','O2', 2581, 123, 3, 32, 12.5, 2.34, 4.5, 7.0, 2.1, 0.04, 2.6, 0.87)
                 self.conduits_tblw.insertRow(row_number)
-                for element, data in enumerate(row_data): # For each iteration gets, for example: first iteration:
-                                                             # 'C1', 2nd. iteration 1, 'J3', etc
+                for element, data in enumerate(row_data):  # For each iteration gets, for example: first iteration:
+                    # 'C1', 2nd. iteration 1, 'J3', etc
                     item = QTableWidgetItem()
                     item.setData(Qt.DisplayRole, data)  # item gets value of data (as QTableWidgetItem Class)
 
                     # Fill the list of inlet names:
-                    if element == 1:   #We need 2nd. element: 'J3' in the example above, and its fid from row_data[0]
+                    if element == 1:  # We need 2nd. element: 'J3' in the example above, and its fid from row_data[0]
                         self.conduit_name_cbo.addItem(data, row_data[0])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_conduits):
@@ -308,9 +309,9 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
                         elif element == 6:
                             if data.isdigit():
-                                self.conduit_shape_cbo.setCurrentIndex(data-1)
+                                self.conduit_shape_cbo.setCurrentIndex(data - 1)
                             else:
-#                                 data = data.title().strip()
+                                #                                 data = data.title().strip()
                                 index = self.shape.index(data) if data in self.shape else -1
                                 self.conduit_shape_cbo.setCurrentIndex(index)
 
@@ -353,20 +354,17 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                         elif element == 19:
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
 
-                    if element > 0:    # For this row omit fid number
+                    if element > 0:  # For this row omit fid number
                         if element == 1 or element == 2 or element == 3:
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                        self.conduits_tblw.setItem(row_number, element-1, item)
+                        self.conduits_tblw.setItem(row_number, element - 1, item)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0705: assignment of value from conduits users layer failed!.\n", e)
 
- 
     def onVerticalSectionClicked(self, logicalIndex):
         self.conduits_tblw_cell_clicked(logicalIndex, 0)
- 
-
 
     def fill_individual_controls_with_current_conduit_in_table(self):
         try:
@@ -454,7 +452,9 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
             item = self.conduits_tblw.item(row, 18)
             if item is not None:
-                self.flap_gate_chbox.setChecked(True if item.text() == 'True' or item.text() == 'True' or item.text() == '1' else False)
+                self.flap_gate_chbox.setChecked(
+                    True if item.text() == "True" or item.text() == "True" or item.text() == "1" else False
+                )
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0631: assignment of value failed!.\n", e)
@@ -464,7 +464,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         Save changes of user_swmm_conduits layer.
         """
         # self.save_attrs()
-        update_qry = '''
+        update_qry = """
                         UPDATE user_swmm_conduits
                         SET
                             conduit_name = ?,
@@ -486,7 +486,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             losses_outlet = ?,
                             losses_average = ?,
                             losses_flapgate  = ?                            
-                        WHERE fid = ?;'''
+                        WHERE fid = ?;"""
 
         for row in range(0, self.conduits_tblw.rowCount()):
             item = QTableWidgetItem()
@@ -569,23 +569,28 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             if item is not None:
                 losses_flapgate = str(item.text())
 
-            self.gutils.execute(update_qry, (conduit_name,
-                                             conduit_inlet,
-                                             conduit_outlet,
-                                             conduit_inlet_offset,
-                                             conduit_outlet_offset,
-                                             xsections_shape,
-                                             xsections_barrels,
-                                             xsections_max_depth,
-                                             xsections_geom2,
-                                             xsections_geom3,
-                                             xsections_geom4,
-                                             conduit_length,
-                                             conduit_manning,
-                                             conduit_init_flow,
-                                             conduit_max_flow,
-                                             losses_inlet,
-                                             losses_outlet,
-                                             losses_average,
-                                             losses_flapgate,
-                                             fid))
+            self.gutils.execute(
+                update_qry,
+                (
+                    conduit_name,
+                    conduit_inlet,
+                    conduit_outlet,
+                    conduit_inlet_offset,
+                    conduit_outlet_offset,
+                    xsections_shape,
+                    xsections_barrels,
+                    xsections_max_depth,
+                    xsections_geom2,
+                    xsections_geom3,
+                    xsections_geom4,
+                    conduit_length,
+                    conduit_manning,
+                    conduit_init_flow,
+                    conduit_max_flow,
+                    losses_inlet,
+                    losses_outlet,
+                    losses_average,
+                    losses_flapgate,
+                    fid,
+                ),
+            )

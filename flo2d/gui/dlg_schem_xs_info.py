@@ -16,17 +16,16 @@ from .ui_utils import load_ui, center_canvas
 import os
 
 
-uiDialog, qtBaseClass = load_ui('schem_xs_info')
+uiDialog, qtBaseClass = load_ui("schem_xs_info")
 
 
 class SchemXsecEditorDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs, gutils, id):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.lyrs = lyrs
         self.gutils = gutils
@@ -36,8 +35,8 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
         self.setup()
 
         # set button icons
-        self.set_icon(self.prev_btn, 'arrow_1.svg')
-        self.set_icon(self.next_btn, 'arrow_3.svg')
+        self.set_icon(self.prev_btn, "arrow_1.svg")
+        self.set_icon(self.next_btn, "arrow_3.svg")
 
         # connections
         self.prev_btn.clicked.connect(self.show_prev)
@@ -45,48 +44,48 @@ class SchemXsecEditorDialog(qtBaseClass, uiDialog):
 
     @staticmethod
     def set_icon(btn, icon_file):
-        idir = os.path.join(os.path.dirname(__file__), '..\\img')
+        idir = os.path.join(os.path.dirname(__file__), "..\\img")
         btn.setIcon(QIcon(os.path.join(idir, icon_file)))
 
     def setup(self, id=None):
         if not self.gutils:
             return
-        self.xs_lyr = self.lyrs.data['chan_elems']['qlyr']
+        self.xs_lyr = self.lyrs.data["chan_elems"]["qlyr"]
         self.id = id if id else self.id
         self.xs = CrossSection(self.id, self.con, self.iface)
         row = self.xs.get_row(by_id=True)
-        typ = row['type']
-        self.seg_fid = row['seg_fid']
-        self.nr_in_seg = row['nr_in_seg']
+        typ = row["type"]
+        self.seg_fid = row["seg_fid"]
+        self.nr_in_seg = row["nr_in_seg"]
 
         # find prev and next xsec ids
-        qry = 'SELECT id FROM chan_elems WHERE seg_fid = ? AND nr_in_seg = ?'
+        qry = "SELECT id FROM chan_elems WHERE seg_fid = ? AND nr_in_seg = ?"
         if self.nr_in_seg == 1:
             self.prev_id = None
         else:
-            self.prev_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg-1)).fetchone()[0]
+            self.prev_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg - 1)).fetchone()[0]
         self.next_id = None
         try:
             self.next_id = self.gutils.execute(qry, (self.seg_fid, self.nr_in_seg + 1)).fetchone()[0]
         except Exception as e:
             pass
-        del row['geom']
-        t = ''
+        del row["geom"]
+        t = ""
         for col, val in row.items():
-            t += '{}:\t{}\n'.format(col, val)
+            t += "{}:\t{}\n".format(col, val)
         chan_x_row = self.xs.get_chan_table()
-        if typ == 'N':
+        if typ == "N":
             xy = self.xs.get_xsec_data()
         else:
             xy = None
-        t += '\n'
+        t += "\n"
         if not xy:
             for col, val in chan_x_row.items():
-                t += '{}:\t{}\n'.format(col, val)
+                t += "{}:\t{}\n".format(col, val)
         else:
             for i, pt in enumerate(xy):
                 x, y = pt
-                t += '{0:.2f}\t\t{1:.2f}\n'.format(x, y)
+                t += "{0:.2f}\t\t{1:.2f}\n".format(x, y)
         self.tedit.setText(t)
 
         self.show_xs_rb()

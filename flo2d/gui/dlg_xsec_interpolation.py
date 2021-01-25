@@ -13,17 +13,21 @@ from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox
 
-uiDialog, qtBaseClass = load_ui('interpolate_xsections')
+uiDialog, qtBaseClass = load_ui("interpolate_xsections")
 
 
 class XSecInterpolationDialog(qtBaseClass, uiDialog):
-
-    def __init__(self, iface,  xs_survey, parent=None,):
+    def __init__(
+        self,
+        iface,
+        xs_survey,
+        parent=None,
+    ):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.setupUi(self)
         self.iface = iface
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.interpolation_browse.clicked.connect(self.get_interpolation_dir)
         self.project_browse.clicked.connect(self.get_project_dir)
         self.set_previous_paths()
@@ -31,38 +35,36 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         self.non_surveyed_lbl.setText(str(xs_survey[1]))
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
         s = QSettings()
-        outdir = s.value('FLO-2D/lastGdsDir', '')
+        outdir = s.value("FLO-2D/lastGdsDir", "")
         self.directory_lbl.setText("(directory: " + outdir + ")")
 
     def set_previous_paths(self):
         s = QSettings()
-        interpolation_dir = s.value('FLO-2D/last_flopro', '')
+        interpolation_dir = s.value("FLO-2D/last_flopro", "")
         # interpolation_dir = s.value('FLO-2D/last_interpolation', '')
-        project_dir = s.value('FLO-2D/lastGdsDir', '')
+        project_dir = s.value("FLO-2D/lastGdsDir", "")
         self.interpolation_le.setText(interpolation_dir)
         self.project_le.setText(project_dir)
 
     def get_interpolation_dir(self):
         s = QSettings()
         interpolation_dir = QFileDialog.getExistingDirectory(
-            None,
-            'Select Cross Sections Interpolation program folder',
-            directory=self.interpolation_le.text())
+            None, "Select Cross Sections Interpolation program folder", directory=self.interpolation_le.text()
+        )
         if not interpolation_dir:
             return
         self.interpolation_le.setText(interpolation_dir)
-        s.setValue('FLO-2D/last_interpolation', interpolation_dir)
+        s.setValue("FLO-2D/last_interpolation", interpolation_dir)
 
     def get_project_dir(self):
         s = QSettings()
         project_dir = QFileDialog.getExistingDirectory(
-            None,
-            'Select FLO-2D project folder',
-            directory=self.project_le.text())
+            None, "Select FLO-2D project folder", directory=self.project_le.text()
+        )
         if not project_dir:
             return
         self.project_le.setText(project_dir)
-        s.setValue('FLO-2D/lastGdsDir', project_dir)
+        s.setValue("FLO-2D/lastGdsDir", project_dir)
 
     def get_parameters(self):
         return self.interpolation_le.text(), self.project_le.text()

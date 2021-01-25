@@ -19,28 +19,18 @@ from qgis.PyQt.QtCore import Qt
 from ..flo2dobjects import ChannelSegment
 from ..utils import Msge
 
-uiDialog, qtBaseClass = load_ui('profile_tool')
+uiDialog, qtBaseClass = load_ui("profile_tool")
+
+
 class ProfileTool(qtBaseClass, uiDialog):
     """
     Tool for creating profile from schematized and user data.
     """
 
     USER_SCHEMA = {
-        'user_levee_lines': {
-            'user_name': 'Levee Lines',
-            'schema_tab': 'levee_data',
-            'schema_fid': 'user_line_fid'
-        },
-        'user_streets': {
-            'user_name': 'Street Lines',
-            'schema_tab': 'street_seg',
-            'schema_fid': 'str_fid'
-        },
-        'user_left_bank': {
-            'user_name': 'Left Bank Line',
-            'schema_tab': 'chan_elems',
-            'schema_fid': 'seg_fid'
-        }
+        "user_levee_lines": {"user_name": "Levee Lines", "schema_tab": "levee_data", "schema_fid": "user_line_fid"},
+        "user_streets": {"user_name": "Street Lines", "schema_tab": "street_seg", "schema_fid": "str_fid"},
+        "user_left_bank": {"user_name": "Left Bank Line", "schema_tab": "chan_elems", "schema_fid": "seg_fid"},
     }
 
     def __init__(self, iface, plot, table, lyrs):
@@ -50,10 +40,10 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.iface = iface
         self.setupUi(self)
         self.lyrs = lyrs
-        
+
         self.plot = plot
-              
-        self.uc = UserCommunication(iface, 'FLO-2D')
+
+        self.uc = UserCommunication(iface, "FLO-2D")
 
         self.fid = None
         self.user_tab = None
@@ -78,8 +68,6 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.rprofile_radio.toggled.connect(self.check_mode)
         self.raster_combo.currentIndexChanged.connect(self.plot_raster_data)
         self.field_combo.currentIndexChanged.connect(self.plot_schema_data)
-        
-        
 
     def setup_connection(self):
         """
@@ -96,155 +84,145 @@ class ProfileTool(qtBaseClass, uiDialog):
         """
         self.user_tab = user_table
         self.fid = fid
-        self.user_lyr = self.lyrs.data[self.user_tab]['qlyr']
-        self.schema_lyr = self.lyrs.data[self.USER_SCHEMA[self.user_tab]['schema_tab']]['qlyr']
-        self.schema_fid = self.USER_SCHEMA[self.user_tab]['schema_fid']
-        self.user_name = self.USER_SCHEMA[self.user_tab]['user_name']
-        self.lyr_label.setText('{0} ({1})'.format(self.user_name, fid))
+        self.user_lyr = self.lyrs.data[self.user_tab]["qlyr"]
+        self.schema_lyr = self.lyrs.data[self.USER_SCHEMA[self.user_tab]["schema_tab"]]["qlyr"]
+        self.schema_fid = self.USER_SCHEMA[self.user_tab]["schema_fid"]
+        self.user_name = self.USER_SCHEMA[self.user_tab]["user_name"]
+        self.lyr_label.setText("{0} ({1})".format(self.user_name, fid))
         self.populate_fields()
         self.calculate_stations()
 
     def show_channel(self, table, fid):
-        self.chan_seg = ChannelSegment(fid, self.iface.f2d['con'], self.iface)
-        self.chan_seg.get_row() # Assigns to self.chan_seg all field values of the selected schematized channel:
-                                # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
+        self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
+        self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
+        # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
         if self.chan_seg.get_profiles():
             self.plot_channel_data()
 
     def plot_channel_data(self):
 
-#         if not self.chan_seg:
-#             return
-#         self.plot.clear()
-#         sta, lb, rb, bed = [], [], [], []
-#         for st, data in self.chan_seg.profiles.items():
-#             sta.append(data['station'])
-#             lb.append(data['lbank_elev'])
-#             rb.append(data['rbank_elev'])
-#             bed.append(data['bed_elev'])
-# #         self.legend.scene().removeItem(self.legend)
-# 
-# #         if self.plot.plot.scene() is not None:
-# #             objects = list(self.plot.plot.scene().items())
-# #             for obj in objects:
-# #                 if self.plot.plot.scene() is not None:
-# #                     self.plot.plot.scene().removeItem(obj)
-# #         self.plot.clear()
-#         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-#         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-#         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-#         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
-#         self.plot.plot.setLabel('bottom', text='Channel length')
-#         self.plot.plot.setLabel('left', text='Elevation')
+        #         if not self.chan_seg:
+        #             return
+        #         self.plot.clear()
+        #         sta, lb, rb, bed = [], [], [], []
+        #         for st, data in self.chan_seg.profiles.items():
+        #             sta.append(data['station'])
+        #             lb.append(data['lbank_elev'])
+        #             rb.append(data['rbank_elev'])
+        #             bed.append(data['bed_elev'])
+        # #         self.legend.scene().removeItem(self.legend)
+        #
+        # #         if self.plot.plot.scene() is not None:
+        # #             objects = list(self.plot.plot.scene().items())
+        # #             for obj in objects:
+        # #                 if self.plot.plot.scene() is not None:
+        # #                     self.plot.plot.scene().removeItem(obj)
+        # #         self.plot.clear()
+        #         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        #         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+        #         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+        #         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
+        #         self.plot.plot.setLabel('bottom', text='Channel length')
+        #         self.plot.plot.setLabel('left', text='Elevation')
 
-
-
-
-#      ...........................................   
+        #      ...........................................
         if not self.chan_seg:
             return
         self.plot.clear()
         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
         for st, data in self.chan_seg.profiles.items():
-            sta.append(data['station'])
-            lb.append(data['lbank_elev'])
-            rb.append(data['rbank_elev'])
-            bed.append(data['bed_elev'])
-            water.append(data['water'])
-            peak.append(data['peak']+data['bed_elev'])
-            
-#         self.plot.items.clear()
-#         legend.scene().removeItem(legend)
-#         self.legend.scene().removeItem(self.legend)
-#         self.plot.plot.legend.scene().removeItem(self.plot.legend)
-  
-#         for i in range(len(self.plot.items)):
-#             self.plot.plot.legend.scene().removeItem(i)               
-#                  
-#         self.plot.plot.legend = None 
-#              
-# #         self.plot.plot.legend.items = []
-  
-#         if self.plot.plot.scene() is not None:
-#             objects = list(self.plot.plot.scene().items())
-#             for obj in objects:
-#                 if self.plot.plot.scene() is not None:
-#                     self.plot.plot.scene().removeItem(obj)
+            sta.append(data["station"])
+            lb.append(data["lbank_elev"])
+            rb.append(data["rbank_elev"])
+            bed.append(data["bed_elev"])
+            water.append(data["water"])
+            peak.append(data["peak"] + data["bed_elev"])
 
-  
+        #         self.plot.items.clear()
+        #         legend.scene().removeItem(legend)
+        #         self.legend.scene().removeItem(self.legend)
+        #         self.plot.plot.legend.scene().removeItem(self.plot.legend)
+
+        #         for i in range(len(self.plot.items)):
+        #             self.plot.plot.legend.scene().removeItem(i)
+        #
+        #         self.plot.plot.legend = None
+        #
+        # #         self.plot.plot.legend.items = []
+
+        #         if self.plot.plot.scene() is not None:
+        #             objects = list(self.plot.plot.scene().items())
+        #             for obj in objects:
+        #                 if self.plot.plot.scene() is not None:
+        #                     self.plot.plot.scene().removeItem(obj)
+
         if self.plot.plot.legend is not None:
             self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
-#             self.plot.remove_item('Bed elevation')
-#             self.plot.remove_item('Left bank')
-#             self.plot.remove_item('Right bank')
-#             self.plot.remove_item('Peak')
-#             self.plot.plot.legend.items.clear()
-
+        #             self.plot.remove_item('Bed elevation')
+        #             self.plot.remove_item('Left bank')
+        #             self.plot.remove_item('Right bank')
+        #             self.plot.remove_item('Peak')
+        #             self.plot.plot.legend.items.clear()
 
         self.plot.plot.addLegend()
-        self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-        self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-        self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
-        self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
-        self.plot.plot.setLabel('bottom', text='Channel length')
-        self.plot.plot.setLabel('left', text='Elevation')
-        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)        
-# .........................................
-        
-        
-        
-        
-        
-#         if not self.chan_seg:
-#             return
-# #         try:
-#         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
-#         for st, data in self.chan_seg.profiles.items():
-#             sta.append(data['station'])
-#             lb.append(data['lbank_elev'])
-#             rb.append(data['rbank_elev'])
-#             bed.append(data['bed_elev'])
-#             water.append(data['water'])
-#             peak.append(data['peak']+data['bed_elev'])
-#          
-#         self.plot.clear()          
-#  
-# #         self.plot.remove_item('Bed elevation')
-# #         self.plot.remove_item('Left bank')
-# #         self.plot.remove_item('Right bank')
-# #         self.plot.remove_item('Peak') 
-#  
-#         for i in range(self.plot.plot.legend.layout.rowCount()):
-#            for j in range(self.plot.plot.legend.layout.columnCount()): 
-#                 vb = self.plot.plot.legend.layout.itemAt(i,j)
-#                 self.plot.plot.legend.layout.removeItem(vb)
-#  
-#         for i in range(len(self.plot.items)):
-#             self.plot.plot.legend.scene().removeItem(i)               
-#                  
-#         self.plot.plot.legend = None 
-#              
-# #         self.plot.plot.legend.items = []
-#         self.plot.plot.addLegend()
-#         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-#         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-#         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-# #         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-#         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
-#         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
-#         self.plot.plot.setLabel('bottom', text='Channel length')
-#         self.plot.plot.setLabel('left', text='Elevation')
-# #         self.plot.removeItem('Bed elevation')
-# #         self.plot.removeItem('Left bank')
-# #         self.plot.removeItem('Right bank')
-# #         self.plot.remove_item('Peak')
-#         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
-# #         except Exception:
-# #             Msge("ERROR 170719.0531: could not remove legend item!", "Error") 
-        
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+        self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+        #         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
+        self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
+        self.plot.plot.setLabel("bottom", text="Channel length")
+        self.plot.plot.setLabel("left", text="Elevation")
+        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
 
+    # .........................................
+
+    #         if not self.chan_seg:
+    #             return
+    # #         try:
+    #         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
+    #         for st, data in self.chan_seg.profiles.items():
+    #             sta.append(data['station'])
+    #             lb.append(data['lbank_elev'])
+    #             rb.append(data['rbank_elev'])
+    #             bed.append(data['bed_elev'])
+    #             water.append(data['water'])
+    #             peak.append(data['peak']+data['bed_elev'])
+    #
+    #         self.plot.clear()
+    #
+    # #         self.plot.remove_item('Bed elevation')
+    # #         self.plot.remove_item('Left bank')
+    # #         self.plot.remove_item('Right bank')
+    # #         self.plot.remove_item('Peak')
+    #
+    #         for i in range(self.plot.plot.legend.layout.rowCount()):
+    #            for j in range(self.plot.plot.legend.layout.columnCount()):
+    #                 vb = self.plot.plot.legend.layout.itemAt(i,j)
+    #                 self.plot.plot.legend.layout.removeItem(vb)
+    #
+    #         for i in range(len(self.plot.items)):
+    #             self.plot.plot.legend.scene().removeItem(i)
+    #
+    #         self.plot.plot.legend = None
+    #
+    # #         self.plot.plot.legend.items = []
+    #         self.plot.plot.addLegend()
+    #         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+    #         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+    #         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+    # #         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+    #         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
+    #         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
+    #         self.plot.plot.setLabel('bottom', text='Channel length')
+    #         self.plot.plot.setLabel('left', text='Elevation')
+    # #         self.plot.removeItem('Bed elevation')
+    # #         self.plot.removeItem('Left bank')
+    # #         self.plot.removeItem('Right bank')
+    # #         self.plot.remove_item('Peak')
+    #         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
+    # #         except Exception:
+    # #             Msge("ERROR 170719.0531: could not remove legend item!", "Error")
 
     def check_mode(self):
         """
@@ -285,7 +263,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         for field in self.schema_lyr.fields():
             if field.isNumeric():
                 fname = field.name()
-                if fname != 'id':
+                if fname != "id":
                     self.field_combo.addItem(fname, field)
             else:
                 continue
@@ -301,7 +279,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         user_feat = next(user_feats)
         geom = user_feat.geometry()
         self.user_feat = user_feat
-        if self.user_tab == 'user_left_bank':
+        if self.user_tab == "user_left_bank":
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().nearestPoint(geom))) for f in schema_feats]
         else:
             self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]
@@ -337,17 +315,17 @@ class ProfileTool(qtBaseClass, uiDialog):
                 axis_x.append(station)
                 axis_y.append(val)
         self.plot_data = [axis_x, axis_y]
-        
+
         self.plot.clear()
         if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
-        self.plot.plot.addLegend()         
-        
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+        self.plot.plot.addLegend()
+
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
-        self.plot.plot.setLabel('bottom', text='Distance along feature ({0})'.format(self.fid))
-        self.plot.plot.setLabel('left', text='Raster value')
-        self.insert_to_table(name_x='Distance', name_y='Raster value')
+        self.plot.plot.setLabel("bottom", text="Distance along feature ({0})".format(self.fid))
+        self.plot.plot.setLabel("left", text="Raster value")
+        self.insert_to_table(name_x="Distance", name_y="Raster value")
 
     def plot_schema_data(self):
         """
@@ -371,16 +349,16 @@ class ProfileTool(qtBaseClass, uiDialog):
 
         self.plot.clear()
         if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend) 
-        self.plot.plot.addLegend()         
-        
+            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+        self.plot.plot.addLegend()
+
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
-        self.plot.plot.setLabel('bottom', text='Distance along feature ({0})'.format(self.fid))
-        self.plot.plot.setLabel('left', text=self.schema_data)
-        self.insert_to_table(name_x='Distance', name_y=self.schema_data)
+        self.plot.plot.setLabel("bottom", text="Distance along feature ({0})".format(self.fid))
+        self.plot.plot.setLabel("left", text=self.schema_data)
+        self.insert_to_table(name_x="Distance", name_y=self.schema_data)
 
-    def insert_to_table(self, name_x='axis_x', name_y='axis_y'):
+    def insert_to_table(self, name_x="axis_x", name_y="axis_y"):
         """
         Inserting data into table view.
         """

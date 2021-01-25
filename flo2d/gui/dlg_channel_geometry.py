@@ -15,17 +15,17 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
 
-uiDialog, qtBaseClass = load_ui('channel_geometry')
+uiDialog, qtBaseClass = load_ui("channel_geometry")
+
 
 class ChannelGeometryDialog(qtBaseClass, uiDialog):
-
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
         self.feat_selection = []
@@ -38,35 +38,38 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.buttonBox.accepted.connect(self.close_dialog)
 
     def set_header(self):
-        self.segment_elements_tblw.setHorizontalHeaderLabels (["Element",
-                                                               "Shape",
-                                                               "Manning's n",
-                                                               "Length",
-                                                               "Left Bank Elev.",
-                                                               "Right Bank Elev.",
-                                                               "Left Slope",
-                                                               "Right Slope",
-                                                               "Average Width",
-                                                               "Thalweg Depth",
-                                                               "XS Number",
-                                                               "Right Bank",
-                                                               "1st area coeff",
-                                                               "1st area exp",
-                                                               "1st wetted coeff",
-                                                               "1st wetted exp",
-                                                               "1st top width coeff",
-                                                               "1st top width exp",
-                                                               "2nd depth",
-                                                               "2nd area coeff",
-                                                               "2nd area exp",
-                                                               "2nd wetted coeff",
-                                                               "2nd wetted exp",
-                                                               "2nd top width coeff",
-                                                               "2nd top width exp"
-                                                               ])
+        self.segment_elements_tblw.setHorizontalHeaderLabels(
+            [
+                "Element",
+                "Shape",
+                "Manning's n",
+                "Length",
+                "Left Bank Elev.",
+                "Right Bank Elev.",
+                "Left Slope",
+                "Right Slope",
+                "Average Width",
+                "Thalweg Depth",
+                "XS Number",
+                "Right Bank",
+                "1st area coeff",
+                "1st area exp",
+                "1st wetted coeff",
+                "1st wetted exp",
+                "1st top width coeff",
+                "1st top width exp",
+                "2nd depth",
+                "2nd area coeff",
+                "2nd area exp",
+                "2nd wetted coeff",
+                "2nd wetted exp",
+                "2nd top width coeff",
+                "2nd top width exp",
+            ]
+        )
 
     def setup_connection(self):
-        con = self.iface.f2d['con']
+        con = self.iface.f2d["con"]
         if con is None:
             return
         else:
@@ -118,8 +121,8 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def populate_channels_dialog(self):
         # Fill dropdown list of segments and load global data of 1rs channel segment.
-        qry_chan = '''SELECT fid, name, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;'''
-        qry_chan_wsel = 'SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel'
+        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
+        qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
 
         rows_chan = self.gutils.execute(qry_chan).fetchall()
         if not rows_chan:
@@ -131,7 +134,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             if row[0] == 1:
                 self.roughness_adjust_coeff_dbox.setValue(row[4])
                 self.max_froude_number_dbox.setValue(row[3])
-                equation = row[5]-1 if row[5] is not None else 0
+                equation = row[5] - 1 if row[5] is not None else 0
                 self.transport_eq_cbo.setCurrentIndex(equation)
 
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
@@ -159,12 +162,12 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.fill_grid_element_controls_with_current_grid_number()
 
     def fill_table_with_cell_elements_of_current_segment(self):
-        qry_chan_elems = '''SELECT fid, seg_fid, rbankgrid, fcn, xlen, type, fid  FROM chan_elems WHERE seg_fid = ?;'''
-        qry_chan_r = '''SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r'''
-        qry_chan_v = '''SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep,
-                                         a11, a22, b11, b22, c11, c22  FROM chan_v;'''
-        qry_chan_t = '''SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t;'''
-        qry_chan_n = '''SELECT elem_fid, nxsecnum FROM chan_n;'''
+        qry_chan_elems = """SELECT fid, seg_fid, rbankgrid, fcn, xlen, type, fid  FROM chan_elems WHERE seg_fid = ?;"""
+        qry_chan_r = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r"""
+        qry_chan_v = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep,
+                                         a11, a22, b11, b22, c11, c22  FROM chan_v;"""
+        qry_chan_t = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t;"""
+        qry_chan_n = """SELECT elem_fid, nxsecnum FROM chan_n;"""
 
         # self.clear_all_individual_items_for_current_cell_element()
 
@@ -209,9 +212,24 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.assign_values_to_row(cell_values, row)
 
         for (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22) in chan_v:
-            cell_values = ((bankell, 4), (bankelr, 5), (fcd, 9), (a1, 12), (a2, 13),
-                           (b1, 14), (b2, 15), (c1, 16), (c2, 17), (excdep, 18),
-                           (a11, 19), (a22, 20), (b11, 21), (b22, 22), (c11, 23), (c22, 24))
+            cell_values = (
+                (bankell, 4),
+                (bankelr, 5),
+                (fcd, 9),
+                (a1, 12),
+                (a2, 13),
+                (b1, 14),
+                (b2, 15),
+                (c1, 16),
+                (c2, 17),
+                (excdep, 18),
+                (a11, 19),
+                (a22, 20),
+                (b11, 21),
+                (b22, 22),
+                (c11, 23),
+                (c22, 24),
+            )
             row = cell_pos.get(elem_fid)
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
@@ -223,7 +241,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.assign_values_to_row(cell_values, row)
 
         for (elem_fid, nxsecnum) in chan_n:
-            cell_values = ((nxsecnum, 10),) # NOTE: when there is  a tuple with only one tuple, a comma "," needs to be place after the tuple.
+            cell_values = (
+                (nxsecnum, 10),
+            )  # NOTE: when there is  a tuple with only one tuple, a comma "," needs to be place after the tuple.
             row = cell_pos.get(elem_fid)
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
@@ -240,13 +260,13 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.segment_elements_tblw.setItem(row, val[1], item)
 
     def fill_channel_segment_global_data(self):
-        if self.gutils.is_table_empty('chan'):
-            self.uc.bar_warn('Schematized Channel Segments (left bank) Layer is empty!.')
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
 
-        qry_wsel = '''SELECT istart, wselstart, iend, wselend FROM chan_wsel WHERE seg_fid = ?;'''
+        qry_wsel = """SELECT istart, wselstart, iend, wselend FROM chan_wsel WHERE seg_fid = ?;"""
         data_wsel = self.gutils.execute(qry_wsel, (idx,)).fetchone()
         if data_wsel is None:
             self.initial_flow_elems_grp.setChecked(False)
@@ -258,27 +278,30 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.ending_water_elev_dbox.setValue(data_wsel[3])
             self.initial_flow_elems_grp.setChecked(True)
 
-        qry_chan = '''SELECT isedn, depinitial, froudc, roughadj, isedn FROM chan WHERE fid = ?;'''
+        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
         self.initial_flow_for_all_dbox.setValue(data_chan[1])
         self.max_froude_number_dbox.setValue(data_chan[2])
         self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
-        equation =  data_chan[4]-1 if data_chan[4] is not None else 0
+        equation = data_chan[4] - 1 if data_chan[4] is not None else 0
         self.transport_eq_cbo.setCurrentIndex(equation)
 
     def fill_starting_and_ending_water_elevations(self):
-        sql_in = '''INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);'''
-        sql_out= '''DELETE from chan_wsel WHERE seg_fid = ?;'''
+        sql_in = """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);"""
+        sql_out = """DELETE from chan_wsel WHERE seg_fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         if self.initial_flow_elems_grp.isChecked():
             self.initial_flow_for_all_dbox.setEnabled(False)
-            self.gutils.execute(sql_in, (idx,
-                                         self.first_elem_box.value(),
-                                         self.starting_water_elev_dbox.value(),
-                                         self.last_elem_box.value(),
-                                         self.ending_water_elev_dbox.value()
-                                         )
-                                )
+            self.gutils.execute(
+                sql_in,
+                (
+                    idx,
+                    self.first_elem_box.value(),
+                    self.starting_water_elev_dbox.value(),
+                    self.last_elem_box.value(),
+                    self.ending_water_elev_dbox.value(),
+                ),
+            )
         else:
             self.initial_flow_for_all_dbox.setEnabled(True)
             self.gutils.execute(sql_out, (idx,))
@@ -286,7 +309,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
     def fill_grid_elements_droplist_for_this_segment(self):
         self.grid_element_cbo.blockSignals(True)
         self.grid_element_cbo.clear()
-        qry_elems = '''SELECT fid FROM chan_elems WHERE seg_fid = ?;'''
+        qry_elems = """SELECT fid FROM chan_elems WHERE seg_fid = ?;"""
         segment = self.channel_segment_cbo.currentIndex() + 1
         rows = self.gutils.execute(qry_elems, (segment,)).fetchall()
         for row in rows:
@@ -298,12 +321,12 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         row = self.grid_element_cbo.currentIndex()
         self.segment_elements_tblw.selectRow(row)
 
-        qry_chan_elems = '''SELECT rbankgrid, fcn, xlen, type FROM chan_elems WHERE fid = ?;'''
-        qry_chan_r = '''SELECT bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;'''
-        qry_chan_v = '''SELECT bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep,
-                               a11, a22, b11, b22, c11, c22  FROM chan_v WHERE elem_fid = ?;'''
-        qry_chan_t = '''SELECT bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;'''
-        qry_chan_n = '''SELECT nxsecnum, xsecname FROM chan_n WHERE elem_fid = ?;'''
+        qry_chan_elems = """SELECT rbankgrid, fcn, xlen, type FROM chan_elems WHERE fid = ?;"""
+        qry_chan_r = """SELECT bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
+        qry_chan_v = """SELECT bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep,
+                               a11, a22, b11, b22, c11, c22  FROM chan_v WHERE elem_fid = ?;"""
+        qry_chan_t = """SELECT bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
+        qry_chan_n = """SELECT nxsecnum, xsecname FROM chan_n WHERE elem_fid = ?;"""
 
         # self.clear_all_individual_items_for_current_cell_element()
 
@@ -324,7 +347,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.manning_dbox.setValue(chan_elems[1])
         self.channel_length_dbox.setValue(chan_elems[2])
         type = chan_elems[3]
-        self.grid_type_cbo.setCurrentIndex(0 if type=="R"  else 1 if type=="V" else 2 if type=="T" else 3)
+        self.grid_type_cbo.setCurrentIndex(0 if type == "R" else 1 if type == "V" else 2 if type == "T" else 3)
 
         self.enable_or_disable_items_according_to_type(type)
 
@@ -336,7 +359,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.average_channel_width_dbox.setValue(chan_r[2])
                 self.thalweg_channel_depth_dbox.setValue(chan_r[3])
             else:
-                self.uc.show_warn("WARNING 060319.1641: Element " + elem + " has a cross section of type 'R' without data!")
+                self.uc.show_warn(
+                    "WARNING 060319.1641: Element " + elem + " has a cross section of type 'R' without data!"
+                )
 
         elif type == "V":
             if chan_v is not None:
@@ -358,7 +383,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.second_top_width_coeff_dbox.setValue(chan_v[14])
                 self.second_top_width_exp_dbox.setValue(chan_v[15])
             else:
-                self.uc.show_warn("WARNING 060319.1624: Element " + elem + " has a cross section of type 'V' without data!")
+                self.uc.show_warn(
+                    "WARNING 060319.1624: Element " + elem + " has a cross section of type 'V' without data!"
+                )
 
         elif type == "T":
             if chan_t is not None:
@@ -370,7 +397,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.left_side_slope_dbox.setValue(chan_t[4])
                 self.right_side_slope_dbox.setValue(chan_t[5])
             else:
-                self.uc.show_warn("WARNING 060319.1625: Element " + elem + " has a cross section of type 'T' without data!")
+                self.uc.show_warn(
+                    "WARNING 060319.1625: Element " + elem + " has a cross section of type 'T' without data!"
+                )
 
         elif type == "N":
             if chan_n is not None:
@@ -378,10 +407,14 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.cross_section_number_lbl.setText(str(chan_n[0]))
                 # self.cross_section_name_lbl.setText(str(chan_n[1]))
             else:
-                self.uc.show_warn("WARNING 060319.1626: Element " + elem + " has a cross section of type 'N' without data!")
+                self.uc.show_warn(
+                    "WARNING 060319.1626: Element " + elem + " has a cross section of type 'N' without data!"
+                )
 
-        highlight_selected_segment(self.lyrs.data['chan']['qlyr'], self.channel_segment_cbo.currentIndex() + 1)
-        highlight_selected_xsection_a(self.gutils, self.lyrs.data['chan_elems']['qlyr'], int(self.grid_element_cbo.currentText()))
+        highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
+        highlight_selected_xsection_a(
+            self.gutils, self.lyrs.data["chan_elems"]["qlyr"], int(self.grid_element_cbo.currentText())
+        )
 
     def clear_all_individual_items_for_current_cell_element(self):
         self.grid_type_cbo.setCurrentIndex(0)
@@ -520,8 +553,10 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.cross_section_number_lbl.setText(str(self.int_or_zero(self.segment_elements_tblw.item(row, 10))))
             # self.cross_section_name_lbl.setText(?)
 
-        highlight_selected_segment(self.lyrs.data['chan']['qlyr'], self.channel_segment_cbo.currentIndex() + 1)
-        highlight_selected_xsection_a(self.gutils, self.lyrs.data['chan_elems']['qlyr'], int(self.grid_element_cbo.currentText()))
+        highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
+        highlight_selected_xsection_a(
+            self.gutils, self.lyrs.data["chan_elems"]["qlyr"], int(self.grid_element_cbo.currentText())
+        )
 
     def int_or_zero(self, value):
         if value is None:
@@ -535,55 +570,55 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         pass
 
     def update_transport_eq(self):
-        qry = '''UPDATE chan SET isedn = ? WHERE fid = ?;'''
+        qry = """UPDATE chan SET isedn = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.transport_eq_cbo.currentIndex() + 1
         self.gutils.execute(qry, (value, idx))
 
     def update_initial_flow_for_all(self):
-        qry = '''UPDATE chan SET depinitial = ? WHERE fid = ?;'''
+        qry = """UPDATE chan SET depinitial = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.initial_flow_for_all_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_froude(self):
-        qry = '''UPDATE chan SET froudc = ? WHERE fid = ?;'''
+        qry = """UPDATE chan SET froudc = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.max_froude_number_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_roughness(self):
-        qry = '''UPDATE chan SET roughadj = ? WHERE fid = ?;'''
+        qry = """UPDATE chan SET roughadj = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.roughness_adjust_coeff_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_first(self):
-        qry = '''UPDATE chan_wsel SET istart = ? WHERE seg_fid = ?;'''
+        qry = """UPDATE chan_wsel SET istart = ? WHERE seg_fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.first_elem_box.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_last(self):
-        qry = '''UPDATE chan_wsel SET iend = ? WHERE seg_fid = ?;'''
+        qry = """UPDATE chan_wsel SET iend = ? WHERE seg_fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.last_elem_box.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_starting(self):
-        qry = '''UPDATE chan_wsel SET wselstart = ? WHERE seg_fid = ?;'''
+        qry = """UPDATE chan_wsel SET wselstart = ? WHERE seg_fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.starting_water_elev_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_ending(self):
-        qry = '''UPDATE chan_wsel SET wselend = ? WHERE seg_fid = ?;'''
+        qry = """UPDATE chan_wsel SET wselend = ? WHERE seg_fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.ending_water_elev_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def roughness_adjust_coeff_dbox_valueChanged(self):
-        qry = '''UPDATE chan SET roughadj = ? WHERE fid = ?;'''
+        qry = """UPDATE chan SET roughadj = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.roughness_adjust_coeff_dbox.value()
         self.gutils.execute(qry, (value, idx))
@@ -611,7 +646,12 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.update_segment_widget_table(self.left_bank_elevation_dbox, 4)
 
     def right_bank_elevation_dbox_valueChanged(self):
-        self.update_chan_elem_attr(self.db_name(), "bankelr", self.right_bank_elevation_dbox.value(), "elem_fid",  )
+        self.update_chan_elem_attr(
+            self.db_name(),
+            "bankelr",
+            self.right_bank_elevation_dbox.value(),
+            "elem_fid",
+        )
         self.update_segment_widget_table(self.right_bank_elevation_dbox, 5)
 
     def left_side_slope_dbox_valueChanged(self):
@@ -684,8 +724,8 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.update_segment_widget_table(self.second_top_width_exp_dbox, 24)
 
     def update_chan_elem_attr(self, table, attr_name, attr_value, id_name):
-        id_value =  self.grid_element_cbo.currentText()
-        qry = '''UPDATE {0} SET {1} = ? WHERE {2} = ?;'''
+        id_value = self.grid_element_cbo.currentText()
+        qry = """UPDATE {0} SET {1} = ? WHERE {2} = ?;"""
         qry = qry.format(table, attr_name, id_name)
         self.gutils.execute(qry, (attr_value, id_value))
 
@@ -702,5 +742,5 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def close_dialog(self):
         self.features = []
-        self.lyrs.data['chan']['qlyr'].selectByIds(self.features)
-        self.lyrs.data['chan_elems']['qlyr'].selectByIds(self.features)
+        self.lyrs.data["chan"]["qlyr"].selectByIds(self.features)
+        self.lyrs.data["chan_elems"]["qlyr"].selectByIds(self.features)

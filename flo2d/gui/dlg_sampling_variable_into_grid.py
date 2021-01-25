@@ -15,11 +15,10 @@ from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtWidgets import QDialogButtonBox
 
-uiDialog, qtBaseClass = load_ui('sampling_variable_into_grid')
+uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
 
 
 class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -29,9 +28,11 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.current_lyr = None
-        self.sampling_point_field_into_grid_field_buttonBox.button(QDialogButtonBox.Ok).setText("Assign to selected grid field")
+        self.sampling_point_field_into_grid_field_buttonBox.button(QDialogButtonBox.Ok).setText(
+            "Assign to selected grid field"
+        )
         self.setup_layer_cbo()
         # connections
         self.points_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
@@ -51,7 +52,7 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
                     pass
 
             if self.points_cbo.count():
-                grid_lyr = self.lyrs.data['grid']['qlyr']
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 fields = [f.name() for f in grid_lyr.fields()]
                 self.grid_fields_cbo.clear()
                 for f in fields:
@@ -62,7 +63,7 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
                 self.populate_fields_cbo(self.points_cbo.currentIndex())
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn('There are not any point layers selected (or visible)')
+                self.uc.bar_warn("There are not any point layers selected (or visible)")
 
         except Exception as e:
             pass

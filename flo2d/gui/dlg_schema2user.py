@@ -16,17 +16,16 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaFPXSECConverter,
     SchemaGridConverter,
     SchemaInfiltrationConverter,
-    SchemaSWMMConverter
+    SchemaSWMMConverter,
 )
 from .ui_utils import load_ui
 from qgis.PyQt.QtWidgets import QApplication
 from ..geopackage_utils import GeoPackageUtils
 
-uiDialog, qtBaseClass = load_ui('schema2user')
+uiDialog, qtBaseClass = load_ui("schema2user")
 
 
 class Schema2UserDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs, uc):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -46,11 +45,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
         self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
-        
+
         self.populate_components()
-        
-    def  populate_components(self):
-        if self.gutils.is_table_empty('swmmflo'):      
+
+    def populate_components(self):
+        if self.gutils.is_table_empty("swmmflo"):
             self.ckbox_swmm.setEnabled(False)
 
     def convert_domain_checked(self):
@@ -163,7 +162,10 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
             swmm_converter.create_user_swmm_nodes()
         except Exception as e:
-            self.uc.log_info(traceback.format_exc())         
+            self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
-                               +'\n_______________________________________________________________', e)  
+            self.uc.show_error(
+                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                + "\n_______________________________________________________________",
+                e,
+            )

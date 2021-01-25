@@ -13,11 +13,10 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui('sampling_xyz')
+uiDialog, qtBaseClass = load_ui("sampling_xyz")
 
 
 class SamplingXYZDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -27,7 +26,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.current_lyr = None
         self.setup_layer_cbo()
         # connections

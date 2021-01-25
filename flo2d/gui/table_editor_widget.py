@@ -19,7 +19,9 @@ import io
 import csv
 from qgis.core import QgsMessageLog
 
-uiDialog, qtBaseClass = load_ui('table_editor')
+uiDialog, qtBaseClass = load_ui("table_editor")
+
+
 class TableEditorWidget(qtBaseClass, uiDialog):
 
     before_paste = pyqtSignal()
@@ -35,22 +37,22 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.setup_tview()
         self.tview.undoStack = QUndoStack(self)
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = None
         self.copy_btn.clicked.connect(self.copy_selection)
         self.paste_btn.clicked.connect(self.paste)
         self.undo_btn.clicked.connect(self.undo)
         self.redo_btn.clicked.connect(self.redo)
         self.connect_delete(True)
-     
-    def connect_delete(self,connect=True):
+
+    def connect_delete(self, connect=True):
         if connect:
             self.delete_btn.clicked.connect(self.delete_selection)
         else:
             try:
                 self.delete_btn.clicked.disconnect()
             except:
-                pass # OK to fail when switching between R and T type xs 
+                pass  # OK to fail when switching between R and T type xs
 
     def undo(self):
         self.tview.undoStack.undo()
@@ -77,43 +79,52 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             columns = sorted(index.column() for index in selection)
             rowcount = rows[-1] - rows[0] + 1
             colcount = columns[-1] - columns[0] + 1
-            table = [[''] * colcount for _ in range(rowcount)]
+            table = [[""] * colcount for _ in range(rowcount)]
             for index in selection:
                 row = index.row() - rows[0]
                 column = index.column() - columns[0]
                 table[row][column] = str(index.data())
             stream = io.StringIO()
-            csv.writer(stream, delimiter='\t').writerows(table)
+            csv.writer(stream, delimiter="\t").writerows(table)
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
         self.before_paste.emit()
         paste_str = QApplication.clipboard().text()
-        rows = paste_str.split('\n')
+        rows = paste_str.split("\n")
         num_rows = len(rows) - 1
-        num_cols = rows[0].count('\t') + 1
+        num_cols = rows[0].count("\t") + 1
         sel_ranges = self.tview.selectionModel().selection()
         if len(sel_ranges) == 1:
             top_left_idx = sel_ranges[0].topLeft()
             sel_col = top_left_idx.column()
             sel_row = top_left_idx.row()
             if sel_col + num_cols > self.tview.model().columnCount():
-                self.uc.bar_warn('Too many columns to paste.')
+                self.uc.bar_warn("Too many columns to paste.")
                 return
             if sel_row + num_rows > self.tview.model().rowCount():
-                self.tview.model().insertRows(self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row))
+                self.tview.model().insertRows(
+                    self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row)
+                )
                 for i in range(self.tview.model().rowCount()):
                     self.tview.setRowHeight(i, 20)
             for row in range(num_rows):
-                columns = rows[row].split('\t')
+                columns = rows[row].split("\t")
                 for i, col in enumerate(columns):
                     if not is_number(col):
-                        columns[i] = ''
-                [self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem()) for col in range(len(columns))]
+                        columns[i] = ""
+                [
+                    self.tview.model().setItem(sel_row + row, sel_col + col, StandardItem())
+                    for col in range(len(columns))
+                ]
                 for col in range(len(columns)):
-                    self.tview.model().item(sel_row + row, sel_col + col).setData(columns[col].strip(), role=Qt.EditRole)
+                    self.tview.model().item(sel_row + row, sel_col + col).setData(
+                        columns[col].strip(), role=Qt.EditRole
+                    )
             self.after_paste.emit()
-            self.tview.model().dataChanged.emit(top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols))
+            self.tview.model().dataChanged.emit(
+                top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols)
+            )
 
     def delete_selection(self):
         indices = []
@@ -125,10 +136,12 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         if indices:
             self.after_delete.emit()
 
+
 class CommandItemEdit(QUndoCommand):
     """
     Command for undoing/redoing text edit changes, to be placed in undostack.
     """
+
     def __init__(self, widget, item, oldText, newText, description):
         QUndoCommand.__init__(self, description)
         self.item = item
@@ -146,8 +159,9 @@ class CommandItemEdit(QUndoCommand):
         try:
             self.item.setText(self.oldText)
         except TypeError:
-            self.item.setText('')
+            self.item.setText("")
         self.widget.connect_itemDataChanged(True)
+
 
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
@@ -165,6 +179,7 @@ class StandardItemModel(QStandardItemModel):
     """
     Items will emit this signal when edited.
     """
+
     itemDataChanged = pyqtSignal(object, object, object, object)
 
 
@@ -172,6 +187,7 @@ class StandardItem(QStandardItem):
     """
     Subclass QStandardItem to reimplement setData to emit itemDataChanged.
     """
+
     def setData(self, newValue, role=Qt.UserRole + 1):
         if role == Qt.EditRole:
             oldValue = self.data(role)
@@ -198,9 +214,9 @@ class TableView(QTableView):
         self.setModel(model)
         self.model().itemDataChanged.connect(self.itemDataChangedSlot)
         self.undoStack = QUndoStack(self)
-        
-    def setModel(self,model):
-        if not isinstance(model,StandardItemModel):
+
+    def setModel(self, model):
+        if not isinstance(model, StandardItemModel):
             msg = "Model for TableView object must be StandardItem type"
             QgsMessageLog.logMessage(msg)
             return Exception(msg)
@@ -208,7 +224,7 @@ class TableView(QTableView):
         self.undoStack = QUndoStack(self)
         self.connect_itemDataChanged(True)
 
-    def connect_itemDataChanged(self,connect=True):
+    def connect_itemDataChanged(self, connect=True):
         if connect:
             self.model().itemDataChanged.connect(self.itemDataChangedSlot)
         else:
@@ -219,7 +235,8 @@ class TableView(QTableView):
         Slot used to push changes of existing items onto undoStack.
         """
         if role == Qt.EditRole:
-            command = CommandItemEdit(self, item, oldValue, newValue,
-                                      "Text changed from '{0}' to '{1}'".format(oldValue, newValue))
+            command = CommandItemEdit(
+                self, item, oldValue, newValue, "Text changed from '{0}' to '{1}'".format(oldValue, newValue)
+            )
             self.undoStack.push(command)
             return True

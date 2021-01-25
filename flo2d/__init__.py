@@ -17,4 +17,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .flo2d import Flo2D
+
     return Flo2D(iface)

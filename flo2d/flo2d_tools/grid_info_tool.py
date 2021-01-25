@@ -8,8 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-#QgsMapToolIdentify required those functions to be self
-#pylint: disable=no-self-use
+# QgsMapToolIdentify required those functions to be self
+# pylint: disable=no-self-use
 
 import os
 from qgis.PyQt.QtCore import pyqtSignal
@@ -39,8 +39,7 @@ class GridInfoTool(QgsMapToolIdentify):
             self.grid_elem_picked.emit(-1)
 
     def activate(self):
-        self.canvas.setCursor(QCursor(QPixmap(os.path.join(
-            os.path.dirname(__file__), 'img/info_tool_icon.svg'))))
+        self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))
 
     def deactivate(self):
         pass

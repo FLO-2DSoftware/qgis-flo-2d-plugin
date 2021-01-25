@@ -15,11 +15,10 @@ from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 
-uiDialog, qtBaseClass = load_ui('ras_import')
+uiDialog, qtBaseClass = load_ui("ras_import")
 
 
 class RasImportDialog(qtBaseClass, uiDialog):
-
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -27,27 +26,25 @@ class RasImportDialog(qtBaseClass, uiDialog):
         self.con = con
         self.iface = iface
         self.lyrs = lyrs
-        self.uc = UserCommunication(iface, 'FLO-2D')
+        self.uc = UserCommunication(iface, "FLO-2D")
 
         self.browse_btn.clicked.connect(self.get_ras_file)
 
     def get_ras_file(self):
         s = QSettings()
-        last_dir = s.value('FLO-2D/lastRasDir', '')
+        last_dir = s.value("FLO-2D/lastRasDir", "")
         ras_file, __ = QFileDialog.getOpenFileName(
-            None,
-            'Select HEC-RAS project or geometry file to import data',
-            directory=last_dir,
-            filter='(*.prj *.g*)')
+            None, "Select HEC-RAS project or geometry file to import data", directory=last_dir, filter="(*.prj *.g*)"
+        )
         if not ras_file:
             return
         self.ras_line.setText(ras_file)
-        s.setValue('FLO-2D/lastRasDir', os.path.dirname(ras_file))
+        s.setValue("FLO-2D/lastRasDir", os.path.dirname(ras_file))
 
     def import_geometry(self):
         ras_file = self.ras_line.text()
         interpolated_xs = True if self.interpolated.isChecked() else False
-        if ras_file.lower().endswith('.prj'):
+        if ras_file.lower().endswith(".prj"):
             project = RASProject(self.con, self.iface, self.lyrs, prj_path=ras_file, interpolated=interpolated_xs)
             project.find_geometry()
             ras_geom = project.get_geometry()
