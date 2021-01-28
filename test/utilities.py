@@ -1,10 +1,7 @@
 # coding=utf-8
 """Common functionality used by regression tests."""
 
-import sys
-
 QGIS_APP = None  # Static variable used to hold hand to running QGIS app
-
 def get_qgis_app():
     """ Start one QGIS application to test against.
 
@@ -16,8 +13,7 @@ def get_qgis_app():
     if QGIS_APP is None:
         from qgis.core import QgsApplication
         gui_flag = True  # All test will run qgis in gui mode
-        #noinspection PyPep8Naming
-        QGIS_APP = QgsApplication(sys.argv, gui_flag)
+        QGIS_APP = QgsApplication([], gui_flag)
         # Make sure QGIS_PREFIX_PATH is set in your env if needed!
         QGIS_APP.initQgis()
 
