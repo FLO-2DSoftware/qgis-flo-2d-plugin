@@ -1,5 +1,4 @@
-Status: [![Build Status](http://jenkins.lutraconsulting.co.uk:8081/buildStatus/icon?job=FLO-2D)](http://jenkins.lutraconsulting.co.uk:8080/job/FLO-2D/)
-
+![Auto Tests](https://github.com/FLO-2DSoftware/qgis-flo-2d-plugin/workflows/Auto%20Tests/badge.svg)
 
 # qgis-flo-2d-plugin
 A plugin for pre-processing/post-processing FLO-2D models

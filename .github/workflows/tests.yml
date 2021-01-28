@@ -11,9 +11,9 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ubuntugis/ppa -y
           sudo apt-get install -y qgis
-          sudo apt-get install -y python3
+          sudo apt-get install -y python3 python3-nose2
 
       - name: Run tests
         run: |
-          cd test
-          python -m unittest
+          source test/run-env-linux.sh /usr
+          nosetests -v

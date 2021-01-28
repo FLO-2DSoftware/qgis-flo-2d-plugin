@@ -23,7 +23,7 @@ def get_qgis_app():
     """
 
     try:
-        from qgis.PyQt import QtCore, QtWidgets
+        from qgis.PyQt import QtGui, QtCore
         from qgis.core import QgsApplication
         from qgis.gui import QgsMapCanvas
         from .qgis_interface import QgisInterface
@@ -44,7 +44,7 @@ def get_qgis_app():
     global PARENT  # pylint: disable=W0603
     if PARENT is None:
         #noinspection PyPep8Naming
-        PARENT = QtWidgets.QWidget()
+        PARENT = QtGui.QWidget()
 
     global CANVAS  # pylint: disable=W0603
     if CANVAS is None:
