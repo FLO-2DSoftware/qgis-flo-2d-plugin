@@ -1949,6 +1949,73 @@ def dirID(dir):
 
     return ID
 
+def is_boundary_cell(gutils, grid_lyr, cell, cell_size):
+    if grid_lyr is not None:
+        if cell:
+           if len(grid_lyr) >= cell and cell > 0:
+
+               currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+               xx, yy = currentCell.geometry().centroid().asPoint()
+
+               # North cell:
+               y = yy  +  cell_size
+               x = xx
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                                   
+               # NorthEast cell                      
+               y = yy  +  cell_size
+               x = xx  +  cell_size
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True     
+                                                             
+               # East cell:   
+               x = xx +  cell_size
+               y = yy
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                           
+               # SouthEast cell:    
+               y = yy  -  cell_size
+               x = xx  +  cell_size
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                                                                      
+               # South cell: 
+               y = yy  -  cell_size
+               x = xx
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+
+               # SouthWest cell:
+               y = yy  -  cell_size
+               x = xx  -  cell_size
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                                    
+                # West cell:
+               y = yy
+               x = xx  -  cell_size
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                                    
+                # NorthWest cell:
+               y = yy  +  cell_size
+               x = xx  -  cell_size
+               grid = gutils.grid_on_point(x, y)
+               if grid is None:
+                   return True
+                                    
+    return False  
+
+
 
 def layer_geometry_is_valid(vlayer):
     """Checking if all features geometries are GEOS valid."""
