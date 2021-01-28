@@ -12,7 +12,7 @@ def get_qgis_app():
     global QGIS_APP
     if QGIS_APP is None:
         from qgis.core import QgsApplication
-        gui_flag = False  # All test will run qgis in gui mode
+        gui_flag = True  # All test will run qgis in gui mode
         QGIS_APP = QgsApplication([], gui_flag)
         # Make sure QGIS_PREFIX_PATH is set in your env if needed!
         QGIS_APP.initQgis()
