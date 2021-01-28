@@ -1,0 +1,19 @@
+name: Auto Tests
+on: [push, pull_request]
+jobs:
+  linux_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: install deps
+        run: |
+          sudo add-apt-repository ppa:ubuntugis/ppa -y
+          sudo apt-get install -y qgis
+          sudo apt-get install -y python3
+
+      - name: Run tests
+        run: |
+          cd test
+          python -m unittest
