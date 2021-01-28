@@ -51,6 +51,9 @@ class TestGridTools(unittest.TestCase):
         self.assertSetEqual(set(n_values), expected)
 
     def test_calculate_arfwrf(self):
+        self.assertTrue(False) # this test hangs for 5+min!
+        return
+
         grid = os.path.join(VECTOR_PATH, 'grid.geojson')
         blockers = os.path.join(VECTOR_PATH, 'blockers.geojson')
         glayer = QgsVectorLayer(grid, 'grid', 'ogr')
