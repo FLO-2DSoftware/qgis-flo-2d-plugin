@@ -9,18 +9,15 @@
 # of the License, or (at your option) any later version
 
 import os
-import sys
 import unittest
-sys.path.append(os.path.join('..', 'flo2d'))
-from qgis.core import QgsVectorLayer
 from .utilities import get_qgis_app
-from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
-
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 VECTOR_PATH = os.path.join(THIS_DIR, 'data', 'vector')
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
 
+from qgis.core import QgsVectorLayer
+from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
 
 class TestGridTools(unittest.TestCase):
 
@@ -54,6 +51,9 @@ class TestGridTools(unittest.TestCase):
         self.assertSetEqual(set(n_values), expected)
 
     def test_calculate_arfwrf(self):
+        self.assertTrue(False) # this test hangs for 5+min!
+        return
+
         grid = os.path.join(VECTOR_PATH, 'grid.geojson')
         blockers = os.path.join(VECTOR_PATH, 'blockers.geojson')
         glayer = QgsVectorLayer(grid, 'grid', 'ogr')
