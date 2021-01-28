@@ -9,18 +9,15 @@
 # of the License, or (at your option) any later version
 
 import os
-import sys
 import unittest
-sys.path.append(os.path.join('..', 'flo2d'))
-from qgis.core import QgsVectorLayer
 from .utilities import get_qgis_app
-from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
-
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 VECTOR_PATH = os.path.join(THIS_DIR, 'data', 'vector')
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
 
+from qgis.core import QgsVectorLayer
+from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
 
 class TestGridTools(unittest.TestCase):
 
