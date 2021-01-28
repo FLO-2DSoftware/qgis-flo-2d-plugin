@@ -14,6 +14,7 @@ from qgis.core import QgsFeatureRequest
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow, Outflow
+from ..flo2d_tools.grid_tools import is_boundary_cell
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
@@ -153,7 +154,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
         in_inserted = self.schematize_inflows()
         out_inserted = self.schematize_outflows()
-
+        
+        self.select_boundary_outflows_from_polygons()
+        
         QApplication.restoreOverrideCursor()
 
         self.uc.show_info(
@@ -291,7 +294,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.reset_inflow_gui()
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows:
-            # self.uc.bar_info('There is no inflow defined in the database...')
+            self.uc.bar_info("There is no inflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             return
         else:
@@ -566,7 +569,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.iface.f2d["con"], self.iface)
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows:
-            # self.uc.bar_info('There is no outflow defined in the database...')
+            self.uc.bar_info('There is no outflow defined in the database...')
             self.change_bc_name_btn.setDisabled(True)
             return
         else:
@@ -626,6 +629,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_changed()
 
     def outflow_changed(self):
+        self.enable_outflow_types()
         bc_idx = self.bc_name_cbo.currentIndex()
         cur_data = self.bc_name_cbo.itemData(bc_idx)
         self.bc_data_model.clear()
@@ -651,7 +655,17 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
         self.outflow_type_cbo.setCurrentIndex(self.type_fid)
         self.outflow_type_changed()
+        if self.geom_type == "polygon":
+            self.disable_outflow_types()
 
+    def enable_outflow_types(self):
+        for idx in range(0, self.outflow_type_cbo.count()):
+            self.outflow_type_cbo.model().item(idx).setEnabled(True)    
+
+    def disable_outflow_types(self):
+        for idx in [0, 2, 3, 6, 8, 9, 10, 11]:
+            self.outflow_type_cbo.model().item(idx).setEnabled(False) 
+            
     def outflow_type_changed(self):
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
@@ -839,6 +853,31 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             return 0
 
+    def select_boundary_outflows_from_polygons(self):
+        
+        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        no_boundary_outflow = []
+        boundary_outflow = []
+        if not self.gutils.is_table_empty('outflow_cells'):
+            grid_lyr = self.lyrs.data['grid']['qlyr']
+            cells   = self.gutils.execute("SELECT grid_fid, outflow_fid FROM outflow_cells").fetchall()
+            if cells:
+                for cell in cells:
+                    grid_fid, outflow_fid = cell
+                    rows = self.gutils.execute("SELECT geom_type, type FROM outflow WHERE bc_fid = ?;", (outflow_fid,)).fetchall()
+                    if rows:
+                        for row in rows:
+                            if row[0] == "polygon" and row[1] in [1, 4, 5, 7]:
+                                if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
+                                    boundary_outflow.append(grid_fid)
+                                else:
+                                    no_boundary_outflow.append(grid_fid)                 
+                
+                if no_boundary_outflow:
+                    for cell in no_boundary_outflow:
+                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))        
+
+
     def define_outflow_types(self):
         self.outflow_types = {
             0: {"name": "No outflow", "wids": [], "data_label": "", "tab_head": None},
@@ -1024,11 +1063,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if user_bc_edited:
             self.enable_bc_type_change()
             # update inflow or outflow names
-            #             if self.bc_type_inflow_radio.isChecked():
-            #                 self.gutils.fill_empty_inflow_names()
-            #             else:
-            #                 self.gutils.fill_empty_outflow_names()
-
             self.gutils.fill_empty_inflow_names()
             self.gutils.fill_empty_outflow_names()
             self.uc.show_info(

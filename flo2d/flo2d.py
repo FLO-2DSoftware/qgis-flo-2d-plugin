@@ -685,7 +685,7 @@ class Flo2D(object):
         qgs_dir = os.path.dirname(qgs_file)
         if old_gpkg:
             QApplication.restoreOverrideCursor()
-            msg = "This QGIS project was used to work with the FLO-2D plugin and\n"
+            msg = "This QGIS project uses the FLO-2D plugin and\n"
             msg += "the following database file:\n\n"
             msg += "{}\n\n Load the model?".format(old_gpkg)
 
