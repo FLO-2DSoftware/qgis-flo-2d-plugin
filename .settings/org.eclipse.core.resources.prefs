@@ -1,3 +1,6 @@
+=\=\=\=\=\=\=
+<<<<<<<=HEAD
+>>>>>>>=stash
 eclipse.preferences.version=1
 encoding//docs/dev/source/conf.py=utf-8
 encoding//docs/user/source/conf.py=utf-8
@@ -16,10 +19,6 @@ encoding//flo2d/flo2d_tools/grid_info_tool.py=utf-8
 encoding//flo2d/flo2d_tools/grid_tools.py=utf-8
 encoding//flo2d/flo2d_tools/infiltration_tools.py=utf-8
 encoding//flo2d/flo2d_tools/info_tool.py=utf-8
-<<<<<<< HEAD
-encoding//flo2d/flo2dobjects.py=utf-8
-encoding//flo2d/gui/bc_editor_widget.py=utf-8
-=======
 encoding//flo2d/flo2d_tools/schema2user_tools.py=utf-8
 encoding//flo2d/flo2d_tools/schematic_tools.py=utf-8
 encoding//flo2d/flo2dobjects.py=utf-8
@@ -34,7 +33,6 @@ encoding//flo2d/gui/dlg_components.py=utf-8
 encoding//flo2d/gui/dlg_conduits.py=utf-8
 encoding//flo2d/gui/dlg_cont_toler_jj.py=utf-8
 encoding//flo2d/gui/dlg_evap_editor.py=utf-8
->>>>>>> stash
 encoding//flo2d/gui/dlg_flopro.py=utf-8
 encoding//flo2d/gui/dlg_grid_elev.py=utf-8
 encoding//flo2d/gui/dlg_hazus.py=utf-8
@@ -55,6 +53,7 @@ encoding//flo2d/gui/f2d_main_widget.py=utf-8
 encoding//flo2d/gui/fpxsec_editor_widget.py=utf-8
 encoding//flo2d/gui/grid_info_widget.py=utf-8
 encoding//flo2d/gui/grid_tools_widget.py=utf-8
+encoding//flo2d/gui/ic_editor_widget.py=utf-8
 encoding//flo2d/gui/infil_editor_widget.py=utf-8
 encoding//flo2d/gui/levee_and_breach_editor_widget.py=utf-8
 encoding//flo2d/gui/multiple_channels_editor_widget.py=utf-8
@@ -65,9 +64,6 @@ encoding//flo2d/gui/struct_editor_widget.py=utf-8
 encoding//flo2d/gui/table_editor_widget.py=utf-8
 encoding//flo2d/gui/ui_utils.py=utf-8
 encoding//flo2d/gui/xs_editor_widget.py=utf-8
-<<<<<<< HEAD
-encoding//flo2d/utils.py=utf-8
-=======
 encoding//flo2d/layers.py=utf-8
 encoding//flo2d/user_communication.py=utf-8
 encoding//flo2d/utils.py=utf-8
@@ -75,4 +71,3 @@ encoding//test/test_flo2dgeopackage.py=utf-8
 encoding//test/test_grid_tools.py=utf-8
 encoding//test/test_schematic_tools.py=utf-8
 encoding//test/utilities.py=utf-8
->>>>>>> stash

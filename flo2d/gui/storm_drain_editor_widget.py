@@ -2044,7 +2044,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.user_swmm_conduits_lyr.triggerRepaint()
             QApplication.restoreOverrideCursor()
             self.uc.show_info(
-                f"Inlet and Outlet node names successfully assigned for the {len(conduit_nodes)} Conduits!"
+                "Inlet and Outlet node names successfully assigned for the {len(conduit_nodes)} Conduits!"
             )
         except Exception as e:
             QApplication.restoreOverrideCursor()

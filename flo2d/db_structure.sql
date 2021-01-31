@@ -221,6 +221,7 @@ CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "outflow_fid" INTEGER,
     "grid_fid" INTEGER,
+    "geom_type" TEXT,
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
