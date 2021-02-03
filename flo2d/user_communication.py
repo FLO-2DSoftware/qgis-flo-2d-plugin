@@ -113,6 +113,17 @@ class UserCommunication(object):
         else:
             print(msg)
 
+    def customized_question(self, msg, standard_buttons=QMessageBox.No | QMessageBox.Yes, default=QMessageBox.Yes):
+        if self.iface is not None:
+            m = QMessageBox()
+            m.setWindowTitle(self.context)
+            m.setText(msg)
+            m.setStandardButtons(standard_buttons)
+            m.setDefaultButton(default)
+            return m.exec_()
+        else:
+            print(msg)
+
     def progress_bar(self, msg, minimum=0, maximum=0, init_value=0):
         pmb = self.iface.messageBar().createMessage(msg)
         pb = QProgressBar()

@@ -685,12 +685,22 @@ class Flo2D(object):
         qgs_dir = os.path.dirname(qgs_file)
         if old_gpkg:
             QApplication.restoreOverrideCursor()
-            msg = "This QGIS project uses the FLO-2D plugin and\n"
-            msg += "the following database file:\n\n"
-            msg += "{}\n\n Load the model?".format(old_gpkg)
-
-            if self.uc.question(msg):
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+            msg = f"This QGIS project uses the FLO-2D plugin and the following database file:\n\n{old_gpkg}\n\n"
+            if not os.path.exists(old_gpkg):
+                msg += "Unfortunately it seems that database file doesn't exist at given location."
+                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
+                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
+                if os.path.exists(_old_gpkg):
+                    msg += f" However we found file with the same name at your project location:\n\n{_old_gpkg}\n\n"
+                    msg += "Load the model?"
+                    old_gpkg = _old_gpkg
+                    answer = self.uc.customized_question(msg)
+                else:
+                    answer = self.uc.customized_question(msg, QMessageBox.Cancel, QMessageBox.Cancel)
+            else:
+                msg += "Load the model?"
+                answer = self.uc.customized_question(msg)
+            if answer == QMessageBox.Yes:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
@@ -707,28 +717,6 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
-            else:
-                # load gpkg from qgis project directory
-                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
-                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
-                if os.path.exists(_old_gpkg):
-                    msg = f"Load the geopackage {_old_gpkg} from QGIS project folder instead?"
-                    if self.uc.question(msg):
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
-                        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                        dlg_settings.connect(_old_gpkg)
-                        self.con = dlg_settings.con
-                        self.iface.f2d["con"] = self.con
-                        self.gutils = dlg_settings.gutils
-                        self.crs = dlg_settings.crs
-                        self.setup_dock_widgets()
-
-                        s = QSettings()
-                        s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                        s.setValue("FLO-2D/lastGdsDir", qgs_dir)
-                        self.write_proj_entry("gpkg", _old_gpkg)
-                        window_title = s.value("FLO-2D/last_flopro_project", "")
-                        self.iface.mainWindow().setWindowTitle(window_title)
 
     def call_IO_methods(self, calls, debug, *args):
         s = QSettings()
