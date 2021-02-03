@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -808,22 +808,24 @@ def clustered_features(polygons, fields, *columns, **columns_map):
             yield new_feat
 
 
-def calculate_spatial_variable_from_polygons(grid, areas):
+def calculate_spatial_variable_from_polygons(grid, areas, use_centroids=True):
     """
     Generator which calculates values based on polygons representing values.
     """
     allfeatures, index = spatial_index(areas)
     features = grid.getFeatures()
+    def get_geom(feature): return feature.geometry()
+    def get_centroid(feature): return feature.geometry().centroid()
+    get_geom_fn = get_centroid if use_centroids is True else get_geom
     for feat in features:  # for each grid feature
-        geom = feat.geometry()  # cell square (a polygon)
+        geom = get_geom_fn(feat)
         fids = index.intersects(geom.boundingBox())
         for fid in fids:
             f = allfeatures[fid]
             fgeom = f.geometry()
             inter = fgeom.intersects(geom)
             if inter is True:
-                centroid = geom.centroid()
-                yield (f.id(), feat.id())
+                yield f.id(), feat.id()
             else:
                 pass
 

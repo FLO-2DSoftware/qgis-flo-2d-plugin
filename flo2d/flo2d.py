@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -707,14 +707,12 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
-                return
-
             else:
                 # load gpkg from qgis project directory
                 gpkg_dir, gpkg_file = os.path.split(old_gpkg)
                 _old_gpkg = os.path.join(qgs_dir, gpkg_file)
                 if os.path.exists(_old_gpkg):
-                    msg = "Load the geopackage %s from QGIS project folder instead?" % _old_gpkg
+                    msg = f"Load the geopackage {_old_gpkg} from QGIS project folder instead?"
                     if self.uc.question(msg):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
@@ -731,9 +729,6 @@ class Flo2D(object):
                         self.write_proj_entry("gpkg", _old_gpkg)
                         window_title = s.value("FLO-2D/last_flopro_project", "")
                         self.iface.mainWindow().setWindowTitle(window_title)
-                return
-
-                self.uc.bar_info("Loading last model cancelled", dur=3)
 
     def call_IO_methods(self, calls, debug, *args):
         s = QSettings()
@@ -1504,16 +1499,13 @@ class Flo2D(object):
             if "Manning's n and Topo" not in dlg_components.components:
                 export_calls.remove("export_mannings_n_topo")
 
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastGdsDir", "")
-            #             QApplication.setOverrideCursor(Qt.WaitCursor)
+            project_dir = QgsProject.instance().absolutePath()
             outdir = QFileDialog.getExistingDirectory(
-                None, "Select directory where FLO-2D model will be exported", directory=last_dir
+                None, "Select directory where FLO-2D model will be exported", directory=project_dir
             )
             if outdir:
                 try:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    s.setValue("FLO-2D/lastGdsDir", outdir)
 
                     self.call_IO_methods(
                         export_calls, True, outdir
