@@ -691,7 +691,7 @@ class Flo2D(object):
                 gpkg_dir, gpkg_file = os.path.split(old_gpkg)
                 _old_gpkg = os.path.join(qgs_dir, gpkg_file)
                 if os.path.exists(_old_gpkg):
-                    msg += f" However we found file with the same name at your project location:\n\n{_old_gpkg}\n\n"
+                    msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
                     msg += "Load the model?"
                     old_gpkg = _old_gpkg
                     answer = self.uc.customized_question(msg)
