@@ -30,7 +30,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Use Blocked Areas User Layer</string>
+      <string>Use Blocked Areas from User Layers</string>
      </property>
      <property name="checked">
       <bool>false</bool>
