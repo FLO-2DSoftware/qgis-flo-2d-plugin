@@ -583,13 +583,20 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             }
             user_feats = []
             for feat in external_layer.getFeatures():
-                user_feat = QgsFeature(blocked_areas_fields)
-                user_feat.setGeometry(feat.geometry())
-                for user_field_name, external_field_name in field_names_map.items():
-                    external_value = feat[external_field_name]
-                    user_feat[user_field_name] = int(external_value) if external_value != NULL else external_value
-                user_feats.append(user_feat)
+                geom = feat.geometry()
+                if geom.isMultipart():
+                    new_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
+                else:
+                    new_geoms = [geom]
+                for new_geom in new_geoms:
+                    user_feat = QgsFeature(blocked_areas_fields)
+                    user_feat.setGeometry(new_geom)
+                    for user_field_name, external_field_name in field_names_map.items():
+                        external_value = feat[external_field_name]
+                        user_feat[user_field_name] = int(external_value) if external_value != NULL else external_value
+                    user_feats.append(user_feat)
             blocked_areas_lyr.startEditing()
+            blocked_areas_lyr.deleteFeatures([f.id() for f in blocked_areas_lyr.getFeatures()])
             blocked_areas_lyr.addFeatures(user_feats)
             blocked_areas_lyr.commitChanges()
             blocked_areas_lyr.updateExtents()
