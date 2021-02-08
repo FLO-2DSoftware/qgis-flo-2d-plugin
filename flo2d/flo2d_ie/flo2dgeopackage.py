@@ -988,7 +988,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(global_sql, local_sql, frag_sql)
 
         # Set 'useglobaldata' to 1 if there are 'G' lines, 0 otherwise:
-        gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
+        self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
 
     def import_fpfroude(self):
         fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
