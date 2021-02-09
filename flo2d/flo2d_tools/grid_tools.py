@@ -814,8 +814,13 @@ def calculate_spatial_variable_from_polygons(grid, areas, use_centroids=True):
     """
     allfeatures, index = spatial_index(areas)
     features = grid.getFeatures()
-    def get_geom(feature): return feature.geometry()
-    def get_centroid(feature): return feature.geometry().centroid()
+
+    def get_geom(feature):
+        return feature.geometry()
+
+    def get_centroid(feature):
+        return feature.geometry().centroid()
+
     get_geom_fn = get_centroid if use_centroids is True else get_geom
     for feat in features:  # for each grid feature
         geom = get_geom_fn(feat)
@@ -1951,72 +1956,72 @@ def dirID(dir):
 
     return ID
 
+
 def is_boundary_cell(gutils, grid_lyr, cell, cell_size):
     if grid_lyr is not None:
         if cell:
-           if len(grid_lyr) >= cell and cell > 0:
+            if len(grid_lyr) >= cell and cell > 0:
 
-               currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-               xx, yy = currentCell.geometry().centroid().asPoint()
+                currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                xx, yy = currentCell.geometry().centroid().asPoint()
 
-               # North cell:
-               y = yy  +  cell_size
-               x = xx
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                                   
-               # NorthEast cell                      
-               y = yy  +  cell_size
-               x = xx  +  cell_size
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True     
-                                                             
-               # East cell:   
-               x = xx +  cell_size
-               y = yy
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                           
-               # SouthEast cell:    
-               y = yy  -  cell_size
-               x = xx  +  cell_size
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                                                                      
-               # South cell: 
-               y = yy  -  cell_size
-               x = xx
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
+                # North cell:
+                y = yy + cell_size
+                x = xx
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
 
-               # SouthWest cell:
-               y = yy  -  cell_size
-               x = xx  -  cell_size
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                                    
+                # NorthEast cell
+                y = yy + cell_size
+                x = xx + cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
+                # East cell:
+                x = xx + cell_size
+                y = yy
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
+                # SouthEast cell:
+                y = yy - cell_size
+                x = xx + cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
+                # South cell:
+                y = yy - cell_size
+                x = xx
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
+                # SouthWest cell:
+                y = yy - cell_size
+                x = xx - cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
                 # West cell:
-               y = yy
-               x = xx  -  cell_size
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                                    
-                # NorthWest cell:
-               y = yy  +  cell_size
-               x = xx  -  cell_size
-               grid = gutils.grid_on_point(x, y)
-               if grid is None:
-                   return True
-                                    
-    return False  
+                y = yy
+                x = xx - cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
 
+                # NorthWest cell:
+                y = yy + cell_size
+                x = xx - cell_size
+                grid = gutils.grid_on_point(x, y)
+                if grid is None:
+                    return True
+
+    return False
 
 
 def layer_geometry_is_valid(vlayer):

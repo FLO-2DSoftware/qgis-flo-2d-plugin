@@ -11,16 +11,17 @@
 import os
 import unittest
 from .utilities import get_qgis_app
+
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-VECTOR_PATH = os.path.join(THIS_DIR, 'data', 'vector')
-EXPORT_DATA_DIR = os.path.join(THIS_DIR, 'data')
+VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
+EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
 
 from qgis.core import QgsVectorLayer
 from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
 
-class TestGridTools(unittest.TestCase):
 
+class TestGridTools(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         for f in os.listdir(EXPORT_DATA_DIR):
@@ -31,19 +32,19 @@ class TestGridTools(unittest.TestCase):
                 pass
 
     def test_build_grid(self):
-        boundary = os.path.join(VECTOR_PATH, 'boundary.geojson')
-        vlayer = QgsVectorLayer(boundary, 'bl', 'ogr')
+        boundary = os.path.join(VECTOR_PATH, "boundary.geojson")
+        vlayer = QgsVectorLayer(boundary, "bl", "ogr")
         self.assertIsInstance(vlayer, QgsVectorLayer)
         polygons = list(build_grid(vlayer, 500))
         self.assertEqual(len(polygons), 494)
 
     def test_poly2grid(self):
-        grid = os.path.join(VECTOR_PATH, 'grid.geojson')
-        roughness = os.path.join(VECTOR_PATH, 'roughness.geojson')
-        glayer = QgsVectorLayer(grid, 'grid', 'ogr')
-        rlayer = QgsVectorLayer(roughness, 'roughness', 'ogr')
+        grid = os.path.join(VECTOR_PATH, "grid.geojson")
+        roughness = os.path.join(VECTOR_PATH, "roughness.geojson")
+        glayer = QgsVectorLayer(grid, "grid", "ogr")
+        rlayer = QgsVectorLayer(roughness, "roughness", "ogr")
         n_values = []
-        for n, gid in poly2grid(glayer, rlayer, None, True, False, False, 1, 'manning'):
+        for n, gid in poly2grid(glayer, rlayer, None, True, False, False, 1, "manning"):
             n_values.append(float(n))
         man_sum = sum(n_values)
         self.assertEqual(round(man_sum, 1), 16.5)
@@ -52,10 +53,10 @@ class TestGridTools(unittest.TestCase):
 
     @unittest.skip("Skipping test due to long run.")
     def test_calculate_arfwrf(self):
-        grid = os.path.join(VECTOR_PATH, 'grid.geojson')
-        blockers = os.path.join(VECTOR_PATH, 'blockers.geojson')
-        glayer = QgsVectorLayer(grid, 'grid', 'ogr')
-        blayer = QgsVectorLayer(blockers, 'blockers', 'ogr')
+        grid = os.path.join(VECTOR_PATH, "grid.geojson")
+        blockers = os.path.join(VECTOR_PATH, "blockers.geojson")
+        glayer = QgsVectorLayer(grid, "grid", "ogr")
+        blayer = QgsVectorLayer(blockers, "blockers", "ogr")
         row = tuple()
         for row in calculate_arfwrf(glayer, blayer):
             awrf = [True if i <= 1 else False for i in row[-9:]]
@@ -64,7 +65,7 @@ class TestGridTools(unittest.TestCase):
 
 
 # Running tests:
-if __name__ == '__main__':
+if __name__ == "__main__":
     cases = [TestGridTools]
     suite = unittest.TestSuite()
     for t in cases:

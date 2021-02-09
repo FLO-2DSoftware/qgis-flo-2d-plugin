@@ -425,7 +425,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 if self.gutils.is_table_empty("user_blocked_areas"):
                     self.uc.bar_warn(
                         'There are no any blocking polygons in "Blocked Areas" layer! '
-                        'Please digitize (or import) them before running tool.'
+                        "Please digitize (or import) them before running tool."
                     )
                     return
 
