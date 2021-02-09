@@ -155,13 +155,16 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
         in_inserted = self.schematize_inflows()
         out_inserted = self.schematize_outflows()
-        
+
         out_deleted = self.select_outflows_according_to_type()
-        
+
         QApplication.restoreOverrideCursor()
 
         self.uc.show_info(
-            str(in_inserted) + " inflows and " + str(out_inserted-out_deleted) + " outflows boundary conditions schematized!"
+            str(in_inserted)
+            + " inflows and "
+            + str(out_inserted - out_deleted)
+            + " outflows boundary conditions schematized!"
         )
 
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
@@ -570,7 +573,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.iface.f2d["con"], self.iface)
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows:
-            self.uc.bar_info('There is no outflow defined in the database...')
+            self.uc.bar_info("There is no outflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             return
         else:
@@ -661,12 +664,12 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def enable_outflow_types(self):
         for idx in range(0, self.outflow_type_cbo.count()):
-            self.outflow_type_cbo.model().item(idx).setEnabled(True)    
+            self.outflow_type_cbo.model().item(idx).setEnabled(True)
 
     def disable_outflow_types(self):
         for idx in [2, 3, 6, 8, 9, 10, 11]:
-            self.outflow_type_cbo.model().item(idx).setEnabled(False) 
-            
+            self.outflow_type_cbo.model().item(idx).setEnabled(False)
+
     def outflow_type_changed(self):
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
@@ -834,8 +837,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         try:
 
             self.gutils.execute("DELETE FROM outflow_cells;")
-               
-            inserted = self.gutils.execute("""
+
+            inserted = self.gutils.execute(
+                """
                                                 INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
                                                 SELECT
                                                     abc.bc_fid, g.fid, abc.geom_type
@@ -844,7 +848,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                                                 WHERE
                                                     abc.type = 'outflow' AND
                                                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-                                            """)
+                                            """
+            )
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
         #             self.uc.show_info("Outflows schematized!")
@@ -855,36 +860,46 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             return 0
 
     def select_outflows_according_to_type(self):
-        cell_size = float(self.gutils.get_cont_par('CELLSIZE'))
+        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         no_outflow = []
-        if not self.gutils.is_table_empty('outflow_cells'):
-            grid_lyr = self.lyrs.data['grid']['qlyr']
-            cells   = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
+        if not self.gutils.is_table_empty("outflow_cells"):
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
             if cells:
                 for cell in cells:
                     grid_fid, outflow_fid, geom_type = cell
                     if geom_type == "polygon":
-                        rows = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                                                    (geom_type, outflow_fid,)).fetchall()
+                        rows = self.gutils.execute(
+                            "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                            (
+                                geom_type,
+                                outflow_fid,
+                            ),
+                        ).fetchall()
                         if rows:
                             for row in rows:
                                 if row[0] == 0:
-                                    no_outflow.append(grid_fid)     
+                                    no_outflow.append(grid_fid)
                                 elif row[0] in [0, 1, 4, 5, 7]:
                                     if not is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
                                         no_outflow.append(grid_fid)
-                                        
+
                     elif geom_type == "line" or geom_type == "point":
-                        rows = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                                                    (geom_type, outflow_fid,)).fetchall()
+                        rows = self.gutils.execute(
+                            "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                            (
+                                geom_type,
+                                outflow_fid,
+                            ),
+                        ).fetchall()
                         if rows:
                             for row in rows:
                                 if row[0] == 0:
-                                    no_outflow.append(grid_fid)                                                                  
+                                    no_outflow.append(grid_fid)
                 if no_outflow:
                     for cell in no_outflow:
-                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))        
-        
+                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))
+
         return len(no_outflow)
 
     def define_outflow_types(self):
