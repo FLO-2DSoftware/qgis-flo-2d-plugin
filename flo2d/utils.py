@@ -66,25 +66,14 @@ def frange(start, stop=None, step=1):
 
 
 def is_true(s):
-    s = str(s)
+    s = str(s).lower().strip()
     return s in [
-        "True",
         "true",
-        "TRUE",
-        "tRUE",
-        "trUE",
-        "truE",
         "1",
-        "T",
         "t",
         "y",
-        "Y",
         "yes",
-        "YES",
-        "Yes",
-        "yES",
-        "yeS",
-        " yeah",
+        "yeah",
         "yup",
         "certainly",
         "uh-huh",

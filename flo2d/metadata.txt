@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.16
+version=0.10.17
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.17
+  - Fixes for issues: #552, #590, #656, #660, #661
  <p>0.10.16
   - Polygon intersection for outflow types 1, 4, 5, and 7
  <p>0.10.15

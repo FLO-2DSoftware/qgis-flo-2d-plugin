@@ -276,7 +276,8 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
 
         return len(schem_lines), len(data), len(fail_data)
     except Exception as e:
-        self.uc.show_error("ERROR 291219.0428: Error while creating schematic levees octagons!.\n", e)
+        raise e
+        # self.uc.show_error("ERROR 291219.0428: Error while creating schematic levees octagons!.\n", e)
 
 
 def delete_levee_directions_duplicates(gutils, levees, grid_lyr):
@@ -384,7 +385,8 @@ def delete_levee_directions_duplicates(gutils, levees, grid_lyr):
 
     except Exception as e:
         QApplication.restoreOverrideCursor()
-        self.uc.show_error("ERROR 040620.0648: unable to eliminate duplicate levee directions!\n", e)
+        raise e
+        # self.uc.show_error("ERROR 040620.0648: unable to eliminate duplicate levee directions!\n", e)
 
 
 # ...............................
@@ -495,7 +497,8 @@ def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
             schem_lines[gid]["lines"][lid] = sides
         return schem_lines
     except Exception as e:
-        self.uc.show_error("ERROR 030120.0731: Error while creating schematic levees!.\n", e)
+        raise e
+        # self.uc.show_error("ERROR 030120.0731: Error while creating schematic levees!.\n", e)
 
 
 def snap_line(x1, y1, x2, y2, cell_size, offset_x, offset_y):

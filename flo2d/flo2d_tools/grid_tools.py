@@ -11,7 +11,6 @@ import os
 import sys
 import math
 import uuid
-import time
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
