@@ -584,6 +584,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             user_feats = []
             for feat in external_layer.getFeatures():
                 geom = feat.geometry()
+                if not geom.isGeosValid():
+                    geom = geom.buffer(0.0, 5)
+                    if not geom.isGeosValid():
+                        continue
                 if geom.isMultipart():
                     new_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
                 else:
