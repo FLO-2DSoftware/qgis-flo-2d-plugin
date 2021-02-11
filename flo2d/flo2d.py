@@ -1954,7 +1954,7 @@ class Flo2D(object):
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
         self.uc.show_info("Converting Schematic Layers to User Layers finished!")
-        if 8 in methods_numbers:  # Storm Drains:
+        if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
                 "To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget."
             )
