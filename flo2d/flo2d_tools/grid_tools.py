@@ -872,7 +872,7 @@ def raster2grid(grid, out_raster, request=None):
                 val = round(ident.results()[1], 3)
             else:
                 val = None
-            yield (val, feat.id())
+            yield val, feat.id()
 
 
 def rasters2centroids(vlayer, request, *raster_paths):
