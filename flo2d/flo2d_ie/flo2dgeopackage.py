@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -988,7 +988,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(global_sql, local_sql, frag_sql)
 
         # Set 'useglobaldata' to 1 if there are 'G' lines, 0 otherwise:
-        gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
+        self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
 
     def import_fpfroude(self):
         fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]

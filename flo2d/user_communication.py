@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -110,6 +110,17 @@ class UserCommunication(object):
             m.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
             m.setDefaultButton(QMessageBox.Yes)
             return True if m.exec_() == QMessageBox.Yes else False
+        else:
+            print(msg)
+
+    def customized_question(self, msg, standard_buttons=QMessageBox.No | QMessageBox.Yes, default=QMessageBox.Yes):
+        if self.iface is not None:
+            m = QMessageBox()
+            m.setWindowTitle(self.context)
+            m.setText(msg)
+            m.setStandardButtons(standard_buttons)
+            m.setDefaultButton(default)
+            return m.exec_()
         else:
             print(msg)
 

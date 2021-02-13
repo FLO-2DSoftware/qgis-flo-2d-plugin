@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,7 +15,6 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaLeveesConverter,
     SchemaFPXSECConverter,
     SchemaGridConverter,
-    SchemaInfiltrationConverter,
     SchemaSWMMConverter,
 )
 from .ui_utils import load_ui
@@ -43,14 +42,47 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_1d.stateChanged.connect(self.convert_1d_checked)
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
-        self.ckbox_infil.stateChanged.connect(self.convert_infil_checked)
         self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
 
         self.populate_components()
 
     def populate_components(self):
-        if self.gutils.is_table_empty("swmmflo"):
-            self.ckbox_swmm.setEnabled(False)
+        schema_domain_tables = ["grid"]
+        schema_bc_tables = ["all_schem_bc"]
+        schema_1d_tables = ["chan", "chan_elems"]
+        schema_levee_tables = ["levee_data"]
+        schema_fpxsec_tables = ["fpxsec"]
+        schema_swwmm_tables = ["swmmflo"]
+
+        if all(self.gutils.is_table_empty(t) for t in schema_domain_tables):
+            self.ckbox_domain.setDisabled(True)
+        else:
+            self.ckbox_domain.setEnabled(True)
+
+        if any(self.gutils.is_table_empty(t) for t in schema_bc_tables):
+            self.ckbox_bc.setDisabled(True)
+        else:
+            self.ckbox_bc.setEnabled(True)
+
+        if any(self.gutils.is_table_empty(t) for t in schema_1d_tables):
+            self.ckbox_1d.setDisabled(True)
+        else:
+            self.ckbox_1d.setEnabled(True)
+
+        if any(self.gutils.is_table_empty(t) for t in schema_levee_tables):
+            self.ckbox_levees.setDisabled(True)
+        else:
+            self.ckbox_levees.setEnabled(True)
+
+        if any(self.gutils.is_table_empty(t) for t in schema_fpxsec_tables):
+            self.ckbox_fpxsec.setDisabled(True)
+        else:
+            self.ckbox_fpxsec.setEnabled(True)
+
+        if any(self.gutils.is_table_empty(t) for t in schema_swwmm_tables):
+            self.ckbox_swmm.setDisabled(True)
+        else:
+            self.ckbox_swmm.setEnabled(True)
 
     def convert_domain_checked(self):
         if self.ckbox_domain.isChecked():
@@ -58,47 +90,35 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.methods.pop(1)
 
-    def convert_roughness_checked(self):
-        if self.ckbox_roughness.isChecked():
-            self.methods[2] = self.convert_roughness
+    def convert_bc_checked(self):
+        if self.ckbox_bc.isChecked():
+            self.methods[2] = self.convert_bc
         else:
             self.methods.pop(2)
 
-    def convert_bc_checked(self):
-        if self.ckbox_bc.isChecked():
-            self.methods[3] = self.convert_bc
+    def convert_1d_checked(self):
+        if self.ckbox_1d.isChecked():
+            self.methods[3] = self.convert_1d
         else:
             self.methods.pop(3)
 
-    def convert_1d_checked(self):
-        if self.ckbox_1d.isChecked():
-            self.methods[4] = self.convert_1d
+    def convert_levees_checked(self):
+        if self.ckbox_levees.isChecked():
+            self.methods[4] = self.convert_levees
         else:
             self.methods.pop(4)
 
-    def convert_levees_checked(self):
-        if self.ckbox_levees.isChecked():
-            self.methods[5] = self.convert_levees
+    def convert_fpxsec_checked(self):
+        if self.ckbox_fpxsec.isChecked():
+            self.methods[5] = self.convert_fpxsec
         else:
             self.methods.pop(5)
 
-    def convert_fpxsec_checked(self):
-        if self.ckbox_fpxsec.isChecked():
-            self.methods[6] = self.convert_fpxsec
-        else:
-            self.methods.pop(6)
-
-    def convert_infil_checked(self):
-        if self.ckbox_infil.isChecked():
-            self.methods[7] = self.convert_infil
-        else:
-            self.methods.pop(7)
-
     def convert_swmm_checked(self):
         if self.ckbox_swmm.isChecked():
-            self.methods[8] = self.convert_swmm
+            self.methods[6] = self.convert_swmm
         else:
-            self.methods.pop(8)
+            self.methods.pop(6)
 
     def convert_domain(self):
         try:
@@ -107,14 +127,6 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating User Layers failed on Grid to Computational Domain conversion!")
-
-    def convert_roughness(self):
-        try:
-            grid_converter = SchemaGridConverter(self.con, self.iface, self.lyrs)
-            grid_converter.roughness_from_grid()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating User Layers failed on Grid to Roughness conversion!")
 
     def convert_bc(self):
         try:
@@ -148,14 +160,6 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.bar_warn("Creating User Layers failed on Floodplain cross-sections conversion!")
-
-    def convert_infil(self):
-        try:
-            infil_converter = SchemaInfiltrationConverter(self.con, self.iface, self.lyrs)
-            infil_converter.create_user_infiltration()
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Creating User Layers failed on Infiltration conversion!")
 
     def convert_swmm(self):
         try:

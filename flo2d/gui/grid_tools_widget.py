@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2017 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -14,7 +14,7 @@ from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
 from qgis.PyQt.QtWidgets import QApplication, QInputDialog
 from ..flo2d_tools.grid_tools import (
     square_grid,
@@ -34,6 +34,8 @@ from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
+from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
+
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 
@@ -397,6 +399,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             )
 
     def eval_arfwrf(self):
+        eval_dlg = EvaluateReductionFactorsDialog()
+        ok = eval_dlg.exec_()
+        if not ok:
+            return
         try:
             grid_empty = self.gutils.is_table_empty("grid")
             if grid_empty:
@@ -411,11 +417,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
             if not self.lyrs.save_edits_and_proceed("Blocked Areas"):
                 return
-            if self.gutils.is_table_empty("user_blocked_areas"):
-                self.uc.bar_warn(
-                    'There is no any blocking polygons in "Blocked Areas" layer! Please digitize them before running tool.'
-                )
-                return
+            if eval_dlg.use_external_layer():
+                external_layer, collapse_field, arf_field, wrf_field = eval_dlg.external_layer_parameters()
+                if not self.import_external_blocked_areas(external_layer, collapse_field, arf_field, wrf_field):
+                    return
+            else:
+                if self.gutils.is_table_empty("user_blocked_areas"):
+                    self.uc.bar_warn(
+                        'There are no any blocking polygons in "Blocked Areas" layer! '
+                        "Please digitize (or import) them before running tool."
+                    )
+                    return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -552,6 +564,54 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
                 "ERROR 060319.1609: Replacing duplicated ARFs and WRFs failed!.\n"
+                "________________________________________________________________",
+                e,
+            )
+            return False
+
+    def import_external_blocked_areas(self, external_layer, collapse_field, arf_field, wrf_field):
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if not all([external_layer, collapse_field, arf_field, wrf_field]):
+                raise UserWarning("Missing external layers parameters!")
+            blocked_areas_lyr = self.lyrs.data["user_blocked_areas"]["qlyr"]
+            blocked_areas_fields = blocked_areas_lyr.dataProvider().fields()
+            field_names_map = {
+                "collapse": collapse_field,
+                "calc_arf": arf_field,
+                "calc_wrf": wrf_field,
+            }
+            user_feats = []
+            for feat in external_layer.getFeatures():
+                geom = feat.geometry()
+                if not geom.isGeosValid():
+                    geom = geom.buffer(0.0, 5)
+                    if not geom.isGeosValid():
+                        continue
+                if geom.isMultipart():
+                    new_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
+                else:
+                    new_geoms = [geom]
+                for new_geom in new_geoms:
+                    user_feat = QgsFeature(blocked_areas_fields)
+                    user_feat.setGeometry(new_geom)
+                    for user_field_name, external_field_name in field_names_map.items():
+                        external_value = feat[external_field_name]
+                        user_feat[user_field_name] = int(external_value) if external_value != NULL else external_value
+                    user_feats.append(user_feat)
+            blocked_areas_lyr.startEditing()
+            blocked_areas_lyr.deleteFeatures([f.id() for f in blocked_areas_lyr.getFeatures()])
+            blocked_areas_lyr.addFeatures(user_feats)
+            blocked_areas_lyr.commitChanges()
+            blocked_areas_lyr.updateExtents()
+            blocked_areas_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error(
+                "ERROR: Import of ARFs and WRFs failed! Please check your external layer.\n"
                 "________________________________________________________________",
                 e,
             )

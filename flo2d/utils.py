@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,9 +32,7 @@ def is_number(s):
     try:
         float(s)
         return True
-    except ValueError:
-        return False
-    except TypeError:
+    except (ValueError, TypeError):
         return False
 
 
@@ -68,25 +66,14 @@ def frange(start, stop=None, step=1):
 
 
 def is_true(s):
-    s = str(s)
+    s = str(s).lower().strip()
     return s in [
-        "True",
         "true",
-        "TRUE",
-        "tRUE",
-        "trUE",
-        "truE",
         "1",
-        "T",
         "t",
         "y",
-        "Y",
         "yes",
-        "YES",
-        "Yes",
-        "yES",
-        "yeS",
-        " yeah",
+        "yeah",
         "yup",
         "certainly",
         "uh-huh",

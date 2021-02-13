@@ -73,31 +73,10 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="ckbox_levees">
-       <property name="text">
-        <string>Levees</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QCheckBox" name="ckbox_1d">
        <property name="text">
         <string>Channel Banks and Cross-Sections</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QCheckBox" name="ckbox_swmm">
-       <property name="text">
-        <string>Storm Drains</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="ckbox_infil">
-       <property name="text">
-        <string>Infiltration</string>
        </property>
       </widget>
      </item>
@@ -109,9 +88,16 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QCheckBox" name="ckbox_roughness">
+      <widget class="QCheckBox" name="ckbox_levees">
        <property name="text">
-        <string>Roughness</string>
+        <string>Levees</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="ckbox_swmm">
+       <property name="text">
+        <string>Storm Drains</string>
        </property>
       </widget>
      </item>

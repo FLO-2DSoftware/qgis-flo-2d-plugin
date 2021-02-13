@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -11,10 +11,11 @@
 import os
 import unittest
 from .utilities import get_qgis_app
+
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR = os.path.join(THIS_DIR, 'data', 'import')
-CONT = os.path.join(IMPORT_DATA_DIR, 'CONT.DAT')
+IMPORT_DATA_DIR = os.path.join(THIS_DIR, "data", "import")
+CONT = os.path.join(IMPORT_DATA_DIR, "CONT.DAT")
 
 from flo2d.geopackage_utils import database_create
 from flo2d.flo2dobjects import CrossSection, Inflow, Outflow, Rain, Evaporation
@@ -82,7 +83,7 @@ class TestInflow(unittest.TestCase):
 
     def test_get_row(self):
         row = self.inflow.get_row()
-        self.assertEqual(row['ident'], 'C')
+        self.assertEqual(row["ident"], "C")
 
     def test_get_time_series(self):
         self.inflow.get_row()
@@ -114,9 +115,9 @@ class TestOutflow(unittest.TestCase):
 
     def test_get_row(self):
         row = self.outflow.get_row()
-        self.assertEqual(row['chan_out'], 0)
-        self.assertEqual(row['fp_out'], 1)
-        self.assertEqual(row['type'], 7)
+        self.assertEqual(row["chan_out"], 0)
+        self.assertEqual(row["fp_out"], 1)
+        self.assertEqual(row["type"], 7)
 
     def test_get_time_series(self):
         self.outflow.get_row()
@@ -131,7 +132,7 @@ class TestOutflow(unittest.TestCase):
     def test_get_qh_tables(self):
         self.outflow.get_row()
         qht = self.outflow.get_qh_tables()
-        self.assertListEqual(qht, [(1, u'Q(h) table 1')])
+        self.assertListEqual(qht, [(1, u"Q(h) table 1")])
 
     def test_get_data_fid_name(self):
         self.outflow.get_row()
@@ -144,7 +145,7 @@ class TestOutflow(unittest.TestCase):
             self.outflow.chan_tser_fid,
             self.outflow.fp_tser_fid,
             self.outflow.chan_qhpar_fid,
-            self.outflow.chan_qhtab_fid
+            self.outflow.chan_qhtab_fid,
         )
         self.assertTupleEqual(fids, (None, None, None, None))
 
@@ -197,7 +198,7 @@ class TestRain(unittest.TestCase):
 
     def test_get_row(self):
         row = self.rain.get_row()
-        self.assertEqual(row['tot_rainfall'], 3.1)
+        self.assertEqual(row["tot_rainfall"], 3.1)
 
     def test_get_time_series(self):
         self.rain.get_row()
@@ -228,7 +229,7 @@ class TestEvaporation(unittest.TestCase):
 
     def test_get_row(self):
         row = self.evaporation.get_row()
-        self.assertEqual(row['ievapmonth'], 5)
+        self.assertEqual(row["ievapmonth"], 5)
 
     def test_get_monthly(self):
         monthly = self.evaporation.get_monthly()
@@ -243,14 +244,8 @@ class TestEvaporation(unittest.TestCase):
 
 
 # Running tests:
-if __name__ == '__main__':
-    cases = [
-        TestCrossSection,
-        TestInflow,
-        TestOutflow,
-        TestRain,
-        TestEvaporation
-    ]
+if __name__ == "__main__":
+    cases = [TestCrossSection, TestInflow, TestOutflow, TestRain, TestEvaporation]
     suite = unittest.TestSuite()
     for t in cases:
         tests = unittest.TestLoader().loadTestsFromTestCase(t)

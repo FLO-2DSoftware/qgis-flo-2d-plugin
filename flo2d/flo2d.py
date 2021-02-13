@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -78,9 +78,9 @@ class Flo2D(object):
         self.files_used = ""
         self.files_not_used = ""
 
-        self.menu = self.tr(u"&Flo2D")
-        self.toolbar = self.iface.addToolBar(u"Flo2D")
-        self.toolbar.setObjectName(u"Flo2D")
+        self.menu = self.tr("&Flo2D")
+        self.toolbar = self.iface.addToolBar("Flo2D")
+        self.toolbar.setObjectName("Flo2D")
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
@@ -214,14 +214,14 @@ class Flo2D(object):
         """
         self.add_action(
             os.path.join(self.plugin_dir, "img/settings.svg"),
-            text=self.tr(u"Settings"),
+            text=self.tr("Settings"),
             callback=self.show_settings,
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/run_flopro.png"),
-            text=self.tr(u"Run Simulation"),
+            text=self.tr("Run Simulation"),
             callback=self.run_flopro,
             parent=self.iface.mainWindow(),
             menu=(
@@ -236,119 +236,119 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
-            text=self.tr(u"Import from GeoPackage"),
+            text=self.tr("Import from GeoPackage"),
             callback=lambda: self.import_from_gpkg(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/import_gds.svg"),
-            text=self.tr(u"Import GDS files"),
+            text=self.tr("Import GDS files"),
             callback=lambda: self.import_gds(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/import_components.svg"),
-            text=self.tr(u"Import selected components files"),
+            text=self.tr("Import selected components files"),
             callback=lambda: self.import_selected_components(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/export_gds.svg"),
-            text=self.tr(u"Export GDS files"),
+            text=self.tr("Export GDS files"),
             callback=lambda: self.export_gds(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/import_ras.svg"),
-            text=self.tr(u"Import RAS geometry"),
+            text=self.tr("Import RAS geometry"),
             callback=lambda: self.import_from_ras(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
-            text=self.tr(u"Set Control Parameters"),
+            text=self.tr("Set Control Parameters"),
             callback=lambda: self.show_cont_toler(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
-            text=self.tr(u"Convert Schematic Layers to User Layers"),
+            text=self.tr("Convert Schematic Layers to User Layers"),
             callback=lambda: self.schematic2user(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/user_to_schematic.svg"),
-            text=self.tr(u"Convert User Layers to Schematic Layers"),
+            text=self.tr("Convert User Layers to Schematic Layers"),
             callback=lambda: self.user2schematic(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-            text=self.tr(u"Channel Profile"),
+            text=self.tr("Channel Profile"),
             callback=self.channel_profile,  # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr(u"Info Tool"),
+            text=self.tr("Info Tool"),
             callback=self.identify,
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-            text=self.tr(u"Grid Info Tool"),
+            text=self.tr("Grid Info Tool"),
             callback=lambda: self.activate_grid_info_tool(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
-            text=self.tr(u"Evaporation Editor"),
+            text=self.tr("Evaporation Editor"),
             callback=lambda: self.show_evap_editor(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
-            text=self.tr(u"Levee Elevation Tool"),
+            text=self.tr("Levee Elevation Tool"),
             callback=lambda: self.show_levee_elev_tool(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/hazus.svg"),
-            text=self.tr(u"HAZUS"),
+            text=self.tr("HAZUS"),
             callback=lambda: self.show_hazus_dialog(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-            text=self.tr(u"Tailings Dam Tool"),
+            text=self.tr("Tailings Dam Tool"),
             callback=self.run_tailingsdambreach,
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/issue.svg"),
-            text=self.tr(u"Warnings and Errors"),
+            text=self.tr("Warnings and Errors"),
             callback=lambda: self.show_errors_dialog(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/help_contents.svg"),
-            text=self.tr(u"FlO-2D Help"),
+            text=self.tr("FlO-2D Help"),
             callback=self.show_help,
             parent=self.iface.mainWindow(),
         )
@@ -357,7 +357,7 @@ class Flo2D(object):
 
     def create_f2d_dock(self):
         self.f2d_dock = QgsDockWidget()
-        self.f2d_dock.setWindowTitle(u"FLO-2D")
+        self.f2d_dock.setWindowTitle("FLO-2D")
         self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot, self.f2d_table)
         self.f2d_widget.setSizeHint(350, 600)
         self.f2d_dock.setWidget(self.f2d_widget)
@@ -371,7 +371,7 @@ class Flo2D(object):
     def create_f2d_plot_dock(self):
         self.f2d_plot_dock = QgsDockWidget()  # The QDockWidget class provides a widget that can be docked inside
         # a QMainWindow or floated as a top-level window on the desktop.
-        self.f2d_plot_dock.setWindowTitle(u"FLO-2D Plot")
+        self.f2d_plot_dock.setWindowTitle("FLO-2D Plot")
         self.f2d_plot = PlotWidget()
         self.f2d_plot.plot.legend = None
         self.f2d_plot.setSizeHint(500, 200)
@@ -385,7 +385,7 @@ class Flo2D(object):
 
     def create_f2d_table_dock(self):
         self.f2d_table_dock = QgsDockWidget()
-        self.f2d_table_dock.setWindowTitle(u"FLO-2D Table Editor")
+        self.f2d_table_dock.setWindowTitle("FLO-2D Table Editor")
         self.f2d_table = TableEditorWidget(self.iface, self.f2d_plot, self.lyrs)
         self.f2d_table.setSizeHint(350, 200)
         self.f2d_table_dock.setWidget(self.f2d_table)
@@ -398,7 +398,7 @@ class Flo2D(object):
 
     def create_f2d_grid_info_dock(self):
         self.f2d_grid_info_dock = QgsDockWidget()
-        self.f2d_grid_info_dock.setWindowTitle(u"FLO-2D Grid Info")
+        self.f2d_grid_info_dock.setWindowTitle("FLO-2D Grid Info")
         self.f2d_grid_info = GridInfoWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
@@ -432,7 +432,7 @@ class Flo2D(object):
         del self.uc
         database_disconnect(self.con)
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr(u"&Flo2D"), action)
+            self.iface.removePluginMenu(self.tr("&Flo2D"), action)
             self.iface.removeToolBarIcon(action)
         # remove dialogs
         if self.f2d_table_dock is not None:
@@ -685,12 +685,22 @@ class Flo2D(object):
         qgs_dir = os.path.dirname(qgs_file)
         if old_gpkg:
             QApplication.restoreOverrideCursor()
-            msg = "This QGIS project uses the FLO-2D plugin and\n"
-            msg += "the following database file:\n\n"
-            msg += "{}\n\n Load the model?".format(old_gpkg)
-
-            if self.uc.question(msg):
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+            msg = f"This QGIS project uses the FLO-2D plugin and the following database file:\n\n{old_gpkg}\n\n"
+            if not os.path.exists(old_gpkg):
+                msg += "Unfortunately it seems that database file doesn't exist at given location."
+                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
+                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
+                if os.path.exists(_old_gpkg):
+                    msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
+                    msg += "Load the model?"
+                    old_gpkg = _old_gpkg
+                    answer = self.uc.customized_question(msg)
+                else:
+                    answer = self.uc.customized_question(msg, QMessageBox.Cancel, QMessageBox.Cancel)
+            else:
+                msg += "Load the model?"
+                answer = self.uc.customized_question(msg)
+            if answer == QMessageBox.Yes:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
@@ -707,33 +717,6 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
-                return
-
-            else:
-                # load gpkg from qgis project directory
-                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
-                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
-                if os.path.exists(_old_gpkg):
-                    msg = "Load the geopackage %s from QGIS project folder instead?" % _old_gpkg
-                    if self.uc.question(msg):
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
-                        dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                        dlg_settings.connect(_old_gpkg)
-                        self.con = dlg_settings.con
-                        self.iface.f2d["con"] = self.con
-                        self.gutils = dlg_settings.gutils
-                        self.crs = dlg_settings.crs
-                        self.setup_dock_widgets()
-
-                        s = QSettings()
-                        s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                        s.setValue("FLO-2D/lastGdsDir", qgs_dir)
-                        self.write_proj_entry("gpkg", _old_gpkg)
-                        window_title = s.value("FLO-2D/last_flopro_project", "")
-                        self.iface.mainWindow().setWindowTitle(window_title)
-                return
-
-                self.uc.bar_info("Loading last model cancelled", dur=3)
 
     def call_IO_methods(self, calls, debug, *args):
         s = QSettings()
@@ -1504,16 +1487,13 @@ class Flo2D(object):
             if "Manning's n and Topo" not in dlg_components.components:
                 export_calls.remove("export_mannings_n_topo")
 
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastGdsDir", "")
-            #             QApplication.setOverrideCursor(Qt.WaitCursor)
+            project_dir = QgsProject.instance().absolutePath()
             outdir = QFileDialog.getExistingDirectory(
-                None, "Select directory where FLO-2D model will be exported", directory=last_dir
+                None, "Select directory where FLO-2D model will be exported", directory=project_dir
             )
             if outdir:
                 try:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    s.setValue("FLO-2D/lastGdsDir", outdir)
 
                     self.call_IO_methods(
                         export_calls, True, outdir
@@ -1974,7 +1954,7 @@ class Flo2D(object):
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
         self.uc.show_info("Converting Schematic Layers to User Layers finished!")
-        if 8 in methods_numbers:  # Storm Drains:
+        if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
                 "To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget."
             )

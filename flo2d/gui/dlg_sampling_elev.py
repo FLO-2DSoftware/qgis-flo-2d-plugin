@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright © 2016 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -121,11 +121,11 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         ymax = grid_ext.yMaximum()
         self.output_bounds = (xmin, ymin, xmax, ymax)
         # CRS
-        self.out_srs = self.grid.crs().toProj4()
+        self.out_srs = self.grid.crs().authid()
         # data type
         src_raster_lyr = QgsRasterLayer(self.src_raster)
         self.raster_type = src_raster_lyr.dataProvider().dataType(1)
-        self.src_srs = src_raster_lyr.crs().toProj4()
+        self.src_srs = src_raster_lyr.crs().authid()
         if not self.src_srs:
             self.src_srs = self.out_srs
         # NODATA
@@ -153,9 +153,10 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             "-of GTiff",
             "-ot {}".format(self.RTYPE[self.raster_type]),
             "-tr {0} {0}".format(self.cell_size),
+            '-s_srs "{}"'.format(self.src_srs),
+            '-t_srs "{}"'.format(self.out_srs),
             "-te {}".format(" ".join([str(c) for c in self.output_bounds])),
             '-te_srs "{}"'.format(self.out_srs),
-            '-s_srs "{}"'.format(self.src_srs),
             "-ovr {}".format(self.ovrCbo.itemData(self.ovrCbo.currentIndex())),
             "-dstnodata {}".format(self.src_nodata),
             "-r {}".format(self.algCbo.itemData(self.algCbo.currentIndex())),
