@@ -8,10 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import traceback
+import time
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QComboBox, QSizePolicy, QInputDialog, QApplication
 from qgis.core import QgsFeatureRequest
+from qgis.gui import QgsRubberBand
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Inflow, Outflow
@@ -20,6 +22,7 @@ from ..user_communication import UserCommunication
 from ..utils import m_fdata, is_number
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
+from _ast import Or
 
 
 uiDialog, qtBaseClass = load_ui("bc_editor")
@@ -30,6 +33,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        self.canvas = iface.mapCanvas()
+        self.rb = None        
         self.plot = plot
         self.table_dock = table
         self.bc_tview = table.tview
@@ -101,6 +106,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.twidget.after_paste.connect(self.unblock_saving)
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
+        self.setup_connection()
+        self.highlight_tidal_cells()
+        
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
 
@@ -136,8 +144,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             )
             self.bc_tview.undoStack.push(command)
             return True
-
+        
     def schematize_bc(self):
+        in_inserted, out_inserted, out_deleted = 0, 0, 0
         qry_all_user_bc = "SELECT * FROM all_user_bc;"
         exist_user_bc = self.gutils.execute(qry_all_user_bc).fetchone()
         if not exist_user_bc:
@@ -154,22 +163,58 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         in_inserted = self.schematize_inflows()
+        
+        start_time = time.time()
         out_inserted = self.schematize_outflows()
-
+        self.uc.log_info("{0:.3f} seconds => selecting all boundary cells".format(time.time() - start_time))
+        
+        start_time = time.time()
         out_deleted = self.select_outflows_according_to_type()
-
+        self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
+        
         QApplication.restoreOverrideCursor()
 
         self.uc.show_info(
-            str(in_inserted)
-            + " inflows and "
-            + str(out_inserted - out_deleted)
-            + " outflows boundary conditions schematized!"
+            str(in_inserted) + " inflows and " + str(out_inserted - out_deleted) + " outflows boundary conditions schematized!"
         )
 
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
         self.lyrs.repaint_layers()
 
+        # Highlight tidal cells (time stage nodes):
+        self.highlight_tidal_cells()
+        
+    def highlight_tidal_cells(self):
+        grid = self.lyrs.data["grid"]["qlyr"]
+        # Clear rubber:
+        if self.rb:
+            for i in range(3):
+                self.rb.reset(i)        
+        qry = '''SELECT grid_fid 
+                 FROM outflow_cells 
+                 INNER JOIN outflow 
+                 ON outflow.bc_fid = outflow_cells.outflow_fid 
+                     AND outflow_cells.geom_type = "polygon"  
+                     AND outflow.type = 5'''
+        
+        outflows = self.gutils.execute(qry).fetchall()  
+        for cell in outflows:
+            lyr = self.lyrs.get_layer_tree_item(grid.id()).layer()
+            gt = lyr.geometryType()
+            self.rb = QgsRubberBand(self.canvas, gt)
+            QColor(Qt.yellow).setAlpha(255)
+            self.rb.setColor(QColor(Qt.yellow))
+            self.rb.setFillColor(QColor(Qt.yellow))
+            fill_color = QColor(Qt.yellow)
+            fill_color.setAlpha(100)
+            self.rb.setFillColor(fill_color)
+#             self.rb.setWidth(0)
+            try:
+                feat = next(lyr.getFeatures(QgsFeatureRequest(cell[0])))
+            except StopIteration:
+                return
+            self.rb.setToGeometry(feat.geometry(), lyr)          
+    
     def set_combos(self):
         sp = QSizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
@@ -861,45 +906,103 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def select_outflows_according_to_type(self):
         cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-        no_outflow = []
+        no_outflow, time_stage = [], []
         if not self.gutils.is_table_empty("outflow_cells"):
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
+            cells   = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
             if cells:
                 for cell in cells:
                     grid_fid, outflow_fid, geom_type = cell
                     if geom_type == "polygon":
-                        rows = self.gutils.execute(
-                            "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                            (
-                                geom_type,
-                                outflow_fid,
-                            ),
-                        ).fetchall()
-                        if rows:
-                            for row in rows:
-                                if row[0] == 0:
-                                    no_outflow.append(grid_fid)
-                                elif row[0] in [0, 1, 4, 5, 7]:
-                                    if not is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
-                                        no_outflow.append(grid_fid)
+                        row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                                                    (geom_type, outflow_fid,)).fetchone()
+#                         if rows:
+#                             for row in rows:
+                        if row:
+                            if row[0] == 0:
+                                no_outflow.append(grid_fid)     
+                            elif row[0] in [0, 1, 4, 5, 7]:
+                                if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
+                                    # Remove diagonals:
+                                    currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
+                                    xx, yy = currentCell.geometry().centroid().asPoint()
+                                      
+                                    # North cell:
+                                    y = yy  +  cell_size
+                                    x = xx
+                                    n_grid = self.gutils.grid_on_point(x, y)
+                                                          
+                                    # NorthEast cell                      
+                                    y = yy  +  cell_size
+                                    x = xx  +  cell_size
+                                    ne_grid = self.gutils.grid_on_point(x, y)
+                                               
+                                    # East cell:   
+                                    x = xx +  cell_size
+                                    y = yy
+                                    e_grid = self.gutils.grid_on_point(x, y)
+             
+                                    # SouthEast cell:    
+                                    y = yy  -  cell_size
+                                    x = xx  +  cell_size
+                                    se_grid = self.gutils.grid_on_point(x, y)
+                                                       
+                                    # South cell: 
+                                    y = yy  -  cell_size
+                                    x = xx
+                                    s_grid = self.gutils.grid_on_point(x, y)
+ 
+                                    # SouthWest cell:
+                                    y = yy  -  cell_size
+                                    x = xx  -  cell_size
+                                    sw_grid = self.gutils.grid_on_point(x, y)
+                       
+                                     # West cell:
+                                    y = yy
+                                    x = xx  -  cell_size
+                                    w_grid = self.gutils.grid_on_point(x, y)
+                                      
+                                     # NorthWest cell:
+                                    y = yy  +  cell_size
+                                    x = xx  -  cell_size
+                                    nw_grid = self.gutils.grid_on_point(x, y)
+                                      
+                                    a = nw_grid is None and n_grid and w_grid
+                                    b = sw_grid is None and w_grid and s_grid
+                                    c = se_grid is None and e_grid and s_grid
+                                    d = ne_grid is None and n_grid and e_grid
+                                    if a or b or c or d:
+                                        # It is a diagonal cell, remove it:
+                                        no_outflow.append(grid_fid) 
+                                    else:
+                                        if row[0] == 5: # Time stage => select adjacent inner cells:
+                                            if w_grid is None and e_grid:
+                                                time_stage.append(e_grid)
+                                            elif e_grid is None and w_grid:
+                                                time_stage.append(w_grid)
+                                            elif n_grid is None and s_grid:
+                                                time_stage.append(s_grid)                                        
+                                            elif s_grid is None and n_grid:
+                                                time_stage.append(n_grid)                                          
+                                else:
+                                    no_outflow.append(grid_fid)    
 
                     elif geom_type == "line" or geom_type == "point":
-                        rows = self.gutils.execute(
-                            "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                            (
-                                geom_type,
-                                outflow_fid,
-                            ),
-                        ).fetchall()
+                        rows = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                                                    (geom_type, outflow_fid,)).fetchall()
                         if rows:
                             for row in rows:
-                                if row[0] == 0:
-                                    no_outflow.append(grid_fid)
+                                if row[0] == 0: # No outflow
+                                    no_outflow.append(grid_fid)                                                                  
                 if no_outflow:
+                    if time_stage:
+                        for cell in time_stage:
+                            if cell in no_outflow:
+                                no_outflow.remove(cell)                    
                     for cell in no_outflow:
-                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))
-
+                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))  
+   
+        
         return len(no_outflow)
 
     def define_outflow_types(self):
