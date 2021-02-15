@@ -630,6 +630,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.plot.update_item("Current Mud", [self.t, self.m])
 
     def add_inflow_data(self):
+        if not self.inflow:
+            return
         if not self.inflow.time_series_fid:
             return
         self.inflow.add_time_series()
