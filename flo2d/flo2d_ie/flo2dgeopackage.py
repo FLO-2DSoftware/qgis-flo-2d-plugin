@@ -1050,30 +1050,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
 
         """
-        swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
-        data_sql = ["""INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""", 3]
-
-        data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
-        for i, row in enumerate(data, 1):
-
-            if len(row) == 2:
-                gid, params = row
-                name = "Rating Table {}".format(i)
-            elif len(row) == 3:
-                gid, inlet_name, params = row
-                name = RT_name
-            elif len(row) == 4:
-                gid, inlet_name, RT_name, params = row
-                name = RT_name
-
-            swmmflort_sql += [(gid, name)]
-            for n in params:
-                data_sql += [(i,) + tuple(n)]
-
-        if data_sql:
-            self.clear_tables("swmmflort", "swmmflort_data")
-            self.batch_execute(swmmflort_sql, data_sql)
-
+        try: 
+            swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
+            data_sql = ["""INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""", 3]
+    
+            data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
+            for i, row in enumerate(data, 1):
+    
+                if len(row) == 2:
+                    gid, params = row
+                    name = "Rating Table {}".format(i)
+                elif len(row) == 3:
+                    gid, inlet_name, params = row
+                    name = inlet_name
+                elif len(row) == 4:
+                    gid, inlet_name, RT_name, params = row
+                    name = RT_name
+    
+                swmmflort_sql += [(gid, name)]
+                for n in params:
+                    data_sql += [(i,) + tuple(n)]
+    
+            if data_sql:
+                self.clear_tables("swmmflort", "swmmflort_data")
+                self.batch_execute(swmmflort_sql, data_sql)
+                
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 1502211915.1535: importing SWMMFLORT.DAT failed!.\n", e)
+        
     def import_swmmoutf(self):
         swmmoutf_sql = ["""INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""", 4]
 

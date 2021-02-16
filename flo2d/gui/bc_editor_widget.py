@@ -200,79 +200,29 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                      AND outflow_cells.geom_type = "polygon"  
                      AND outflow.type = 5'''
         
-#         # Clear rubber:
-#         if self.rb:
-#             for i in range(3):
-#                 self.rb.reset(i)         
-        
         lyr = self.lyrs.get_layer_tree_item(grid.id()).layer()
         gt = lyr.geometryType()  
 
-#         outflows_poly = self.gutils.execute(qry_poly).fetchall()  
-#         for cell in outflows_poly:
-#             self.rb = QgsRubberBand(self.canvas, gt)
-#             try:
-#                 feat = next(lyr.getFeatures(QgsFeatureRequest(cell[0])))
-#             except StopIteration:
-#                 return
-#          
-#             self.rb.setToGeometry(feat.geometry(), lyr) 
-#             self.rb.reset()     
-#             # Clear rubber:
-#             for i in range(3):
-#                 self.rb.reset(i)                
-# 
-#             self.canvas.scene().removeItem(self.rb)
-#             del self.rb
-
         for rb in self.rb:
             self.canvas.scene().removeItem(rb)
-            del rb            
-
-        outflows_t5 = self.gutils.execute(qry_type5).fetchall() 
-        if outflows_t5:
-            for cell in outflows_t5:
-                rb = QgsRubberBand(self.canvas, gt)            
-                rb.setColor(QColor(Qt.yellow))
-                fill_color = QColor(Qt.yellow)
-                fill_color.setAlpha(100)
-                rb.setFillColor(fill_color)
-                rb.setWidth(0)
-                try:
-                    feat = next(lyr.getFeatures(QgsFeatureRequest(cell[0])))
-                except StopIteration:
-                    return
-                rb.setToGeometry(feat.geometry(), lyr)
-                self.rb.append(rb) 
-
-
-
-
-
-
-
-               
-#         outflows_t5 = self.gutils.execute(qry_type5).fetchall()  
-#         for cell in outflows_t5:
-#             self.rb = None 
-#             self.rb = QgsRubberBand(self.canvas, gt)
-#             # Clear rubber:
-#             for i in range(3):
-#                 self.rb.reset(i)             
-# #             QColor(Qt.yellow).setAlpha(255)
-#             self.rb.setColor(QColor(Qt.yellow))
-# #             self.rb.setFillColor(QColor(255, 0, 0, 100))
-# #             self.rb.setFillColor(QColor(Qt.yellow))
-#             fill_color = QColor(Qt.yellow)
-#             fill_color.setAlpha(100)
-#             self.rb.setFillColor(fill_color)
-#             self.rb.setWidth(0)
-#             try:
-#                 feat = next(lyr.getFeatures(QgsFeatureRequest(cell[0])))
-#             except StopIteration:
-#                 return
-#             self.rb.setToGeometry(feat.geometry(), lyr)          
-
+            del rb    
+                    
+        if not self.gutils.is_table_empty("outflow_cells"):
+            outflows_t5 = self.gutils.execute(qry_type5).fetchall() 
+            if outflows_t5:
+                for cell in outflows_t5:
+                    rb = QgsRubberBand(self.canvas, gt)            
+                    rb.setColor(QColor(Qt.yellow))
+                    fill_color = QColor(Qt.yellow)
+                    fill_color.setAlpha(100)
+                    rb.setFillColor(fill_color)
+                    rb.setWidth(0)
+                    try:
+                        feat = next(lyr.getFeatures(QgsFeatureRequest(cell[0])))
+                    except StopIteration:
+                        return
+                    rb.setToGeometry(feat.geometry(), lyr)
+                    self.rb.append(rb) 
     
     def set_combos(self):
         sp = QSizePolicy()
