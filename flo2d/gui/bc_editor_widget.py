@@ -34,7 +34,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.iface = iface
         self.canvas = iface.mapCanvas()
-        self.rb = []        
+        self.rb_tidal = []        
         self.plot = plot
         self.table_dock = table
         self.bc_tview = table.tview
@@ -203,7 +203,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         lyr = self.lyrs.get_layer_tree_item(grid.id()).layer()
         gt = lyr.geometryType()  
 
-        for rb in self.rb:
+        for rb in self.rb_tidal:
             self.canvas.scene().removeItem(rb)
             del rb    
                     
@@ -222,7 +222,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     except StopIteration:
                         return
                     rb.setToGeometry(feat.geometry(), lyr)
-                    self.rb.append(rb) 
+                    self.rb_tidal.append(rb) 
     
     def set_combos(self):
         sp = QSizePolicy()
