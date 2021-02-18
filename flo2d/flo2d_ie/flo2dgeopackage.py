@@ -1007,7 +1007,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(fpfroude_sql, cells_sql)
 
     def import_gutter(self):
-        gutter_globals_sql = ["""INSERT INTO gutter_globals (height, width, n_value) VALUES""", 3]
+        gutter_globals_sql = ["""INSERT INTO gutter_globals (width, height, n_value) VALUES""", 3]
         gutter_areas_sql = ["""INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""", 5]
         cells_sql = ["""INSERT INTO gutter_cells (area_fid, grid_fid) VALUES""", 2]
 
