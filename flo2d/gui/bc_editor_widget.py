@@ -107,7 +107,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
         self.setup_connection()
-        self.highlight_tidal_cells()
+#         self.highlight_tidal_cells()
         
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
@@ -147,43 +147,39 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         
     def schematize_bc(self):
         in_inserted, out_inserted, out_deleted = 0, 0, 0
-        qry_all_user_bc = "SELECT * FROM all_user_bc;"
-        exist_user_bc = self.gutils.execute(qry_all_user_bc).fetchone()
+        exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
         if not exist_user_bc:
             self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
-            return
+#             return
 
-        qry_all_schem_bc = "SELECT * FROM all_schem_bc;"
-        exist_schem_bc = self.gutils.execute(qry_all_schem_bc).fetchone()
+        exist_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchone()
         if exist_schem_bc:
             if not self.uc.question(
                 "There are some boundary conditions grid cells defined already in the Schematic layer (BC Cells).\n\n Overwrite them?"
             ):
                 return
+            
         QApplication.setOverrideCursor(Qt.WaitCursor)
-
         in_inserted = self.schematize_inflows()
         
         start_time = time.time()
         out_inserted = self.schematize_outflows()
         self.uc.log_info("{0:.3f} seconds => selecting all boundary cells".format(time.time() - start_time))
         
-        start_time = time.time()
-        out_deleted = self.select_outflows_according_to_type()
-        self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
+#         start_time = time.time()
+#         out_deleted = self.select_outflows_according_to_type()
+#         self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
+        
+        self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
+        self.lyrs.repaint_layers()
+
+#         self.highlight_tidal_cells()        
         
         QApplication.restoreOverrideCursor()
-
         self.uc.show_info(
             str(in_inserted) + " inflows and " + str(out_inserted - out_deleted) + " outflows boundary conditions schematized!"
         )
 
-        self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
-        self.lyrs.repaint_layers()
-
-        # Highlight tidal cells (time stage nodes):
-        self.highlight_tidal_cells()
-        
     def highlight_tidal_cells(self):
         grid = self.lyrs.data["grid"]["qlyr"]
         
@@ -745,6 +741,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 self.outflow_hydro_cbo.setCurrentIndex(self.outflow.hydro_out)
             else:
                 self.outflow_hydro_cbo.setCurrentIndex(1)
+                self.outflow_hydrograph_changed()
             return
         elif self.outflow.typ > 4:
             self.create_outflow_plot()
@@ -927,8 +924,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     if geom_type == "polygon":
                         row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
                                                     (geom_type, outflow_fid,)).fetchone()
-#                         if rows:
-#                             for row in rows:
                         if row:
                             if row[0] == 0:
                                 no_outflow.append(grid_fid)     

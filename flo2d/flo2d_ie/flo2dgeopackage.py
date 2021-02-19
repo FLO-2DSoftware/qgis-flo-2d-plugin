@@ -1360,11 +1360,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("outflow"):
                 return False
+            
+            outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
+            #             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''            
+            
+            
             outflow_sql = """
             SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-            FROM outflow WHERE bc_fid = ? ORDER BY type;"""
-            outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
-            #             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''
+            FROM outflow WHERE bc_fid = ? AND geom_type = ?;"""
+
             qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
             qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
             ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
@@ -1384,37 +1388,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
             outflow = os.path.join(outdir, "OUTFLOW.DAT")
             floodplains = {}
             previous_oid = -1
+            previous_geom = "xxx"
             row = None
 
             warning = ""
             with open(outflow, "w") as o:
-                for oid, gid in out_cells:
-
-                    # July 05
-                    if previous_oid != oid:
-                        row = self.execute(outflow_sql, (oid,)).fetchone()
-                        if row:
-                            row = [x if x is not None and x is not "" else 0 for x in row]
-                            previous_oid = oid
-                        else:
-                            warning += (
-                                "Data for outflow in cell "
-                                + str(gid)
-                                + " not found in 'Outflow' table (wrong outflow 'id' "
-                                + str(oid)
-                                + " in 'Outflow Cells' table).\n"
-                            )
-                            continue
+                for oid, gid, geom in out_cells:
+                    row = self.execute(outflow_sql, (oid,geom)).fetchone()
+                    if row:
+                        row = [x if x is not None and x is not "" else 0 for x in row]
+                        previous_oid = oid
+                        previous_geom = geom
                     else:
-                        pass
-
-                    # March 22:
-                    #                     if previous_oid != oid:
-                    #                         row = self.execute(outflow_sql, (oid,)).fetchone()
-                    #                         row = [x if x is not None else 0 for x in row]
-                    #                         previous_oid = oid
-                    #                     else:
-                    #                         pass
+                        warning += (
+                            "Data for outflow in cell "
+                            + str(gid)
+                            + " not found in 'Outflow' table (wrong outflow 'id' "
+                            + str(oid)
+                            + " in 'Outflow Cells' table).\n"
+                        )
+                        continue
 
                     fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
                     if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
@@ -1428,9 +1421,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         pass
                     if chan_tser_fid > 0 or fp_tser_fid > 0:
-
                         nostacfp = 1 if chan_tser_fid == 1 else 0
-                        #                         nostacfp = 0 if chan_tser_fid > 0 else 1
                         o.write(n_line.format(gid, nostacfp))
                         series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
                         for values in self.execute(ts_data_sql, (series_fid,)):
