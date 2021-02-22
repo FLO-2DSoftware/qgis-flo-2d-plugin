@@ -196,8 +196,8 @@ class SchemaBCConverter(SchemaConverter):
         cur = self.con.cursor()
         for table, fid, tab_bc_fid in bc_updates:
             qry = """UPDATE {0} SET bc_fid = ?, geom_type = ? WHERE fid = ?;""".format(table)
-            #             cur.execute(qry, (fid, 'point', tab_bc_fid))
-            cur.execute(qry, (tab_bc_fid, "point", tab_bc_fid))
+            cur.execute(qry, (fid, 'point', tab_bc_fid))
+#             cur.execute(qry, (tab_bc_fid, "point", tab_bc_fid))
         self.con.commit()
 
     def create_user_bc(self):
@@ -221,7 +221,6 @@ class SchemaBCConverter(SchemaConverter):
         self.user_bc_lyr.removeSelection()
         self.update_bc_fids(bc_updates)
         self.enable_geom_triggers()
-
 
 class SchemaFPXSECConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):

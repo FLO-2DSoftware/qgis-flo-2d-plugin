@@ -69,7 +69,7 @@ CREATE TABLE "inflow" (
     "ident" TEXT  DEFAULT 'F',
     "inoutfc" INTEGER DEFAULT 0,
     "note" TEXT,
-    "geom_type" TEXT,
+    "geom_type" TEXT DEFAULT 'point',
     "bc_fid" INTEGER,
     CONSTRAINT inflow_unique_gtype_fid UNIQUE (geom_type, bc_fid) ON CONFLICT IGNORE
 );
@@ -210,8 +210,8 @@ CREATE TABLE "outflow" (
     "chan_qhpar_fid" INTEGER DEFAULT 0,
     "chan_qhtab_fid" INTEGER DEFAULT 0,
     "fp_tser_fid" INTEGER DEFAULT 0,
-    "type" INTEGER,
-    "geom_type" TEXT,
+    "type" INTEGER DEFAULT 0,
+    "geom_type" TEXT DEFAULT 'point',
     "bc_fid" INTEGER,
     CONSTRAINT outflow_unique_gtype_fid UNIQUE (geom_type, bc_fid) ON CONFLICT IGNORE
 );
@@ -221,7 +221,7 @@ CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "outflow_fid" INTEGER,
     "grid_fid" INTEGER,
-    "geom_type" TEXT,
+    "geom_type" TEXT DEFAULT 'point',
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
@@ -822,7 +822,7 @@ CREATE TABLE "infil" (
     "infchan" INTEGER  DEFAULT 0, -- INFCHAN, switch for simulating channel infiltration
     "hydcall" REAL DEFAULT 0.1, -- HYDCALL, average global floodplain hydraulic conductivity
     "soilall" REAL DEFAULT 4.3, -- SOILALL, average global floodplain capillary suction
-    "hydcadj" REAL DEFAULT 0.1, -- HYDCADJ, hydraulic conductivity adjustment variable
+    "hydcadj" REAL DEFAULT 0.0, -- HYDCADJ, hydraulic conductivity adjustment variable
     "hydcxx" REAL DEFAULT 0.1, -- HYDCXX, global channel infiltration hydraulic conductivity
     "scsnall" REAL DEFAULT 99.0, -- SCSNALL, global floodplain SCS curve number
     "abstr1" REAL DEFAULT 0.0, -- ABSTR1, SCS global floodplain rainfall abstraction or interception

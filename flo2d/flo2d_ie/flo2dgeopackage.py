@@ -106,7 +106,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with_n_value = False
 
         try:
-            self.clear_tables("inflow", "inflow_cells", "reservoirs", "inflow_time_series", "inflow_time_series_data")
+            self.clear_tables(
+                "inflow", 
+                "inflow_cells", 
+                "reservoirs", 
+                "inflow_time_series", 
+                "inflow_time_series_data"
+                
+            )
             head, inf, res = self.parser.parse_inflow()
             if not head == None:
                 cont_sql += [
@@ -1358,11 +1365,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_outflow(self, outdir):
         # check if there are any outflows defined.
         try:
-            if self.is_table_empty("outflow"):
+            if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
                 return False
             
-            outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
-            #             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''            
+#             outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells;"""
+            outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells ORDER BY outflow_fid;"""
+#             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''            
             
             
             outflow_sql = """
@@ -1394,20 +1402,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             warning = ""
             with open(outflow, "w") as o:
                 for oid, gid, geom in out_cells:
-                    row = self.execute(outflow_sql, (oid,geom)).fetchone()
+                    row = self.execute(outflow_sql, (oid, geom)).fetchone()
                     if row:
                         row = [x if x is not None and x is not "" else 0 for x in row]
                         previous_oid = oid
                         previous_geom = geom
                     else:
-                        warning += (
-                            "Data for outflow in cell "
-                            + str(gid)
-                            + " not found in 'Outflow' table (wrong outflow 'id' "
-                            + str(oid)
-                            + " in 'Outflow Cells' table).\n"
-                        )
                         continue
+#                         warning += (
+#                             "Data for outflow in cell "
+#                             + str(gid)
+#                             + " not found in 'Outflow' table (wrong outflow 'id' "
+#                             + str(oid)
+#                             + " in 'Outflow Cells' table).\n"
+#                         )
+#                         continue
 
                     fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
                     if gid not in floodplains and (fp_out == 1 or hydro_out > 0):

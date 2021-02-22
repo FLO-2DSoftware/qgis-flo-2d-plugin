@@ -107,7 +107,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
         self.setup_connection()
-#         self.highlight_tidal_cells()
+        self.highlight_tidal_cells()
         
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
@@ -150,15 +150,19 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
         if not exist_user_bc:
             self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
-#             return
+            return
 
-        exist_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchone()
-        if exist_schem_bc:
+        
+#         exist_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchone()
+#         if exist_schem_bc:
+        if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
-                "There are some boundary conditions grid cells defined already in the Schematic layer (BC Cells).\n\n Overwrite them?"
+                "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
             ):
                 return
-            
+         
+#         self.gutils.disable_geom_triggers()
+        
         QApplication.setOverrideCursor(Qt.WaitCursor)
         in_inserted = self.schematize_inflows()
         
@@ -166,14 +170,16 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         out_inserted = self.schematize_outflows()
         self.uc.log_info("{0:.3f} seconds => selecting all boundary cells".format(time.time() - start_time))
         
-#         start_time = time.time()
-#         out_deleted = self.select_outflows_according_to_type()
-#         self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
+        start_time = time.time()
+        out_deleted = self.select_outflows_according_to_type()
+        self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
         
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
         self.lyrs.repaint_layers()
 
-#         self.highlight_tidal_cells()        
+        self.highlight_tidal_cells()        
+        
+#         self.gutils.enable_geom_triggers() 
         
         QApplication.restoreOverrideCursor()
         self.uc.show_info(
@@ -234,6 +240,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         for combo, layout in combos.items():
             combo.setEditable(False)
             combo.setSizePolicy(sp)
+            combo.setMaxVisibleItems(40)
             layout.addWidget(combo)
 
     def show_editor(self, user_bc_table=None, bc_fid=None):
@@ -891,8 +898,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
             self.gutils.execute("DELETE FROM outflow_cells;")
 
-            inserted = self.gutils.execute(
-                """
+            inserted = self.gutils.execute( """
                                                 INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
                                                 SELECT
                                                     abc.bc_fid, g.fid, abc.geom_type
@@ -903,12 +909,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                                                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
                                             """
             )
+            
+#             all_schem_bc = self.gutils.execute("""SELECT tab_bc_fid, grid_fid FROM all_schem_bc;""").fetchall()
+#             for row in all_schem_bc:
+#                 tab_bc_fid, grid_fid = row[0], row[1]
+#                 self.gutils.execute( """UPDATE outflow_cells SET outflow_fid = ? WHERE grid_fid = ?;""", (tab_bc_fid, grid_fid))
+            
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
-        #             self.uc.show_info("Outflows schematized!")
+            #             self.uc.show_info("Outflows schematized!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("WARNING 180319.1434: Schematizing of outflows aborted!")
+            self.uc.show_error("ERROR 180319.1434: Schematizing of outflows aborted!\n", e)            
             self.uc.log_info(traceback.format_exc())
             return 0
 
@@ -1195,7 +1207,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         # if user bc layers were edited
         if user_bc_edited:
             self.enable_bc_type_change()
-            # update inflow or outflow names
+            # Update inflow or outflow names:
             self.gutils.fill_empty_inflow_names()
             self.gutils.fill_empty_outflow_names()
             self.uc.show_info(
