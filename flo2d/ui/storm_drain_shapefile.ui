@@ -913,6 +913,9 @@
        </layout>
       </widget>
       <widget class="QCheckBox" name="inlets_append_chbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>472</x>
@@ -992,6 +995,9 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="outfall_append_chbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>472</x>
@@ -1612,6 +1618,9 @@
        </property>
       </widget>
       <widget class="QCheckBox" name="conduits_append_chbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>472</x>

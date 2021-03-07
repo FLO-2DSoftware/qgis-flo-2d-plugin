@@ -1057,12 +1057,24 @@ class Flo2D(object):
                             + self.files_not_used
                         )
 
+                    msg = ""
                     if "import_swmmflo" in import_calls:
-                        self.uc.show_info(
-                            "To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                            + "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n"
-                            + "...and 'Import SWMM.INP' from the Storm Drain Editor widget."
-                        )
+                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                            msg += "must be done using the "
+                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                     
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls: 
+                        if msg:
+                            msg += "<br><br>"                           
+                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                        msg +="must be done using the "
+                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                                
+                    if msg:
+                        self.uc.show_info(msg)  
 
     @connection_required
     def import_selected_components(self):
@@ -1345,22 +1357,34 @@ class Flo2D(object):
                             + self.files_not_used
                         )
 
+                    msg = ""
                     if "import_swmmflo" in import_calls:
                         self.clean_rating_tables()
 
                         if self.gutils.is_table_empty("user_model_boundary"):
-                            self.uc.show_info(
-                                "To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                                + "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n"
-                                + "...and 'Import SWMM.INP' from the Storm Drain Editor widget."
-                            )
+                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                            msg += "must be done using the "
+                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                         else:
-                            self.uc.show_info(
-                                "To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                                + "must be done using the 'Conversion from Schematic Layers to User Layers' tool in the FLO-2D panel...\n\n"
-                                + "...and 'Import SWMM.INP' from the Storm Drain Editor widget."
-                            )
+                            msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
+                            msg += "must be done using the "
+                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                     
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls: 
+                        if msg:
+                            msg += "<br><br>"    
+                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                        msg +="must be done using the "
+                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."  
+                                                      
+                    if msg:
+                        self.uc.show_info(msg)            
 
     def clean_rating_tables(self):
         remove_grid = []

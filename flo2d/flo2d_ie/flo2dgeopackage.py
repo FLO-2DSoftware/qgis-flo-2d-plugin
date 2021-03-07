@@ -157,9 +157,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_outflow(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
-                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-            8,
-        ]
+                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""", 8]
         cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES""", 2]
         qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
         qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
@@ -1368,26 +1366,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
                 return False
             
-#             outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells;"""
-            outflow_cells_sql = """SELECT outflow_fid, grid_fid, geom_type FROM outflow_cells ORDER BY outflow_fid;"""
-#             outflow_cells_sql = '''SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY fid, grid_fid;'''            
-            
-            
             outflow_sql = """
             SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-            FROM outflow WHERE bc_fid = ? AND geom_type = ?;"""
-
+            FROM outflow WHERE fid = ?;"""   
+            outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""          
             qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
             qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
             ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
-
+ 
             k_line = "K  {0}\n"
             qh_params_line = "H  {0}  {1}  {2}\n"
             qh_table_line = "T  {0}  {1}\n"
             n_line = "N     {0}  {1}\n"
             ts_line = "S  {0}  {1}\n"
             o_line = "{0}  {1}\n"
-
+ 
             out_cells = self.execute(outflow_cells_sql).fetchall()
             if not out_cells:
                 return False
@@ -1396,62 +1389,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
             outflow = os.path.join(outdir, "OUTFLOW.DAT")
             floodplains = {}
             previous_oid = -1
-            previous_geom = "xxx"
             row = None
-
+ 
             warning = ""
             with open(outflow, "w") as o:
-                for oid, gid, geom in out_cells:
-                    row = self.execute(outflow_sql, (oid, geom)).fetchone()
-                    if row:
-                        row = [x if x is not None and x is not "" else 0 for x in row]
-                        previous_oid = oid
-                        previous_geom = geom
-                    else:
-                        continue
-#                         warning += (
-#                             "Data for outflow in cell "
-#                             + str(gid)
-#                             + " not found in 'Outflow' table (wrong outflow 'id' "
-#                             + str(oid)
-#                             + " in 'Outflow Cells' table).\n"
-#                         )
-#                         continue
-
-                    fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
-                    if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
-                        floodplains[gid] = hydro_out
-                    if chan_out == 1:
-                        o.write(k_line.format(gid))
-                        for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
-                            o.write(qh_params_line.format(*values))
-                        for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
-                            o.write(qh_table_line.format(*values))
+                for oid, gid in out_cells:
+                    if previous_oid != oid:
+                        row = self.execute(outflow_sql, (oid,)).fetchone()
+                        if row is not None:
+                            row = [x if x is not None and x is not "" else 0 for x in row]
+                            previous_oid = oid
+                        else:
+                            warning += "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                            warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
+                            continue   
                     else:
                         pass
-                    if chan_tser_fid > 0 or fp_tser_fid > 0:
-                        nostacfp = 1 if chan_tser_fid == 1 else 0
-                        o.write(n_line.format(gid, nostacfp))
-                        series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
-                        for values in self.execute(ts_data_sql, (series_fid,)):
-                            o.write(ts_line.format(*values))
-                    else:
-                        pass
-
+                    
+                    if row is not None:
+                        fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
+                        if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                            floodplains[gid] = hydro_out
+                        if chan_out == 1:
+                            o.write(k_line.format(gid))
+                            for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                                o.write(qh_params_line.format(*values))
+                            for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                                o.write(qh_table_line.format(*values))
+                        else:
+                            pass
+                        if chan_tser_fid > 0 or fp_tser_fid > 0:
+                            nostacfp = 1 if chan_tser_fid == 1 else 0
+                            o.write(n_line.format(gid, nostacfp))
+                            series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                            for values in self.execute(ts_data_sql, (series_fid,)):
+                                o.write(ts_line.format(*values))
+                        else:
+                            pass
+                        
+ 
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                     ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
                     o.write(o_line.format(ident, gid))
-
+ 
             QApplication.restoreOverrideCursor()
             if warning != "":
-                self.uc.show_warn(
-                    "ERROR 170319.2018: error while exporting OUTFLOW.DAT!\n\n"
-                    + warning
-                    + "\n\nWere the Boundary Conditions schematized? "
-                )
-
+                msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" +  warning
+                msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
+                self.uc.show_warn(msg)
             return True
-
+ 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)

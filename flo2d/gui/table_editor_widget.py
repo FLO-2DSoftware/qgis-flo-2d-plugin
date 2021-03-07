@@ -149,18 +149,32 @@ class CommandItemEdit(QUndoCommand):
         self.oldText = oldText
         self.newText = newText
 
+
     def redo(self):
-        self.widget.connect_itemDataChanged(False)
+        self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
         self.item.setText(self.newText)
-        self.widget.connect_itemDataChanged(True)
+        self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
 
     def undo(self):
-        self.widget.connect_itemDataChanged(False)
+        self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
         try:
             self.item.setText(self.oldText)
         except TypeError:
-            self.item.setText("")
-        self.widget.connect_itemDataChanged(True)
+            self.item.setText('')
+        self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
+
+#     def redo(self):
+#         self.widget.connect_itemDataChanged(False)
+#         self.item.setText(self.newText)
+#         self.widget.connect_itemDataChanged(True)
+# 
+#     def undo(self):
+#         self.widget.connect_itemDataChanged(False)
+#         try:
+#             self.item.setText(self.oldText)
+#         except TypeError:
+#             self.item.setText("")
+#         self.widget.connect_itemDataChanged(True)
 
 
 class TableEditorEventFilter(QObject):

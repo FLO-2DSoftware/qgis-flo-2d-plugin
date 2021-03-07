@@ -770,7 +770,7 @@ class Outflow(GeoPackageUtils):
             self.chan_qhpar_fid,
             self.chan_qhtab_fid,
             self.fp_tser_fid,
-            self.typ,
+            self.typ
         )
         qry = """INSERT INTO outflow (
             name,
@@ -813,7 +813,7 @@ class Outflow(GeoPackageUtils):
             self.chan_qhtab_fid,
             self.fp_tser_fid,
             self.typ,
-            self.fid,
+            self.fid
         )
         qry = """UPDATE outflow
                     SET name=?,
@@ -902,8 +902,8 @@ class Outflow(GeoPackageUtils):
         name_qry = """UPDATE outflow_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;"""
         self.execute(name_qry, (rowid,))
         self.set_new_data_fid(rowid)
-        if not name:
-            self.name = "Time series {}".format(rowid)
+#         if not name:
+#             self.name = "Time series {}".format(rowid)
         if fetch:
             return self.get_time_series()
 

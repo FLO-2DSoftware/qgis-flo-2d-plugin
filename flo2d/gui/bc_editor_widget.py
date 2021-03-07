@@ -106,8 +106,10 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.twidget.after_paste.connect(self.unblock_saving)
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
+        
         self.setup_connection()
-        self.highlight_tidal_cells()
+#         self.highlight_tidal_cells()
         
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
@@ -150,37 +152,23 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
         if not exist_user_bc:
             self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
-            return
-
-        
-#         exist_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchone()
-#         if exist_schem_bc:
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
                 "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
             ):
                 return
-         
-#         self.gutils.disable_geom_triggers()
-        
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        
+        out_inserted = self.schematize_outflows()
         in_inserted = self.schematize_inflows()
         
-        start_time = time.time()
-        out_inserted = self.schematize_outflows()
-        self.uc.log_info("{0:.3f} seconds => selecting all boundary cells".format(time.time() - start_time))
-        
-        start_time = time.time()
-        out_deleted = self.select_outflows_according_to_type()
-        self.uc.log_info("{0:.3f} seconds => outermost cells".format(time.time() - start_time))
-        
+#         out_deleted = self.select_outflows_according_to_type() 
+#         self.highlight_tidal_cells()  
+   
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
         self.lyrs.repaint_layers()
 
-        self.highlight_tidal_cells()        
-        
-#         self.gutils.enable_geom_triggers() 
-        
         QApplication.restoreOverrideCursor()
         self.uc.show_info(
             str(in_inserted) + " inflows and " + str(out_inserted - out_deleted) + " outflows boundary conditions schematized!"
@@ -192,13 +180,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         qry_poly= '''SELECT grid_fid 
                  FROM outflow_cells 
                  INNER JOIN outflow 
-                 ON outflow.bc_fid = outflow_cells.outflow_fid 
+                 ON outflow.fid = outflow_cells.outflow_fid 
                      AND outflow_cells.geom_type = "polygon"  
                  '''        
         qry_type5= '''SELECT grid_fid 
                  FROM outflow_cells 
                  INNER JOIN outflow 
-                 ON outflow.bc_fid = outflow_cells.outflow_fid 
+                 ON outflow.fid = outflow_cells.outflow_fid 
                      AND outflow_cells.geom_type = "polygon"  
                      AND outflow.type = 5'''
         
@@ -210,7 +198,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             del rb    
                     
         if not self.gutils.is_table_empty("outflow_cells"):
-            outflows_t5 = self.gutils.execute(qry_type5).fetchall() 
+            outflows_t5 = self.gutils.execute(qry_poly).fetchall() 
             if outflows_t5:
                 for cell in outflows_t5:
                     rb = QgsRubberBand(self.canvas, gt)            
@@ -235,7 +223,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         combos = {
             self.bc_name_cbo: self.bc_name_cbo_layout,
             self.inflow_tseries_cbo: self.inflow_tseries_cbo_layout,
-            self.outflow_data_cbo: self.outflow_data_cbo_layout,
+            self.outflow_data_cbo: self.outflow_data_cbo_layout
         }
         for combo, layout in combos.items():
             combo.setEditable(False)
@@ -533,16 +521,20 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def schematize_inflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+            inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall()   
+                      
             del_qry = "DELETE FROM inflow_cells;"
-            ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid)
+            ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid, area_factor)
                 SELECT
-                    abc.bc_fid, g.fid
+                    abc.bc_fid, g.fid, CAST(abc.bc_fid AS INT)
                 FROM
                     grid AS g, all_user_bc AS abc
                 WHERE
                     abc.type = 'inflow' AND
                     ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));"""
             self.gutils.execute(del_qry)
+            
             inserted = self.gutils.execute(ins_qry)
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
@@ -626,10 +618,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         Read outflow table, populate the cbo and set proper outflow.
         """
-        if not self.iface.f2d["con"]:
-            return
         self.reset_outflow_gui()
-        self.gutils = GeoPackageUtils(self.iface.f2d["con"], self.iface)
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows:
             self.uc.bar_info("There is no outflow defined in the database...")
@@ -708,8 +697,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.type_fid = int(self.outflow.typ)
         if not self.outflow.geom_type:
             return
-        if not self.outflow.geom_type:
-            return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.bc_center_chbox.isChecked():
@@ -720,6 +707,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_type_changed()
         if self.geom_type == "polygon":
             self.disable_outflow_types()
+            
+        self.outflow_type_cbo.model().item(10).setEnabled(False)    
 
     def enable_outflow_types(self):
         for idx in range(0, self.outflow_type_cbo.count()):
@@ -728,7 +717,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def disable_outflow_types(self):
         for idx in [2, 3, 6, 8, 9, 10, 11]:
             self.outflow_type_cbo.model().item(idx).setEnabled(False)
-
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
+        
     def outflow_type_changed(self):
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
@@ -736,7 +726,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow.set_type_data(typ_idx)
         self.outflow.set_row()
         self.populate_outflow_data_cbo()
-
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
+        
     def outflow_hydrograph_changed(self):
         self.outflow.hydro_out = self.outflow_hydro_cbo.currentIndex()
         self.outflow.set_row()
@@ -895,26 +886,64 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-
-            self.gutils.execute("DELETE FROM outflow_cells;")
-
-            inserted = self.gutils.execute( """
-                                                INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
-                                                SELECT
-                                                    abc.bc_fid, g.fid, abc.geom_type
-                                                FROM
-                                                    grid AS g, all_user_bc AS abc
-                                                WHERE
-                                                    abc.type = 'outflow' AND
-                                                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-                                            """
-            )
             
-#             all_schem_bc = self.gutils.execute("""SELECT tab_bc_fid, grid_fid FROM all_schem_bc;""").fetchall()
-#             for row in all_schem_bc:
-#                 tab_bc_fid, grid_fid = row[0], row[1]
-#                 self.gutils.execute( """UPDATE outflow_cells SET outflow_fid = ? WHERE grid_fid = ?;""", (tab_bc_fid, grid_fid))
+#             triggers = self.gutils.execute("SELECT * FROM trigger_control;").fetchall()
+            msg = ""
+
+#             view_all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall()
+#             outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+#             inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall() 
+#             all_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchall() 
+#             outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()    
+                                   
+            self.gutils.execute('DELETE FROM outflow_cells;')
+            self.gutils.execute('DELETE FROM inflow_cells;')
+           
+#             view_all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall()
+#             outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+#             inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall() 
+#             all_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchall() 
+#             outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()         
+#             n_inflows = len(inflow) 
             
+            ins_qry = '''
+                INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor)
+                SELECT
+                    abc.bc_fid, g.fid, abc.geom_type, CAST(abc.bc_fid AS INT)
+                FROM
+                    grid AS g, all_user_bc AS abc
+                WHERE
+                    abc.type = 'outflow' AND
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+                    '''         
+            inserted = self.gutils.execute(ins_qry)
+
+            outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall() 
+            # Fix outflow_cells:
+            for oc in outflow_cells:
+                grid = oc[2]
+                geom_type = oc[3]
+                area_factor = oc[4]
+                fid = self.gutils.execute("SELECT fid FROM outflow WHERE geom_type = ? AND bc_fid = ?;", (geom_type, area_factor,)).fetchone()
+                if fid: 
+                    self.gutils.execute("UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;", (fid[0], geom_type, area_factor))
+                else:
+                    tab_bc_fid = self.gutils.execute("SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;", (grid,)).fetchone()
+                    if tab_bc_fid:
+                        self.gutils.execute("UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;", (tab_bc_fid[0], geom_type, area_factor))
+                    
+                    else:
+                        msg += "\nNo fid for "  + str(grid) 
+
+#             view_all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall()
+#             outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+#             inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall() 
+#             all_schem_bc = self.gutils.execute("SELECT * FROM all_schem_bc;").fetchall() 
+#             outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()  
+
+            if msg:
+                self.uc.show_warn(msg)
+                                
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
             #             self.uc.show_info("Outflows schematized!")
@@ -934,7 +963,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 for cell in cells:
                     grid_fid, outflow_fid, geom_type = cell
                     if geom_type == "polygon":
-                        row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                        row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND fid = ?;",
                                                     (geom_type, outflow_fid,)).fetchone()
                         if row:
                             if row[0] == 0:
@@ -1065,7 +1094,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 "tab_head": ["Time", "Stage"],
             },
             9: {
-                "name": "Channel stage-discharge (Q(h) parameters)",
+                "name": "Channel Depth-Discharge Power Regression (Q(h)) params)",
                 "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn],
                 "data_label": "Q(h) parameters",
                 "tab_head": ["Hmax", "Coef", "Exponent"],
@@ -1077,7 +1106,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 "tab_head": ["Hmax", "Coef", "Exponent"],
             },
             11: {
-                "name": "Channel stage-discharge (Q(h) table)",
+                "name": "Channel depth-discharge (Q(h) table)",
                 "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
                 "data_label": "Q(h) table",
                 "tab_head": ["Depth", "Discharge"],

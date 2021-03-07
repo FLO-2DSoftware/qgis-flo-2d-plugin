@@ -648,10 +648,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         feat.setAttribute("rim_elev_inp", 0)
                         feat.setAttribute("rim_elev", 0)
                         feat.setAttribute("ge_elev", 0)
-                        feat.setAttribute("difference", 0)
-
+                        feat.setAttribute("difference", 0)               
+                    
                         new_feats.append(feat)
-
+ 
                     if new_feats:
                         if not self.inlets_append_chbox.isChecked():
                             remove_features(self.user_swmm_nodes_lyr)
@@ -663,7 +663,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.user_swmm_nodes_lyr.triggerRepaint()
                         self.user_swmm_nodes_lyr.removeSelection()
                     else:
-                        load_inlets = False
+                        load_inlets = false
 
                     QApplication.restoreOverrideCursor()
 
@@ -803,7 +803,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         new_feats.append(feat)
 
                     if new_feats:
-                        if not self.outfall_append_chbox.isChecked():
+                        if not self.outfall_append_chbox.isChecked() and not load_inlets:
                             remove_features(self.user_swmm_nodes_lyr)
 
                         self.user_swmm_nodes_lyr.startEditing()

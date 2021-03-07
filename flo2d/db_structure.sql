@@ -69,7 +69,7 @@ CREATE TABLE "inflow" (
     "ident" TEXT  DEFAULT 'F',
     "inoutfc" INTEGER DEFAULT 0,
     "note" TEXT,
-    "geom_type" TEXT DEFAULT 'point',
+    "geom_type" TEXT,
     "bc_fid" INTEGER,
     CONSTRAINT inflow_unique_gtype_fid UNIQUE (geom_type, bc_fid) ON CONFLICT IGNORE
 );
@@ -211,7 +211,7 @@ CREATE TABLE "outflow" (
     "chan_qhtab_fid" INTEGER DEFAULT 0,
     "fp_tser_fid" INTEGER DEFAULT 0,
     "type" INTEGER DEFAULT 0,
-    "geom_type" TEXT DEFAULT 'point',
+    "geom_type" TEXT,
     "bc_fid" INTEGER,
     CONSTRAINT outflow_unique_gtype_fid UNIQUE (geom_type, bc_fid) ON CONFLICT IGNORE
 );
@@ -221,7 +221,7 @@ CREATE TABLE "outflow_cells" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "outflow_fid" INTEGER,
     "grid_fid" INTEGER,
-    "geom_type" TEXT DEFAULT 'point',
+    "geom_type" TEXT,
     "area_factor" REAL
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outflow_cells', 'aspatial');
