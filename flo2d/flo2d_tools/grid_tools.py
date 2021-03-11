@@ -30,7 +30,6 @@ from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistic
 from ..utils import is_number
 from ..errors import GeometryValidityErrors
 
-
 # GRID classes
 class TINInterpolator(object):
     def __init__(self, point_lyr, field_name):
@@ -402,7 +401,7 @@ def intersection_spatial_index(vlayer, request=None):
             geom = geom.buffer(0.0, 5)
             if not geom.isGeosValid():
                 error_messages = [
-                    f"{ge.what()} at location: {ge.where().toString()}"
+                    "{ge.what()} at location: {ge.where().toString()}"
                     for ge in geom.validateGeometry(method=QgsGeometry.ValidatorGeos)
                 ]
                 raise GeometryValidityErrors("\n".join(error_messages))
@@ -1749,95 +1748,6 @@ def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size)
     except:
         show_error("ERROR 040420.1715: could not evaluate adjacent cell elevation!")
 
-
-# .......................................................
-
-#         # North cell:
-#         y = yy  +  cell_size
-#         x = xx
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             N_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             N_elev = -999
-#         elevs.append(N_elev)
-#
-#
-#         # NorthEast cell:
-#         y = yy  +  cell_size
-#         x = xx  +  cell_size
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#            NE_elev  = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#            NE_elev  = -999
-#         elevs.append(NE_elev)
-#
-#         # East cell:
-#         x = xx +  cell_size
-#         y = yy
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             E_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             E_elev = -999
-#         elevs.append(E_elev)
-#
-#         # SouthEast cell:
-#         y = yy  -  cell_size
-#         x = xx  +  cell_size
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             SE_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             SE_elev = -999
-#         elevs.append(SE_elev)
-#
-#         # South cell:
-#         y = yy  -  cell_size
-#         x = xx
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             S_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             S_elev = -999
-#         elevs.append(S_elev)
-#
-#         # SouthWest cell:
-#         y = yy  -  cell_size
-#         x = xx  -  cell_size
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             SW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             SW_elev = -999
-#         elevs.append(SW_elev)
-#
-#          # West cell:
-#         y = yy
-#         x = xx  -  cell_size
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             W_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             W_elev = -999
-#         elevs.append(W_elev)
-#
-#          # NorthWest cell:
-#         y = yy  +  cell_size
-#         x = xx  -  cell_size
-#         grid = gutils.grid_on_point(x, y)
-#         if grid is not None:
-#             NW_elev = gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
-#         else:
-#             NW_elev = -999
-#         elevs.append(NW_elev)
-#
-#     return elevs
-
-# ..............................................
-
-
 def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     try:
         sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
@@ -1916,6 +1826,67 @@ def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error("ERROR 160520.1644: could not evaluate adjacent cell elevation!")
 
+def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
+    try:
+        currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+        xx, yy = currentCell.geometry().centroid().asPoint()
+
+        elev = -999
+        if dir == "N":
+            # North cell:
+            y = yy + cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+
+
+        elif dir == "NE":
+            # NorthEast cell:
+            y = yy + cell_size
+            x = xx + cell_size
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "E":
+            # East cell:
+            x = xx + cell_size
+            y = yy
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "SE":
+            # SouthEast cell:
+            y = yy - cell_size
+            x = xx + cell_size
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "S":
+            # South cell:
+            y = yy - cell_size
+            x = xx
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "SW":
+            # SouthWest cell:
+            y = yy - cell_size
+            x = xx - cell_size
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "W":
+            # West cell:
+            y = yy
+            x = xx - cell_size
+            grid = gutils.grid_on_point(x, y)
+
+        elif dir == "NW":
+            # NorthWest cell:
+            y = yy + cell_size
+            x = xx - cell_size
+            grid = gutils.grid_on_point(x, y)
+
+        else:
+            show_error("ERROR 090321.1623: Invalid direction!")
+
+        return grid
+    except:
+        show_error("ERROR 090321.1624: could not evaluate adjacent cell!")
 
 def dirID(dir):
     if dir == 1:  # "N"
@@ -1959,7 +1930,8 @@ def dirID(dir):
 def is_boundary_cell(gutils, grid_lyr, cell, cell_size):
     if grid_lyr is not None:
         if cell:
-            if len(grid_lyr) >= cell and cell > 0:
+            n_cells = number_of_elements(gutils, grid_lyr)
+            if n_cells >= cell and cell > 0:
 
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
@@ -1979,8 +1951,8 @@ def is_boundary_cell(gutils, grid_lyr, cell, cell_size):
                     return True
 
                 # East cell:
-                x = xx + cell_size
                 y = yy
+                x = xx + cell_size
                 grid = gutils.grid_on_point(x, y)
                 if grid is None:
                     return True
@@ -2030,3 +2002,17 @@ def layer_geometry_is_valid(vlayer):
         if not geom.isGeosValid():
             return False
     return True
+
+
+def number_of_elements(gutils, layer):
+    if len(layer) > 0:
+        return len(layer)
+    elif layer.featureCount() > 0:
+        return layer.featureCount()
+    else:
+        count_sql = """SELECT COUNT(fid) FROM grid;"""
+        a = gutils.execute(count_sql).fetchone()[0]
+        if a:
+            return a
+        else:
+                return len(list(layer.getFeatures()))

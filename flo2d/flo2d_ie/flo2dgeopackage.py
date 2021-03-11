@@ -13,15 +13,16 @@ from itertools import chain, groupby
 from operator import itemgetter
 from qgis.PyQt.QtCore import QSettings
 from .flo2d_parser import ParseDAT
+from ..gui.bc_editor_widget import BCEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from qgis.PyQt.QtWidgets import QApplication
 
+from ..utils import get_BC_Border, BC_BORDER
 
 class Flo2dGeoPackage(GeoPackageUtils):
     """
     Class for proper import and export FLO-2D data.
     """
-
     def __init__(self, con, iface):
         super(Flo2dGeoPackage, self).__init__(con, iface)
         self.parser = None
@@ -31,7 +32,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.chunksize = float("inf")
         self.gutils = GeoPackageUtils(con, iface)
         self.export_messages = ""
-
+        
     def set_parser(self, fpath):
         self.parser = ParseDAT()
         self.parser.scan_project_dir(fpath)
@@ -1363,6 +1364,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_outflow(self, outdir):
         # check if there are any outflows defined.
         try:
+
             if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
                 return False
             
@@ -1390,10 +1392,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             floodplains = {}
             previous_oid = -1
             row = None
- 
+            border = get_BC_Border()
+            
             warning = ""
             with open(outflow, "w") as o:
                 for oid, gid in out_cells:
+                    if border is not None:
+                        if gid in border:
+                            continue
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
                         if row is not None:
@@ -1431,7 +1437,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
                     ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
                     o.write(o_line.format(ident, gid))
- 
+
+                if border is not None:
+                    for b in border:
+                       o.write(o_line.format("O", b)) 
+                
             QApplication.restoreOverrideCursor()
             if warning != "":
                 msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" +  warning

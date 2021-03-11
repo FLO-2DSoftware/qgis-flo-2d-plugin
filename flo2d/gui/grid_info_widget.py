@@ -17,6 +17,7 @@ from .ui_utils import load_ui, center_canvas, set_icon, zoom
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
 from ..geopackage_utils import GeoPackageUtils
+from ..flo2d_tools.grid_tools import number_of_elements
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
 
@@ -162,7 +163,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     cell = self.idEdit.text()
                     if cell != "":
                         cell = int(cell)
-                        n_cells = self.number_of_elements(grid)
+                        n_cells = number_of_elements(self.gutils, grid)
                         if n_cells > 0 and cell > 0:
                             if cell <= n_cells:
                                 self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
@@ -189,15 +190,3 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def number_of_elements(self, layer):
-        if len(layer) > 0:
-            return len(layer)
-        elif layer.featureCount() > 0:
-            return layer.featureCount()
-        else:
-            count_sql = """SELECT COUNT(fid) FROM grid;"""
-            a = self.gutils.execute(count_sql).fetchone()[0]
-            if a:
-                return a
-            else:
-                return len(list(layer.getFeatures()))

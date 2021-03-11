@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.17
+version=0.10.18
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,15 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.18
+   	- Boundary Conditions:
+ 		- 	Use 'area_factor' field in 'inflow_cells' and 'outflow_cells' tables as pointer to 'bc_fid' field in 'inflow' and 'outflow' tables.
+ 		- 	Disable Outflow Type 10 in Outflow Type combobox of widget.
+		- 	Delete 'outflow_cells' and 'inflow_cells' features when schematizing BC.
+		- 	Change several texts of items of combobox of Outflow Types.
+		- 	Remove 'point' default from "geom_type" in CREATE TABLE in database of inflow/outflow tables.
+		- 	Remove naming 'Time Series..' at new BC outflow names.
+	-Table Editor: fix error in code for 'Redo' and 'Undo'.
  <p>0.10.17
   - Fixes for issues: #552, #590, #656, #660, #661
  <p>0.10.16

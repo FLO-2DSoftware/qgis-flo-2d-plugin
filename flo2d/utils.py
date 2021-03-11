@@ -7,6 +7,10 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
+
+BC_BORDER = None  # Static variable used to hold BC for type 5 outflow.
+
 import os.path
 import io
 import csv
@@ -14,6 +18,13 @@ from math import ceil
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication
 
+def get_BC_Border():
+    global BC_BORDER
+    return BC_BORDER
+
+def set_BC_Border(val):
+    global BC_BORDER
+    BC_BORDER = val
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))

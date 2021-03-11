@@ -206,30 +206,42 @@ class SchemaBCConverter(SchemaConverter):
         self.con.commit()
  
     def create_user_bc(self):
-        self.disable_geom_triggers()
-        remove_features(self.user_bc_lyr)
- 
-        remove_features(self.user_bc_lines_lyr)
-        remove_features(self.user_bc_polygons_lyr)
-         
-        fields = self.user_bc_lyr.fields()
-        common_fnames = {"fid": "fid", "type": "type"}
-        geom_fn = self.geom_functions["centroid"]
-        new_features = []
-        bc_updates = []
-        for feat in self.schema_bc_lyr.getFeatures():
-            new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
-            new_features.append(new_feat)
-            bc_updates.append((feat["type"], feat["fid"], feat["tab_bc_fid"]))
-#             bc_updates.append((new_feat['type'], new_feat['fid'], new_feat['tab_bc_fid']))
-        self.user_bc_lyr.startEditing()
-        self.user_bc_lyr.addFeatures(new_features)
-        self.user_bc_lyr.commitChanges()
-        self.user_bc_lyr.updateExtents()
-        self.user_bc_lyr.triggerRepaint()
-        self.user_bc_lyr.removeSelection()
-        self.update_bc_fids(bc_updates)
-        self.enable_geom_triggers()
+        try:
+            self.disable_geom_triggers()
+            remove_features(self.user_bc_lyr)
+     
+            remove_features(self.user_bc_lines_lyr)
+            remove_features(self.user_bc_polygons_lyr)
+             
+            fields = self.user_bc_lyr.fields()
+            common_fnames = {"fid": "fid", "type": "type"}
+            geom_fn = self.geom_functions["centroid"]
+            new_features = []
+            bc_updates = []
+            for feat in self.schema_bc_lyr.getFeatures():
+                if feat is None:
+                    continue
+                if feat.geometry().isNull():
+                    continue       
+                new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
+                new_features.append(new_feat)
+                bc_updates.append((feat["type"], feat["fid"], feat["tab_bc_fid"]))
+    #             bc_updates.append((new_feat['type'], new_feat['fid'], new_feat['tab_bc_fid']))
+            self.user_bc_lyr.startEditing()
+            self.user_bc_lyr.addFeatures(new_features)
+            self.user_bc_lyr.commitChanges()
+            self.user_bc_lyr.updateExtents()
+            self.user_bc_lyr.triggerRepaint()
+            self.user_bc_lyr.removeSelection()
+            self.update_bc_fids(bc_updates)
+            self.enable_geom_triggers()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 100321.1010:\n\Conversion of Boundary Conditions to User Layer failed!"
+                + "\n_______________________________________________________________",
+                e,
+            )        
 
 class SchemaFPXSECConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
