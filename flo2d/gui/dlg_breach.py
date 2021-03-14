@@ -24,7 +24,7 @@ from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
-from ..flo2d_tools.grid_tools import adjacent_grid_elevations
+from ..flo2d_tools.grid_tools import adjacent_grid_elevations, number_of_elements
 from pickle import FALSE
 from qgis.core import *
 from datetime import datetime
@@ -1234,7 +1234,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             return
         else:
             cell = int(levee_grid)
-            if cell > self.grid_lyr.featureCount() or cell < 0:
+            n_cells = number_of_elements(self.gutils, self.grid_lyr)          
+            if cell > n_cells or cell < 0:
                 self.uc.bar_warn("WARNING 221219.1141: Cell is outside the computational domain!")
                 return
 
