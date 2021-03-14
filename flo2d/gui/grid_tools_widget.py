@@ -35,6 +35,7 @@ from ..gui.dlg_sampling_mann import SamplingManningDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
+from ..gui.dlg_create_grid import CreateGridDialog
 
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
@@ -125,9 +126,19 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
 
     def create_grid(self):
+        create_grid_dlg = CreateGridDialog()
+        ok = create_grid_dlg.exec_()
+        if not ok:
+            return
         try:
             if not self.lyrs.save_edits_and_proceed("Computational Domain"):
                 return
+            if create_grid_dlg.use_external_layer():
+                external_layer, cell_size_field = create_grid_dlg.external_layer_parameters()
+                if not self.import_comp_domain(external_layer, cell_size_field):
+                    return
+            if self.gutils.count("user_model_boundary") > 1:
+                warn = "WARNING 060319.1708: There are multiple features in Computational Domain layer.\n"
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
                 return
@@ -564,6 +575,52 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
                 "ERROR 060319.1609: Replacing duplicated ARFs and WRFs failed!.\n"
+                "________________________________________________________________",
+                e,
+            )
+            return False
+
+    def import_comp_domain(self, external_layer, cell_size_field):
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if not all([external_layer, cell_size_field]):
+                raise UserWarning("Missing Parameters!")
+            user_model_boundary_lyr = self.lyrs.data["user_model_boundary"]["qlyr"]
+            user_model_boundary_fields = user_model_boundary_lyr.dataProvider().fields()
+            field_names_map = {
+                "cell_size": cell_size_field,
+            }
+            user_feats = []
+            for feat in external_layer.getFeatures():
+                geom = feat.geometry()
+                if not geom.isGeosValid():
+                    geom = geom.buffer(0.0, 5)
+                    if not geom.isGeosValid():
+                        continue
+                if geom.isMultipart():
+                    new_geoms = [QgsGeometry.fromPolygonXY(g) for g in geom.asMultiPolygon()]
+                else:
+                    new_geoms = [geom]
+                for new_geom in new_geoms:
+                    user_feat = QgsFeature(user_model_boundary_fields)
+                    user_feat.setGeometry(new_geom)
+                    for user_field_name, external_field_name in field_names_map.items():
+                        external_value = feat[external_field_name]
+                        user_feat[user_field_name] = int(external_value) if external_value != NULL else external_value
+                    user_feats.append(user_feat)
+            user_model_boundary_lyr.startEditing()
+            user_model_boundary_lyr.deleteFeatures([f.id() for f in user_model_boundary_lyr.getFeatures()])
+            user_model_boundary_lyr.addFeatures(user_feats)
+            user_model_boundary_lyr.commitChanges()
+            user_model_boundary_lyr.updateExtents()
+            user_model_boundary_lyr.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error(
+                "ERROR: Import Computational Domain failed! Please check your external layer.\n"
                 "________________________________________________________________",
                 e,
             )
