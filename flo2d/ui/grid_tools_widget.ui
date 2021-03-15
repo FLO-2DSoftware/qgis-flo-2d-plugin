@@ -57,7 +57,7 @@
    <item row="0" column="2">
     <widget class="QToolButton" name="xyz_elevation_btn">
      <property name="toolTip">
-      <string>Assign elevations to grid from points layer</string>
+      <string>Assign elevations to grid</string>
      </property>
      <property name="text">
       <string>...</string>
