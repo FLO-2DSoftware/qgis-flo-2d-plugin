@@ -33,7 +33,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.setup_layer_cbo()
         # connections
         self.points_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
-        self.lidar_interpolation_btn.clicked.connect(self.interpolate_from_lidar)
+        self.points_layer_grp.clicked.connect(self.points_layer_selected)
+        self.lidar_grp.clicked.connect(self.lidar_selected)
 
     def setup_layer_cbo(self):
         """
@@ -58,6 +59,12 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.fields_cbo.setLayer(self.current_lyr)
         self.fields_cbo.setCurrentIndex(0)
 
+    def points_layer_selected(self):
+        self.lidar_grp.setChecked(not self.points_layer_grp.isChecked())
+
+    def lidar_selected(self):
+        self.points_layer_grp.setChecked(not self.lidar_grp.isChecked())
+                    
     def interpolate_from_lidar(self):
 
         s = QSettings()
@@ -76,9 +83,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         try:
             errors0 = []
             errors1 = []
-            noInlets = []
-            lst_no_type4 = []
-            str_no_type4 = ""
             warnings = []
             accepted_files = []
             goodRT = 0
@@ -96,14 +100,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
 
             for file in lidar_files:
-                err0, err1 = self.check_LIDAR_file(file)
+#                 err0, err1 = self.check_LIDAR_file(file)
 #                 if err0 == "" and err1 == "" :
 
 
                 
-                for i in range(len(lidar_files)):
-                    time.sleep(1)
-                    progress.setValue(i + 1)
+#                 for i in range(len(lidar_files)):
+#                     time.sleep(1)
+#                     progress.setValue(i + 1)
                 
 
                 # See if comma delimited:
@@ -111,57 +115,49 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                   line = f.readline()  
                   n_commas = line.count(",")
                   n_spaces = line.count(" ")
+      
+#                     self.iface.messageBar().pushMessage(
+#                             "Interpolating points from file " + file  +  ". The process may take several minutes...",
+#                             level=Qgis.Warning)
+                i= 0        
+                goodRT += 1                    
+                with open(file, "r") as f1:
+                    i += 1
+                    time.sleep(1)
+                    progress.setValue(i)
+                    for line in f1:
+                        pass
+#                             row = line.split()
 
-                with open(file, "r") as f:        
-                    self.iface.messageBar().pushMessage(
-                            "Interpolating points from file " + file  +  ". The process may take several minutes...",
-                            level=Qgis.Warning)
-                    I = 0        
-                    goodRT += 1                    
-                    with open(file, "r") as f1:
-                        I
-                        time.sleep(1)
-                        progress.setValue(i + 1)
-                        for line in f1:
-                            row = line.split()
-                            if row:
-                                pass
-                            
- 
- 
- 
- 
- 
+                    
+            self.iface.messageBar().clearWidgets()        
                     
                     
-                    
-                    
-                    
-            len_errors = len(errors0) + len(errors1)
-
-            if errors0:
-                errors0.append("\n")
-            if errors1:
-                errors1.append("\n")
-
-            warnings = errors0 + errors1
-
-            if len_errors + goodRT > 0:
-
-                QApplication.restoreOverrideCursor()
-
-                txt1 = " could not be read (maybe wrong format).\n\n"
-
-                self.uc.show_info(
-                    "INFO 150321.0951:\n\n"
-                    + "* "
-                    + str(len(lidar_files))
-                    + " files selected"
-                    + (", of which " + str(len_errors) + txt1 if len_errors > 0 else ".\n\n")
-                    + "* "
-                    + str(goodRT)
-                    + " lidar files were read."
-                )
+#             len_errors = len(errors0) + len(errors1)
+# 
+#             if errors0:
+#                 errors0.append("\n")
+#             if errors1:
+#                 errors1.append("\n")
+# 
+#             warnings = errors0 + errors1
+# 
+#             if len_errors + goodRT > 0:
+# 
+#                 QApplication.restoreOverrideCursor()
+# 
+#                 txt1 = " could not be read (maybe wrong format).\n\n"
+# 
+#                 self.uc.show_info(
+#                     "INFO 150321.0951:\n\n"
+#                     + "* "
+#                     + str(len(lidar_files))
+#                     + " files selected"
+#                     + (", of which " + str(len_errors) + txt1 if len_errors > 0 else ".\n\n")
+#                     + "* "
+#                     + str(goodRT)
+#                     + " lidar files were read."
+#                 )
                     
                     
                     
@@ -443,6 +439,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
 
             QApplication.restoreOverrideCursor()
+            self.uc.show_info("Elevations assigned from LIDAR files.")
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

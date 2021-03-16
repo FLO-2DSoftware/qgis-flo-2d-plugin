@@ -1397,9 +1397,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             warning = ""
             with open(outflow, "w") as o:
                 for oid, gid in out_cells:
-                    if border is not None:
-                        if gid in border:
-                            continue
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
                         if row is not None:
@@ -1435,6 +1432,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         
  
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
+                    if border is not None:
+                        if gid in border:
+                            continue
                     ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
                     o.write(o_line.format(ident, gid))
 

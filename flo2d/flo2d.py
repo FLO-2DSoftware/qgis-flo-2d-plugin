@@ -1519,6 +1519,9 @@ class Flo2D(object):
                 try:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
 
+                    s = QSettings()
+                    s.setValue("FLO-2D/lastGdsDir", outdir)
+
                     self.call_IO_methods(
                         export_calls, True, outdir
                     )  # The strings list 'export_calls', contains the names of

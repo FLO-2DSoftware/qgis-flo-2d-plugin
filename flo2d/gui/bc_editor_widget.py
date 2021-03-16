@@ -152,6 +152,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_bc(self):
         in_inserted, out_inserted, out_deleted = 0, 0, 0
+        border = []
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
         if not exist_user_bc:
             self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
@@ -905,7 +906,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.gutils.execute('DELETE FROM inflow_cells;')
             
             
-            all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall() 
+#             all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall() 
             
             ins_qry = '''
                 INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor)
