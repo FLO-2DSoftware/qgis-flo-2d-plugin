@@ -1421,7 +1421,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 o.write(qh_table_line.format(*values))
                         else:
                             pass
+                        
                         if chan_tser_fid > 0 or fp_tser_fid > 0:
+                            if border is not None:
+                                if gid in border:
+                                    continue                         
                             nostacfp = 1 if chan_tser_fid == 1 else 0
                             o.write(n_line.format(gid, nostacfp))
                             series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
@@ -1430,14 +1434,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         else:
                             pass
                         
- 
+                # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-                    if border is not None:
-                        if gid in border:
-                            continue
+#                     if border is not None:
+#                         if gid in border:
+#                             continue
                     ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
                     o.write(o_line.format(ident, gid))
-
+                    if border is not None:
+                        if gid in border:
+                            border.remove(gid)
+                
+                # Write lines 'O cell_id":            
                 if border is not None:
                     for b in border:
                        o.write(o_line.format("O", b)) 

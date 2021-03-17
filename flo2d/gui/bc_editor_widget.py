@@ -112,7 +112,23 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         
         self.setup_connection()
 
-#         self.highlight_time_stage_cells()
+        out_deleted, time_stage_1, time_stage_2, border = self.select_outflows_according_to_type() 
+        self.highlight_time_stage_cells(time_stage_1, time_stage_2)  
+        
+        if time_stage_1:
+            set_BC_Border(border)
+
+
+
+
+
+
+#         self.highlight_time_stage_cells(BC_BORDER,[])
+        
+        
+        
+        
+        
         
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
@@ -170,7 +186,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         out_deleted, time_stage_1, time_stage_2, border = self.select_outflows_according_to_type() 
         self.highlight_time_stage_cells(time_stage_1, time_stage_2)  
         
-        set_BC_Border(border) 
+        if time_stage_1:
+            set_BC_Border(border) 
         
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
         self.lyrs.repaint_layers()
