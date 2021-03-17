@@ -853,7 +853,7 @@ class Outflow(GeoPackageUtils):
         self.clear_type_data()
         self.clear_data_fids()
         self.typ = typ
-        if typ in (2, 8):
+        if typ in (2, 8, 9, 11):
             self.chan_out = 1
         elif typ in (1, 7):
             self.fp_out = 1
