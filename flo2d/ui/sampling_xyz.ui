@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Elevation Points Sampling</string>
+   <string>Elevation Points Assignment</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_5">
    <item row="0" column="0" colspan="2">
@@ -262,7 +262,7 @@
      <property name="checked">
       <bool>false</bool>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>41</x>
@@ -277,6 +277,9 @@
          <property name="text">
           <string>Use all LIDAR points</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item row="1" column="0">
@@ -287,7 +290,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QSpinBox" name="spinBox">
+        <widget class="QSpinBox" name="porcentage_dbox">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>

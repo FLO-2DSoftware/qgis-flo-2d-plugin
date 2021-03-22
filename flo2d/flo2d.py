@@ -694,12 +694,12 @@ class Flo2D(object):
                     msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
                     msg += "Load the model?"
                     old_gpkg = _old_gpkg
-                    answer = self.uc.customized_question(msg)
+                    answer = self.uc.customized_question("FLO-2D", msg)
                 else:
-                    answer = self.uc.customized_question(msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                    answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
             else:
                 msg += "Load the model?"
-                answer = self.uc.customized_question(msg)
+                answer = self.uc.customized_question("FLO-2D", msg)
             if answer == QMessageBox.Yes:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
