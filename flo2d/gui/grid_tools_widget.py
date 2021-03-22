@@ -228,7 +228,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     ) 
                     
             else:
-                dlg.interpolate_from_lidar()                       
+                dlg.interpolate_from_lidar(20)                       
         else:
             return
 

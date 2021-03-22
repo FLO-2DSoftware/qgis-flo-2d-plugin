@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.18
+version=0.10.19
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,8 +9,10 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.19
+    - Import LIDAR files, interpolate, and assign elevations to cells.
  <p>0.10.18
-   	- Boundary Conditions:
+  - Boundary Conditions:
  		- 	Use 'area_factor' field in 'inflow_cells' and 'outflow_cells' tables as pointer to 'bc_fid' field in 'inflow' and 'outflow' tables.
  		- 	Disable Outflow Type 10 in Outflow Type combobox of widget.
 		- 	Delete 'outflow_cells' and 'inflow_cells' features when schematizing BC.

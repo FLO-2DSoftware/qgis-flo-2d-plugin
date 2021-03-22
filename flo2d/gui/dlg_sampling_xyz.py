@@ -8,13 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os
-from qgis.core import QgsWkbTypes, Qgis
+import os, stat
+from qgis.core import *
+# QgsWkbTypes, Qgis, QgsFeatureRequest, QgsVectorLayer, QgsField, QgsFields, QgsFeature, QgsGeometry, QgsPointXY, QgsProject
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtCore import QSettings, Qt 
-from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QProgressBar
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant
+from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QProgressBar, qApp, QMessageBox
+from ..flo2d_tools.grid_tools import number_of_elements, fid_from_grid, adjacent_grid_elevations
+from plugins.processing.tools.vector import values
 import time
 
 uiDialog, qtBaseClass = load_ui("sampling_xyz")
@@ -64,8 +67,11 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
     def lidar_selected(self):
         self.points_layer_grp.setChecked(not self.lidar_grp.isChecked())
-                    
-    def interpolate_from_lidar(self):
+        self.use_all_radio.setEnabled(False)
+        self.use_porcentage_radio.setEnabled(False)
+        self.porcentage_dbox.setEnabled(False)
+                   
+    def interpolate_from_lidar(self, n_max_points = 20):
 
         s = QSettings()
         last_dir = s.value("FLO-2D/lastLIDARDir", "")
@@ -73,7 +79,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             None,
             "Select LIDAR files",
             directory=last_dir,
-            filter="(ELEVFILES.DAT   ELEVFILESBIN.DAT   *.TXT   *.DAT   *.FLT);;(ELEVFILES.DAT);;(ELEVFILEBIN.DAT);;(*.TXT);;(*.FLT);;(*.DAT);;(*.*)",
+            filter="*.TXT ; *.DAT;;Normal text file (*.txt;*.TXT) ;;*.DAT;;All files (*)",
         )
 
         if not lidar_files:
@@ -81,371 +87,392 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            elevs = {}
             errors0 = []
             errors1 = []
             warnings = []
+            read_error = "Error reading files:\n\n"
             accepted_files = []
-            goodRT = 0
+            outside_grid, inside_grid = 0, 0
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+
+            progressMessageBar1= self.iface.messageBar().createMessage("Reading LIDAR files...")
+            progress1 = QProgressBar()
+            progress1.setMaximum(len(lidar_files) + 1)
+            progress1.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+            progressMessageBar1.layout().addWidget(progress1)
+            self.iface.messageBar().pushWidget(progressMessageBar1, Qgis.Info)
 
 
+#             progressMessageBar2= self.iface.messageBar().createMessage("Reading LIDAR files...")
+#             progress2 = QProgressBar()
+#             progress2.setMaximum(len(lidar_files) + 1)
+#             progress2.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+#             progressMessageBar2.layout().addWidget(progress2)
+#             self.iface.messageBar().pushWidget(progressMessageBar2, Qgis.Info)
+            
+#             # Create points layer:
+#             vl = QgsVectorLayer("Point", "temporary_points", "memory")
+#             vl.startEditing()
+#             pr = vl.dataProvider()
+#             # add fields
+#             pr.addAttributes([QgsField("elevation", QVariant.Double)])
+#             vl.updateFields() # tell the vector layer to fetch changes from the provider
 
-            progressMessageBar = self.iface.messageBar().createMessage("Doing something boring...")
-            progress = QProgressBar()
-            progress.setMaximum(len(lidar_files))
-            progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
-            progressMessageBar.layout().addWidget(progress)
-            self.iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
-
-
-
-
-            for file in lidar_files:
+            start_time = time.time()
+            
+            for i, file in enumerate(lidar_files,1):
+#                 progress1.setValue(i) 
+                n_commas =  0
+                n_spaces = 0             
+                 
 #                 err0, err1 = self.check_LIDAR_file(file)
 #                 if err0 == "" and err1 == "" :
-
-
-                
-#                 for i in range(len(lidar_files)):
-#                     time.sleep(1)
-#                     progress.setValue(i + 1)
-                
-
-                # See if comma delimited:
+ 
+                # See if comma or space delimited:
                 with open(file, "r") as f:
-                  line = f.readline()  
-                  n_commas = line.count(",")
-                  n_spaces = line.count(" ")
-      
-#                     self.iface.messageBar().pushMessage(
-#                             "Interpolating points from file " + file  +  ". The process may take several minutes...",
-#                             level=Qgis.Warning)
-                i= 0        
-                goodRT += 1                    
-                with open(file, "r") as f1:
-                    i += 1
-                    time.sleep(1)
-                    progress.setValue(i)
-                    for line in f1:
-                        pass
-#                             row = line.split()
+                    while True:    
+                        line = f.readline()
+                        line = line.replace('\t', '') 
+                        if line.strip() != "": 
+                            n_commas = line.count(",")
+                            if n_commas == 0:
+                                n_spaces = len(line.split())
+                            break
+                if n_commas != 0 or n_spaces != 0:
+                    # Read file: 
+#                     self.uc.progress_bar("Reading " + file)                 
+                    with open(file, "r") as f1:
+                        try:
+                            k = 0
+                            for line in f1: 
+                                line = line.replace('\t', '')                            
+                                if n_commas == 0: # No commas, values separated by spaces.
+                                    values = line.split()   
+                                    n_values = len(values)
+                                    if n_values == 3:
+                                        xpp, ypp, zpp  = values
+                                    elif n_values == 4:
+                                        xpp, ypp, zpp, dummy  = values  
+                                    elif n_values == 5:
+                                        dummy1, xpp, ypp, zpp, dummy2  = values  
+                                    else:
+                                        break          
+                                elif n_commas == 2:  # 3 columns.
+                                    xpp, ypp, zpp  = line.split(",") 
+                                elif n_commas == 3:  # 4 columns.
+                                    xpp, ypp, zpp, dummy  = line.split(",") 
+                                elif n_commas == 4:  # 5 columns.
+                                     dummy1, xpp, ypp, zpp, dummy2  = line.split(",")  
+                                else:
+                                    break  
+                                  
+                                cell = self.gutils.grid_on_point(xpp, ypp)
+                                
+                                if cell is not None:
+                                    if cell in elevs:
+                                        elevs[cell][0] += float(zpp)
+                                        elevs[cell][1] += 1
+                                    else:
+                                        elevs[cell] = [float(zpp), 1]
+                                    inside_grid += 1                         
+                                    
+                                else:
+                                    outside_grid += 1
+                        except ValueError:
+                            read_error += os.path.basename(file) + "\n\n"
 
-                    
+                        
+            # Assign -9999 to all cell elevations prior to the assignment from LIDAR points: 
+            self.gutils.execute("UPDATE grid SET elevation = -9999;")
+            
+            # Update cell elevations from LIDAR points:
+            if elevs:
+                for cell, value in elevs.items():
+                    elevation = round(value[0]/value[1],4)
+                    self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elevation, cell))
+
             self.iface.messageBar().clearWidgets()        
-                    
-                    
-#             len_errors = len(errors0) + len(errors1)
-# 
-#             if errors0:
-#                 errors0.append("\n")
-#             if errors1:
-#                 errors1.append("\n")
-# 
-#             warnings = errors0 + errors1
-# 
-#             if len_errors + goodRT > 0:
-# 
-#                 QApplication.restoreOverrideCursor()
-# 
-#                 txt1 = " could not be read (maybe wrong format).\n\n"
-# 
-#                 self.uc.show_info(
-#                     "INFO 150321.0951:\n\n"
-#                     + "* "
-#                     + str(len(lidar_files))
-#                     + " files selected"
-#                     + (", of which " + str(len_errors) + txt1 if len_errors > 0 else ".\n\n")
-#                     + "* "
-#                     + str(goodRT)
-#                     + " lidar files were read."
-#                 )
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
+            QApplication.restoreOverrideCursor()    
+             
+            end_time = time.time()   
+            elapsed_time = round((end_time - start_time)/60.0 , 2)
+            hours, rem = divmod(end_time-start_time, 3600)
+            minutes, seconds = divmod(rem, 60)            
+            elapsed_time = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
+            
+            self.uc.show_info("Elevations assigned from LIDAR files.\n\n" + '{0:,d}'.format(inside_grid) + 
+                              " points inside the grid, and " + '{0:,d}'.format(outside_grid) + " points outside." + 
+                              "\n\n(Elapsed time: " + str(elapsed_time) + ")")
+            
+            if read_error != "Error reading files:\n\n":
+                self.uc.show_info(read_error)
+            self.grid = self.lyrs.data["grid"]["qlyr"]
+            
+            n_cells = number_of_elements(self.gutils, self.grid)
+            n_no_assigned_cells = n_cells - len(elevs)
+            if n_no_assigned_cells > 0:
+                
+                while True:
+                    QApplication.restoreOverrideCursor()       
+                    # Get non-assigned cells:
+                    nope = []
+                    for i in range(1, n_cells + 1):
+                        if i not in elevs:
+                            nope.append(i)
+                        else:
+                            pass      
+                                                  
+                    dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
+                    dlg.label.setText("There are " + str(n_no_assigned_cells) + " non-interpolated grid elements.")
+                    ok = dlg.exec_()
+                    if not ok:
+                        return
+                    else:
+                        s = QSettings()
+                        lastDir = s.value("FLO-2D/lastGdsDir", "")
+                        qApp.processEvents()
+                        
+                        shapefile = lastDir + "/Non-interpolated cells.shp"
+                        name = "Non-interpolated cells"
+            
+                        lyr = QgsProject.instance().mapLayersByName(name)
+            
+                        if lyr:
+                            QgsProject.instance().removeMapLayers([lyr[0].id()])                  
+                        
+                        if dlg.interpolate_radio.isChecked():
+                            
+                            ini_time = time.time()
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
+    
+                            for this_cell in nope:
+                                currentCell = next(self.grid.getFeatures(QgsFeatureRequest(this_cell)))
+                                xx, yy = currentCell.geometry().centroid().asPoint()
+                
+                                elevs = []
+                                sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
+                                # North cell:
+                                y = yy + cell_size
+                                x = xx
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # NorthEast cell
+                                y = yy + cell_size
+                                x = xx + cell_size
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # East cell:
+                                x = xx + cell_size
+                                y = yy
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # SouthEast cell:
+                                y = yy - cell_size
+                                x = xx + cell_size
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # South cell:
+                                y = yy - cell_size
+                                x = xx
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # SouthWest cell:
+                                y = yy - cell_size
+                                x = xx - cell_size
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # West cell:
+                                y = yy
+                                x = xx - cell_size
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                # NorthWest cell:
+                                y = yy + cell_size
+                                x = xx - cell_size
+                                grid = self.gutils.grid_on_point(x, y)
+                                if grid is not None:
+                                    altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
+                                    if altitude != -9999:
+                                        elevs.append(altitude)
+                
+                                if len(elevs) == 0:
+                                    pass
+                                else:
+                                    elev = round(sum(elevs)/len(elevs), 3)
+                                    self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elev, this_cell))  
+                            
+                            self.lyrs.repaint_layers()
 
-# Sub INTERPOLATE_LIDAR_VB6(Cota_En_Centro() As Single, N_Max_Points As Long, Error_Tolerance As Single)
-#     
-#   Dim NUMBER_OF_LIDAR_FILES As Long
-#   Dim LIDARFILES() As String
-#   Dim Xmin As Double, Ymin As Double, Zmin As Double, Xmax As Double, Ymax As Double, Zmax As Double
-#   Dim XCMIN As Double, YCMIN As Double, XCMAX As Double, YCMAX As Double
-#   Dim IMIN As Long, JMIN As Long, iMax As Long, JMAX As Long
-#   Dim NPOINTSC() As Long, IDCELL() As Long
-#   Dim SUMT() As Double
-#   Dim FILE_EXISTS As Boolean
-#   Dim XPP   As Double, YPP As Double
-#   Dim ZPP As Single
-#   Dim ICELL As Long, I As Long, J As Long, K As Long, NTILES As Long, ITILE As Integer
-#   Dim F As Integer
-#   Dim II As Integer, Ln As String, Pos As Integer, s1 As String, Comma As Boolean
-#   Dim III As Long, JJJ As Long
-#   Dim errorMsg As String
-#   
-#   
-#   On Error GoTo Error_01
-# 
-#   ReDim SUMT(1 To MaxI_Malla, 1 To MaxJ_Malla)
-#   ReDim IDCELL(1 To MaxI_Malla, 1 To MaxJ_Malla)
-#   ReDim NPOINTSC(1 To MaxI_Malla, 1 To MaxJ_Malla)
-# 
-#   
-#   If N_Max_Points = 0 And Error_Tolerance = -9999 Then
-#     'Use maximum number of points on each element to interpolate
-#     N_Max_Points = 1  'Assumes this maximum
-#   Else
-#     N_Max_Points = Int(100 / N_Max_Points) 'Do nothing and assume N_Max_Points will be taken as limit
-#   End If
-# 
-# '  IDCELL = -9999
-# 
-# '  For ICELL = 1 To N_Celdas_Int
-# '    If En_Malla_Double(Centro_X(ICELL), Centro_Y(ICELL), i, J) Then
-# '      IDCELL(i, J) = ICELL
-# '    End If
-# '  Next
-# 
-#   NTILES = LIDAR_File_Names.Count2
-# '  SUMT = 0
-# '  NPOINTSC = 0
-#   
-#   'For each elevation LIDAR file
-#   For ITILE = 0 To NTILES - 1
-#     If Dire(Trim(LIDAR_File_Names.item(ITILE))) <> 0 Then
-#       F = FreeFile(0)
-#       Open LIDAR_File_Names.item(ITILE) For Input As #F
-#       
-#       'See if comma delimited:
-#         Line Input #1, Ln
-#         Ln = Trim(Ln)
-#         Pos = InStr(Trim(Ln), ",")
-#         If Pos > 0 Then
-#           Comma = True
-#         Else
-#           Comma = False
-#         End If
-#         Close
-#         
-#       'See if 3 or 5 columns:
-#       
-#         Open LIDAR_File_Names.item(ITILE) For Input As #F
-#         
-#         If Comma Then
-#           Line Input #F, Ln
-#           Ln = Trim(Ln)
-#           Pos = InStr(Ln, ",")
-#           II = 0
-#           Do While Pos <> 0
-#             II = II + 1
-#             Ln = Trim(Mid(Ln, Pos + 1))
-#             Pos = InStr(Ln, ",")
-#           Loop
-#           
-#           If II = 2 Then
-#             '3 columns
-#           ElseIf II = 4 Then
-#             '5 columns
-#           End If
-#           
-#         Else 'separated by spaces
-#           Line Input #F, Ln
-#           Ln = Trim(Ln)
-#           Pos = InStr(Ln, " ")
-#           II = 0
-#           Do While Pos <> 0
-#             II = II + 1
-#             Ln = Trim(Mid(Ln, Pos + 1))
-#             Pos = InStr(Ln, " ")
-#           Loop
-#           
-#           If II = 2 Then
-#             '3 columns
-#           ElseIf II = 4 Then
-#             '5 columns
-#           End If
-#         End If
-#         Close #F
-# 
-#       Open LIDAR_File_Names.item(ITILE) For Input As #F
-# 
-#       Wait.Mensaje.Caption = "Interpolating points from file " & LIDAR_File_Names.item(ITILE) & "." & _
-#                               Chr(10) & "The process may take several minutes..."
-#       Wait.Cancel.Visible = False
-#       Wait.Show
-#       Wait.Refresh
-#       
-#       K = 0
-#       Do While Not EOF(F)
-#         If K >= N_Max_Points Then
-#            'No more points needed
-#            K = 0
-#         Else
-#           K = K + 1
-#           
-#           If II = 2 Then '3 columns
-#             If Comma Then 'space delimited
-#               Line Input #F, Ln
-#                 
-#               Ln = Trim(Ln)
-#               Pos = InStr(Ln, ",")
-#               XPP = Val(Left(Ln, Pos))
-#               
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, ",")
-#               YPP = Val(Left(Ln, Pos))
-# 
-#               ZPP = Val(Mid(Ln, Pos + 1))
-#               
-#             Else 'space delimited, no comma
-#               Input #F, XPP, YPP, ZPP
-#             End If
-#             
-#           ElseIf II = 3 Then '4 columns
-#            If Comma Then 'space delimited
-#              Line Input #F, Ln
-#                
-#              Ln = Trim(Ln)
-#              Pos = InStr(Ln, ",")
-#              XPP = Val(Left(Ln, Pos))
-#              
-#              Ln = Trim(Mid(Ln, Pos + 1))
-#              Pos = InStr(Ln, ",")
-#              YPP = Val(Left(Ln, Pos))
-# 
-#              ZPP = Val(Mid(Ln, Pos + 1))
-#              
-#            Else 'space delimited, no comma
-#              Input #F, XPP, YPP, ZPP
-#            End If
-#             
-#           Else '5 columns
-#             If Comma Then 'comma delimited
-#               Line Input #F, Ln
-#                 
-#               Ln = Trim(Ln)
-#               Pos = InStr(Ln, ",")
-#               s1 = Val(Left(Ln, Pos))
-#               
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, ",")
-#               XPP = Val(Left(Ln, Pos))
-#             
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, ",")
-#               YPP = Val(Left(Ln, Pos))
-#               
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, ",")
-#               ZPP = Val(Left(Ln, Pos))
-# 
-#             Else 'space delimited
-#               Line Input #F, Ln
-#                 
-#               Ln = Trim(Ln)
-#               Pos = InStr(Ln, " ")
-#               s1 = Val(Left(Ln, Pos))
-#               
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, " ")
-#               XPP = Val(Left(Ln, Pos))
-#             
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, " ")
-#               YPP = Val(Left(Ln, Pos))
-#               
-#               Ln = Trim(Mid(Ln, Pos + 1))
-#               Pos = InStr(Ln, " ")
-#               ZPP = Val(Left(Ln, Pos))
-#             End If
-#               
-#           End If
-#           
-#           'With the points read, calculate the number of points and sum of elevations for this (i,j):
-#           If Int(K / N_Max_Points) = K / N_Max_Points Then 'Sample points: count points every NP_MAX points
-#             'What happens if XPP, YPP is not contained in any cell
-#             'If En_Malla_Double(XPP, YPP, I, J) Then
-#             
-#                     III = Int((XPP - X0_Malla) / X_CeldaMalla) + 1
-#                     JJJ = Int((YPP - Y0_Malla) / Y_CeldaMalla) + 1
-#                     
-#                     If III > MaxI_Malla Or JJJ > MaxJ_Malla Or III < 1 Or JJJ < 1 Then
-#                       'Outside the grid
-#                     Else
-#                       ' WHAT IF THERE ARE NO POINTS IN ELEMENT I J?
-#                         NPOINTSC(III, JJJ) = NPOINTSC(III, JJJ) + 1
-#                         SUMT(III, JJJ) = SUMT(III, JJJ) + ZPP
-#                     End If
-#             
-#             'End If
-#           End If
-#         End If
-#       Loop
-#       Close #F
-#     Else
-#       errorMsg = errorMsg & CR_LF & "File " & LIDAR_File_Names.item(ITILE) & " does not exist."
-#     End If
-#   Next
-#   
-#   If errorMsg <> "" Then
-#     MsgBox errorMsg, vbExclamation
-#   End If
-#     
-#   'Calculate interpolated cell elevation:
-#     K = 0
-#     For I = 1 To MaxI_Malla
-#       For J = 1 To MaxJ_Malla
-#         If Celda_Interior(I, J) Then
-#            K = K + 1
-# '          If IDCELL(I, J) <> -9999 Then
-#               If NPOINTSC(I, J) <> 0 Then
-#                 Cota_En_Centro(K) = SUMT(I, J) / NPOINTSC(I, J) ' COMPUTES ELEVATION AT IDCELL(I,J)
-#               Else
-#                 Cota_En_Centro(K) = -9999 ' ASSINGS THIS VALUE TO CELLS WITHOUT ELEVATIONS
-#               End If
-# '          End If
-#         End If
-#       Next
-#     Next
-#     
-#   Close
-#   Wait.Hide
-#   Exit Sub
-#   
-# Error_01:
-#   Close
-#   Wait.Hide
-#   MsgBox "ERROR 1906101111: error while interpolating LIDAR files", vbExclamation
-#   Tell_About_The_Error
-#   Exit Sub
-# 
-# End Sub
+                            QApplication.restoreOverrideCursor()  
+                            fin_time = time.time()  
+                            
+                            duration = self.time_taken(ini_time, fin_time)  
+                            
+                            self.uc.show_info("Elevation to " + str(len(nope)) + " non-interpolated cells were assigned from adjacent elevations." + 
+                                               "\n\n(Elapsed time: " + duration + ")")
+                        
+                            del dlg
+                            break
+                        elif dlg.assign_radio.isChecked():
+                            
+                            ini_time = time.time()
+                            QApplication.setOverrideCursor(Qt.WaitCursor)                              
+                            
+                            value = dlg.non_interpolated_value_dbox.value()
+                            for this_cell in nope:
+                                self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (value, this_cell)) 
+                                
+                            self.lyrs.repaint_layers()
+    
+                            QApplication.restoreOverrideCursor()                               
+                            fin_time = time.time()      
+                            
+                            duration = self.time_taken(ini_time, fin_time)  
+                             
+                            self.uc.show_info("Elevation " + str(value) + " was assigned to "   + str(len(nope)) +  " non-interpolated cells." +
+                                              "\n\n(Elapsed time: " + duration + ")")      
+                             
+                            del dlg                         
+                            break
+                        
+                        elif dlg.highlight_radio.isChecked():
+                             
+                            ini_time = time.time()    
+                            QApplication.setOverrideCursor(Qt.WaitCursor)     
+    
+                            # Define fields for feature attributes. 
+                            fields = QgsFields()
+                            fields.append(QgsField("cell", QVariant.Int))
+                            fields.append(QgsField("elevation", QVariant.Int))
 
+                            mapCanvas = self.iface.mapCanvas()
+                            crs = mapCanvas.mapSettings().destinationCrs()
+                            QgsVectorFileWriter.deleteShapeFile(shapefile)                               
+                            writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.Point, crs, "ESRI Shapefile")
+                
+                            if writer.hasError() == QgsVectorFileWriter.NoError:
+                                pass
+                            else:
+                                QApplication.restoreOverrideCursor()
+                                
+                                answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
+                                                                     QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
+                                                                     QMessageBox.Cancel,
+                                                                     QMessageBox.Critical)
+                                
+                                if answer ==  QMessageBox.Cancel:
+                                    del writer
+                                    del dlg
+                                    break
+                                
+                                elif answer ==  QMessageBox.Retry:
+                                    pass
+                                                                                                                    
+#                                 elif answer ==  QMessageBox.Ignore: 
+#                                     del writer
+#                                     del dlg
+#                                     break
+                            
+                                elif answer ==  QMessageBox.Help:  
+                                    self.uc.show_info("Error while creating shapefile: " + shapefile + 
+                                                      "\n\nIs the file or directory read only?")
+                                    del writer
+                                    del dlg                                  
+                                     
+                            QApplication.setOverrideCursor(Qt.WaitCursor)   
+                            
+                            if writer.hasError() == QgsVectorFileWriter.NoError:                             
+                                # Add features:
+                                features = []
+                                for this_cell in nope:  
+                                        currentCell = next(self.grid.getFeatures(QgsFeatureRequest(this_cell)))
+                                        xx, yy = currentCell.geometry().centroid().asPoint()
+                                         
+                                        # add a feature
+                                        fet = QgsFeature()
+                                        fet.setFields(fields)
+                                        fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
+                                        fet.setAttributes([this_cell, -9999])
+                                        features.append(fet)
+                                
+                                writer.addFeatures(features)                            
+        
+                                # Delete the writer to flush features to disk.
+                                del writer
+                    
+                                vlayer = self.iface.addVectorLayer(shapefile, "", "ogr")
+                    
+                                symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
+                                vlayer.renderer().setSymbol(symbol)
+                    
+                                # Show the change.
+                                vlayer.triggerRepaint() 
+                                del dlg      
+                                                                      
+                                QApplication.restoreOverrideCursor()
+                                fin_time = time.time()  
+                                       
+                                duration = self.time_taken(ini_time, fin_time)  
+                                 
+                                QApplication.restoreOverrideCursor() 
+                                self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
+                                                  "\n\n(Elapsed time: " + duration + ")")   
 
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Elevations assigned from LIDAR files.")
+                                break
+                      
+                self.lyrs.refresh_layers()
+                self.lyrs.zoom_to_all()
+                
+                QApplication.restoreOverrideCursor()
+                               
+#                 time_passed = round((fin_time - ini_time)/60.0 , 2)
+#                 hours, rem = divmod(fin_time - ini_time, 3600)
+#                 minutes, seconds = divmod(rem, 60)            
+#                 time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
+#                 self.uc.show_info("Elapsed time: " + str(time_passed))
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
+            self.iface.messageBar().clearWidgets()        
             self.uc.show_error("ERROR 140321.1653: importing LIDAR files failed!", e)
             return
+    def time_taken(self, ini, fin):  
+        time_passed = round((fin - ini)/60.0 , 2)
+        hours, rem = divmod(fin - ini, 3600)
+        minutes, seconds = divmod(rem, 60)            
+        time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
+        return time_passed      
         
+          
     def check_LIDAR_file(self, file):
         file_name, file_ext = os.path.splitext(os.path.basename(file))
         error0 = ""
@@ -472,4 +499,24 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             error0 = "File " + file_name + file_ext + " is not a text file!"
         finally:
              return error0, error1
+
+
+uiDialog, qtBaseClass = load_ui("lidar_options")
+class LidarOptionsDialog(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, lyrs):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.con = con
+        self.iface = iface
+        self.lyrs = lyrs
+        self.setupUi(self)
+        self.gutils = GeoPackageUtils(con, iface)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        
+    def _del_(self): 
+        pass
+  
+
+
+
            
