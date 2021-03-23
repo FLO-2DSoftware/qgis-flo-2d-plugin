@@ -2,7 +2,7 @@ name: Auto Tests
 on: [push]
 jobs:
   linux_tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

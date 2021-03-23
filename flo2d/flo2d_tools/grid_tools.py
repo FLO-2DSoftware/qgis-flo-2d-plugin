@@ -123,7 +123,7 @@ class ZonalStatistics(object):
                 else:
                     pass
             try:
-                yield round(self.calculation_method(points), 3), feat["fid"]
+                yield round(self.calculation_method(points), 4), feat["fid"]
             except (ValueError, ZeroDivisionError) as e:
                 pass
 
@@ -258,7 +258,7 @@ class ZonalStatisticsOther(object):
                 else:
                     pass
             try:
-                yield round(self.calculation_method(points), 3), feat["fid"]
+                yield round(self.calculation_method(points), 4), feat["fid"]
             except (ValueError, ZeroDivisionError) as e:
                 pass
 
@@ -868,7 +868,7 @@ def raster2grid(grid, out_raster, request=None):
         # ident is the value of the query provided by the identify method of the dataProvider.
         if ident.isValid():
             if is_number(ident.results()[1]):
-                val = round(ident.results()[1], 3)
+                val = round(ident.results()[1], 4)
             else:
                 val = None
             yield val, feat.id()
@@ -909,7 +909,7 @@ def rasters2centroids(vlayer, request, *raster_paths):
             # ident is the value of the query provided by the identify method of the dataProvider.
             if ident.isValid():
                 if is_number(ident.results()[1]):
-                    val = round(ident.results()[1], 3)
+                    val = round(ident.results()[1], 4)
                 else:
                     val = None
                 raster_values.append((val, fid))
