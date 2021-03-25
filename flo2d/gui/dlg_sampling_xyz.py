@@ -12,6 +12,7 @@ import os, stat
 from qgis.core import *
 # QgsWkbTypes, Qgis, QgsFeatureRequest, QgsVectorLayer, QgsField, QgsFields, QgsFeature, QgsGeometry, QgsPointXY, QgsProject
 from .ui_utils import load_ui
+from ..utils import time_taken
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings, Qt, QVariant
@@ -85,8 +86,9 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         if not lidar_files:
             return
         s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+       
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             elevs = {}
             errors0 = []
             errors1 = []
@@ -213,21 +215,24 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             n_no_assigned_cells = n_cells - len(elevs)
             if n_no_assigned_cells > 0:
                 
+                # Get non-assigned cells:
+                nope = []
+                for i in range(1, n_cells + 1):
+                    if i not in elevs:
+                        nope.append(i)
+                    else:
+                        pass       
+                               
+                QApplication.restoreOverrideCursor()  
+                dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
+                dlg.label.setText("There are " + str(n_no_assigned_cells) + " non-interpolated grid elements.")                
+                
                 while True:
-                    QApplication.restoreOverrideCursor()       
-                    # Get non-assigned cells:
-                    nope = []
-                    for i in range(1, n_cells + 1):
-                        if i not in elevs:
-                            nope.append(i)
-                        else:
-                            pass      
-                                                  
-                    dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
-                    dlg.label.setText("There are " + str(n_no_assigned_cells) + " non-interpolated grid elements.")
+    
+                                                
                     ok = dlg.exec_()
                     if not ok:
-                        return
+                        break
                     else:
                         s = QSettings()
                         lastDir = s.value("FLO-2D/lastGdsDir", "")
@@ -250,7 +255,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 currentCell = next(self.grid.getFeatures(QgsFeatureRequest(this_cell)))
                                 xx, yy = currentCell.geometry().centroid().asPoint()
                 
-                                elevs = []
+                                heights = []
                                 sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
                                 # North cell:
                                 y = yy + cell_size
@@ -259,7 +264,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # NorthEast cell
                                 y = yy + cell_size
@@ -268,7 +273,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # East cell:
                                 x = xx + cell_size
@@ -277,7 +282,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # SouthEast cell:
                                 y = yy - cell_size
@@ -286,7 +291,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # South cell:
                                 y = yy - cell_size
@@ -295,7 +300,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # SouthWest cell:
                                 y = yy - cell_size
@@ -304,7 +309,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # West cell:
                                 y = yy
@@ -313,7 +318,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
                                 # NorthWest cell:
                                 y = yy + cell_size
@@ -322,12 +327,12 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 if grid is not None:
                                     altitude = self.gutils.execute(sel_elev_qry, (grid,)).fetchone()[0]
                                     if altitude != -9999:
-                                        elevs.append(altitude)
+                                        heights.append(altitude)
                 
-                                if len(elevs) == 0:
+                                if len(heights) == 0:
                                     pass
                                 else:
-                                    elev = round(sum(elevs)/len(elevs), 3)
+                                    elev = round(sum(heights)/len(heights), 3)
                                     self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elev, this_cell))  
                             
                             self.lyrs.repaint_layers()
@@ -335,13 +340,13 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             QApplication.restoreOverrideCursor()  
                             fin_time = time.time()  
                             
-                            duration = self.time_taken(ini_time, fin_time)  
+                            duration = time_taken(ini_time, fin_time)  
                             
                             self.uc.show_info("Elevation to " + str(len(nope)) + " non-interpolated cells were assigned from adjacent elevations." + 
                                                "\n\n(Elapsed time: " + duration + ")")
                         
-                            del dlg
-                            break
+#                             del dlg
+                                                    
                         elif dlg.assign_radio.isChecked():
                             
                             ini_time = time.time()
@@ -356,14 +361,13 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             QApplication.restoreOverrideCursor()                               
                             fin_time = time.time()      
                             
-                            duration = self.time_taken(ini_time, fin_time)  
+                            duration = time_taken(ini_time, fin_time)  
                              
                             self.uc.show_info("Elevation " + str(value) + " was assigned to "   + str(len(nope)) +  " non-interpolated cells." +
                                               "\n\n(Elapsed time: " + duration + ")")      
                              
-                            del dlg                         
-                            break
-                        
+#                             del dlg                         
+                                                    
                         elif dlg.highlight_radio.isChecked():
                              
                             ini_time = time.time()    
@@ -380,37 +384,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.Point, crs, "ESRI Shapefile")
                 
                             if writer.hasError() == QgsVectorFileWriter.NoError:
-                                pass
-                            else:
-                                QApplication.restoreOverrideCursor()
-                                
-                                answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
-                                                                     QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
-                                                                     QMessageBox.Cancel,
-                                                                     QMessageBox.Critical)
-                                
-                                if answer ==  QMessageBox.Cancel:
-                                    del writer
-                                    del dlg
-                                    break
-                                
-                                elif answer ==  QMessageBox.Retry:
-                                    pass
-                                                                                                                    
-#                                 elif answer ==  QMessageBox.Ignore: 
-#                                     del writer
-#                                     del dlg
-#                                     break
-                            
-                                elif answer ==  QMessageBox.Help:  
-                                    self.uc.show_info("Error while creating shapefile: " + shapefile + 
-                                                      "\n\nIs the file or directory read only?")
-                                    del writer
-                                    del dlg                                  
-                                     
-                            QApplication.setOverrideCursor(Qt.WaitCursor)   
-                            
-                            if writer.hasError() == QgsVectorFileWriter.NoError:                             
                                 # Add features:
                                 features = []
                                 for this_cell in nope:  
@@ -436,43 +409,51 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     
                                 # Show the change.
                                 vlayer.triggerRepaint() 
-                                del dlg      
+#                                 del dlg      
                                                                       
                                 QApplication.restoreOverrideCursor()
-                                fin_time = time.time()  
-                                       
-                                duration = self.time_taken(ini_time, fin_time)  
-                                 
-                                QApplication.restoreOverrideCursor() 
+                                fin_time = time.time()     
+                                duration = time_taken(ini_time, fin_time)  
+                    
                                 self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
-                                                  "\n\n(Elapsed time: " + duration + ")")   
+                                                  "\n\n(Elapsed time: " + duration + ")")                                  
 
-                                break
-                      
+                            else:
+                                QApplication.restoreOverrideCursor()
+                                
+                                answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
+                                                                     QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
+                                                                     QMessageBox.Cancel,
+                                                                     QMessageBox.Critical)
+                                
+                                if answer ==  QMessageBox.Cancel:
+                                    pass
+#                                     del dlg
+                                                                    
+                                elif answer ==  QMessageBox.Retry:
+                                    pass
+                                                                                                                    
+#                                 elif answer ==  QMessageBox.Ignore: 
+#                                     del writer
+#                                     del dlg
+#                                     break
+                            
+                                elif answer ==  QMessageBox.Help:  
+                                    self.uc.show_info("Error while creating shapefile: " + shapefile + 
+                                                      "\n\nIs the file or directory read only?")
+#                                     del dlg                                   
+                                                    
                 self.lyrs.refresh_layers()
                 self.lyrs.zoom_to_all()
                 
-                QApplication.restoreOverrideCursor()
-                               
-#                 time_passed = round((fin_time - ini_time)/60.0 , 2)
-#                 hours, rem = divmod(fin_time - ini_time, 3600)
-#                 minutes, seconds = divmod(rem, 60)            
-#                 time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
-#                 self.uc.show_info("Elapsed time: " + str(time_passed))
+            QApplication.restoreOverrideCursor()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.iface.messageBar().clearWidgets()        
             self.uc.show_error("ERROR 140321.1653: importing LIDAR files failed!", e)
-            return
-    def time_taken(self, ini, fin):  
-        time_passed = round((fin - ini)/60.0 , 2)
-        hours, rem = divmod(fin - ini, 3600)
-        minutes, seconds = divmod(rem, 60)            
-        time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
-        return time_passed      
+            return    
         
-          
     def check_LIDAR_file(self, file):
         file_name, file_ext = os.path.splitext(os.path.basename(file))
         error0 = ""
@@ -513,10 +494,18 @@ class LidarOptionsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
         
+        self.interpolate_radio.clicked.connect(self.enable_non_value)
+        self.assign_radio.clicked.connect(self.enable_non_value)
+        self.highlight_radio.clicked.connect(self.enable_non_value)
+        
     def _del_(self): 
         pass
   
-
+    def enable_non_value(self):
+        if self.assign_radio.isChecked():
+            self.non_interpolated_value_dbox.setEnabled(True)
+        else:
+            self.non_interpolated_value_dbox.setEnabled(False)   
 
 
            

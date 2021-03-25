@@ -86,6 +86,9 @@
        </item>
        <item row="0" column="1">
         <widget class="QDoubleSpinBox" name="non_interpolated_value_dbox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="maximum">
           <double>10000.000000000000000</double>
          </property>

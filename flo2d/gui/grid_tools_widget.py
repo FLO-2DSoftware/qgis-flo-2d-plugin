@@ -11,6 +11,7 @@
 import traceback
 import time
 from .ui_utils import load_ui, set_icon
+from ..utils import time_taken
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import Qt
@@ -209,34 +210,41 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         if ok:
             if dlg.points_layer_grp.isChecked():
                 points_lyr = dlg.current_lyr
-                zfield = dlg.fields_cbo.currentText()
-                calc_type = dlg.calc_cbo.currentText()
-                search_distance = dlg.search_spin_box.value()
-        
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
-                    points_elevation = zs.points_elevation()
-                    zs.set_elevation(points_elevation)
-                    cmd, out = zs.rasterize_grid()
-                    self.uc.log_info(cmd)
-                    self.uc.log_info(out)
-                    cmd, out = zs.fill_nodata()
-                    self.uc.log_info(cmd)
-                    self.uc.log_info(out)
-                    null_elevation = zs.null_elevation()
-                    zs.set_elevation(null_elevation)
-                    zs.remove_rasters()
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("Calculating elevation finished!")
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.log_info(traceback.format_exc())
-                    self.uc.show_warn(
-                        "WARNING 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n\n"
-                        + repr(e)
-                    ) 
+                if not points_lyr:
+                    self.uc.show_info("Select a points layer!")                    
+                else:    
+                    zfield = dlg.fields_cbo.currentText()
+                    calc_type = dlg.calc_cbo.currentText()
+                    search_distance = dlg.search_spin_box.value()
+            
+                    try:
+                        ini_time = time.time()
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                        zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+                        points_elevation = zs.points_elevation()
+                        zs.set_elevation(points_elevation)
+                        cmd, out = zs.rasterize_grid()
+                        self.uc.log_info(cmd)
+                        self.uc.log_info(out)
+                        cmd, out = zs.fill_nodata()
+                        self.uc.log_info(cmd)
+                        self.uc.log_info(out)
+                        null_elevation = zs.null_elevation()
+                        zs.set_elevation(null_elevation)
+                        zs.remove_rasters()
+                        QApplication.restoreOverrideCursor()
+                    
+                        fin_time = time.time()  
+                        duration = time_taken(ini_time, fin_time)  
+                        self.uc.show_info("Calculating elevation finished." +
+                                          "\n\n(Elapsed time: " + duration + ")")
+                    
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.log_info(traceback.format_exc())
+                        self.uc.show_error(
+                            "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
             else:
                 dlg.interpolate_from_lidar(20)                       

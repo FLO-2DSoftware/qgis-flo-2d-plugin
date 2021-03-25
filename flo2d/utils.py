@@ -138,6 +138,12 @@ def int_or_zero(value):
     else:
         return int(value.text())
 
+def time_taken(ini, fin):  
+    time_passed = round((fin - ini)/60.0 , 2)
+    hours, rem = divmod(fin - ini, 3600)
+    minutes, seconds = divmod(rem, 60)            
+    time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
+    return time_passed  
 
 def Msge(msg_string, icon):
     msgBox = QMessageBox()
