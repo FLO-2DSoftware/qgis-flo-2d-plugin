@@ -1578,7 +1578,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             notes = (SELECT notes FROM user_xsections WHERE fid = chan_elems.user_xs_fid);
         """
 
-        get_val = """SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+        get_val = """SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
                 FROM grid AS g, chan AS l, ce as chan_elems
                 WHERE g.fid = ce.fid AND l.user_lbank_fid = ce.seg_fid;"""
 
@@ -1592,7 +1592,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                             WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                         ) < ? THEN ? 
                 ELSE (
-                        SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+                        SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
                         FROM grid AS g, chan AS l
                         WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                      )
@@ -1603,7 +1603,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         #         UPDATE chan_elems
         #         SET
         #             xlen = (
-        #                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+        #                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
         #                 FROM grid AS g, chan AS l
         #                 WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
         #                 );
@@ -1643,7 +1643,7 @@ class ChannelsSchematizer(GeoPackageUtils):
     #     UPDATE chan_elems
     #     SET
     #         xlen = (
-    #             SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
+    #             SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
     #             FROM grid AS g, chan AS l
     #             WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
     #             );
