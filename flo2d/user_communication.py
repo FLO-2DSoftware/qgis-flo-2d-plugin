@@ -127,6 +127,7 @@ class UserCommunication(object):
 
     def progress_bar(self, msg, minimum=0, maximum=0, init_value=0):
         pmb = self.iface.messageBar().createMessage(msg)
+        
         pb = QProgressBar()
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
@@ -136,5 +137,37 @@ class UserCommunication(object):
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
 
+    def progress_bar2(self,  message, min=0, max=0, init_value=0, ):
+        pb = QProgressBar()
+        pb.setMinimum(min)
+        pb.setMaximum(max)
+        pb.setValue(init_value)
+        pb.setFormat("%v of %m")
+        pb.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+        pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
+        
+        pbm = self.iface.messageBar().createMessage(message)
+        pbm.layout().addWidget(pb)
+        
+        self.iface.messageBar().pushWidget(pbm, Qgis.Info)       
+        self.iface.mainWindow().repaint()
+        
+        return pb  
+ 
+        # pb = QProgressBar()
+        # pb.setMinimum(min)
+        # pb.setMaximum(max)
+        # pb.setValue(init_value)
+        # pb.setFormat("%v of %m")
+        # pb.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+        # pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
+        #
+        # pmb = self.iface.messageBar().createMessage(message)
+        # pmb.layout().addWidget(pb)
+        # self.iface.messageBar().pushWidget(pmb, Qgis.Info) 
+        #
+        # return pb   
+ 
+    
     def clear_bar_messages(self):
         self.iface.messageBar().clearWidgets()

@@ -413,10 +413,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_chan(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(last_dir + "\CHAN.DAT"):
+        if not os.path.isfile(last_dir + r"\CHAN.DAT"):
             self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
             return
-        if not os.path.isfile(last_dir + "\CHANBANK.DAT"):
+        if not os.path.isfile(last_dir + r"\CHANBANK.DAT"):
             self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
             return
 
@@ -2501,7 +2501,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # check if there is any SWMM rating data defined.
         try:
             if self.is_table_empty("swmmflort"):
-                if os.path.isfile(outdir + "\SWMMFLORT.DAT"):
+                if os.path.isfile(outdir + r"\SWMMFLORT.DAT"):
                     m = "* There are no Rating Tables defined in the project, but there is\n"
                     m += "  an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
                     self.export_messages += m

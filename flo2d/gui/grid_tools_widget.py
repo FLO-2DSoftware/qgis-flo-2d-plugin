@@ -9,14 +9,19 @@
 # of the License, or (at your option) any later version
 
 import traceback
+import os
 import time
+
 from .ui_utils import load_ui, set_icon
 from ..utils import time_taken
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
-from qgis.PyQt.QtWidgets import QApplication, QInputDialog
+
+from qgis.PyQt.QtCore import Qt, QThread, QSettings
+from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL, Qgis, QgsMessageLog
+from qgis.PyQt.QtWidgets import QApplication, QInputDialog, QProgressBar, QPushButton, QLabel, QWidget, QFileDialog
+from qgis.PyQt import QtWidgets
+
 from ..flo2d_tools.grid_tools import (
     square_grid,
     evaluate_roughness,
@@ -33,14 +38,12 @@ from ..flo2d_tools.grid_tools import (
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog
+from ..gui.dlg_sampling_xyz import SamplingXYZDialog, LIDARWorker
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
 from ..gui.dlg_create_grid import CreateGridDialog
 
-
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
-
 
 class GridToolsWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
@@ -247,10 +250,140 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
             else:
-                dlg.interpolate_from_lidar(20)                       
+                # s = QSettings()
+                # last_dir = s.value("FLO-2D/lastLIDARDir", "")
+                # lidar_files, __ = QFileDialog.getOpenFileNames(
+                    # None,
+                    # "Select LIDAR files",
+                    # directory=last_dir,
+                    # filter="*.TXT ; *.DAT;;Normal text file (*.txt;*.TXT) ;;*.DAT;;All files (*)",
+                # )
+                #
+                # if not lidar_files:  
+                    # return
+                # s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))    
+                
+                
+                # self.interpolate_from_lidar_THREAD_original(self.lyrs.data["grid"]["qlyr"])
+
+#..................................................
+              
+               
+                # self.interpolate_from_lidar_THREAD(lidar_files, self.lyrs)
+                
+                
+#....................................................   
+
+           
+                dlg.interpolate_from_lidar()  
+                
+            QApplication.restoreOverrideCursor()                         
         else:
+            QApplication.restoreOverrideCursor()
             return
 
+
+    def interpolate_from_lidar_THREAD_original(self, layer):
+        # create a new interpolate_from_LIDAR_thread instance
+        LIDAR_walker_instance = LIDARWorker(layer)  
+        
+        # configure the QgsMessageBar
+        messageBar = self.iface.messageBar().createMessage('Interpolating from LIDAR files...', )
+        self.advanceBar = QProgressBar()
+        self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.cancelButton = QPushButton()
+        self.cancelButton.setText('Cancel')
+        self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)
+        messageBar.layout().addWidget(self.advanceBar)
+        messageBar.layout().addWidget(self.cancelButton)
+        self.iface.messageBar().pushWidget(messageBar, Qgis.Info)
+        self.messageBar = messageBar
+
+
+        statBar = self.iface.mainWindow().statusBar()
+        self.statusLabel = QLabel();
+        self.statusLabel.setText('Interpolating from LIDAR files...');
+        statBar.addWidget(self.statusLabel)
+        statBar.addWidget(self.advanceBar) 
+        statBar.addWidget(self.cancelButton)  
+        self.iface.mainWindow().statusBar().addWidget(statBar)
+        self.statBar = statBar
+        
+    
+        # start the worker in a new thread
+        thread = QThread(self)
+        LIDAR_walker_instance.moveToThread(thread)
+        LIDAR_walker_instance.THREAD_finished.connect(self.workerFinished)
+        LIDAR_walker_instance.THREAD_error.connect(self.workerError)
+        LIDAR_walker_instance.THREAD_progrss.connect(self.advanceBar.setValue)
+        thread.started.connect(LIDAR_walker_instance.run)
+        thread.start()
+        self.thread = thread
+        self.LIDAR_walker_instance = LIDAR_walker_instance
+
+    def interpolate_from_lidar_THREAD(self, lidar_files, lyrs):
+        # create a new interpolate_from_LIDAR_thread instance
+        LIDAR_walker_instance = LIDARWorker(self.iface, lidar_files, lyrs)   
+        
+        # configure the QgsMessageBar
+        messageBar = self.iface.messageBar().createMessage('Interpolating from LIDAR files...', )
+        self.advanceBar = QProgressBar()
+        self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.cancelButton = QPushButton()
+        self.cancelButton.setText('Cancel')
+        self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)
+        messageBar.layout().addWidget(self.advanceBar)
+        messageBar.layout().addWidget(self.cancelButton)
+        self.iface.messageBar().pushWidget(messageBar, Qgis.Info)
+        self.messageBar = messageBar
+
+
+        statBar = self.iface.mainWindow().statusBar()
+        self.statusLabel = QLabel();
+        self.statusLabel.setText('Interpolating from LIDAR files...');
+        statBar.addWidget(self.statusLabel)
+        statBar.addWidget(self.advanceBar) 
+        statBar.addWidget(self.cancelButton)  
+        self.iface.mainWindow().statusBar().addWidget(statBar)
+        self.statBar = statBar
+        
+    
+        # start the worker in a new thread
+        thread = QThread(self)
+        LIDAR_walker_instance.moveToThread(thread)
+        LIDAR_walker_instance.THREAD_finished.connect(self.workerFinished)
+        LIDAR_walker_instance.THREAD_error.connect(self.workerError)
+        LIDAR_walker_instance.THREAD_progrss.connect(self.advanceBar.setValue)
+        thread.started.connect(LIDAR_walker_instance.run)
+        thread.start()
+        self.thread = thread
+        self.LIDAR_walker_instance = LIDAR_walker_instance
+
+    def workerFinished(self):
+        # clean up the worker and thread
+        self.LIDAR_walker_instance.deleteLater()
+        self.thread.quit()
+        self.thread.wait()
+        self.thread.deleteLater()
+        # remove widget from message bar
+        self.iface.messageBar().popWidget(self.messageBar)
+        self.statBar.removeWidget(self.statusLabel)
+        self.statBar.removeWidget(self.advanceBar)
+        self.statBar.removeWidget(self.cancelButton)
+        
+#         self.iface.mainWindow().statusBar().removeWidget(self.statBar)
+#         self.statBar.hide()
+#         if ret is not None:
+#             # report the result
+#             layer, total_area = ret
+#             self.iface.messageBar().pushMessage('The total area of {name} is {area}.'.format(name=layer.name(), area=total_area))
+#         else:
+#             # notify the user that something went wrong
+#             self.iface.messageBar().pushMessage('Something went wrong! See the message log for more information.', 
+#                                                 level=Qgis.Critical, duration=3)
+
+    def workerError(self, e, exception_string):
+        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), level=Qgis.Critical)
 
     def other_variable(self):
         if self.gutils.is_table_empty("grid"):

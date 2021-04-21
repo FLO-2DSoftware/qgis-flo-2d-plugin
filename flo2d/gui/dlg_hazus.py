@@ -15,7 +15,6 @@ from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
@@ -51,7 +50,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         self.buildings_cbo.currentIndexChanged.connect(self.populate_lists_with_buildigns_attributes)
         self.buildings_layer_cbo.currentIndexChanged.connect(self.populate_statistics_fields)
         self.buildings_raster_elevation_btn.clicked.connect(self.raster_elevation)
-        self.buildings_xyz_elevation_btn.clicked.connect(self.xyz_elevation)
+#         self.buildings_xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.buildings_adjust_factor_from_polygons_btn.clicked.connect(self.eval_buildings_adjustment_factor)
 
         # Buildings ground elevations group:
@@ -173,43 +172,17 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1627: Probing grid elevation failed! Please check your raster layer.")
 
-    def xyz_elevation(self):
-        if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
-            return
-        dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
-        if ok:
-            pass
-        else:
-            return
-        # points_lyr = dlg.current_lyr
-        # zfield = dlg.fields_cbo.currentText()
-        # calc_type = dlg.calc_cbo.currentText()
-        # search_distance = dlg.search_spin_box.value()
-        #
-        # try:
-        #     QApplication.setOverrideCursor(Qt.WaitCursor)
-        #     grid_lyr = self.lyrs.data['grid']['qlyr']
-        #     zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
-        #     points_elevation = zs.points_elevation()
-        #     zs.set_elevation(points_elevation)
-        #     cmd, out = zs.rasterize_grid()
-        #     self.uc.log_info(cmd)
-        #     self.uc.log_info(out)
-        #     cmd, out = zs.fill_nodata()
-        #     self.uc.log_info(cmd)
-        #     self.uc.log_info(out)
-        #     null_elevation = zs.null_elevation()
-        #     zs.set_elevation(null_elevation)
-        #     zs.remove_rasters()
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_info('Calculating elevation finished!')
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.log_info(traceback.format_exc())
-        #     self.uc.show_warn('Calculating grid elevation aborted! Please check elevation points layer.')
-
+#     def xyz_elevation(self):
+#         if self.gutils.is_table_empty("grid"):
+#             self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
+#             return
+#         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
+#         ok = dlg.exec_()
+#         if ok:
+#             pass
+#         else:
+#             return
+        
     def get_cell_size(self):
         """
         Get cell size from:

@@ -61,93 +61,93 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             #
             #             else:
 
-            if os.path.isfile(last_dir + "\CHAN.DAT"):
-                if os.path.getsize(last_dir + "\CHAN.DAT") > 0:
+            if os.path.isfile(last_dir + r"\CHAN.DAT"):
+                if os.path.getsize(last_dir + r"\CHAN.DAT") > 0:
                     self.channels_chbox.setChecked(True)
                     self.channels_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\ARF.DAT"):
-                if os.path.getsize(last_dir + "\ARF.DAT") > 0:
+            if os.path.isfile(last_dir + r"\ARF.DAT"):
+                if os.path.getsize(last_dir + r"\ARF.DAT") > 0:
                     self.reduction_factors_chbox.setChecked(True)
                     self.reduction_factors_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\STREET.DAT"):
-                if os.path.getsize(last_dir + "\STREET.DAT") > 0:
+            if os.path.isfile(last_dir + r"\STREET.DAT"):
+                if os.path.getsize(last_dir + r"\STREET.DAT") > 0:
                     self.streets_chbox.setChecked(True)
                     self.streets_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\OUTFLOW.DAT"):
-                if os.path.getsize(last_dir + "\OUTFLOW.DAT") > 0:
+            if os.path.isfile(last_dir + r"\OUTFLOW.DAT"):
+                if os.path.getsize(last_dir + r"\OUTFLOW.DAT") > 0:
                     self.outflow_elements_chbox.setChecked(True)
                     self.outflow_elements_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\INFLOW.DAT"):
-                if os.path.getsize(last_dir + "\INFLOW.DAT") > 0:
+            if os.path.isfile(last_dir + r"\INFLOW.DAT"):
+                if os.path.getsize(last_dir + r"\INFLOW.DAT") > 0:
                     self.inflow_elements_chbox.setChecked(True)
                     self.inflow_elements_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\LEVEE.DAT"):
-                if os.path.getsize(last_dir + "\LEVEE.DAT") > 0:
+            if os.path.isfile(last_dir + r"\LEVEE.DAT"):
+                if os.path.getsize(last_dir + r"\LEVEE.DAT") > 0:
                     self.levees_chbox.setChecked(True)
                     self.levees_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\MULT.DAT"):
-                if os.path.getsize(last_dir + "\MULT.DAT") > 0:
+            if os.path.isfile(last_dir + r"\MULT.DAT"):
+                if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
                     self.multiple_channels_chbox.setChecked(True)
                     self.multiple_channels_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\BREACH.DAT"):
-                if os.path.getsize(last_dir + "\BREACH.DAT") > 0:
+            if os.path.isfile(last_dir + r"\BREACH.DAT"):
+                if os.path.getsize(last_dir + r"\BREACH.DAT") > 0:
                     self.breach_chbox.setChecked(True)
                     self.breach_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\GUTTER.DAT"):
-                if os.path.getsize(last_dir + "\GUTTER.DAT") > 0:
+            if os.path.isfile(last_dir + r"\GUTTER.DAT"):
+                if os.path.getsize(last_dir + r"\GUTTER.DAT") > 0:
                     self.gutters_chbox.setChecked(True)
                     self.gutters_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\INFIL.DAT"):
-                if os.path.getsize(last_dir + "\INFIL.DAT") > 0:
+            if os.path.isfile(last_dir + r"\INFIL.DAT"):
+                if os.path.getsize(last_dir + r"\INFIL.DAT") > 0:
                     self.infiltration_chbox.setChecked(True)
                     self.infiltration_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\FPXSEC.DAT"):
-                if os.path.getsize(last_dir + "\FPXSEC.DAT") > 0:
+            if os.path.isfile(last_dir + r"\FPXSEC.DAT"):
+                if os.path.getsize(last_dir + r"\FPXSEC.DAT") > 0:
                     self.floodplain_xs_chbox.setChecked(True)
                     self.floodplain_xs_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\SED.DAT"):
-                if os.path.getsize(last_dir + "\SED.DAT") > 0:
+            if os.path.isfile(last_dir + r"\SED.DAT"):
+                if os.path.getsize(last_dir + r"\SED.DAT") > 0:
                     self.mud_and_sed_chbox.setChecked(True)
                     self.mud_and_sed_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\EVAPOR.DAT"):
-                if os.path.getsize(last_dir + "\EVAPOR.DAT") > 0:
+            if os.path.isfile(last_dir + r"\EVAPOR.DAT"):
+                if os.path.getsize(last_dir + r"\EVAPOR.DAT") > 0:
                     self.evaporation_chbox.setChecked(True)
                     self.evaporation_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\HYSTRUC.DAT"):
-                if os.path.getsize(last_dir + "\HYSTRUC.DAT") > 0:
+            if os.path.isfile(last_dir + r"\HYSTRUC.DAT"):
+                if os.path.getsize(last_dir + r"\HYSTRUC.DAT") > 0:
                     self.hydr_struct_chbox.setChecked(True)
                     self.hydr_struct_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\RAIN.DAT"):
-                if os.path.getsize(last_dir + "\RAIN.DAT") > 0:
+            if os.path.isfile(last_dir + r"\RAIN.DAT"):
+                if os.path.getsize(last_dir + r"\RAIN.DAT") > 0:
                     self.rain_chbox.setChecked(True)
                     self.rain_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\SWMMFLO.DAT"):
-                if os.path.getsize(last_dir + "\SWMMFLO.DAT") > 0:
+            if os.path.isfile(last_dir + r"\SWMMFLO.DAT"):
+                if os.path.getsize(last_dir + r"\SWMMFLO.DAT") > 0:
                     self.storm_drain_chbox.setChecked(True)
                     self.storm_drain_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\TOLSPATIAL.DAT"):
-                if os.path.getsize(last_dir + "\TOLSPATIAL.DAT") > 0:
+            if os.path.isfile(last_dir + r"\TOLSPATIAL.DAT"):
+                if os.path.getsize(last_dir + r"\TOLSPATIAL.DAT") > 0:
                     self.spatial_tolerance_chbox.setChecked(True)
                     self.spatial_tolerance_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + "\FPFROUDE.DAT"):
-                if os.path.getsize(last_dir + "\FPFROUDE.DAT") > 0:
+            if os.path.isfile(last_dir + r"\FPFROUDE.DAT"):
+                if os.path.getsize(last_dir + r"\FPFROUDE.DAT") > 0:
                     self.spatial_froude_chbox.setChecked(True)
                     self.spatial_froude_chbox.setEnabled(True)
 

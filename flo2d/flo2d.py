@@ -10,18 +10,19 @@
 
 # Lambda may not be necessary
 # pylint: disable=W0108
+
 import os
 import sys
 import time
 import traceback
+import multiprocessing
+from datetime import datetime
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
 from qgis.core import QgsProject, QgsWkbTypes
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
-
-from datetime import datetime
 
 from .layers import Layers
 from .user_communication import UserCommunication
@@ -51,7 +52,46 @@ from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
 from .flo2d_tools.grid_tools import dirID
 
+# class OtherClass:
+  # def run(self, sentence, graph):
+    # return False
+    #
+    #
+# def single(params):
+    # other = OtherClass()
+    # sentences, graph = params
+    # return [other.run(sentence, graph) for sentence in sentences]
 
+# class SomeClass:
+   # def __init__(self):
+       # self.sentences = [["Some string"]]
+       # self.graphs = ["string"]
+       #
+   # def some_method(self, pool):
+      # return list(pool.map(single, zip(self.sentences, self.graphs)))
+
+# if __name__ == '__main__':  # <- prevent RuntimeError for 'spawn'
+    # # and 'forkserver' start_methods
+    # with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as pool:
+        # print(SomeClass().some_method())
+
+class Zeta:
+    def __init__(self, iface):
+        self.iface = iface
+        
+    # def zzz(self,n):
+        # # if __name__ == '__main__': 
+            # with multiprocessing.Pool(n) as pool:
+                # pool.map(lambda x: x + x, [1,2,3])
+
+class SomeClass:
+    def __init__(self):
+        list = [1, 2, 3]
+    def some_method(self, pool):
+        pool.map(lambda x: x + x, self.list) 
+         
+
+            
 class Flo2D(object):
     def __init__(self, iface):
         self.iface = iface
@@ -102,6 +142,10 @@ class Flo2D(object):
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
+
+
+
+
 
     def tr(self, message):
         """
@@ -588,7 +632,7 @@ class Flo2D(object):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if os.path.isfile(flo2d_dir + "\Tailings Dam Breach.exe"):
+            if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
                 tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
                 return_code = tailings.run()
                 if return_code != 0:
@@ -631,7 +675,7 @@ class Flo2D(object):
             self.uc.bar_warn("Could not run Mapper program under current operation system!")
             return
         try:
-            if os.path.isfile(flo2d_dir + "\Mapper PRO.exe"):
+            if os.path.isfile(flo2d_dir + r"\Mapper PRO.exe"):
                 mapper = MapperExecutor(flo2d_dir, project_dir)
                 mapper.run()
                 self.uc.bar_info("Mapper started!", dur=3)
@@ -734,7 +778,7 @@ class Flo2D(object):
                     self.files_not_used += dat + "\n"
                     continue
                 else:
-                    if os.path.getsize(last_dir + "\\" + dat) > 0:
+                    if os.path.getsize(last_dir + r"\\" + dat) > 0:
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
@@ -826,7 +870,7 @@ class Flo2D(object):
                     return
 
             # Check if MANNINGS_N.DAT exist:
-            if not os.path.isfile(dir_name + "\MANNINGS_N.DAT") or os.path.getsize(dir_name + "\MANNINGS_N.DAT") == 0:
+            if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 return
 
@@ -1596,7 +1640,7 @@ class Flo2D(object):
             pass
 
     @connection_required
-    def show_cont_toler(self):
+    def show_cont_toler(self):        
         try:
             dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
             save = dlg_control.exec_()
@@ -1888,8 +1932,8 @@ class Flo2D(object):
             return
 
         s = QSettings()
-        project_dir = s.value("FLO-2D/last_flopro_project", "")
-        if not os.path.isfile(project_dir + "\DEPFP.OUT"):
+        project_dir = s.value("FLO-2D/lastGdsDir", "")
+        if not os.path.isfile(project_dir + r"\DEPFP.OUT"):
             self.uc.show_warn(
                 "WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"
                 + project_dir
@@ -1919,10 +1963,11 @@ class Flo2D(object):
 
     @connection_required
     def show_errors_dialog(self):
+        
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-
+            
         dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
         dlg_errors.show()
         while True:
@@ -1938,14 +1983,20 @@ class Flo2D(object):
             else:
                 return
 
-    #         try:
-    #             QApplication.setOverrideCursor(Qt.WaitCursor)
-    #
-    #             QApplication.restoreOverrideCursor()
-    #
-    #         except Exception as e:
-    #             QApplication.restoreOverrideCursor()
-    #             self.uc.show_warn('ERROR 221019.0653: unable to process warnings and errors!')
+    #     @staticmethod
+    def show_help(self):
+        pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+        
+        #         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+        
+        #         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+
 
     def schematize_levees(self):
         """
@@ -2061,23 +2112,23 @@ class Flo2D(object):
     def restore_settings(self):
         pass
 
-    #     @staticmethod
-    def show_help(self):
-        #         self.uc.bar_info("Coming soon!")
-        #         self.uc.show_info('Coming soon!')
-        #         return
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        #         help_file = 'file:///{0}/help/index.html'.format(pth)
-        #         QDesktopServices.openUrl(QUrl(help_file))
+# class OtherClass:
+  # def run(self, sentence, graph):
+    # return False
+    #
+# def single(params):
+    # other = OtherClass()
+    # sentences, graph = params
+    # return [other.run(sentence, graph) for sentence in sentences]
 
-        pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
 
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
 
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+# if __name__ == '__main__':  # <- prevent RuntimeError for 'spawn'
+    # # and 'forkserver' start_methods
+    # with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as pool:
+        # SomeClass().some_method()
+        
+def zzz(self,n):
+    # if __name__ == '__main__': 
+        with multiprocessing.Pool(n) as pool:
+            pool.map(lambda x: x + x, [1,2,3])

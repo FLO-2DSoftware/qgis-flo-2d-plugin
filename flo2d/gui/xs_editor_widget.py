@@ -850,7 +850,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def import_chan(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(last_dir + "\CHAN.DAT"):
+        if not os.path.isfile(last_dir + r"\CHAN.DAT"):
             self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
             return
 

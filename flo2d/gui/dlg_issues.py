@@ -31,7 +31,6 @@ from .table_editor_widget import StandardItemModel, StandardItem
 from ..utils import copy_tablewidget_selection
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
 from ..flo2d_tools.grid_tools import grid_has_empty_elev, get_adjacent_cell_elevation
@@ -810,15 +809,15 @@ class IssuesFiles(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
 
-        if os.path.isfile(last_dir + "\DEPRESSED_ELEMENTS.OUT"):
+        if os.path.isfile(last_dir + r"\DEPRESSED_ELEMENTS.OUT"):
             self.depressed_elements_chbox.setChecked(True)
             self.depressed_elements_chbox.setEnabled(True)
 
-        if os.path.isfile(last_dir + "\CHANBANKEL.CHK"):
+        if os.path.isfile(last_dir + r"\CHANBANKEL.CHK"):
             self.chanbankel_chbox.setChecked(True)
             self.chanbankel_chbox.setEnabled(True)
 
-        if os.path.isfile(last_dir + "\FPRIMELEV.OUT"):
+        if os.path.isfile(last_dir + r"\FPRIMELEV.OUT"):
             self.fprimelev_chbox.setChecked(True)
             self.fprimelev_chbox.setEnabled(True)
 
