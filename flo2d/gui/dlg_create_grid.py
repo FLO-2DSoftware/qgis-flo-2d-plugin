@@ -9,11 +9,13 @@
 # of the License, or (at your option) any later version
 
 
+import os
 from .ui_utils import load_ui
 from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
+from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtWidgets import QFileDialog
 
 uiDialog, qtBaseClass = load_ui("create_grid")
-
 
 class CreateGridDialog(qtBaseClass, uiDialog):
     def __init__(self):
@@ -23,10 +25,12 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         self.external_lyr_cbo.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.cell_size_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)
         self.external_layer_changed()
+        self.method_changed()
         # connections
         self.external_lyr_cbo.currentIndexChanged.connect(self.external_layer_changed)
         self.use_external_lyr_rb.toggled.connect(self.method_changed)
         self.use_user_layer_rb.setChecked(True)
+        self.browseBtn.clicked.connect(self.browse_raster_file)
 
     def external_layer_changed(self):
         current_layer = self.external_lyr_cbo.currentLayer()
@@ -44,4 +48,20 @@ class CreateGridDialog(qtBaseClass, uiDialog):
     def external_layer_parameters(self):
         current_layer = self.external_lyr_cbo.currentLayer()
         cell_size_field = self.cell_size_cbo.currentField()
-        return current_layer, cell_size_field
+        raster_file = self.raster_file_lab.text().strip()
+        return current_layer, cell_size_field, raster_file
+
+    def browse_raster_file(self):
+        """
+        Users pick a source raster file from file explorer.
+        """
+        s = QSettings()
+        last_elev_raster_dir = s.value("FLO-2D/lastElevRasterDir", "")
+        src_file, __ = QFileDialog.getOpenFileName(None, "Choose elevation raster...",
+                                                   directory=last_elev_raster_dir,
+                                                   filter='Elev (*.tif )')
+        if not src_file:
+            return
+        s.setValue("FLO-2D/lastElevRasterDir", os.path.dirname(src_file))
+        self.raster_file_lab.setText(src_file)
+        self.raster_file_lab.setToolTip(src_file)

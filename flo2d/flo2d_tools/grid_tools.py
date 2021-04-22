@@ -502,7 +502,7 @@ def divide_geom(geom, threshold=1000):
     return new_geoms
 
 
-def build_grid(boundary, cell_size):
+def build_grid(boundary, cell_size, upper_left_coords=None):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
     """
@@ -519,6 +519,8 @@ def build_grid(boundary, cell_size):
     #     xmax = math.ceil(bbox.xMaximum())
     #     ymax = math.ceil(bbox.yMaximum())
     #     ymin = math.floor(bbox.yMinimum())
+    if upper_left_coords:
+        xmin,ymax = upper_left_coords
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -917,7 +919,7 @@ def rasters2centroids(vlayer, request, *raster_paths):
 
 
 # Tools which use GeoPackageUtils instance
-def square_grid(gutils, boundary):
+def square_grid(gutils, boundary, upper_left_coords=None):
     """
     Function for calculating and writing square grid into 'grid' table.
     """
@@ -926,7 +928,7 @@ def square_grid(gutils, boundary):
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
 
-    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize))
+    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize, upper_left_coords))
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
     for g_tuple in polygons:
         sql.append(g_tuple)
