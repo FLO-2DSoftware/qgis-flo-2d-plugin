@@ -14,7 +14,7 @@ import stat
 import time
 import traceback
 
-import PyQt5.sip 
+# import PyQt5.sip 
 from qgis.core import (
         QgsWkbTypes, 
         Qgis, 

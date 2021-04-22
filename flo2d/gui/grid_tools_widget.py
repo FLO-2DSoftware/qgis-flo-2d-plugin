@@ -38,7 +38,7 @@ from ..flo2d_tools.grid_tools import (
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog, LIDARWorker
+from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
 from ..gui.dlg_create_grid import CreateGridDialog
