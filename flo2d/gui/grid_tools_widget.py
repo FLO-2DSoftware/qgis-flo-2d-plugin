@@ -37,7 +37,6 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
-from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
@@ -60,7 +59,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         set_icon(self.create_grid_btn, "create_grid.svg")
         set_icon(self.raster_elevation_btn, "sample_elev.svg")
-        set_icon(self.point_elevation_btn, "sample_elev_point.svg")
         set_icon(self.xyz_elevation_btn, "sample_elev_xyz.svg")
         set_icon(self.polygon_elevation_btn, "sample_elev_polygon.svg")
         set_icon(self.roughness_btn, "sample_manning.svg")
@@ -74,7 +72,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         self.create_grid_btn.clicked.connect(self.create_grid)
         self.raster_elevation_btn.clicked.connect(self.raster_elevation)
-        self.point_elevation_btn.clicked.connect(self.point_elevation)
         self.xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
         self.roughness_btn.clicked.connect(self.get_roughness)
@@ -141,7 +138,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.lyrs.save_edits_and_proceed("Computational Domain"):
                 return
             if create_grid_dlg.use_external_layer():
-                external_layer, cell_size_field, raster_file = create_grid_dlg.external_layer_parameters()
+                external_layer, cell_size_field = create_grid_dlg.external_layer_parameters()
                 if not self.import_comp_domain(external_layer, cell_size_field):
                     return
             if self.gutils.count("user_model_boundary") > 1:
@@ -161,24 +158,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data["user_model_boundary"]["qlyr"]
-            upper_left_coords_override = None
-
-            if create_grid_dlg.use_external_layer() and raster_file:
-                # compute upper left coordinate aligning it with with source raster pixel
-                feat = next(bl.getFeatures())
-                geom = feat.geometry()
-                bbox = geom.boundingBox()
-                xmin = bbox.xMinimum()
-                ymax = bbox.yMaximum()
-                from ..misc.gdal_utils import GDALRasterLayer
-                gdal_layer = GDALRasterLayer(raster_file)
-                # get pixel corresponding to xmin, ymax 
-                row,col = gdal_layer.index(xmin,ymax)
-                # get coordinate of upper left corner of pixel
-                xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
-                upper_left_coords_override = (xmin_new,ymax_new)
-
-            square_grid(self.gutils, bl, upper_left_coords_override)
+            square_grid(self.gutils, bl)
 
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
@@ -223,17 +203,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1710: Probing grid elevation failed! Please check your raster layer.")
-
-    def point_elevation(self):
-        if self.gutils.is_table_empty("user_model_boundary"):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-            return
-        if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
-        cell_size = self.get_cell_size()
-        dlg = SamplingPointElevDialog(self.con, self.iface, self.lyrs, cell_size)
-        ok = dlg.exec_()
 
     def xyz_elevation(self):
         if self.gutils.is_table_empty("grid"):
