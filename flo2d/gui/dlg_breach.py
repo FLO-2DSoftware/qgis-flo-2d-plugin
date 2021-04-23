@@ -612,9 +612,12 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             7: [False, 0, 0, 0, 0, 0, 0],
             8: [False, 0, 0, 0, 0, 0, 0],
         }
-
+        
+        self.setup_connection()
+        
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        self.grid_count = len(list(self.grid_lyr.getFeatures()))
+        self.grid_count = self.gutils.count("grid", field = "fid")
+        # self.grid_count = len(list(self.grid_lyr.getFeatures()))
         set_icon(self.zoom_in_btn, "zoom_in.svg")
         set_icon(self.zoom_out_btn, "zoom_out.svg")
         set_icon(self.find_levee_cell_btn, "eye-svgrepo-com.svg")
@@ -624,7 +627,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.next_levees_lbl.setText("Next " + str(self.n_levees))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.setup_connection()
+        
 
         # Allow only integers:
         validator = QIntValidator()

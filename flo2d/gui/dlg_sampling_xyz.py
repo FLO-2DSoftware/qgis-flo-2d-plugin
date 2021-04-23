@@ -143,24 +143,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
                     line_size = len(line) + 1
                 size += file_size / line_size
-                
-            
-            
-            
-                # f = open(file)                  
-                # lines = 0
-                # buf_size = 1024 * 1024
-                # read_f = f.read # loop optimization
-                #
-                # buf = read_f(buf_size)
-                # while buf:
-                    # lines += buf.count('\n')
-                    # buf = read_f(buf_size)            
-            
-            
-            
-            
-            
+
             progress = self.uc.progress_bar2("Reading " + "{:,}".format(int(size)) + " lines from " + str(len(lidar_files)) + " files...", 0, len(lidar_files), 0)
             step = 50000   
             for i, file in enumerate(lidar_files,1):
@@ -185,10 +168,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             if n_commas == 0:
                                 n_spaces = len(line.split())
                             break
-                        
-                        
-                        
-                        
+
                 if n_commas != 0 or n_spaces != 0:
                     # Read file: 
                     with open(file, "r") as f1:
@@ -229,6 +209,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 else:
                                     break  
                                     
+                                # cell = 1
                                 cell = self.gutils.grid_on_point(xpp, ypp)
                                 
                                 if cell is not None:

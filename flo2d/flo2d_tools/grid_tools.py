@@ -1415,7 +1415,8 @@ def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
     if grid_lyr is not None:
         if cell != "":
             cell = int(cell)
-            grid_count = len(list(grid_lyr.getFeatures()))
+            grid_count = gutils.count("grid", field = "fid")
+            # grid_count = len(list(grid_lyr.getFeatures()))
             if grid_count >= cell and cell > 0:
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
