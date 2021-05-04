@@ -24,6 +24,7 @@ from qgis.PyQt import QtWidgets
 
 from ..flo2d_tools.grid_tools import (
     square_grid,
+    square_grid_and_tableColRow,
     evaluate_roughness,
     update_roughness,
     evaluate_arfwrf,
@@ -155,11 +156,15 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
             if not self.get_cell_size():
                 return
+
+            ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data["user_model_boundary"]["qlyr"]
-            square_grid(self.gutils, bl)
-
+            
+            square_grid_and_tableColRow(self.gutils, bl)
+            # square_grid(self.gutils, bl)
+            
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -170,7 +175,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 grid_lyr.triggerRepaint()
             self.uc.clear_bar_messages()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Grid created!")
+            
+            fin_time = time.time()  
+            duration = time_taken(ini_time, fin_time)  
+            self.uc.show_info("Grid created." +
+                              "\n\n(Elapsed time: " + duration + ")")            
+            
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
@@ -249,32 +259,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         self.uc.show_error(
                             "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
-            else:
-                # s = QSettings()
-                # last_dir = s.value("FLO-2D/lastLIDARDir", "")
-                # lidar_files, __ = QFileDialog.getOpenFileNames(
-                    # None,
-                    # "Select LIDAR files",
-                    # directory=last_dir,
-                    # filter="*.TXT ; *.DAT;;Normal text file (*.txt;*.TXT) ;;*.DAT;;All files (*)",
-                # )
-                #
-                # if not lidar_files:  
-                    # return
-                # s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))    
-                
-                
-                # self.interpolate_from_lidar_THREAD_original(self.lyrs.data["grid"]["qlyr"])
-
-#..................................................
-              
-               
-                # self.interpolate_from_lidar_THREAD(lidar_files, self.lyrs)
-                
-                
-#....................................................   
-
-           
+            else:         
                 dlg.interpolate_from_lidar()  
                 
             QApplication.restoreOverrideCursor()                         

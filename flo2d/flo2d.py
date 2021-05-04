@@ -50,48 +50,8 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID
+from .flo2d_tools.grid_tools import dirID        
 
-# class OtherClass:
-  # def run(self, sentence, graph):
-    # return False
-    #
-    #
-# def single(params):
-    # other = OtherClass()
-    # sentences, graph = params
-    # return [other.run(sentence, graph) for sentence in sentences]
-
-# class SomeClass:
-   # def __init__(self):
-       # self.sentences = [["Some string"]]
-       # self.graphs = ["string"]
-       #
-   # def some_method(self, pool):
-      # return list(pool.map(single, zip(self.sentences, self.graphs)))
-
-# if __name__ == '__main__':  # <- prevent RuntimeError for 'spawn'
-    # # and 'forkserver' start_methods
-    # with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as pool:
-        # print(SomeClass().some_method())
-
-class Zeta:
-    def __init__(self, iface):
-        self.iface = iface
-        
-    # def zzz(self,n):
-        # # if __name__ == '__main__': 
-            # with multiprocessing.Pool(n) as pool:
-                # pool.map(lambda x: x + x, [1,2,3])
-
-class SomeClass:
-    def __init__(self):
-        list = [1, 2, 3]
-    def some_method(self, pool):
-        pool.map(lambda x: x + x, self.list) 
-         
-
-            
 class Flo2D(object):
     def __init__(self, iface):
         self.iface = iface
@@ -2111,24 +2071,3 @@ class Flo2D(object):
 
     def restore_settings(self):
         pass
-
-# class OtherClass:
-  # def run(self, sentence, graph):
-    # return False
-    #
-# def single(params):
-    # other = OtherClass()
-    # sentences, graph = params
-    # return [other.run(sentence, graph) for sentence in sentences]
-
-
-
-# if __name__ == '__main__':  # <- prevent RuntimeError for 'spawn'
-    # # and 'forkserver' start_methods
-    # with multiprocessing.Pool(multiprocessing.cpu_count() - 1) as pool:
-        # SomeClass().some_method()
-        
-def zzz(self,n):
-    # if __name__ == '__main__': 
-        with multiprocessing.Pool(n) as pool:
-            pool.map(lambda x: x + x, [1,2,3])

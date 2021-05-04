@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>455</width>
-    <height>243</height>
+    <width>472</width>
+    <height>244</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>LIDAR Post-interpolation Options</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="0" column="0" colspan="3">
@@ -99,7 +99,7 @@
      <item row="2" column="0">
       <widget class="QRadioButton" name="highlight_radio">
        <property name="text">
-        <string>Higlight non-interpolated grid  elements</string>
+        <string>Highlight non-interpolated grid  elements</string>
        </property>
       </widget>
      </item>

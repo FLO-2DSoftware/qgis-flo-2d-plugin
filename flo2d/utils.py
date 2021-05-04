@@ -11,6 +11,8 @@
 
 BC_BORDER = None  # Static variable used to hold BC for type 5 outflow.
 
+grid_index = {}
+
 import os.path
 import io
 import csv
@@ -25,6 +27,27 @@ def get_BC_Border():
 def set_BC_Border(val):
     global BC_BORDER
     BC_BORDER = val
+
+def is_grid_index():
+    global grid_index
+    if grid_index:
+        return True
+    else:
+        return False
+    
+def get_grid_index():
+    global grid_index
+    return grid_index
+
+def set_grid_index(val):
+    global grid_index
+    grid_index = val
+    
+def clear_grid_index():  
+    global grid_index
+    for key, value in grid_index.items():
+        grid_index[key][1] = 0.0
+        grid_index[key][2] = 0
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.realpath(__file__))
