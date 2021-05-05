@@ -124,16 +124,12 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             grid_extent = self.grid.extent()
             xMinimum = grid_extent.xMinimum()
             yMinimum = grid_extent.yMinimum()
+   
+            gid_indx = {}
+            cells = self.gutils.execute("SELECT fid, col, row FROM grid").fetchall()
+            for cell in cells:
+                    gid_indx[cell[1], cell[2]] = [cell[0], 0.0, 0]
 
-            if not self.use_sql_chbox.isChecked():
-                if is_grid_index():
-                    gid_indx = get_grid_index()
-                    clear_grid_index()
-                else:    
-                    QApplication.restoreOverrideCursor()    
-                    self.uc.show_info("Grid layer has no indexes defined!")  
-                    return
-                  
             start_time = time.time()
 
             statBar = self.iface.mainWindow().statusBar()

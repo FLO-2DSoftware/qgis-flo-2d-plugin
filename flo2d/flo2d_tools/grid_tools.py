@@ -595,6 +595,25 @@ def build_grid_and_tableColRow(boundary, cell_size):
             y_tmp -= cell_size
         x += cell_size
 
+
+def assign_col_row_indexes_to_grid(grid, gutils):
+    cell_size = float(gutils.get_cont_par("CELLSIZE"))
+    ext = grid.extent()
+    xmin = ext.xMinimum()
+    ymin = ext.yMinimum()                  
+    qry = "UPDATE grid SET col = ?, row = ? WHERE fid = ?"
+    qry_values = []
+    for i, cell in enumerate(grid.getFeatures(), 1):
+        geom = cell.geometry()
+        xx, yy = geom.centroid().asPoint()
+        col = int((xx - xmin)/cell_size) + 2
+        row = int((yy - ymin)/cell_size) + 2 
+        qry_values.append((col, row, i))
+        
+    cur = gutils.con.cursor()
+    cur.executemany(qry, qry_values)
+
+
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
@@ -990,17 +1009,13 @@ def square_grid_and_tableColRow(gutils, boundary):
     update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
-    
-    sql = ["""INSERT INTO grid (geom) VALUES""", 1] 
-    gi = {}
-    
+
+    sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
     polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
-    for i, g_tuple in enumerate(polygonsClRw):
-        sql.append((g_tuple[0][0],))
-        gi[g_tuple[0][1], g_tuple[0][2]] = [i+1, 0.0, 0]
+    for g_tuple in polygonsClRw:
+        sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
     if len(sql) > 2:
         gutils.batch_execute(sql)
-        set_grid_index(gi)
     else:
         pass
     

@@ -50,7 +50,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID        
+from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid        
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -102,10 +102,6 @@ class Flo2D(object):
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
-
-
-
-
 
     def tr(self, message):
         """
@@ -1033,8 +1029,9 @@ class Flo2D(object):
                         self.gutils.clear_tables(table)
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
-                    # the methods in the class Flo2dGeoPackage to import (read) the
-                    # FLO-2D .DAT files
+                                        # the methods in the class Flo2dGeoPackage to import (read) the # FLO-2D .DAT files
+
+                    assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)
 
                     # save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj4())
@@ -1050,6 +1047,10 @@ class Flo2D(object):
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
 
                 finally:
                     QApplication.restoreOverrideCursor()
@@ -1079,7 +1080,7 @@ class Flo2D(object):
                                 
                     if msg:
                         self.uc.show_info(msg)  
-
+        
     @connection_required
     def import_selected_components(self):
         """

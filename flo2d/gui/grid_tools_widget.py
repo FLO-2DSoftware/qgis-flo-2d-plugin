@@ -35,6 +35,7 @@ from ..flo2d_tools.grid_tools import (
     evaluate_spatial_noexchange,
     ZonalStatistics,
     ZonalStatisticsOther,
+    assign_col_row_indexes_to_grid
 )
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
@@ -259,8 +260,20 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         self.uc.show_error(
                             "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
-            else:         
-                dlg.interpolate_from_lidar()  
+            else:     
+                cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                if cell[0] != NULL:   
+                    dlg.interpolate_from_lidar()  
+                else:
+                    QApplication.restoreOverrideCursor()
+                    proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
+                    if proceed:
+                        assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                        dlg.interpolate_from_lidar()  
+                    else:
+                        return                    
+                    
+                    
                 
             QApplication.restoreOverrideCursor()                         
         else:
