@@ -24,6 +24,7 @@ from qgis.PyQt import QtWidgets
 
 from ..flo2d_tools.grid_tools import (
     square_grid,
+    square_grid_and_tableColRow,
     evaluate_roughness,
     update_roughness,
     evaluate_arfwrf,
@@ -34,6 +35,7 @@ from ..flo2d_tools.grid_tools import (
     evaluate_spatial_noexchange,
     ZonalStatistics,
     ZonalStatisticsOther,
+    assign_col_row_indexes_to_grid
 )
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
@@ -158,9 +160,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
             if not self.get_cell_size():
                 return
+
+            ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+            
             upper_left_coords_override = None
 
             if create_grid_dlg.use_external_layer() and raster_file:
@@ -178,8 +183,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
                 upper_left_coords_override = (xmin_new,ymax_new)
 
-            square_grid(self.gutils, bl, upper_left_coords_override)
-
+            #square_grid(self.gutils, bl, upper_left_coords_override) 
+            square_grid_and_tableColRow(self.gutils, bl)
+            # square_grid(self.gutils, bl)
+            
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -190,7 +197,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 grid_lyr.triggerRepaint()
             self.uc.clear_bar_messages()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Grid created!")
+            
+            fin_time = time.time()  
+            duration = time_taken(ini_time, fin_time)  
+            self.uc.show_info("Grid created." +
+                              "\n\n(Elapsed time: " + duration + ")")            
+            
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
@@ -280,33 +292,20 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         self.uc.show_error(
                             "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
-            else:
-                # s = QSettings()
-                # last_dir = s.value("FLO-2D/lastLIDARDir", "")
-                # lidar_files, __ = QFileDialog.getOpenFileNames(
-                    # None,
-                    # "Select LIDAR files",
-                    # directory=last_dir,
-                    # filter="*.TXT ; *.DAT;;Normal text file (*.txt;*.TXT) ;;*.DAT;;All files (*)",
-                # )
-                #
-                # if not lidar_files:  
-                    # return
-                # s.setValue("FLO-2D/lastLIDARDir", os.path.dirname(lidar_files[0]))    
-                
-                
-                # self.interpolate_from_lidar_THREAD_original(self.lyrs.data["grid"]["qlyr"])
-
-#..................................................
-              
-               
-                # self.interpolate_from_lidar_THREAD(lidar_files, self.lyrs)
-                
-                
-#....................................................   
-
-           
-                dlg.interpolate_from_lidar()  
+            else:     
+                cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                if cell[0] != NULL:   
+                    dlg.interpolate_from_lidar()  
+                else:
+                    QApplication.restoreOverrideCursor()
+                    proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
+                    if proceed:
+                        assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                        dlg.interpolate_from_lidar()  
+                    else:
+                        return                    
+                    
+                    
                 
             QApplication.restoreOverrideCursor()                         
         else:

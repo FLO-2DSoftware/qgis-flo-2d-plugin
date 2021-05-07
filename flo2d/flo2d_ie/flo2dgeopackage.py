@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
+from math import isclose
 from itertools import chain, groupby
 from operator import itemgetter
 from qgis.PyQt.QtCore import QSettings
@@ -66,29 +67,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
-        sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-
-        self.clear_tables("grid")
-        data = self.parser.parse_mannings_n_topo()
-
-        c = 0
-        man = slice(0, 2)
-        coords = slice(2, 4)
-        elev = slice(4, None)
-        for row in data:
-            if c < self.chunksize:
-                geom = " ".join(row[coords])
-                g = self.build_square(geom, self.cell_size)
-                sql += [tuple(row[man] + row[elev] + [g])]
-                c += 1
-            else:
+        
+        try:
+            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+            
+            self.clear_tables("grid")
+            data = self.parser.parse_mannings_n_topo()
+            
+            c = 0
+            man = slice(0, 2)
+            coords = slice(2, 4)
+            elev = slice(4, None)
+            for row in data:
+                if c < self.chunksize:
+                    geom = " ".join(row[coords])
+                    g = self.build_square(geom, self.cell_size)
+                    sql += [tuple(row[man] + row[elev] + [g])]
+                    c += 1
+                else:
+                    self.batch_execute(sql)
+                    c = 0
+            if len(sql) > 2:
                 self.batch_execute(sql)
-                c = 0
-        if len(sql) > 2:
-            self.batch_execute(sql)
-        else:
-            pass
-
+            else:
+                pass
+        
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing TOP.DAT!.\n", e)
+            
     def import_inflow(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""", 4]
@@ -1083,7 +1090,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 1502211915.1535: importing SWMMFLORT.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
         
     def import_swmmoutf(self):
         swmmoutf_sql = ["""INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""", 4]

@@ -50,6 +50,8 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('trigger_control', 'as
 
 CREATE TABLE "grid" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
+    "col" INTEGER,
+    "row" INTEGER,
     "n_value" REAL DEFAULT 0.05,
     "elevation" REAL DEFAULT -9999,
     "water_elevation" REAL DEFAULT -9999,

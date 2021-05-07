@@ -27,7 +27,7 @@ from qgis.core import (
     NULL,
 )
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
-from ..utils import is_number
+from ..utils import is_number, grid_index, get_grid_index, set_grid_index
 from ..errors import GeometryValidityErrors
 
 # GRID classes
@@ -550,6 +550,71 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
             y_tmp -= cell_size
         x += cell_size
 
+def build_grid_and_tableColRow(boundary, cell_size):
+    """
+    Generator which creates grid with given cell size and inside given boundary layer.
+    """
+    half_size = cell_size * 0.5
+    biter = boundary.getFeatures()
+    feature = next(biter)
+    geom = feature.geometry()
+    bbox = geom.boundingBox()
+    xmin = bbox.xMinimum()
+    xmax = bbox.xMaximum()
+    ymax = bbox.yMaximum()
+    ymin = bbox.yMinimum()
+    #     xmin = math.floor(bbox.xMinimum())
+    #     xmax = math.ceil(bbox.xMaximum())
+    #     ymax = math.ceil(bbox.yMaximum())
+    #     ymin = math.floor(bbox.yMinimum())
+    cols = int(math.ceil(abs(xmax - xmin) / cell_size))
+    rows = int(math.ceil(abs(ymax - ymin) / cell_size))
+    x = xmin + half_size
+    y = ymax - half_size
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
+    geos_geom_engine.prepareGeometry()
+    for col in range(cols):
+        y_tmp = y
+        for row in range(rows):
+            pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
+            if geos_geom_engine.intersects(pnt.constGet()):
+                poly = (
+                    x - half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp - half_size,
+                )
+                yield (poly, col + 2, abs(row - rows) + 1)
+                # yield (poly, col, abs(row - rows) - 2)
+            else:
+                pass
+            y_tmp -= cell_size
+        x += cell_size
+
+
+def assign_col_row_indexes_to_grid(grid, gutils):
+    cell_size = float(gutils.get_cont_par("CELLSIZE"))
+    ext = grid.extent()
+    xmin = ext.xMinimum()
+    ymin = ext.yMinimum()                  
+    qry = "UPDATE grid SET col = ?, row = ? WHERE fid = ?"
+    qry_values = []
+    for i, cell in enumerate(grid.getFeatures(), 1):
+        geom = cell.geometry()
+        xx, yy = geom.centroid().asPoint()
+        col = int((xx - xmin)/cell_size) + 2
+        row = int((yy - ymin)/cell_size) + 2 
+        qry_values.append((col, row, i))
+        
+    cur = gutils.con.cursor()
+    cur.executemany(qry, qry_values)
+
 
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
@@ -937,7 +1002,25 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     else:
         pass
 
+def square_grid_and_tableColRow(gutils, boundary):
+    """
+    Function for calculating and writing square grid into 'grid' table.
+    """
 
+    cellsize = float(gutils.get_cont_par("CELLSIZE"))
+    update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
+    gutils.execute(update_cellsize, (cellsize,))
+    gutils.clear_tables("grid")
+
+    sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+    polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+    for g_tuple in polygonsClRw:
+        sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+    if len(sql) > 2:
+        gutils.batch_execute(sql)
+    else:
+        pass
+    
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
