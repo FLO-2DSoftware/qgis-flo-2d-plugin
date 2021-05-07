@@ -161,16 +161,20 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             field_index = grid_lyr.fields().indexFromName("col") 
             if field_index == -1:
-                self.uc.show_warn("WARNING 060521.1802: Old GeoPackage.\n\n Grid table doesn't have 'col' and 'row' attributes!")
-                return
+                old = self.uc.question("WARNING 060521.1802: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' attributes!\n\n"
+                                    + "Some functionality will be unavailable. Would you like to continue?")
+                if not old:
+                    return
 
             ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             bl = self.lyrs.data["user_model_boundary"]["qlyr"]
             
-            square_grid_and_tableColRow(self.gutils, bl)
-            # square_grid(self.gutils, bl)
+            if old:
+                square_grid(self.gutils, bl) 
+            else:
+                square_grid_and_tableColRow(self.gutils, bl)
             
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
