@@ -1031,8 +1031,6 @@ class Flo2D(object):
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                                         # the methods in the class Flo2dGeoPackage to import (read) the # FLO-2D .DAT files
 
-                    assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)
-
                     # save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
@@ -1044,6 +1042,8 @@ class Flo2D(object):
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
+                    assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)
+                    
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()

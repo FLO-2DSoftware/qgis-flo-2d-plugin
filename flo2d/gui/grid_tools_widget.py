@@ -160,6 +160,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             field_index = grid_lyr.fields().indexFromName("col") 
+            old = False
             if field_index == -1:
                 old = self.uc.question("WARNING 060521.1802: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' attributes!\n\n"
                                     + "Some functionality will be unavailable. Would you like to continue?")
