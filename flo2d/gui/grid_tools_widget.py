@@ -161,6 +161,15 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.get_cell_size():
                 return
 
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            field_index = grid_lyr.fields().indexFromName("col") 
+            old = False
+            if field_index == -1:
+                old = self.uc.question("WARNING 060521.1802: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' attributes!\n\n"
+                                    + "Some functionality will be unavailable. Would you like to continue?")
+                if not old:
+                    return
+
             ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -183,9 +192,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
                 upper_left_coords_override = (xmin_new,ymax_new)
 
-            #square_grid(self.gutils, bl, upper_left_coords_override) 
-            square_grid_and_tableColRow(self.gutils, bl)
-            # square_grid(self.gutils, bl)
+            if old:
+                square_grid(self.gutils, bl, upper_left_coords_override) 
+            else:
+                square_grid_and_tableColRow(self.gutils, bl)
+                # Above line will be replaced with the following after additional modification
+                #square_grid_and_tableColRow(self.gutils, bl, upper_left_coords_override)
             
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
@@ -289,21 +301,25 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.log_info(traceback.format_exc())
-                        self.uc.show_error(
-                            "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
+                        self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
-            else:     
-                cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
-                if cell[0] != NULL:   
-                    dlg.interpolate_from_lidar()  
-                else:
-                    QApplication.restoreOverrideCursor()
-                    proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
-                    if proceed:
-                        assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+            else:    
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                field_index = grid_lyr.fields().indexFromName("col") 
+                if field_index == -1:
+                    self.uc.show_warn("WARNING 060521.1746: Old GeoPackage.\n\n Grid table doesn't have 'col' and 'row' attributes!")
+                else:    
+                    cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                    if cell[0] != NULL:   
                         dlg.interpolate_from_lidar()  
                     else:
-                        return                    
+                        QApplication.restoreOverrideCursor()
+                        proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
+                        if proceed:
+                            assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                            dlg.interpolate_from_lidar()  
+                        else:
+                            return                    
                     
                     
                 

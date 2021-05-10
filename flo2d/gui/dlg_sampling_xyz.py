@@ -39,6 +39,7 @@ from ..utils import time_taken, grid_index, get_grid_index, set_grid_index, clea
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_tools.grid_tools import number_of_elements, fid_from_grid, adjacent_grid_elevations
+from pickle import TRUE
 # from flo2d.__init__ import classFactory
 # from ..flo2d import xxx
 
@@ -51,12 +52,19 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.grid = self.lyrs.data["grid"]["qlyr"]
+        
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.gpkg_path = self.gutils.get_gpkg_path()
         self.uc = UserCommunication(iface, "FLO-2D")
         self.current_lyr = None
         self.setup_layer_cbo()
+        
+        self.cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+        grid_extent = self.grid.extent()
+        self.xMinimum = grid_extent.xMinimum()
+        self.yMinimum = grid_extent.yMinimum() 
+        
         # connections
         self.points_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
         self.points_layer_grp.clicked.connect(self.points_layer_selected)
@@ -113,17 +121,9 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             elevs = {}
-            errors0 = []
-            errors1 = []
-            warnings = []
             read_error = "Error reading files:\n\n"
-            accepted_files = []
             outside_grid, inside_grid = 0, 0
-            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
             n_grid_cells = number_of_elements(self.gutils, self.grid)
-            grid_extent = self.grid.extent()
-            xMinimum = grid_extent.xMinimum()
-            yMinimum = grid_extent.yMinimum()
    
             gid_indx = {}
             cells = self.gutils.execute("SELECT fid, col, row FROM grid").fetchall()
@@ -161,9 +161,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                  
                 n_commas =  0
                 n_spaces = 0             
-
-# #                 err0, err1 = self.check_LIDAR_file(file)
-# #                 if err0 == "" and err1 == "" :
  
                 # See if comma or space delimited:
                 with open(file, "r") as f:
@@ -188,8 +185,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             step = int(n_lines/ 20)
 
                             if n_lines > step:
-                               advanceBar.setValue(step/2) 
-                               self.iface.mainWindow().repaint()   
+                                advanceBar.setValue(step/2) 
+                                self.iface.mainWindow().repaint()   
                                        
                             # for line in f1: 
                             for i, line in enumerate(lines, 1): 
@@ -214,10 +211,9 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 elif n_commas == 3:  # 4 columns.
                                     xpp, ypp, zpp, dummy  = line.split(",") 
                                 elif n_commas == 4:  # 5 columns.
-                                     dummy1, xpp, ypp, zpp, dummy2  = line.split(",")  
+                                    dummy1, xpp, ypp, zpp, dummy2  = line.split(",")  
                                 else:
                                     break  
-                                 
                                  
                                 if self.use_sql_chbox.isChecked():
                                     cell = self.gutils.grid_on_point(xpp, ypp)
@@ -231,8 +227,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                     else:
                                         outside_grid += 1    
                                 else: 
-                                    col = int((float(xpp) - xMinimum)/cell_size) + 2
-                                    row = int((float(ypp) - yMinimum)/cell_size) + 2                                    
+                                    col = int((float(xpp) - self.xMinimum)/self.cell_size) + 2
+                                    row = int((float(ypp) - self.yMinimum)/self.cell_size) + 2                                    
                                     if (col, row) in gid_indx:
                                         gid_indx[col, row][1] += float(zpp)
                                         gid_indx[col, row][2] += 1
@@ -250,7 +246,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             self.gutils.execute("UPDATE grid SET elevation = -9999;")
             
             # Update cell elevations from LIDAR points:
-
             nope = []
             if self.use_sql_chbox.isChecked():
                 if elevs:
@@ -265,7 +260,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         else:
                             pass                                            
             else:                 
-                maxRow = max(gid_indx, key=gid_indx.get)
                 if inside_grid > 0:
                     for gi in gid_indx.items():
                         if gi[1][2] != 0:
@@ -274,7 +268,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         else:
                             nope.append(gi[1][0])
 
-            # self.iface.messageBar().clearWidgets() 
             self.uc.clear_bar_messages()       
             QApplication.restoreOverrideCursor()    
             
@@ -287,15 +280,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             if read_error != "Error reading files:\n\n":
                 self.uc.show_info(read_error)
 
-   
-
-            # name = "Non-interpolated cells"
-            # lyr = QgsProject.instance().mapLayersByName(name)
-            # if lyr:
-                # QgsProject.instance().removeMapLayers([lyr[0].id()]) 
-
             if nope:
-                self.process_non_interpolated_cells(cell_size, nope)   
+                self.process_non_interpolated_cells(nope)   
             
             self.lyrs.refresh_layers()
             self.lyrs.zoom_to_all()
@@ -321,9 +307,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
     def  read_LIDAR_points(self):
         n_commas =  0
         n_spaces = 0             
-         
-        #                 err0, err1 = self.check_LIDAR_file(file)
-        #                 if err0 == "" and err1 == "" :
         
         # See if comma or space delimited:
         with open(file, "r") as f:
@@ -378,14 +361,13 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 except ValueError:
                     read_error += os.path.basename(file) + "\n\n"        
         
-    def process_non_interpolated_cells(self, cell_size, nope):  
+    def process_non_interpolated_cells(self, nope):  
         try:   
             QApplication.restoreOverrideCursor()  
             dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
             dlg.label.setText("There are " + str(len(nope)) + " non-interpolated grid elements.")                
             
             while True:
-                   
                 ok = dlg.exec_()
                 if not ok:
                     break
@@ -399,96 +381,69 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     lyr = QgsProject.instance().mapLayersByName(name)
                     if lyr:
                         QgsProject.instance().removeMapLayers([lyr[0].id()])                  
+
+                    update_qry = "UPDATE grid SET elevation = ?  WHERE fid = ?;"
+                    qry_values = []
                     
                     if dlg.interpolate_radio.isChecked():
                         
                         ini_time = time.time()
                         QApplication.setOverrideCursor(Qt.WaitCursor)
-        
+                        
                         for this_cell in nope:
-                            currentCell = next(self.grid.getFeatures(QgsFeatureRequest(this_cell)))
-                            xx, yy = currentCell.geometry().centroid().asPoint()
+                            xx, yy = self.cell_centroid(this_cell)                           
             
                             heights = []
-                            sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
+                            
                             # North cell:
-                            y = yy + cell_size
+                            y = yy + self.cell_size
                             x = xx
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            heights.append(self.adjacent_elev(x, y))
+
                             # NorthEast cell
-                            y = yy + cell_size
-                            x = xx + cell_size
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            y = yy + self.cell_size
+                            x = xx + self.cell_size
+                            heights.append(self.adjacent_elev(x, y))
+
                             # East cell:
-                            x = xx + cell_size
+                            x = xx + self.cell_size
                             y = yy
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            heights.append(self.adjacent_elev(x, y))
+
                             # SouthEast cell:
-                            y = yy - cell_size
-                            x = xx + cell_size
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            y = yy - self.cell_size
+                            x = xx + self.cell_size
+                            heights.append(self.adjacent_elev(x, y))
+
                             # South cell:
-                            y = yy - cell_size
+                            y = yy - self.cell_size
                             x = xx
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            heights.append(self.adjacent_elev(x, y))
+
                             # SouthWest cell:
-                            y = yy - cell_size
-                            x = xx - cell_size
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            y = yy - self.cell_size
+                            x = xx - self.cell_size
+                            heights.append(self.adjacent_elev(x, y))
+
                             # West cell:
                             y = yy
-                            x = xx - cell_size
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            x = xx - self.cell_size
+                            heights.append(self.adjacent_elev(x, y))
+ 
                             # NorthWest cell:
-                            y = yy + cell_size
-                            x = xx - cell_size
-                            elem = self.gutils.grid_on_point(x, y)
-                            if elem is not None:
-                                altitude = self.gutils.execute(sel_elev_qry, (elem,)).fetchone()[0]
-                                if altitude != -9999:
-                                    heights.append(altitude)
-            
+                            y = yy + self.cell_size
+                            x = xx - self.cell_size
+                            heights.append(self.adjacent_elev(x, y))
+
                             if len(heights) == 0:
                                 pass
                             else:
                                 elev = round(sum(heights)/len(heights), 3)
-                                self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elev, this_cell))  
+                                qry_values.append((elev, this_cell))
                         
+                        cur = self.gutils.con.cursor()    
+                        cur.executemany(update_qry, qry_values)  
+
                         self.lyrs.repaint_layers()
         
                         QApplication.restoreOverrideCursor()  
@@ -506,7 +461,10 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         
                         value = dlg.non_interpolated_value_dbox.value()
                         for this_cell in nope:
-                            self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (value, this_cell)) 
+                            qry_values.append((value, this_cell))
+                         
+                        cur = self.gutils.con.cursor()    
+                        cur.executemany(update_qry, qry_values)  
                             
                         self.lyrs.repaint_layers()
         
@@ -537,15 +495,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             # Add features:
                             features = []
                             for this_cell in nope:  
-                                    currentCell = next(self.grid.getFeatures(QgsFeatureRequest(this_cell)))
-                                    xx, yy = currentCell.geometry().centroid().asPoint()
-                                     
-                                    # add a feature
-                                    fet = QgsFeature()
-                                    fet.setFields(fields)
-                                    fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
-                                    fet.setAttributes([this_cell, -9999])
-                                    features.append(fet)
+                                xx, yy = self.cell_centroid(this_cell)
+                                 
+                                # add a feature
+                                fet = QgsFeature()
+                                fet.setFields(fields)
+                                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
+                                fet.setAttributes([this_cell, -9999])
+                                features.append(fet)
                             
                             writer.addFeatures(features)                            
         
@@ -589,8 +546,39 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 030521.0848: failed to process non-interpolated cells!", e)
             return   
-    
-           
+
+
+   
+    def adjacent_elev(self, x, y):
+        
+        if False:
+            elev = 0
+            altitude = self.cell_elevation(x, y)
+            if altitude is not None:
+                if altitude[0] != -9999:
+                    elev =  altitude[0] 
+            return elev                              
+        else:
+            elev = 0
+            elem = self.gutils.grid_on_point(x, y)
+            if elem is not None:
+                altitude = self.gutils.execute("SELECT elevation FROM grid WHERE fid = ?;", (elem,)).fetchone()[0]
+                if altitude != -9999:
+                    elev = altitude
+            return elev
+                
+    def cell_centroid(self, cell):        
+        col, row = self.gutils.execute("SELECT col, row FROM grid WHERE fid = ?;",(cell,)).fetchone()
+        x = self.xMinimum + (col-2)*self.cell_size + self.cell_size/2
+        y = self.yMinimum + (row-2)*self.cell_size + self.cell_size/2
+        return x, y
+
+    def cell_elevation(self, x, y):
+        col = int((float(x) - self.xMinimum)/self.cell_size) + 2
+        row = int((float(y) - self.yMinimum)/self.cell_size) + 2                                    
+        elev = self.gutils.execute("SELECT elevation FROM grid WHERE col = ? AND row = ?;", (col, row,)).fetchone()
+        return elev     
+                                      
     def check_LIDAR_file(self, file):
         file_name, file_ext = os.path.splitext(os.path.basename(file))
         error0 = ""

@@ -675,6 +675,7 @@ class GeoPackageUtils(object):
             gid = None
         return gid
 
+        
     def grid_value(self, gid, field):
         qry = 'SELECT "{}" FROM grid WHERE fid=?;'.format(field)
         value = self.execute(qry, (gid,)).fetchone()[0]
