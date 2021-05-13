@@ -851,7 +851,7 @@ class Outflow(GeoPackageUtils):
         else:
             old_hydro_out = None
         self.clear_type_data()
-        self.clear_data_fids()
+        # self.clear_data_fids()
         self.typ = typ
         if typ in (2, 8, 9, 11):
             self.chan_out = 1
@@ -862,30 +862,32 @@ class Outflow(GeoPackageUtils):
             self.fp_out = 1
         elif typ == 4:
             self.hydro_out = old_hydro_out
+        elif typ == 0: 
+            self.clear_data_fids()              
         else:
             pass   
              
-#         if typ == 4:
-#             # keep nr of outflow hydrograph to set it later
-#             old_hydro_out = self.hydro_out
-#         else:
-#             old_hydro_out = None
-#         self.clear_type_data()
-#         self.typ = typ
-#         if typ in (2, 8):
-#             self.chan_out = 1
-#         elif typ in (1, 7):
-#             self.fp_out = 1
-#         elif typ == 3:
-#             self.chan_out = 1
-#             self.fp_out = 1
-#         elif typ == 4:
-#             self.clear_data_fids()
-#             self.hydro_out = old_hydro_out
-#         elif typ == 0: 
-#             self.clear_data_fids()   
-#         else:
-#             pass
+        # if typ == 4:
+            # # keep nr of outflow hydrograph to set it later
+            # old_hydro_out = self.hydro_out
+        # else:
+            # old_hydro_out = None
+        # self.clear_type_data()
+        # self.typ = typ
+        # if typ in (2, 8):
+            # self.chan_out = 1
+        # elif typ in (1, 7):
+            # self.fp_out = 1
+        # elif typ == 3:
+            # self.chan_out = 1
+            # self.fp_out = 1
+        # elif typ == 4:
+            # self.clear_data_fids()
+            # self.hydro_out = old_hydro_out
+        # elif typ == 0: 
+            # self.clear_data_fids()   
+        # else:
+            # pass
 
     def get_time_series(self, order_by="name"):
         if order_by == "name":
