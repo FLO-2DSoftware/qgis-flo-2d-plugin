@@ -236,8 +236,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         sp = QSizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         self.bc_name_cbo = QComboBox(self)
+        self.bc_name_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         self.inflow_tseries_cbo = QComboBox(self)
+        self.inflow_tseries_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         self.outflow_data_cbo = QComboBox(self)
+        self.outflow_data_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         combos = {
             self.bc_name_cbo: self.bc_name_cbo_layout,
             self.inflow_tseries_cbo: self.inflow_tseries_cbo_layout,
