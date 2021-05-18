@@ -13,46 +13,101 @@
   <property name="windowTitle">
    <string>Individual Breach Data</string>
   </property>
-  <widget class="QDialogButtonBox" name="global_breach_buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>712</y>
-     <width>417</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-   </property>
-  </widget>
-  <widget class="QGroupBox" name="individual_core_data_grp">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>256</y>
-     <width>417</width>
-     <height>135</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Individual Core Data</string>
-   </property>
-   <property name="flat">
-    <bool>false</bool>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_26">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_11">
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_12">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_13">
+  <layout class="QGridLayout" name="gridLayout_28">
+   <item row="0" column="0">
+    <layout class="QGridLayout" name="gridLayout_27">
+     <item row="0" column="0">
+      <layout class="QGridLayout" name="gridLayout_14">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>Breach failure grid element</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_17">
+         <property name="text">
+          <string>Direction of breach failure</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="0" column="1">
+      <layout class="QGridLayout" name="gridLayout_15">
+       <item row="0" column="0">
+        <widget class="QComboBox" name="individual_breach_element_cbo"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QComboBox" name="breach_failure_direction_cbo">
+         <item>
           <property name="text">
-           <string>Mean sediment size</string>
+           <string>1 = North</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>2 = East</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>3 =South</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>4 = West</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>5 = Northeast</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>6 = Southeast</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>7 = Southwest</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>8 = Northwest</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="individual_geometry_data_grp">
+     <property name="title">
+      <string>Individual Geometry Data</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_5">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Upstream face slope</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -60,9 +115,9 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_14">
+         <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>Porosity</string>
+           <string>Down stream face slope</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -70,9 +125,9 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLabel" name="label_15">
+         <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Unit weight</string>
+           <string>Core average face slope</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -80,9 +135,19 @@
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="QLabel" name="label_16">
+         <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Manning's n-value</string>
+           <string>Crest width</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>Crest length</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -92,50 +157,556 @@
        </layout>
       </item>
       <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_13">
+       <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
-         <widget class="QDoubleSpinBox" name="d50c_dbox">
-          <property name="value">
-           <double>0.200000000000000</double>
+         <widget class="QDoubleSpinBox" name="zu_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="porc_dbox">
-          <property name="value">
-           <double>0.350000000000000</double>
+         <widget class="QDoubleSpinBox" name="zd_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="uwc_dbox">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
+         <widget class="QDoubleSpinBox" name="zc_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-          <property name="value">
-           <double>109.000000000000000</double>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="QDoubleSpinBox" name="cnc_dbox">
+         <widget class="QDoubleSpinBox" name="crestwidth_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QDoubleSpinBox" name="crestlength_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="2">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Maximum top width</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_18">
+          <property name="text">
+           <string>Weir Coeficient</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Maximum bottom width</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Pipe bottom elevation</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="3">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="brbotwidmax_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="brtopwidmax_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QDoubleSpinBox" name="brbottomel_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QDoubleSpinBox" name="weircoef_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
           <property name="value">
-           <double>0.200000000000000</double>
+           <double>3.000000000000000</double>
           </property>
          </widget>
         </item>
        </layout>
       </item>
      </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_9">
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="individual_core_data_grp">
+     <property name="title">
+      <string>Individual Core Data</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_26">
       <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_8">
+       <layout class="QGridLayout" name="gridLayout_11">
         <item row="0" column="0">
-         <widget class="QLabel" name="label_9">
+         <layout class="QGridLayout" name="gridLayout_12">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Mean sediment size</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Porosity</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Unit weight</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Manning's n-value</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_13">
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="d50c_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="porc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.350000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="uwc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>109.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QDoubleSpinBox" name="cnc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_9">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_8">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Angle of internal friction</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Cohesive strength</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Core sediment gradient</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="afrc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>26.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="cohc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>922.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="unfcc_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>750.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QGroupBox" name="individual_shell_data_grp">
+     <property name="title">
+      <string>Individual Shell Data</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_25">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_6">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_16">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>Mean sediment size</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>Porosity</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_23">
+            <property name="text">
+             <string>Unit weight</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_24">
+            <property name="text">
+             <string>Manning's n-value</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_17">
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="d50s_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>20.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="pors_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.040000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="uws_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>130.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QDoubleSpinBox" name="cns_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.200000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_18">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_19">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_25">
+            <property name="text">
+             <string>Angle of internal friction</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_27">
+            <property name="text">
+             <string>Shell sediment gradient</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="text">
+             <string>Cohesive strength</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QGridLayout" name="gridLayout_20">
+          <item row="2" column="0">
+           <widget class="QDoubleSpinBox" name="unfcs_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>7.500000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="cohs_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>250.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QDoubleSpinBox" name="afrs_dbox">
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <double>999999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>38.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QGroupBox" name="individual_miscellaneous_data_grp">
+     <property name="title">
+      <string>Individual Miscellaneous Data</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_24">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_7">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_36">
           <property name="text">
-           <string>Angle of internal friction</string>
+           <string>Ratio of init. width to length</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -143,9 +714,9 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_10">
+         <widget class="QLabel" name="label_29">
           <property name="text">
-           <string>Cohesive strength</string>
+           <string>Average grass length</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -153,9 +724,19 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLabel" name="label_11">
+         <widget class="QLabel" name="label_30">
           <property name="text">
-           <string>Core sediment gradient</string>
+           <string>Downstream grass condition</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_31">
+          <property name="text">
+           <string>Maximum grass velocity</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -165,203 +746,58 @@
        </layout>
       </item>
       <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_10">
+       <layout class="QGridLayout" name="gridLayout_21">
         <item row="0" column="0">
-         <widget class="QDoubleSpinBox" name="afrc_dbox">
+         <widget class="QDoubleSpinBox" name="bratio_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
           <property name="maximum">
-           <double>999.000000000000000</double>
+           <double>999999.000000000000000</double>
           </property>
           <property name="value">
-           <double>26.000000000000000</double>
+           <double>2.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="cohc_dbox">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
+         <widget class="QDoubleSpinBox" name="grasslength_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-          <property name="value">
-           <double>922.000000000000000</double>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="unfcc_dbox">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
+         <widget class="QDoubleSpinBox" name="grasscond_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-          <property name="value">
-           <double>750.000000000000000</double>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QDoubleSpinBox" name="grassvmaxp_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
        </layout>
       </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QGroupBox" name="individual_miscellaneous_data_grp">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>560</y>
-     <width>419</width>
-     <height>133</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Individual Miscellaneous Data</string>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_24">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_36">
-        <property name="text">
-         <string>Ratio of init. width to length</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_29">
-        <property name="text">
-         <string>Average grass length</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_30">
-        <property name="text">
-         <string>Downstream grass condition</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_31">
-        <property name="text">
-         <string>Maximum grass velocity</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_21">
-      <item row="0" column="0">
-       <widget class="QDoubleSpinBox" name="bratio_dbox">
-        <property name="value">
-         <double>2.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="grasslength_dbox"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QDoubleSpinBox" name="grasscond_dbox"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QDoubleSpinBox" name="grassvmaxp_dbox"/>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="2">
-     <layout class="QGridLayout" name="gridLayout_22">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_33">
-        <property name="text">
-         <string>Max. sediment conc.</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_34">
-        <property name="text">
-         <string>Mean sediment (riprap) size</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_35">
-        <property name="text">
-         <string>Sediment (riprap) gradient</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_37">
-        <property name="text">
-         <string>Breach time</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="3">
-     <layout class="QGridLayout" name="gridLayout_23">
-      <item row="0" column="0">
-       <widget class="QDoubleSpinBox" name="sedconmax_dbox"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="d50df_dbox"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QDoubleSpinBox" name="unfcdf_dbox"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QDoubleSpinBox" name="breachtime_dbox"/>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QGroupBox" name="individual_shell_data_grp">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>408</y>
-     <width>417</width>
-     <height>135</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Individual Shell Data</string>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_25">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_16">
+      <item row="0" column="2">
+       <layout class="QGridLayout" name="gridLayout_22">
         <item row="0" column="0">
-         <widget class="QLabel" name="label_21">
+         <widget class="QLabel" name="label_33">
           <property name="text">
-           <string>Mean sediment size</string>
+           <string>Max. sediment conc.</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -369,9 +805,9 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_22">
+         <widget class="QLabel" name="label_34">
           <property name="text">
-           <string>Porosity</string>
+           <string>Mean sediment (riprap) size</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -379,9 +815,9 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLabel" name="label_23">
+         <widget class="QLabel" name="label_35">
           <property name="text">
-           <string>Unit weight</string>
+           <string>Sediment (riprap) gradient</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -389,9 +825,9 @@
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="QLabel" name="label_24">
+         <widget class="QLabel" name="label_37">
           <property name="text">
-           <string>Manning's n-value</string>
+           <string>Breach time</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -400,359 +836,64 @@
         </item>
        </layout>
       </item>
-      <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_17">
+      <item row="0" column="3">
+       <layout class="QGridLayout" name="gridLayout_23">
         <item row="0" column="0">
-         <widget class="QDoubleSpinBox" name="d50s_dbox">
-          <property name="maximum">
-           <double>999.000000000000000</double>
+         <widget class="QDoubleSpinBox" name="sedconmax_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-          <property name="value">
-           <double>20.000000000000000</double>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="pors_dbox">
-          <property name="value">
-           <double>0.040000000000000</double>
+         <widget class="QDoubleSpinBox" name="d50df_dbox">
+          <property name="decimals">
+           <number>3</number>
+          </property>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="uws_dbox">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
+         <widget class="QDoubleSpinBox" name="unfcdf_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-          <property name="value">
-           <double>130.000000000000000</double>
+          <property name="maximum">
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="3" column="0">
-         <widget class="QDoubleSpinBox" name="cns_dbox">
-          <property name="value">
-           <double>0.200000000000000</double>
+         <widget class="QDoubleSpinBox" name="breachtime_dbox">
+          <property name="decimals">
+           <number>3</number>
           </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_18">
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_19">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_25">
-          <property name="text">
-           <string>Angle of internal friction</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_27">
-          <property name="text">
-           <string>Shell sediment gradient</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_26">
-          <property name="text">
-           <string>Cohesive strength</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_20">
-        <item row="2" column="0">
-         <widget class="QDoubleSpinBox" name="unfcs_dbox">
-          <property name="value">
-           <double>7.500000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="cohs_dbox">
           <property name="maximum">
-           <double>9999.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>250.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QDoubleSpinBox" name="afrs_dbox">
-          <property name="maximum">
-           <double>999.000000000000000</double>
-          </property>
-          <property name="value">
-           <double>38.000000000000000</double>
+           <double>999999.000000000000000</double>
           </property>
          </widget>
         </item>
        </layout>
       </item>
      </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QGroupBox" name="individual_geometry_data_grp">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>80</y>
-     <width>417</width>
-     <height>159</height>
-    </rect>
-   </property>
-   <property name="title">
-    <string>Individual Geometry Data</string>
-   </property>
-   <property name="flat">
-    <bool>false</bool>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_5">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Upstream face slope</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Down stream face slope</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Core average face slope</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Crest width</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Crest length</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QDoubleSpinBox" name="zu_dbox"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="zd_dbox"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QDoubleSpinBox" name="zc_dbox"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QDoubleSpinBox" name="crestwidth_dbox"/>
-      </item>
-      <item row="4" column="0">
-       <widget class="QDoubleSpinBox" name="crestlength_dbox"/>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="2">
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Maximum top width</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_18">
-        <property name="text">
-         <string>Weir Coeficient</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Maximum bottom width</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Pipe bottom elevation</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="3">
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="0">
-       <widget class="QDoubleSpinBox" name="brbotwidmax_dbox"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QDoubleSpinBox" name="brtopwidmax_dbox"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QDoubleSpinBox" name="brbottomel_dbox"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QDoubleSpinBox" name="weircoef_dbox">
-        <property name="value">
-         <double>3.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="layoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>104</x>
-     <y>16</y>
-     <width>241</width>
-     <height>50</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_27">
-    <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout_14">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>Breach failure grid element</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Direction of breach failure</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="1">
-     <layout class="QGridLayout" name="gridLayout_15">
-      <item row="0" column="0">
-       <widget class="QComboBox" name="individual_breach_element_cbo"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QComboBox" name="breach_failure_direction_cbo">
-        <item>
-         <property name="text">
-          <string>1 = North</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2 = East</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>3 =South</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4 = West</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>5 = Northeast</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>6 = Southeast</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>7 = Southwest</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>8 = Northwest</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </item>
-   </layout>
-  </widget>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QDialogButtonBox" name="global_breach_buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections>
