@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.21
+version=0.10.22
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,18 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.22
+  - BC widget: add scroll bars to outflows and time series combo boxes.
+  - GDAL Grid Point Elevation Tool:
+    - Sample elevation from a point source *.csv or an elevation raster source.
+    - Six new sampling agolrithms: average, inverse distance, inverse distance nearest neighbor, nearest neighbor, linear.
+    - Applies GDAL Grid interpolation method.
+    - Fill NODATA allowed.
+    - Applies DASK multi thread / cache management.
+  - LiDAR Elevation Method Optimization
+    - Add array positions to Grid Layer.  Ncol and Nrow.
+    - Applies the LiDAR sampling method to the numpy array.
+    - Optimizes python code for LiDAR sampling.
  <p>0.10.21
   - Show 2 progress bars when reading and interpolating elevation points from LIDAR files.
  <p>0.10.20
