@@ -266,7 +266,7 @@ tags=flow, 2d, grid, preprocess, geopackage
 
 homepage=https://flo-2d.com
 category=Plugins
-icon=img/flo2d.svg
+icon=img/F2D 400 Transparent.png
 # experimental flag
 experimental=False
 
