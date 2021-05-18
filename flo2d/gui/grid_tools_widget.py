@@ -316,7 +316,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         QApplication.restoreOverrideCursor()
                         proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
                         if proceed:
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
                             assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                            QApplication.restoreOverrideCursor()
                             dlg.interpolate_from_lidar()  
                         else:
                             return                    

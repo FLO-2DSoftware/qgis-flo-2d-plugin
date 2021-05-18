@@ -118,18 +118,6 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if time_stage_1:
             set_BC_Border(border)
 
-
-
-
-
-
-#         self.highlight_time_stage_cells(BC_BORDER,[])
-        
-        
-        
-        
-        
-        
     def block_saving(self):
         try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
 
@@ -248,8 +236,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         sp = QSizePolicy()
         sp.setHorizontalPolicy(QSizePolicy.MinimumExpanding)
         self.bc_name_cbo = QComboBox(self)
+        self.bc_name_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         self.inflow_tseries_cbo = QComboBox(self)
+        self.inflow_tseries_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
         self.outflow_data_cbo = QComboBox(self)
+        self.outflow_data_cbo.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         combos = {
             self.bc_name_cbo: self.bc_name_cbo_layout,
             self.inflow_tseries_cbo: self.inflow_tseries_cbo_layout,
@@ -676,31 +669,31 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.out_fid, self.type_fid, self.geom_type = self.bc_name_cbo.itemData(cur_out_idx)
         self.outflow = Outflow(self.out_fid, self.iface.f2d["con"], self.iface)
         self.outflow.get_row()
-        msg = """In populate_outflows. Got current outflow row:
-        name = {}
-        chan_out = {}
-        fp_out = {}
-        hydro_out = {}
-        chan_tser_fid = {}
-        chan_qhpar_fid = {}
-        chan_qhtab_fid = {}
-        fp_tser_fid = {}
-        typ = {}
-        geom_type = {}
-        bc_fid = {}
-        """.format(
-            self.outflow.name,
-            self.outflow.chan_out,
-            self.outflow.fp_out,
-            self.outflow.hydro_out,
-            self.outflow.chan_tser_fid,
-            self.outflow.chan_qhpar_fid,
-            self.outflow.chan_qhtab_fid,
-            self.outflow.fp_tser_fid,
-            self.outflow.typ,
-            self.outflow.geom_type,
-            self.outflow.bc_fid,
-        )
+        # msg = """In populate_outflows. Got current outflow row:
+        # name = {}
+        # chan_out = {}
+        # fp_out = {}
+        # hydro_out = {}
+        # chan_tser_fid = {}
+        # chan_qhpar_fid = {}
+        # chan_qhtab_fid = {}
+        # fp_tser_fid = {}
+        # typ = {}
+        # geom_type = {}
+        # bc_fid = {}
+        # """.format(
+            # self.outflow.name,
+            # self.outflow.chan_out,
+            # self.outflow.fp_out,
+            # self.outflow.hydro_out,
+            # self.outflow.chan_tser_fid,
+            # self.outflow.chan_qhpar_fid,
+            # self.outflow.chan_qhtab_fid,
+            # self.outflow.fp_tser_fid,
+            # self.outflow.typ,
+            # self.outflow.geom_type,
+            # self.outflow.bc_fid,
+        # )
         if not self.outflow.geom_type:
             return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
