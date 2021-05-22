@@ -1027,7 +1027,6 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
     """
     try:
         # start_time = time.time()
-
         if reset is True:
             default = gutils.get_cont_par("MANNING")
             gutils.execute("UPDATE grid SET n_value=?;", (default,))

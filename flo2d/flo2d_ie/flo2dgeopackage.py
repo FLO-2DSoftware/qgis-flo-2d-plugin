@@ -2012,7 +2012,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
     def export_mult(self, outdir):
@@ -2070,7 +2070,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
             return False
 
     def export_gutter(self, outdir):
@@ -2467,7 +2467,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
             return False
 
     def export_swmmflo(self, outdir):

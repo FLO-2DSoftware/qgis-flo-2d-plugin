@@ -1034,93 +1034,99 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             s.setValue("FLO-2D/lastGdsDir", outdir)
             chan = os.path.join(outdir, "CHAN.DAT")
 
-            with open(chan, "w") as c:
-                surveyed = 0
-                non_surveyed = 0
-
-                ISED = self.gutils.get_cont_par("ISED")
-
-                for row in chan_rows:
-                    row = [x if x is not None else "0" for x in row]
-                    fid = row[0]
-                    if ISED == "0":
-                        row[4] = ""
-                    c.write(
-                        segment.format(*row[1:5])
-                    )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-                    # A single line for each channel segment. The next lines will be the grid elements of
-                    # this channel segment.
-                    previous_xs = -999
-
-                    for elems in self.gutils.execute(
-                        chan_elems_sql, (fid,)
-                    ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
-                        # 'chan_elems' table (the cross sections in the schematic layer),
-                        #  that has the 'fid' value indicated (the channel segment id).
-
-                        elems = [
-                            x if x is not None else "" for x in elems
-                        ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                        (
-                            eid,
-                            rbank,
-                            fcn,
-                            xlen,
-                            typ,
-                            user_xs_fid,
-                        ) = elems  # Separates values of list into individual variables.
-                        sql, line, fcn_idx, xlen_idx = sqls[
-                            typ
-                        ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
-                        # line (format to write), fcn_idx (?), and xlen_idx (?)
-                        res = [
-                            x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
-                        ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-
-                        if typ == "N":
-                            res.insert(
-                                1, fcn
-                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(
-                                2, xlen
-                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                            if user_xs_fid == previous_xs:
-                                res.insert(3, 0)
-                                non_surveyed += 1
+            try:
+                with open(chan, "w") as c:
+                    surveyed = 0
+                    non_surveyed = 0
+    
+                    ISED = self.gutils.get_cont_par("ISED")
+    
+                    for row in chan_rows:
+                        row = [x if x is not None else "0" for x in row]
+                        fid = row[0]
+                        if ISED == "0":
+                            row[4] = ""
+                        c.write(
+                            segment.format(*row[1:5])
+                        )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                        # A single line for each channel segment. The next lines will be the grid elements of
+                        # this channel segment.
+                        previous_xs = -999
+    
+                        for elems in self.gutils.execute(
+                            chan_elems_sql, (fid,)
+                        ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                            # 'chan_elems' table (the cross sections in the schematic layer),
+                            #  that has the 'fid' value indicated (the channel segment id).
+    
+                            elems = [
+                                x if x is not None else "" for x in elems
+                            ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                            (
+                                eid,
+                                rbank,
+                                fcn,
+                                xlen,
+                                typ,
+                                user_xs_fid,
+                            ) = elems  # Separates values of list into individual variables.
+                            sql, line, fcn_idx, xlen_idx = sqls[
+                                typ
+                            ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                            # line (format to write), fcn_idx (?), and xlen_idx (?)
+                            res = [
+                                x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
+                            ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+    
+                            if typ == "N":
+                                res.insert(
+                                    1, fcn
+                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                                res.insert(
+                                    2, xlen
+                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                                if user_xs_fid == previous_xs:
+                                    res.insert(3, 0)
+                                    non_surveyed += 1
+                                else:
+                                    res.insert(3, natural_channel_section_number_dict[user_xs_fid])
+                                    surveyed += 1
+                                    previous_xs = user_xs_fid
                             else:
-                                res.insert(3, natural_channel_section_number_dict[user_xs_fid])
-                                surveyed += 1
-                                previous_xs = user_xs_fid
+                                res.insert(
+                                    fcn_idx, fcn
+                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                                res.insert(
+                                    xlen_idx, xlen
+                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+    
+                            c.write(line.format(*res))
+    
+                    for row in self.gutils.execute(chan_wsel_sql):
+                        c.write(wsel.format(*row[:2]))
+                        c.write(wsel.format(*row[2:]))
+    
+                    pairs = []
+                    for row in self.gutils.execute(chan_conf_sql):
+                        chan_elem = row[0]
+                        if not pairs:
+                            pairs.append(chan_elem)
                         else:
-                            res.insert(
-                                fcn_idx, fcn
-                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(
-                                xlen_idx, xlen
-                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-
-                        c.write(line.format(*res))
-
-                for row in self.gutils.execute(chan_wsel_sql):
-                    c.write(wsel.format(*row[:2]))
-                    c.write(wsel.format(*row[2:]))
-
-                pairs = []
-                for row in self.gutils.execute(chan_conf_sql):
-                    chan_elem = row[0]
-                    if not pairs:
-                        pairs.append(chan_elem)
-                    else:
-                        pairs.append(chan_elem)
-                        c.write(conf.format(*pairs))
-                        del pairs[:]
-
-                for row in self.gutils.execute(chan_e_sql):
-                    c.write(chan_e.format(row[0]))
-
-            self.uc.bar_info("CHAN.DAT file exported to " + outdir, dur=5)
-            QApplication.restoreOverrideCursor()
-            return [surveyed, non_surveyed]
+                            pairs.append(chan_elem)
+                            c.write(conf.format(*pairs))
+                            del pairs[:]
+    
+                    for row in self.gutils.execute(chan_e_sql):
+                        c.write(chan_e.format(row[0]))
+    
+                self.uc.bar_info("CHAN.DAT file exported to " + outdir, dur=5)
+                QApplication.restoreOverrideCursor()
+                return [surveyed, non_surveyed]     
+            
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
+                return []
 
         else:
             return []

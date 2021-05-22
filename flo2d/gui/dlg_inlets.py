@@ -552,7 +552,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         Save changes of user_swmm_nodes layer.
         """
         try:
-
             inlets = []
             t4_but_rt_name = []
 
