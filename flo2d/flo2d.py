@@ -50,7 +50,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid        
+from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements     
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -401,6 +401,11 @@ class Flo2D(object):
         self.f2d_grid_info_dock.setWindowTitle("FLO-2D Grid Info")
         self.f2d_grid_info = GridInfoWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
+        
+        grid = self.lyrs.data["grid"]["qlyr"]
+        if grid is not None:
+            self.f2d_grid_info.set_info_layer(grid)
+            
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
 
@@ -1624,6 +1629,7 @@ class Flo2D(object):
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
             self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
         else:

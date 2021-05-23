@@ -20,8 +20,6 @@ from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import number_of_elements
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
-
-
 class GridInfoWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -40,6 +38,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.grid = None
         self.mann_default = None
+        self.n_cells = 0
         self.d1 = []
         self.d2 = []
         self.setup_connection()
@@ -56,7 +55,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-
+            
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
 
@@ -67,7 +66,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
 
     def set_info_layer(self, lyr):
         self.grid = lyr
-
+        self.n_cells_lbl.setText("Number of cells: " + str(self.n_cells))
+        # self.n_cells_lbl.setText("Number of cells: " + str(number_of_elements(self.gutils, self.grid)))
     def update_fields(self, fid):
         try:
             if not fid == -1:
@@ -85,6 +85,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.elevEdit.setText(elev)
                 self.mannEdit.setText(str(n))
                 self.cellEdit.setText(cell)
+                self.n_cells_lbl.setText("Number of cells: " + str(self.n_cells))
+                # self.n_cells_lbl.setText("Number of cells: " + str(number_of_elements(self.gutils, self.grid)))
                 if self.plot_ckbox.isChecked():
                     self.plot_grid_rainfall(feat)
             else:
@@ -92,6 +94,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.elevEdit.setText("")
                 self.mannEdit.setText("")
                 self.cellEdit.setText("")
+                self.n_cells_lbl.setText("Number of cells: 0")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(

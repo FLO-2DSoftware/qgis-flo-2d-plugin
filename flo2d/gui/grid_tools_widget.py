@@ -35,7 +35,8 @@ from ..flo2d_tools.grid_tools import (
     evaluate_spatial_noexchange,
     ZonalStatistics,
     ZonalStatisticsOther,
-    assign_col_row_indexes_to_grid
+    assign_col_row_indexes_to_grid,
+    number_of_elements
 )
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
@@ -173,13 +174,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            bl = self.lyrs.data["user_model_boundary"]["qlyr"]
+            boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
             
             upper_left_coords_override = None
 
             if create_grid_dlg.use_external_layer() and raster_file:
                 # compute upper left coordinate aligning it with with source raster pixel
-                feat = next(bl.getFeatures())
+                feat = next(boundary.getFeatures())
                 geom = feat.geometry()
                 bbox = geom.boundingBox()
                 xmin = bbox.xMinimum()
@@ -193,17 +194,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 upper_left_coords_override = (xmin_new,ymax_new)
 
             if old:
-                square_grid(self.gutils, bl, upper_left_coords_override) 
+                square_grid(self.gutils, boundary, upper_left_coords_override) 
             else:
-                square_grid_and_tableColRow(self.gutils, bl)
+                square_grid_and_tableColRow(self.gutils, boundary)
                 # Above line will be replaced with the following after additional modification
-                #square_grid_and_tableColRow(self.gutils, bl, upper_left_coords_override)
+                #square_grid_and_tableColRow(self.gutils, boundary, upper_left_coords_override)
             
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
 
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            n_cells = number_of_elements(self.gutils, grid_lyr)
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
@@ -212,16 +213,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             
             fin_time = time.time()  
             duration = time_taken(ini_time, fin_time)  
-            self.uc.show_info("Grid created." +
-                              "\n\n(Elapsed time: " + duration + ")")            
+            self.uc.show_info("Grid created with " + str(n_cells) + " cells."
+                              "\n\n(Elapsed time: " + duration + ")") 
+            
+            widg = self.iface.mainWindow().findChildren("FLO'2D Grid Info")
             
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
+            self.uc.show_error(
                 "WARNING 060319.1709: Creating grid aborted!\n\n"
-                + "Please check Computational Domain layer and cell size."
-            )
+                + "Please check Computational Domain layer and cell size.", e)
 
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):

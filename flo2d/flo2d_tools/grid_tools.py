@@ -2100,4 +2100,4 @@ def number_of_elements(gutils, layer):
         if a:
             return a
         else:
-                return len(list(layer.getFeatures()))
+            return len(list(layer.getFeatures()))
