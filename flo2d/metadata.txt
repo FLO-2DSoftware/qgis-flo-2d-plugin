@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.23
+version=0.10.24
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.24
+  - LIDAR 2 progress bars updated and forced to be displayed.
+  - Add total number of cells to FLO-2D Grid Info panel.
+  - Show grid size and total number of cells when grid created.
+  - Change logo of FLO-2D in installed plugins dialog.
+  - Show user cross sections data and plot when clicked using Info Tool.
  <p>0.10.23
   - Expand max values in individual breach data to 99999, and allow 3 decimal places.
  <p>0.10.22
@@ -21,7 +27,6 @@ changelog=
     - Applies DASK multi thread / cache management.
   - LiDAR Elevation Method Optimization
     - Add array positions to Grid Layer.  Ncol and Nrow.
-    - Applies the LiDAR sampling method to the numpy array.
     - Optimizes python code for LiDAR sampling.
  <p>0.10.21
   - Show 2 progress bars when reading and interpolating elevation points from LIDAR files.

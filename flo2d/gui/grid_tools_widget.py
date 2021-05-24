@@ -199,12 +199,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 square_grid_and_tableColRow(self.gutils, boundary)
                 # Above line will be replaced with the following after additional modification
                 #square_grid_and_tableColRow(self.gutils, boundary, upper_left_coords_override)
-            
+                
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
-
-            n_cells = number_of_elements(self.gutils, grid_lyr)
+            
+            # Update grid_lyr:
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
@@ -213,10 +214,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             
             fin_time = time.time()  
             duration = time_taken(ini_time, fin_time)  
-            self.uc.show_info("Grid created with " + str(n_cells) + " cells."
+            
+            n_cells = number_of_elements(self.gutils, grid_lyr)
+            cell_size = self.gutils.get_cont_par("CELLSIZE")
+            units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"                        
+            self.uc.show_info("Grid created.\n\nCell size:  " + cell_size + units + "\n\nTotal number of cells:  " +  "{:,}".format(n_cells) +
                               "\n\n(Elapsed time: " + duration + ")") 
             
-            widg = self.iface.mainWindow().findChildren("FLO'2D Grid Info")
+            # widg = self.iface.mainWindow().findChildren("FLO'2D Grid Info")
             
         except Exception as e:
             self.uc.log_info(traceback.format_exc())

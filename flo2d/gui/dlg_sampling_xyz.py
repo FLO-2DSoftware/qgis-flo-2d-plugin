@@ -147,7 +147,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 file_size = os.path.getsize(file)
                 with open(file, "r") as f:
                     line = f.readline()
-
+                    
                     line_size = len(line) + 1
                 size += file_size / line_size
 
@@ -156,8 +156,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             for i, file in enumerate(lidar_files,1):
             
                 progress.setValue(i)
-                self.iface.mainWindow().repaint()
-                advanceBar.setValue(i) 
+                # advanceBar.setValue(i) 
                  
                 n_commas =  0
                 n_spaces = 0             
@@ -185,14 +184,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                             step = int(n_lines/ 20)
 
                             if n_lines > step:
-                                advanceBar.setValue(step/2) 
-                                self.iface.mainWindow().repaint()   
+                                advanceBar.setValue(int(step/2)) 
+                                # self.iface.mainWindow().repaint()   
                                        
-                            # for line in f1: 
                             for i, line in enumerate(lines, 1): 
                             
-                                if (i%step <= 0.0):
+                                if (int(i%step) == 0):                            
                                     advanceBar.setValue(i) 
+                                    qApp.processEvents()
                                 
                                 line = line.replace('\t', '')                            
                                 if n_commas == 0: # No commas, values separated by spaces.
@@ -238,10 +237,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                     
                         except ValueError:
                             read_error += os.path.basename(file) + "\n\n"
-                            
+
+
+            self.uc.clear_bar_messages() 
+            self.uc.bar_info("Updating grid elevations...")                        
             statBar.removeWidget(statusLabel)
             statBar.removeWidget(advanceBar)    
-                                                       
+            qApp.processEvents()   
+                                                                
             # Assign -9999 to all cell elevations prior to the assignment from LIDAR points: 
             self.gutils.execute("UPDATE grid SET elevation = -9999;")
             

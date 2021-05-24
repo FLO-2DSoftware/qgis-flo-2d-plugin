@@ -2090,14 +2090,14 @@ def layer_geometry_is_valid(vlayer):
 
 
 def number_of_elements(gutils, layer):
-    if len(layer) > 0:
-        return len(layer)
-    elif layer.featureCount() > 0:
-        return layer.featureCount()
+    # if len(layer) > 0:
+        # return len(layer)
+    # if layer.featureCount() > 0:
+        # return layer.featureCount()
+    # else:
+    count_sql = """SELECT COUNT(fid) FROM grid;"""
+    a = gutils.execute(count_sql).fetchone()[0]
+    if a:
+        return a
     else:
-        count_sql = """SELECT COUNT(fid) FROM grid;"""
-        a = gutils.execute(count_sql).fetchone()[0]
-        if a:
-            return a
-        else:
-            return len(list(layer.getFeatures()))
+        return len(list(layer.getFeatures()))

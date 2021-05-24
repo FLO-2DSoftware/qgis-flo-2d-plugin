@@ -38,6 +38,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.grid = None
         self.mann_default = None
+        self.cell_Edit = None
         self.n_cells = 0
         self.d1 = []
         self.d2 = []
@@ -66,8 +67,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
 
     def set_info_layer(self, lyr):
         self.grid = lyr
-        self.n_cells_lbl.setText("Number of cells: " + str(self.n_cells))
-        # self.n_cells_lbl.setText("Number of cells: " + str(number_of_elements(self.gutils, self.grid)))
+        self.n_cells = number_of_elements(self.gutils, self.grid)
+        self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
+        
     def update_fields(self, fid):
         try:
             if not fid == -1:
@@ -76,7 +78,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 gid = str(fid)
                 elev = str(feat["elevation"])
                 n = feat["n_value"]
-                cell = "{}".format(cell_size)
                 if not n:
                     n = "{} (default)".format(self.mann_default)
                 else:
@@ -84,17 +85,18 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.idEdit.setText(gid)
                 self.elevEdit.setText(elev)
                 self.mannEdit.setText(str(n))
-                self.cellEdit.setText(cell)
-                self.n_cells_lbl.setText("Number of cells: " + str(self.n_cells))
-                # self.n_cells_lbl.setText("Number of cells: " + str(number_of_elements(self.gutils, self.grid)))
+                self.cellEdit.setText(str(cell_size))
+                self.grid = self.lyrs.data["grid"]["qlyr"]
+                self.n_cells = number_of_elements(self.gutils, self.grid)
+                self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
                 if self.plot_ckbox.isChecked():
                     self.plot_grid_rainfall(feat)
             else:
                 self.idEdit.setText("")
                 self.elevEdit.setText("")
                 self.mannEdit.setText("")
-                self.cellEdit.setText("")
-                self.n_cells_lbl.setText("Number of cells: 0")
+                # self.cellEdit.setText("")
+                # self.n_cells_lbl.setText("Number of cells:       ")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -176,7 +178,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 zoom(self.iface, 0.4)
                                 self.mannEdit.setText(str(feat["n_value"]))
                                 self.elevEdit.setText(str(feat["elevation"]))
-                                self.cellEdit.setText(str(sqrt(feat.geometry().area())))
+                                self.cellEdit.setText(str(feat.geometry().area()))
                             else:
                                 self.uc.bar_warn("Cell " + str(cell) + " not found.")
                                 self.lyrs.clear_rubber()

@@ -1629,6 +1629,7 @@ class Flo2D(object):
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
             self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
             self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
