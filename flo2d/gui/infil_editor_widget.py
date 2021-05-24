@@ -929,10 +929,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_land_rtimpl") is None else s.value("ga_land_rtimpl"))
             self.rtimpl_cbo.setCurrentIndex(val)
 
-
 uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
-
-
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
     def __init__(self, iface, lyrs):
         qtBaseClass_scs.__init__(self)
