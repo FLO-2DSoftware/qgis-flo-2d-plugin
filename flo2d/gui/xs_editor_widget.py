@@ -801,53 +801,58 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
         if xs_survey:
             if self.save_xsec_dot_dat_with_only_user_cross_sections():
-                self.uc.show_info("Files CHAN.DAT and XSEC.DAT saved.")
-                if self.run_INTERPOLATE(xs_survey) == 0:
-                    s = QSettings()
-                    outdir = s.value("FLO-2D/lastGdsDir", "")
-
-                    msg = QMessageBox()
-
-                    q = "Cross sections interpolation performed!.\n"
-                    q += "(in Directory: " + outdir + ")\n\n"
-                    q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
-                    q += "Now select:\n\n"
-                    q += "      Import CHAN.DAT and XSEC.DAT data.\n\n"
-                    q += "      or\n\n"
-                    q += "      Run CHANRIGHTBANK.EXE to identify right bank cells.\n"
-                    q += "      (It requires the CHAN.DAT, XSEC.DAT, and TOPO.DAT files).\n"
-                    msg.setWindowTitle("Interpolation Performed")
-                    msg.setText(q)
-                    #                     msg.setStandardButtons(
-                    #                         QMessageBox().Ok | QMessageBox().Cancel)
-                    msg.addButton(QPushButton("Import CHAN.DAT and XSEC.DAT files"), QMessageBox.YesRole)
-                    msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
-                    msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
-                    msg.setDefaultButton(QMessageBox().Cancel)
-                    msg.setIcon(QMessageBox.Question)
-                    ret = msg.exec_()
-                    if ret == 0:
-                        s = QSettings()
-                        last_dir = s.value("FLO-2D/lastGdsDir", "")
-                        fname = last_dir + "\CONT.DAT"
-                        if not fname:
-                            return
-                        self.parser.scan_project_dir(fname)
-                        self.import_chan()
-                        zero, few = self.import_xsec()
-                        m = "Files CHAN.DAT and XSEC.DAT imported."
-                        if zero > 0:
-                            m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
-                        if few > 0:
-                            m += "\n\nWARNING: There are " + str(few) + " cross sections with less than 6 stations."
-                        if zero > 0 or few > 0:
-                            m += "\n\nIncrement the number of stations in the problematic cross sections."
-                        self.uc.show_info(m)
-                    if ret == 1:
-                        self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
-                    #                         self.run_CHANRIGHTBANK()
-                    if ret == 2:
-                        pass
+                if self.save_CHANBANK():
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("Files CHAN.DAT,XSEC.DAT, and CHANBANK.DAT saved.")
+                    rtrn = -2
+                    while rtrn == -2:
+                        rtrn = self.run_INTERPOLATE(xs_survey)
+                        if rtrn == 0:
+                            s = QSettings()
+                            outdir = s.value("FLO-2D/lastGdsDir", "")
+        
+                            msg = QMessageBox()
+        
+                            q = "Cross sections interpolation performed!.\n"
+                            q += "(in Directory: " + outdir + ")\n\n"
+                            q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
+                            q += "Now select:\n\n"
+                            q += "      Import CHAN.DAT and XSEC.DAT data.\n\n"
+                            q += "      or\n\n"
+                            q += "      Run CHANRIGHTBANK.EXE to identify right bank cells.\n"
+                            q += "      (It requires the CHAN.DAT, XSEC.DAT, and TOPO.DAT files).\n"
+                            msg.setWindowTitle("Interpolation Performed")
+                            msg.setText(q)
+                            #                     msg.setStandardButtons(
+                            #                         QMessageBox().Ok | QMessageBox().Cancel)
+                            msg.addButton(QPushButton("Import CHAN.DAT and XSEC.DAT files"), QMessageBox.YesRole)
+                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
+                            msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+                            msg.setDefaultButton(QMessageBox().Cancel)
+                            msg.setIcon(QMessageBox.Question)
+                            ret = msg.exec_()
+                            if ret == 0:
+                                s = QSettings()
+                                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                                fname = last_dir + "\CONT.DAT"
+                                if not fname:
+                                    return
+                                self.parser.scan_project_dir(fname)
+                                self.import_chan()
+                                zero, few = self.import_xsec()
+                                m = "Files CHAN.DAT and XSEC.DAT imported."
+                                if zero > 0:
+                                    m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
+                                if few > 0:
+                                    m += "\n\nWARNING: There are " + str(few) + " cross sections with less than 6 stations."
+                                if zero > 0 or few > 0:
+                                    m += "\n\nIncrement the number of stations in the problematic cross sections."
+                                self.uc.show_info(m)
+                            if ret == 1:
+                                self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
+                            #                         self.run_CHANRIGHTBANK()
+                            if ret == 2:
+                                pass
 
         QApplication.restoreOverrideCursor()
 
@@ -1068,7 +1073,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 fcn,
                                 xlen,
                                 typ,
-                                user_xs_fid,
+                                usr_xs_fid,
                             ) = elems  # Separates values of list into individual variables.
                             sql, line, fcn_idx, xlen_idx = sqls[
                                 typ
@@ -1085,13 +1090,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 res.insert(
                                     2, xlen
                                 )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                                if user_xs_fid == previous_xs:
+                                if usr_xs_fid == previous_xs:
                                     res.insert(3, 0)
                                     non_surveyed += 1
                                 else:
-                                    res.insert(3, natural_channel_section_number_dict[user_xs_fid])
+                                    res.insert(3, natural_channel_section_number_dict[usr_xs_fid])
                                     surveyed += 1
-                                    previous_xs = user_xs_fid
+                                    previous_xs = usr_xs_fid
                             else:
                                 res.insert(
                                     fcn_idx, fcn
@@ -1180,7 +1185,28 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return False
         else:
             return False
-
+        
+        
+    def save_CHANBANK(self):
+        try:
+            line = " {0: <10} {1}\n"
+            rbanks = self.gutils.execute("SELECT fid, rbankgrid FROM chan_elems;").fetchall() 
+            if rbanks:
+                s = QSettings()
+                outdir = s.value("FLO-2D/lastGdsDir", "")
+                if outdir:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    s.setValue("FLO-2D/lastGdsDir", outdir)
+                    chanbank = os.path.join(outdir, "CHANBANK.DAT")
+                    with open(chanbank, "w") as cb:       
+                        for rb in rbanks:
+                            cb.write(line.format(rb[0], rb[1]))
+                    return True
+        except Exception as e:
+            self.uc.log_info(repr(e))
+            self.uc.show_error("ERROR 260521.1207: Couldn't export CHANBANK.DAT!", e)
+            return  False      
+    
     def run_INTERPOLATE(self, xs_survey):
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run interpolation under current operation system!")
@@ -1220,7 +1246,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn("WARNING 060319.1750: Program INTERPOLATE.EXE is not in directory\n\n" + self.exe_dir)
-                return -1
+                return -2
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_error("ERROR 280318.0528: Cross sections interpolation failed!")

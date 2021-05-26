@@ -36,12 +36,11 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
         s = QSettings()
         outdir = s.value("FLO-2D/lastGdsDir", "")
-        self.directory_lbl.setText("(directory: " + outdir + ")")
+        self.directory_lbl.setText("directory: " + outdir)
 
     def set_previous_paths(self):
         s = QSettings()
         interpolation_dir = s.value("FLO-2D/last_flopro", "")
-        # interpolation_dir = s.value('FLO-2D/last_interpolation', '')
         project_dir = s.value("FLO-2D/lastGdsDir", "")
         self.interpolation_le.setText(interpolation_dir)
         self.project_le.setText(project_dir)
@@ -54,7 +53,7 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         if not interpolation_dir:
             return
         self.interpolation_le.setText(interpolation_dir)
-        s.setValue("FLO-2D/last_interpolation", interpolation_dir)
+        s.setValue("FLO-2D/last_flopro", interpolation_dir)
 
     def get_project_dir(self):
         s = QSettings()

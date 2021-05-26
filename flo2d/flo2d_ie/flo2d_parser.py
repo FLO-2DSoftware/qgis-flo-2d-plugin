@@ -386,6 +386,7 @@ class ParseDAT(object):
         noexchange = []
         shape = {"R": 8, "V": 20, "T": 10, "N": 5}
         chanchar = ["C", "E"]
+        no_rb = ""
         for row in par:
             char = row[0]
             if char not in shape and char not in chanchar and len(row) > 2:
@@ -401,13 +402,13 @@ class ParseDAT(object):
                     rbank = nxt[1:]
                     lbank = nxt[0]
                     if row[1] != lbank:
-                        Msge(
-                            "ERROR 010219.2020: Element "
-                            + row[1]
-                            + " in CHAN.DAT has no right bank element in CHANBANK.DAT !",
-                            "Error",
-                        )
-                        return
+                        # Msge(
+                            # "ERROR 010219.2020: Element "
+                            # + row[1]
+                            # + " in CHAN.DAT has no right bank element in CHANBANK.DAT !",
+                            # "Error",
+                        # )
+                        no_rb += "\n" + row[1]
                 except StopIteration:
                     Msge(
                         "ERROR 010219.0956: There is a missing right bank element in CHANBANK.DAT !\n\n"
@@ -433,6 +434,12 @@ class ParseDAT(object):
                 else:
                     wsel[-1].extend(row)
                     start = True
+        if no_rb != "": 
+            Msge(
+                "ERROR 010219.2020: These elements in CHAN.DAT have no right bank element in CHANBANK.DAT !\n" 
+                + no_rb, 
+                "Error",
+                )                       
         return segments, wsel, confluence, noexchange
 
     def parse_xsec(self):
