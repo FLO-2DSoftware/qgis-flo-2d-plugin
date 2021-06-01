@@ -197,14 +197,15 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 # get coordinate of upper left corner of pixel
                 xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
                 upper_left_coords_override = (xmin_new,ymax_new)
-
-            if add_new_colums == QMessageBox.No:
-                square_grid(self.gutils, boundary, upper_left_coords_override) 
-            else:
-                if add_col_and_row_fields(grid_lyr):                 
-                    assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                                          
+                
+            if field_index == -1:
+                if add_new_colums == QMessageBox.No:
+                    square_grid(self.gutils, boundary, upper_left_coords_override) 
                 else:
-                    square_grid(self.gutils, boundary, upper_left_coords_override)  
+                    if add_col_and_row_fields(grid_lyr):                 
+                        assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                                          
+                    else:
+                        square_grid(self.gutils, boundary, upper_left_coords_override)  
 
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
