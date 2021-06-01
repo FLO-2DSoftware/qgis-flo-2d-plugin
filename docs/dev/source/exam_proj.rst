@@ -1,23 +1,24 @@
 Projections for some FLO-2D example models
 ==========================================
 
-* Goat -  State Plane Arizona Central
-* Lesson 1 - State Plane Arizona Central
-* Lesson 2 - State Plane Arizona Central
-* Lesson 3 - State Plane Arizona Central
-* Lesson 4 - No coordinates
-* Lesson 5 - unknown
-* Lesson 6 - State Plane Arizona Central
-* Lesson 7 - unknown
-* Lesson 8 - Probably State Plane Idaho near Boise
-* Lesson 9 -  State Plane Arizona Central
-* Lesson 10 - State Plane Arizona Central
-* Lesson 11 - Probably State Plane - Honolulu
-* Lesson 12 - Greece Maybe UTM but I think it is a national Greece projection
-* Lesson 13 - unknown
-* Lesson 14 - State Plane New Mexico Central
-* Lesson 15 - State Plane New Mexico Central
-* Rio Grande - State Plane New Mexico Central
-* Urban - State Plane California Ventura, CA
-* Monroe is somewhere in Nevada.  Probably State Plane
-* Barn is somewhere in Utah.  Probably State Plane
+* QGIS Lesson 1 - EPSG 2223 Arizona
+* QGIS Lesson 2 - EPSG 2223 Arizona
+* QGIS Lesson 3 - EPSG 2223 Arizona 
+* QGIS Lesson 4 - EPSG 2223 Arizona 
+* QGIS Lesson 5 - EPSG 2223 Arizona 
+* QGIS Lesson 6 - EPSG 2223 Arizona 
+
+* Advanced Training Module 1 - Debug Module - EPSG 2223 Arizona 
+* Advanced Training Module 2 - Advanced Hydraulic Structure - EPSG 2223 Arizona 
+* Advanced Training Module 3 - Prescribed Breach - EPSG 2868 Arizona
+* Advanced Training Module 4 - Sediment Tranport - unkonwn
+* Advanced Training Module 5 - Part 1 Watershed Setup - EPSG 2229 California
+* Advanced Training Module 5 - Part 2 Mudflow - EPSG 2229 California
+* Advanced Training Module 6 - Breach Erosion - EPSG 2229 California
+* Advanced Training Module 7 - Tailings Dam - EPSG 29101 Brazil
+* Advanced Training Module 8 - Advanced Storm Drain - EPSG 2223 Arizona
+* Advanced Training Module 9 - Bridge Parameters - EPSG 2229 California
+
+* Rio Grande - Riverine Study - State Plane New Mexico Central
+* Urban -  Urban Flood Study - EPSG 2229 California
+* Barn - Mudflow Study - State Plane Utah
