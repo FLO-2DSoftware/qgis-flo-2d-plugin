@@ -812,10 +812,7 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
             cur.executemany(qry, data_rows)
             self.con.commit()
 
-
 uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
-
-
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
         qtBaseClass_green.__init__(self)

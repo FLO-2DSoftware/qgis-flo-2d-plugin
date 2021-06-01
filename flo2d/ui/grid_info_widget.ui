@@ -179,6 +179,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="render_elevations_chbox">
+       <property name="text">
+        <string>Render elevations</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

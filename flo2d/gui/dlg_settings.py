@@ -85,6 +85,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             qry = """SELECT value FROM cont WHERE name = ?;"""
             row = self.gutils.execute(qry, (name,)).fetchone()
             if not row:
+                QApplication.restoreOverrideCursor()
                 msg = "Database query for param {} from cont table return null. Check your DB.".format(name)
                 raise Flo2dQueryResultNull(msg)
             value = row[0]

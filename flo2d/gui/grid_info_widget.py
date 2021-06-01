@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+
 from math import sqrt
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator
@@ -17,7 +18,8 @@ from .ui_utils import load_ui, center_canvas, set_icon, zoom
 from ..utils import m_fdata
 from ..user_communication import UserCommunication
 from ..geopackage_utils import GeoPackageUtils
-from ..flo2d_tools.grid_tools import number_of_elements
+from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations
+
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
 class GridInfoWidget(qtBaseClass, uiDialog):
@@ -46,6 +48,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         validator = QIntValidator()
         self.idEdit.setValidator(validator)
 
+        self.render_elevations_chbox.clicked.connect(self.render_elevations)
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
 
@@ -106,6 +109,11 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 e,
             )
 
+    def render_elevations(self): 
+        render_grid_elevations(self.grid, self.render_elevations_chbox.isChecked())  
+        self.lyrs.lyrs_to_repaint = [self.grid]
+        self.lyrs.repaint_layers()
+                
     def plot_grid_rainfall(self, feat):
         si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
         qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"

@@ -492,7 +492,7 @@ class Layers(object):
                     {
                         "name": "Grid",
                         "sgroup": "Schematic Layers",
-                        "styles": ["grid.qml"],
+                        "styles": ["grid.qml", "grid_nodata.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
                     },

@@ -537,8 +537,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             data.append(m_fdata(self.xs_data_model, i, 0))
         bankell, bankelr, fcw, fcd = data
         x0, y0 = [0, bankell]
-        x1, y1 = [0, bankell - fcd]
-        x2, y2 = [fcw, bankell - fcd]
+        x1, y1 = [0, min(bankell - fcd, bankelr - fcd)]
+        x2, y2 = [fcw, min(bankell - fcd, bankelr - fcd)]
         x3, y3 = [fcw, bankelr]
         self.xi = [x0, x1, x2, x3]
         self.yi = [y0, y1, y2, y3]
@@ -549,11 +549,35 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             data.append(m_fdata(self.xs_data_model, i, 0))
         bankell, bankelr, fcw, fcd, zl, zr = data
         x0, y0 = [0, bankell]
-        x1, y1 = [x0 + zl * fcd, bankell - fcd]
-        x2, y2 = [x1 + fcw, bankell - fcd]
+        x1, y1 = [x0 + zl * fcd, min(bankell - fcd, bankelr - fcd)]
+        x2, y2 = [x1 + fcw, min(bankell - fcd, bankelr - fcd)]
         x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
         self.xi = [x0, x1, x2, x3]
         self.yi = [y0, y1, y2, y3]
+
+    # def _create_rectangular_xy(self):
+        # data = []
+        # for i in range(self.xs_data_model.rowCount()):
+            # data.append(m_fdata(self.xs_data_model, i, 0))
+        # bankell, bankelr, fcw, fcd = data
+        # x0, y0 = [0, bankell]
+        # x1, y1 = [0, bankell - fcd]
+        # x2, y2 = [fcw, bankell - fcd]
+        # x3, y3 = [fcw, bankelr]
+        # self.xi = [x0, x1, x2, x3]
+        # self.yi = [y0, y1, y2, y3]
+        #
+    # def _create_trapezoidal_xy(self):
+        # data = []
+        # for i in range(self.xs_data_model.rowCount()):
+            # data.append(m_fdata(self.xs_data_model, i, 0))
+        # bankell, bankelr, fcw, fcd, zl, zr = data
+        # x0, y0 = [0, bankell]
+        # x1, y1 = [x0 + zl * fcd, bankell - fcd]
+        # x2, y2 = [x1 + fcw, bankell - fcd]
+        # x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
+        # self.xi = [x0, x1, x2, x3]
+        # self.yi = [y0, y1, y2, y3]
 
     def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
@@ -803,7 +827,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             if self.save_xsec_dot_dat_with_only_user_cross_sections():
                 if self.save_CHANBANK():
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("Files CHAN.DAT,XSEC.DAT, and CHANBANK.DAT saved.")
+                    self.uc.show_info("Files CHAN.DAT, XSEC.DAT, and CHANBANK.DAT saved.")
                     rtrn = -2
                     while rtrn == -2:
                         rtrn = self.run_INTERPOLATE(xs_survey)
@@ -817,7 +841,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             q += "(in Directory: " + outdir + ")\n\n"
                             q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
                             q += "Now select:\n\n"
-                            q += "      Import CHAN.DAT and XSEC.DAT data.\n\n"
+                            q += "      Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files.\n\n"
                             q += "      or\n\n"
                             q += "      Run CHANRIGHTBANK.EXE to identify right bank cells.\n"
                             q += "      (It requires the CHAN.DAT, XSEC.DAT, and TOPO.DAT files).\n"
@@ -825,7 +849,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             msg.setText(q)
                             #                     msg.setStandardButtons(
                             #                         QMessageBox().Ok | QMessageBox().Cancel)
-                            msg.addButton(QPushButton("Import CHAN.DAT and XSEC.DAT files"), QMessageBox.YesRole)
+                            msg.addButton(QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"), QMessageBox.YesRole)
                             msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                             msg.setDefaultButton(QMessageBox().Cancel)
@@ -840,7 +864,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 self.parser.scan_project_dir(fname)
                                 self.import_chan()
                                 zero, few = self.import_xsec()
-                                m = "Files CHAN.DAT and XSEC.DAT imported."
+                                m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
                                 if zero > 0:
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
@@ -1032,7 +1056,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         outdir = QFileDialog.getExistingDirectory(
-            None, "Select directory where CHAN.DAT and XSEC.DAT files will be exported", directory=last_dir
+            None, "Select directory where CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files will be exported", directory=last_dir
         )
         if outdir:
             QApplication.setOverrideCursor(Qt.WaitCursor)

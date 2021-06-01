@@ -19,12 +19,12 @@ from ..user_communication import UserCommunication
 
 from qgis.PyQt.QtCore import Qt, QThread, QSettings
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL, Qgis, QgsMessageLog
-from qgis.PyQt.QtWidgets import QApplication, QInputDialog, QProgressBar, QPushButton, QLabel, QWidget, QFileDialog
+from qgis.PyQt.QtWidgets import QApplication, QInputDialog, QProgressBar, QPushButton, QLabel, QWidget, QFileDialog, QMessageBox
 from qgis.PyQt import QtWidgets
 
 from ..flo2d_tools.grid_tools import (
     square_grid,
-    square_grid_and_tableColRow,
+    add_col_and_row_fields,
     evaluate_roughness,
     update_roughness,
     evaluate_arfwrf,
@@ -164,13 +164,18 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             field_index = grid_lyr.fields().indexFromName("col") 
-            old = False
             if field_index == -1:
-                old = self.uc.question("WARNING 060521.1802: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' attributes!\n\n"
-                                    + "Some functionality will be unavailable. Would you like to continue?")
-                if not old:
+                QApplication.restoreOverrideCursor()  
+                
+                add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
+                                           + "Some functionality will be unavailable.\n\n"
+                                           + "Would you like to add the 'col' and 'row' fields to the grid table?", 
+                                           QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+          
+                if add_new_colums == QMessageBox.Cancel:
                     return
-
+                
+            QApplication.setOverrideCursor(Qt.WaitCursor)             
             ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -193,13 +198,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
                 upper_left_coords_override = (xmin_new,ymax_new)
 
-            if old:
+            if add_new_colums == QMessageBox.No:
                 square_grid(self.gutils, boundary, upper_left_coords_override) 
             else:
-                square_grid_and_tableColRow(self.gutils, boundary)
-                # Above line will be replaced with the following after additional modification
-                #square_grid_and_tableColRow(self.gutils, boundary, upper_left_coords_override)
-                
+                if add_col_and_row_fields(grid_lyr):                 
+                    assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                                          
+                else:
+                    square_grid(self.gutils, boundary, upper_left_coords_override)  
+
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -217,11 +223,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             
             n_cells = number_of_elements(self.gutils, grid_lyr)
             cell_size = self.gutils.get_cont_par("CELLSIZE")
-            units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"                        
+            units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"   
+            
+            QApplication.restoreOverrideCursor()                        
             self.uc.show_info("Grid created.\n\nCell size:  " + cell_size + units + "\n\nTotal number of cells:  " +  "{:,}".format(n_cells) +
                               "\n\n(Elapsed time: " + duration + ")") 
-            
-            # widg = self.iface.mainWindow().findChildren("FLO'2D Grid Info")
             
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -268,7 +274,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def xyz_elevation(self):
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 060319.1711: There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool.")
             return
         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
@@ -310,18 +316,28 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         self.uc.log_info(traceback.format_exc())
                         self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
                     
-            else:    
+            else:
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 field_index = grid_lyr.fields().indexFromName("col") 
                 if field_index == -1:
-                    self.uc.show_warn("WARNING 060521.1746: Old GeoPackage.\n\n Grid table doesn't have 'col' and 'row' attributes!")
+                    if self.gutils.is_table_empty("user_model_boundary"):
+                        QApplication.restoreOverrideCursor()  
+                        self.uc.show_warn("WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
+                                          "and there is no Computational Domain to create them!")                      
+                    else:
+                        proceed = self.uc.question("WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" + 
+                                                   "Would you like to add the 'col' and 'row' fields to the grid table?")
+                        if proceed:  
+                            if add_col_and_row_fields(grid_lyr):                 
+                                assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)                            
+                                dlg.interpolate_from_lidar()  
                 else:    
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell[0] != NULL:   
                         dlg.interpolate_from_lidar()  
                     else:
                         QApplication.restoreOverrideCursor()
-                        proceed = self.uc.question("Grid layer has NULL 'col' or 'row' attributes!\n\nWould you like to assign them?")
+                        proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
                         if proceed:
                             QApplication.setOverrideCursor(Qt.WaitCursor)
                             assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -329,9 +345,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             dlg.interpolate_from_lidar()  
                         else:
                             return                    
-                    
-                    
-                
+
             QApplication.restoreOverrideCursor()                         
         else:
             QApplication.restoreOverrideCursor()

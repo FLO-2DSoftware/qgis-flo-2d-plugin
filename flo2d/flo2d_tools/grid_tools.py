@@ -12,9 +12,12 @@ import sys
 import math
 import uuid
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog
+from qgis.PyQt.QtCore import QVariant
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import (
+    QgsVectorDataProvider,
+    QgsField,
     QgsFeature,
     QgsGeometry,
     QgsPointXY,
@@ -27,8 +30,8 @@ from qgis.core import (
     NULL,
 )
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
-from ..utils import is_number, grid_index, get_grid_index, set_grid_index
-from ..errors import GeometryValidityErrors
+from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
+from ..errors import GeometryValidityErrors,Flo2dError
 
 # GRID classes
 class TINInterpolator(object):
@@ -566,7 +569,7 @@ def build_grid_and_tableColRow(boundary, cell_size):
     #     xmin = math.floor(bbox.xMinimum())
     #     xmax = math.ceil(bbox.xMaximum())
     #     ymax = math.ceil(bbox.yMaximum())
-    #     ymin = math.floor(bbox.yMinimum())
+    #     ymin = math.floor(bbox.yMinimum())       
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -591,7 +594,6 @@ def build_grid_and_tableColRow(boundary, cell_size):
                     y_tmp - half_size,
                 )
                 yield (poly, col + 2, abs(row - rows) + 1)
-                # yield (poly, col, abs(row - rows) - 2)
             else:
                 pass
             y_tmp -= cell_size
@@ -614,7 +616,7 @@ def assign_col_row_indexes_to_grid(grid, gutils):
         
     cur = gutils.con.cursor()
     cur.executemany(qry, qry_values)
-
+    gutils.con.commit()
 
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
@@ -1002,24 +1004,70 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     else:
         pass
 
-def square_grid_and_tableColRow(gutils, boundary):
+def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
+    
+    # """
+    # Function for calculating and writing square grid into 'grid' table.
+    # """
+    #
+    # cellsize = float(gutils.get_cont_par("CELLSIZE"))
+    # update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
+    # gutils.execute(update_cellsize, (cellsize,))
+    # gutils.clear_tables("grid")
+    #
+    # sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+    # polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+    # for g_tuple in polygonsClRw:
+        # sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+    # if len(sql) > 2:
+        # gutils.batch_execute(sql)
+    # else:
+        # pass    
+    
+    
+    
     """
     Function for calculating and writing square grid into 'grid' table.
     """
+    try:
+        cellsize = float(gutils.get_cont_par("CELLSIZE"))
+        update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
+        gutils.execute(update_cellsize, (cellsize,))
+        gutils.clear_tables("grid")
+        
+        sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+        polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) 
+                                for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+        for g_tuple in polygonsClRw:
+            sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+        if len(sql) > 2:
+            gutils.batch_execute(sql)
+        else:
+            pass
+        return True
+    except:
+        QApplication.restoreOverrideCursor()
+        show_error(
+            "ERROR 300521.0526: creating grid with 'col' and 'row' fields failed !\n"
+            "_____________________________________________________________________"
+        )
+        return False        
 
-    cellsize = float(gutils.get_cont_par("CELLSIZE"))
-    update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
-    gutils.execute(update_cellsize, (cellsize,))
-    gutils.clear_tables("grid")
+def add_col_and_row_fields(grid):
+    try:
+        caps = grid.dataProvider().capabilities()
+        if caps & QgsVectorDataProvider.AddAttributes:
+            grid.dataProvider().addAttributes([QgsField('col', QVariant.Int), QgsField('row', QVariant.Int)])
+            grid.updateFields()
+        return True
+    except:
+        QApplication.restoreOverrideCursor()
+        show_error(
+            "ERROR 300521.1111: creating grid with 'col' and 'row' fields failed !\n"
+            "_____________________________________________________________________"
+        )
+        return False  
 
-    sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
-    polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
-    for g_tuple in polygonsClRw:
-        sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
-    if len(sql) > 2:
-        gutils.batch_execute(sql)
-    else:
-        pass
     
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
@@ -2101,3 +2149,27 @@ def number_of_elements(gutils, layer):
         return a
     else:
         return len(list(layer.getFeatures()))
+    
+def render_grid_elevations(grid_lyr, show):
+    if show:
+        style_path1 = get_file_path("styles", "grid_nodata.qml")
+        if os.path.isfile(style_path1):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path1)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path1, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style file {}".format(style_path1))
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))

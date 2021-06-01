@@ -21,7 +21,7 @@ from datetime import datetime
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
-from qgis.core import QgsProject, QgsWkbTypes
+from qgis.core import QgsProject, QgsWkbTypes, NULL
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 from .layers import Layers
@@ -50,7 +50,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements     
+from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -1035,7 +1035,10 @@ class Flo2D(object):
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                                         # the methods in the class Flo2dGeoPackage to import (read) the # FLO-2D .DAT files
-
+                                        
+                                        
+                                        
+                                        
                     # save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
@@ -1046,12 +1049,58 @@ class Flo2D(object):
 
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
-
-                    assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)
                     
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+                    
+                    # See if geopackage has grid with 'col' and 'row' fields:    
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    field_index = grid_lyr.fields().indexFromName("col") 
+                    if field_index == -1:
+                        QApplication.restoreOverrideCursor()  
+                        
+                        add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                                                   + "Would you like to add the 'col' and 'row' fields to the grid table?", 
+                                                   QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                  
+                        if add_new_colums == QMessageBox.Cancel:
+                            return
+                        
+                        if add_new_colums == QMessageBox.No:
+                            return
+                        else:
+                            if add_col_and_row_fields(grid_lyr):                 
+                                assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                         
+                    else:    
+                        cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                        if cell[0] == NULL:   
+                            QApplication.restoreOverrideCursor()
+                            proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
+                            if proceed:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                                QApplication.restoreOverrideCursor()
+                            else:
+                                return   
+                        
+                    QApplication.restoreOverrideCursor()          
+        
+                    # # See if geopackage has grid with 'col' and 'row' fields:    
+                    # grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    # field_index = grid_lyr.fields().indexFromName("col") 
+                    # if field_index == -1:
+                        # if self.gutils.is_table_empty("user_model_boundary"):
+                            # QApplication.restoreOverrideCursor()  
+                            # self.uc.bar_warn("WARNING 310521.0445: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!", 10)                 
+                        # else: 
+                            # QApplication.restoreOverrideCursor()         
+                            # proceed = self.uc.question("WARNING 290521.0500: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" + 
+                                                       # "Would you like to create it?")
+                            # QApplication.setOverrideCursor(Qt.WaitCursor)
+                            # if proceed:                    
+                                # if square_grid_with_col_and_row_fields(self.gutils, self.lyrs.data["user_model_boundary"]["qlyr"]):  
+                                    # assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)                    
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
