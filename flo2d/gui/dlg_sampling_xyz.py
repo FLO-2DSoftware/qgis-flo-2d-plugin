@@ -549,31 +549,8 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         else:
                             ini_time = time.time()    
                             QApplication.setOverrideCursor(Qt.WaitCursor)    
-                            
-                            # style_path2 = get_file_path("styles", "grid.qml")
-                            # if os.path.isfile(style_path2):
-                                # err_msg, res = self.grid.loadNamedStyle(style_path2)
-                                # if not res:
-                                    # QApplication.restoreOverrideCursor()
-                                    # msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
-                                    # raise Flo2dError(msg)
-                            # else:
-                                # QApplication.restoreOverrideCursor()
-                                # raise Flo2dError("Unable to load style {}".format(style_path2))                                                 
-                        
+                                                                                
                             render_grid_elevations(self.grid, True);
-                            
-                            style_path1 = get_file_path("styles", "grid_nodata.qml")
-                            # if os.path.isfile(style_path1):
-                                # err_msg, res = self.grid.loadNamedStyle(style_path1)
-                                # if not res:
-                                    # QApplication.restoreOverrideCursor()
-                                    # msg = "Unable to load style {}.\n{}".format(style_path1, err_msg)
-                                    # raise Flo2dError(msg)
-                            # else:
-                                # QApplication.restoreOverrideCursor()
-                                # raise Flo2dError("Unable to load style file {}".format(style_path1))
-
 
                             QApplication.restoreOverrideCursor()
                             fin_time = time.time()     

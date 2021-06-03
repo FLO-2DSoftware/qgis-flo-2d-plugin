@@ -15,7 +15,7 @@ from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValid
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import QSize, Qt
 from .ui_utils import load_ui, center_canvas, set_icon, zoom
-from ..utils import m_fdata
+from ..utils import m_fdata, is_number
 from ..user_communication import UserCommunication
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations
@@ -44,6 +44,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.n_cells = 0
         self.d1 = []
         self.d2 = []
+        
+        self.control_lyr = self.lyrs.data["cont"]["qlyr"]
+        
         self.setup_connection()
         validator = QIntValidator()
         self.idEdit.setValidator(validator)
@@ -59,6 +62,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+            
+            self.control_lyr.editingStopped.connect(self.check_render_elevations)
             
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -98,8 +103,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.idEdit.setText("")
                 self.elevEdit.setText("")
                 self.mannEdit.setText("")
-                # self.cellEdit.setText("")
-                # self.n_cells_lbl.setText("Number of cells:       ")
+                self.cellEdit.setText("")
+                self.n_cells_lbl.setText("Number of cells:       ")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -108,6 +113,17 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 + "\n____________________________________________",
                 e,
             )
+
+    def check_render_elevations(self):
+        qry = """SELECT value FROM cont WHERE name = 'IBACKUP';"""
+        row = self.gutils.execute(qry).fetchone()
+        if is_number(row[0]):
+            if row[0] == "0":
+                self.render_elevations_chbox.setChecked(False)
+            else:
+                self.render_elevations_chbox.setChecked(True)
+
+
 
     def render_elevations(self): 
         render_grid_elevations(self.grid, self.render_elevations_chbox.isChecked())  
@@ -186,7 +202,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 zoom(self.iface, 0.4)
                                 self.mannEdit.setText(str(feat["n_value"]))
                                 self.elevEdit.setText(str(feat["elevation"]))
-                                self.cellEdit.setText(str(feat.geometry().area()))
+                                self.cellEdit.setText(str(sqrt(feat.geometry().area())))
+                                self.n_cells = n_cells
+                                self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(n_cells) + "   ")                                
                             else:
                                 self.uc.bar_warn("Cell " + str(cell) + " not found.")
                                 self.lyrs.clear_rubber()

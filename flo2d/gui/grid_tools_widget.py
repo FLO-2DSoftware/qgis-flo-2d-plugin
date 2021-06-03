@@ -136,6 +136,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
 
     def create_grid(self):
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return        
         create_grid_dlg = CreateGridDialog()
         ok = create_grid_dlg.exec_()
         if not ok:
@@ -162,19 +165,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.get_cell_size():
                 return
 
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            field_index = grid_lyr.fields().indexFromName("col") 
-            if field_index == -1:
-                QApplication.restoreOverrideCursor()  
-                
-                add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
-                                           + "Some functionality will be unavailable.\n\n"
-                                           + "Would you like to add the 'col' and 'row' fields to the grid table?", 
-                                           QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-          
-                if add_new_colums == QMessageBox.Cancel:
-                    return
-                
             QApplication.setOverrideCursor(Qt.WaitCursor)             
             ini_time = time.time() 
             self.uc.progress_bar("Creating grid...")
@@ -197,6 +187,19 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 # get coordinate of upper left corner of pixel
                 xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul') 
                 upper_left_coords_override = (xmin_new,ymax_new)
+             
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            field_index = grid_lyr.fields().indexFromName("col") 
+            if field_index == -1:
+                QApplication.restoreOverrideCursor()  
+                
+                add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
+                                           + "Some functionality will be unavailable.\n\n"
+                                           + "Would you like to add the 'col' and 'row' fields to the grid table?", 
+                                           QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+          
+                if add_new_colums == QMessageBox.Cancel:
+                    return                
                 
             if field_index == -1:
                 if add_new_colums == QMessageBox.No:
@@ -205,7 +208,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     if add_col_and_row_fields(grid_lyr):                 
                         assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                                          
                     else:
-                        square_grid(self.gutils, boundary, upper_left_coords_override)  
+                        square_grid(self.gutils, boundary, upper_left_coords_override) 
+            else:
+                square_grid(self.gutils, boundary, upper_left_coords_override)               
 
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")

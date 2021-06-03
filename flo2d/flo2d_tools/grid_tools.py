@@ -2150,8 +2150,8 @@ def number_of_elements(gutils, layer):
     else:
         return len(list(layer.getFeatures()))
     
-def render_grid_elevations(grid_lyr, show):
-    if show:
+def render_grid_elevations(grid_lyr, show_nodata):
+    if show_nodata:
         style_path1 = get_file_path("styles", "grid_nodata.qml")
         if os.path.isfile(style_path1):
             err_msg, res = grid_lyr.loadNamedStyle(style_path1)
