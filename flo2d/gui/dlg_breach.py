@@ -7,6 +7,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import functools
+import time
 
 from qgis.PyQt.QtCore import Qt, QEvent
 from qgis.PyQt.QtWidgets import (
@@ -24,21 +26,46 @@ from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
-from ..flo2d_tools.grid_tools import adjacent_grid_elevations, number_of_elements
+from ..flo2d_tools.grid_tools import adjacent_grid_elevations, number_of_elements, buildCellIDNPArray, buildCellElevNPArray, adjacent_grid_elevations_np, cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray, cellElevNumpyArray
+
 from pickle import FALSE
 from qgis.core import *
 from datetime import datetime
 from math import modf
 
+import numpy as np
+
 # from qgis.PyQt.QtWidgets import (QApplication, QDialogButtonBox, QInputDialog, QFileDialog,
 #                                 QTableWidgetItem, , , QTableView, QCompleter, QTableWidget, qApp )
-
 
 uiDialog_global, qtBaseClass = load_ui("global_breach_data")
 uiDialog_individual_breach, qtBaseClass = load_ui("individual_breach_data")
 uiDialog_levee_fragility, qtBaseClass = load_ui("levee_fragility_curves")
 uiDialog_individual_levees, qtBaseClass = load_ui("individual_levee_data")
 
+def timer(func):
+    """Print the runtime of the decorated function"""
+    @functools.wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        start_time = time.perf_counter()    # 1
+        value = func(*args, **kwargs)
+        end_time = time.perf_counter()      # 2
+        run_time = end_time - start_time    # 3
+        print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
+        return value
+    return wrapper_timer
+
+def timer1(func):
+    """Print the runtime of the decorated function"""
+    @functools.wraps(func)
+    def wrapper_timer(arg):
+        start_time = time.perf_counter()    # 1
+        value = func(arg)
+        end_time = time.perf_counter()      # 2
+        run_time = end_time - start_time    # 3
+        print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
+        return value
+    return wrapper_timer
 
 class GlobalBreachDialog(qtBaseClass, uiDialog_global):
     def __init__(self, iface, lyrs):
@@ -612,12 +639,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             7: [False, 0, 0, 0, 0, 0, 0],
             8: [False, 0, 0, 0, 0, 0, 0],
         }
-        
-        self.setup_connection()
-        
+
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        self.grid_count = self.gutils.count("grid", field = "fid")
-        # self.grid_count = len(list(self.grid_lyr.getFeatures()))
+        
         set_icon(self.zoom_in_btn, "zoom_in.svg")
         set_icon(self.zoom_out_btn, "zoom_out.svg")
         set_icon(self.find_levee_cell_btn, "eye-svgrepo-com.svg")
@@ -627,7 +651,16 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.next_levees_lbl.setText("Next " + str(self.n_levees))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.setup_connection()
         
+        self.grid_count = self.gutils.count('grid', field="fid")
+        
+        global cellIDNumpyArray
+        global cellElevNumpyArray
+        if cellIDNumpyArray is None:
+            cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray = buildCellIDNPArray(self.gutils)
+        if cellElevNumpyArray is None:
+            cellElevNumpyArray = buildCellElevNPArray(self.gutils, cellIDNumpyArray)
 
         # Allow only integers:
         validator = QIntValidator()
@@ -693,14 +726,13 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         self.failure_max_width_dbox.installEventFilter(self)
         self.failure_vertical_rate_dbox.installEventFilter(self)
         self.failure_horizontal_rate_dbox.installEventFilter(self)
-
+        
         self.populate_individual_levees_dialog()
 
         QApplication.restoreOverrideCursor()
 
     #         event = QEvent(QEvent.FocusIn)
     #         self.eventFilter(self.E_dbox, event)
-
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -708,12 +740,16 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-
+    @timer
     def populate_individual_levees_dialog(self):
+        
         qry_levee_cells = (
             """SELECT grid_fid, ldir, levcrest, user_line_fid FROM levee_data GROUP BY grid_fid ORDER BY grid_fid"""
         )
+        #starttime = datetime.now()
         self.levee_rows = self.gutils.execute(qry_levee_cells).fetchall()
+        #print ("qry_levee_cells: %s"  % (datetime.now() - starttime).total_seconds())       
+        
         if not self.levee_rows:
             return
 
@@ -731,7 +767,6 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
         self.previous_levees_btn.setEnabled(False)
         self.levee_failure_grp.setChecked(False)
-
     def eventFilter(self, widget, event):
         name = widget.objectName()
         if event.type() == QEvent.FocusOut:
@@ -857,7 +892,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.previousWidget = name
 
         return QWidget.eventFilter(self, widget, event)
-
+    @timer
     def load_grid_failure(self, grid, direction):
 
         #         if self.failureData.get(direction)[0]:  # Index [0] is a boolean indicating that the direction is selected or not.
@@ -881,7 +916,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     #             self.failure_max_width_dbox.setValue(float_or_zero(fail[3]))
     #             self.failure_vertical_rate_dbox.setValue(float_or_zero(fail[4]))
     #             self.failure_horizontal_rate_dbox.setValue(float_or_zero(fail[5]))
-
+    @timer
     def load_next_combo(self):
         self.previous_levees_btn.setEnabled(True)
         self.individual_levee_element_cbo.setCurrentIndex(self.individual_levee_element_cbo.count() - 1)
@@ -894,10 +929,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     self.next_levees_btn.setEnabled(False)
                     break
                 self.individual_levee_element_cbo.addItem(str(self.levee_rows[i][0]))
-
+    @timer
     def directionEditingFinished(self, widget):
         widget.setStyleSheet("")
-
+    @timer
     def load_previous_combo(self):
         self.next_levees_btn.setEnabled(True)
         self.individual_levee_element_cbo.setCurrentIndex(0)
@@ -908,12 +943,12 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.individual_levee_element_cbo.addItem(str(self.levee_rows[i][0]))
         if row - self.n_levees == 0:
             self.previous_levees_btn.setEnabled(False)
-
+    @timer1
     def individual_levee_element_cbo_currentIndexChanged(self):
         cell = self.individual_levee_element_cbo.currentText()
         self.show_levee(cell)
-
-    def show_levee(self, cell):
+    @timer
+    def show_levee(self, cell):                   
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.uc.clear_bar_messages()
@@ -978,7 +1013,13 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
                 high_light_this = min(high_light_this, dir)
 
+            #starttime = datetime.now()
             grid_elev = self.gutils.execute("SELECT elevation FROM grid WHERE fid = ?", (cell,)).fetchone()[0]
+            #print ("Grid_elev: %s"  % (datetime.now() - starttime).total_seconds())
+            #starttime = datetime.now()
+            #grid_elev = cellElevNumpyArray[cellIDNumpyArray == int(cell)][0]
+            #print ("Grid_elev_np: %s"  % (datetime.now() - starttime).total_seconds())
+            
             self.grid_elevation_lbl.setText(str(grid_elev))
 
             levee_failure_qry = """SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
@@ -999,17 +1040,26 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.cell_to_find_le.setText(str(cell))
 
             # Find elevations of adjacent cells:
+
             try:
+
                 sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
                 cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
                 if self.gutils.get_cont_par("METRIC") == "1":
                     unit = "   mts"
                 else:
                     unit = "   ft"
-
-                elevs = adjacent_grid_elevations(self.gutils, self.grid_lyr, cell, cell_size)
-
+                    
+                
+                #starttime = datetime.now()
+                #elevs = adjacent_grid_elevations(self.gutils, self.grid_lyr, cell, cell_size)
+                #print ("Adjacent_grid_elevations: %s"  % (datetime.now() - starttime).total_seconds())
                 cell = int(cell)
+                #starttime = datetime.now()
+                elevs = adjacent_grid_elevations_np(cell, cellIDNumpyArray, cellElevNumpyArray)
+                #print ("Adjacent_grid_elevations_np: %s"  % (datetime.now() - starttime).total_seconds())
+                
+                
                 if self.grid_count >= cell and cell > 0:
                     self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                     xx, yy = self.currentCell.geometry().centroid().asPoint()
@@ -1062,7 +1112,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             return False
         finally:
             QApplication.restoreOverrideCursor()
-
+    @timer
     def get_adjacent_cell_elevation(self, xx, yy, cell_size, unit, dir):
         sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
         elev = -999
@@ -1158,7 +1208,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.uc.bar_warn("Invalid direction!")
 
         return elev
-
+    @timer
     def clear_all_directions(self):
         self.N_chbox.setChecked(False)
         self.E_chbox.setChecked(False)
@@ -1231,7 +1281,6 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         Save changes to individual levee.
         """
 
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         levee_grid = self.individual_levee_element_cbo.currentText()
 
         if levee_grid == "":
@@ -1245,23 +1294,17 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
         try:
 
-            # Retrive previous levee user_line_fid:
-            user_line_fid = self.gutils.execute("SELECT user_line_fid FROM levee_data WHERE grid_fid = ?;", (levee_grid,)).fetchone()
-            user_line_fid = None if not user_line_fid else user_line_fid[0]
-            
+            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
+            insert_failure_qry = """INSERT INTO levee_failure
+                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+                                    VALUES (?,?,?,?,?,?,?,?);"""
+
             # Delete all features of this cell in levee_data and levee_failure:
             self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = ?;", (levee_grid,))
             self.gutils.execute("DELETE FROM levee_failure WHERE grid_fid = ?;", (levee_grid,))
-            
-            
-            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid, user_line_fid, geom) VALUES (?,?,?,?,?);"
-            insert_failure_qry = """INSERT INTO levee_failure
-                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-                                    VALUES (?,?,?,?,?,?,?,?);"""            
 
             if self.N_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "1", cell_size)
-                self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid))
                 if self.failureData.get(1)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1278,8 +1321,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.E_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "2", cell_size)
-                self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid))
                 if self.failureData.get(2)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1296,8 +1338,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.S_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "3", cell_size)
-                self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid))
                 if self.failureData.get(3)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1314,8 +1355,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.W_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "4", cell_size)
-                self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid))
                 if self.failureData.get(4)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1332,8 +1372,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.NE_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "5", cell_size)
-                self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid))
                 if self.failureData.get(5)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1350,8 +1389,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.SE_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "6", cell_size)
-                self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid))
                 if self.failureData.get(6)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1368,8 +1406,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.SW_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "7", cell_size)
-                self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid))
                 if self.failureData.get(7)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1386,8 +1423,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.NW_chbox.isChecked():
-                geom = self.gutils.build_levee(levee_grid, "8", cell_size)
-                self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid))
                 if self.failureData.get(8)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1403,50 +1439,26 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                         ),
                     )
 
-            self.lyrs.lyrs_to_repaint = [
-                self.lyrs.data["levee_data"]["qlyr"],
-                self.lyrs.data["levee_failure"]["qlyr"]
-            ]
-            self.lyrs.repaint_layers()
-            
-            levees = self.lyrs.data["levee_data"]["qlyr"]
-            levees.triggerRepaint()
+            # levee_data layer queries:
+            select_qry = "SELECT * FROM levee_data WHERE grid_fid = ? AND ldir = ?"
+            update_qry = "UPDATE levee_data SET ldir = ?, levcrest = ? WHERE grid_fid = ? AND ldir = ?"
+            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
+            delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
+            delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
 
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error(
-                "ERROR 280319.1651: update of Individual Levee Data failed!"
-                + "\n__________________________________________________",
-                e,
-            )
-            return False
-
-
-
-
-#             # levee_data layer queries:
-#             select_qry = "SELECT * FROM levee_data WHERE grid_fid = ? AND ldir = ?"
-#             update_qry = "UPDATE levee_data SET ldir = ?, levcrest = ? WHERE grid_fid = ? AND ldir = ?"
-#             insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
-#             delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
-#             delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
-
-#             # levee_failure layer queries:
-#             select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
-#             insert_failure_qry = """INSERT INTO levee_failure
-#                                      (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-#                                     VALUES (?,?,?,?,?,?,?,?);"""
-#             update_levee_failure_qry = """UPDATE levee_failure 
-#                                             SET failevel = ?, 
-#                                                 failtime = ?, 
-#                                                 levbase = ?, 
-#                                                 failwidthmax  = ?, 
-#                                                 failrate = ?, 
-#                                                 failwidrate = ?
-#                                             WHERE grid_fid = ? AND lfaildir = ? ; """
+            # levee_failure layer queries:
+            select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
+            insert_failure_qry = """INSERT INTO levee_failure
+                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+                                    VALUES (?,?,?,?,?,?,?,?);"""
+            update_levee_failure_qry = """UPDATE levee_failure 
+                                            SET failevel = ?, 
+                                                failtime = ?, 
+                                                levbase = ?, 
+                                                failwidthmax  = ?, 
+                                                failrate = ?, 
+                                                failwidrate = ?
+                                            WHERE grid_fid = ? AND lfaildir = ? ; """
 
             #             if self.N_chbox.isChecked():
             #                 # Does this direction exists for this cell? If so update, otherwise insert:
@@ -1565,70 +1577,81 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             #                 self.gutils.execute(delete_qry, (levee_grid, 8))
             #                 self.gutils.execute(delete_failure_qry, (levee_grid, 8))
 
+            self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
 
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 280319.1651: update of Individual Levee Data failed!"
+                + "\n__________________________________________________",
+                e,
+            )
+            return False
 
-#         try:
-# 
-#             select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
-#             update_levee_failure_qry = """UPDATE levee_failure 
-#                                             SET failevel = ?, 
-#                                                 failtime = ?, 
-#                                                 levbase = ?, 
-#                                                 failwidthmax  = ?, 
-#                                                 failrate = ?, 
-#                                                 failwidrate = ?
-#                                             WHERE grid_fid = ? AND lfaildir = ? ; """
-# 
-#             insert_failure_qry = """INSERT INTO levee_failure
-#                              (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-#                             VALUES (?,?,?,?,?,?,?,?);"""
-# 
-#             delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
-# 
-#             for f in self.failureData:
-#                 if f[0]:
-#                     self.failureData[f[0]] = [True, f[1], f[2], f[3], f[4], f[5], f[6]]
-#             if self.levee_failure_grp.isChecked():
-#                 # Does this failure exists for this cell, in this direction? If so update, otherwise insert:
-#                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
-#                     # Update:
-#                     self.gutils.execute(update_levee_failure_qry,
-#                                        (self.failure_elevation_dbox.value(),
-#                                         self.failure_duration_dbox.value(),
-#                                         self.failure_base_elevation_dbox.value(),
-#                                         self.failure_max_width_dbox.value(),
-#                                         self.failure_vertical_rate_dbox.value(),
-#                                         self.failure_horizontal_rate_dbox.value(),
-#                                         levee_grid, self.previousDirection
-#                                         ))
-#                 else:
-#                     # Insert:
-#                     self.gutils.execute(insert_failure_qry,
-#                                        (levee_grid,
-#                                         self.previousDirection,
-#                                         self.failure_elevation_dbox.value(),
-#                                         self.failure_duration_dbox.value(),
-#                                         self.failure_base_elevation_dbox.value(),
-#                                         self.failure_max_width_dbox.value(),
-#                                         self.failure_vertical_rate_dbox.value(),
-#                                         self.failure_horizontal_rate_dbox.value()
-#                                         ))
-#             else:
-#                 # If this direction is not selected and exists, delete it:
-#                 pass
-#                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
-#                     self.gutils.execute(delete_failure_qry, (levee_grid, self.previousDirection))
-# 
-#             return True
-# 
-#         except Exception as e:
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_error(
-#                 "ERROR 290319.1204: error updating levee failures!"
-#                 + "\n__________________________________________________",
-#                 e,
-#             )
-#             return False
+        try:
+
+            select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
+            update_levee_failure_qry = """UPDATE levee_failure 
+                                            SET failevel = ?, 
+                                                failtime = ?, 
+                                                levbase = ?, 
+                                                failwidthmax  = ?, 
+                                                failrate = ?, 
+                                                failwidrate = ?
+                                            WHERE grid_fid = ? AND lfaildir = ? ; """
+
+            insert_failure_qry = """INSERT INTO levee_failure
+                             (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+                            VALUES (?,?,?,?,?,?,?,?);"""
+
+            delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
+
+            #             for f in self.failureData:
+            #                 if f[0]:
+            #
+            #                 self.failureData[f[0]] = [True, f[1], f[2], f[3], f[4], f[5], f[6]]
+
+            #             if self.levee_failure_grp.isChecked():
+            #                 # Does this failure exists for this cell, in this direction? If so update, otherwise insert:
+            #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
+            #                     # Update:
+            #                     self.gutils.execute(update_levee_failure_qry,
+            #                                        (self.failure_elevation_dbox.value(),
+            #                                         self.failure_duration_dbox.value(),
+            #                                         self.failure_base_elevation_dbox.value(),
+            #                                         self.failure_max_width_dbox.value(),
+            #                                         self.failure_vertical_rate_dbox.value(),
+            #                                         self.failure_horizontal_rate_dbox.value(),
+            #                                         levee_grid, self.previousDirection
+            #                                         ))
+            #                 else:
+            #                     # Insert:
+            #                     self.gutils.execute(insert_failure_qry,
+            #                                        (levee_grid,
+            #                                         self.previousDirection,
+            #                                         self.failure_elevation_dbox.value(),
+            #                                         self.failure_duration_dbox.value(),
+            #                                         self.failure_base_elevation_dbox.value(),
+            #                                         self.failure_max_width_dbox.value(),
+            #                                         self.failure_vertical_rate_dbox.value(),
+            #                                         self.failure_horizontal_rate_dbox.value()
+            #                                         ))
+            #             else:
+            #                 # If this direction is not selected and exists, delete it:
+            #                 pass
+            #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
+            #                     self.gutils.execute(delete_failure_qry, (levee_grid, self.previousDirection))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 290319.1204: error updating levee failures!"
+                + "\n__________________________________________________",
+                e,
+            )
+            return False
 
     def highlight_cell(self, cell):
         try:

@@ -7,7 +7,6 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-
 import os
 import traceback
 from qgis.PyQt.QtCore import QSettings
@@ -186,8 +185,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         finally:
             self.corrector.clear_filter()
 
-    def elev_from_lines(self):
-        self.corrector.elevation_from_lines()
+    def elev_from_lines(self, rangeReq = None):
+        self.corrector.elevation_from_lines(regionReq = rangeReq)
 
     def elev_from_polys(self):
         try:
