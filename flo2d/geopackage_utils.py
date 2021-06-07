@@ -504,6 +504,12 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
+    def build_square_from_polygon2(self, polyColRow):
+        gpb = """SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))""".format(
+            *polyColRow[0]
+        )
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return (gpb_buff, polyColRow[1], polyColRow[2])                                                     
     def get_max(self, table, field="fid"):
         sql = """SELECT MAX("{0}") FROM "{1}";""".format(field, table)
         max_val = self.execute(sql).fetchone()[0]
