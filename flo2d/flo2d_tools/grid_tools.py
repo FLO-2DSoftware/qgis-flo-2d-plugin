@@ -28,11 +28,10 @@ from qgis.core import (
     NULL,
 )
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
-from ..utils import is_number
-from ..errors import GeometryValidityErrors
+from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
+from ..errors import GeometryValidityErrors, Flo2dError
 
 import numpy as np
-from pickle import NONE
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -133,7 +132,7 @@ class ZonalStatistics(object):
                 else:
                     pass
             try:
-                yield round(self.calculation_method(points), 3), feat["fid"]
+                yield round(self.calculation_method(points), 4), feat["fid"]
             except (ValueError, ZeroDivisionError) as e:
                 pass
 
@@ -268,7 +267,7 @@ class ZonalStatisticsOther(object):
                 else:
                     pass
             try:
-                yield round(self.calculation_method(points), 3), feat["fid"]
+                yield round(self.calculation_method(points), 4), feat["fid"]
             except (ValueError, ZeroDivisionError) as e:
                 pass
 
@@ -483,7 +482,7 @@ def divide_geom(geom, threshold=1000):
     return new_geoms
 
 
-def build_grid(boundary, cell_size):
+def build_grid(boundary, cell_size, upper_left_coords=None):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
     """
@@ -500,6 +499,8 @@ def build_grid(boundary, cell_size):
     #     xmax = math.ceil(bbox.xMaximum())
     #     ymax = math.ceil(bbox.yMaximum())
     #     ymin = math.floor(bbox.yMinimum())
+    if upper_left_coords:
+        xmin,ymax = upper_left_coords                         
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -529,7 +530,71 @@ def build_grid(boundary, cell_size):
             y_tmp -= cell_size
         x += cell_size
 
+def build_grid_and_tableColRow(boundary, cell_size):
+    """
+    Generator which creates grid with given cell size and inside given boundary layer.
+    """
+    half_size = cell_size * 0.5
+    biter = boundary.getFeatures()
+    feature = next(biter)
+    geom = feature.geometry()
+    bbox = geom.boundingBox()
+    xmin = bbox.xMinimum()
+    xmax = bbox.xMaximum()
+    ymax = bbox.yMaximum()
+    ymin = bbox.yMinimum()
+    #     xmin = math.floor(bbox.xMinimum())
+    #     xmax = math.ceil(bbox.xMaximum())
+    #     ymax = math.ceil(bbox.yMaximum())
+    #     ymin = math.floor(bbox.yMinimum())       
+    cols = int(math.ceil(abs(xmax - xmin) / cell_size))
+    rows = int(math.ceil(abs(ymax - ymin) / cell_size))
+    x = xmin + half_size
+    y = ymax - half_size
+    geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
+    geos_geom_engine.prepareGeometry()
+    for col in range(cols):
+        y_tmp = y
+        for row in range(rows):
+            pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
+            if geos_geom_engine.intersects(pnt.constGet()):
+                poly = (
+                    x - half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp - half_size,
+                    x + half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp + half_size,
+                    x - half_size,
+                    y_tmp - half_size,
+                )
+                yield (poly, col + 2, abs(row - rows) + 1)
+            else:
+                pass
+            y_tmp -= cell_size
+        x += cell_size
 
+
+def assign_col_row_indexes_to_grid(grid, gutils):
+    cell_size = float(gutils.get_cont_par("CELLSIZE"))
+    ext = grid.extent()
+    xmin = ext.xMinimum()
+    ymin = ext.yMinimum()                  
+    qry = "UPDATE grid SET col = ?, row = ? WHERE fid = ?"
+    qry_values = []
+    for i, cell in enumerate(grid.getFeatures(), 1):
+        geom = cell.geometry()
+        xx, yy = geom.centroid().asPoint()
+        col = int((xx - xmin)/cell_size) + 2
+        row = int((yy - ymin)/cell_size) + 2 
+        qry_values.append((col, row, i))
+        
+    cur = gutils.con.cursor()
+    cur.executemany(qry, qry_values)
+    gutils.con.commit()      
+    
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
@@ -853,7 +918,7 @@ def raster2grid(grid, out_raster, request=None):
         # ident is the value of the query provided by the identify method of the dataProvider.
         if ident.isValid():
             if is_number(ident.results()[1]):
-                val = round(ident.results()[1], 3)
+                val = round(ident.results()[1], 4)
             else:
                 val = None
             yield val, feat.id()
@@ -894,7 +959,7 @@ def rasters2centroids(vlayer, request, *raster_paths):
             # ident is the value of the query provided by the identify method of the dataProvider.
             if ident.isValid():
                 if is_number(ident.results()[1]):
-                    val = round(ident.results()[1], 3)
+                    val = round(ident.results()[1], 4)
                 else:
                     val = None
                 raster_values.append((val, fid))
@@ -902,7 +967,7 @@ def rasters2centroids(vlayer, request, *raster_paths):
 
 
 # Tools which use GeoPackageUtils instance
-def square_grid(gutils, boundary):
+def square_grid(gutils, boundary, upper_left_coords=None):
     """
     Function for calculating and writing square grid into 'grid' table.
     """
@@ -911,7 +976,7 @@ def square_grid(gutils, boundary):
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
 
-    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize))
+    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize), upper_left_coords)
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
     for g_tuple in polygons:
         sql.append(g_tuple)
@@ -920,7 +985,69 @@ def square_grid(gutils, boundary):
     else:
         pass
 
+def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
+    
+    # """
+    # Function for calculating and writing square grid into 'grid' table.
+    # """
+    #
+    # cellsize = float(gutils.get_cont_par("CELLSIZE"))
+    # update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
+    # gutils.execute(update_cellsize, (cellsize,))
+    # gutils.clear_tables("grid")
+    #
+    # sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+    # polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+    # for g_tuple in polygonsClRw:
+        # sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+    # if len(sql) > 2:
+        # gutils.batch_execute(sql)
+    # else:
+        # pass    
+    
+    
+    
+    """
+    Function for calculating and writing square grid into 'grid' table.
+    """
+    try:
+        cellsize = float(gutils.get_cont_par("CELLSIZE"))
+        update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
+        gutils.execute(update_cellsize, (cellsize,))
+        gutils.clear_tables("grid")
+        
+        sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+        polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) 
+                                for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+        for g_tuple in polygonsClRw:
+            sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+        if len(sql) > 2:
+            gutils.batch_execute(sql)
+        else:
+            pass
+        return True
+    except:
+        QApplication.restoreOverrideCursor()
+        show_error(
+            "ERROR 300521.0526: creating grid with 'col' and 'row' fields failed !\n"
+            "_____________________________________________________________________"
+        )
+        return False        
 
+def add_col_and_row_fields(grid):
+    try:
+        caps = grid.dataProvider().capabilities()
+        if caps & QgsVectorDataProvider.AddAttributes:
+            grid.dataProvider().addAttributes([QgsField('col', QVariant.Int), QgsField('row', QVariant.Int)])
+            grid.updateFields()
+        return True
+    except:
+        QApplication.restoreOverrideCursor()
+        show_error(
+            "ERROR 300521.1111: creating grid with 'col' and 'row' fields failed !\n"
+            "_____________________________________________________________________"
+        )
+        return False  
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
@@ -1646,7 +1773,8 @@ def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
     if grid_lyr is not None:
         if cell != "":
             cell = int(cell)
-            grid_count = len(list(grid_lyr.getFeatures()))
+            grid_count = gutils.count("grid", field = "fid")                                                
+            #grid_count = len(list(grid_lyr.getFeatures()))
             if grid_count >= cell and cell > 0:
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
@@ -2236,14 +2364,38 @@ def layer_geometry_is_valid(vlayer):
 
 
 def number_of_elements(gutils, layer):
-    if len(layer) > 0:
-        return len(layer)
-    elif layer.featureCount() > 0:
-        return layer.featureCount()
+    # if len(layer) > 0:
+        # return len(layer)
+    # if layer.featureCount() > 0:
+        # return layer.featureCount()
+    # else:
+    count_sql = """SELECT COUNT(fid) FROM grid;"""
+    a = gutils.execute(count_sql).fetchone()[0]
+    if a:
+        return a
     else:
-        count_sql = """SELECT COUNT(fid) FROM grid;"""
-        a = gutils.execute(count_sql).fetchone()[0]
-        if a:
-            return a
+        return len(list(layer.getFeatures()))
+    
+def render_grid_elevations(grid_lyr, show_nodata):
+    if show_nodata:
+        style_path1 = get_file_path("styles", "grid_nodata.qml")
+        if os.path.isfile(style_path1):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path1)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path1, err_msg)
+                raise Flo2dError(msg)
         else:
-                return len(list(layer.getFeatures()))
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style file {}".format(style_path1))
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
