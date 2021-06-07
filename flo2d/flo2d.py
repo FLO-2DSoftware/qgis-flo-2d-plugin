@@ -18,7 +18,7 @@ import traceback
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
-from qgis.core import QgsProject, QgsWkbTypes
+from qgis.core import QgsProject, QgsWkbTypes, NULL
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
 
 from datetime import datetime
@@ -50,6 +50,7 @@ from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
 from .flo2d_tools.grid_tools import dirID, cellIDNumpyArray
+from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
 from urllib3.contrib import _securetransport
 
 
@@ -402,6 +403,9 @@ class Flo2D(object):
         self.f2d_grid_info_dock.setWindowTitle("FLO-2D Grid Info")
         self.f2d_grid_info = GridInfoWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
+        grid = self.lyrs.data["grid"]["qlyr"]
+        if grid is not None:
+            self.f2d_grid_info.set_info_layer(grid)
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
 
@@ -589,7 +593,7 @@ class Flo2D(object):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if os.path.isfile(flo2d_dir + "\Tailings Dam Breach.exe"):
+            if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
                 tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
                 return_code = tailings.run()
                 if return_code != 0:
@@ -632,7 +636,7 @@ class Flo2D(object):
             self.uc.bar_warn("Could not run Mapper program under current operation system!")
             return
         try:
-            if os.path.isfile(flo2d_dir + "\Mapper PRO.exe"):
+            if os.path.isfile(flo2d_dir + r"\Mapper PRO.exe"):
                 mapper = MapperExecutor(flo2d_dir, project_dir)
                 mapper.run()
                 self.uc.bar_info("Mapper started!", dur=3)
@@ -695,12 +699,12 @@ class Flo2D(object):
                     msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
                     msg += "Load the model?"
                     old_gpkg = _old_gpkg
-                    answer = self.uc.customized_question(msg)
+                    answer = self.uc.customized_question("FLO-2D", msg)
                 else:
-                    answer = self.uc.customized_question(msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                    answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
             else:
                 msg += "Load the model?"
-                answer = self.uc.customized_question(msg)
+                answer = self.uc.customized_question("FLO-2D", msg)
             if answer == QMessageBox.Yes:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
@@ -735,7 +739,7 @@ class Flo2D(object):
                     self.files_not_used += dat + "\n"
                     continue
                 else:
-                    if os.path.getsize(last_dir + "\\" + dat) > 0:
+                    if os.path.getsize(os.path.join(last_dir, dat)) > 0:
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
@@ -827,7 +831,7 @@ class Flo2D(object):
                     return
 
             # Check if MANNINGS_N.DAT exist:
-            if not os.path.isfile(dir_name + "\MANNINGS_N.DAT") or os.path.getsize(dir_name + "\MANNINGS_N.DAT") == 0:
+            if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 return
 
@@ -1047,7 +1051,57 @@ class Flo2D(object):
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+                    # See if geopackage has grid with 'col' and 'row' fields:    
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    field_index = grid_lyr.fields().indexFromName("col") 
+                    if field_index == -1:
+                        QApplication.restoreOverrideCursor()  
+                        
+                        add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                                                   + "Would you like to add the 'col' and 'row' fields to the grid table?", 
+                                                   QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                  
+                        if add_new_colums == QMessageBox.Cancel:
+                            return
+                        
+                        if add_new_colums == QMessageBox.No:
+                            return
+                        else:
+                            if add_col_and_row_fields(grid_lyr):                 
+                                assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                         
+                    else:    
+                        cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                        if cell[0] == NULL:   
+                            QApplication.restoreOverrideCursor()
+                            proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
+                            if proceed:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                                QApplication.restoreOverrideCursor()
+                            else:
+                                return   
+                        
+                    QApplication.restoreOverrideCursor()          
+        
+                    # # See if geopackage has grid with 'col' and 'row' fields:    
+                    # grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    # field_index = grid_lyr.fields().indexFromName("col") 
+                    # if field_index == -1:
+                        # if self.gutils.is_table_empty("user_model_boundary"):
+                            # QApplication.restoreOverrideCursor()  
+                            # self.uc.bar_warn("WARNING 310521.0445: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!", 10)                 
+                        # else: 
+                            # QApplication.restoreOverrideCursor()         
+                            # proceed = self.uc.question("WARNING 290521.0500: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" + 
+                                                       # "Would you like to create it?")
+                            # QApplication.setOverrideCursor(Qt.WaitCursor)
+                            # if proceed:                    
+                                # if square_grid_with_col_and_row_fields(self.gutils, self.lyrs.data["user_model_boundary"]["qlyr"]):  
+                                    # assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)                    
 
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
@@ -1620,6 +1674,8 @@ class Flo2D(object):
             self.grid_info_tool.grid = grid
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)                                                                   
             self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
         else:
@@ -1936,8 +1992,8 @@ class Flo2D(object):
             return
 
         s = QSettings()
-        project_dir = s.value("FLO-2D/last_flopro_project", "")
-        if not os.path.isfile(project_dir + "\DEPFP.OUT"):
+        project_dir = s.value("FLO-2D/lastGdsDir", "")
+        if not os.path.isfile(os.path.join(project_dir, "DEPFP.OUT")):
             self.uc.show_warn(
                 "WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"
                 + project_dir
@@ -1986,15 +2042,19 @@ class Flo2D(object):
             else:
                 return
 
-    #         try:
-    #             QApplication.setOverrideCursor(Qt.WaitCursor)
-    #
-    #             QApplication.restoreOverrideCursor()
-    #
-    #         except Exception as e:
-    #             QApplication.restoreOverrideCursor()
-    #             self.uc.show_warn('ERROR 221019.0653: unable to process warnings and errors!')
-
+    #     @staticmethod
+    def show_help(self):
+        pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+        
+        #         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+        
+        #         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
     def schematize_levees(self):
         """
         Generate schematic lines for user defined levee lines.
@@ -2107,24 +2167,3 @@ class Flo2D(object):
 
     def restore_settings(self):
         pass
-
-    #     @staticmethod
-    def show_help(self):
-        #         self.uc.bar_info("Coming soon!")
-        #         self.uc.show_info('Coming soon!')
-        #         return
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        #         help_file = 'file:///{0}/help/index.html'.format(pth)
-        #         QDesktopServices.openUrl(QUrl(help_file))
-
-        pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
-
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
-
-        #         pth = os.path.dirname(os.path.abspath(__file__))
-        help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
-        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
