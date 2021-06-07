@@ -976,7 +976,7 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
 
-    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize), upper_left_coords))
+    polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize, upper_left_coords))
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
     for g_tuple in polygons:
         sql.append(g_tuple)
