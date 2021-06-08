@@ -273,7 +273,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                         
     
                         item = feat[self.name_FieldCbo.currentText()]
-                        name = str(item) if item and item != "" else str(int(feat["fid_"]))
+                        name = str(item) if item and item != "" else str(int(feat["fid"]))
                         
                         try:
                             item = feat[self.correction_FieldCbo.currentText()]
