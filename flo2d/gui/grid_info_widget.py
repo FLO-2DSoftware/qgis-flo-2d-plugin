@@ -63,7 +63,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             
-            self.control_lyr.editingStopped.connect(self.check_render_elevations)
+            # self.control_lyr.editingStopped.connect(self.check_render_elevations)
             
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)

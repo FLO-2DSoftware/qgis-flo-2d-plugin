@@ -285,7 +285,13 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 self.uc.show_info(read_error)
 
             if nope:
-                self.process_non_interpolated_cells(nope)   
+                QApplication.setOverrideCursor(Qt.WaitCursor)                                                     
+                render_grid_elevations(self.grid, True);                
+
+                self.lyrs.lyrs_to_repaint = [self.grid]
+                self.lyrs.repaint_layers()
+                
+                # self.process_non_interpolated_cells(nope)   
             
             self.lyrs.refresh_layers()
             self.lyrs.zoom_to_all()
@@ -483,84 +489,84 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                           "\n\n(Elapsed time: " + duration + ")")      
   
                     elif dlg.highlight_radio.isChecked():
-                        if False:   
-                            ini_time = time.time()    
-                            QApplication.setOverrideCursor(Qt.WaitCursor)     
-            
-                            # Define fields for feature attributes. 
-                            fields = QgsFields()
-                            fields.append(QgsField("cell", QVariant.Int))
-                            fields.append(QgsField("elevation", QVariant.Int))
-            
-                            mapCanvas = self.iface.mapCanvas()
-                            crs = mapCanvas.mapSettings().destinationCrs()
-                            QgsVectorFileWriter.deleteShapeFile(shapefile)                               
-                            writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.Point, crs, "ESRI Shapefile")
-                
-                            if writer.hasError() == QgsVectorFileWriter.NoError:
-                                # Add features:
-                                features = []
-                                for this_cell in nope:  
-                                    xx, yy = self.cell_centroid(this_cell)
-                                     
-                                    # add a feature
-                                    fet = QgsFeature()
-                                    fet.setFields(fields)
-                                    fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
-                                    fet.setAttributes([this_cell, -9999])
-                                    features.append(fet)
-                                
-                                writer.addFeatures(features)                            
-            
-                                # Delete the writer to flush features to disk.
-                                del writer
-                    
-                                vlayer = self.iface.addVectorLayer(shapefile, "", "ogr")
-                    
-                                symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
-                                vlayer.renderer().setSymbol(symbol)
-                    
-                                # Show the change.
-                                vlayer.triggerRepaint()   
-                                                                      
-                                QApplication.restoreOverrideCursor()
-                                fin_time = time.time()     
-                                duration = time_taken(ini_time, fin_time)  
-                                self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
-                                                  "\n\n(Elapsed time: " + duration + ")")                                  
-            
-                            else:
-                                QApplication.restoreOverrideCursor()
-                                
-                                answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
-                                                                     QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
-                                                                     QMessageBox.Cancel,
-                                                                     QMessageBox.Critical)
-                                
-                                if answer ==  QMessageBox.Cancel:
-                                    pass
-                                                                    
-                                elif answer ==  QMessageBox.Retry:
-                                    pass                                                                                                          
-                            
-                                elif answer ==  QMessageBox.Help:  
-                                    self.uc.show_info("Error while creating shapefile: " + shapefile + 
-                                                      "\n\nIs the file or directory read only?")
-                        else:
-                            ini_time = time.time()    
-                            QApplication.setOverrideCursor(Qt.WaitCursor)    
-                                                                                
-                            render_grid_elevations(self.grid, True);
+ 
+                        # ini_time = time.time()    
+                        # QApplication.setOverrideCursor(Qt.WaitCursor)     
+                        #
+                        # # Define fields for feature attributes. 
+                        # fields = QgsFields()
+                        # fields.append(QgsField("cell", QVariant.Int))
+                        # fields.append(QgsField("elevation", QVariant.Int))
+                        #
+                        # mapCanvas = self.iface.mapCanvas()
+                        # crs = mapCanvas.mapSettings().destinationCrs()
+                        # QgsVectorFileWriter.deleteShapeFile(shapefile)                               
+                        # writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.Point, crs, "ESRI Shapefile")
+                        #
+                        # if writer.hasError() == QgsVectorFileWriter.NoError:
+                            # # Add features:
+                            # features = []
+                            # for this_cell in nope:  
+                                # xx, yy = self.cell_centroid(this_cell)
+                                #
+                                # # add a feature
+                                # fet = QgsFeature()
+                                # fet.setFields(fields)
+                                # fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
+                                # fet.setAttributes([this_cell, -9999])
+                                # features.append(fet)
+                                #
+                            # writer.addFeatures(features)                            
+                            #
+                            # # Delete the writer to flush features to disk.
+                            # del writer
+                            #
+                            # vlayer = self.iface.addVectorLayer(shapefile, "", "ogr")
+                            #
+                            # symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
+                            # vlayer.renderer().setSymbol(symbol)
+                            #
+                            # # Show the change.
+                            # vlayer.triggerRepaint()   
+                            #
+                            # QApplication.restoreOverrideCursor()
+                            # fin_time = time.time()     
+                            # duration = time_taken(ini_time, fin_time)  
+                            # self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
+                                              # "\n\n(Elapsed time: " + duration + ")")                                  
+                                              #
+                        # else:
+                            # QApplication.restoreOverrideCursor()
+                            #
+                            # answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
+                                                                 # QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
+                                                                 # QMessageBox.Cancel,
+                                                                 # QMessageBox.Critical)
+                                                                 #
+                            # if answer ==  QMessageBox.Cancel:
+                                # pass
+                                #
+                            # elif answer ==  QMessageBox.Retry:
+                                # pass                                                                                                          
+                                #
+                            # elif answer ==  QMessageBox.Help:  
+                                # self.uc.show_info("Error while creating shapefile: " + shapefile + 
+                                                  # "\n\nIs the file or directory read only?")
 
-                            QApplication.restoreOverrideCursor()
-                            fin_time = time.time()     
-                            duration = time_taken(ini_time, fin_time)  
-                            self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
-                                              "\n\n(Elapsed time: " + duration + ")")   
-                            
-                            self.lyrs.lyrs_to_repaint = [self.grid]
-                            self.lyrs.repaint_layers()
+                        ini_time = time.time()    
+                        QApplication.setOverrideCursor(Qt.WaitCursor)    
+                                                                            
+                        render_grid_elevations(self.grid, True);
+                        
+                        self.lyrs.lyrs_to_repaint = [self.grid]
+                        self.lyrs.repaint_layers()
 
+                        QApplication.restoreOverrideCursor()
+                        fin_time = time.time()     
+                        duration = time_taken(ini_time, fin_time)  
+                        self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
+                                          "\n\n(Elapsed time: " + duration + ")")   
+ 
         except Exception as e: 
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 030521.0848: failed to process non-interpolated cells!", e)

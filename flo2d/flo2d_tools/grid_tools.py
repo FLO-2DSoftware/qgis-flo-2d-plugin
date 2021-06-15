@@ -28,6 +28,7 @@ from qgis.core import (
     QgsRectangle,
     QgsFeedback,
     NULL,
+    QgsMarkerSymbol    
 )
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
@@ -2152,7 +2153,11 @@ def number_of_elements(gutils, layer):
     
 def render_grid_elevations(grid_lyr, show_nodata):
     if show_nodata:
-        style_path1 = get_file_path("styles", "grid_nodata.qml")
+        
+        # symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
+        # grid_lyr.renderer().setSymbol(symbol)       
+        
+        style_path1 = get_file_path("styles", "grid_nodata_2.qml")
         if os.path.isfile(style_path1):
             err_msg, res = grid_lyr.loadNamedStyle(style_path1)
             if not res:
@@ -2173,3 +2178,31 @@ def render_grid_elevations(grid_lyr, show_nodata):
         else:
             QApplication.restoreOverrideCursor()
             raise Flo2dError("Unable to load style {}".format(style_path2))
+        
+        
+        
+        
+        
+     
+                            
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
