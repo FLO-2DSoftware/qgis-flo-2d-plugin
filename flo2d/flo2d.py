@@ -10,19 +10,18 @@
 
 # Lambda may not be necessary
 # pylint: disable=W0108
-
 import os
 import sys
 import time
 import traceback
-import multiprocessing
-from datetime import datetime
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
 from qgis.core import QgsProject, QgsWkbTypes, NULL
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
+
+from datetime import datetime
 
 from .layers import Layers
 from .user_communication import UserCommunication
@@ -32,7 +31,7 @@ from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.grid_tools import grid_has_empty_elev
-from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_levee_directions_duplicates
+from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_levee_directions_duplicates, delete_levee_directions_duplicates_np
 from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor, MapperExecutor, ProgramExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
@@ -50,7 +49,10 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_components import ComponentsDialog
+from .flo2d_tools.grid_tools import dirID, cellIDNumpyArray
 from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
+from urllib3.contrib import _securetransport
+
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -401,11 +403,9 @@ class Flo2D(object):
         self.f2d_grid_info_dock.setWindowTitle("FLO-2D Grid Info")
         self.f2d_grid_info = GridInfoWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         self.f2d_grid_info.setSizeHint(350, 30)
-        
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             self.f2d_grid_info.set_info_layer(grid)
-            
         self.f2d_grid_info_dock.setWidget(self.f2d_grid_info)
         self.f2d_grid_info_dock.dockLocationChanged.connect(self.f2d_grid_info_dock_save_area)
 
@@ -739,7 +739,7 @@ class Flo2D(object):
                     self.files_not_used += dat + "\n"
                     continue
                 else:
-                    if os.path.getsize(last_dir + r"\\" + dat) > 0:
+                    if os.path.getsize(os.path.join(last_dir, dat)) > 0:
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
@@ -1034,11 +1034,9 @@ class Flo2D(object):
                         self.gutils.clear_tables(table)
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
-                                        # the methods in the class Flo2dGeoPackage to import (read) the # FLO-2D .DAT files
-                                        
-                                        
-                                        
-                                        
+                    # the methods in the class Flo2dGeoPackage to import (read) the
+                    # FLO-2D .DAT files
+
                     # save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
@@ -1049,11 +1047,10 @@ class Flo2D(object):
 
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
-                    
+
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
-                    
                     # See if geopackage has grid with 'col' and 'row' fields:    
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col") 
@@ -1105,7 +1102,6 @@ class Flo2D(object):
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
-
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
@@ -1134,7 +1130,7 @@ class Flo2D(object):
                                 
                     if msg:
                         self.uc.show_info(msg)  
-        
+
     @connection_required
     def import_selected_components(self):
         """
@@ -1655,7 +1651,7 @@ class Flo2D(object):
             pass
 
     @connection_required
-    def show_cont_toler(self):        
+    def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
             save = dlg_control.exec_()
@@ -1679,7 +1675,7 @@ class Flo2D(object):
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
             self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)                                                                   
             self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
         else:
@@ -1789,17 +1785,34 @@ class Flo2D(object):
         try:
             #             start = datetime.now()
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            n_elements, n_levee_directions, n_fail_features = self.schematize_levees()
-            for no in sorted(dlg_levee_elev.methods):
-                dlg_levee_elev.methods[no]()
-
+            n_elements_total = 1
+            n_levee_directions_total = 0
+            n_fail_features_total = 0
+            
+            starttime = time.time()
+            for n_elements, n_levee_directions, n_fail_features, ranger in self.schematize_levees():
+                n_elements_total += n_elements
+                n_levee_directions_total += n_levee_directions
+                n_fail_features_total += n_fail_features
+                
+                for no in sorted(dlg_levee_elev.methods):
+                    if no == 1:
+                        # processing for a spatial selection range is enabled on this type
+                        dlg_levee_elev.methods[no](rangeReq = ranger)
+                    else: 
+                        dlg_levee_elev.methods[no]()
+            inctime = time.time()
+            print ("%s seconds to process levee features" % round(inctime - starttime, 2))
+            
             # Delete duplicates:
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             q = False
-            if n_elements > 0:
+            if n_elements_total > 0:
+                print ("in clear loop")
                 dletes = "Cell - Direction\n---------------\n"
                 levees = self.lyrs.data["levee_data"]["qlyr"]
-                leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
+                leveesToDelete = delete_levee_directions_duplicates_np(self.gutils, levees, cellIDNumpyArray) # pass grid layer if it exists
+                #leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
                 if len(leveesToDelete) > 0:
                     k = 0
                     i = 0
@@ -1894,21 +1907,52 @@ class Flo2D(object):
                         #                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' +
                         #                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')
                         #                     if q:
-                        delete_levees_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
-                        delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
-                        for levee in leveesToDelete:
-                            self.gutils.execute(delete_levees_qry, (levee[0], levee[1]))
-                            self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))
+                        delete_levees_qry = """DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?;"""
+                        delete_failure_qry = """DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"""
+                        print ("Deleting extra levee and levee failure features")
+                        
+                        # build indexes to speed up the process
+                        qryIndex = """CREATE INDEX if not exists leveeDataGridFID_LDIR  ON levee_data (grid_fid, ldir);"""
+                        self.gutils.execute(qryIndex)
+                        qryIndex = """CREATE INDEX if not exists leveeFailureGridFID_LFAILDIR  ON levee_failure (grid_fid, lfaildir);"""
+                        self.gutils.execute(qryIndex)
+                        self.gutils.con.commit()
+                        
+                        #cur = self.gutils.con.cursor()
+                        #cur.executemany(delete_levees_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
+                        #self.gutils.con.commit()
+                        #cur.executemany(delete_failure_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
+                        #self.gutils.con.commit()
+                        #cur.close()
+                        
+                        for leveeCounter, levee in enumerate(leveesToDelete):
+                            #self.gutils.execute(delete_levees_qry, (levee[0], levee[1]))
+                            self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1]))
+                            if leveeCounter % 1000 == 0:
+                                print ("DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1]))
+                            self.gutils.con.commit()
+                            #self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))
+                            self.gutils.execute("DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;" % (levee[0], levee[1]))
+                            if leveeCounter % 1000 == 0:
+                                print ("DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;" % (levee[0], levee[1]))
+                            self.gutils.con.commit()
+                        print ("Done deleting extra levee and levee failure features")
+                        qryIndex = """DROP INDEX if exists leveeDataGridFID_LDIR;"""
+                        self.gutils.execute(qryIndex)
+                        qryIndex = """DROP INDEX if exists leveeFailureGridFID_LFAILDIR;"""
+                        self.gutils.execute(qryIndex)
+                        self.gutils.con.commit()
+                        
                         levees.triggerRepaint()
 
                 levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
                 if levee_schem:
                     levee_schem.triggerRepaint()
             if q:
-                n_levee_directions -= len(leveesToDelete)
-                n_fail_features -= len(leveesToDelete)
-                if n_fail_features < 0:
-                    n_fail_features = 0
+                n_levee_directions_total -= len(leveesToDelete)
+                n_fail_features_total -= len(leveesToDelete)
+                if n_fail_features_total < 0:
+                    n_fail_features_total = 0
 
             #             end = datetime.now()
             #             time_taken = end - start
@@ -1917,21 +1961,20 @@ class Flo2D(object):
             levees = self.lyrs.data["levee_data"]["qlyr"]
             idx = levees.fields().indexOf("grid_fid")
             values = levees.uniqueValues(idx)
-            
-            QApplication.restoreOverrideCursor()
+
             info = (
                 "Values assigned to the Schematic Levees layer!"
                 + "\n\nThere are now "
                 + str(len(values))
                 + " grid elements with levees,"
                 + "\nwith "
-                + str(n_levee_directions)
+                + str(n_levee_directions_total)
                 + " levee directions,"
                 + "\nof which, "
-                + str(n_fail_features)
+                + str(n_fail_features_total)
                 + " have failure data."
             )
-            if n_fail_features > n_levee_directions:
+            if n_fail_features_total > n_levee_directions_total:
                 info += "\n\n(WARNING 191219.1649: Please review the input User Levee Lines. There may be more than one line intersecting grid elements)"
             self.uc.show_info(info)
 
@@ -1950,7 +1993,7 @@ class Flo2D(object):
 
         s = QSettings()
         project_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(project_dir + r"\DEPFP.OUT"):
+        if not os.path.isfile(os.path.join(project_dir, "DEPFP.OUT")):
             self.uc.show_warn(
                 "WARNING 060319.1808: File DEPFP.OUT is needed for the Hazus flooding analysis. It is not in the current project directory:\n\n"
                 + project_dir
@@ -1980,11 +2023,10 @@ class Flo2D(object):
 
     @connection_required
     def show_errors_dialog(self):
-        
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-            
+
         dlg_errors = ErrorsDialog(self.con, self.iface, self.lyrs)
         dlg_errors.show()
         while True:
@@ -2013,8 +2055,6 @@ class Flo2D(object):
         #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
-
-
     def schematize_levees(self):
         """
         Generate schematic lines for user defined levee lines.
@@ -2022,11 +2062,10 @@ class Flo2D(object):
         try:
             levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            n_elements, n_levee_directions, n_fail_features = generate_schematic_levees(
-                self.gutils, levee_lyr, grid_lyr
-            )
-
-            return n_elements, n_levee_directions, n_fail_features
+            
+            for n_elements, n_levee_directions, n_fail_features, regionReq in generate_schematic_levees(
+                self.gutils, levee_lyr, grid_lyr):
+                yield (n_elements, n_levee_directions, n_fail_features, regionReq) 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 030120.0723: unable to process user levees!\n", e)

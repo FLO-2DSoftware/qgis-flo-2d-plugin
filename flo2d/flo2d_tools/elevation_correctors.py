@@ -11,9 +11,22 @@ from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsFeatureRequest, QgsField, QgsFields, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
-from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics
+from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics, gridRegionGenerator
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
+import functools
+import time
 
+def timer(func):
+    """Print the runtime of the decorated function"""
+    @functools.wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        start_time = time.perf_counter()    # 1
+        value = func(*args, **kwargs)
+        end_time = time.perf_counter()      # 2
+        run_time = end_time - start_time    # 3
+        print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
+        return value
+    return wrapper_timer
 
 class ElevationCorrector(object):
 
@@ -113,7 +126,7 @@ class LeveesElevation(ElevationCorrector):
         self.user_levees = self.lyrs.data["user_levee_lines"]["qlyr"]
         self.schema_levees = self.lyrs.data["levee_data"]["qlyr"]
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'levees';"
-
+    @timer
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
@@ -126,32 +139,52 @@ class LeveesElevation(ElevationCorrector):
             interpolated = interpolate_along_line(feat, self.schema_levees.getFeatures(), intervals)
             try:
                 for elev, fid in interpolated:
-                    cur.execute(qry, (round(elev, 4), fid))
+                    cur.execute(qry, (round(elev, 3), fid))
             except IndexError:
                 continue
         self.gutils.con.commit()
-
-    def elevation_from_lines(self):
+    def elevation_from_lines(self, regionReq=None):
         cur = self.gutils.con.cursor()
-        for feat in self.user_levees.getFeatures():
-            fid = feat["fid"]
-            elev = feat[self.ELEVATION_FIELD]
-            cor = feat[self.CORRECTION_FIELD]
-            qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
-            if elev == NULL and cor == NULL:
-                continue
-            elif elev != NULL and cor != NULL:
-                val = elev + cor
-            elif elev != NULL and cor == NULL:
-                val = elev
-            elif elev == NULL and cor != NULL:
-                qry = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
-                val = cor
-            else:
-                continue
-            cur.execute(qry, (round(val, 4), fid))
+        # use moving window        
+        qryIndex = "CREATE INDEX if not exists leveeDataUser_Line_FID  ON levee_data (user_line_fid);"
+        cur.execute(qryIndex)
         self.gutils.con.commit()
-
+        
+        grid = self.lyrs.data["grid"]["qlyr"]
+        qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
+        qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
+        
+        for regionReqSwatch in gridRegionGenerator(self.gutils, grid, regionPadding = 0, showProgress=True) if regionReq is None else [regionReq]:
+            feats = []
+            featsElevNullPlusCorrect = []
+            for feat in self.user_levees.getFeatures(regionReqSwatch):
+                fid = feat["fid"]
+                elev = feat[self.ELEVATION_FIELD]
+                cor = feat[self.CORRECTION_FIELD]
+                
+                if elev == NULL and cor == NULL:
+                    continue
+                elif elev != NULL and cor != NULL:
+                    val = elev + cor
+                    feats.append((round(val, 3), fid))
+                elif elev != NULL and cor == NULL:
+                    val = elev
+                    feats.append((round(val, 3), fid))
+                elif elev == NULL and cor != NULL:
+                    val = cor
+                    featsElevNullPlusCorrect.append((round(val,3), fid))
+                else:
+                    continue
+            if len(feats) > 0:
+                print ("Writing %i levee features with elevations to db" % len(feats))
+                cur.executemany(qry, feats)
+            if len(featsElevNullPlusCorrect) > 0:
+                print ("Writing %i levee features without an assigned elevation to db" % len(featsElevNullPlusCorrect))
+                cur.executemany(qryElevNullPlusCorrect, featsElevNullPlusCorrect)
+            if len(feats) > 0 or len(featsElevNullPlusCorrect) > 0:
+                self.gutils.con.commit()
+                
+    @timer
     def elevation_from_polygons(self):
         qry_values = []
         qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
@@ -160,7 +193,7 @@ class LeveesElevation(ElevationCorrector):
                 feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD
             )
             for elev, fid in poly_values:
-                qry_values.append((round(elev, 4), fid))
+                qry_values.append((round(elev, 3), fid))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -208,9 +241,9 @@ class GridElevation(ElevationCorrector):
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:
-                el = round(el, 4)
+                el = round(el, 3)
             if not cor_null:
-                cor = round(cor, 4)
+                cor = round(cor, 3)
 
             if not el_null and cor_null:
                 cur.execute(set_qry, (el, fid))
@@ -241,7 +274,7 @@ class GridElevation(ElevationCorrector):
             succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            qry_values.append((round(value, 4), feat.id()))
+            qry_values.append((round(value, 3), feat.id()))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -283,7 +316,7 @@ class GridElevation(ElevationCorrector):
             succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            qry_values.append((round(value, 4), feat.id()))
+            qry_values.append((round(value, 3), feat.id()))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -321,7 +354,7 @@ class GridElevation(ElevationCorrector):
                 elevs.append(elev)
             if not elevs:
                 continue
-            elevation = round(calculation_method(elevs), 4)
+            elevation = round(calculation_method(elevs), 3)
             for g in gids:
                 qry_values.append((elevation, g))
         cur = self.gutils.con.cursor()
@@ -410,9 +443,9 @@ class ExternalElevation(ElevationCorrector):
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:
-                el = round(el, 4)
+                el = round(el, 3)
             if not cor_null:
-                cor = round(cor, 4)
+                cor = round(cor, 3)
 
             if not el_null and cor_null:
                 qry_values.append((set_qry, (el, gid)))
@@ -460,7 +493,7 @@ class ExternalElevation(ElevationCorrector):
             elevs = []
             for grid_feat in self.grid.getFeatures(grid_request):
                 elevs.append(grid_feat["elevation"])
-            elevation = round(calculation_method(elevs), 4)
+            elevation = round(calculation_method(elevs), 3)
             fids_elevs[fid] = {"elev": elevation}
             for g in grids_fids:
                 cur.execute(qry, (elevation, g))

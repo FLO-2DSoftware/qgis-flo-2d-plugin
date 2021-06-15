@@ -7,6 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+import time
 import traceback
 from collections import defaultdict, OrderedDict
 
@@ -23,14 +24,17 @@ from qgis.core import (
     QgsPoint,
     QgsWkbTypes,
 )
-
+import numpy as np
 from .grid_tools import (
     spatial_index,
     fid_from_grid,
+    fid_from_grid_features,
     adjacent_grid_elevations,
     three_adjacent_grid_elevations,
     get_adjacent_cell_elevation,
-)
+    buildCellIDNPArray)
+
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QApplication
@@ -173,7 +177,6 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
     else:
         return pts, None
 
-
 def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
     try:
 
@@ -189,97 +192,223 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
             7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
             8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half)),
         }
-        lid_gid_elev = fid_from_grid(gutils, "user_levee_lines", None, False, False, "elevation")
-        cell_size = float(gutils.get_cont_par("CELLSIZE"))
-        scale = 0.9
-        # square half
-        sh = cell_size * 0.5 * scale
-        # octagon half
-        oh = sh / 2.414
-        schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
-
-        del_levees_sql = """DELETE FROM levee_data WHERE user_line_fid IS NOT NULL;"""
-        ins_levees_sql = """INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
-                     VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));"""
-        del_levee_failures_sql = """DELETE FROM levee_failure"""
-
-        levee_failure_qry = """SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
-                                FROM levee_failure 
-                                WHERE grid_fid = ?"""
-
-        ins_levees_failure_sql = """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
-                                                          levbase, failwidthmax, failrate, failwidrate)
-                                     VALUES (?,?,?,?,?,?,?,?);"""
-
-        select_fail_qry = """SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
-                            FROM user_levee_lines 
-                            WHERE fid = ?"""
-
-        # Create levee segments for distinct levee directions in each grid element
-        grid_levee_seg = {}
-        data = []
-        fail_data = []
-        for gid, gdata in schem_lines.items():
-
-            elev = gdata["elev"]
-            grid_levee_seg[gid] = {}
-            grid_levee_seg[gid]["sides"] = {}
-            grid_levee_seg[gid]["centroid"] = gdata["centroid"]
-            for lid, sides in gdata["lines"].items():
-                if sides:
-                    for side in sides:
-                        if side not in list(grid_levee_seg[gid]["sides"].keys()):
-
-                            grid_levee_seg[gid]["sides"][side] = lid
-                            ldir = octagon_levee_dirs[side]
-                            c = gdata["centroid"]
-                            data.append(
-                                (
-                                    gid,
-                                    ldir,
-                                    elev,
-                                    lid,
-                                    "LINESTRING({0} {1}, {2} {3})".format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh)),
-                                )
-                            )
-
-                            fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone()
-                            if fail:
-                                if not all(v == 0 for v in fail):
-                                    if not fail[0] == 0.0:
-                                        # failElev selected, use it.
-                                        fail_data.append(
-                                            (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6])
-                                        )
-                                    elif not fail[1] == 0.0:
-                                        # failDepth selected, use adjacent cell elevations to calculate fail elevation.
-
-                                        adj_cell, adj_elev = get_adjacent_cell_elevation(
-                                            gutils, grid_lyr, gid, ldir, cell_size
-                                        )
-                                        grid_elev = gutils.grid_value(gid, "elevation")
-                                        max_elev = max(adj_elev, grid_elev)
-
-                                        fail_data.append(
-                                            (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6])
-                                        )
-                                    else:  # do not set failure data for this direction.
-                                        pass
-
+        
+        #lid_gid_elev = fid_from_grid(gutils, "user_levee_lines", None, False, False, "elevation")
+        #print (lid_gid_elev[0])
+        # get user levee lines features
+        print ("Deleting existing schematized levee and levee failure elements")
+        del_levees_sql = """DELETE FROM levee_data  WHERE user_line_fid IS NOT NULL;"""
+        del_levee_failures_sql = """DELETE FROM levee_failure;"""
         gutils.con.execute(del_levees_sql)
-        gutils.con.executemany(ins_levees_sql, data)
-
         gutils.con.execute(del_levee_failures_sql)
-        gutils.con.executemany(ins_levees_failure_sql, fail_data)
-
         gutils.con.commit()
+        print ("Intersecting levee elements with grid")
+        
+        for lid_gid_elev, regionReq in fid_from_grid_features(gutils, grid_lyr, levee_lyr):#"user_levee_lines", None, False, False, "elevation")
+        #print (lid_gid_elev[0])
+            cell_size = float(gutils.get_cont_par("CELLSIZE"))
+            scale = 0.9
+            # square half
+            sh = cell_size * 0.5 * scale
+            # octagon half
+            oh = sh / 2.414
+            schem_lines = levee_schematic(lid_gid_elev, levee_lyr, grid_lyr)
+    
+            
+            ins_levees_sql = """INSERT INTO levee_data (grid_fid, ldir, levcrest, user_line_fid, geom)
+                         VALUES (?,?,?,?, AsGPB(ST_GeomFromText(?)));"""
+            
+    
+            levee_failure_qry = """SELECT failevel, failtime, levbase, failwidthmax, failrate, failwidrate
+                                    FROM levee_failure 
+                                    WHERE grid_fid = ?"""
+    
+            ins_levees_failure_sql = """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
+                                                              levbase, failwidthmax, failrate, failwidrate)
+                                         VALUES (?,?,?,?,?,?,?,?);"""
+    
+            select_fail_qry = """SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
+                                FROM user_levee_lines 
+                                WHERE fid = ?"""
+    
+            # Create levee segments for distinct levee directions in each grid element
+            grid_levee_seg = {}
+            data = []
+            fail_data = []
+            for gid, gdata in schem_lines.items():
+    
+                elev = gdata["elev"]
+                grid_levee_seg[gid] = {}
+                grid_levee_seg[gid]["sides"] = {}
+                grid_levee_seg[gid]["centroid"] = gdata["centroid"]
+                for lid, sides in gdata["lines"].items():
+                    if sides:
+                        for side in sides:
+                            if side not in list(grid_levee_seg[gid]["sides"].keys()):
+    
+                                grid_levee_seg[gid]["sides"][side] = lid
+                                ldir = octagon_levee_dirs[side]
+                                c = gdata["centroid"]
+                                data.append(
+                                    (
+                                        gid,
+                                        ldir,
+                                        elev,
+                                        lid,
+                                        "LINESTRING({0} {1}, {2} {3})".format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh)),
+                                    )
+                                )
+    
+                                fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone()
+                                if fail:
+                                    if not all(v == 0 for v in fail):
+                                        if not fail[0] == 0.0:
+                                            # failElev selected, use it.
+                                            fail_data.append(
+                                                (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6])
+                                            )
+                                        elif not fail[1] == 0.0:
+                                            # failDepth selected, use adjacent cell elevations to calculate fail elevation.
+    
+                                            adj_cell, adj_elev = get_adjacent_cell_elevation(
+                                                gutils, grid_lyr, gid, ldir, cell_size
+                                            )
+                                            grid_elev = gutils.grid_value(gid, "elevation")
+                                            max_elev = max(adj_elev, grid_elev)
+    
+                                            fail_data.append(
+                                                (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6])
+                                            )
+                                        else:  # do not set failure data for this direction.
+                                            pass
+    
+            
+            gutils.con.executemany(ins_levees_sql, data)
+    
+            
+            gutils.con.executemany(ins_levees_failure_sql, fail_data)
+    
+            gutils.con.commit()
+            yield (len(schem_lines), len(data), len(fail_data), regionReq)
 
-        return len(schem_lines), len(data), len(fail_data)
+        #return len(schem_lines), len(data), len(fail_data)
     except Exception as e:
         raise e
         # self.uc.show_error("ERROR 291219.0428: Error while creating schematic levees octagons!.\n", e)
+        
+def delete_levee_directions_duplicates_np(gutils, levees, cellIDNumpyArray = None):
+    # create a numpy array of the levee segments with a float in each
+    # to limit memory, do 2 (opposing directions) at a time
+    # shift the NP arrays accordingly to look for conflicts and then delete segments as needed
+    
+    retVals = []
+    nullVal = -999.0
+    
+    if cellIDNumpyArray is None:
+        cellIDNumpyArray, xVals, yVals = buildCellIDNPArray(gutils)
+    starttime = time.time()
+    #print (cellIDNumpyArray)
+    # list of opposing levee directions
+    
+    oppositeLeveeDirections = [
+        [1, 3],
+        [2, 4],
+        [5, 7],
+        [6, 8],
+        ]
+    
+    rollOrientations = [
+        # row roll, col roll
+        [1, 0], # roll north to south
+        [0, -1], # roll east to west
+        [1, -1], # roll northeast to southwest
+        [-1, -1] # roll southeast to northwest
+    ]
+    # use to find levee cell ids in cellid array in loop - no need to generate through each pass
+    flatID = cellIDNumpyArray.flatten()
+    idssorted = np.argsort(flatID)
+        
+    # make a 2 layer deep array for comparing levee elevations
+    for n, dirPair in enumerate(oppositeLeveeDirections):
+        print ("Processing direction pair: %s" % str(dirPair))
+        
+        leveeArray = np.zeros((cellIDNumpyArray.shape[0]+2, cellIDNumpyArray.shape[1]+2, 2), dtype=int) + int(nullVal)
+        # assign elevations for the directions of interest
+        dir1 = dirPair[0]
+        dir2 = dirPair[1]
+        
+        levees_qry = "SELECT grid_fid, ldir, levcrest FROM levee_data  WHERE ldir = ? or ldir = ? ORDER BY grid_fid"
+        levees = gutils.execute(levees_qry, (dir1, dir2)).fetchall()
+        
+        dir1List = [(levee[0], levee[2]) for levee in levees if levee[1] == dir1] # get cellid and crest elevation for dir1 elements
+        dir2List = [(levee[0], levee[2]) for levee in levees if levee[1] == dir2] # get cellid and crest elevation for dir1 elements
+        dir1List = np.array(dir1List, dtype=float)
+        dir2List = np.array(dir2List, dtype=float)
+        
+        # assign dir lists to leveeArray based upon the cellID array
+        # get the indices for the levee element cellIDs by finding where they fall in the sorted list
+        dir1pos = np.searchsorted(flatID[idssorted], dir1List[:,0])
+        # now pull their indices in the actual list
+        dir1indices = idssorted[dir1pos]
+        maskdir1 = np.zeros(flatID.shape, dtype=int) + int(nullVal)
+        maskdir1[dir1indices] = dir1List[:,0] # set assigned ids
+        leveeArray[1:-1,1:-1,0] = np.reshape(maskdir1, (cellIDNumpyArray.shape[0], cellIDNumpyArray.shape[1]))
+        del dir1pos, dir1indices, maskdir1
+        
+        dir2pos = np.searchsorted(flatID[idssorted], dir2List[:,0])
+        dir2indices = idssorted[dir2pos]
+        maskdir2 = np.zeros(flatID.shape, dtype=int) + int(nullVal)
+        maskdir2[dir2indices] = dir2List[:,0] # set assigned ids
+        leveeArray[1:-1,1:-1,1] = np.reshape(maskdir2, (cellIDNumpyArray.shape[0], cellIDNumpyArray.shape[1]))
+        del dir2pos, dir2indices, maskdir2
+                
+        # roll the bottom array, based upon direction and look for counts > 1
+        rolls = rollOrientations[n]
+        if rolls[0] != 0:
+            leveeArray[:,:,1] = np.roll(leveeArray[:,:,1], rolls[0], axis = 0)
+        if rolls[1] != 0:
+            leveeArray[:,:,1] = np.roll(leveeArray[:,:,1], rolls[1], axis = 1)
+        # for counts > 1, keep the higher elev and delete the lower
+        logicArray = leveeArray != -999.0
+        counter = np.sum(logicArray, axis=2)
+        del logicArray
+        conflicts = counter == 2
+        del counter
+        print ("%s redundant levee elements founds" % np.sum(conflicts))
+        
 
+        # based upon which levee element has the lower elevation
+        if np.sum(conflicts) > 0:
+            conflictIDs = leveeArray[conflicts]
+            #print ("Conflict IDs Shape: %s" % str(conflictIDs.shape))
+            # compare elevations using the conflict id sets - if the elevation is greater in one, keep it and flag the other for deletion
+            dir1ConflictIDs = conflictIDs[:,0] # get a 1d array of the ids
+            dir2ConflictIDs = conflictIDs[:,1] # get a 1d array of the ids
+            
+            #dir1 is in ascending order                         
+            dir1Elevs = dir1List[np.searchsorted(dir1List[:,0], dir1ConflictIDs), 1]
+            dir2Elevs = dir2List[np.searchsorted(dir2List[:,0], dir2ConflictIDs), 1]
+            
+            
+            dir1ToDelete = dir1ConflictIDs[dir1Elevs < dir2Elevs]
+            dir2ToDelete = dir2ConflictIDs[dir2Elevs <= dir1Elevs]
+            
+            #print ("Dir: %s" % dir1)
+            #print (dir1ToDelete[0:10])
+            
+            #print ("Dir: %s" % dir2)
+            #print (dir2ToDelete[0:10])
+            
+            retVals.extend([(dir1ToDelete[n], dir1) for n in np.arange(dir1ToDelete.shape[0])])
+            retVals.extend([(dir2ToDelete[n], dir2) for n in np.arange(dir2ToDelete.shape[0])])
 
+            
+    delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
+    delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
+    print ("%s sec to process duplicates" % (time.time() - starttime))
+    return retVals
+        
+        
 def delete_levee_directions_duplicates(gutils, levees, grid_lyr):
     """
     Eliminate levee opposite directions. Select the one with highest crest elevation.
@@ -445,7 +574,6 @@ def delete_levee_directions_duplicates(gutils, levees, grid_lyr):
 #     gutils.con.commit()
 
 # ....................................
-
 
 def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
     try:
@@ -1578,7 +1706,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             notes = (SELECT notes FROM user_xsections WHERE fid = chan_elems.user_xs_fid);
         """
 
-        get_val = """SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
+        get_val = """SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
                 FROM grid AS g, chan AS l, ce as chan_elems
                 WHERE g.fid = ce.fid AND l.user_lbank_fid = ce.seg_fid;"""
 
@@ -1592,7 +1720,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                             WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                         ) < ? THEN ? 
                 ELSE (
-                        SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
+                        SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
                         FROM grid AS g, chan AS l
                         WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
                      )
@@ -1603,7 +1731,7 @@ class ChannelsSchematizer(GeoPackageUtils):
         #         UPDATE chan_elems
         #         SET
         #             xlen = (
-        #                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
+        #                 SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
         #                 FROM grid AS g, chan AS l
         #                 WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
         #                 );
@@ -1643,7 +1771,7 @@ class ChannelsSchematizer(GeoPackageUtils):
     #     UPDATE chan_elems
     #     SET
     #         xlen = (
-    #             SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 4)
+    #             SELECT round(ST_Length(ST_Intersection(GeomFromGPB(g.geom), GeomFromGPB(l.geom))), 3)
     #             FROM grid AS g, chan AS l
     #             WHERE g.fid = chan_elems.fid AND l.user_lbank_fid = chan_elems.seg_fid
     #             );
@@ -2048,3 +2176,4 @@ class FloodplainXS(GeoPackageUtils):
         self.execute_many(fpxsec_qry, line_rows)
         self.schema_fpxs_lyr.triggerRepaint()
         self.cells_fpxs_lyr.triggerRepaint()
+
