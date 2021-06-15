@@ -366,6 +366,17 @@ class GeoPackageUtils(object):
             geom = self.execute(sql.format(table, field), (g,)).fetchone()[0]
             cells[g] = geom
         return cells
+    
+    def grid_centroids_all(self, table="grid", field="fid", buffers=False):
+        cells = []
+        if buffers is False:
+            sql = """SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""
+        else:
+            sql = """SELECT fid, AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""
+        
+        for g in self.execute(sql.format(table)).fetchall():
+            cells.append((g[0], [float(item) for item in g[1].replace('POINT(', "").replace(")","").split(' ')]))          
+        return cells
 
     def single_centroid(self, gid, table="grid", field="fid", buffers=False):
         if buffers is False:
@@ -498,8 +509,7 @@ class GeoPackageUtils(object):
             *polyColRow[0]
         )
         gpb_buff = self.execute(gpb).fetchone()[0]
-        return (gpb_buff, polyColRow[1], polyColRow[2])
-    
+        return (gpb_buff, polyColRow[1], polyColRow[2])                                                     
     def get_max(self, table, field="fid"):
         sql = """SELECT MAX("{0}") FROM "{1}";""".format(field, table)
         max_val = self.execute(sql).fetchone()[0]
@@ -675,7 +685,6 @@ class GeoPackageUtils(object):
             gid = None
         return gid
 
-        
     def grid_value(self, gid, field):
         qry = 'SELECT "{}" FROM grid WHERE fid=?;'.format(field)
         value = self.execute(qry, (gid,)).fetchone()[0]

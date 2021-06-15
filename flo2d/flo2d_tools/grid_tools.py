@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 
 # FLO-2D Preprocessor tools for QGIS
-# Copyright Â© 2021 Lutra Consulting for FLO-2D
+# Copyright © 2021 Lutra Consulting for FLO-2D
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+import datetime
 import os
 import sys
 import math
 import uuid
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog
-from qgis.PyQt.QtCore import QVariant
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
 from qgis.core import (
-    QgsVectorDataProvider,
-    QgsField,
     QgsFeature,
     QgsGeometry,
     QgsPointXY,
@@ -31,7 +29,15 @@ from qgis.core import (
 )
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
-from ..errors import GeometryValidityErrors,Flo2dError
+from ..errors import GeometryValidityErrors, Flo2dError
+
+import numpy as np
+
+cellIDNumpyArray = None
+xvalsNumpyArray = None
+yvalsNumpyArray = None
+
+cellElevNumpyArray = None
 
 # GRID classes
 class TINInterpolator(object):
@@ -364,26 +370,26 @@ def polygons_statistics(vlayer, rlayer, statistics):
 
 
 # GRID functions
-def spatial_index(vlayer):
+def spatial_index(vlayer, request=None):
     """
     Creating spatial index over collection of features.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    for feat in vlayer.getFeatures():
+    for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         feat_copy = QgsFeature(feat)
         allfeatures[feat.id()] = feat_copy
         index.insertFeature(feat_copy)
     return allfeatures, index
 
 
-def spatial_centroids_index(vlayer):
+def spatial_centroids_index(vlayer, request=None):
     """
     Creating spatial index over collection of features centroids.
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    for feat in vlayer.getFeatures():
+    for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         feat_copy = QgsFeature(feat)
         feat_copy.setGeometry(feat_copy.geometry().centroid())
         allfeatures[feat.id()] = feat_copy
@@ -425,35 +431,6 @@ def intersection_spatial_index(vlayer, request=None):
             index.insertFeature(feat_copy)
 
     return allfeatures, index
-
-
-# def intersection_spatial_index(vlayer):
-#     """
-#     Creating optimized for intersections spatial index over collection of features.
-#     """
-#     allfeatures = {}
-#     index = QgsSpatialIndex()
-#     max_fid = max(vlayer.allFeatureIds()) + 1
-#     for feat in vlayer.getFeatures():
-#         geom = feat.geometry()
-#         new_geoms = divide_geom(geom)
-#         new_fid = True if len(new_geoms) > 1 else False
-#         for g in new_geoms:
-#             engine = QgsGeometry.createGeometryEngine(g.constGet())
-#             engine.prepareGeometry()
-#             feat_copy = QgsFeature(feat)
-#             feat_copy.setGeometry(g)
-#             if new_fid is True:
-#                 fid = max_fid
-#                 feat_copy.setId(fid)
-#                 max_fid += 1
-#             else:
-#                 fid = feat.id()
-#             allfeatures[fid] = (feat_copy, engine)
-#             index.insertFeature(feat_copy)
-#
-#     return allfeatures, index
-
 
 def count_polygon_vertices(geom):
     """
@@ -523,7 +500,7 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
     #     ymax = math.ceil(bbox.yMaximum())
     #     ymin = math.floor(bbox.yMinimum())
     if upper_left_coords:
-        xmin,ymax = upper_left_coords
+        xmin,ymax = upper_left_coords                         
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -616,8 +593,8 @@ def assign_col_row_indexes_to_grid(grid, gutils):
         
     cur = gutils.con.cursor()
     cur.executemany(qry, qry_values)
-    gutils.con.commit()
-
+    gutils.con.commit()      
+    
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
@@ -695,7 +672,7 @@ def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
     """
-    allfeatures, index = spatial_index(polygons)
+    allfeatures, index = spatial_index(polygons, request)
 
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
@@ -806,7 +783,7 @@ def grid_sections(grid, polygons, request, *columns):
     except StopIteration:
         return
 
-    allfeatures, index = intersection_spatial_index(grid)
+    allfeatures, index = intersection_spatial_index(grid, request)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
     grid_parts = defaultdict(list)
@@ -902,14 +879,17 @@ def calculate_spatial_variable_from_polygons(grid, areas, use_centroids=True):
                 pass
 
 
-def calculate_spatial_variable_from_lines(grid, lines):
+def calculate_spatial_variable_from_lines(grid, lines, request=None):
     """
-    Generator which calculates values based on lines representing values.
+    Generator which calculates values based on lines representing values
+    yields (grid id, feature id, grid elev).
     """
-    allfeatures, index = spatial_index(lines)
-    features = grid.getFeatures()
+    
+    allfeatures, index = spatial_index(lines, request)
+    features = grid.getFeatures() if request is None else grid.getFeatures(request)
     for feat in features:  # for each grid feature
         geom = feat.geometry()  # cell square (a polygon)
+        gelev = feat['elevation']
         fids = index.intersects(geom.boundingBox())  # c
         for fid in fids:
             f = allfeatures[fid]
@@ -917,9 +897,10 @@ def calculate_spatial_variable_from_lines(grid, lines):
             inter = fgeom.intersects(geom)
             if inter is True:
                 centroid = geom.centroid()
-                yield (f.id(), feat.id())
+                yield (f.id(), feat.id(), gelev)
             else:
                 pass
+    
 
 
 def raster2grid(grid, out_raster, request=None):
@@ -1067,14 +1048,13 @@ def add_col_and_row_fields(grid):
             "_____________________________________________________________________"
         )
         return False  
-
-    
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
     """
     try:
         # start_time = time.time()
+
         if reset is True:
             default = gutils.get_cont_par("MANNING")
             gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -1112,7 +1092,108 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
         )
         return False
 
+def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showProgress = True):
+    # yields rectangular selection regions in the grid
+    # useful for subdividing large geoprocessing tasks over smaller, discrete regions of the grid
+       
+    #gridCount = grid.featureCount()
+    cellsize = float(gutils.get_cont_par("CELLSIZE"))
+    
+    # process 100x100 cell regions typically
+    gridDimPerAnalysisRegion = gridSpan
+    #gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+    
+    # determine extent of grid
+    gridExt = grid.extent()
+    ySpan = gridExt.yMaximum() - gridExt.yMinimum()
+    xSpan = gridExt.xMaximum() - gridExt.xMinimum()
+    
+    # determine # of processing rows/columns based upon analysis regions
+    colCount = math.ceil(xSpan / (gridDimPerAnalysisRegion * cellsize))
+    rowCount = math.ceil(ySpan / (gridDimPerAnalysisRegion * cellsize))
+    
+    # segment the grid ext to create analysis regions
+    regionCount = rowCount * colCount
+    regionCounter = 0 # exit criteria
+    
+    #regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
+    
+    if showProgress == True:
+        progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
+        progDialog.setModal(True)
 
+        progress = 0.0
+    while regionCounter < regionCount:
+        for row in range(rowCount):
+            yMin = gridExt.yMinimum() + ySpan / rowCount * row - regionPadding / 2.0
+            yMax = gridExt.yMinimum() + ySpan / rowCount * (row + 1) + regionPadding / 2.0
+            for col in range(colCount):
+                xMin = gridExt.xMinimum() + xSpan / colCount * col - regionPadding / 2.0
+                xMax = gridExt.xMinimum() + xSpan / colCount * (col + 1) + regionPadding / 2.0
+
+                queryRect = QgsRectangle(xMin, yMin, xMax, yMax)  # xmin, ymin, xmax, ymax
+
+                request = QgsFeatureRequest(queryRect)
+                regionCounter += 1 # increment regionCounter up
+                if showProgress == True:
+                    if progDialog.wasCanceled() == True:
+                        break
+                    progress = regionCounter/regionCount * 100.0
+                    progDialog.setValue(progress)
+                print ("Processing region: %s of %s" % (regionCounter, regionCount))
+                yield request
+            if showProgress == True:
+                if progDialog.wasCanceled() == True:
+                    break
+        if showProgress == True:
+            progDialog.close()
+
+def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC = None):
+    # extraFC is a second feature class for the case in which 2 feature classes are to be intersected that are not
+    # the grid; land-use intersection with soils, for instance
+    
+    #gridCount = grid.featureCount()
+    cellsize = float(gutils.get_cont_par("CELLSIZE"))
+    
+    # process 100x100 cell regions
+    gridDimPerAnalysisRegion = 100
+    #gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+    
+    # determine extent of grid
+    gridExt = grid.extent()
+    ySpan = gridExt.yMaximum() - gridExt.yMinimum()
+    xSpan = gridExt.xMaximum() - gridExt.xMinimum()
+    
+    # determine # of processing rows/columns based upon analysis regions
+    colCount = math.ceil(xSpan / (gridDimPerAnalysisRegion * cellsize))
+    rowCount = math.ceil(ySpan / (gridDimPerAnalysisRegion * cellsize))
+    
+    # segment the grid ext to create analysis regions
+    regionCount = rowCount * colCount
+    regionCounter = 0 # exit criteria
+    
+    regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
+    
+    while regionCounter < regionCount:
+        for row in range(rowCount):
+            yMin = gridExt.yMinimum() + ySpan / rowCount * row - regionPadding / 2.0
+            yMax = gridExt.yMinimum() + ySpan / rowCount * (row + 1) + regionPadding / 2.0
+            for col in range(colCount):
+                xMin = gridExt.xMinimum() + xSpan / colCount * col - regionPadding / 2.0
+                xMax = gridExt.xMinimum() + xSpan / colCount * (col + 1) + regionPadding / 2.0
+
+                queryRect = QgsRectangle(xMin, yMin, xMax, yMax)  # xmin, ymin, xmax, ymax
+
+                request = QgsFeatureRequest(queryRect)
+                yieldVal = None
+                if extraFC is None:
+                    yieldVal = poly2poly_geos(grid, inputFC, request, *valueColumnNames) # this returns 2 values
+                else:
+                    yieldVal = poly2poly_geos(inputFC, extraFC, request, *valueColumnNames) # this returns 2 values
+                regionCounter += 1 # increment regionCounter up
+                yield yieldVal[0], yieldVal[1], (regionCount - 1) / regionCount # yield the intersection list and % complete
+                
+    
 # def update_roughness(gutils, grid, roughness, column_name, reset=False):
 #     """
 #     Updating roughness values inside 'grid' table.
@@ -1141,7 +1222,8 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
         else:
             pass
         qry = "UPDATE grid SET n_value=? WHERE fid=?;"
-
+        
+        '''
         gridCount = grid.featureCount()
 
         cellsize = float(gutils.get_cont_par("CELLSIZE"))
@@ -1161,7 +1243,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
         # segment the grid ext to create analysis regions
         regionCount = rowCount * colCount
         #     print ("Processing in %s regions" % regionCount)
-
+        '''
         # create progress bar
         progDialog = QProgressDialog("n-Value Progress (by area - timing will be uneven)", "Cancel", 0, 100)
         progDialog.setModal(True)
@@ -1169,6 +1251,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
         progress = 0.0
 
         # slice into rows by region count
+        '''
         breakVar = False  # cause a break if it's true
         for row in range(rowCount):
             yMin = gridExt.yMinimum() + ySpan / rowCount * row
@@ -1190,25 +1273,31 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
                 queryRect = QgsRectangle(xMin, yMin, xMax, yMax)  # xmin, ymin, xmax, ymax
 
                 request = QgsFeatureRequest(queryRect)
-                manning_values = poly2poly_geos(grid, roughness, request, column_name)
+        '''
+                #manning_values = poly2poly_geos(grid, roughness, request, column_name)
 
-                gridCount = 0
-                writeVals = []
-                for gid, values in manning_values:
-                    gridCount += 1
-                    #                 if gridCount % 1000 == 0:
-                    #                     print ("Processing %s" % gridCount)
-                    if values:
-                        manning = sum(ma * subarea for ma, subarea in values)
-                        manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
-                        manning = "{0:.4}".format(manning)
-                        writeVals.append((manning, gid))
-                        # gutils.execute(qry,(manning, gid),)
-                #             print ("Writing %s values to db" % len(writeVals))
-                if len(writeVals) > 0:
-                    gutils.con.executemany(qry, writeVals)
-                    #                 print ("committing to db")
-                    gutils.con.commit()
+        gridCount = 0
+        writeVals = []
+        for gid, values, progPercent in geos2geosGenerator(gutils, grid, roughness, column_name):
+            gridCount += 1
+            #                 if gridCount % 1000 == 0:
+            #                     print ("Processing %s" % gridCount)
+            if values:
+                manning = sum(ma * subarea for ma, subarea in values)
+                manning = manning + (1.0 - sum(subarea for ma, subarea in values)) * globalnValue
+                manning = "{0:.4}".format(manning)
+                writeVals.append((manning, gid))
+            
+            if progDialog.wasCanceled():
+                break
+                
+            if len(writeVals) > 0:
+                gutils.con.executemany(qry, writeVals)
+                #                 print ("committing to db")
+                gutils.con.commit()
+            
+            progress = progPercent * 100.0
+            progDialog.setValue(progress)
 
         progDialog.close()
 
@@ -1479,6 +1568,53 @@ def grid_has_empty_elev(gutils):
     except StopIteration:
         return None
 
+def fid_from_grid_np(gutils, table_name, table_fids=None, grid_center = False, switch=False, *extra_fields):
+    """
+    Get a list of grid elements fids that intersect the given tables features.
+    Optionally, users can specify a list of table_fids to be checked.
+    """
+    grid_elems = []
+    if cellIDNumpyArray is None:
+        cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray = buildCellIDNPArray(gutils)
+    if cellElevNumpyArray is None:
+        cellElevNumpyArray = buildCellElevNPArray(gutils, cellIDNumpyArray)
+    
+    # iterate over features
+    
+
+    return grid_elems
+
+def divide_line_grid_np(gutils, line):
+    # return the cell ids and segment coordinates for each segment 
+    # [
+    #  [15, [[15.25, 14.25], [18.25, 10.2]]],
+    #  [17, [[18.25, 12.25], [25.25, 13.2]]],
+    # ]
+    lineSegments = [] 
+    if cellIDNumpyArray is None:
+        cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray = buildCellIDNPArray(gutils)
+        
+    return lineSegments
+
+def fid_from_grid_features(gutils, grid, linefeatures) :
+    """
+    Get a list of grid elements fids that intersect the grid features.
+    Used to calculate levee-line intersections from grid
+    
+    gridRegionGenerator implemented to increase processing speed for
+    large datasets
+    """
+    retVals = []
+       
+    for region in gridRegionGenerator(gutils, grid, showProgress = True):
+        # process each sub-area of the grid
+        retVals = []
+        for result in calculate_spatial_variable_from_lines(grid, linefeatures, region): # returns grid id, line id, grid elev
+            # currently, this goes one line at a time
+            retVals.append(result)
+        yield (retVals, region)
+    # return cell ids and elevations
+    #return retVals
 
 def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False, *extra_fields):
     """
@@ -1512,7 +1648,6 @@ def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch
     grid_elems = ((row[first], row[second]) + tuple(row[2:]) for row in gutils.execute(qry))
     return grid_elems
 
-
 def highlight_selected_segment(layer, id):
     feat_selection = []
     for feature in layer.getFeatures():
@@ -1541,14 +1676,105 @@ def highlight_selected_xsection_b(layer, xs_id):
             break
     layer.selectByIds(feat_selection)
 
+def buildCellIDNPArray(gutils):
+    # construct numpy arrays of key grid parameters such as cellid and elevation
+    starttime = datetime.datetime.now()
+    incTime = datetime.datetime.now()
+    
+    centroids = gutils.grid_centroids_all()
+    print ("Centroids pull time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    incTime = datetime.datetime.now()
+    # list in format [gid, [x, y]]
+    xVals = sorted(list(set([item[1][0] for item in centroids])))
+    yVals = sorted(list(set([item[1][1] for item in centroids])))
+    
+    centroids = sorted(centroids, key=lambda student: student[0])
+    
+    centroids = [(item[1][0], item[1][1], item[0]) for item in centroids] # flatten list
+    
+    centroids = np.array(centroids, dtype=float)
+    
+    #yVals = yVals.sort(reverse=True) # place in reverse order per raster orientation
+    xVals = np.array(xVals, dtype=float)
+    yVals = np.array(yVals, dtype=float)
+        
+    centroidsXInd = np.searchsorted(xVals, centroids[:,0], side='right')-1
+    centroidsYInd = np.searchsorted(yVals, centroids[:,1], side='right')
 
+    centroidsYInd = yVals.shape[0] - centroidsYInd # for reverse ordering
+    yVals = np.flip(yVals) # reverse order
+    
+    cellIDs = np.zeros((yVals.shape[0], xVals.shape[0]), dtype=int)
+    # populate cellIDs array
+    cellIDs[centroidsYInd, centroidsXInd] = centroids[:,2]
+    #for n in range(centroids.shape[0]):
+    #    cellIDs[centroidsYInd[n], centroidsXInd[n]] = n + 1
+        
+    del centroidsXInd, centroidsYInd, centroids
+    print ("Array creation time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    print ("Total CellID time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    return cellIDs, xVals, yVals
+
+def buildCellElevNPArray(gutils, cellIDArray):
+    starttime = datetime.datetime.now()
+    qry_elevs = (
+            """SELECT elevation FROM grid ORDER BY fid"""
+        )
+    elevs = gutils.execute(qry_elevs).fetchall()
+    print ("Elevs pull time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    incTime = datetime.datetime.now()
+    
+    elevs = np.array(elevs, dtype=float)
+    elevs = elevs[:,0]
+    elevArray = np.zeros(cellIDArray.shape, dtype=float)
+
+    elevArray[cellIDArray != 0] = elevs[cellIDArray[cellIDArray != 0]-1]
+    print ("Elevs Array assignment time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    incTime = datetime.datetime.now()
+    print ("Total Elev Array Gen time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    return elevArray
+
+def adjacent_grid_elevations_np(cell, cellNPArray, elevNPArray):
+    # order is N, NE, E, SE, S, SW, W, NW
+    row, col = np.nonzero(cellNPArray == cell)
+    row = row[0]
+    col = col[0]
+    
+    dirMatrix = np.array([
+        [-1, 0], # N
+        [-1, 1], # NE
+        [0, 1], # E
+        [1, 1], # SE
+        [1, 0], # S
+        [1, -1], # SW
+        [0, -1], # W
+        [-1, -1] # NW
+        ], dtype=int)
+    
+    rows = row + 1 * dirMatrix[:,0]
+    cols = col + 1 * dirMatrix[:,1]
+    
+    # filter out entries that are beyond the extents
+    mask = rows < elevNPArray.shape[0]
+    mask &= rows >= 0
+    mask &= cols < elevNPArray.shape[1]
+    mask &= cols >= 0
+    
+    elevs = np.zeros(rows.shape, dtype=float)
+    elevs[~mask] = -999
+    elevs[mask] = elevNPArray[rows[mask], cols[mask]]
+    
+    elevs = list(elevs)
+    
+    return elevs
+    
 def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
     sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
     if grid_lyr is not None:
         if cell != "":
             cell = int(cell)
-            grid_count = gutils.count("grid", field = "fid")
-            # grid_count = len(list(grid_lyr.getFeatures()))
+            grid_count = gutils.count("grid", field = "fid")                                                
+            #grid_count = len(list(grid_lyr.getFeatures()))
             if grid_count >= cell and cell > 0:
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
