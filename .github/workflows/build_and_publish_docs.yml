@@ -19,13 +19,13 @@ jobs:
         name: Building Sphinx documentation from source files
         with:
           docs-folder: "docs/user/"
-          build-command: "sphinx-build -b html source build"
+          build-command: "sphinx-build -b html source _build"
   
       - uses: actions/upload-artifact@v1
         name: Zipping and uploading HTML static files as an artifact
         with:
           name: FLO2D_QGIS_Plugin_Documentation
-          path: docs/user/build/
+          path: docs/user/_build/
 
   publish_user_documentation:
       name: Publishing user documentation
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: FLO2D_QGIS_Plugin_Documentation
-          path: docs/user/build/
+          path: docs/user/_build/
 
       - name: Commiting documentation changes
         run: |
