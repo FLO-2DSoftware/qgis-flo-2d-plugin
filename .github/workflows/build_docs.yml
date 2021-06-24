@@ -26,7 +26,7 @@ jobs:
           
       - uses: actions/upload-artifact@v1
         with:
-          name: DocumentationHTML
+          name: FLO2D_QGIS_Plugin_Documentation
           path: docs/user/build/
 
       - name: Commit documentation changes
