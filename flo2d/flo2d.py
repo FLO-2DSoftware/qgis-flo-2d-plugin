@@ -350,7 +350,7 @@ class Flo2D(object):
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/help_contents.svg"),
-            text=self.tr("FlO-2D Help"),
+            text=self.tr("FLO-2D Help"),
             callback=self.show_help,
             parent=self.iface.mainWindow(),
         )
@@ -1051,27 +1051,27 @@ class Flo2D(object):
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
-                    # See if geopackage has grid with 'col' and 'row' fields:    
+                    # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    field_index = grid_lyr.fields().indexFromName("col") 
+                    field_index = grid_lyr.fields().indexFromName("col")
                     if field_index == -1:
-                        QApplication.restoreOverrideCursor()  
-                        
+                        QApplication.restoreOverrideCursor()
+
                         add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
-                                                   + "Would you like to add the 'col' and 'row' fields to the grid table?", 
+                                                   + "Would you like to add the 'col' and 'row' fields to the grid table?",
                                                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-                  
+
                         if add_new_colums == QMessageBox.Cancel:
                             return
-                        
+
                         if add_new_colums == QMessageBox.No:
                             return
                         else:
-                            if add_col_and_row_fields(grid_lyr):                 
-                                assign_col_row_indexes_to_grid(grid_lyr, self.gutils)                         
-                    else:    
+                            if add_col_and_row_fields(grid_lyr):
+                                assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
+                    else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
-                        if cell[0] == NULL:   
+                        if cell[0] == NULL:
                             QApplication.restoreOverrideCursor()
                             proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
                             if proceed:
@@ -1079,25 +1079,25 @@ class Flo2D(object):
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
                                 QApplication.restoreOverrideCursor()
                             else:
-                                return   
-                        
-                    QApplication.restoreOverrideCursor()          
-        
-                    # # See if geopackage has grid with 'col' and 'row' fields:    
+                                return
+
+                    QApplication.restoreOverrideCursor()
+
+                    # # See if geopackage has grid with 'col' and 'row' fields:
                     # grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    # field_index = grid_lyr.fields().indexFromName("col") 
+                    # field_index = grid_lyr.fields().indexFromName("col")
                     # if field_index == -1:
                         # if self.gutils.is_table_empty("user_model_boundary"):
-                            # QApplication.restoreOverrideCursor()  
-                            # self.uc.bar_warn("WARNING 310521.0445: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!", 10)                 
-                        # else: 
-                            # QApplication.restoreOverrideCursor()         
-                            # proceed = self.uc.question("WARNING 290521.0500: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" + 
+                            # QApplication.restoreOverrideCursor()
+                            # self.uc.bar_warn("WARNING 310521.0445: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!", 10)
+                        # else:
+                            # QApplication.restoreOverrideCursor()
+                            # proceed = self.uc.question("WARNING 290521.0500: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
                                                        # "Would you like to create it?")
                             # QApplication.setOverrideCursor(Qt.WaitCursor)
-                            # if proceed:                    
-                                # if square_grid_with_col_and_row_fields(self.gutils, self.lyrs.data["user_model_boundary"]["qlyr"]):  
-                                    # assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)                    
+                            # if proceed:
+                                # if square_grid_with_col_and_row_fields(self.gutils, self.lyrs.data["user_model_boundary"]["qlyr"]):
+                                    # assign_col_row_indexes_to_grid(self.lyrs.data['grid']['qlyr'], self.gutils)
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
@@ -1119,17 +1119,17 @@ class Flo2D(object):
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                     
-                    if "import_inflow" in import_calls or "import_outflow" in import_calls: 
+
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
-                            msg += "<br><br>"                           
+                            msg += "<br><br>"
                         msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
                         msg +="must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
-                                
+
                     if msg:
-                        self.uc.show_info(msg)  
+                        self.uc.show_info(msg)
 
     @connection_required
     def import_selected_components(self):
@@ -1429,17 +1429,17 @@ class Flo2D(object):
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                     
-                    if "import_inflow" in import_calls or "import_outflow" in import_calls: 
+
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
-                            msg += "<br><br>"    
+                            msg += "<br><br>"
                         msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
                         msg +="must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."  
-                                                      
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+
                     if msg:
-                        self.uc.show_info(msg)            
+                        self.uc.show_info(msg)
 
     def clean_rating_tables(self):
         remove_grid = []
@@ -1675,7 +1675,7 @@ class Flo2D(object):
             self.f2d_grid_info.set_info_layer(grid)
             self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
             self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)                                                                   
+            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
             self.f2d_grid_info.gutils = self.gutils
             self.canvas.setMapTool(self.grid_info_tool)
         else:
@@ -1788,22 +1788,22 @@ class Flo2D(object):
             n_elements_total = 1
             n_levee_directions_total = 0
             n_fail_features_total = 0
-            
+
             starttime = time.time()
             for n_elements, n_levee_directions, n_fail_features, ranger in self.schematize_levees():
                 n_elements_total += n_elements
                 n_levee_directions_total += n_levee_directions
                 n_fail_features_total += n_fail_features
-                
+
                 for no in sorted(dlg_levee_elev.methods):
                     if no == 1:
                         # processing for a spatial selection range is enabled on this type
                         dlg_levee_elev.methods[no](rangeReq = ranger)
-                    else: 
+                    else:
                         dlg_levee_elev.methods[no]()
             inctime = time.time()
             print ("%s seconds to process levee features" % round(inctime - starttime, 2))
-            
+
             # Delete duplicates:
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             q = False
@@ -1910,21 +1910,21 @@ class Flo2D(object):
                         delete_levees_qry = """DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?;"""
                         delete_failure_qry = """DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"""
                         print ("Deleting extra levee and levee failure features")
-                        
+
                         # build indexes to speed up the process
                         qryIndex = """CREATE INDEX if not exists leveeDataGridFID_LDIR  ON levee_data (grid_fid, ldir);"""
                         self.gutils.execute(qryIndex)
                         qryIndex = """CREATE INDEX if not exists leveeFailureGridFID_LFAILDIR  ON levee_failure (grid_fid, lfaildir);"""
                         self.gutils.execute(qryIndex)
                         self.gutils.con.commit()
-                        
+
                         #cur = self.gutils.con.cursor()
                         #cur.executemany(delete_levees_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
                         #self.gutils.con.commit()
                         #cur.executemany(delete_failure_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
                         #self.gutils.con.commit()
                         #cur.close()
-                        
+
                         for leveeCounter, levee in enumerate(leveesToDelete):
                             #self.gutils.execute(delete_levees_qry, (levee[0], levee[1]))
                             self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1]))
@@ -1942,7 +1942,7 @@ class Flo2D(object):
                         qryIndex = """DROP INDEX if exists leveeFailureGridFID_LFAILDIR;"""
                         self.gutils.execute(qryIndex)
                         self.gutils.con.commit()
-                        
+
                         levees.triggerRepaint()
 
                 levee_schem = self.lyrs.get_layer_by_name("Levees", group=self.lyrs.group).layer()
@@ -2047,11 +2047,11 @@ class Flo2D(object):
         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
-        
+
         #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
-        
+
         #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
@@ -2062,10 +2062,10 @@ class Flo2D(object):
         try:
             levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
-            
+
             for n_elements, n_levee_directions, n_fail_features, regionReq in generate_schematic_levees(
                 self.gutils, levee_lyr, grid_lyr):
-                yield (n_elements, n_levee_directions, n_fail_features, regionReq) 
+                yield (n_elements, n_levee_directions, n_fail_features, regionReq)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 030120.0723: unable to process user levees!\n", e)
