@@ -9,21 +9,22 @@ on:
 jobs:
   build_sphinx_documentation:
     # The type of runner that the job will run on
+    name: Building Sphinx documentation and uploading as an artifact
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Checking-out repository
       - uses: actions/checkout@v2
+        name: Checking-out repository
   
-      - name: Building Sphinx documentation from source files
       - uses: ammaraskar/sphinx-action@0.4
+        name: Building Sphinx documentation from source files
         with:
           docs-folder: "docs/user/"
           build-command: "sphinx-build -b html source build"
   
-      - name: Zipping and uploading HTML static files as an artifact
       - uses: actions/upload-artifact@v1
+        name: Zipping and uploading HTML static files as an artifact
         with:
           name: FLO2D_QGIS_Plugin_Documentation
           path: docs/user/build/
@@ -39,6 +40,7 @@ jobs:
           git commit -m "Update documentation" -a || true
           # The above command will fail if no changes were present, so we ignore
           # the return code.
+  
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
