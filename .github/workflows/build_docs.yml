@@ -1,4 +1,4 @@
-name: Build Sphinx user documentation
+name: Build and publish user documentation
 
 # Controls when the action will run. 
 on:
