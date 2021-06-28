@@ -34,18 +34,18 @@ if __name__ == "__main__":
     plugin_dirname = "flo2d"
     plugin_path = os.path.join(this_dir, plugin_dirname)
     docs_path = os.path.join(this_dir, "docs", "user")
-    print("Building documentation...")
-    try:
-        build_sphinx_docs(docs_path)
-        html_build_path = os.path.join(docs_path, "build", "html")
-        html_help_path = os.path.join(plugin_path, "help", "html")
-        print("Copying documentation files to the help folder...")
-        if os.path.exists(html_build_path):
-            if os.path.exists(html_help_path):
-                shutil.rmtree(html_help_path)
-            shutil.copytree(html_build_path, html_help_path)
-    except subprocess.CalledProcessError as e:
-        print("Building documentation skipped due to Sphinx error!")
+    # print("Building documentation...")
+    # try:
+    #     build_sphinx_docs(docs_path)
+    #     html_build_path = os.path.join(docs_path, "build", "html")
+    #     html_help_path = os.path.join(plugin_path, "help", "html")
+    #     print("Copying documentation files to the help folder...")
+    #     if os.path.exists(html_build_path):
+    #         if os.path.exists(html_help_path):
+    #             shutil.rmtree(html_help_path)
+    #         shutil.copytree(html_build_path, html_help_path)
+    # except subprocess.CalledProcessError as e:
+    #     print("Building documentation skipped due to Sphinx error!")
     print("Zipping plugin package...")
     plugin_version = get_plugin_version(plugin_path)
     zip_filename = f"{plugin_dirname}-{plugin_version}"
