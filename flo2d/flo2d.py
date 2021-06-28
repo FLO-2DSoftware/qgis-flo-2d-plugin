@@ -2042,19 +2042,21 @@ class Flo2D(object):
             else:
                 return
 
-    #     @staticmethod
-    def show_help(self):
+    @staticmethod
+    def show_help():
         pth = os.path.dirname(os.path.abspath(__file__))
+        help_file = "file:///{0}/help/html/index.html".format(pth)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+
         help_file = "file:///{0}/help/FLO-2D Plugin Users Manual.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
 
-        #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/FLO-2D Plugin Technical Reference Manual.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
 
-        #         pth = os.path.dirname(os.path.abspath(__file__))
         help_file = "file:///{0}/help/Workshop Lessons QGIS FLO-2D.pdf".format(pth)
         QDesktopServices.openUrl(QUrl.fromLocalFile(help_file))
+
     def schematize_levees(self):
         """
         Generate schematic lines for user defined levee lines.
