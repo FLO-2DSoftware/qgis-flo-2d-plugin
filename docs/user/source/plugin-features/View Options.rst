@@ -83,7 +83,7 @@ If the windows are missing, show them using the **View>Panels>FLO-2D Panel.**
 
 This panel can be docked along with the QGIS Processing Tools Panel.
 
-.. image:: ../img/View-Options/View013.gif
+.. image:: ../img/View-Options/View014.gif
 
 FLO-2D Plot and Table Editor Windows
 ------------------------------------
