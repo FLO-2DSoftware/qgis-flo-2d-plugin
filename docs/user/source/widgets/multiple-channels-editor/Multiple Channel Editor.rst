@@ -22,6 +22,7 @@ Enter the data using the QGIS vector editor in the toolbar.
 
 1. Digitize the drainages,
    rills or gullies in the project area.
+
 .. image:: ../../img/Multiple-Channel-Editor/mutipl009.png
 
 

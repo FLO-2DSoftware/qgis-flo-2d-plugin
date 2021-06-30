@@ -27,6 +27,7 @@ The rainfall distribution is imported from a data file.
 
 2. Import the rainfall distribution file from a set of predefined files. The files
    are installed in the FLO-2D Documentation folder.
+
 **C:\users\public\publicdocuments\FLO-2D Pro Documentation\flo_help\Rainfall Distributions**
 
 .. image:: ../../img/Rain-Editor/rained003.png

@@ -8,7 +8,7 @@ shapefile with a single polygon.
 Both methods are described below.
 
 Method 1: Load an External Layer
--------------------------------
+---------------------------------
 
 1. This method will use a shapefile
    with 1 polygon that represents the model area.
