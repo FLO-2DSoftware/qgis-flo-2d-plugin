@@ -73,10 +73,10 @@ If the user data does not have a section below, skip that bullet.
    -  If User Layers Levee Lines are available, use them to recalculate the levees.
 
    -  If Levee Lines User Layer is not present, use this simple process to copy them from the Schematized Levees.
-     (This does not work for walls)
+      (This does not work for walls)
 
       -  Create levee lines the center of the levee.
-        This is just the standard create levee polyline using the editor add polyline process.
+         This is just the standard create levee polyline using the editor add polyline process.
 
       -  Make certain these lines cross the Schematic Levees frequently.
 

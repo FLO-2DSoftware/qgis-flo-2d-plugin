@@ -16,7 +16,7 @@ Inflow Node
 1. To create a point of
    u7inflow, click the Add Point BC button on the Boundary Condition Editor widget.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda002.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda002.png
 
 
 2. Identify the inflow node by left clicking the location of the inflow node on the map.
@@ -24,7 +24,7 @@ Inflow Node
    It is not necessary to enter the fid.
    Click *OK* to create the feature.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda003.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda003.png
 
 
 3. Click the Save Button
@@ -36,13 +36,13 @@ Inflow Node
 5. This example
    inflow node will have a steady hydrograph with 100 cfs assigned to Cave Creek inflow node.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda004.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda004.png
 
 
 6. The time series inflow hydrograph is assigned in the table editor where time is in hours and discharge is cfs or cms.
    This is a clear water inflow hydrograph and no sediment concentration is assigned.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda005.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda005.png
 
 
 7. Repeat the process to add additional inflow hydrographs.
@@ -51,10 +51,10 @@ Inflow Node
 8. Use the Schematize icon
    (shown below) to save the data to the Schematic Layers and click *Yes* to overwrite the layers.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda006.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda006.png
 
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda007.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda007.png
 
 
 Outflow Boundary Conditions
@@ -82,7 +82,7 @@ the downstream boundary or along the edge of a grid system.
 1. Click the
    *Add Polygon BC* button
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda008.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda008.png
 
 
 2. Digitize a polygon that covers the desired boundary extent.
@@ -91,7 +91,7 @@ the downstream boundary or along the edge of a grid system.
 3. Set the type to
    Outflow and click OK.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda009.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda009.png
 
 
 4. Click *Save* to load save the load the data into the BC Editor.
@@ -99,7 +99,7 @@ the downstream boundary or along the edge of a grid system.
 5. Name the boundary and set the boundary conditions to 1.
    Floodplain outflow (no hydrograph).
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda010.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda010.png
 
 
 Outflow Channel
@@ -125,10 +125,10 @@ For channel outflow at a normal depth condition, select the channel outflow node
 6. Note that only
    one point is required.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda011.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda011.png
 
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda012.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda012.png
 
 
 Outflow with Hydrograph
@@ -152,7 +152,7 @@ https://flo-2d.sharefile.com/d-s25731a178264675b
 3. Name the boundary condition
    and set the boundary *Outflow type* conditions as *Outflow with Hydrograph*.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda013.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda013.png
 
 
 Outflow with Time – Stage Hydrograph for Floodplain
@@ -186,7 +186,7 @@ Select the outflow nodes along the downstream boundary with a polygon.
 5. Name and fill the
    Time Series table.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda014.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda014.png
 
 
 6. In the figure below,
@@ -198,7 +198,7 @@ Select the outflow nodes along the downstream boundary with a polygon.
 8. The Stage – Time nodes apply a water surface elevation.
    This water can fill the downstream area up to the stage.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda015.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda015.png
 
 
 Outflow with Time – Stage Hydrograph for Channel
@@ -223,9 +223,9 @@ The time – stage relationship can be synchronized to rainfall and watershed fl
 5. Name and
    fill the Time Series table.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda016.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda016.png
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda017.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda017.png
 
 Time-Stage for Floodplain and Free Floodplain and Channel
 ---------------------------------------------------------
@@ -241,7 +241,7 @@ Set the elevation for matching the water surface elevation of an existing FEMA m
 1. Set this up with the
    same method described in the previous two sections.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda018.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda018.png
 
 Time-Stage for Channel and Free Floodplain and Channel
 ------------------------------------------------------
@@ -251,7 +251,7 @@ This option is the same as option 7 with the condition that the stage – time t
 1. Set this up with
    the same method described in the previous two sections.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda019.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda019.png
 
 Channel Stage-Discharge Parameters
 ------------------------------------
@@ -272,7 +272,7 @@ This system is used when there is a control or a gage at the channel with a know
 4. Name and fill the
    Q(h) parameters table.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda020.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda020.png
 
 Channel Stage-Discharge (Q(h) table)
 -------------------------------------
@@ -291,7 +291,7 @@ The final outflow option is used to define the downstream boundary with a stage-
 4. Name and fill the Q(h)
    table.
 
-.. image:: ../../img/Boundary-Condition-Editor/Bounda021.png
+.. image:: ../../img/Boundary-Condition-Editor/bounda021.png
 
 Troubleshooting
 ----------------
