@@ -39,5 +39,6 @@ This tool can be used to view channel profiles.
 
 7. The channel plot will automatically update.
    automatically update.
+
 .. image:: ../img/Channel-Profile/channelprofile6.png
   
