@@ -24,8 +24,8 @@ Use the editor widget to create the cross section.
 
 .. image:: ../../img/Floodplain-Cross-Section-Editor/floodp006.png
 
-4.	Check the editor
-    and make any adjustments necessary.
+4. Check the editor
+   and make any adjustments necessary.
 
 .. image:: ../../img/Floodplain-Cross-Section-Editor/floodp009.png
 
