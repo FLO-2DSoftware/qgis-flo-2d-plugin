@@ -87,18 +87,6 @@ Table of Contents
    /widgets/user-cross-sections-editor/User Cross Sections Editor
    References
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Workshops:
-
-   /Workshops/workshop
-   /Workshops/Lesson 1
-   /Workshops/Lesson 2
-   /Workshops/Lesson 3
-   /Workshops/Lesson 4
-   /Workshops/Lesson 5
-   /Workshops/Lesson 6
-   /Advance-Workshop/Advanced
 
 
 
