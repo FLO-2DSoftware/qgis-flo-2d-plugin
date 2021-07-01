@@ -36,25 +36,41 @@ Table of Contents
    :maxdepth: 1
    :caption: Toolbar QGIS and FLO-2D:
 
+<<<<<<< Updated upstream
    /toolbar/FLO-2D Toolbar
    /toolbar/Channel Profile
    /toolbar/Convert User Layers to Schematic Layers
    /toolbar/Debug
    /toolbar/Export Project
    /toolbar/Flo-2D Info Tool
+=======
+>>>>>>> Stashed changes
    /toolbar/Flo-2D Settings
-   /toolbar/Grid Info Tool
-   /toolbar/Hazus Tool
-   /toolbar/Import Data Files
+   /toolbar/Run Flo-2D
    /toolbar/Import Geo Package
-   /toolbar/Import RAS Channel
+   /toolbar/Import Data Files
    /toolbar/Imported Selected Component Files
+<<<<<<< Updated upstream
    /toolbar/Levee Tool
    /toolbar/QGIS General Tools
    /toolbar/Run Flo-2D
    /toolbar/Schema 2 User
    /toolbar/Control Variables
+=======
+   /toolbar/Export Project
+   /toolbar/Import RAS Channel
+   /toolbar/Setup Control Variables
+   /toolbar/Schema 2 User
+   /toolbar/Convert User Layers to Schematic Layers
+   /toolbar/Channel Profile
+   /toolbar/Flo-2D Info Tool
+   /toolbar/Grid Info Tool
+   /toolbar/Levee Tool
+>>>>>>> Stashed changes
    /toolbar/Walls
+   /toolbar/Hazus Tool
+   /toolbar/Debug
+   /toolbar/QGIS General Tools
 
 .. toctree::
    :maxdepth: 2
