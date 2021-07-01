@@ -7,7 +7,7 @@ Overview
 In this task, the spatially variable manning’s roughness is calculated from a polygon shapefile.
 The polygons represent roughness associated with different LandUse categories such as building, street, grass, desert brush and many others.
 
-.. image:: ../../img/Sample-Roughness-Data/sample002.png
+.. image:: ../../img/Sample-Roughness-Data/img2.png
 
 The plugin has 4 methods for calculating roughness.
 Use the Sampling Manning’s tool to access the calculator.
