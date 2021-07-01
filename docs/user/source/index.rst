@@ -41,15 +41,14 @@ Table of Contents
    /toolbar/Export Project
    /toolbar/Import RAS Channel
    /toolbar/Setup Control Variables
-   /toolbar/Schema 2 User
-   /toolbar/Convert User Layers to Schematic Layers
+   /toolbar/Schematic to User Converter
+   /toolbar/User to Schematic Converter
    /toolbar/Channel Profile
    /toolbar/Flo-2D Info Tool
    /toolbar/Grid Info Tool
    /toolbar/Levee Tool
    /toolbar/Walls
    /toolbar/Hazus Tool
-   /toolbar/Walls
    /toolbar/Debug
 
 .. toctree::
