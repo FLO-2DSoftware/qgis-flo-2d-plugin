@@ -32,21 +32,11 @@ Table of Contents
    :caption: Toolbar QGIS and FLO-2D:
 
    /toolbar/FLO-2D Toolbar
-   /toolbar/Channel Profile
-   /toolbar/Convert User Layers to Schematic Layers
-   /toolbar/Debug
-   /toolbar/Export Project
-   /toolbar/Flo-2D Info Tool
    /toolbar/Flo-2D Settings
    /toolbar/Run Flo-2D
    /toolbar/Import Geo Package
    /toolbar/Import Data Files
    /toolbar/Imported Selected Component Files
-   /toolbar/Levee Tool
-   /toolbar/QGIS General Tools
-   /toolbar/Run Flo-2D
-   /toolbar/Schema 2 User
-   /toolbar/Control Variables
    /toolbar/Export Project
    /toolbar/Import RAS Channel
    /toolbar/Setup Control Variables
@@ -56,8 +46,8 @@ Table of Contents
    /toolbar/Flo-2D Info Tool
    /toolbar/Grid Info Tool
    /toolbar/Levee Tool
-   /toolbar/Walls
    /toolbar/Hazus Tool
+   /toolbar/Walls
    /toolbar/Debug
    /toolbar/QGIS General Tools
 
