@@ -1,5 +1,5 @@
-Setup Control Variables
-=======================
+Control Variables
+==================
 
 Setup the FLO-2D Control Data
 -----------------------------
@@ -19,7 +19,7 @@ This button allows the user to set up the control variables.
    to the GeoPackage with the *Save* button.
 
 4. The variable descriptions and instructions are available in the
-   `Data Input Manual <../Manuals/Data%20Input%20Manual%20PRO.pdf>`__.
+   `Data Input Manual <"C:\Users\Public\Documents\FLO-2D PRO Documentation\flo_help\Manuals\Data Input Manual PRO.pdf">`__.
 
 
 
@@ -38,7 +38,7 @@ preserved.**
 
 
 6. Global variables are
-   defined on the 3\ :sup:`rd` tab.
+   defined on the third tab.
 
 .. image:: ../img/Setup-Control-Variables/setupcontrolvariables4.png
 

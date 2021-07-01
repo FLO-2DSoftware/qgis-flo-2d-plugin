@@ -81,8 +81,12 @@ If the windows are missing, show them using the **View>Panels>FLO-2D Panel.**
 
 .. image:: ../img/View-Options/View010.png
 
-FLO-2D Plot and Table Editor Windows.
--------------------------------------
+This panel can be docked along with the QGIS Processing Tools Panel.
+
+.. image:: ../img/View-Options/View014.gif
+
+FLO-2D Plot and Table Editor Windows
+------------------------------------
 
 The plot window and table editor window are used to assign table data to various components such as inflow, rain, hydraulic structures, and channels.
 The user can copy and paste from excel or ASCII text files.

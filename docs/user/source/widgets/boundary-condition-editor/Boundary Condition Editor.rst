@@ -13,13 +13,13 @@ This represents a flood inflow to the flow domain from an off-site source.
 Inflow Node
 -----------
 
-1. To create a point of
-   u7inflow, click the Add Point BC button on the Boundary Condition Editor widget.
+1. To create a point of inflow, click the Add Point BC button on the Boundary Condition
+   Editor widget.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda002.png
 
 
-2. Identify the inflow node by left clicking the location of the inflow node on the map.
+2. Digitize the inflow node by left clicking the location of the inflow node on the map.
    In this example, the inflow node is a channel inflow node.
    It is not necessary to enter the fid.
    Click *OK* to create the feature.
@@ -30,8 +30,7 @@ Inflow Node
 3. Click the Save Button
    to load the data into the editor.
 
-4. Assign the defining
-   detail conditions to the inflow node in the following image.
+4. Assign the conditions to the inflow node as seen in the following image.
 
 5. This example
    inflow node will have a steady hydrograph with 100 cfs assigned to Cave Creek inflow node.
@@ -46,7 +45,7 @@ Inflow Node
 
 
 7. Repeat the process to add additional inflow hydrographs.
-   Use the *Add* data series/table for current BC button to create a new hydrograph.
+   Use the *Add data series/table* for current BC button to create a new hydrograph.
 
 8. Use the Schematize icon
    (shown below) to save the data to the Schematic Layers and click *Yes* to overwrite the layers.
@@ -62,11 +61,11 @@ Outflow Boundary Conditions
 
 Boundary outflow conditions include:
 
--  Stage time relationships
-
--  Stage discharge relationships
-
 -  Normal depth control
+
+-  Stage time control
+
+-  Stage discharge control
 
 These conditions define how the channel or floodplain discharge enters or leaves the FLO-2D model domain.
 
@@ -96,8 +95,10 @@ the downstream boundary or along the edge of a grid system.
 
 4. Click *Save* to load save the load the data into the BC Editor.
 
-5. Name the boundary and set the boundary conditions to 1.
+5. Name the boundary and set the outflow type to 1.
    Floodplain outflow (no hydrograph).
+
+6. Click the Schematize button (shown below) to complete the boundary.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda010.png
 
@@ -105,7 +106,7 @@ the downstream boundary or along the edge of a grid system.
 Outflow Channel
 ---------------
 
-For channel outflow at a normal depth condition, select the channel outflow node on the downstream boundary or channel segment terminus.
+For channel outflow at a normal depth condition, use the channel outflow node on the downstream boundary or channel segment terminus.
 
 1. Click add a
    point boundary and click the last left bank channel node.
@@ -117,13 +118,13 @@ For channel outflow at a normal depth condition, select the channel outflow node
    feature.
 
 4. Set the outflow condition
-   for the channel.
+   for the channel to 3. Floodplain and channel outflow (no hydrograph).
 
-5. A combined floodplain
-   and channel outflow condition (3) is the typical setting.
-
-6. Note that only
+5. Note that only
    one point is required.
+
+6. Click the Schematized button.
+
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda011.png
 
@@ -139,9 +140,10 @@ Multiple Domain System
 
 Use this option with any floodplain boundary that will transfer flow between two domains.
 
-See the Multiple Domain Flow Exchange Training Package for further instructions:
+See the |location_link| for further instructions:
 
-https://flo-2d.sharefile.com/d-s25731a178264675b
+.. |location_link| raw:: html
+   <a href="https://flo-2d.sharefile.com/d-s25731a178264675b" target="_blank">Multiple Domain Flow Exchange Training Package</a>
 
 1. Click the *Add Polygon BC*
    button and draw a line through the desired outflow nodes.
