@@ -125,6 +125,7 @@ For channel outflow at a normal depth condition, use the channel outflow node on
 
 6. Click the Schematized button.
 
+
 .. image:: ../../img/Boundary-Condition-Editor/bounda011.png
 
 
