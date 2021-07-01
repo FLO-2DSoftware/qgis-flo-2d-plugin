@@ -1,11 +1,8 @@
 Walls
 =====
 
-*Create Walls Shapefile*
-
-
-Overview
---------
+Create Walls Shapefile
+______________________
 
 Digitize a wall shapefile to represent the walls that will make a
 significant impact to the flooding in an urban development. This means
@@ -20,21 +17,21 @@ Walls that have the potential for failure due to collapse should also be
 identified. The shapefile must have polyline geometry and should have
 the following attributes:
 
--  Name – feature name (string)
+-  Name – feature name (string) (required)
 
--  Elevation – crest elevation (float)
+-  Elevation – crest elevation (float) (required)
 
--  Correction – elevation correction (float)
+-  Correction – elevation correction (float) (NULL ok)
 
--  Fail elevation or fail depth (float) (not required)
+-  Fail elevation or fail depth (float) (NULL ok)
 
--  Duration (float) (not required)
+-  Duration (float) (NULL ok)
 
--  Maximum fail width (float) (not required)
+-  Maximum fail width (float) (NULL ok)
 
--  Vertical fail rate (float) (not required)
+-  Vertical fail rate (float) (NULL ok)
 
--  Horizontal Fail Rate (float) (not required)
+-  Horizontal Fail Rate (float) (NULL ok)
 
 .. image:: ../img/Walls/walls1.png
 
@@ -90,14 +87,15 @@ Troubleshooting
    Levee Tool will analyze duplicate levees and remove the levee with
    the lowest crest elevation. This process is automatic. The duplicate
    levee data is saved to the Layers List so it can be analyzed for
-   potential modifications.
+   potential modifications.  The plugin should remove duplicate levees
+   automatically.
 
 .. image:: ../img/Walls/walls7.png
  
 2. Crest elevation is another potential source for a fatal error for
    FLO-2D. If a levee or wall crest is lower than an adjacent grid
-   elevation, the model will stop with a fatal error message and the
-   erroneous elevations are reported to the error.chk file. The plugin
+   elevation, the FLO-2D engine will stop with a fatal error message and
+   the erroneous elevations are reported to the error.chk file. The plugin
    can validate elevations using the debug options. See Debug section
    for instructions.
 

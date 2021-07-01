@@ -36,6 +36,7 @@ Table of Contents
    :maxdepth: 1
    :caption: Toolbar QGIS and FLO-2D:
 
+   /toolbar/FLO-2D Toolbar
    /toolbar/Channel Profile
    /toolbar/Convert User Layers to Schematic Layers
    /toolbar/Debug
@@ -52,11 +53,11 @@ Table of Contents
    /toolbar/QGIS General Tools
    /toolbar/Run Flo-2D
    /toolbar/Schema 2 User
-   /toolbar/Setup Control Variables
+   /toolbar/Control Variables
    /toolbar/Walls
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Widgets:
 
    /widgets/boundary-condition-editor/Boundary Condition Editor
@@ -86,18 +87,3 @@ Table of Contents
    /widgets/street-editor/Street Editor
    /widgets/user-cross-sections-editor/User Cross Sections Editor
    References
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
