@@ -62,7 +62,7 @@ Table of Contents
    /toolbar/QGIS General Tools
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Widgets:
 
    /widgets/grid-tools/Create a Grid
