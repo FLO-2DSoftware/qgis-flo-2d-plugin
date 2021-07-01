@@ -76,30 +76,30 @@ Table of Contents
    :maxdepth: 2
    :caption: Widgets:
 
-   /widgets/boundary-condition-editor/Boundary Condition Editor
-   /widgets/floodplain-cross-section-editor/Floodplain Cross Section Editor
-   /widgets/grid-tools/Area and Width Reduction
-   /widgets/grid-tools/Assign Results from Points Layers
    /widgets/grid-tools/Create a Grid
-   /widgets/grid-tools/Elevation Correction from Polygons
-   /widgets/grid-tools/Gutters
-   /widgets/grid-tools/No Exchange Channel Cells
    /widgets/grid-tools/Sample Elevation Data GDL Grid Method
    /widgets/grid-tools/Sample Elevation from Points
    /widgets/grid-tools/Sample Elevation from Raster
+   /widgets/grid-tools/Elevation Correction from Polygons
    /widgets/grid-tools/Sample Roughness Data
+   /widgets/grid-tools/Area and Width Reduction
+   /widgets/grid-tools/Spatially Variable
    /widgets/grid-tools/Spatial Limiting Froude
    /widgets/grid-tools/Spatial Shallow
-   /widgets/grid-tools/Spatially Variable
-   /widgets/hydraulic-structure-editor/Hydraulic Structure Editor
-   /widgets/infiltration-editor/Infiltration Editor
-   /widgets/initial-condition-editor/Initial Condition Editor
-   /widgets/levees-breach-editor/Levees Breach Editor
-   /widgets/multiple-channels-editor/Multiple Channel Editor
+   /widgets/grid-tools/Gutters
+   /widgets/grid-tools/No Exchange Channel Cells
+   /widgets/grid-tools/Assign Results from Points Layers
    /widgets/profile-tool/Profile Tool
+   /widgets/user-cross-sections-editor/User Cross Sections Editor
+   /widgets/boundary-condition-editor/Boundary Condition Editor
+   /widgets/initial-condition-editor/Initial Condition Editor
    /widgets/rain-editor/Rain Editor
    /widgets/schematized-channel-editor/Schematized Channel Editor
-   /widgets/storm-drainer-editor/Storm Drain
+   /widgets/hydraulic-structure-editor/Hydraulic Structure Editor
    /widgets/street-editor/Street Editor
-   /widgets/user-cross-sections-editor/User Cross Sections Editor
+   /widgets/floodplain-cross-section-editor/Floodplain Cross Section Editor
+   /widgets/infiltration-editor/Infiltration Editor
+   /widgets/storm-drainer-editor/Storm Drain
+   /widgets/levees-breach-editor/Levees Breach Editor
+   /widgets/multiple-channels-editor/Multiple Channel Editor
    References
