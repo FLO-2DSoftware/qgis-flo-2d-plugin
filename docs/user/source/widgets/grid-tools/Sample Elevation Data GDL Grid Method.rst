@@ -42,7 +42,7 @@ Sample Elevation
 7. The elevation_xyz_gdalgrid.tif
    is sampled to the grid layer.
 
-.. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/Sample005.png
+.. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/image5.png
 
 8.  A log of the interpolation
     process helps the user track the progress.
