@@ -11,13 +11,14 @@ FLO-2D Plugin User Manual
 
 
 Table of Contents
-------------------------------------------------------------
+----------------------
 
 .. toctree::
    :maxdepth: 1
-   :caption: Installation Instruction:
+   :caption: Setup:
 
    /installation-instructions/Installation
+   /toolbar/QGIS General Tools
 
 .. toctree::
    :maxdepth: 1
@@ -32,21 +33,11 @@ Table of Contents
    :caption: Toolbar QGIS and FLO-2D:
 
    /toolbar/FLO-2D Toolbar
-   /toolbar/Channel Profile
-   /toolbar/Convert User Layers to Schematic Layers
-   /toolbar/Debug
-   /toolbar/Export Project
-   /toolbar/Flo-2D Info Tool
    /toolbar/Flo-2D Settings
    /toolbar/Run Flo-2D
    /toolbar/Import Geo Package
    /toolbar/Import Data Files
    /toolbar/Imported Selected Component Files
-   /toolbar/Levee Tool
-   /toolbar/QGIS General Tools
-   /toolbar/Run Flo-2D
-   /toolbar/Schema 2 User
-   /toolbar/Control Variables
    /toolbar/Export Project
    /toolbar/Import RAS Channel
    /toolbar/Setup Control Variables
@@ -60,11 +51,10 @@ Table of Contents
    /toolbar/Hazus Tool
    /toolbar/Walls
    /toolbar/Debug
-   /toolbar/QGIS General Tools
 
 .. toctree::
    :maxdepth: 1
-   :caption: Widgets:
+   :caption: Widgets (Grid Tools):
 
    /widgets/grid-tools/Create a Grid
    /widgets/grid-tools/Sample Elevation Data GDL Grid Method
@@ -79,6 +69,11 @@ Table of Contents
    /widgets/grid-tools/Gutters
    /widgets/grid-tools/No Exchange Channel Cells
    /widgets/grid-tools/Assign Results from Points Layers
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Widgets:
+
    /widgets/profile-tool/Profile Tool
    /widgets/user-cross-sections-editor/User Cross Sections Editor
    /widgets/boundary-condition-editor/Boundary Condition Editor
@@ -92,10 +87,11 @@ Table of Contents
    /widgets/storm-drainer-editor/Storm Drain
    /widgets/levees-breach-editor/Levees Breach Editor
    /widgets/multiple-channels-editor/Multiple Channel Editor
-   References
+
 
 .. toctree::
    :maxdepth: 1
    :caption: Post Development Grid Modification:
 
    /post-development-grid-modification/Post Development Grid Modification
+   References
