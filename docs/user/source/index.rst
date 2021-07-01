@@ -58,6 +58,7 @@ Table of Contents
    /toolbar/Levee Tool
    /toolbar/Walls
    /toolbar/Hazus Tool
+   /toolbar/Walls
    /toolbar/Debug
    /toolbar/QGIS General Tools
 
