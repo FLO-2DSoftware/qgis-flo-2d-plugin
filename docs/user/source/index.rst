@@ -26,37 +26,27 @@ Table of Contents
    /plugin-features/Data Storage
    /plugin-features/Plugin Features
    /plugin-features/View Options
-.. toctree::
-   :maxdepth: 1
-   :caption: Post Development Grid Modification:
-
-   /post-development-grid-modification/Post Development Grid Modification
 
 .. toctree::
    :maxdepth: 1
    :caption: Toolbar QGIS and FLO-2D:
 
-<<<<<<< Updated upstream
    /toolbar/FLO-2D Toolbar
    /toolbar/Channel Profile
    /toolbar/Convert User Layers to Schematic Layers
    /toolbar/Debug
    /toolbar/Export Project
    /toolbar/Flo-2D Info Tool
-=======
->>>>>>> Stashed changes
    /toolbar/Flo-2D Settings
    /toolbar/Run Flo-2D
    /toolbar/Import Geo Package
    /toolbar/Import Data Files
    /toolbar/Imported Selected Component Files
-<<<<<<< Updated upstream
    /toolbar/Levee Tool
    /toolbar/QGIS General Tools
    /toolbar/Run Flo-2D
    /toolbar/Schema 2 User
    /toolbar/Control Variables
-=======
    /toolbar/Export Project
    /toolbar/Import RAS Channel
    /toolbar/Setup Control Variables
@@ -66,7 +56,6 @@ Table of Contents
    /toolbar/Flo-2D Info Tool
    /toolbar/Grid Info Tool
    /toolbar/Levee Tool
->>>>>>> Stashed changes
    /toolbar/Walls
    /toolbar/Hazus Tool
    /toolbar/Debug
@@ -103,3 +92,9 @@ Table of Contents
    /widgets/levees-breach-editor/Levees Breach Editor
    /widgets/multiple-channels-editor/Multiple Channel Editor
    References
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Post Development Grid Modification:
+
+   /post-development-grid-modification/Post Development Grid Modification
