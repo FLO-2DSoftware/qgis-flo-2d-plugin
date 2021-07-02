@@ -1,4 +1,4 @@
-.. FLO-2D-Tutorials documentation master file, created by
+.. FLO-2D Plugin User Manual master file, created by
    sphinx-quickstart on Sun Apr 18 21:47:28 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -93,4 +93,9 @@ Table of Contents
    :caption: Post Development Grid Modification:
 
    /post-development-grid-modification/Post Development Grid Modification
+
+.. toctree::
+   :maxdepth: 1
+   :caption: References:
+
    References
