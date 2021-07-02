@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath("..."))
 
 # -- Project information -----------------------------------------------------
 
-project = "FLO-2D-Tutorials"
+project = "FLO-2D-User-Manual"
 copyright = "2021, Karen O'Brien"
 author = "Karen O'Brien"
 html_logo = "Flo2D_logo.jpg"
