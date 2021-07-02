@@ -1,5 +1,5 @@
-Spatially Variable TOL Parameter – Low Impact Development (LID)
-===============================================================
+Spatial TOL
+===========
 
 Overview
 --------

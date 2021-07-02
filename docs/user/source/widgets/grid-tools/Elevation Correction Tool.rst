@@ -1,5 +1,5 @@
-Elevation Correction from Polygons, Polylines and Points
-========================================================
+Elevation Correction Tool
+==========================
 
 Overview
 --------

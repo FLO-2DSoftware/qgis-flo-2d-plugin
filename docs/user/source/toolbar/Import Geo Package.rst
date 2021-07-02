@@ -1,5 +1,5 @@
 Import a Geo Package
-=============================
+=====================
 
 When the FLO-2D Plugin is updated, the Geo Package structure changes. The
 project can no longer be opened in the standard method described in the

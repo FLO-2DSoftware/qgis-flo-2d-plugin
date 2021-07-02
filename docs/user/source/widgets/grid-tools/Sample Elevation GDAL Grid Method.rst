@@ -1,5 +1,5 @@
-Sample Elevation Data GDAL Grid Method
-======================================
+Sample Elevation GDAL Grid Method
+==================================
 
 To interpolate the elevation to a grid layer from a using the GDAL Grid method.
 

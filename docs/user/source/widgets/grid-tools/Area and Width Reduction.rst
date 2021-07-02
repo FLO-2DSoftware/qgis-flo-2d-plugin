@@ -1,5 +1,5 @@
-Area and Width Reduction Factor – Buildings
-===========================================
+Area and Width Reduction – Buildings
+=====================================
 
 Overview
 --------

@@ -1,5 +1,5 @@
-Spatial Limiting Froude Number
-==============================
+Spatial Limiting Froude
+=======================
 
 Overview
 --------

@@ -3,6 +3,8 @@ Profile Tool
 
 The profile tool is primarily used to review the channel profile but can also be used to review table data for specific features.
 
+.. image:: ../../img/Profile-Tool/profil001.png
+
 Raster Profile
 --------------
 
