@@ -18,7 +18,7 @@ Table of Contents
    :caption: Setup:
 
    /installation-instructions/Installation
-   /toolbar/QGIS General Tools
+   /installation-instructions/QGIS General Tools
 
 .. toctree::
    :maxdepth: 1
@@ -33,8 +33,8 @@ Table of Contents
    :caption: Toolbar QGIS and FLO-2D:
 
    /toolbar/FLO-2D Toolbar
-   /toolbar/Flo-2D Settings
-   /toolbar/Run Flo-2D
+   /toolbar/FLO-2D Settings
+   /toolbar/Run FLO-2D
    /toolbar/Import Geo Package
    /toolbar/Import Data Files
    /toolbar/Imported Selected Component Files
@@ -44,7 +44,7 @@ Table of Contents
    /toolbar/Schematic to User Converter
    /toolbar/User to Schematic Converter
    /toolbar/Channel Profile
-   /toolbar/Flo-2D Info Tool
+   /toolbar/FLO-2D Info Tool
    /toolbar/Grid Info Tool
    /toolbar/Levee Tool
    /toolbar/Walls
@@ -56,7 +56,7 @@ Table of Contents
    :caption: Widgets (Grid Tools):
 
    /widgets/grid-tools/Create a Grid
-   /widgets/grid-tools/Sample Elevation Data GDL Grid Method
+   /widgets/grid-tools/Sample Elevation Data GDAL Grid Method
    /widgets/grid-tools/Sample Elevation from Points
    /widgets/grid-tools/Sample Elevation from Raster
    /widgets/grid-tools/Elevation Correction from Polygons
