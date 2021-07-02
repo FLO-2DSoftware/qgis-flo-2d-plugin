@@ -14,11 +14,15 @@ from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import QSize, Qt
+
+from heapq import nsmallest
+from itertools import filterfalse
+
 from .ui_utils import load_ui, center_canvas, set_icon, zoom
-from ..utils import m_fdata, is_number
+from ..utils import m_fdata, is_number, get_min_max_elevs, set_min_max_elevs
 from ..user_communication import UserCommunication
 from ..geopackage_utils import GeoPackageUtils
-from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations
+from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations, render_grid_elevations2
 
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
@@ -63,8 +67,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             
-            # self.control_lyr.editingStopped.connect(self.check_render_elevations)
-            
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
 
@@ -84,7 +86,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 feat = next(self.grid.getFeatures(QgsFeatureRequest(fid)))
                 cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
-                elev = str(feat["elevation"])
+                elev =  "{:10.3f}".format(feat["elevation"])
                 n = feat["n_value"]
                 if not n:
                     n = "{} (default)".format(self.mann_default)
@@ -123,12 +125,20 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             else:
                 self.render_elevations_chbox.setChecked(True)
 
-
-
     def render_elevations(self): 
-        render_grid_elevations(self.grid, self.render_elevations_chbox.isChecked())  
+        elevs = [x[0]  for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
+        mini = self.second_smallest(elevs) 
+        maxi = max(elevs)       
+        render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, maxi) 
+        set_min_max_elevs(mini, maxi) 
         self.lyrs.lyrs_to_repaint = [self.grid]
         self.lyrs.repaint_layers()
+
+    def second_smallest(self,numbers):
+        s = set()
+        sa = s.add
+        un = (sa(n) or n for n in filterfalse(s.__contains__, numbers))
+        return nsmallest(2, un)[-1]   
                 
     def plot_grid_rainfall(self, feat):
         si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"

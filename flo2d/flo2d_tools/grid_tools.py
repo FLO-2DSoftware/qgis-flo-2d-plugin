@@ -13,8 +13,10 @@ import sys
 import math
 import uuid
 from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog
+from qgis.PyQt.QtCore import Qt
 from collections import defaultdict
 from subprocess import Popen, PIPE, STDOUT
+from qgis.PyQt.QtGui import QColor
 from qgis.core import (
     QgsFeature,
     QgsGeometry,
@@ -26,8 +28,17 @@ from qgis.core import (
     QgsRectangle,
     QgsFeedback,
     NULL,
-    QgsMarkerSymbol    
+    QgsMarkerSymbol,
+    QgsProject ,
+    QgsSymbol,
+    QgsRendererCategory,
+    QgsCategorizedSymbolRenderer,
+    QgsRendererRange,
+    QgsGraduatedSymbolRenderer
+    
 )
+
+
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
 from ..errors import GeometryValidityErrors, Flo2dError
@@ -1864,6 +1875,82 @@ def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
                 return elevs
 
 
+def adjacent_average_elevation(gutils, grid_lyr, xx, yy, cell_size):
+    # sel_elev_qry = "SELECT elevation FROM grid WHERE fid = ?;"
+    if grid_lyr is not None:
+        elevs = []
+        
+        # North cell:
+        y = yy + cell_size
+        x = xx
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+
+        # NorthEast cell
+        y = yy + cell_size
+        x = xx + cell_size
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+            
+        # East cell:
+        x = xx + cell_size
+        y = yy
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+
+        # SouthEast cell:
+        y = yy - cell_size
+        x = xx + cell_size
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+            
+        # South cell:
+        y = yy - cell_size
+        x = xx
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+
+        # SouthWest cell:
+        y = yy - cell_size
+        x = xx - cell_size
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+
+        # West cell:
+        y = yy
+        x = xx - cell_size
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+
+        # NorthWest cell:
+        y = yy + cell_size
+        x = xx - cell_size
+        e = gutils.grid_elevation_on_point(x, y)
+        # if e is not None and e != -9999:
+        elevs.append(e)
+        
+        # Return average elevation of adjacent cells:    
+        n= 0
+        avrg = 0
+        for elev in elevs:
+            if elev is not None and elev != -9999:
+                avrg += elev
+                n += 1
+        if n > 0:
+            avrg = avrg / n       
+        else:
+            avrg = -9999
+               
+        return avrg
+
+
 def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size):
 
     #     if grid_lyr is not None:
@@ -2379,20 +2466,82 @@ def number_of_elements(gutils, layer):
     
 def render_grid_elevations(grid_lyr, show_nodata):
     if show_nodata:
-        
-        # symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
-        # grid_lyr.renderer().setSymbol(symbol)       
-        
-        style_path1 = get_file_path("styles", "grid_nodata_2.qml")
-        if os.path.isfile(style_path1):
-            err_msg, res = grid_lyr.loadNamedStyle(style_path1)
-            if not res:
-                QApplication.restoreOverrideCursor()
-                msg = "Unable to load style {}.\n{}".format(style_path1, err_msg)
-                raise Flo2dError(msg)
-        else:
-            QApplication.restoreOverrideCursor()
-            raise Flo2dError("Unable to load style file {}".format(style_path1))
+
+        idx = grid_lyr.fields().indexFromName("elevation")
+        maxi = grid_lyr.maximumValue(idx)
+        myRangeList = []
+
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        symbol.setColor(QColor(Qt.black))                              
+        myRange = QgsRendererRange(-9999, 0, symbol, 'Group 1')                   
+        myRangeList.append(myRange)
+
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        symbol.setColor(QColor(Qt.red))                              
+        myRange = QgsRendererRange(0, maxi/4, symbol, 'Group 2')                   
+        myRangeList.append(myRange)
+            
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        symbol.setColor(QColor(Qt.blue))                              
+        myRange = QgsRendererRange(maxi/4, maxi/3, symbol, 'Group 3')                   
+        myRangeList.append(myRange)                                     
+    
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        symbol.setColor(QColor(Qt.green))
+        myRange = QgsRendererRange(maxi/3, maxi/2, symbol, 'Group 4')
+        myRangeList.append(myRange)
+ 
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        symbol.setColor(QColor(Qt.yellow))
+        myRange = QgsRendererRange(maxi/2, maxi, symbol, 'Group 5')
+        myRangeList.append(myRange)
+    
+        myRenderer = QgsGraduatedSymbolRenderer("elevation", myRangeList)  
+        myRenderer.setMode(QgsGraduatedSymbolRenderer.Custom)               
+    
+        grid_lyr.setRenderer(myRenderer)  
+        grid_lyr.triggerRepaint()
+#................................................
+        # # Create dictionary to store
+        # # 'attribute value' : ('symbol colour', 'legend name')
+        # land_class = {
+            # '0': ('#0f0', 'Transparent polygons'),
+            # '1': ('#f00', 'Filled polygons')
+        # }
+        # # Create list to store symbology properties
+        # categories = []
+        # # Iterate through the dictionary
+        # for classes, (color, label) in land_class.items():
+            # # Automatically set symbols based on layer's geometry
+            # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            # # Set colour
+            # symbol.setColor(QColor(color))
+            # # Set symbol with value = 0 to be transparent
+            # if classes == '0':
+                # symbol.setOpacity(50)
+            # # Set the renderer properties
+            # category = QgsRendererCategory(classes, symbol, label)
+            # categories.append(category)
+            #
+        # # Field name
+        # expression = 'elevation'
+        # # Set the categorized renderer
+        # renderer = QgsCategorizedSymbolRenderer(expression, categories)
+        # grid_lyr.setRenderer(renderer)
+        # # Refresh layer
+        # grid_lyr.triggerRepaint()
+ 
+# ..............................
+        # style_path1 = get_file_path("styles", "grid_nodata_2.qml")
+        # if os.path.isfile(style_path1):
+            # err_msg, res = grid_lyr.loadNamedStyle(style_path1)
+            # if not res:
+                # QApplication.restoreOverrideCursor()
+                # msg = "Unable to load style {}.\n{}".format(style_path1, err_msg)
+                # raise Flo2dError(msg)
+        # else:
+            # QApplication.restoreOverrideCursor()
+            # raise Flo2dError("Unable to load style file {}".format(style_path1))
     else:
         style_path2 = get_file_path("styles", "grid.qml")
         if os.path.isfile(style_path2):
@@ -2404,3 +2553,123 @@ def render_grid_elevations(grid_lyr, show_nodata):
         else:
             QApplication.restoreOverrideCursor()
             raise Flo2dError("Unable to load style {}".format(style_path2))
+<<<<<<< HEAD
+=======
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)           
+
+def cell_centroid(self, cell):        
+    col, row = self.gutils.execute("SELECT col, row FROM grid WHERE fid = ?;",(cell,)).fetchone()
+    x = self.xMinimum + (col-2)*self.cell_size + self.cell_size/2
+    y = self.yMinimum + (row-2)*self.cell_size + self.cell_size/2
+    return x, y
+
+def cell_elevation(self, x, y):
+    col = int((float(x) - self.xMinimum)/self.cell_size) + 2
+    row = int((float(y) - self.yMinimum)/self.cell_size) + 2                                    
+    elev = self.gutils.execute("SELECT elevation FROM grid WHERE col = ? AND row = ?;", (col, row,)).fetchone()
+    return elev         
+        
+def render_grid_elevations2(grid_lyr, show_nodata, mini, maxi):
+    if show_nodata:
+
+        colors = ['#0011FF', '#0061FF', '#00D4FF', '#00FF66', '#00FF00', '#E5FF32', '#FCFC0C', '#FF9F00', '#FF3F00', '#FF0000']
+        myRangeList = []
+        step = (maxi - mini) / (len(colors)-1)
+        
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())  
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))    
+        symbol.setColor(QColor(Qt.lightGray))                              
+        myRange = QgsRendererRange(-9999, -9999, symbol, '-9999')                   
+        myRangeList.append(myRange)
+        
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        # symbol.setColor(QColor(Qt.green))                              
+        # myRange = QgsRendererRange(0, mini, symbol, '0.0 - ' + '{0:.0f}'.format(mini))                   
+        # myRangeList.append(myRange)        
+        
+        low = mini
+        high = mini + step
+        for i in range (0,len(colors)-1):    
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())  
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen)) 
+            symbol.setColor(QColor(colors[i]))                              
+            myRange = QgsRendererRange(low,high, symbol, '{0:.0f}'.format(low) + ' - ' + '{0:.0f}'.format(high))                   
+            myRangeList.append(myRange)
+            low = high
+            high = high + step
+        
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        # symbol.setColor(QColor(Qt.blue))                              
+        # myRange = QgsRendererRange(-9999, -9999, symbol, '-9999')                   
+        # myRangeList.append(myRange)
+        #
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        # symbol.setColor(QColor(Qt.green))                              
+        # myRange = QgsRendererRange(0, mini, symbol, '0.0 - ' + '{0:.0f}'.format(mini))                   
+        # myRangeList.append(myRange)
+        #
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        # symbol.setColor(QColor(Qt.yellow))                              
+        # myRange = QgsRendererRange(mini, mini + step, symbol, '{0:.0f}'.format(mini) + ' - ' + '{0:.0f}'.format(mini + step))                   
+        # myRangeList.append(myRange)
+        #
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())     
+        # symbol.setColor(QColor(Qt.darkRed))                              
+        # myRange = QgsRendererRange(mini + step, mini + step*2, symbol, '{0:.0f}'.format(mini + step) + ' - ' + '{0:.0f}'.format(mini + step*2))                
+        # myRangeList.append(myRange)                                     
+        #
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        # symbol.setColor(QColor(Qt.gray))
+        # myRange = QgsRendererRange(mini + step*2, mini + step*3, symbol, '{0:.0f}'.format(mini + step*2) + ' - ' + '{0:.0f}'.format(mini + step*3))  
+        # myRangeList.append(myRange)
+        #
+        # symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        # symbol.setColor(QColor(Qt.lightGray))
+        # myRange = QgsRendererRange(mini + step*3, mini + step*4, symbol, '{0:.0f}'.format(mini + step*3) + ' - ' + '{0:.0f}'.format(mini + step*4))  
+        # myRangeList.append(myRange)
+    
+        myRenderer = QgsGraduatedSymbolRenderer("elevation", myRangeList)  
+        myRenderer.setMode(QgsGraduatedSymbolRenderer.Custom)               
+    
+        grid_lyr.setRenderer(myRenderer)  
+        grid_lyr.triggerRepaint()
+
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)            
+        
+     
+                            
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+>>>>>>> refs/heads/LIDAR_adjacent_elevations

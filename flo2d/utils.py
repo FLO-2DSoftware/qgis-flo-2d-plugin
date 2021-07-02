@@ -10,6 +10,8 @@
 
 
 BC_BORDER = None  # Static variable used to hold BC for type 5 outflow.
+MIN_ELEVS = 0
+MAX_ELEVS = 0
 
 grid_index = {}
 
@@ -27,6 +29,14 @@ def get_BC_Border():
 def set_BC_Border(val):
     global BC_BORDER
     BC_BORDER = val
+
+def get_min_max_elevs():
+    global MIN_ELEVS, MAX_ELEVS
+    return MIN_ELEVS, MAX_ELEVS
+
+def set_min_max_elevs(mini, maxi):
+    global MIN_ELEVS, MAX_ELEVS
+    MIN_ELEVS, MAX_ELEVS = mini, maxi
 
 def is_grid_index():
     global grid_index
