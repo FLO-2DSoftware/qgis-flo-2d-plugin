@@ -675,6 +675,30 @@ class GeoPackageUtils(object):
             gid = None
         return gid
 
+    def grid_elevation_on_point(self, x, y):
+        """
+        Getting elevation of grid which contains given point.
+        """
+        qry = """
+        SELECT g.elevation
+        FROM grid AS g
+        WHERE g.ROWID IN (
+            SELECT id FROM rtree_grid_geom
+            WHERE
+                {0} <= maxx AND
+                {0} >= minx AND
+                {1} <= maxy AND
+                {1} >= miny)
+        AND
+            ST_Intersects(GeomFromGPB(g.geom), ST_GeomFromText('POINT({0} {1})'));
+        """
+        qry = qry.format(x, y)
+        data = self.execute(qry).fetchone()
+        if data is not None:
+            elev = data[0]
+        else:
+            elev = None
+        return elev
         
     def grid_value(self, gid, field):
         qry = 'SELECT "{}" FROM grid WHERE fid=?;'.format(field)

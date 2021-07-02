@@ -36,10 +36,19 @@ from qgis.PyQt import  QtCore, QtGui
 
 from ..errors import Flo2dError
 from .ui_utils import load_ui
-from ..utils import get_file_path, time_taken, grid_index, get_grid_index, set_grid_index, clear_grid_index, is_grid_index
+from ..utils import get_file_path, time_taken, grid_index, get_grid_index, set_grid_index, clear_grid_index, is_grid_index, get_min_max_elevs, set_min_max_elevs
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import number_of_elements, fid_from_grid, adjacent_grid_elevations, render_grid_elevations
+from ..flo2d_tools.grid_tools import (
+        number_of_elements, 
+        fid_from_grid, 
+        adjacent_grid_elevations, 
+        render_grid_elevations,  
+        render_grid_elevations2, 
+        adjacent_average_elevation,
+        cell_centroid,
+        cell_elevation
+    )
 from pickle import TRUE
 # from flo2d.__init__ import classFactory
 # from ..flo2d import xxx
@@ -99,7 +108,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
 
     def lidar_selected(self):
         self.points_layer_grp.setChecked(not self.lidar_grp.isChecked())
-        self.use_sql_chbox.setEnabled(self.lidar_grp.isChecked())
+        self.use_sql_chbox.setEnabled(False)
         self.use_all_radio.setEnabled(False)
         self.use_porcentage_radio.setEnabled(False)
         self.porcentage_dbox.setEnabled(False)
@@ -124,7 +133,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             elevs = {}
             read_error = "Error reading files:\n\n"
             outside_grid, inside_grid = 0, 0
-            n_grid_cells = number_of_elements(self.gutils, self.grid)
    
             gid_indx = {}
             cells = self.gutils.execute("SELECT fid, col, row FROM grid").fetchall()
@@ -157,8 +165,6 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             for i, file in enumerate(lidar_files,1):
             
                 progress.setValue(i)
-                # advanceBar.setValue(i) 
-                 
                 n_commas =  0
                 n_spaces = 0             
  
@@ -214,63 +220,41 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                     dummy1, xpp, ypp, zpp, dummy2  = line.split(",")  
                                 else:
                                     break  
-                                 
-                                if self.use_sql_chbox.isChecked():
-                                    cell = self.gutils.grid_on_point(xpp, ypp)
-                                    if cell is not None:
-                                        if cell in elevs:
-                                            elevs[cell][0] += float(zpp)
-                                            elevs[cell][1] += 1
-                                        else:
-                                            elevs[cell] = [float(zpp), 1]
-                                        inside_grid += 1                         
-                                    else:
-                                        outside_grid += 1    
-                                else: 
-                                    col = int((float(xpp) - self.xMinimum)/self.cell_size) + 2
-                                    row = int((float(ypp) - self.yMinimum)/self.cell_size) + 2                                    
-                                    if (col, row) in gid_indx:
-                                        gid_indx[col, row][1] += float(zpp)
-                                        gid_indx[col, row][2] += 1
-                                        inside_grid += 1   
-                                    else:
-                                        outside_grid += 1    
+                                                               
+                                col = int((float(xpp) - self.xMinimum)/self.cell_size) + 2
+                                row = int((float(ypp) - self.yMinimum)/self.cell_size) + 2                                    
+                                if (col, row) in gid_indx:
+                                    gid_indx[col, row][1] += float(zpp)
+                                    gid_indx[col, row][2] += 1
+                                    inside_grid += 1   
+                                else:
+                                    outside_grid += 1    
                                     
                         except ValueError:
                             read_error += os.path.basename(file) + "\n\n"
 
-
-            self.uc.clear_bar_messages() 
-            self.uc.bar_info("Updating grid elevations...")                        
+            self.uc.clear_bar_messages()    
             statBar.removeWidget(statusLabel)
             statBar.removeWidget(advanceBar)    
             qApp.processEvents()   
-                                                                
+            self.uc.bar_info("Updating grid elevations...")   
+                                                           
             # Assign -9999 to all cell elevations prior to the assignment from LIDAR points: 
             self.gutils.execute("UPDATE grid SET elevation = -9999;")
             
             # Update cell elevations from LIDAR points:
             nope = []
-            if self.use_sql_chbox.isChecked():
-                if elevs:
-                    for cell, value in elevs.items():
-                        elevation = round(value[0]/value[1],4)
-                        self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elevation, cell))      
-                        
-                    # Get non-assigned cells:
-                    for i in range(1, n_grid_cells + 1):
-                        if i not in elevs:
-                            nope.append(i)
-                        else:
-                            pass                                            
-            else:                 
-                if inside_grid > 0:
-                    for gi in gid_indx.items():
-                        if gi[1][2] != 0:
-                            elevation = round(gi[1][1]/gi[1][2],4)
-                            self.gutils.execute("UPDATE grid SET elevation = ? WHERE fid = ?;", (elevation, gi[1][0]))         
-                        else:
-                            nope.append(gi[1][0])
+            cell_elev = [] 
+            
+            if inside_grid > 0:
+                qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+                for gi in gid_indx.items():
+                    if gi[1][2] != 0:
+                        elevation = round(gi[1][1]/gi[1][2],4)
+                        cell_elev.append((elevation, gi[1][0]))       
+                    else:
+                        nope.append((gi[1][0],gi[0][0], gi[0][1]))   # element, col, row
+                self.gutils.execute_many(qry, cell_elev)                                
 
             self.uc.clear_bar_messages()       
             QApplication.restoreOverrideCursor()    
@@ -285,15 +269,19 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                 self.uc.show_info(read_error)
 
             if nope:
-                QApplication.setOverrideCursor(Qt.WaitCursor)                                                     
-                render_grid_elevations(self.grid, True);                
+                QApplication.setOverrideCursor(Qt.WaitCursor) 
+                elevs =  [x[0] for x in cell_elev]
+                max_elev = max(elevs)  
+                min_elev = min(elevs)                
+                set_min_max_elevs(min_elev, max_elev)                                                 
+                render_grid_elevations2(self.grid, True, min_elev, max_elev);                
 
                 self.lyrs.lyrs_to_repaint = [self.grid]
                 self.lyrs.repaint_layers()
                 
-                # self.process_non_interpolated_cells(nope)   
+                self.process_non_interpolated_cells(nope, cell_elev)   
             
-            self.lyrs.refresh_layers()
+            # self.lyrs.refresh_layers()
             self.lyrs.zoom_to_all()
              
             QApplication.restoreOverrideCursor()
@@ -306,94 +294,40 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             return    
              
     def elapsed_time(self, start, end):   
-        et = round((end - start)/60.0 , 2)
         hours, rem = divmod(end - start, 3600)
         minutes, seconds = divmod(rem, 60)            
         et = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))        
-        return et
+        return et     
         
-        
-         
-    def  read_LIDAR_points(self):
-        n_commas =  0
-        n_spaces = 0             
-        
-        # See if comma or space delimited:
-        with open(file, "r") as f:
-            while True:    
-                line = f.readline()
-                line = line.replace('\t', '') 
-                if line.strip() != "": 
-                    n_commas = line.count(",")
-                    if n_commas == 0:
-                        n_spaces = len(line.split())
-                    break
-        if n_commas != 0 or n_spaces != 0:
-            # Read file: 
-        
-            with open(file, "r") as f1:
-                try:
-                    k = 0
-                    for line in f1: 
-                        line = line.replace('\t', '')                            
-                        if n_commas == 0: # No commas, values separated by spaces.
-                            values = line.split()   
-                            n_values = len(values)
-                            if n_values == 3:
-                                xpp, ypp, zpp  = values
-                            elif n_values == 4:
-                                xpp, ypp, zpp, dummy  = values  
-                            elif n_values == 5:
-                                dummy1, xpp, ypp, zpp, dummy2  = values  
-                            else:
-                                break          
-                        elif n_commas == 2:  # 3 columns.
-                            xpp, ypp, zpp  = line.split(",") 
-                        elif n_commas == 3:  # 4 columns.
-                            xpp, ypp, zpp, dummy  = line.split(",") 
-                        elif n_commas == 4:  # 5 columns.
-                             dummy1, xpp, ypp, zpp, dummy2  = line.split(",")  
-                        else:
-                            break  
-                          
-                        cell = self.gutils.grid_on_point(xpp, ypp)
-                        
-                        if cell is not None:
-                            if cell in elevs:
-                                elevs[cell][0] += float(zpp)
-                                elevs[cell][1] += 1
-                            else:
-                                elevs[cell] = [float(zpp), 1]
-                            inside_grid += 1                         
-                            
-                        else:
-                            outside_grid += 1
-                except ValueError:
-                    read_error += os.path.basename(file) + "\n\n"        
-        
-    def process_non_interpolated_cells(self, nope):  
+    def process_non_interpolated_cells(self, nope, assigned):  
         try:   
-            QApplication.restoreOverrideCursor()  
-            dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
-            dlg.label.setText("There are " + str(len(nope)) + " non-interpolated grid elements.")                
-            
+            adjacent = []
+            tot_adjacent = 0
             while True:
+                QApplication.restoreOverrideCursor()  
+                dlg = LidarOptionsDialog(self.con, self.iface, self.lyrs)
+                if nope:
+                    if adjacent:
+                        tot_adjacent += len(adjacent)
+                        dlg.label.setText("Elevations from LIDAR files assigned to " + '{0:,d}'.format(len(assigned)) + " cells," + 
+                                          "\n\nand " + '{0:,d}'.format(tot_adjacent) + " from adjacent cells."
+                                          "\n\nThere are still " + '{0:,d}'.format(len(nope)) + " non-interpolated cells.\n")
+                    else:
+                        dlg.label.setText("Elevations from LIDAR files assigned to " + '{0:,d}'.format(len(assigned)) + " cells." + 
+                                          "\n\nThere are still " + '{0:,d}'.format(len(nope)) + " non-interpolated cells.\n")                        
+                else:
+                    dlg.label.setText("Elevations from LIDAR files assigned to " + '{0:,d}'.format(len(assigned)) + " cells.")                                                       
+                
                 ok = dlg.exec_()
                 if not ok:
                     break
                 else:
-                    s = QSettings()
-                    lastDir = s.value("FLO-2D/lastGdsDir", "")
-                    qApp.processEvents()
                     
-                    shapefile = lastDir + "/Non-interpolated cells.shp"
-                    name = "Non-interpolated cells"
-                    lyr = QgsProject.instance().mapLayersByName(name)
-                    if lyr:
-                        QgsProject.instance().removeMapLayers([lyr[0].id()])                  
+                    qApp.processEvents()                
 
                     update_qry = "UPDATE grid SET elevation = ?  WHERE fid = ?;"
                     qry_values = []
+                    adjacent = []
                     
                     if dlg.interpolate_radio.isChecked():
                         
@@ -401,68 +335,29 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         
                         for this_cell in nope:
-                            xx, yy = self.cell_centroid(this_cell)                           
-            
-                            heights = []
                             
-                            # North cell:
-                            y = yy + self.cell_size
-                            x = xx
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # NorthEast cell
-                            y = yy + self.cell_size
-                            x = xx + self.cell_size
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # East cell:
-                            x = xx + self.cell_size
-                            y = yy
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # SouthEast cell:
-                            y = yy - self.cell_size
-                            x = xx + self.cell_size
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # South cell:
-                            y = yy - self.cell_size
-                            x = xx
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # SouthWest cell:
-                            y = yy - self.cell_size
-                            x = xx - self.cell_size
-                            heights.append(self.adjacent_elev(x, y))
-
-                            # West cell:
-                            y = yy
-                            x = xx - self.cell_size
-                            heights.append(self.adjacent_elev(x, y))
- 
-                            # NorthWest cell:
-                            y = yy + self.cell_size
-                            x = xx - self.cell_size
-                            heights.append(self.adjacent_elev(x, y))
-
-                            if len(heights) == 0:
-                                pass
-                            else:
-                                elev = round(sum(heights)/len(heights), 3)
-                                qry_values.append((elev, this_cell))
+                            xx = self.xMinimum + (this_cell[1]-2)*self.cell_size + self.cell_size/2
+                            yy = self.yMinimum + (this_cell[2]-2)*self.cell_size + self.cell_size/2                        
+                            
+                            avrg = adjacent_average_elevation(self.gutils, self.grid, xx, yy, self.cell_size)
+                            if avrg != -9999:
+                                qry_values.append((avrg, this_cell[0]))
+                                adjacent.append(this_cell[0])
+                                
+                        self.gutils.execute_many(update_qry, qry_values)   
                         
-                        cur = self.gutils.con.cursor()    
-                        cur.executemany(update_qry, qry_values)  
-                        self.gutils.con.commit()
-
-                        self.lyrs.repaint_layers()
-        
+                        nope = [i for i in nope if i[0] not in adjacent]
+                        
                         QApplication.restoreOverrideCursor()  
                         fin_time = time.time()  
                         
                         duration = time_taken(ini_time, fin_time)  
-                        
-                        self.uc.show_info("Elevation to " + str(len(nope)) + " non-interpolated cells were assigned from adjacent elevations." + 
+
+                        self.lyrs.lyrs_to_repaint = [self.grid]
+                        self.lyrs.repaint_layers()
+                                                                         
+                        self.uc.show_info("Elevation to " + '{0:,d}'.format(len(qry_values)) + " non-interpolated cells were assigned from adjacent elevations." + 
+                                          "\n\n There are still " + '{0:,d}'.format(len(nope)) + " non-interpolated cells."
                                            "\n\n(Elapsed time: " + duration + ")")
          
                     elif dlg.assign_radio.isChecked():
@@ -472,7 +367,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         
                         value = dlg.non_interpolated_value_dbox.value()
                         for this_cell in nope:
-                            qry_values.append((value, this_cell))
+                            qry_values.append((value, this_cell[0]))
                          
                         cur = self.gutils.con.cursor()    
                         cur.executemany(update_qry, qry_values) 
@@ -485,73 +380,12 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         
                         duration = time_taken(ini_time, fin_time)  
                          
-                        self.uc.show_info("Elevation " + str(value) + " was assigned to "   + str(len(nope)) +  " non-interpolated cells." +
-                                          "\n\n(Elapsed time: " + duration + ")")      
+                        self.uc.show_info("Elevation " + str(value) + " was assigned to "  + '{0:,d}'.format(len(nope)) + " non-interpolated cells." +
+                                          "\n\n(Elapsed time: " + duration + ")") 
+                        
+                        nope = []     
   
                     elif dlg.highlight_radio.isChecked():
- 
-                        # ini_time = time.time()    
-                        # QApplication.setOverrideCursor(Qt.WaitCursor)     
-                        #
-                        # # Define fields for feature attributes. 
-                        # fields = QgsFields()
-                        # fields.append(QgsField("cell", QVariant.Int))
-                        # fields.append(QgsField("elevation", QVariant.Int))
-                        #
-                        # mapCanvas = self.iface.mapCanvas()
-                        # crs = mapCanvas.mapSettings().destinationCrs()
-                        # QgsVectorFileWriter.deleteShapeFile(shapefile)                               
-                        # writer = QgsVectorFileWriter(shapefile, "system", fields, QgsWkbTypes.Point, crs, "ESRI Shapefile")
-                        #
-                        # if writer.hasError() == QgsVectorFileWriter.NoError:
-                            # # Add features:
-                            # features = []
-                            # for this_cell in nope:  
-                                # xx, yy = self.cell_centroid(this_cell)
-                                #
-                                # # add a feature
-                                # fet = QgsFeature()
-                                # fet.setFields(fields)
-                                # fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(xx, yy)))
-                                # fet.setAttributes([this_cell, -9999])
-                                # features.append(fet)
-                                #
-                            # writer.addFeatures(features)                            
-                            #
-                            # # Delete the writer to flush features to disk.
-                            # del writer
-                            #
-                            # vlayer = self.iface.addVectorLayer(shapefile, "", "ogr")
-                            #
-                            # symbol = QgsMarkerSymbol.createSimple({'name': 'square', 'color': 'black'})
-                            # vlayer.renderer().setSymbol(symbol)
-                            #
-                            # # Show the change.
-                            # vlayer.triggerRepaint()   
-                            #
-                            # QApplication.restoreOverrideCursor()
-                            # fin_time = time.time()     
-                            # duration = time_taken(ini_time, fin_time)  
-                            # self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
-                                              # "\n\n(Elapsed time: " + duration + ")")                                  
-                                              #
-                        # else:
-                            # QApplication.restoreOverrideCursor()
-                            #
-                            # answer = self.uc.customized_question("FLO-2D. Could not create shapefile",  writer.errorMessage(),
-                                                                 # QMessageBox.Cancel | QMessageBox.Retry |  QMessageBox.Help , 
-                                                                 # QMessageBox.Cancel,
-                                                                 # QMessageBox.Critical)
-                                                                 #
-                            # if answer ==  QMessageBox.Cancel:
-                                # pass
-                                #
-                            # elif answer ==  QMessageBox.Retry:
-                                # pass                                                                                                          
-                                #
-                            # elif answer ==  QMessageBox.Help:  
-                                # self.uc.show_info("Error while creating shapefile: " + shapefile + 
-                                                  # "\n\nIs the file or directory read only?")
 
                         ini_time = time.time()    
                         QApplication.setOverrideCursor(Qt.WaitCursor)    
@@ -564,45 +398,22 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         QApplication.restoreOverrideCursor()
                         fin_time = time.time()     
                         duration = time_taken(ini_time, fin_time)  
-                        self.uc.show_info(str(len(nope)) +  " non-interpolated cells are highlighted." +
+                        self.uc.show_info('{0:,d}'.format(len(nope)) +  " non-interpolated cells are highlighted." +
                                           "\n\n(Elapsed time: " + duration + ")")   
  
         except Exception as e: 
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 030521.0848: failed to process non-interpolated cells!", e)
             return   
-
-
    
-    def adjacent_elev(self, x, y):
-        
-        if False:
-            elev = 0
-            altitude = self.cell_elevation(x, y)
-            if altitude is not None:
-                if altitude[0] != -9999:
-                    elev =  altitude[0] 
-            return elev                              
-        else:
-            elev = 0
-            elem = self.gutils.grid_on_point(x, y)
-            if elem is not None:
-                altitude = self.gutils.execute("SELECT elevation FROM grid WHERE fid = ?;", (elem,)).fetchone()[0]
-                if altitude != -9999:
-                    elev = altitude
-            return elev
-                
-    def cell_centroid(self, cell):        
-        col, row = self.gutils.execute("SELECT col, row FROM grid WHERE fid = ?;",(cell,)).fetchone()
-        x = self.xMinimum + (col-2)*self.cell_size + self.cell_size/2
-        y = self.yMinimum + (row-2)*self.cell_size + self.cell_size/2
-        return x, y
-
-    def cell_elevation(self, x, y):
-        col = int((float(x) - self.xMinimum)/self.cell_size) + 2
-        row = int((float(y) - self.yMinimum)/self.cell_size) + 2                                    
-        elev = self.gutils.execute("SELECT elevation FROM grid WHERE col = ? AND row = ?;", (col, row,)).fetchone()
-        return elev     
+    def adjacent_elev(self, x, y):            
+        elev = 0
+        elem = self.gutils.grid_on_point(x, y)
+        if elem is not None:
+            altitude = self.gutils.execute("SELECT elevation FROM grid WHERE fid = ?;", (elem,)).fetchone()[0]
+            if altitude != -9999:
+                elev = altitude
+        return elev    
                                       
     def check_LIDAR_file(self, file):
         file_name, file_ext = os.path.splitext(os.path.basename(file))
@@ -655,20 +466,7 @@ class LIDARWorker(QObject) :
             self.gutils = GeoPackageUtils(self.con, self.iface)
             
     def run(self):
-        try:
-            # elevs = {}
-            # errors0 = []
-            # errors1 = []
-            # warnings = []
-            # read_error = "Error reading files:\n\n"
-            # accepted_files = []
-            # outside_grid, inside_grid = 0, 0
-            
-            
-            # cell_size = self.gutils.execute.get_cont_par("CELLSIZE")
-            # cell_size = float(cell_size)
-            
-            
+        try:            
             THREAD_progress_count = 0 
             n_files = len(self.lidar_files)             
             for i, file in enumerate(self.lidar_files,1): 
@@ -725,18 +523,6 @@ class LIDARWorker(QObject) :
                                 else:
                                     break  
                                     
-#                                 cell = self.gutils.grid_on_point(xpp, ypp)
-#                                   
-#                                 if cell is not None:
-#                                     if cell in elevs:
-#                                         elevs[cell][0] += float(zpp)
-#                                         elevs[cell][1] += 1
-#                                     else:
-#                                         elevs[cell] = [float(zpp), 1]
-#                                     inside_grid += 1                         
-#                                       
-#                                 else:
-#                                     outside_grid += 1
                         except ValueError:
                             read_error += os.path.basename(file) + "\n\n"
                             
@@ -769,6 +555,8 @@ class LidarOptionsDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
+           
+        self.highlight_radio.setVisible(False)
         
         self.interpolate_radio.clicked.connect(self.enable_non_value)
         self.assign_radio.clicked.connect(self.enable_non_value)

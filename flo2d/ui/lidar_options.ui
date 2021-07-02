@@ -31,7 +31,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Thre are xxxxx non-interpolated grid elements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Thre are xxxxx non-interpolated cells.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="wordWrap">
         <bool>true</bool>
@@ -41,7 +41,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>What would you like to do?</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;What would you like to do to the non-interpolated cells?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -80,7 +80,7 @@
        <item row="0" column="0">
         <widget class="QRadioButton" name="assign_radio">
          <property name="text">
-          <string>Assign this value to all non-interpolated elements</string>
+          <string>Assign this value to all non-interpolated cells</string>
          </property>
         </widget>
        </item>
@@ -98,15 +98,18 @@
      </item>
      <item row="2" column="0">
       <widget class="QRadioButton" name="highlight_radio">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
-        <string>Highlight non-interpolated grid  elements</string>
+        <string>Highlight non-interpolated cells</string>
        </property>
       </widget>
      </item>
      <item row="0" column="0">
       <widget class="QRadioButton" name="interpolate_radio">
        <property name="text">
-        <string>Interpolate from nearest grid elements</string>
+        <string>Interpolate from the 8 inmediate adjacent cells</string>
        </property>
        <property name="checked">
         <bool>true</bool>

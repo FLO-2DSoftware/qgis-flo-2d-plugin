@@ -43,7 +43,7 @@ from qgis.core import (
     QgsSingleSymbolRenderer,
     QgsArrowSymbolLayer,
     QgsVectorLayer,
-    QgsFillSymbol,
+    QgsFillSymbol
 )
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
