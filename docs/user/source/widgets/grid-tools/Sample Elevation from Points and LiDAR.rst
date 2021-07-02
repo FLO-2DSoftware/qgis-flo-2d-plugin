@@ -1,5 +1,5 @@
-Sample Elevation Data from Points and LiDAR
-===========================================
+Sample Elevation from Points and LiDAR
+=======================================
 
 
 Load Elevation Points

@@ -1,5 +1,5 @@
-Sample Roughness Data
-=====================
+Sample Roughness
+================
 
 Overview
 --------

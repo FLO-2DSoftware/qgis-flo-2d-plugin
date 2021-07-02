@@ -1,5 +1,5 @@
-Convert User Layers to Schematic Layers
-=======================================
+User to Schematic Converter
+============================
 
 This button may help convert user layers to schematic layers.
 It’s functionality is limited to very simple projects.

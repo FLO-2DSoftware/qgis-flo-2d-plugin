@@ -11,6 +11,6 @@ Multi-Resolution Land Characteristics Consortium, 2011, National Land Cover Data
 National Oceanic and Atmospheric Administration, 2017, NOAA Atlas 14 Precipitation Frequency Estimates in GIS Compatible Format,
 https://hdsc.nws.noaa.gov/hdsc/pfds/pfds_gis.html.
 
-National Oceanic and Atmospheric Administration, 2017, NOAA NEXRAD Archive, https://www.ncdc.noaa.gov/nexradinv/.
+National Oceanic and Atmospheric Administration, 2017, NOAA NEXRAD Archive, https://www.ncdc.noaa.gov/nexradinv.
 
 United States Department of Agriculture, 2017, Web Soil Survey, https://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm.

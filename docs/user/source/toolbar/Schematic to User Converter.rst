@@ -1,5 +1,5 @@
-Schematic Layers
-=================
+Schematic to User Converter
+===========================
 
 Convert Schematic Layers to User Layers
 ----------------------------------------

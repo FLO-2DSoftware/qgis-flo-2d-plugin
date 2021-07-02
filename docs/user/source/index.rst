@@ -40,41 +40,41 @@ Table of Contents
    /toolbar/Imported Selected Component Files
    /toolbar/Export Project
    /toolbar/Import RAS Channel
-   /toolbar/Setup Control Variables
+   /toolbar/Control Variables
    /toolbar/Schematic to User Converter
    /toolbar/User to Schematic Converter
    /toolbar/Channel Profile
    /toolbar/FLO-2D Info Tool
    /toolbar/Grid Info Tool
    /toolbar/Levee Tool
-   /toolbar/Walls
+   /toolbar/Levee Tool Walls
    /toolbar/Hazus Tool
-   /toolbar/Debug
+   /toolbar/Debug Tool
 
 .. toctree::
    :maxdepth: 1
    :caption: Widgets (Grid Tools):
 
    /widgets/grid-tools/Create a Grid
-   /widgets/grid-tools/Sample Elevation Data GDAL Grid Method
-   /widgets/grid-tools/Sample Elevation from Points
    /widgets/grid-tools/Sample Elevation from Raster
-   /widgets/grid-tools/Elevation Correction from Polygons
-   /widgets/grid-tools/Sample Roughness Data
+   /widgets/grid-tools/Sample Elevation GDAL Grid Method
+   /widgets/grid-tools/Sample Elevation from Points and LiDAR
+   /widgets/grid-tools/Elevation Correction Tool
+   /widgets/grid-tools/Sample Roughness
    /widgets/grid-tools/Area and Width Reduction
-   /widgets/grid-tools/Spatially Variable
+   /widgets/grid-tools/Spatial TOL
    /widgets/grid-tools/Spatial Limiting Froude
-   /widgets/grid-tools/Spatial Shallow
+   /widgets/grid-tools/Spatial Shallow n
    /widgets/grid-tools/Gutters
-   /widgets/grid-tools/No Exchange Channel Cells
-   /widgets/grid-tools/Assign Results from Points Layers
+   /widgets/grid-tools/No Exchange Channel
+   /widgets/grid-tools/Hazus Layers
 
 .. toctree::
    :maxdepth: 1
    :caption: Widgets:
 
    /widgets/profile-tool/Profile Tool
-   /widgets/user-cross-sections-editor/User Cross Sections Editor
+   /widgets/cross-sections-editor/Cross Sections Editor
    /widgets/boundary-condition-editor/Boundary Condition Editor
    /widgets/initial-condition-editor/Initial Condition Editor
    /widgets/rain-editor/Rain Editor

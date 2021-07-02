@@ -1,5 +1,5 @@
-Sample Elevation Data from Raster
-=================================
+Sample Elevation from Raster
+=============================
 
 To interpolate the elevation to a grid layer from a raster layer, use
 the *Sampling Grid Elevation from Raster Layer* icon.

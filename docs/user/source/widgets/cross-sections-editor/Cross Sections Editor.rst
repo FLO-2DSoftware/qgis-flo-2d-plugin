@@ -1,5 +1,5 @@
-User Cross Sections Editor
-==========================
+Cross Sections Editor
+======================
 
 This section will cover many of the tools available to develop channels for FLO-2D.
 This is not a step-by-step procedure.
