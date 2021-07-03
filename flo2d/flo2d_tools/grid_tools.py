@@ -2553,8 +2553,6 @@ def render_grid_elevations(grid_lyr, show_nodata):
         else:
             QApplication.restoreOverrideCursor()
             raise Flo2dError("Unable to load style {}".format(style_path2))
-<<<<<<< HEAD
-=======
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)           
 
@@ -2649,27 +2647,3 @@ def render_grid_elevations2(grid_lyr, show_nodata, mini, maxi):
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)            
         
-     
-                            
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
->>>>>>> refs/heads/LIDAR_adjacent_elevations
