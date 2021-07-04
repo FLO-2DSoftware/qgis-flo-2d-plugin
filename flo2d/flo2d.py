@@ -1629,7 +1629,7 @@ class Flo2D(object):
             self.uc.bar_info("HEC-RAS geometry data imported!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Could not read HEC-RAS file!")
+            self.uc.bar_warn("ERROR 030721.0518: Could not read HEC-RAS file!")
         QApplication.restoreOverrideCursor()
 
     def load_layers(self):
