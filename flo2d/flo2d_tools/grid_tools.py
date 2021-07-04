@@ -914,6 +914,24 @@ def calculate_spatial_variable_from_lines(grid, lines, request=None):
                 pass
     
 
+def calculate_gutter_variable_from_lines(grid, lines):
+    """
+    Generator which calculates values based on lines representing values.
+    """
+    allfeatures, index = spatial_index(lines)
+    features = grid.getFeatures()
+    for feat in features:  # for each grid feature
+        geom = feat.geometry()  # cell square (a polygon)
+        fids = index.intersects(geom.boundingBox())  # c
+        for fid in fids:
+            f = allfeatures[fid]
+            fgeom = f.geometry()
+            inter = fgeom.intersects(geom)
+            if inter is True:
+                centroid = geom.centroid()
+                yield (f.id(), feat.id())
+            else:
+                pass
 
 def raster2grid(grid, out_raster, request=None):
     """
@@ -1549,7 +1567,7 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
         gutils.batch_execute(insert_cells_from_polygons)
 
     if lines:
-        for row in calculate_spatial_variable_from_lines(grid, lines):
+        for row in calculate_gutter_variable_from_lines(grid, lines):
             insert_cells_from_lines.append(row)
         gutils.batch_execute(insert_cells_from_lines)
 

@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.27
+version=0.10.28
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,10 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
-<p>0.10.27
+ <p>0.10.28
+  - User gutter lines sampled into gutter cells table.
+ <p>0.10.27
   - Error message while reading RAS .g01 file.
   - Render grid elevations after LIDAR interpolation.
-  - Fix non-interpolated LIDAR cell interpolation from neighbor.
+  - Fix non-interpolated cell interpolation from neighbor.
   - Fix create grid from polygon bug.
   - Update documentation pages.
   - Link help button to documentation pages on github.
