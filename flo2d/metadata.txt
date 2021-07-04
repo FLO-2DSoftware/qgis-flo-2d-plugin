@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.26
+version=0.10.27
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+<p>0.10.27
+  - Error message while reading RAS .g01 file.
+  - Fix non-interpolated LIDAR cell interpolation from neighbor.
+  - Fix create grid from polygon bug.
+  - Update documentation pages.
+  - Link help button to documentation pages on github.
  <p>0.10.26
   - Render grid non-interpolated elevations.
   - Add 'col' and 'row' fields to grid layer.
