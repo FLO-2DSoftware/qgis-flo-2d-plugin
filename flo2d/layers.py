@@ -94,7 +94,7 @@ class Layers(object):
                 (
                     "user_left_bank",
                     {
-                        "name": "Left Bank Line",
+                        "name": "Left Bank Lines",
                         "sgroup": "User Layers",
                         "styles": ["user_lbank.qml"],
                         "attrs_edit_widgets": {},
@@ -105,7 +105,7 @@ class Layers(object):
                 (
                     "user_right_bank",
                     {
-                        "name": "Right Bank Line",
+                        "name": "Right Bank Lines",
                         "sgroup": "User Layers",
                         "styles": ["user_rbank.qml"],
                         "attrs_edit_widgets": {},
@@ -139,7 +139,7 @@ class Layers(object):
                 (
                     "user_struct",
                     {
-                        "name": "Structure lines",
+                        "name": "Structure Lines",
                         "sgroup": "User Layers",
                         "styles": ["user_struct.qml"],
                         "attrs_edit_widgets": {},
@@ -371,7 +371,7 @@ class Layers(object):
                 (
                     "chan",
                     {
-                        "name": "Channel Segments (left Banks)",
+                        "name": "Channel Segments (Left Banks)",
                         "sgroup": "Schematic Layers",
                         "styles": ["chan.qml"],
                         "attrs_edit_widgets": {},
@@ -480,7 +480,7 @@ class Layers(object):
                 (
                     "all_schem_bc",
                     {
-                        "name": "BC cells",
+                        "name": "BC Cells",
                         "sgroup": "Schematic Layers",
                         "styles": ["all_schem_bc.qml"],
                         "attrs_edit_widgets": {},
@@ -595,7 +595,7 @@ class Layers(object):
                     "infil_areas_green",
                     {
                         "name": "Areas Green Ampt",
-                        "sgroup": "Infiltration layers",
+                        "sgroup": "Infiltration Layers",
                         "styles": ["infil_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
