@@ -493,7 +493,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 chan_conf_sql += [(geom2, i, 1, gid2)]
             for i, row in enumerate(noexchange, 1):
                 gid = row[-1]
-                geom = self.grid_centroids([gid])[0]
+                geom = self.grid_centroids([gid])[gid]
                 chan_e_sql += [(self.build_buffer(geom, self.buffer),)]
                 elems_e_sql += [(i, gid)]
 
