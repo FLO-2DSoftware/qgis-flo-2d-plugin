@@ -921,30 +921,34 @@ class ChannelsSchematizer(GeoPackageUtils):
         self.update_banks_elev()
 
     def update_banks_elev(self):
-        sel_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
-        update_table = {"T": "user_chan_t", "R": "user_chan_r"}
-        elems = {}
-        for feat in self.user_xsections_lyr.getFeatures():
-            fid = feat["fid"]
-            typ = feat["type"]
-            if typ not in ["T", "R"]:
-                continue
-            line_geom = feat.geometry().asPolyline()
-            start = line_geom[0]
-            end = line_geom[-1]
-            lgid = self.grid_on_point(start.x(), start.y())
-            rgid = self.grid_on_point(end.x(), end.y())
-            lelev = self.execute(sel_qry, (lgid,)).fetchone()[0]
-            relev = self.execute(sel_qry, (rgid,)).fetchone()[0]
-            elems[fid] = (lelev, relev, typ)
-
-        update_qry = """UPDATE {0} SET {1} = ? WHERE user_xs_fid = ? AND {1} IS NULL;"""
-        for fid, (lelev, relev, typ) in list(elems.items()):
-            table = update_table[typ]
-            cur = self.con.cursor()
-            cur.execute(update_qry.format(table, "bankell"), (lelev, fid))
-            cur.execute(update_qry.format(table, "bankelr"), (relev, fid))
-        self.con.commit()
+        try:
+            sel_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
+            update_table = {"T": "user_chan_t", "R": "user_chan_r"}
+            elems = {}
+            for feat in self.user_xsections_lyr.getFeatures():
+                fid = feat["fid"]
+                typ = feat["type"]
+                if typ not in ["T", "R"]:
+                    continue
+                line_geom = feat.geometry().asPolyline()
+                start = line_geom[0]
+                end = line_geom[-1]
+                lgid = self.grid_on_point(start.x(), start.y())
+                rgid = self.grid_on_point(end.x(), end.y())
+                lelev = self.execute(sel_qry, (lgid,)).fetchone()[0]
+                relev = self.execute(sel_qry, (rgid,)).fetchone()[0]
+                elems[fid] = (lelev, relev, typ)
+    
+            update_qry = """UPDATE {0} SET {1} = ? WHERE user_xs_fid = ? AND {1} IS NULL;"""
+            for fid, (lelev, relev, typ) in list(elems.items()):
+                table = update_table[typ]
+                cur = self.con.cursor()
+                cur.execute(update_qry.format(table, "bankell"), (lelev, fid))
+                cur.execute(update_qry.format(table, "bankelr"), (relev, fid))
+            self.con.commit()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error("ERROR 080721.1126: Error while updating bank elevations around (left, right) cells: (" + str(lgid) + ", " + str(rgid) + ")", e)            
 
     def set_xs_features(self):
         """
@@ -1047,7 +1051,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             xs_start = QgsPointXY(first_xs.geometry().vertexAt(0))
 
             if self.grid_on_point(line_start.x(), line_start.y()) != self.grid_on_point(xs_start.x(), xs_start.y()):
-                msg = "WARNING 060319.1617: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!"
+                msg = "WARNING 060319.1829: Left bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!"
                 msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
                 self.uc.show_warn(msg)
                 raise Exception
@@ -1080,7 +1084,7 @@ class ChannelsSchematizer(GeoPackageUtils):
                 xs_end = QgsPointXY(first_xs.geometry().vertexAt(last_index))
 
                 if self.grid_on_point(line_start.x(), line_start.y()) != self.grid_on_point(xs_end.x(), xs_end.y()):
-                    msg = "WARNING 060319.1617: Right bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!"
+                    msg = "WARNING 060319.1823: Right bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!"
                     msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
                     self.uc.show_warn(msg)
                     raise Exception

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
-    <height>583</height>
+    <width>800</width>
+    <height>656</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,7 +32,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="usesScrollButtons">
       <bool>false</bool>
@@ -67,6 +67,9 @@
          </property>
          <property name="title">
           <string>Time Control and Plot Variables</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <property name="flat">
           <bool>false</bool>
@@ -343,6 +346,9 @@
          </property>
          <property name="title">
           <string>Global Data Modification</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_20">
           <item row="0" column="0">
@@ -680,6 +686,9 @@
          <property name="title">
           <string>Switches</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
          <layout class="QGridLayout" name="gridLayout_8">
           <item row="0" column="1" rowspan="2">
            <widget class="QGroupBox" name="physicalProcessesSwitchesGroup">
@@ -691,6 +700,9 @@
             </property>
             <property name="title">
              <string>Physical Processes Switches</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
             <layout class="QGridLayout" name="gridLayout_9">
              <item row="0" column="0">
@@ -855,6 +867,9 @@
             <property name="title">
              <string>Conveyance Structure Switches</string>
             </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+            </property>
             <layout class="QGridLayout" name="gridLayout_5">
              <item row="0" column="0">
               <widget class="QCheckBox" name="IHYDRSTRUCT">
@@ -917,6 +932,9 @@
             </property>
             <property name="title">
              <string>System Components Switches</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
             <property name="checkable">
              <bool>false</bool>
@@ -1023,6 +1041,9 @@
            </property>
            <property name="title">
             <string>Floodplain/Channel Display Options</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
            </property>
            <layout class="QGridLayout" name="gridLayout_34">
             <item row="0" column="1">
@@ -1220,6 +1241,9 @@
            <property name="title">
             <string>Time Lapse Output</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           </property>
            <layout class="QGridLayout" name="gridLayout_24">
             <item row="0" column="0">
              <spacer name="horizontalSpacer_4">
@@ -1380,7 +1404,7 @@
           <string>Numerical Stability Parameters</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_32">
           <item row="0" column="0">
@@ -1539,7 +1563,7 @@
           <string>Courant Numbers</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <layout class="QGridLayout" name="gridLayout_38">
           <item row="0" column="0">

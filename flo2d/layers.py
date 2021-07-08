@@ -605,7 +605,7 @@ class Layers(object):
                     "infil_areas_scs",
                     {
                         "name": "Areas SCS",
-                        "sgroup": "Infiltration layers",
+                        "sgroup": "Infiltration Layers",
                         "styles": ["infil_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -615,7 +615,7 @@ class Layers(object):
                     "infil_areas_horton",
                     {
                         "name": "Areas Horton",
-                        "sgroup": "Infiltration layers",
+                        "sgroup": "Infiltration Layers",
                         "styles": ["infil_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -625,7 +625,7 @@ class Layers(object):
                     "infil_areas_chan",
                     {
                         "name": "Areas for Channels",
-                        "sgroup": "Infiltration layers",
+                        "sgroup": "Infiltration Layers",
                         "styles": ["infil_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
