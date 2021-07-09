@@ -86,7 +86,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 feat = next(self.grid.getFeatures(QgsFeatureRequest(fid)))
                 cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
-                elev =  "{:10.3f}".format(feat["elevation"])
+                elev =  "{:10.4f}".format(feat["elevation"]).strip()
+                elev = elev if float(elev) > -9999 else "-9999"
                 n = feat["n_value"]
                 if not n:
                     n = "{} (default)".format(self.mann_default)
@@ -211,7 +212,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 center_canvas(self.iface, x, y)
                                 zoom(self.iface, 0.4)
                                 self.mannEdit.setText(str(feat["n_value"]))
-                                self.elevEdit.setText(str(feat["elevation"]))
+                                self.elevEdit.setText(str(feat["elevation"])).strip()
                                 self.cellEdit.setText(str(sqrt(feat.geometry().area())))
                                 self.n_cells = n_cells
                                 self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(n_cells) + "   ")                                
