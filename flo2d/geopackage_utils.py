@@ -19,7 +19,6 @@ def connection_required(fn):
     """
     Checking for active connection object.
     """
-
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         if not self.con:
@@ -27,9 +26,7 @@ def connection_required(fn):
             return
         else:
             return fn(self, *args, **kwargs)
-
     return wrapper
-
 
 def spatialite_connect(*args, **kwargs):
     # copied from https://github.com/qgis/QGIS/blob/master/python/utils.py#L587

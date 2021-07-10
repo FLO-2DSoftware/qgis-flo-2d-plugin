@@ -24,7 +24,6 @@ from ..user_communication import UserCommunication
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations, render_grid_elevations2
 
-
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
 class GridInfoWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
@@ -127,13 +126,17 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.render_elevations_chbox.setChecked(True)
 
     def render_elevations(self): 
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return        
         elevs = [x[0]  for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
-        mini = self.second_smallest(elevs) 
-        maxi = max(elevs)       
-        render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, maxi) 
-        set_min_max_elevs(mini, maxi) 
-        self.lyrs.lyrs_to_repaint = [self.grid]
-        self.lyrs.repaint_layers()
+        if elevs:
+            mini = self.second_smallest(elevs) 
+            maxi = max(elevs)       
+            render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, maxi) 
+            set_min_max_elevs(mini, maxi) 
+            self.lyrs.lyrs_to_repaint = [self.grid]
+            self.lyrs.repaint_layers()
 
     def second_smallest(self,numbers):
         s = set()
@@ -172,7 +175,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.update_plot()
 
     def create_plot(self):
-
         self.plot.clear()
         if self.plot.plot.legend is not None:
             self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
