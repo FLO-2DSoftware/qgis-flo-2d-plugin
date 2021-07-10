@@ -183,7 +183,7 @@ Import Realtime Rainfall
 
 .. image:: ../../img/Rain-Editor/rained014.png
 
-The plugin requests the directory where the NEXRAD data is stored.
+The Plugin requests the directory where the NEXRAD data is stored.
 
 3. Navigate to the correct directory and click Select Folder.
 

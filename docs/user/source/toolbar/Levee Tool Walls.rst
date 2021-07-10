@@ -87,7 +87,7 @@ Troubleshooting
    Levee Tool will analyze duplicate levees and remove the levee with
    the lowest crest elevation. This process is automatic. The duplicate
    levee data is saved to the Layers List so it can be analyzed for
-   potential modifications.  The plugin should remove duplicate levees
+   potential modifications.  The Plugin should remove duplicate levees
    automatically.
 
 .. image:: ../img/Walls/walls7.png
@@ -95,7 +95,7 @@ Troubleshooting
 2. Crest elevation is another potential source for a fatal error for
    FLO-2D. If a levee or wall crest is lower than an adjacent grid
    elevation, the FLO-2D engine will stop with a fatal error message and
-   the erroneous elevations are reported to the error.chk file. The plugin
+   the erroneous elevations are reported to the error.chk file. The Plugin
    can validate elevations using the debug options. See Debug section
    for instructions.
 
@@ -113,7 +113,7 @@ Troubleshooting
 
 5. If a levee line is exactly aligned with a grid element side or
    corner, the following error will appear. Bear in mind that the On
-   line 1675 may change with new versions of the plugin.
+   line 1675 may change with new versions of the Plugin.
 
 .. image:: ../img/Walls/walls10.png
 

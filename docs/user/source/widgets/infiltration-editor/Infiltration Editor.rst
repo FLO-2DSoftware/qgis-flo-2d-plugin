@@ -119,7 +119,7 @@ The land use data can account for vegetative cover and impervious cover.
 4. Fill the form and  
    click OK.
 
-5. The plugin will  
+5. The Plugin will
    assign spatially variable infiltration data to each cell using an intersection and weighted average.
 
 .. image:: ../../img/Infiltration-Editor/Infilt015.png

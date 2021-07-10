@@ -9,7 +9,7 @@ The polygons represent roughness associated with different LandUse categories su
 
 .. image:: ../../img/Sample-Roughness-Data/img2.png
 
-The plugin has 4 methods for calculating roughness.
+The Plugin has 4 methods for calculating roughness.
 Use the Sampling Manning’s tool to access the calculator.
 
 1. Click the *Sample Manning’s icon*

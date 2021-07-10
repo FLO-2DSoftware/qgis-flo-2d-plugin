@@ -446,17 +446,17 @@ Alternate Bank and Channel Profile Tool
 ----------------------------------------
 
 A secondary method can be used to create the cross section data.
-This example will sample the map for station-elevation data using a plugin called Profile Tool.
+This example will sample the map for station-elevation data using a Plugin called Profile Tool.
 This tool is not the preferred method but it has some handy features that make it useful.
 
 1. Find and install  
-   the plugin Profile Tool.
+   the Plugin Profile Tool.
 
 2. Select the first cross section in the Cross Section Editor widget.
    This activates the cross section table and plot.
 
 3. Click the Profile  
-   button to open the Profile Tool plugin,
+   button to open the Profile Tool Plugin,
 
 4. Click the add  
    layer button and select the Elevation Raster layer.

@@ -128,7 +128,7 @@ levee.
 1. Click the Levee Elevation Tool icon and select User elevation points
    within search radius and click OK.
 
-2. The plugin will schematize the Levee Lines layer, set the elevation
+2. The Plugin will schematize the Levee Lines layer, set the elevation
    data for the crest and apply a correction if used.
 
 3. The levee crest
@@ -152,7 +152,7 @@ Levee from Levee User Lines
 1. Click the Levee Elevation Tool icon and select User elevation points
    within search radius and click OK.
 
-2. The plugin will schematize the Levee Lines layer, set the elevation
+2. The Plugin will schematize the Levee Lines layer, set the elevation
    data for the crest and apply a correction if used.
 
 3. The levee crest

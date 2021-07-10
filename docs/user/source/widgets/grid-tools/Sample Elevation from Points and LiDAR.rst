@@ -109,7 +109,7 @@ category.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample012.png
 
-7. The plugin will fill this data with a nearest neighbor patch.
+7. The Plugin will fill this data with a nearest neighbor patch.
    Select the first option and click ok to fill the missing data.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample013.png

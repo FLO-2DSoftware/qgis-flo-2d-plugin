@@ -28,7 +28,7 @@ changelog=
   - Add 'col' and 'row' fields to grid layer.
   - Fix XS trapezoidal and rectangular plots.
  <p>0.10.25
-  - XS Editor: Channel interpolation imports: Imports CHAN.DAT, XSSEC.DAT, and now CHANBANK.DAT
+  - XS Editor: Channel interpolation imports: Imports CHAN.DAT, XSEC.DAT, and now CHANBANK.DAT
  <p>0.10.24
   - LIDAR 2 progress bars updated and forced to be displayed.
   - Add total number of cells to FLO-2D Grid Info panel.
