@@ -92,7 +92,7 @@ To perform the calculation, use the Area Reduction calculator.
 |rained024|\ |rained025|
 
 1. Click the
-   *Area Reduction* button.
+   Area Reduction button.
 
 2. Fill the
    form and click OK.
@@ -117,14 +117,12 @@ NEXRAD rainfall data and rainfall gage data are available from NOAA.
 The realtime rainfall calculator imports the \*.ASC files, interpolates them to the grid and creates the rainfall data in two formats.
 The formats are RAINCELL.DAT and RAINCELL.HD5.
 
-*\**Important Note**\**
+**Important Note**
 
-*The RAINCELL.DAT file is a mega data file.
+**The RAINCELL.DAT file is a mega data file.
 It is not recommended to import this file into a QGIS – FLO-2D project when importing GDS files.
 It is recommended to use a Skeleton Project with only grid data and no other components loaded to perform the RAINCELL.DAT or RAINCELL.HDF5 data
-files.*
-
-*\**Important Note**\**
+files.**
 
 Rainfall Catalog
 ----------------
@@ -139,21 +137,19 @@ In this case the time interval is 5 minutes.
 The rainfall catalog is a text file that contains specific information about the layout and timing of the data.
 The first line of data is a control line that sets up the timing of the storm and the interval.
 
-**Line 1: 9/9/2013 04:05 9/9/2013 23:55 5 239**
+Line 1: 9/9/2013 04:05 9/9/2013 23:55 5 239
 
-**Line 1: Start Time, End Time, Time Interval, \*.asc File Count**
+Line 1: Start Time, End Time, Time Interval, \*.asc File Count
 
-*\**Important Note**\**
+**Important Note**
 
-*Line 2 of the \*.rfc isn’t necessary.
+**Line 2 of the \*.rfc isn’t necessary.
 The Rainfall calculator will use all \*.ASC files in the project directory.
-Make sure they are named in ascending order by time.*
+Make sure they are named in ascending order by time.**
 
-*Time = 0 is not necessary.
+**Time = 0 is not necessary.
 The engine will start the simulation at time and rainfall = zero.
-The rainfall data will interpolate from time = 0 rainfall = 0 to the first interval.*
-
-*\**Important Note**\**
+The rainfall data will interpolate from time = 0 rainfall = 0 to the first interval.**
 
 .. image:: ../../img/Rain-Editor/rained010.png
 

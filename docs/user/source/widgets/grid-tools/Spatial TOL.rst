@@ -15,14 +15,14 @@ Divide this volume by the surface area of a grid element to determine the TOL de
 Digitize or Copy Data
 ---------------------
 
-1. Click the *Tolerance Areas* layer
+1. Click the Tolerance Areas layer
    and use the editor tool to digitize the outline of the building roof area.
    This is the area that collects water.
 
 .. image:: ../../img/Spatially-Variable/spatia002.png
 
-2. The roof polygons can be imported to a separate layer and pasted into the *Tolerance Areas* layer.
-   In this instance, the polygons were copied from the *Blocked Areas* layer.
+2. The roof polygons can be imported to a separate layer and pasted into the Tolerance Areas layer.
+   In this instance, the polygons were copied from the Blocked Areas layer.
 
 In this example the LID TOL value is unknown and must be calculated from the cistern volume and the collection area.
 Each house has a theoretical 50-gallon rain collection cistern.
@@ -34,13 +34,13 @@ Define the Tolerance Attribute
 ------------------------------
 
 3. Open the attribute
-   table of the *Tolerance Areas* layer.
+   table of the Tolerance Areas layer.
 
 .. image:: ../../img/Spatially-Variable/spatia003.png
 
 
-4. On the attribute table window, click on the *Toggle Editing* icon, change the field to TOL, add the command to set the TOL depth (6.68 / $area) and
-   click *Update All*.
+4. On the attribute table window, click on the Toggle Editing icon, change the field to TOL, add the command to set
+   the TOL depth (6.68 / $area) and click Update All.
 
 5. Save and close the editor tool and close the attribute table.
    This process converted the volume of the cistern to a depth over the area of each polygon.
@@ -58,7 +58,7 @@ Sample Data
 
 
 2. Once the
-   process is complete, Click *OK* to complete TOL the assignment.
+   process is complete, Click OK to complete TOL the assignment.
 
 .. image:: ../../img/Spatially-Variable/spatia006.png
 
@@ -69,9 +69,9 @@ Troubleshooting
 ----------------
 
 1. Create the tolerance
-   polygons if they are missing from the *Tolerance Areas* layer.
+   polygons if they are missing from the Tolerance Areas layer.
 
-2. If the *Grid* layer
+2. If the Grid layer
    is empty, create a grid and try again.
 
 3. If a Python error appears during the sampling process, the attribute table may be missing.

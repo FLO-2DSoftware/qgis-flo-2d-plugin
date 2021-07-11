@@ -7,11 +7,11 @@ Load Elevation Points
 
 .. image:: ../../img/Buttons/addlayer.png
 
-1. Click on *Layer*>\ *Add Layers* >\ *Add Delimited Text Layer* or click on the *Open Data Source Manager* icon and navigate to the *Delimited Text* tab.
+1. Click on Layer>\ Add Layers >\ Add Delimited Text Layer or click on the Open Data Source Manager icon and navigate to the Delimited Text tab.
    Add the delimited text data, following the figure below.
 
 2. There are many options to help sort the data.
-   Select the options that reflect the desired dataset and click *add.*
+   Select the options that reflect the desired dataset and click add.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample002.png
 
@@ -24,7 +24,7 @@ The data has a default style so it isn’t very easy to view elevation.
    For example, elevation data that has a large range can wash out the detail in local areas of the project area.
 
 2. Double
-   click the layer to open the *Properties* window and select the style tab to perform the following.
+   click the layer to open the Properties window and select the style tab to perform the following.
 
 3. Assign
    graduated colors;
@@ -48,8 +48,8 @@ The data has a default style so it isn’t very easy to view elevation.
 Sample Data
 -----------
 
-1. Click the *Assign Elevation
-   to Grid from Points Layer* icon to interpolate the elevation data to the grid.
+1. Click the Assign Elevation
+   to Grid from Points Layer icon to interpolate the elevation data to the grid.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample005.png
 
@@ -66,12 +66,12 @@ Sample Data
 
 
 5. Once the calculation is complete, the following dialog is displayed.
-   Click *OK* to continue.
+   Click OK to continue.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample008.png
 
 6. The elevation
-   data is saved to the *Grid* Layer in the *Schematic Layers* group.
+   data is saved to the Grid Layer in the Schematic Layers group.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample009.png
 
@@ -83,7 +83,7 @@ It applies a simple average to the point within a cell and can patch missing LiD
 category.
 
 1. Click the
-   *Assign Elevation to Grid from Points Layer* icon to interpolate the elevation data to the grid.
+   Assign Elevation to Grid from Points Layer icon to interpolate the elevation data to the grid.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample005.png
 
@@ -120,8 +120,8 @@ Troubleshooting
 1. If the elevation data is not visible, check the CRS.
    It may be necessary to transform the data into the correct CRS.
 
-2. If the elevation layer does not show up in the *Sample Elevation Dialog* box, make sure it is a point layer and that it is checked on in the *Layers*
-   List.
+2. If the elevation layer does not show up in the Sample Elevation Dialog box, make sure it is a point layer and that
+   it is checked on in the Layers List.
 
 3. If a Python error appears during the sampling, it may indicate that there is no attribute table.
    Save and reload the project into QGIS and try again.

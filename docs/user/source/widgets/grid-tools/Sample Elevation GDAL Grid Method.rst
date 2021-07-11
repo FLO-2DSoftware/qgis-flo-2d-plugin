@@ -9,10 +9,10 @@ To interpolate the elevation to a grid layer from a using the GDAL Grid method.
 Sample Elevation
 ----------------
 
-1. Click the *Sampling grid elevation from point or raster file button* and enter the required data in the dialog fields.
+1. Click the Sampling grid elevation from point or raster file button and enter the required data in the dialog fields.
    As shown below.
 
-2. Select the *Fill NODATA* option to set the elevation of empty grid elements from neighbors.
+2. Select the Fill NODATA option to set the elevation of empty grid elements from neighbors.
 
 3. Click
    Run.

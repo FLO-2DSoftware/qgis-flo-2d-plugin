@@ -33,14 +33,14 @@ Either way, this information will serve as a template for the data needed to cre
 
 The shapefiles can be described as follow:
 
--  **Lesson3Outfalls.shp** is a point shapefile that contains the outfalls.
+-  Lesson3Outfalls.shp is a point shapefile that contains the outfalls.
 
--  **Lesson3Conduits.shp** is a line shapefile that contains the conduits system.
+-  Lesson3Conduits.shp is a line shapefile that contains the conduits system.
 
--  **Lesson3InletsJunctions.shp** is a point shapefile that contains the Inlets, pumps, and Junctions.
+-  Lesson3InletsJunctions.shp is a point shapefile that contains the Inlets, pumps, and Junctions.
 
-The following data must be available in the shapefile to create the **SWMM.INP** files and the associated storm drain data files: **SWMMFLO.DAT**,
-**SWMMOUTF.DAT** and **SWMMFLORT.DAT**.
+The following data must be available in the shapefile to create the SWMM.INP files and the associated storm drain data files: SWMMFLO.DAT,
+SWMMOUTF.DAT and SWMMFLORT.DAT.
 
 .. image:: ../../img/Storm-Drain/Storm005.png
 

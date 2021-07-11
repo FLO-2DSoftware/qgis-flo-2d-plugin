@@ -53,7 +53,7 @@ Add Walls to Levee Lines
  
 
 2. Click the Levee
-   Tool and click the *Add walls to User Levee Lines*.
+   Tool and click the Add walls to User Levee Lines.
 
 .. image:: ../img/Buttons/Leveetool.png
 
@@ -63,10 +63,10 @@ Add Walls to Levee Lines
 
 3. Fill the Walls dialog
    box and click with the appropriate layers and
-   click *Add Walls to User Levee Lines*.
+   click Add Walls to User Levee Lines.
 
-4. If other levees already exist, check the *Add these walls to current
-   User Levee Lines layer*.
+4. If other levees already exist, check the Add these walls to current
+   User Levee Lines layer.
 
 .. image:: ../img/Walls/walls5.png
 

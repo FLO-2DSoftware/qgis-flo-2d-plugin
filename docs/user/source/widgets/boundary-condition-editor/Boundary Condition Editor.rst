@@ -22,7 +22,7 @@ Inflow Node
 2. Digitize the inflow node by left clicking the location of the inflow node on the map.
    In this example, the inflow node is a channel inflow node.
    It is not necessary to enter the fid.
-   Click *OK* to create the feature.
+   Click OK to create the feature.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda003.png
 
@@ -45,10 +45,10 @@ Inflow Node
 
 
 7. Repeat the process to add additional inflow hydrographs.
-   Use the *Add data series/table* for current BC button to create a new hydrograph.
+   Use the Add data series/table for current BC button to create a new hydrograph.
 
 8. Use the Schematize icon
-   (shown below) to save the data to the Schematic Layers and click *Yes* to overwrite the layers.
+   (shown below) to save the data to the Schematic Layers and click Yes to overwrite the layers.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda006.png
 
@@ -79,7 +79,7 @@ This is an outflow condition where the flow leaves the domain without effecting 
 the downstream boundary or along the edge of a grid system.
 
 1. Click the
-   *Add Polygon BC* button
+   Add Polygon BC button
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda008.png
 
@@ -93,7 +93,7 @@ the downstream boundary or along the edge of a grid system.
 .. image:: ../../img/Boundary-Condition-Editor/bounda009.png
 
 
-4. Click *Save* to load save the load the data into the BC Editor.
+4. Click Save to load save the load the data into the BC Editor.
 
 5. Name the boundary and set the outflow type to 1.
    Floodplain outflow (no hydrograph).
@@ -112,7 +112,7 @@ For channel outflow at a normal depth condition, use the channel outflow node on
    point boundary and click the last left bank channel node.
 
 2. Click
-   *Save*.
+   Save.
 
 3. Name the
    feature.
@@ -145,14 +145,14 @@ See the |location_link| for further instructions:
 .. |location_link| raw:: html
    <a href="https://flo-2d.sharefile.com/d-s25731a178264675b" target="_blank">Multiple Domain Flow Exchange Training Package</a>
 
-1. Click the *Add Polygon BC*
+1. Click the Add Polygon BC
    button and draw a line through the desired outflow nodes.
 
-2. Click *Save* to load save
+2. Click Save to load save
    the feature to the layer and activate the editor.
 
 3. Name the boundary condition
-   and set the boundary *Outflow type* conditions as *Outflow with Hydrograph*.
+   and set the boundary Outflow type conditions as Outflow with Hydrograph.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda013.png
 
@@ -179,7 +179,7 @@ Select the outflow nodes along the downstream boundary with a polygon.
 2. Digitize the
    polygon across the boundary.
 
-3. Click *Save* to
+3. Click Save to
    save the feature to the layer and activate the editor.
 
 4. Name the boundary
@@ -216,7 +216,7 @@ The time – stage relationship can be synchronized to rainfall and watershed fl
 2. Set the time-stage
    node one element upstream.
 
-3. Click *Save* to
+3. Click Save to
    load save the feature to the layer and activate the editor.
 
 4. Name the boundary
@@ -265,7 +265,7 @@ This system is used when there is a control or a gage at the channel with a know
 1. Select the
    stage-discharge node at the end of a channel segment.
 
-2. Click *Save* to
+2. Click Save to
    load save the feature to the layer and activate the editor.
 
 3. Name the boundary
@@ -284,7 +284,7 @@ The final outflow option is used to define the downstream boundary with a stage-
 1. Select the stage-discharge
    node at the channel terminus.
 
-2. Click *Save* to load save
+2. Click Save to load save
    the feature to the layer and activate the editor.
 
 3. Name the boundary and set

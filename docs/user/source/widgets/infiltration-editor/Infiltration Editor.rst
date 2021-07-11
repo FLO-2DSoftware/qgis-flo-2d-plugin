@@ -40,7 +40,7 @@ Create a polygon to represent an area of infiltration.
    table for the infiltration data.
 
 4. Click  
-   *Save*.
+   Save.
 
 5. Fill the  
    data in the widget for each new polygon.
@@ -303,7 +303,7 @@ Create a polygon to represent an area of infiltration.
 .. image:: ../../img/Infiltration-Editor/Infilt036.png
 
 2. Click  
-   *Save*.
+   Save.
 
 .. image:: ../../img/Infiltration-Editor/Infilt037.png
 

@@ -10,13 +10,13 @@ This button allows the user to set up the control variables.
 
 
 1. Click the
-   *Set Control Parameters* Icon.
+   Set Control Parameters Icon.
 
 2. The dialog box is used to set the control data for the CONT.DAT and
    TOLER.DAT files.
 
 3. Save the data
-   to the GeoPackage with the *Save* button.
+   to the GeoPackage with the Save button.
 
 4. The variable descriptions and instructions are available in the
    `Data Input Manual <"C:\Users\Public\Documents\FLO-2D PRO Documentation\flo_help\Manuals\Data Input Manual PRO.pdf">`__.

@@ -48,7 +48,7 @@ The channel segments are split up to allow for the width of the roadway.
    widget form.
 
 8. In the generalized
-   culvert equation, **conduit with** is used to represent the culvert height or diameter.
+   culvert equation, conduit with is used to represent the culvert height or diameter.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau002.png
 

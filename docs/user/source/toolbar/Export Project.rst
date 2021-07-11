@@ -14,7 +14,7 @@ Export the project files with this button.
 
 
 2. Click
-   the *GDS* *Export* icon.
+   the FLO-2D Data Export button.
 
 3. Select the
    components that require an export.

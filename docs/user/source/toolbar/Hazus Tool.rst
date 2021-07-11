@@ -21,7 +21,7 @@ Import Depth and Water Surface Layers
 --------------------------------------
 
 3. Add a depth layer and a water surface layer.
-   Click *Layer*>\ *Add Layer*>\ *Add Delimited Text Layer*
+   Click Layer>\ Add Layer>\ Add Delimited Text Layer
    to import the files DEPTH.OUT and MAXWSELEV.OUT.
 
 .. image:: ../img/Hazus-Tool/hazustool2.png
@@ -61,19 +61,19 @@ Assign Water Elevation and Depth to the Grid Layer
 9.  Repeat the process
     for the Depth layer.
 
-10. On the *Grid Tools*
-    widget select the *Assign water elevations/flow depths to grid from points layer* button.
+10. On the Grid Tools
+    widget select the Assign water elevations/flow depths to grid from points layer button.
 
 .. image:: ../img/Hazus-Tool/hazustool6.png
    
 
 11. Edit the dialog box as
-    shown below and click the *Assign to selected grid field* button.
+    shown below and click the Assign to selected grid field button.
 
 .. image:: ../img/Hazus-Tool/hazustool9.png
 
 
-12. Click *OK* to
+12. Click OK to
     close the dialog box.
 
 .. image:: ../img/Hazus-Tool/hazustool8.png
@@ -83,15 +83,15 @@ Assign Water Elevation and Depth to the Grid Layer
 Intersect Building Layer to Grid
 --------------------------------
 
-13. Use the *QGIS Vector*
-    Menu to set up the intersection. Click *Vectors*>\ *GeoProcessing Tools*>\ *Intersection*.
+13. Use the QGIS Vector
+    Menu to set up the intersection. Click Vectors>\ GeoProcessing Tools>\ Intersection.
 
 .. image:: ../img/Hazus-Tool/hazustool10.png
 
    
 
 14. Set up the intersection dialog
-    box as shown below. Click *Run* to make the intersection. This process adds the Intersection layer to the map automatically.
+    box as shown below. Click Run to make the intersection. This process adds the Intersection layer to the map automatically.
 
 .. image:: ../img/Hazus-Tool/hazustool11.png
 
@@ -99,8 +99,8 @@ Intersect Building Layer to Grid
 Review Intersection Layer
 -------------------------
 
-15. The new *Intersection* layer
-    has fields from both the *Buildings* and *Grid* layers:
+15. The new Intersection layer
+    has fields from both the Buildings and Grid layers:
 
 .. image:: ../img/Hazus-Tool/hazustool12.png
 
@@ -123,18 +123,18 @@ Homogenize the Intersection Layer
 ----------------------------------
 
 18. Select the HAZUS
-    icon in the *FLO-2D Toolbar*.
+    icon in the FLO-2D Toolbar.
 
 .. image:: ../img/Hazus-Tool/hazustool15.png
 
 
 19. Fill the dialog box as
-    shown below and click the *Compute and Show Building Statistics* button.
+    shown below and click the Compute and Show Building Statistics button.
 
 .. image:: ../img/Hazus-Tool/hazustool16.png
 
-*Note: The ‘Finished floor global adjustment factor’ value will be added
-to the ground elevations, if selected.*
+**Note: The ‘Finished floor global adjustment factor’ value will be added
+to the ground elevations, if selected.**
 
 20. Click OK to close
     the message dialog box.
@@ -162,8 +162,8 @@ to the ground elevations, if selected.*
 Join Building Statistics Table to Building Polygons
 ---------------------------------------------------
 
-22. Right click the *Buildings*
-    layer and click *Properties*. *Add a Join* to the layer. Click *OK* and Close the *Properties* window.
+22. Right click the Buildings
+    layer and click Properties. Add a Join to the layer. Click OK and Close the Properties window.
 
 .. image:: ../img/Hazus-Tool/hazustool20.png
  
@@ -171,14 +171,14 @@ Join Building Statistics Table to Building Polygons
 .. image:: ../img/Hazus-Tool/hazustool21.png
 
 
-23. Save the *Buildings* Layer to a
-    shapefile. Select the *Save As…* to a location and name the file.
+23. Save the Buildings Layer to a
+    shapefile. Select the Save As… to a location and name the file.
 
 
-**Note:** The style of this new layer can be edited to help the user review
+**Note: The style of this new layer can be edited to help the user review
 the data. The attributes can be sorted and arranged to help track
 outliers or bad data. Use the field calculator to perform additional
-statistical analysis on the data in this layer.
+statistical analysis on the data in this layer.**
 
 .. image:: ../img/Hazus-Tool/hazustool22.png
 
@@ -196,19 +196,19 @@ Rasterize the Buildings
 -----------------------
 
 25. On the Main QGIS Menu,
-    click *Processing*>\ *Toolbox*.
+    click Processing>\ Toolbox.
 
 .. image:: ../img/Hazus-Tool/hazustool25.png
 
 
-26. Enter the search term *Rasterize*
-    in the Processing Toolbox search field. Double click the *Saga Rasterize* tool. Saga>Raster Creation Tools>Rasterize.
+26. Enter the search term Rasterize
+    in the Processing Toolbox search field. Double click the Saga Rasterize tool. Saga>Raster Creation Tools>Rasterize.
 
 .. image:: ../img/Hazus-Tool/hazustool26.png
 
 
 27. Change the dialog
-    box as shown below and click *Run*.
+    box as shown below and click Run.
 
 .. image:: ../img/Hazus-Tool/hazustool27.png
 
@@ -216,6 +216,6 @@ Rasterize the Buildings
 28. This example uses 10 ft. pixel resolution.
     The user can change this value to the desired resolution to better fit the buildings.
     This raster can be used with the FEMA Hazus software. Any other rasters that Hazus
-    requires can be generated with the same meth-odology.
+    requires can be generated with the same methodology.
 
 .. image:: ../img/Hazus-Tool/hazustool28.png

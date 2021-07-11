@@ -5,13 +5,13 @@ Overview
 --------
 
 A spatially variable shallow n-value enables the flow roughness to be depth integrated enable high n-values at shallow flow depths.
-The value can also be globally assigned in the *FLO-2D Control and Tolerance Variables* window.
+The value can also be globally assigned in the FLO-2D Control and Tolerance Variables window.
 Polygons can be applied to select individual or groups of grid elements to supersede the global n-value as in the case for streets and parking lots.
 
 Digitize or Copy Data
 ---------------------
 
-1. Select the *Shallow-n Areas*
+1. Select the Shallow-n Areas
    layer and click edit.
 
 2. Create or copy the polygons
@@ -25,8 +25,8 @@ Digitize or Copy Data
 Sample Data
 -----------
 
-1. Click the *Sampling Spatial Shallow-n Values*
-   icon and then *OK* once the process is complete.
+1. Click the Sampling Spatial Shallow-n Values
+   icon and then OK once the process is complete.
 
 .. image:: ../../img/Spatial-Shallow/spatia003.png
 
@@ -38,7 +38,7 @@ Troubleshooting
 ---------------
 
 1. Create the shallow-n polygons
-   if they are missing from the *Shallow-n Areas* layer.
+   if they are missing from the Shallow-n Areas layer.
 
 2. If the Grid layer is empty,
    create a grid and try again.

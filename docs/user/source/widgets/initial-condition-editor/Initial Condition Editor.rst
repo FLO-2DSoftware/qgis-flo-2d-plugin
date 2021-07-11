@@ -10,7 +10,7 @@ runtime as assign the starting reservoir flow depth.
 The reservoir data is written to the INFLOW.DAT file.
 
 1. Click the
-   *Reservoir* button.
+   Reservoir button.
 
 .. image:: ../../img/Buttons/resevoir.png
 
@@ -26,7 +26,7 @@ The reservoir data is written to the INFLOW.DAT file.
 
 .. image:: ../../img/Initial-Condition-Editor/Initia003.png
 
-5. Click *Schematize*
+5. Click Schematize
    to save the data to the schematic layers.
 
 .. image:: ../../img/Initial-Condition-Editor/Initia004.png
@@ -63,11 +63,9 @@ The initial condition will be written to the CHANNEL.DAT file.
    initial depth.
 
 3. Click
-   *Schematize* to save the data to the schematic layers.
+   Schematize to save the data to the schematic layers.
 
 .. image:: ../../img/Initial-Condition-Editor/Initia004.png
-
-
 
 
 Troubleshooting
