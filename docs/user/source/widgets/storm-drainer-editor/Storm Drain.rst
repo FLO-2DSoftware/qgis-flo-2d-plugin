@@ -33,14 +33,14 @@ Either way, this information will serve as a template for the data needed to cre
 
 The shapefiles can be described as follow:
 
--  **Lesson3Outfalls.shp** is a point shapefile that contains the outfalls.
+-  Lesson3Outfalls.shp is a point shapefile that contains the outfalls.
 
--  **Lesson3Conduits.shp** is a line shapefile that contains the conduits system.
+-  Lesson3Conduits.shp is a line shapefile that contains the conduits system.
 
--  **Lesson3InletsJunctions.shp** is a point shapefile that contains the Inlets, pumps, and Junctions.
+-  Lesson3InletsJunctions.shp is a point shapefile that contains the Inlets, pumps, and Junctions.
 
-The following data must be available in the shapefile to create the **SWMM.INP** files and the associated storm drain data files: **SWMMFLO.DAT**,
-**SWMMOUTF.DAT** and **SWMMFLORT.DAT**.
+The following data must be available in the shapefile to create the SWMM.INP files and the associated storm drain data files: SWMMFLO.DAT,
+SWMMOUTF.DAT and SWMMFLORT.DAT.
 
 .. image:: ../../img/Storm-Drain/Storm005.png
 
@@ -180,12 +180,12 @@ Rating Tables
 Rating tables define the flow at a given depth.
 They are used for headwalls.
 There are two methods for building rating tables.
-`Method 1 <#method-1.-create-with-the-flo-2d-plugin>`__ uses the plugin to build the tables.
+`Method 1 <#method-1.-create-with-the-flo-2d-plugin>`__ uses the Plugin to build the tables.
 This method is good if only a few tables are required.
 `Method 2 <#method-2.-import-multiple-tables>`__ imports tables from a text file.
 This method is better if many tables are required.
 
-Method 1. Create with the FLO-2D plugin
+Method 1. Create with the FLO-2D Plugin
 ----------------------------------------
 
 1. Set up the rating
@@ -209,7 +209,7 @@ Method 2. Import multiple tables
 2. Select all of the rating
    tables that match the type 4 inlets.
 
-3. The plugin will load the tables
+3. The Plugin will load the tables
    based on the node name and automatically assign each table.
 
 .. image:: ../../img/Storm-Drain/Storm028.png

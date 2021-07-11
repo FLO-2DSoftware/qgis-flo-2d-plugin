@@ -17,13 +17,13 @@ Create a Raster
 
 .. image:: ../../img/Profile-Tool/profil002.png
   
-2. Enter the search term *Rasterize* in the Processing Toolbox search feature.
-   Double click the Saga Rasterized tool.
+2. Enter the search term Rasterize in the Processing Toolbox search feature.
+   Double click the Saga Rasterize tool.
 
 .. image:: ../../img/Profile-Tool/profil003.png
 
 
-3. Change the dialog box as shown below and click *Run*.
+3. Change the dialog box as shown below and click Run.
    Cell size is the grid element size.
    Fit = cells will ensure that the raster pixels are centered on the grid elements.
    Saga-Rasterize is a good raster generator for FLO-2D data because it builds a raster with hidden null data.
@@ -32,8 +32,8 @@ Create a Raster
 .. image:: ../../img/Profile-Tool/profil004.png
 
 
-The raster that is created is a temporary layer called *Rasterize*.
-This layer should be saved to a permanent layer using the QGIS *Save As* feature.
+The raster that is created is a temporary layer called Rasterize.
+This layer should be saved to a permanent layer using the QGIS Save As feature.
 This feature is found by right clicking the layer.
 
 .. image:: ../../img/Profile-Tool/profil005.png
@@ -45,13 +45,13 @@ Plot a profile of a polyline on the raster.
 The profile tool works for Levee, Channel and Street polylines that are digitized in the user layers only.
 This example will test it on a channel polyline.
 
-1. Click the *Raster profile* radio button and set the raster.
-   This example uses *Grid Elevation* raster.
+1. Click the Raster profile radio button and set the raster.
+   This example uses Grid Elevation raster.
 
 .. image:: ../../img/Profile-Tool/profil006.png
  
 
-2. Click *the FLO-2D Info Tool* and click on a channel
+2. Click the FLO-2D Info Tool and click on a channel
    segment.
 
 .. image:: ../../img/Buttons/floinfo.png

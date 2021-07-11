@@ -1,5 +1,5 @@
-Import Data Files
-==================
+Import FLO-2D Data Files
+=========================
 
 Import the FLO-2D \*.DAT files into the Project
 -------------------------------------------------
@@ -17,7 +17,7 @@ Settings <Flo-2D%20Settings.html>`__.
    files into a Geo Package:
 
 2. Click the
-   Import GDS Files
+   Import FLO-2D Data Files
 
 3. Navigate to
    the FLO-2D \*.DAT files

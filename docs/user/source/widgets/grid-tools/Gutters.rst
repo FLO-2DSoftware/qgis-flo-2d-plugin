@@ -18,8 +18,8 @@ the Gutter component with FLO-2D.
 Digitize or Copy Data
 ---------------------
 
-1. Select the layer or the *Gutter Line* Layer and click *Toggle
-   Editing*. Create polygons or polylines that represent the gutter
+1. Select the layer or the Gutter Line Layer and click Toggle
+   Editing. Create polygons or polylines that represent the gutter
    alignment. Enter the data from the attributes table. Save the Gutter
    layer and close the editor.
 
@@ -29,8 +29,8 @@ Digitize or Copy Data
 Sample Data
 -----------
 
-2. Click the *Sampling Gutter Values* icon in the *Grid Tools* and click
-   *OK* when the process is complete. Fill the Global values and click
+2. Click the Sampling Gutter Values icon in the Grid Tools and click
+   OK when the process is complete. Fill the Global values and click
    OK to close the global data.
 
 .. image:: ../../img/Gutters/gutters2.png
@@ -55,12 +55,12 @@ Troubleshooting
 ---------------
 
 1. Create the gutter polygons or gutter polylines if they are missing
-   from the *Gutters Areas* layers.
+   from the Gutters Areas layers.
 
 .. image:: ../../img/Gutters/gutters8.png
  
 
-2. If the *Grid* layer is empty,
+2. If the Grid layer is empty,
    create a grid and try again.
 
 3. If a Python error appears during the sampling process, the attribute

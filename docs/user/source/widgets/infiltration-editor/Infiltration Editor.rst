@@ -40,7 +40,7 @@ Create a polygon to represent an area of infiltration.
    table for the infiltration data.
 
 4. Click  
-   *Save*.
+   Save.
 
 5. Fill the  
    data in the widget for each new polygon.
@@ -119,7 +119,7 @@ The land use data can account for vegetative cover and impervious cover.
 4. Fill the form and  
    click OK.
 
-5. The plugin will  
+5. The Plugin will
    assign spatially variable infiltration data to each cell using an intersection and weighted average.
 
 .. image:: ../../img/Infiltration-Editor/Infilt015.png
@@ -303,7 +303,7 @@ Create a polygon to represent an area of infiltration.
 .. image:: ../../img/Infiltration-Editor/Infilt036.png
 
 2. Click  
-   *Save*.
+   Save.
 
 .. image:: ../../img/Infiltration-Editor/Infilt037.png
 

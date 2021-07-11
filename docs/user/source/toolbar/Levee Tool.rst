@@ -3,7 +3,7 @@ Levee Elevation Tool
 
 .. image:: ../img/Buttons/Leveetool.png
  
-The *Levee Elevation* Tool will create levees, berms, walls and dams. It
+The Levee Elevation Tool will create levees, berms, walls and dams. It
 uses data from 5 sources:
 
 .. image:: ../img/Levee-Tool/leveetool2.png
@@ -99,10 +99,10 @@ The polygon layer is also used to define a uniform elevation for a
 levee.
 
 1. Click the
-   *Levee Elevation Tool* icon.
+   Levee Elevation Tool icon.
 
-2. Select *User elevation polygons* and click *Create Schematic Layers
-   from User Levees*.
+2. Select User elevation polygons and click Create Schematic Layers
+   from User Levees.
 
 3. The Plugin will build the levee into a schematic layer, set the
    elevation data for the crest and apply a correction if used.
@@ -119,7 +119,7 @@ levee.
 .. image:: ../img/Levee-Tool/leveetool16.png
  
 
-*Levee from Elevation Points within Search Radius*
+Levee from Elevation Points within Search Radius
 
 
 .. image:: ../img/Buttons/Leveetool.png
@@ -128,7 +128,7 @@ levee.
 1. Click the Levee Elevation Tool icon and select User elevation points
    within search radius and click OK.
 
-2. The plugin will schematize the Levee Lines layer, set the elevation
+2. The Plugin will schematize the Levee Lines layer, set the elevation
    data for the crest and apply a correction if used.
 
 3. The levee crest
@@ -152,7 +152,7 @@ Levee from Levee User Lines
 1. Click the Levee Elevation Tool icon and select User elevation points
    within search radius and click OK.
 
-2. The plugin will schematize the Levee Lines layer, set the elevation
+2. The Plugin will schematize the Levee Lines layer, set the elevation
    data for the crest and apply a correction if used.
 
 3. The levee crest

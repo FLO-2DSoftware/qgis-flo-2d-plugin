@@ -9,15 +9,15 @@ The polygons represent roughness associated with different LandUse categories su
 
 .. image:: ../../img/Sample-Roughness-Data/img2.png
 
-The plugin has 4 methods for calculating roughness.
+The Plugin has 4 methods for calculating roughness.
 Use the Sampling Manning’s tool to access the calculator.
 
-1. Click the *Sample Manning’s icon*
+1. Click the Sample Manning’s icon
    from polygon layers.
 
 .. image:: ../../img/Sample-Roughness-Data/img3.png
 
-This layer requires a polygon shapefile with roughness data or digitized data assigned to the *Roughness User Layer*.
+This layer requires a polygon shapefile with roughness data or digitized data assigned to the Roughness User Layer.
 The tool will calculate Manning’s roughness values with three different processes.
 
 Roughness Polygon Intersection
@@ -45,16 +45,16 @@ Roughness Update
 .. image:: ../../img/Sample-Roughness-Data/img6.png
 
 5. Once the sample is complete, the following window will appear.
-   Click *OK* to close the window.
+   Click OK to close the window.
 
 .. image:: ../../img/Sample-Roughness-Data/img7.png
 
-The roughness values are assigned to the *Grid* layer in *the Schematized Layers* group.
+The roughness values are assigned to the Grid layer in the Schematized Layers group.
 
 .. image:: ../../img/Sample-Roughness-Data/img8.png
 
 6. If it is necessary to update or change a
-   small selection of elements, use the *Roughness* layer in the *User Layers* group.
+   small selection of elements, use the Roughness layer in the User Layers group.
 
 .. image:: ../../img/Sample-Roughness-Data/img9.png
 

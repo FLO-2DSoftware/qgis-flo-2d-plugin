@@ -1,8 +1,8 @@
 FLO-2D Info Tool
 ================
 
-Use the *Info Tool* to identify data in the *User Layers* and *Schematic Layers*.
-The layers must be active and checked on in the *Layers* Panel.
+Use the Info Tool to identify data in the User Layers and Schematic Layers.
+The layers must be active and checked on in the Layers Panel.
 This tool also activates the Profile Tool Widget.
 Layers that work with this tool:
 
@@ -30,7 +30,7 @@ Channel Layers
    any left bank line.
 
 3. The data will  
-   load into the editor widget, *FLO-2D Plot*, and *FLO-2D Table Editor*.
+   load into the editor widget, FLO-2D Plot, and FLO-2D Table Editor.
 
 4. Use the  
    Profile tool to select the data plot source.

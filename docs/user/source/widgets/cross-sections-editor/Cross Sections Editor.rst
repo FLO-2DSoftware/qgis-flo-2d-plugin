@@ -22,7 +22,7 @@ Left Bank
 ----------
 
 1. Select the  
-   *Left Bank Line* layer.
+   Left Bank Line layer.
 
 2. Click on both the start  
    editing button and the add feature button.
@@ -51,7 +51,7 @@ Right Bank
 ------------
 
 1. Select the  
-   *Right Bank Line* layer.
+   Right Bank Line layer.
 
 2. Click on both the start  
    editing button and the add feature button.
@@ -101,16 +101,16 @@ To create natural cross sections, the cross sections should be numbered consecut
 
 The cross sections shown in the following image have been digitized.
 
-*Important Notes:*
+**Important Notes:**
 
--  *Draw polylines from left bank to right bank looking downstream.*
+-  **Draw polylines from left bank to right bank looking downstream.**
 
--  *The first cross section must cross the left and right bank and be inside the same grid elements.*
+-  **The first cross section must cross the left and right bank and be inside the same grid elements.**
 
--  *The subsequent cross sections can cross the left and right bank and be wider than the channel.*
+-  **The subsequent cross sections can cross the left and right bank and be wider than the channel.**
 
--  *Place-holder data is added to the cross section station elevation data.
-   It is replaced after all cross sections are ready.*
+-  **Place-holder data is added to the cross section station elevation data.
+   It is replaced after all cross sections are ready.**
 
 The finished product will look something like the following image.
 
@@ -173,7 +173,7 @@ Schematize Channel
 .. image::../../img/User-Cross-Sections-Editor/User017.png
 
 6. If the channel  
-   schematization process was successful, the following message will appear.
+   schematize process was successful, the following message will appear.
 
 7. Click close to load  
    the channel info for the schematized layer.
@@ -446,17 +446,17 @@ Alternate Bank and Channel Profile Tool
 ----------------------------------------
 
 A secondary method can be used to create the cross section data.
-This example will sample the map for station-elevation data using a plugin called Profile Tool.
+This example will sample the map for station-elevation data using a Plugin called Profile Tool.
 This tool is not the preferred method but it has some handy features that make it useful.
 
 1. Find and install  
-   the plugin Profile Tool.
+   the Plugin Profile Tool.
 
 2. Select the first cross section in the Cross Section Editor widget.
    This activates the cross section table and plot.
 
 3. Click the Profile  
-   button to open the Profile Tool plugin,
+   button to open the Profile Tool Plugin,
 
 4. Click the add  
    layer button and select the Elevation Raster layer.

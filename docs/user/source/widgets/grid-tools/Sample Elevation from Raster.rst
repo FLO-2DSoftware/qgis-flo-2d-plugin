@@ -2,7 +2,7 @@ Sample Elevation from Raster
 =============================
 
 To interpolate the elevation to a grid layer from a raster layer, use
-the *Sampling Grid Elevation from Raster Layer* icon.
+the Sampling Grid Elevation from Raster Layer icon.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster1.png
 
@@ -29,10 +29,10 @@ Important properties:
 Sample Elevation
 ----------------
 
-4. Click the *Sampling Grid Elevation Button* and enter the required data
+4. Click the Sampling Grid Elevation Button and enter the required data
    in the dialog fields. As shown below, when the elevation sample is
-   complete, the *Sampling Done* dialog box will appear. Select the *Fill
-   NODATA* option to set the elevation of empty grid elements from
+   complete, the Sampling Done dialog box will appear. Select the Fill
+   NODATA option to set the elevation of empty grid elements from
    neighbors.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster2.png

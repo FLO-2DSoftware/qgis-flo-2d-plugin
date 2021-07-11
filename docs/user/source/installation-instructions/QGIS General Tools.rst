@@ -37,7 +37,7 @@ Open a Project
 
 
 1. Click the open icon on the QGIS toolbar. Navigate to the project
-   folder, select the \*.qgs file and click Open.
+   folder, select the \*.qgz file and click Open.
 
 .. image:: ../img/QGIS-General-Tools/qgisgeneraltools9.png
 
@@ -53,13 +53,13 @@ Project Path Changes
 
 Path corrections may be required if the project folder was changed or moved to a new computer.
 External data links can be correct using number 1 below and the geopackage links are automatically
-corrected by the plugin as shown in number 3 below.
+corrected by the Plugin as shown in number 3 below.
 
 **Important Note:  If the ProjectName.gpkg file is still in the old path, it will be chosen
 automatically.**
 
 1. Fix the links
-   with QGIS and the FLO-2D plugin with this process.
+   with QGIS and the FLO-2D Plugin with this process.
 
 2. Fix the external data links with the Handle Unavailable Layers
    window. Auto find works well. Apply Changes to close the window.

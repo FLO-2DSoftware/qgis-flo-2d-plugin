@@ -8,7 +8,7 @@ This tool is used to correct elevation data for polygons, points or polylines.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat002.png
 
-The correction datasets are set up in the *User Layers* group.
+The correction datasets are set up in the User Layers group.
 
 -  Elevation Polygons
 
@@ -20,7 +20,7 @@ Users Layers Tab
 ----------------
 
 There are multiple options in this tool.
-The following sections will show how to use each option in the *Users Layers Mode* tab.
+The following sections will show how to use each option in the Users Layers Mode tab.
 
 Tin from Points and Polygon
 ---------------------------
@@ -30,15 +30,15 @@ Tin from Points and Polygon
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat003.png
 
 2. The tool creates a TIN that is confined to the elevation polygon layer.
-   The TIN elevation is read from the *Elevation Points* layer.
+   The TIN elevation is read from the Elevation Points layer.
    The elevation is assigned to the grid from the TIN as a correction to the grid elevation.
    Only grids with a centroid inside the polygon are adjusted.
    In this example, a section of the dam is removed from the grid element elevation so the dam can be breached.
    Most of the dam is left in place so the volume displacement is still occurring.
 
-*Note: The elevation image in this example is not the grid element.
+**Note: The elevation image in this example is not the grid element.
 It is a hillshade of the raw raster data.
-The tool corrects the grid elevation only.*
+The tool corrects the grid elevation only.**
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat004.png
 
@@ -75,7 +75,7 @@ Elevation Polygon Attributes
 Grid Statistics within Blocked Areas
 ------------------------------------
 
-8. In this case, the correction is applied by analyzing the statistics of the elevations within the **Blocked Areas Polygons**.
+8. In this case, the correction is applied by analyzing the statistics of the elevations within the Blocked Areas Polygons.
    The mean, max or min elevation of the combined cell centroids within the polygon are applied as a general condition to all of the cells centroids
    within the polygon.
 
@@ -86,7 +86,7 @@ Grid Statistics within Blocked Areas
 External Layer Tab
 ------------------
 
-This section will review each option in the *External* *Layers* *Mode* tab:
+This section will review each option in the External Layers Mode tab:
 
 Correction Options
 ------------------
