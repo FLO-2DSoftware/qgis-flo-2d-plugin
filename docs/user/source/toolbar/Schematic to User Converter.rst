@@ -10,7 +10,7 @@ Use it after performing an Import FLO-2D \*.DAT files.
 .. image:: ../img/Buttons/schematicgreen.png
 
 
-1. This tool will convert imported project data into user layers so they
+1. This tool will convert imported project data into User Layers so they
    can be edited.
 
 2. Click the
@@ -32,6 +32,6 @@ Use it after performing an Import FLO-2D \*.DAT files.
 
    - Floodplain Cross-Sections
 
-   - Storm Drains
+   - Boundary Conditions
 
 .. image:: ../img/Schema-2-User/schema2user2.png

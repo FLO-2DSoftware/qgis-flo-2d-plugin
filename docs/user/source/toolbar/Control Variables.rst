@@ -21,9 +21,6 @@ This button allows the user to set up the control variables.
 4. The variable descriptions and instructions are available in the
    `Data Input Manual <"C:\Users\Public\Documents\FLO-2D PRO Documentation\flo_help\Manuals\Data Input Manual PRO.pdf">`__.
 
-
-
-
 **Important – If the user unselects a Component Switch, that data file
 will not be written when the data is exported. The original data will be
 preserved.**
@@ -38,7 +35,7 @@ preserved.**
 
 
 6. Global variables are
-   defined on the third tab.
+   defined on the 3\ :sup:'rd' tab.
 
 .. image:: ../img/Setup-Control-Variables/setupcontrolvariables4.png
 

@@ -120,7 +120,7 @@ The formats are RAINCELL.DAT and RAINCELL.HD5.
 **Important Note**
 
 **The RAINCELL.DAT file is a mega data file.
-It is not recommended to import this file into a QGIS – FLO-2D project when importing GDS files.
+It is not recommended to import this file into a QGIS – FLO-2D project when importing FLO-2D Data files.
 It is recommended to use a Skeleton Project with only grid data and no other components loaded to perform the RAINCELL.DAT or RAINCELL.HDF5 data
 files.**
 

@@ -24,8 +24,7 @@ This tool can be used to view channel profiles.
 .. image:: ../img/Channel-Profile/channelprofile3.png
 
 
-5. GoTo the Cross Section Editor widget and click the Add Water Surface
-   Elevation tool.
+5. GoTo the Cross Section Editor widget and click the Import Channel Peaks (HYCHAN.OUT) tool.
 
 .. image:: ../img/Channel-Profile/channelprofile4.png
    

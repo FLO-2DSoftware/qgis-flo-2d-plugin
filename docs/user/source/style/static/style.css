@@ -100,6 +100,7 @@ div.related ul {
 /*changes how you want to display the list. Horizontally or vertically or like a list*/
 div.related li {
   list-style-type: circle;
+  padding-inline-start: 10px;
 }
 li::marker {
   color: RED;
