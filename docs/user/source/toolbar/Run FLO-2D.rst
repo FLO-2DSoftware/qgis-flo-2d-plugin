@@ -36,10 +36,10 @@ The Run FLO-2D button is used to run FLO-2D and other processing programs.
 8.  Hydrog.exe
     is a tool to review channel and floodplain cross sections.
 
-9.  Run MaxPlot.exe
+9.  MaxPlot.exe
     is a tool to make simple plots of the FLO-2D results such as depth and velocity.
 
-10. Run Mapper.exe
+10. Mapper.exe
     is a tool to create shapefiles for FLO-2D results.
 
 .. image:: ../img/Run-Flo2d/Run005.png

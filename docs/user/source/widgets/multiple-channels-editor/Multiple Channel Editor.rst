@@ -52,7 +52,7 @@ If multiple layer edits are required, they should be made in the Multiple Channe
 Multiple Channel Areas
 ----------------------
 
-When a channel is imported into QGIS using the Import GDS button, the data is written to the Multiple Channel Areas layer as grid element sized
+When a channel is imported into QGIS using the Import FLO-2D Component button, the data is written to the Multiple Channel Areas layer as grid element sized
 polygons.
 
 Export MULT.DAT Files

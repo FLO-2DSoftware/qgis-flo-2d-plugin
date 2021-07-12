@@ -6,7 +6,7 @@ Export FLO-2D \*.DAT Files
 
 Export the project files with this button.
 
-.. image:: ../img/Buttons/exportgds.png
+.. image:: ../img/Buttons/exportproject.png
 
 
 1. Set the Control Data switches before running the Export tool.

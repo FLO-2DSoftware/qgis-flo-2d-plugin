@@ -7,10 +7,10 @@ Import HEC-RAS Channel
    GeoRAS project.
 
 2. The tool will import
-   the project from the \*.g0* geometry
+   the project from the \*.g0\* geometry.
 
 3. For FLO-2D,
-   Limit the cross sections to the bank stations.
+   limit the cross sections to the bank stations.
 
 .. image:: ../img/Import-RAS-Channel/importRASchannel2.png
 
