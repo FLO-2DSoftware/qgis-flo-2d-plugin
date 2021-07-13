@@ -21,7 +21,8 @@ class GridInfoTool(QgsMapToolIdentify):
 
     grid_elem_picked = pyqtSignal(int)
 
-    def __init__(self, canvas, lyrs):
+    def __init__(self, uc, canvas, lyrs):
+        self.uc = uc
         self.canvas = canvas
         self.lyrs = lyrs
         self.grid = None
@@ -32,11 +33,14 @@ class GridInfoTool(QgsMapToolIdentify):
         pass
 
     def canvasReleaseEvent(self, e):
-        res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
-        if res:
-            self.grid_elem_picked.emit(res[0].mFeature.id())
-        else:
-            self.grid_elem_picked.emit(-1)
+        try:
+            res = self.identify(e.x(), e.y(), [self.grid], QgsMapToolIdentify.ActiveLayer)
+            if res:
+                self.grid_elem_picked.emit(res[0].mFeature.id())
+            else:
+                self.grid_elem_picked.emit(-1)
+        except Exception:
+            self.uc.bar_error("ERROR 100721.1942: is the grid defined?") 
 
     def activate(self):
         self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))

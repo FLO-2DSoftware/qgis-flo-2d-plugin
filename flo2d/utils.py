@@ -15,6 +15,8 @@ MAX_ELEVS = 0
 
 grid_index = {}
 
+from heapq import nsmallest
+from itertools import filterfalse
 import os.path
 import io
 import csv
@@ -146,6 +148,11 @@ def float_or_zero(value):
     except Exception:
         return 0.0
 
+def second_smallest(numbers):
+    s = set()
+    sa = s.add
+    un = (sa(n) or n for n in filterfalse(s.__contains__, numbers))
+    return nsmallest(2, un)[-1]  
 
 def int_or_zero(value):
     #     if value is None:
@@ -206,3 +213,5 @@ def copy_tablewidget_selection(tablewidget):
         stream = io.StringIO()
         csv.writer(stream, delimiter="\t").writerows(table)
         QApplication.clipboard().setText(stream.getvalue())
+
+ 

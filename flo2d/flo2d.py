@@ -2107,7 +2107,7 @@ class Flo2D(object):
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
-        self.grid_info_tool = GridInfoTool(self.canvas, self.lyrs)
+        self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
         self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
 
     def identify(self):

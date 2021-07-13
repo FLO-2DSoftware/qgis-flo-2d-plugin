@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.29
+version=0.10.30
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.30
+  - Render grid elevations with min, second min, and max.
+  - Error and warning messages in Grid Info tool.
+  - Filter None values in grid layer after "Sampling Points from layer" in "Assign elevations to grid". 
+    Assign -9999 instead of None.
+  - Function to find second smallest from list of values.
  <p>0.10.29
   - Capture error when Schematizing Channels from XS editor.
   - Read no-exchange from CHAN.DAT file.
