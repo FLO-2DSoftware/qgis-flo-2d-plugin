@@ -36,8 +36,10 @@ from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
     assign_col_row_indexes_to_grid,
-    number_of_elements
+    number_of_elements,
+    render_grid_elevations2
 )
+from ..utils import second_smallest, set_min_max_elevs
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
@@ -276,84 +278,105 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         ok = dlg.exec_()
 
     def xyz_elevation(self):
-        if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool.")
-            return
-        dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-        ok = dlg.exec_()
-        if ok:
-            if dlg.points_layer_grp.isChecked():
-                points_lyr = dlg.current_lyr
-                if not points_lyr:
-                    self.uc.show_info("Select a points layer!")
-                else:
-                    zfield = dlg.fields_cbo.currentText()
-                    calc_type = dlg.calc_cbo.currentText()
-                    search_distance = dlg.search_spin_box.value()
-
-                    try:
-                        ini_time = time.time()
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
-                        grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                        zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
-                        points_elevation = zs.points_elevation()
-                        zs.set_elevation(points_elevation)
-                        cmd, out = zs.rasterize_grid()
-                        self.uc.log_info(cmd)
-                        self.uc.log_info(out)
-                        cmd, out = zs.fill_nodata()
-                        self.uc.log_info(cmd)
-                        self.uc.log_info(out)
-                        null_elevation = zs.null_elevation()
-                        zs.set_elevation(null_elevation)
-                        zs.remove_rasters()
-                        QApplication.restoreOverrideCursor()
-
-                        fin_time = time.time()
-                        duration = time_taken(ini_time, fin_time)
-                        self.uc.show_info("Calculating elevation finished." +
-                                          "\n\n(Elapsed time: " + duration + ")")
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.log_info(traceback.format_exc())
-                        self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
-
-            else:
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                field_index = grid_lyr.fields().indexFromName("col")
-                if field_index == -1:
-                    if self.gutils.is_table_empty("user_model_boundary"):
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_warn("WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
-                                          "and there is no Computational Domain to create them!")
+        try:
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool.")
+                return
+            
+            grid = self.lyrs.data["grid"]["qlyr"]
+            grid_extent = grid.extent()        
+            
+            dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
+            ok = dlg.exec_()
+            if ok:
+                if dlg.points_layer_grp.isChecked():
+                    points_lyr = dlg.current_lyr
+                    if not points_lyr:
+                        self.uc.show_info("Select a points layer!")
                     else:
-                        proceed = self.uc.question("WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
-                                                   "Would you like to add the 'col' and 'row' fields to the grid table?")
-                        if proceed:
-                            if add_col_and_row_fields(grid_lyr):
-                                assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-                                dlg.interpolate_from_lidar()
-                else:
-                    cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
-                    if cell[0] != NULL:
-                        dlg.interpolate_from_lidar()
-                    else:
-                        QApplication.restoreOverrideCursor()
-                        proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
-                        if proceed:
+                        zfield = dlg.fields_cbo.currentText()
+                        calc_type = dlg.calc_cbo.currentText()
+                        search_distance = dlg.search_spin_box.value()
+    
+                        try:
+                            ini_time = time.time()
                             QApplication.setOverrideCursor(Qt.WaitCursor)
-                            assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                            zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+                            points_elevation = zs.points_elevation()
+                            zs.set_elevation(points_elevation)
+                            cmd, out = zs.rasterize_grid()
+                            self.uc.log_info(cmd)
+                            self.uc.log_info(out)
+                            cmd, out = zs.fill_nodata()
+                            self.uc.log_info(cmd)
+                            self.uc.log_info(out)
+                            null_elevation = zs.null_elevation()
+                            zs.set_elevation(null_elevation)
+                            zs.remove_rasters()
+
+                            self.gutils.execute("UPDATE grid SET elevation = -9999 WHERE elevation IS NULL;")
+                            elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
+                            # elevs = [x if x is not None else -9999 for x in elevs] 
+                            if elevs:
+                                mini = min(elevs)
+                                mini2 = second_smallest(elevs) 
+                                maxi = max(elevs)       
+                                render_grid_elevations2(grid_lyr, True, mini, mini2, maxi) 
+                                set_min_max_elevs(mini, maxi) 
+                                self.lyrs.lyrs_to_repaint = [grid_lyr]
+                                self.lyrs.repaint_layers()
+
                             QApplication.restoreOverrideCursor()
+    
+                            fin_time = time.time()
+                            duration = time_taken(ini_time, fin_time)
+                            self.uc.show_info("Calculating elevation finished." +
+                                              "\n\n(Elapsed time: " + duration + ")")
+    
+                        except Exception as e:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.log_info(traceback.format_exc())
+                            self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
+    
+                else:
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    field_index = grid_lyr.fields().indexFromName("col")
+                    if field_index == -1:
+                        if self.gutils.is_table_empty("user_model_boundary"):
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_warn("WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
+                                              "and there is no Computational Domain to create them!")
+                        else:
+                            proceed = self.uc.question("WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
+                                                       "Would you like to add the 'col' and 'row' fields to the grid table?")
+                            if proceed:
+                                if add_col_and_row_fields(grid_lyr):
+                                    assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                                    dlg.interpolate_from_lidar()
+                    else:
+                        cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                        if cell[0] != NULL:
                             dlg.interpolate_from_lidar()
                         else:
-                            return
-
+                            QApplication.restoreOverrideCursor()
+                            proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
+                            if proceed:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                                QApplication.restoreOverrideCursor()
+                                dlg.interpolate_from_lidar()
+                            else:
+                                return
+    
+                QApplication.restoreOverrideCursor()
+            else:
+                QApplication.restoreOverrideCursor()
+                return
+            
+        except Exception:
             QApplication.restoreOverrideCursor()
-        else:
-            QApplication.restoreOverrideCursor()
-            return
-
+            self.uc.bar_error("ERROR 100721.1952: is the grid defined?")
 
     def interpolate_from_lidar_THREAD_original(self, layer):
         # create a new interpolate_from_LIDAR_thread instance

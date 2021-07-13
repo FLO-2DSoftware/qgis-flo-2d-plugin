@@ -1239,7 +1239,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     x, y = geom.strip("POINT()").split()
                     m.write(mline.format(fid, "{0:.3f}".format(man)))
                     t.write(
-                        tline.format("{0:.3f}".format(float(x)), "{0:.3f}".format(float(y)), "{0:.2f}".format(elev))
+                        tline.format("{0:.4f}".format(float(x)), "{0:.4f}".format(float(y)), "{0:.4f}".format(elev))
                     )
             return True
 

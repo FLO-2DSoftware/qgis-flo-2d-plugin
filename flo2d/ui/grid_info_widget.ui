@@ -37,7 +37,7 @@
      <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>ID:</string>
+        <string>ID</string>
        </property>
       </widget>
      </item>
@@ -55,6 +55,9 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item>
@@ -71,7 +74,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Elevation:</string>
+        <string>Elevation</string>
        </property>
       </widget>
      </item>
@@ -89,6 +92,9 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -97,7 +103,7 @@
      <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>n:</string>
+        <string>n</string>
        </property>
       </widget>
      </item>
@@ -136,7 +142,7 @@
      <item>
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Cell size:</string>
+        <string>Cell size</string>
        </property>
       </widget>
      </item>

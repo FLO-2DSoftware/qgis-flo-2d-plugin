@@ -14,7 +14,6 @@ import stat
 import time
 import traceback
 
-# import PyQt5.sip 
 from qgis.core import (
         QgsWkbTypes, 
         Qgis, 
@@ -36,14 +35,24 @@ from qgis.PyQt import  QtCore, QtGui
 
 from ..errors import Flo2dError
 from .ui_utils import load_ui
-from ..utils import get_file_path, time_taken, grid_index, get_grid_index, set_grid_index, clear_grid_index, is_grid_index, get_min_max_elevs, set_min_max_elevs
+from ..utils import (
+        get_file_path, 
+        time_taken, 
+        grid_index, 
+        get_grid_index, 
+        set_grid_index, 
+        clear_grid_index, 
+        is_grid_index, 
+        get_min_max_elevs, 
+        set_min_max_elevs,
+        second_smallest
+    )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..flo2d_tools.grid_tools import (
         number_of_elements, 
         fid_from_grid, 
         adjacent_grid_elevations, 
-        render_grid_elevations,  
         render_grid_elevations2, 
         adjacent_average_elevation,
         cell_centroid,
@@ -271,11 +280,11 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             if nope:
                 QApplication.setOverrideCursor(Qt.WaitCursor) 
                 elevs =  [x[0] for x in cell_elev]
-                max_elev = max(elevs)  
-                min_elev = min(elevs)                
-                set_min_max_elevs(min_elev, max_elev)                                                 
-                render_grid_elevations2(self.grid, True, min_elev, max_elev);                
-
+                mini = -9999
+                mini2 = min(elevs) 
+                maxi = max(elevs)                                                        
+                render_grid_elevations2(self.grid, True, mini, mini2, maxi);                
+                set_min_max_elevs(mini, maxi)  
                 self.lyrs.lyrs_to_repaint = [self.grid]
                 self.lyrs.repaint_layers()
                 
@@ -372,7 +381,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         cur = self.gutils.con.cursor()    
                         cur.executemany(update_qry, qry_values) 
                         self.gutils.con.commit() 
-                            
+
+                        elevs = [x[0]  for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
+                        mini = min(elevs)
+                        mini2 = mini 
+                        maxi = max(elevs)       
+                        render_grid_elevations2(self.grid, True, mini, mini2, maxi) 
+                        set_min_max_elevs(mini, maxi) 
+                        self.lyrs.lyrs_to_repaint = [self.grid]
                         self.lyrs.repaint_layers()
         
                         QApplication.restoreOverrideCursor()                               
@@ -386,20 +402,21 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         nope = []     
   
                     elif dlg.highlight_radio.isChecked():
+                        pass
 
-                        ini_time = time.time()    
-                        QApplication.setOverrideCursor(Qt.WaitCursor)    
-                                                                            
-                        render_grid_elevations(self.grid, True);
-                        
-                        self.lyrs.lyrs_to_repaint = [self.grid]
-                        self.lyrs.repaint_layers()
-
-                        QApplication.restoreOverrideCursor()
-                        fin_time = time.time()     
-                        duration = time_taken(ini_time, fin_time)  
-                        self.uc.show_info('{0:,d}'.format(len(nope)) +  " non-interpolated cells are highlighted." +
-                                          "\n\n(Elapsed time: " + duration + ")")   
+                        # ini_time = time.time()    
+                        # QApplication.setOverrideCursor(Qt.WaitCursor)    
+                        #
+                        # render_grid_elevations(self.grid, True);
+                        #
+                        # self.lyrs.lyrs_to_repaint = [self.grid]
+                        # self.lyrs.repaint_layers()
+                        #
+                        # QApplication.restoreOverrideCursor()
+                        # fin_time = time.time()     
+                        # duration = time_taken(ini_time, fin_time)  
+                        # self.uc.show_info('{0:,d}'.format(len(nope)) +  " non-interpolated cells are highlighted." +
+                        #                   "\n\n(Elapsed time: " + duration + ")")   
  
         except Exception as e: 
             QApplication.restoreOverrideCursor()
