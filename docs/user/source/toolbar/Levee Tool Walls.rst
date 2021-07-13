@@ -31,17 +31,15 @@ the following attributes:
 
 -  Vertical fail rate (float) (NULL ok)
 
--  Horizontal Fail Rate (float) (NULL ok)
+-  Horizontal fail rate (float) (NULL ok)
 
 .. image:: ../img/Walls/walls1.png
 
-
-In the case of walls, the failure data is usually set to default = 0
-because they will collapse when the fail depth or fail elevation is
-achieved. For walls, the only required failure data is the failure
-elevation or failure depth. It is not necessary to use failure data for
-every wall feature. If the failure elevation or failure depth is NULL or
-Zero, the failure for that wall will be ignored.
+In the case of walls, the failure data is usually set to default = 0 because they collapse when
+the fail depth or fail elevation is achieved.  For walls, the only required failure data is the
+failure elevation or failure depth.  All other failure values can be zero.  It is not necessary
+to use failure data for every wall feature.  If the failure elevation or failure depth is NULL,
+the failure for that wall will be ignored.
 
 Add Walls to Levee Lines
 ------------------------
@@ -51,15 +49,12 @@ Add Walls to Levee Lines
 
 .. image:: ../img/Walls/walls2.png
  
-
 2. Click the Levee
    Tool and click the Add walls to User Levee Lines.
 
 .. image:: ../img/Buttons/Leveetool.png
 
-
 .. image:: ../img/Walls/walls4.png
-
 
 3. Fill the Walls dialog
    box and click with the appropriate layers and
@@ -70,12 +65,10 @@ Add Walls to Levee Lines
 
 .. image:: ../img/Walls/walls5.png
 
-
 5. If the walls are added to the layer successfully, the following image
    will appear.
 
 .. image:: ../img/Walls/walls6.png
-
 
 6. Go to `Levee <Levee%20Tool.html>`__ from Levee User Lines above to
    complete the walls by schematizing them.
