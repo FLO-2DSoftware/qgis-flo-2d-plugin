@@ -7,7 +7,7 @@ Load Elevation Points
 
 .. image:: ../../img/Buttons/addlayer.png
 
-1. Click on Layer>\ Add Layers >\ Add Delimited Text Layer or click on the Open Data Source Manager icon and navigate to the Delimited Text tab.
+1. Click on Layer>\ Add Layers >\ Add Delimited Text Layer or click on the Open Data Source Manager button and navigate to the Delimited Text tab.
    Add the delimited text data, following the figure below.
 
 2. There are many options to help sort the data.
@@ -41,7 +41,7 @@ The data has a default style so it isn’t very easy to view elevation.
 .. image:: ../../img/Sample-Elevation-From-Points/Sample003.png
 
 7. The point data style
-   is a graduated color scheme set to the elevation scale (see figure below).
+   is a graduated color scheme set to the elevation scale (see the figure below).
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample004.png
 
@@ -49,7 +49,7 @@ Sample Data
 -----------
 
 1. Click the Assign Elevation
-   to Grid from Points Layer icon to interpolate the elevation data to the grid.
+   to Grid button to interpolate the elevation data to the grid.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample005.png
 
@@ -83,19 +83,19 @@ It applies a simple average to the point within a cell and can patch missing LiD
 category.
 
 1. Click the
-   Assign Elevation to Grid from Points Layer icon to interpolate the elevation data to the grid.
+   Assign Elevation to Grid button to interpolate the elevation data to the grid.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample005.png
 
-2.	Choose the Interpolate from LiDAR files option and click OK.
+2. Choose the Interpolate from LiDAR files option and click OK.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample014.png
 
-3. Select the bare earth data LiDAR data files that cover the project area.
-   These are determined using the LiDAR tiles shapefile.
+3. These files are created from LasTools using the LiDAR *.LAS
+   files and the position is identified by a tiles shapefile.  Each filename has a
+   distinct tile associated with it.  The LiDAR xyz file must have a *.txt extension.
 
-4. Click Open.
-   The LiDAR file must have a \*.txt extension.
+4. Select the files and click Open.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample010.png
 
@@ -104,15 +104,31 @@ category.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample011.png
 
-6. LiDAR data is bare earth data
+6. Once the processing is complete
+   a dialog box appears with information about the processing points and time.
+   Click OK to close this window.
+
+.. image:: ../../img/Sample-Elevation-From-Points/Sample016.png
+
+7. LiDAR data is bare earth data
    so categories such as buildings, bridges, overpasses are removed from the point data.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample012.png
 
-7. The Plugin will fill this data with a nearest neighbor patch.
-   Select the first option and click ok to fill the missing data.
+8. The plugin will color the grid layers so that elevation data can be identified and allow
+   the user to fill this data with a nearest neighbor patch or assign a value to
+   non-interpolated cells.
+   Select the first option and click ok to fill the missing data and click OK.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample013.png
+
+9. This system may cycle a few times until all cells are filled.
+   Once the cells are filled, it is OK to cancel the dialog box.
+
+10. The final results
+    should be a grid with all elevation data complete.
+
+.. image:: ../../img/Sample-Elevation-From-Points/Sample017.png
 
 Troubleshooting
 ---------------
@@ -125,6 +141,3 @@ Troubleshooting
 
 3. If a Python error appears during the sampling, it may indicate that there is no attribute table.
    Save and reload the project into QGIS and try again.
-
-.. |Sample014| image:: ../../img/Sample-Elevation-From-Points/Sample014.png
-.. |Sample015| image:: ../../img/Sample-Elevation-From-Points/Sample015.png

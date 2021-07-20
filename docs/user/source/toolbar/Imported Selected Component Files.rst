@@ -4,7 +4,7 @@ Import Selected Component Files
 .. image:: ../img/Buttons/importdatared.png
 
 1. Click the
-   Import FLO-2D Component Files icon.
+   Import FLO-2D Component Files button.
 
 2. Navigate to
    the FLO-2D \*.DAT files.

@@ -12,7 +12,7 @@ The polygons represent roughness associated with different LandUse categories su
 The Plugin has 4 methods for calculating roughness.
 Use the Sampling Manning’s tool to access the calculator.
 
-1. Click the Sample Manning’s icon
+1. Click the Sample Manning’s button
    from polygon layers.
 
 .. image:: ../../img/Sample-Roughness-Data/img3.png
@@ -39,8 +39,7 @@ Roughness Point Sample
 Roughness Update
 ----------------
 
-4. To calculate a point sample from the centroid of the grid element on the manning’s polygons, use the Source Layer and Intersect cell centroid option.
-   This option will only update cells whose centroid lies within the Roughness Layer polygons and leave all other values as is.
+4. This option will only update cells whose centroid lies within the Roughness Layer polygons and leave all other values as is.
 
 .. image:: ../../img/Sample-Roughness-Data/img6.png
 

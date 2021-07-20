@@ -24,7 +24,7 @@ Save Project
 .. image:: ../img/Buttons/savebutton.png
 
 
-2. Click the Save Icon on the QGIS toolbar. Save the file to the project
+2. Click the Save button on the QGIS toolbar. Save the file to the project
    directory.
 
 .. image:: ../img/QGIS-General-Tools/qgisgeneraltools4.png
@@ -36,7 +36,7 @@ Open a Project
 .. image:: ../img/Buttons/openproject.png
 
 
-1. Click the open icon on the QGIS toolbar. Navigate to the project
+1. Click the Open button on the QGIS toolbar. Navigate to the project
    folder, select the \*.qgz file and click Open.
 
 .. image:: ../img/QGIS-General-Tools/qgisgeneraltools9.png

@@ -108,7 +108,7 @@ The polygon layer is also used to define a uniform elevation for a
 levee.
 
 1. Click the
-   Levee Elevation Tool icon.
+   Levee Elevation Tool button.
 
 2. Select User elevation
    polygons and User levee lines.
@@ -135,7 +135,7 @@ Levee from Elevation Points within Search Radius
 .. image:: ../img/Buttons/Leveetool.png
 
 1. Click the
-   Levee Elevation Tool icon.
+   Levee Elevation Tool button.
 
 2. Select User elevation points
    within search radius and User levee lines.
@@ -158,7 +158,7 @@ Levee from Levee User Lines
 .. image:: ../img/Buttons/Leveetool.png
 
 1. Click the
-   Levee Elevation Tool icon.
+   Levee Elevation Tool button.
 
 2. Select User
    levee lines.

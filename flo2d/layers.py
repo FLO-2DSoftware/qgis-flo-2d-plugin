@@ -1324,7 +1324,7 @@ class Layers(object):
                 (
                     "struct",
                     {
-                        "name": "(struct)",
+                        "name": "Hydraulic Structures",
                         "sgroup": "Hydraulic Structures",
                         "styles": ["struc.qml"],
                         "attrs_edit_widgets": {},
@@ -1334,7 +1334,7 @@ class Layers(object):
                 (
                     "rat_curves",
                     {
-                        "name": "(rat_curves)",
+                        "name": "Rating Curves",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1344,7 +1344,7 @@ class Layers(object):
                 (
                     "repl_rat_curves",
                     {
-                        "name": "(repl_rat_curves)",
+                        "name": "Replacement Rating Curves",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1354,7 +1354,7 @@ class Layers(object):
                 (
                     "rat_table",
                     {
-                        "name": "(rat_table)",
+                        "name": "Rating Tables",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1364,7 +1364,7 @@ class Layers(object):
                 (
                     "culvert_equations",
                     {
-                        "name": "(culvert_equations)",
+                        "name": "Culvert Equations",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1374,7 +1374,7 @@ class Layers(object):
                 (
                     "storm_drains",
                     {
-                        "name": "(storm_drains)",
+                        "name": "Hystruc Storm Drains",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1384,7 +1384,7 @@ class Layers(object):
                 (
                     "bridge_variables",
                     {
-                        "name": "(bridge_variables)",
+                        "name": "Bridge Data",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},

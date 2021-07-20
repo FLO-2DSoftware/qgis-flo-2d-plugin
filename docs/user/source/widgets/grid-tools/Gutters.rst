@@ -29,7 +29,7 @@ Digitize or Copy Data
 Sample Data
 -----------
 
-2. Click the Sampling Gutter Values icon in the Grid Tools and click
+2. Click the Sampling Gutter Values button in the Grid Tools and click
    OK when the process is complete. Fill the Global values and click
    OK to close the global data.
 

@@ -39,7 +39,7 @@
           <item row="0" column="0">
            <widget class="QToolButton" name="levee_elevation_tool_btn">
             <property name="toolTip">
-             <string>Levee Elevation Tool</string>
+             <string>Levee elevation tool</string>
             </property>
             <property name="text">
              <string>Levee Elevation Tool</string>
@@ -245,7 +245,7 @@
         <item row="0" column="0">
          <widget class="QToolButton" name="create_breach_location_btn">
           <property name="toolTip">
-           <string>Add Breach Location</string>
+           <string>Add breach location</string>
           </property>
           <property name="text">
            <string/>
@@ -268,7 +268,7 @@
         <item row="0" column="1">
          <widget class="QToolButton" name="save_breach_location_btn">
           <property name="toolTip">
-           <string>Save Breach Edits</string>
+           <string>Save breach edits</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -288,7 +288,7 @@
         <item row="0" column="2">
          <widget class="QToolButton" name="revert_breach_changes_btn">
           <property name="toolTip">
-           <string>Revert Breach Edits</string>
+           <string>Revert breach edits</string>
           </property>
           <property name="text">
            <string>...</string>

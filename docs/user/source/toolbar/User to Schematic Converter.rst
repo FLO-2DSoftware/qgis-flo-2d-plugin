@@ -13,7 +13,7 @@ Always make a recovery *.gpkg file.
    will update some layers if the grid element size or project domain is updated.
 
 2. Click the  
-   Convert User Layers to Schematic Layers icon.
+   Convert User Layers to Schematic Layers button.
 
 3. Choose the  
    layers to be updated.

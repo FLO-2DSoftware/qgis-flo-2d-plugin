@@ -2,7 +2,7 @@ Sample Elevation from Raster
 =============================
 
 To interpolate the elevation to a grid layer from a raster layer, use
-the Sampling Grid Elevation from Raster Layer icon.
+the Sampling Grid Elevation from Raster Layer button.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster1.png
 
@@ -15,25 +15,29 @@ A raster file is a geo-referenced image file with band data assigned to
 pixels aligned in column and row. In this case, the bands are elevation.
 Important properties:
 
-1. The raster must have the same coordinate reference system (CRS) as
+-  The raster must have the same coordinate reference system (CRS) as
    the project. If the CRS is missing or is set by the user, save the
    raster with the correct CRS.
 
-2. The best resolution of the grid element elevation is achieved when
+-  The best resolution of the grid element elevation is achieved when
    the elevation raster pixel size is smaller than the grid element
    size.
 
-3. The raster warp method uses a weighted average to warp the original
+-  The raster warp method uses a weighted average to warp the original
    raster pixels to the cell size pixels.
 
 Sample Elevation
 ----------------
 
-4. Click the Sampling Grid Elevation Button and enter the required data
-   in the dialog fields. As shown below, when the elevation sample is
-   complete, the Sampling Done dialog box will appear. Select the Fill
+1. Click the Sampling Grid Elevation Button and enter the required data
+   in the dialog fields as shown below.
+
+2. Select the Fill
    NODATA option to set the elevation of empty grid elements from
-   neighbors.
+   neighbors.  This is only necessary if there are empty raster pixels.
+   It happens where LiDAR data is rasterized and only bare ground is added.
+
+3. Click OK.  When the elevation sampling is complete Close the Sampling Done box.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster2.png
 

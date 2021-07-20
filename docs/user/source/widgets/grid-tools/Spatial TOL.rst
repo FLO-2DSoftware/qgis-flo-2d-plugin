@@ -39,7 +39,7 @@ Define the Tolerance Attribute
 .. image:: ../../img/Spatially-Variable/spatia003.png
 
 
-4. On the attribute table window, click on the Toggle Editing icon, change the field to TOL, add the command to set
+4. On the attribute table window, click on the Toggle Editing button, change the field to TOL, add the command to set
    the TOL depth (6.68 / $area) and click Update All.
 
 5. Save and close the editor tool and close the attribute table.
@@ -52,7 +52,7 @@ Sample Data
 -----------
 
 1. Click
-   the Sample Spatial Tolerance Values icon.
+   the Sample Spatial Tolerance Values button.
 
 .. image:: ../../img/Spatially-Variable/spatia005.png
 

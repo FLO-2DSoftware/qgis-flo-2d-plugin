@@ -19,4 +19,4 @@ Other helpful Plugins include:
 -  Quick Map Service
 
    *Note: For QuickMapService, it is necessary to install and add maps.
-   Click on the QuickMapServices icon>Settings>More Services> Get Contributed Pack> Save.*
+   Click on the QuickMapServices button>Settings>More Services> Get Contributed Pack> Save.*

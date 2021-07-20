@@ -4,7 +4,7 @@ Spatial Shallow n
 Overview
 --------
 
-A spatially variable shallow n-value enables the flow roughness to be depth integrated enable high n-values at shallow flow depths.
+A spatially variable shallow n-value enables the flow roughness to be depth integrated to enable high n-values at shallow flow depths.
 The value can also be globally assigned in the FLO-2D Control and Tolerance Variables window.
 Polygons can be applied to select individual or groups of grid elements to supersede the global n-value as in the case for streets and parking lots.
 
@@ -26,7 +26,7 @@ Sample Data
 -----------
 
 1. Click the Sampling Spatial Shallow-n Values
-   icon and then OK once the process is complete.
+   button and then OK once the process is complete.
 
 .. image:: ../../img/Spatial-Shallow/spatia003.png
 

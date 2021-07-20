@@ -14,7 +14,7 @@ Use it after performing an Import FLO-2D \*.DAT files.
    can be edited.
 
 2. Click the
-   Convert Schematic Layers to User Layers icon.
+   Convert Schematic Layers to User Layers button.
 
 3. This tool will convert the Schematic Layers to User Layers so
    they can be edited.

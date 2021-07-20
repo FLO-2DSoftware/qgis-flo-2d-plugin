@@ -47,7 +47,7 @@ Inflow Node
 7. Repeat the process to add additional inflow hydrographs.
    Use the Add data series/table for current BC button to create a new hydrograph.
 
-8. Use the Schematize icon
+8. Use the Schematize button
    (shown below) to save the data to the Schematic Layers and click Yes to overwrite the layers.
 
 .. image:: ../../img/Boundary-Condition-Editor/bounda006.png
