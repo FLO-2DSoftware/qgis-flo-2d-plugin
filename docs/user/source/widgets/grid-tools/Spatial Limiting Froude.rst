@@ -28,7 +28,7 @@ Sample Data
 -----------
 
 1. Click the Sampling
-   Froude Numbers icon.
+   Froude Numbers button.
 
 .. image:: ../../img/Spatial-Limiting-Froude/spatia003.png
 

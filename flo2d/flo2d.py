@@ -690,7 +690,7 @@ class Flo2D(object):
         qgs_dir = os.path.dirname(qgs_file)
         if old_gpkg:
             QApplication.restoreOverrideCursor()
-            msg = f"This QGIS project uses the FLO-2D plugin and the following database file:\n\n{old_gpkg}\n\n"
+            msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{old_gpkg}\n\n"
             if not os.path.exists(old_gpkg):
                 msg += "Unfortunately it seems that database file doesn't exist at given location."
                 gpkg_dir, gpkg_file = os.path.split(old_gpkg)

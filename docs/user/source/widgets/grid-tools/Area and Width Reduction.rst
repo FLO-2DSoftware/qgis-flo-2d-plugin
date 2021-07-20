@@ -4,11 +4,12 @@ Area and Width Reduction – Buildings
 Overview
 --------
 
-Buildings are only calculated from the Blocked Areas layer in the User Layers group.
-The blocked areas are polygons that represent buildings or other features that displace and redirect the flow as it moves over an area.
-The blocked areas are converted to FLO-2D Area Reductions Factors (ARF) and Width Reduction Factors (WRF) in the Schematic Layer.
+The black polygons below are polygons that represent buildings or other features that displace and
+redirect the flow as it moves over an area.  The blocked areas or external shapefiles are converted
+to FLO-2D Area Reductions Factors (ARF) and Width Reduction Factors (WRF) in the Schematic Layer.
 
-Use the QGIS Editing Tools Create Polygon tool to digitize or outline buildings with polygons or import the building from an external layer.
+Use the QGIS Editing Tools Create Polygon tool to digitize or outline buildings with polygons or
+import the building from an external layer.
 
 Building polygons are also available in many locations from County GIS data.
 If Buildings are not available, Tax Boundary polygons are available for all cities in the USA.
@@ -21,7 +22,7 @@ Calculate ARF and WRF layers
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area003.png
 
-1. Click the Evaluate Reduction Factors (ARF and WRF) icon.
+1. Click the Evaluate Reduction Factors (ARF and WRF) button.
    There are two options.
    Use the Blocked Areas Layer if constructing polygons from the digitizing tools.
    Use the external polygon layer if building polygons are in another layer.
@@ -38,7 +39,7 @@ Calculate ARF and WRF layers
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area006.png
 
-4. Click on the Set Control Parameters icon, and then on the Control Variables (CONT.DAT) tab Check on Area Reduction Factors (ARF) and then click
+4. Click on the Set Control Parameters button, and then on the Control Variables (CONT.DAT) tab Check on Area Reduction Factors (ARF) and then click
    Save.
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area007.png

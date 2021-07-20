@@ -8,7 +8,7 @@ set the coordinate system and create the GeoPackage file.
 
 
 1. Click on the
-   FLO-2D Plugin Settings tool icon.
+   FLO-2D Plugin Settings tool button.
 
 2. Assign the
    desired grid element size and baseline n-value.

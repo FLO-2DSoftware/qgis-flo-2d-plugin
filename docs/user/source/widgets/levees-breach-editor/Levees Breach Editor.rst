@@ -83,7 +83,7 @@ In this case, the breach starts in the North direction because the Point is clos
 
 .. image:: ../../img/Levee-Breach/Levees011.png
 
-6. Click the Save icon on the Breach Widget activate the breach editor.
+6. Click the Save button on the Breach Widget activate the breach editor.
    Click the Individual Breach Data Button to fill the dam and breach data into the dialog box.
 
 .. image:: ../../img/Levee-Breach/Levees012.png

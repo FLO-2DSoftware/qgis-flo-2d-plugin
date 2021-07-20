@@ -7,14 +7,21 @@ This polygon can be digitized in the Computational Domain layer or it can be add
 shapefile with a single polygon.
 Both methods are described below.
 
-Method 1: Load an External Layer
----------------------------------
+Method 1: Grid From an External Polygon
+---------------------------------------
 
 1. This method will use a shapefile
    with 1 polygon that represents the model area.
 
+2. Click the Create Grid
+   button.
+
+.. image:: ../../img/Create-a-Grid/create006.png
+
 2. Select the shapefile and an
    attribute for cell size and click OK.
+
+.. image:: ../../img/Create-a-Grid/create002.png
 
 3. Optionally, select the elevation
    source to align the grid to a raster pixel.
@@ -22,11 +29,12 @@ Method 1: Load an External Layer
 4. The tool will add a polygon
    to the Computational Domain layer and then create the grid.
 
-.. image:: ../../img/Create-a-Grid/create002.png
+5. The optional raster alignment
+   will align the grid to the pixels of a raster.
 
 
-Method 2: Digitize the Computational Domain
--------------------------------------------
+Method 2: Grid from the Computational Domain
+---------------------------------------------
 
 1. Select the Computational
    Domain layer in the Layers Panel>User Layers.
@@ -35,7 +43,7 @@ Method 2: Digitize the Computational Domain
 
 
 2. Select the Toggle Editing
-   icon from the QGIS Toolbar to activate the editor and then click the Add Feature button to create a polygon.
+   button from the QGIS Toolbar to activate the editor and then click the Add Polygon Feature button to create a polygon.
 
 .. image:: ../../img/Create-a-Grid/create004.png
  
@@ -59,8 +67,8 @@ Method 2: Digitize the Computational Domain
 
 6. If this is a new project, the grid system will be created automatically.
    If this is a current project, the user will be asked to overwrite the current grid system.
-   Click Yes to continue and No to cancel.
-   Once the grid system is generated, the “Grid created!” message will appear.
+   Click Yes to continue or No to cancel.
+   Once the grid system is generated, the Grid created! message will appear.
    Click OK to close.
 
 .. image:: ../../img/Create-a-Grid/create010.png

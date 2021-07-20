@@ -48,7 +48,7 @@ Sample Elevation
     process helps the user track the progress.
 
 9.  The user can set the CPU thread count
-    and the memory cache allowed by the processors. This ensures the computer won’t slow down while the optimized calculations are performed.
+    and the memory cache allowed by the processors. This ensures the computer will not slow down while the optimized calculations are performed.
 
 10. Once the Finished Computation message
     appears. Click Close.

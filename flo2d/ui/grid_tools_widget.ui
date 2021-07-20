@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QToolButton" name="create_grid_btn">
      <property name="toolTip">
-      <string>Create Grid</string>
+      <string>Create grid</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -77,7 +77,7 @@
    <item row="1" column="5">
     <widget class="QToolButton" name="noexchange_btn">
      <property name="toolTip">
-      <string>Sampling No-Exchange Channel Cells</string>
+      <string>Sample no-exchange channel cells</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -100,7 +100,7 @@
       <bool>true</bool>
      </property>
      <property name="toolTip">
-      <string>Sampling Gutter Values</string>
+      <string>Sampling gutters</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -123,7 +123,7 @@
       <bool>true</bool>
      </property>
      <property name="toolTip">
-      <string>Sampling Spatial Shallow-n Values</string>
+      <string>Sampling spatial shallow-n values</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -143,7 +143,7 @@
    <item row="1" column="2">
     <widget class="QToolButton" name="froude_btn">
      <property name="toolTip">
-      <string>Sampling Froude Numbers</string>
+      <string>Sampling limiting Froude numbers</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -163,7 +163,7 @@
    <item row="1" column="1">
     <widget class="QToolButton" name="tolerance_btn">
      <property name="toolTip">
-      <string>Sampling Spatial Tolerance Values</string>
+      <string>Sampling spatial tolerance values</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -183,7 +183,7 @@
    <item row="1" column="0">
     <widget class="QToolButton" name="arfwrf_btn">
      <property name="toolTip">
-      <string>Evaluate Reduction Factors (ARF and WRF)</string>
+      <string>Calculate reduction factors (ARF and WRF)</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -203,7 +203,7 @@
    <item row="0" column="5">
     <widget class="QToolButton" name="roughness_btn">
      <property name="toolTip">
-      <string>Sampling Manning's</string>
+      <string>Sampling roughness</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -223,7 +223,7 @@
    <item row="0" column="4">
     <widget class="QToolButton" name="polygon_elevation_btn">
      <property name="toolTip">
-      <string>Correct Grid Elevation</string>
+      <string>Correct grid elevation</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -243,7 +243,7 @@
    <item row="0" column="3">
     <widget class="QToolButton" name="xyz_elevation_btn">
      <property name="toolTip">
-      <string>Assign elevations to grid</string>
+      <string>Sample elevation from point or LiDAR </string>
      </property>
      <property name="text">
       <string>...</string>
@@ -263,7 +263,7 @@
    <item row="0" column="2">
     <widget class="QToolButton" name="point_elevation_btn">
      <property name="toolTip">
-      <string>Sampling grid elevation from point file or raster after converting to point file</string>
+      <string>Sampling grid elevation from point or raster GDAL grid method</string>
      </property>
      <property name="text">
       <string>...</string>

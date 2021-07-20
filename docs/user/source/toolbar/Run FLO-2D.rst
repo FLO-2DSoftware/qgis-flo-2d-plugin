@@ -10,7 +10,7 @@ The Run FLO-2D button is used to run FLO-2D and other processing programs.
   
 
 1. Run FLO-2D Click
-   the Run FLO-2D icon on the FLO-2D Plugin toolbar.
+   the Run FLO-2D button on the FLO-2D Plugin toolbar.
 
 2. Set the Project
    Export folder location and the location of the FLOPRO.EXE file.

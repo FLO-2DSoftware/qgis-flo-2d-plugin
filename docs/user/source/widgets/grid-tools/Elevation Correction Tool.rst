@@ -16,8 +16,8 @@ The correction datasets are set up in the User Layers group.
 
 -  Rasters
 
-Users Layers Tab
-----------------
+Users Layers Mode
+-----------------
 
 There are multiple options in this tool.
 The following sections will show how to use each option in the Users Layers Mode tab.
@@ -29,7 +29,7 @@ Tin from Points and Polygon
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat003.png
 
-2. The tool creates a TIN that is confined to the elevation polygon layer.
+2. The tool creates a triangulated irregular network (TIN) that is confined to the elevation polygon layer.
    The TIN elevation is read from the Elevation Points layer.
    The elevation is assigned to the grid from the TIN as a correction to the grid elevation.
    Only grids with a centroid inside the polygon are adjusted.
@@ -42,19 +42,20 @@ The tool corrects the grid elevation only.**
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat004.png
 
-3. Here is a before and after image of the calculation.
+3. Here is a before and after image of the calculation.  The tool removed the dam from the grid elevation.
+   It interpolated the grid elevations based on the point and a TIN.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat005.png
 
 Tin from Polygon Boundary
 -------------------------
 
-4. The second option is to build a TIN from the grid element elevation surrounding a polygon.
+1. The second option is to build a TIN from the grid element elevation surrounding a polygon.
    This will assess the elevation where the polygon intersects the grid and interpolate that elevation to the TIN.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat006.png
 
-5. This option is used when a Cut or Fill correction is required.
+2. This option is used when a Cut or Fill correction is required.
    For example, to fill a channel with elevation data along the bank, cover the channel with an elevation polygon and apply the correction.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat007.png
@@ -62,11 +63,11 @@ Tin from Polygon Boundary
 Elevation Polygon Attributes
 ----------------------------
 
-6. This option is used when a single known elevation correction is required.
+1. This option is used when a single known elevation correction is required.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat008.png
 
-7. In this example, the invert elevation at the headwall inlet is incorrect.
+2. In this example, the invert elevation at the headwall inlet is incorrect.
    The polygon has a new elevation assigned that will be applied directly to the grid layer.
    In this case the correction is applied to centroid of the cell and the selected polygon only.
 
@@ -75,7 +76,7 @@ Elevation Polygon Attributes
 Grid Statistics within Blocked Areas
 ------------------------------------
 
-8. In this case, the correction is applied by analyzing the statistics of the elevations within the Blocked Areas Polygons.
+1. In this case, the correction is applied by analyzing the statistics of the elevations within the Blocked Areas Polygons.
    The mean, max or min elevation of the combined cell centroids within the polygon are applied as a general condition to all of the cells centroids
    within the polygon.
 
@@ -162,7 +163,7 @@ This method will apply zonal statistics to a raster within individual grid eleme
 
 1. Import an elevation raster.
 
-2. Copy a set of grid elements to the Elevation Polygon Layer.
+2. Copy a group of grid elements to the Elevation Polygon Layer.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat018.png
 

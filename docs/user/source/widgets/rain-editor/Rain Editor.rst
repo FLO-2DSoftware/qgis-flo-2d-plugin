@@ -12,7 +12,7 @@ Uniform Rainfall
 
 Uniform rainfall requires the total rain in inches or millimeters and a rainfall distribution.
 In this example, the total rainfall is 3 inches.
-To find Total Storm Rainfall, zoom to Rainfall raster with Computational Domain layer, check Identify Features icon, clicks within the Computational
+To find Total Storm Rainfall, zoom to Rainfall raster with Computational Domain layer, check Identify Features button, clicks within the Computational
 Domain to find highest derived value.
 The Building Rain switch is selected so that rain on totally blocked ARF cells will allow rain to run from the blocked areas.
 The initial abstraction is default of zero inches.

@@ -26,7 +26,7 @@
       <bool>false</bool>
      </property>
      <property name="toolTip">
-      <string>Add Storm Drain Point</string>
+      <string>Add storm drain ooint</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -49,7 +49,7 @@
       <bool>false</bool>
      </property>
      <property name="toolTip">
-      <string>Save Current Storm Drain Points</string>
+      <string>Save current storm drain points</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -78,7 +78,7 @@
       </size>
      </property>
      <property name="toolTip">
-      <string>Revert Unsaved Changes For Current Storm Drain Point</string>
+      <string>Revert unsaved changes for current storm drain point</string>
      </property>
      <property name="text">
       <string/>
@@ -101,7 +101,7 @@
       <bool>false</bool>
      </property>
      <property name="toolTip">
-      <string>Delete Current Storm Drain Point</string>
+      <string>Delete Current storm drain point</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -124,7 +124,7 @@
       <bool>true</bool>
      </property>
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize Storm Drain Components&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>Schematize storm drain components</string>
      </property>
      <property name="text">
       <string>...</string>
@@ -341,7 +341,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>Show Inlet Rating Table</string>
+           <string>Show inlet rating table</string>
           </property>
           <property name="text">
            <string/>
@@ -354,7 +354,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>Add Inlet Rating Table</string>
+           <string>Add inlet rating table</string>
           </property>
           <property name="text">
            <string/>
@@ -371,7 +371,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>Remove Inlet Rating Table</string>
+           <string>Remove inlet rating table</string>
           </property>
           <property name="text">
            <string/>
@@ -388,7 +388,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>Rename Inlet Rating Table</string>
+           <string>Rename inlet rating table</string>
           </property>
           <property name="text">
            <string/>

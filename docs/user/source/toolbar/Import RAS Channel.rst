@@ -3,7 +3,7 @@ Import HEC-RAS Channel
 
 .. image:: ../img/Buttons/ras.png
 
-1. Click the Import RAS Geometry icon to import channel data from a
+1. Click the Import RAS Geometry button to import channel data from a
    GeoRAS project.
 
 2. The tool will import
