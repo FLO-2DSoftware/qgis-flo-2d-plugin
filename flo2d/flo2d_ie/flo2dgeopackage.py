@@ -40,7 +40,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.cell_size = self.parser.calculate_cellsize()
         if self.cell_size == 0:
             self.uc.show_info(
-                "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exists or is empty?"
+                "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
             )
             return False
         else:
