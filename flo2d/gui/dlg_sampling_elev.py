@@ -46,6 +46,8 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         self.probe_raster = None
         self.radiusSBox.setHidden(True)
         self.max_radius_lab.setHidden(True)
+        self.ovrCbo.setHidden(True)
+        self.label_3.setHidden(True)
 
         # connections
         self.browseSrcBtn.clicked.connect(self.browse_src_raster)

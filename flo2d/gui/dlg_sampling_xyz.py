@@ -87,7 +87,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         # connections
         self.points_cbo.currentIndexChanged.connect(self.populate_fields_cbo)
         self.points_layer_grp.clicked.connect(self.points_layer_selected)
-        self.lidar_grp.clicked.connect(self.lidar_selected)
+        self.lidar_chbox.clicked.connect(self.lidar_selected)
 
     def setup_layer_cbo(self):
         """
@@ -113,14 +113,10 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         self.fields_cbo.setCurrentIndex(0)
 
     def points_layer_selected(self):
-        self.lidar_grp.setChecked(not self.points_layer_grp.isChecked())
+        self.lidar_chbox.setChecked(not self.points_layer_grp.isChecked())
 
     def lidar_selected(self):
-        self.points_layer_grp.setChecked(not self.lidar_grp.isChecked())
-        self.use_sql_chbox.setEnabled(False)
-        self.use_all_radio.setEnabled(False)
-        self.use_porcentage_radio.setEnabled(False)
-        self.porcentage_dbox.setEnabled(False)
+        self.points_layer_grp.setChecked(not self.lidar_chbox.isChecked())
                    
     def interpolate_from_lidar(self):
         
