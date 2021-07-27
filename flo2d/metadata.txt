@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.30
+version=0.10.31
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -8,7 +8,10 @@ author=FLO-2D
 email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
+
 changelog=
+ <p>0.10.31
+  - Fix several dialogs (.ui) sizes and size policies.
  <p>0.10.30
   - Render grid elevations with min, second min, and max.
   - Error and warning messages in Grid Info tool.
