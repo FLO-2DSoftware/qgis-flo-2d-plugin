@@ -56,7 +56,8 @@ from ..flo2d_tools.grid_tools import (
         render_grid_elevations2, 
         adjacent_average_elevation,
         cell_centroid,
-        cell_elevation
+        cell_elevation,
+        ZonalStatistics
     )
 from pickle import TRUE
 # from flo2d.__init__ import classFactory
@@ -236,7 +237,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                     outside_grid += 1    
                                     
                         except ValueError:
-                            read_error += os.path.basename(file) + "\n\n"
+                            read_error += os.path.basename(file) + " at line " + str(i) + "\n\n" 
 
             self.uc.clear_bar_messages()    
             statBar.removeWidget(statusLabel)
@@ -335,35 +336,122 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                     adjacent = []
                     
                     if dlg.interpolate_radio.isChecked():
-                        
-                        ini_time = time.time()
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
-                        
-                        for this_cell in nope:
-                            
-                            xx = self.xMinimum + (this_cell[1]-2)*self.cell_size + self.cell_size/2
-                            yy = self.yMinimum + (this_cell[2]-2)*self.cell_size + self.cell_size/2                        
-                            
-                            avrg = adjacent_average_elevation(self.gutils, self.grid, xx, yy, self.cell_size)
-                            if avrg != -9999:
-                                qry_values.append((avrg, this_cell[0]))
-                                adjacent.append(this_cell[0])
-                                
-                        self.gutils.execute_many(update_qry, qry_values)   
-                        
-                        nope = [i for i in nope if i[0] not in adjacent]
-                        
-                        QApplication.restoreOverrideCursor()  
-                        fin_time = time.time()  
-                        
-                        duration = time_taken(ini_time, fin_time)  
 
-                        self.lyrs.lyrs_to_repaint = [self.grid]
-                        self.lyrs.repaint_layers()
-                                                                         
-                        self.uc.show_info("Elevation to " + '{0:,d}'.format(len(qry_values)) + " non-interpolated cells were assigned from adjacent elevations." + 
-                                          "\n\n There are still " + '{0:,d}'.format(len(nope)) + " non-interpolated cells."
-                                           "\n\n(Elapsed time: " + duration + ")")
+                        for lyr in QgsProject.instance().mapLayers().values():
+                            if lyr.name() == "Cell elevations from LIDAR":
+                                QgsProject.instance().removeMapLayers([lyr.id()])                   
+
+                        epsg = self.grid .crs().authid()
+                        vl = QgsVectorLayer("{}?crs={}".format("Point", epsg), "Cell elevations from LIDAR", "memory")
+                        pr = vl.dataProvider()
+                        # add fields
+                        pr.addAttributes( [QgsField("elevation", QVariant.Double), QgsField("grid", QVariant.Int) ] )
+                        vl.updateFields() # tell the vector layer to fetch changes from the provider
+                        # Enter editing mode
+                        vl.startEditing()                     
+                        for item in assigned:
+                            fet = QgsFeature()
+                            pnt = self.gutils.single_centroid(item[1])
+                            pt = QgsGeometry().fromWkt(pnt).asPoint()
+                            if pt.x is not None and pt.y is not None:
+                                fet.setGeometry(QgsGeometry().fromPointXY(pt))
+                                fet.setAttributes([item[0], item[1]])
+                                pr.addFeatures( [ fet ] )
+                                
+                        vl.commitChanges()
+                        QgsProject.instance().addMapLayer(vl)                        
+                        
+                        QApplication.setOverrideCursor(Qt.WaitCursor) 
+                        elevs =  [x[0] for x in assigned]
+                        mini = -9999
+                        mini2 = min(elevs) 
+                        maxi = max(elevs)                                                        
+                        render_grid_elevations2(vl, True, mini, mini2, maxi);                 
+                        self.lyrs.lyrs_to_repaint = [vl]
+                        self.lyrs.repaint_layers()  
+                        
+                        QApplication.restoreOverrideCursor()                      
+                        
+# $$$$$$$$$$$$$$$$$$$$$$$                        
+                        zfield = "elevation"
+                        calc_type = "Mean"
+                        search_distance = dlg.search_distance_sbox.value()
+    
+                        try:
+                            ini_time = time.time()
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            zs = ZonalStatistics(self.gutils, self.grid, vl, zfield, calc_type, search_distance)
+                            points_elevation = zs.points_elevation()
+                            zs.set_elevation(points_elevation)
+                            cmd, out = zs.rasterize_grid()
+                            self.uc.log_info(cmd)
+                            self.uc.log_info(out)
+                            cmd, out = zs.fill_nodata()
+                            self.uc.log_info(cmd)
+                            self.uc.log_info(out)
+                            null_elevation = zs.null_elevation()
+                            zs.set_elevation(null_elevation)
+                            zs.remove_rasters()
+
+                            self.gutils.execute("UPDATE grid SET elevation = -9999 WHERE elevation IS NULL;")
+                            elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
+                            # elevs = [x if x is not None else -9999 for x in elevs] 
+                            if elevs:
+                                mini = min(elevs)
+                                mini2 = second_smallest(elevs) 
+                                maxi = max(elevs)       
+                                render_grid_elevations2(self.grid, True, mini, mini2, maxi) 
+                                set_min_max_elevs(mini, maxi) 
+                                self.lyrs.lyrs_to_repaint = [self.grid]
+                                self.lyrs.repaint_layers()
+
+                            QApplication.restoreOverrideCursor()
+    
+                            fin_time = time.time()
+                            duration = time_taken(ini_time, fin_time)
+                            self.uc.show_info("Calculating elevation finished." +
+                                              "\n\n(Elapsed time: " + duration + ")")
+                            
+                            break
+    
+                        except Exception as e:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.log_info(traceback.format_exc())
+                            self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
+# &&&&&&&&&&&&&&&&&&&&&&&&
+
+
+                        
+                        
+                        
+                        # ini_time = time.time()
+                        # QApplication.setOverrideCursor(Qt.WaitCursor)
+                        #
+                        # for this_cell in nope:
+                        #
+                        #     xx = self.xMinimum + (this_cell[1]-2)*self.cell_size + self.cell_size/2
+                        #     yy = self.yMinimum + (this_cell[2]-2)*self.cell_size + self.cell_size/2                        
+                        #
+                        #     avrg = adjacent_average_elevation(self.gutils, self.grid, xx, yy, self.cell_size)
+                        #     if avrg != -9999:
+                        #         qry_values.append((avrg, this_cell[0]))
+                        #         adjacent.append(this_cell[0])
+                        #
+                        # self.gutils.execute_many(update_qry, qry_values)   
+                        #
+                        # nope = [i for i in nope if i[0] not in adjacent]
+                        #
+                        # QApplication.restoreOverrideCursor()  
+                        # fin_time = time.time()  
+                        #
+                        # duration = time_taken(ini_time, fin_time)  
+                        #
+                        # self.lyrs.lyrs_to_repaint = [self.grid]
+                        # self.lyrs.repaint_layers()
+                        #
+                        # self.uc.show_info("Elevation to " + '{0:,d}'.format(len(qry_values)) + " non-interpolated cells were assigned from adjacent elevations." + 
+                        #                   "\n\n There are still " + '{0:,d}'.format(len(nope)) + " non-interpolated cells."
+                        #                    "\n\n(Elapsed time: " + duration + ")")
          
                     elif dlg.assign_radio.isChecked():
                         
@@ -396,9 +484,11 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                           "\n\n(Elapsed time: " + duration + ")") 
                         
                         nope = []     
+                        
+                        break
   
-                    elif dlg.highlight_radio.isChecked():
-                        pass
+                    # elif dlg.highlight_radio.isChecked():
+                    #     pass
 
                         # ini_time = time.time()    
                         # QApplication.setOverrideCursor(Qt.WaitCursor)    
@@ -453,7 +543,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
         except UnicodeDecodeError:
             error0 = "File " + file_name + file_ext + " is not a text file!"
         finally:
-             return error0, error1
+            return error0, error1
 
 class LIDARWorker(QObject) :
     def __init__(self, iface, lidar_files, lyrs):
@@ -568,12 +658,9 @@ class LidarOptionsDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
-           
-        self.highlight_radio.setVisible(False)
         
         self.interpolate_radio.clicked.connect(self.enable_non_value)
         self.assign_radio.clicked.connect(self.enable_non_value)
-        self.highlight_radio.clicked.connect(self.enable_non_value)
         
     def _del_(self): 
         pass

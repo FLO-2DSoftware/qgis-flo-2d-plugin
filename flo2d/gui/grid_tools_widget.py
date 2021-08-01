@@ -284,12 +284,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
             
             grid = self.lyrs.data["grid"]["qlyr"]
-            grid_extent = grid.extent()        
+            # grid_extent = grid.extent()        
             
             dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
             ok = dlg.exec_()
             if ok:
-                if dlg.points_layer_grp.isChecked():
+                if dlg.points_layer_grp.isChecked(): 
+                    # Interpolate from points layer:
                     points_lyr = dlg.current_lyr
                     if not points_lyr:
                         self.uc.show_info("Select a points layer!")
@@ -301,8 +302,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         try:
                             ini_time = time.time()
                             QApplication.setOverrideCursor(Qt.WaitCursor)
-                            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                            zs = ZonalStatistics(self.gutils, grid_lyr, points_lyr, zfield, calc_type, search_distance)
+                            # grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                            zs = ZonalStatistics(self.gutils, grid, points_lyr, zfield, calc_type, search_distance)
                             points_elevation = zs.points_elevation()
                             zs.set_elevation(points_elevation)
                             cmd, out = zs.rasterize_grid()
@@ -322,9 +323,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                 mini = min(elevs)
                                 mini2 = second_smallest(elevs) 
                                 maxi = max(elevs)       
-                                render_grid_elevations2(grid_lyr, True, mini, mini2, maxi) 
+                                render_grid_elevations2(grid, True, mini, mini2, maxi) 
                                 set_min_max_elevs(mini, maxi) 
-                                self.lyrs.lyrs_to_repaint = [grid_lyr]
+                                self.lyrs.lyrs_to_repaint = [grid]
                                 self.lyrs.repaint_layers()
 
                             QApplication.restoreOverrideCursor()
@@ -339,9 +340,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             self.uc.log_info(traceback.format_exc())
                             self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
     
-                else:
-                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                    field_index = grid_lyr.fields().indexFromName("col")
+                else: 
+                    # Interpolate from LIDAR:
+                    # grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    field_index = grid.fields().indexFromName("col")
                     if field_index == -1:
                         if self.gutils.is_table_empty("user_model_boundary"):
                             QApplication.restoreOverrideCursor()
@@ -351,7 +353,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             proceed = self.uc.question("WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
                                                        "Would you like to add the 'col' and 'row' fields to the grid table?")
                             if proceed:
-                                if add_col_and_row_fields(grid_lyr):
+                                if add_col_and_row_fields(grid):
                                     assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
                                     dlg.interpolate_from_lidar()
                     else:
