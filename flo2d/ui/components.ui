@@ -140,7 +140,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Mudflow and sediment transport</string>
+        <string>Mudflow and Sediment Transport</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -222,7 +222,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Reduction factors</string>
+        <string>Reduction Factors</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -235,7 +235,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Outflow elements</string>
+        <string>Outflow Elements</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -248,7 +248,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Inflow elements</string>
+        <string>Inflow Elements</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -356,7 +356,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Multiple channels</string>
+        <string>Multiple Channels</string>
        </property>
        <property name="checked">
         <bool>false</bool>

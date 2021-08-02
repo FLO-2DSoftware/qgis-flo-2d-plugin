@@ -74,7 +74,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>Elevation</string>
+        <string>Elev</string>
        </property>
       </widget>
      </item>
@@ -174,21 +174,21 @@
      <item>
       <widget class="QLabel" name="n_cells_lbl">
        <property name="text">
-        <string>Number of cells: 1,234,456</string>
+        <string>No. cells: 1,234,456</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="plot_ckbox">
        <property name="text">
-        <string>Plot rainfall</string>
+        <string>Plot rain</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="render_elevations_chbox">
        <property name="text">
-        <string>Render elevations</string>
+        <string>Render elev</string>
        </property>
       </widget>
      </item>
