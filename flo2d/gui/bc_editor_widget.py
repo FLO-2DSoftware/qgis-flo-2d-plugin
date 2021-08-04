@@ -359,13 +359,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.clear()
         self.plot.clear()
 
-    def populate_inflows(self, inflow_fid=None, show_last_edited=False):
+    def populate_inflows(self, inflow_fid=None, show_last_edited=False, widget_setup = False):
         """
         Read inflow and inflow_time_series tables, populate proper combo boxes.
         """
         self.reset_inflow_gui()
         all_inflows = self.gutils.get_inflows_list()
-        if not all_inflows:
+        if not all_inflows and not widget_setup:
             self.uc.bar_info("There is no inflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             return
@@ -637,13 +637,13 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_data_label.setText(out_par["data_label"])
         self.outflow_tab_head = out_par["tab_head"]
 
-    def populate_outflows(self, outflow_fid=None, show_last_edited=False):
+    def populate_outflows(self, outflow_fid=None, show_last_edited=False, widget_setup = False):
         """
         Read outflow table, populate the cbo and set proper outflow.
         """
         self.reset_outflow_gui()
         all_outflows = self.gutils.get_outflows_list()
-        if not all_outflows:
+        if not all_outflows and not widget_setup:
             self.uc.bar_info("There is no outflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             return
@@ -1305,18 +1305,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             # populate widgets and show last edited bc
             self.populate_bcs(show_last_edited=True)
         self.repaint_bcs()
-
-    def populate_bcs(self, bc_fid=None, show_last_edited=False):
+ 
+    def populate_bcs(self, bc_fid=None, show_last_edited=False, widget_setup = False):
         self.bc_tview.setModel(self.bc_data_model)
         self.lyrs.clear_rubber()
         if self.bc_type_inflow_radio.isChecked():
-            self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited)
+            self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited, widget_setup = widget_setup)
             if self.bc_name_cbo.count() == 0:
                 self.inflow_frame.setDisabled(True)
             else:
                 self.inflow_frame.setEnabled(True)
         elif self.bc_type_outflow_radio.isChecked():
-            self.populate_outflows(outflow_fid=bc_fid, show_last_edited=show_last_edited)
+            self.populate_outflows(outflow_fid=bc_fid, show_last_edited=show_last_edited, widget_setup = widget_setup)
             if self.bc_name_cbo.count() == 0:
                 self.outflow_frame.setDisabled(True)
             else:
