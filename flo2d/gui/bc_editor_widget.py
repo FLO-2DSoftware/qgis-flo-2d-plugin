@@ -386,6 +386,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             if inflow_fid and fid == inflow_fid:
                 cur_name_idx = i - inflows_skipped
         if not self.bc_name_cbo.count():
+            if not widget_setup:  
+                self.uc.bar_info("There is no inflow defined in the database...")       
             return
         if show_last_edited:
             cur_name_idx = i - inflows_skipped
@@ -662,38 +664,17 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.bc_name_cbo.addItem(name, [fid, typ, geom_type])
             if fid == outflow_fid:
                 cur_out_idx = i - outflows_skipped
+                
         if not self.bc_name_cbo.count():
-            return
+            if not widget_setup:  
+                self.uc.bar_info("There is no outflow defined in the database...")       
+            return                
         if show_last_edited:
             cur_out_idx = i - outflows_skipped
         self.out_fid, self.type_fid, self.geom_type = self.bc_name_cbo.itemData(cur_out_idx)
         self.outflow = Outflow(self.out_fid, self.iface.f2d["con"], self.iface)
         self.outflow.get_row()
-        # msg = """In populate_outflows. Got current outflow row:
-        # name = {}
-        # chan_out = {}
-        # fp_out = {}
-        # hydro_out = {}
-        # chan_tser_fid = {}
-        # chan_qhpar_fid = {}
-        # chan_qhtab_fid = {}
-        # fp_tser_fid = {}
-        # typ = {}
-        # geom_type = {}
-        # bc_fid = {}
-        # """.format(
-            # self.outflow.name,
-            # self.outflow.chan_out,
-            # self.outflow.fp_out,
-            # self.outflow.hydro_out,
-            # self.outflow.chan_tser_fid,
-            # self.outflow.chan_qhpar_fid,
-            # self.outflow.chan_qhtab_fid,
-            # self.outflow.fp_tser_fid,
-            # self.outflow.typ,
-            # self.outflow.geom_type,
-            # self.outflow.bc_fid,
-        # )
+
         if not self.outflow.geom_type:
             return
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
