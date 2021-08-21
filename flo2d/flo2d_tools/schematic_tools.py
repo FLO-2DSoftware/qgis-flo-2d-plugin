@@ -33,8 +33,6 @@ from .grid_tools import (
     three_adjacent_grid_elevations,
     get_adjacent_cell_elevation,
     buildCellIDNPArray)
-
-
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QApplication
@@ -2103,8 +2101,7 @@ class Confluences(GeoPackageUtils):
     def remove_xs_after_vertex(self, seg_fid, vertex_id):
         del_sql = """DELETE FROM chan_elems WHERE seg_fid = ? AND nr_in_seg > ?;"""
         self.execute(del_sql, (seg_fid, vertex_id))
-
-
+  
 class FloodplainXS(GeoPackageUtils):
     """
     Class for schematizing floodplain cross-sections.

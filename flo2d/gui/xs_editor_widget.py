@@ -42,6 +42,7 @@ from ..flo2dobjects import UserCrossSection, ChannelSegment
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
+from ..gui.dlg_confluences import Confluences2
 from ..gui.dlg_flopro import ExternalProgramFLO2D
 from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -181,7 +182,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.import_HYCHAN_OUT_btn.clicked.connect(self.import_channel_peaks_from_HYCHAN_OUT)
         #         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values_externally)
-        self.confluences_btn.clicked.connect(self.schematize_confluences)
+        self.confluences_btn.clicked.connect(self.create_confluence)
+        # self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
@@ -1602,6 +1604,35 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.")
+                    
+    def create_confluence(self):
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("user_left_bank"):
+            self.uc.bar_warn(
+                "WARNING 160821.0931: There are no any user left bank lines! Please digitize them before running the tool."
+            )
+            return
+        if self.gutils.is_table_empty("user_xsections"):
+            self.uc.bar_warn(
+                "WARNING 160821.0932: There are no any user cross sections! Please digitize them before running the tool."
+            )
+            return
+        try:
+            conf = Confluences2(self.con, self.iface, self.lyrs)
+            save = conf.exec_()
+            if save:            
+                chan_schem = self.lyrs.data["chan"]["qlyr"]
+                chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
+                rbank = self.lyrs.data["rbank"]["qlyr"]
+                confluences = self.lyrs.data["chan_confluences"]["qlyr"]
+                self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+                self.lyrs.repaint_layers()
+                self.uc.show_info("Confluences schematized!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)            
 
     def effective_user_cross_section(self, fid, name):
         """ Return the cross section split between banks """

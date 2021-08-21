@@ -8,9 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, CREATE_NO_WINDOW, check_call, CalledProcessError, run, call
 from contextlib import contextmanager
-
+from ..user_communication import UserCommunication
 
 @contextmanager
 def cd(newdir):
@@ -26,17 +26,45 @@ class FLOPROExecutor(object):
 
     FLOPRO_EXE = "FLOPRO.exe"
 
-    def __init__(self, flo2d_dir, project_dir):
+    def __init__(self, iface, flo2d_dir, project_dir):
         self.flo2d_dir = flo2d_dir
         self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
         self.project_dir = project_dir
+        self.uc = self.uc = UserCommunication(iface, "FLO-2D")
 
     def execute_flopro(self):
-        with cd(self.project_dir):
-            Popen(self.flo2d_exe)
+        with cd(self.project_dir):  
+            try:
+                # check_call(self.flo2d_exe)
+                # run(self.flo2d_exe)
+                # call(self.flo2d_exe)
+                # result = run([self.flo2d_exe],input="",capture_output=True)
+                # Popen([self.flo2d_exe], shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE, universal_newlines=False)
+                # out = result.communicate() 
+                # for line in out:
+                #     self.uc.log_info(line)               
+                # proc = Popen(self.flo2d_exe, )    
+                
+                proc = Popen([self.flo2d_exe]) 
+ 
+    
+                # (self, args, bufsize=-1, executable=None,
+                #  stdin=None, stdout=None, stderr=None,
+                #  preexec_fn=None, close_fds=True,
+                #  shell=False, cwd=None, env=None, universal_newlines=None,
+                #  startupinfo=None, creationflags=0,
+                #  restore_signals=True, start_new_session=False,
+                #  pass_fds=(), *, encoding=None, errors=None, text=None):
+                
+                       
+                self.uc.bar_info("Model started. " ) 
+                proc.wait()
+                return proc.returncode     
+            except Exception as e:
+                self.uc.show_error("ERROR 180821.0822: can't run model!/n", e)
 
     def run(self):
-        self.execute_flopro()
+        return self.execute_flopro()
 
 
 class XSECInterpolatorExecutor(object):

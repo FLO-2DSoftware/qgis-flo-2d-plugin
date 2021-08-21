@@ -64,19 +64,23 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
     def get_parameters(self):
         return self.flo2d_le.text(), self.project_le.text()
 
-    def debug_run(self):
+    def debug_run(self):      
         try:
             self.uc.show_info("Run 0.4 min debug")
-            s = QSettings()
             flo2d_dir = self.flo2d_le.text()
             project_dir = self.project_le.text()
             debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
             with open(debugDAT, "w") as f:
                 f.write("")
-
-            simulation = FLOPROExecutor(flo2d_dir, project_dir)
-            simulation.run()
-            self.uc.bar_info("Debug simulation started!", dur=3)
+            debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
+            return_code = debug_simulation.run()
+            if return_code != 0:
+                self.uc.show_warn(
+                    "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
+                    + "Program finished with return code " + str(return_code)
+                )
+            else:
+                self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))     
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
