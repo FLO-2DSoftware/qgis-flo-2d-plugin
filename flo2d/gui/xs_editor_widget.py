@@ -1620,7 +1620,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             )
             return
         try:
-            conf = Confluences2(self.con, self.iface, self.lyrs)
+            conf = Confluences2(self.con, self.iface)
+            conf.close()
+            conf = Confluences2(self.con, self.iface)
             save = conf.exec_()
             if save:            
                 chan_schem = self.lyrs.data["chan"]["qlyr"]

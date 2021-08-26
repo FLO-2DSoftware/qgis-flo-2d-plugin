@@ -93,6 +93,9 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.calculate_stations()
 
     def show_channel(self, table, fid):
+        """
+        Assign field values to schematized channels for Profile Tool.
+        """
         self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
         self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
         # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
@@ -100,129 +103,83 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot_channel_data()
 
     def plot_channel_data(self):
-
-        #         if not self.chan_seg:
-        #             return
-        #         self.plot.clear()
-        #         sta, lb, rb, bed = [], [], [], []
-        #         for st, data in self.chan_seg.profiles.items():
-        #             sta.append(data['station'])
-        #             lb.append(data['lbank_elev'])
-        #             rb.append(data['rbank_elev'])
-        #             bed.append(data['bed_elev'])
-        # #         self.legend.scene().removeItem(self.legend)
-        #
-        # #         if self.plot.plot.scene() is not None:
-        # #             objects = list(self.plot.plot.scene().items())
-        # #             for obj in objects:
-        # #                 if self.plot.plot.scene() is not None:
-        # #                     self.plot.plot.scene().removeItem(obj)
-        # #         self.plot.clear()
-        #         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        #         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-        #         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-        #         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
-        #         self.plot.plot.setLabel('bottom', text='Channel length')
-        #         self.plot.plot.setLabel('left', text='Elevation')
-
-        #      ...........................................
+        """
+        Plot the Schema Data from channel data in the FLO-2D Plot.
+        """
         if not self.chan_seg:
             return
         self.plot.clear()
         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
+
         for st, data in self.chan_seg.profiles.items():
-            sta.append(data["station"])
-            lb.append(data["lbank_elev"])
-            rb.append(data["rbank_elev"])
-            bed.append(data["bed_elev"])
-            water.append(data["water"])
-            peak.append(data["peak"] + data["bed_elev"])
-
-        #         self.plot.items.clear()
-        #         legend.scene().removeItem(legend)
-        #         self.legend.scene().removeItem(self.legend)
-        #         self.plot.plot.legend.scene().removeItem(self.plot.legend)
-
-        #         for i in range(len(self.plot.items)):
-        #             self.plot.plot.legend.scene().removeItem(i)
-        #
-        #         self.plot.plot.legend = None
-        #
-        # #         self.plot.plot.legend.items = []
-
-        #         if self.plot.plot.scene() is not None:
-        #             objects = list(self.plot.plot.scene().items())
-        #             for obj in objects:
-        #                 if self.plot.plot.scene() is not None:
-        #                     self.plot.plot.scene().removeItem(obj)
-
+            if data["water"] is not None:
+                sta.append(data["station"])
+                lb.append(data["lbank_elev"])
+                rb.append(data["rbank_elev"])
+                bed.append(data["bed_elev"])
+                if data["water"] == 0:
+                    water.append(data["bed_elev"])
+                else:
+                    water.append(data["water"])
+                peak.append(data["peak"] + data["bed_elev"])
+            else:
+                sta.append(data["station"])
+                lb.append(data["lbank_elev"])
+                rb.append(data["rbank_elev"])
+                bed.append(data["bed_elev"])
+            
         if self.plot.plot.legend is not None:
             self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
-        #             self.plot.remove_item('Bed elevation')
-        #             self.plot.remove_item('Left bank')
-        #             self.plot.remove_item('Right bank')
-        #             self.plot.remove_item('Peak')
-        #             self.plot.plot.legend.items.clear()
+        
+        if data["water"] is not None:
+            self.plot.plot.addLegend()
+            self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+            self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+            self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.blue), sty=Qt.SolidLine)
+            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
+            self.plot.plot.setLabel("bottom", text="Channel length")
+            self.plot.plot.setLabel("left", text="Elevation")
+        else:
+            self.plot.plot.addLegend()
+            self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+            self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+            self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
+            self.plot.plot.setLabel("bottom", text="Channel length")
+            self.plot.plot.setLabel("left", text="Elevation")
 
-        self.plot.plot.addLegend()
-        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-        self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-        #         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
-        self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
-        self.plot.plot.setLabel("bottom", text="Channel length")
-        self.plot.plot.setLabel("left", text="Elevation")
-        # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
 
-    # .........................................
-
-    #         if not self.chan_seg:
-    #             return
-    # #         try:
-    #         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
-    #         for st, data in self.chan_seg.profiles.items():
-    #             sta.append(data['station'])
-    #             lb.append(data['lbank_elev'])
-    #             rb.append(data['rbank_elev'])
-    #             bed.append(data['bed_elev'])
-    #             water.append(data['water'])
-    #             peak.append(data['peak']+data['bed_elev'])
+    # def show_channel(self, table, fid):
+    #     self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
+    #     self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
+    #     # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
+    #     if self.chan_seg.get_profiles():
+    #         self.plot_channel_data()
     #
-    #         self.plot.clear()
+    # def plot_channel_data(self):
+    #     if not self.chan_seg:
+    #         return
+    #     self.plot.clear()
+    #     sta, lb, rb, bed, water, peak = [], [], [], [], [], []
+    #     for st, data in self.chan_seg.profiles.items():
+    #         sta.append(data["station"])
+    #         lb.append(data["lbank_elev"])
+    #         rb.append(data["rbank_elev"])
+    #         bed.append(data["bed_elev"])
+    #         water.append(data["water"])
+    #         peak.append(data["peak"] + data["bed_elev"])
     #
-    # #         self.plot.remove_item('Bed elevation')
-    # #         self.plot.remove_item('Left bank')
-    # #         self.plot.remove_item('Right bank')
-    # #         self.plot.remove_item('Peak')
+    #     if self.plot.plot.legend is not None:
+    #         self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
     #
-    #         for i in range(self.plot.plot.legend.layout.rowCount()):
-    #            for j in range(self.plot.plot.legend.layout.columnCount()):
-    #                 vb = self.plot.plot.legend.layout.itemAt(i,j)
-    #                 self.plot.plot.legend.layout.removeItem(vb)
-    #
-    #         for i in range(len(self.plot.items)):
-    #             self.plot.plot.legend.scene().removeItem(i)
-    #
-    #         self.plot.plot.legend = None
-    #
-    # #         self.plot.plot.legend.items = []
-    #         self.plot.plot.addLegend()
-    #         self.plot.add_item('Bed elevation', [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-    #         self.plot.add_item('Left bank', [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-    #         self.plot.add_item('Right bank', [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-    # #         self.plot.add_item('Max. Water', [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-    #         self.plot.add_item('Peak', [sta, peak], col=QColor(Qt.cyan), sty=Qt.SolidLine)
-    #         self.plot.plot.setTitle(title='Channel Profile - {}'.format(self.chan_seg.name))
-    #         self.plot.plot.setLabel('bottom', text='Channel length')
-    #         self.plot.plot.setLabel('left', text='Elevation')
-    # #         self.plot.removeItem('Bed elevation')
-    # #         self.plot.removeItem('Left bank')
-    # #         self.plot.removeItem('Right bank')
-    # #         self.plot.remove_item('Peak')
-    #         # self.insert_to_table(name_x='Distance', name_y=self.schema_data)
-    # #         except Exception:
-    # #             Msge("ERROR 170719.0531: could not remove legend item!", "Error")
+    #     self.plot.plot.addLegend()
+    #     self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+    #     self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
+    #     self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
+    #     self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+    #     self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
+    #     self.plot.plot.setLabel("bottom", text="Channel length")
 
     def check_mode(self):
         """
