@@ -40,6 +40,7 @@ from qgis.core import (
 
 
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
+from ..gui.ui_utils import center_canvas, zoom_show_n_cells
 from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
 from ..errors import GeometryValidityErrors, Flo2dError
 
@@ -2284,6 +2285,50 @@ def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error("ERROR 090321.1624: could not evaluate adjacent cell!")
 
+def adjacent_grids(gutils, currentCell, cell_size):
+    xx, yy = currentCell.geometry().centroid().asPoint()
+
+    # North cell:
+    y = yy + cell_size
+    x = xx
+    n_grid = gutils.grid_on_point(x, y)
+
+    # NorthEast cell
+    y = yy + cell_size
+    x = xx + cell_size
+    ne_grid = gutils.grid_on_point(x, y)
+
+    # East cell:
+    x = xx + cell_size
+    y = yy
+    e_grid = gutils.grid_on_point(x, y)
+
+    # SouthEast cell:
+    y = yy - cell_size
+    x = xx + cell_size
+    se_grid = gutils.grid_on_point(x, y)
+
+    # South cell:
+    y = yy - cell_size
+    x = xx
+    s_grid = gutils.grid_on_point(x, y)
+
+    # SouthWest cell:
+    y = yy - cell_size
+    x = xx - cell_size
+    sw_grid = gutils.grid_on_point(x, y)
+
+    # West cell:
+    y = yy
+    x = xx - cell_size
+    w_grid = gutils.grid_on_point(x, y)
+
+    # NorthWest cell:
+    y = yy + cell_size
+    x = xx - cell_size
+    nw_grid = gutils.grid_on_point(x, y) 
+     
+    return  n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
 def dirID(dir):
     if dir == 1:  # "N"
         # North cell:
@@ -2491,3 +2536,49 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
     prj = QgsProject.instance()
     prj.layerTreeRoot().findLayer(elevs_lyr.id()).setItemVisibilityCheckedParentRecursive(True)            
         
+def find_this_cell(iface, lyrs, uc, gutils, cell, color = Qt.yellow, zoom_in = False, clear_previous = True):
+    try:
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        grid = lyrs.data["grid"]["qlyr"]
+        if grid is not None:
+            if grid:
+                ext = iface.mapCanvas().extent()
+                if cell != "":
+                    cell = int(cell)
+                    if len(grid) >= cell and cell > 0:
+                        lyrs.show_feat_rubber(grid.id(), cell, QColor(color), clear_previous)
+                        currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                        x, y = currentCell.geometry().centroid().asPoint()
+                        if (
+                            x < ext.xMinimum()
+                            or x > ext.xMaximum()
+                            or y < ext.yMinimum()
+                            or y > ext.yMaximum()
+                        ):
+                            center_canvas(iface, x, y)
+                            ext = iface.mapCanvas().extent()
+                        else:
+                            if zoom_in:                            
+                                center_canvas(iface, x, y)
+                                cell_size = float(gutils.get_cont_par("CELLSIZE"))
+                                zoom_show_n_cells(iface, cell_size, 30)
+                                ext = iface.mapCanvas().extent()
+                    else:
+                        if cell != -999:
+                            uc.bar_warn("Cell " + str(cell) + " not found.", 2)
+                            lyrs.clear_rubber()
+                        else:
+                            lyrs.clear_rubber()
+                else:
+                    if cell.strip() != "-999" and cell.strip() != "":
+                        uc.bar_warn("Cell " + str(cell) + " not found.", 2)
+                        lyrs.clear_rubber()
+                    else:
+                        lyrs.clear_rubber()
+    except ValueError:
+        uc.bar_warn("Cell " + str(cell) + " is not valid.")
+        lyrs.clear_rubber()
+        pass
+    finally:
+        QApplication.restoreOverrideCursor()
+            

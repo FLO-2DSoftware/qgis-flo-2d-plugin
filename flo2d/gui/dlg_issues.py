@@ -1583,9 +1583,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         qApp.processEvents()
         features = []
         for e in self.errors:
-            pnt = self.gutils.single_centroid(e[0])
-            pt = QgsGeometry().fromWkt(pnt).asPoint()
-            features.append([pt.x(), pt.y(), e[0], e[3]])
+            if int(e[0]) > 1:
+                pnt = self.gutils.single_centroid(e[0])
+                pt = QgsGeometry().fromWkt(pnt).asPoint()
+                features.append([pt.x(), pt.y(), e[0], e[3]])
 
         shapefile = lastDir + "/Current Conflicts.shp"
         name = "Current Conflicts"

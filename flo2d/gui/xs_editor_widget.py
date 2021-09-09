@@ -33,6 +33,7 @@ from qgis.core import (
     QgsWkbTypes,
     QgsPointXY,
     QgsCoordinateTransform,
+    NULL
 )
 from qgis.gui import QgsMapLayerComboBox
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
@@ -40,8 +41,10 @@ from ..utils import m_fdata, is_number
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import UserCrossSection, ChannelSegment
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
+from ..flo2d_tools.grid_tools import adjacent_grids
 from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
+from ..gui.dlg_tributaries import TributariesDialog
 from ..gui.dlg_confluences import Confluences2
 from ..gui.dlg_flopro import ExternalProgramFLO2D
 from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
@@ -182,7 +185,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.import_HYCHAN_OUT_btn.clicked.connect(self.import_channel_peaks_from_HYCHAN_OUT)
         #         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values_externally)
-        self.confluences_btn.clicked.connect(self.create_confluence)
+        self.confluences_btn.clicked.connect(self.create_confluences)
         # self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
@@ -1605,34 +1608,109 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.")
                     
-    def create_confluence(self):
+    def create_confluences(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
             return
-        if self.gutils.is_table_empty("user_left_bank"):
+        if self.gutils.is_table_empty("chan_elems"):
             self.uc.bar_warn(
-                "WARNING 160821.0931: There are no any user left bank lines! Please digitize them before running the tool."
-            )
-            return
-        if self.gutils.is_table_empty("user_xsections"):
-            self.uc.bar_warn(
-                "WARNING 160821.0932: There are no any user cross sections! Please digitize them before running the tool."
+                "WARNING 160821.0931: There are no schematized channel cross sections."
             )
             return
         try:
-            conf = Confluences2(self.con, self.iface)
-            conf.close()
-            conf = Confluences2(self.con, self.iface)
-            save = conf.exec_()
-            if save:            
-                chan_schem = self.lyrs.data["chan"]["qlyr"]
-                chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
-                rbank = self.lyrs.data["rbank"]["qlyr"]
-                confluences = self.lyrs.data["chan_confluences"]["qlyr"]
-                self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
-                self.lyrs.repaint_layers()
-                self.uc.show_info("Confluences schematized!")
+            # conf = Confluences2(self.con, self.iface)
+            # conf.close()
+            # conf = Confluences2(self.con, self.iface)
+            # ok = conf.exec_()
+            # if ok: 
+                QApplication.setOverrideCursor(Qt.WaitCursor)  
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+                xs_lyr = self.lyrs.data["chan_elems"]["qlyr"] 
+                xs = xs_lyr.getFeatures()
+                segments = {}
+                for feat in xs: 
+                    segments[feat["seg_fid"]] = [feat["fid"]]
+                lastCellInSegments = segments.items()
+                confluences = dict(segments)
+                for key, last in lastCellInSegments:
+                    # Find adjacent cells to 'last' cell in others segments:
+                    lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
+                    n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(self.gutils, lastCell, cell_size)
+                    if n_grid:
+                        lst = list(segments[key])
+                        lst.append(n_grid)    
+                        segments[key] = lst
+                        pass                    
+                    if ne_grid:
+                        lst = list(segments[key])
+                        lst.append(ne_grid)    
+                        segments[key] = lst
+                        pass   
+                    if e_grid:
+                        lst = list(segments[key])
+                        lst.append(e_grid)    
+                        segments[key] = lst
+                        pass   
+                    if se_grid:
+                        lst = list(segments[key])
+                        lst.append(se_grid)    
+                        segments[key] = lst
+                        pass   
+                    if s_grid:
+                        lst = list(segments[key])
+                        lst.append(s_grid)    
+                        segments[key] = lst
+                        pass                          
+                    if sw_grid:
+                        lst = list(segments[key])
+                        lst.append(sw_grid)    
+                        segments[key] = lst
+                        pass                                     
+                    if w_grid:
+                        lst = list(segments[key])
+                        lst.append(w_grid)    
+                        segments[key] = lst
+                        pass 
+                    if nw_grid:
+                        lst = list(segments[key])
+                        lst.append(nw_grid)    
+                        segments[key] = lst
+                        pass  
+                
+                for key, values in segments.items():
+                    xs2 = xs_lyr.getFeatures()
+                    for f in xs2:
+                        if f["seg_fid"] != key:
+                            if f["fid"] in values[1:]: 
+                                lst = list(confluences[key])
+                                if f["fid"] not in lst:
+                                    lst.append(f["fid"])
+                                    confluences[key] = lst 
+                            if f["rbankgrid"] in values[1:]: 
+                                lst = list(confluences[key])
+                                if f["rbankgrid"] not in lst:
+                                    lst.append(f["rbankgrid"])
+                                    confluences[key] = lst    
+                QApplication.restoreOverrideCursor()
+
+                dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
+                save = dlg_tributaries.exec_()
+                if save:  
+                    dlg_tributaries.save()
+
+                dlg_tributaries.clear_confluences_rubber()
+                # self.lyrs.clear_rubber()
+
+                # chan_schem = self.lyrs.data["chan"]["qlyr"]
+                # chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
+                # rbank = self.lyrs.data["rbank"]["qlyr"]
+                # confluences = self.lyrs.data["chan_confluences"]["qlyr"]
+                # self.lyrs.lyrs_to_repaint = [grid_lyr, chan_schem, chan_elems, rbank, confluences]
+                # self.lyrs.repaint_layers()
+
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)            
 

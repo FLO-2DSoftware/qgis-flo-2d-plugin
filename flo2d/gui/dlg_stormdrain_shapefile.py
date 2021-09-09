@@ -663,7 +663,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.user_swmm_nodes_lyr.triggerRepaint()
                         self.user_swmm_nodes_lyr.removeSelection()
                     else:
-                        load_inlets = false
+                        load_inlets = False
 
                     QApplication.restoreOverrideCursor()
 

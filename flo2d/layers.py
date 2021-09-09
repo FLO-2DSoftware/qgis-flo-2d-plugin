@@ -1892,10 +1892,11 @@ class Layers(object):
         )
         sym.symbolLayer(0).setGeometryExpression(exp_arf)
 
-    def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0)):
+    def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0), clear = True):
         lyr = self.get_layer_tree_item(lyr_id).layer()
         gt = lyr.geometryType()
-        self.clear_rubber()
+        if clear:
+            self.clear_rubber()
         self.rb = QgsRubberBand(self.canvas, gt)
         color.setAlpha(255)
         self.rb.setColor(color)
