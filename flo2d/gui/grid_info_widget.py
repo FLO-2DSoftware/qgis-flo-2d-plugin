@@ -82,22 +82,29 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 feat = next(self.grid.getFeatures(QgsFeatureRequest(fid)))
                 cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
-                elev =  "{:10.4f}".format(feat["elevation"]).strip()
-                elev = elev if float(elev) > -9999 else "-9999"
-                n = feat["n_value"]
-                if not n:
-                    n = "{} (default)".format(self.mann_default)
+                if feat["elevation"]:
+                    elev =  "{:10.4f}".format(feat["elevation"]).strip()
+                    elev = elev if float(elev) > -9999 else "-9999"
+                    n = feat["n_value"]
+                    if not n:
+                        n = "{} (default)".format(self.mann_default)
+                    else:
+                        pass
+                    self.idEdit.setText(gid)
+                    self.elevEdit.setText(elev)
+                    self.mannEdit.setText(str(n))
+                    self.cellEdit.setText(str(cell_size))
+                    self.grid = self.lyrs.data["grid"]["qlyr"]
+                    self.n_cells = number_of_elements(self.gutils, self.grid)
+                    self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
+                    if self.plot_ckbox.isChecked():
+                        self.plot_grid_rainfall(feat)
                 else:
-                    pass
-                self.idEdit.setText(gid)
-                self.elevEdit.setText(elev)
-                self.mannEdit.setText(str(n))
-                self.cellEdit.setText(str(cell_size))
-                self.grid = self.lyrs.data["grid"]["qlyr"]
-                self.n_cells = number_of_elements(self.gutils, self.grid)
-                self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
-                if self.plot_ckbox.isChecked():
-                    self.plot_grid_rainfall(feat)
+                    self.idEdit.setText("")
+                    self.elevEdit.setText("")
+                    self.mannEdit.setText("")
+                    self.cellEdit.setText("")
+                    self.n_cells_lbl.setText("Number of cells:       ")                    
             else:
                 self.idEdit.setText("")
                 self.elevEdit.setText("")
