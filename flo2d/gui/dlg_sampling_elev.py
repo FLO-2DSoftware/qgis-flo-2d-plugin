@@ -181,9 +181,22 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         else:
             pass
         sampler = raster2grid(self.grid, self.out_raster)
+        
+        # qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
+        # self.con.execute(qryIndex)
+        # self.con.commit()
+        #
+        # print ("Writing elevs to geopackage")
+        
         qry = "UPDATE grid SET elevation=? WHERE fid=?;"
         self.con.executemany(qry, sampler)
         self.con.commit()
+        
+        # print ("Done Writing elevs to geopackage")
+        # qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
+        # self.con.execute(qryIndex)
+        # self.con.commit()        
+        
         return True
 
     def fill_nodata(self):

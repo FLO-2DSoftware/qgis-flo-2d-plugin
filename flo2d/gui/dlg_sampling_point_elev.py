@@ -335,9 +335,23 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
                 pass
             self.log_message('>>> Sampling Raster-to-Grid')
             sampler = raster2grid(self.grid, raster_outpath)
+            
+            qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
+            self.con.execute(qryIndex)
+            self.con.commit()
+            #
+            # print ("Writing elevs to geopackage")
+
             qry = "UPDATE grid SET elevation=? WHERE fid=?;"
             self.con.executemany(qry, sampler)
             self.con.commit()
+            
+            # print ("Done Writing elevs to geopackage")
+            qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
+            self.con.execute(qryIndex)
+            self.con.commit()              
+            
+            
             self.log_message('Ok.')
             self.show_probing_result_info()
 
