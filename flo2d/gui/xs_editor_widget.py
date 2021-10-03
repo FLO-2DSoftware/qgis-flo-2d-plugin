@@ -45,7 +45,6 @@ from ..flo2d_tools.grid_tools import adjacent_grids
 from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
 from ..gui.dlg_tributaries import TributariesDialog
-from ..gui.dlg_confluences import Confluences2
 from ..gui.dlg_flopro import ExternalProgramFLO2D
 from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
