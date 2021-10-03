@@ -25,25 +25,6 @@ class Confluences2(qtBaseClass, uiDialog):
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
         
-        # self.tributary_pic_lbl.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "img/confluence1.svg"))
-        # self.main_pic_lbl.pixmap = QPixmap(os.path.join(os.path.dirname(__file__), "img/confluence2.png"))
-
-        # pix = QPixmap(os.path.join(os.path.dirname(__file__), "img/confluence1.svg"))
-        # self.tributary_pic_lbl.setPixmap(pix)
-        # self.tributary_pic_lbl.setMask(pix.mask())
-        # self.tributary_pic_lbl.show();
-        #
-        #
-        # ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "img")
-        # # ui_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "img", "confluence2.png" )
-        # basepath = os.path.dirname(os.path.realpath(__file__))
-        # picDir =  os.path.join(basepath, "/img")
-        # # self.main_pic_lbl.setPixmap(QPixmap(ui_file, "confluence2.png")) 
-        # self.main_pic_lbl.pixmap = QPixmap(ui_file, "confluence2.png")
-        #
-        # # idir = os.path.join(os.path.dirname(__file__), "..\\img")
-        # # os.chdir("C:/Users/Juan Jose Rodriguez/Desktop/XSEC Interpolated")
-        #
         idir = os.chdir("C:/Users/Juan Jose Rodriguez/git/qgis-flo-2d-plugin/flo2d/img")
         self.main_pic_lbl.pixmap = QPixmap(idir, "confluence2.png")   
         

@@ -36,6 +36,7 @@ from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor,
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
+from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
@@ -341,6 +342,14 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/landslide.svg"),
+            text=self.tr("Mud and Sediment Transport"),
+            callback=lambda: self.show_mud_and_sediment_dialog(),
+            parent=self.iface.mainWindow(),
+        )
+        
         self.add_action(
             os.path.join(self.plugin_dir, "img/issue.svg"),
             text=self.tr("Warnings and Errors"),
@@ -2050,6 +2059,20 @@ class Flo2D(object):
             #                     self.uc.show_warn("Select a DEBUG file!")
             #                 else:
             #                     break
+            else:
+                return
+
+    @connection_required
+    def show_mud_and_sediment_dialog(self):
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
+        dlg_ms.show()
+        while True:
+            ok = dlg_ms.exec_()
+            if ok:
+                break
             else:
                 return
 
