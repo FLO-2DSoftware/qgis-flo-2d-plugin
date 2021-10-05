@@ -2125,7 +2125,7 @@ class FloodplainXS(GeoPackageUtils):
             gid = self.grid_on_point(pnt.x(), pnt.y())
             geom = self.single_centroid(gid, buffers=True)
             yield (geom, gid)
-            distance += step
+            distance = min(length, distance + step)
             reps -= 1
 
     def schematize_floodplain_xs(self):
