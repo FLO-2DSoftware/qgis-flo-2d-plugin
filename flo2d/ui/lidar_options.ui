@@ -94,7 +94,7 @@
          <item row="0" column="0">
           <widget class="QRadioButton" name="interpolate_radio">
            <property name="text">
-            <string>Interpolate from inmediate adjacent cells</string>
+            <string>Interpolate from immediate adjacent cells</string>
            </property>
            <property name="checked">
             <bool>true</bool>

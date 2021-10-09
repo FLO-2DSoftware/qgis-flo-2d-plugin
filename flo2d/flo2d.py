@@ -2069,12 +2069,18 @@ class Flo2D(object):
             return
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
         dlg_ms.show()
-        while True:
-            ok = dlg_ms.exec_()
-            if ok:
-                break
-            else:
-                return
+        ok = dlg_ms.exec_()
+        if ok:
+            try:
+                dlg_ms.save_mud_sediment()
+            except Exception as e:
+                self.uc.show_error(
+                    "ERROR 051021.0815: couldn't save Mud and Sediment tables!"
+                    + "\n__________________________________________________",
+                    e,
+                )                
+        else:
+            return
 
     @staticmethod
     def show_help():
