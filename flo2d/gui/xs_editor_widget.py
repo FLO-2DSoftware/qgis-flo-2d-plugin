@@ -45,7 +45,6 @@ from ..flo2d_tools.grid_tools import adjacent_grids
 from ..user_communication import UserCommunication
 from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
 from ..gui.dlg_tributaries import TributariesDialog
-from ..gui.dlg_confluences import Confluences2
 from ..gui.dlg_flopro import ExternalProgramFLO2D
 from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
@@ -1618,96 +1617,83 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             )
             return
         try:
-            # conf = Confluences2(self.con, self.iface)
-            # conf.close()
-            # conf = Confluences2(self.con, self.iface)
-            # ok = conf.exec_()
-            # if ok: 
-                QApplication.setOverrideCursor(Qt.WaitCursor)  
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-                xs_lyr = self.lyrs.data["chan_elems"]["qlyr"] 
-                xs = xs_lyr.getFeatures()
-                segments = {}
-                for feat in xs: 
-                    segments[feat["seg_fid"]] = [feat["fid"]]
-                lastCellInSegments = segments.items()
-                confluences = dict(segments)
-                for key, last in lastCellInSegments:
-                    # Find adjacent cells to 'last' cell in others segments:
-                    lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
-                    n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(self.gutils, lastCell, cell_size)
-                    if n_grid:
-                        lst = list(segments[key])
-                        lst.append(n_grid)    
-                        segments[key] = lst
-                        pass                    
-                    if ne_grid:
-                        lst = list(segments[key])
-                        lst.append(ne_grid)    
-                        segments[key] = lst
-                        pass   
-                    if e_grid:
-                        lst = list(segments[key])
-                        lst.append(e_grid)    
-                        segments[key] = lst
-                        pass   
-                    if se_grid:
-                        lst = list(segments[key])
-                        lst.append(se_grid)    
-                        segments[key] = lst
-                        pass   
-                    if s_grid:
-                        lst = list(segments[key])
-                        lst.append(s_grid)    
-                        segments[key] = lst
-                        pass                          
-                    if sw_grid:
-                        lst = list(segments[key])
-                        lst.append(sw_grid)    
-                        segments[key] = lst
-                        pass                                     
-                    if w_grid:
-                        lst = list(segments[key])
-                        lst.append(w_grid)    
-                        segments[key] = lst
-                        pass 
-                    if nw_grid:
-                        lst = list(segments[key])
-                        lst.append(nw_grid)    
-                        segments[key] = lst
-                        pass  
-                
-                for key, values in segments.items():
-                    xs2 = xs_lyr.getFeatures()
-                    for f in xs2:
-                        if f["seg_fid"] != key:
-                            if f["fid"] in values[1:]: 
-                                lst = list(confluences[key])
-                                if f["fid"] not in lst:
-                                    lst.append(f["fid"])
-                                    confluences[key] = lst 
-                            if f["rbankgrid"] in values[1:]: 
-                                lst = list(confluences[key])
-                                if f["rbankgrid"] not in lst:
-                                    lst.append(f["rbankgrid"])
-                                    confluences[key] = lst    
-                QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.WaitCursor)  
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+            xs_lyr = self.lyrs.data["chan_elems"]["qlyr"] 
+            xs = xs_lyr.getFeatures()
+            segments = {}
+            for feat in xs: 
+                segments[feat["seg_fid"]] = [feat["fid"]]
+            lastCellInSegments = segments.items()
+            confluences = dict(segments)
+            for key, last in lastCellInSegments:
+                # Find adjacent cells to 'last' cell in others segments:
+                lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
+                n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(self.gutils, lastCell, cell_size)
+                if n_grid:
+                    lst = list(segments[key])
+                    lst.append(n_grid)    
+                    segments[key] = lst
+                    pass                    
+                if ne_grid:
+                    lst = list(segments[key])
+                    lst.append(ne_grid)    
+                    segments[key] = lst
+                    pass   
+                if e_grid:
+                    lst = list(segments[key])
+                    lst.append(e_grid)    
+                    segments[key] = lst
+                    pass   
+                if se_grid:
+                    lst = list(segments[key])
+                    lst.append(se_grid)    
+                    segments[key] = lst
+                    pass   
+                if s_grid:
+                    lst = list(segments[key])
+                    lst.append(s_grid)    
+                    segments[key] = lst
+                    pass                          
+                if sw_grid:
+                    lst = list(segments[key])
+                    lst.append(sw_grid)    
+                    segments[key] = lst
+                    pass                                     
+                if w_grid:
+                    lst = list(segments[key])
+                    lst.append(w_grid)    
+                    segments[key] = lst
+                    pass 
+                if nw_grid:
+                    lst = list(segments[key])
+                    lst.append(nw_grid)    
+                    segments[key] = lst
+                    pass  
+            
+            for key, values in segments.items():
+                xs2 = xs_lyr.getFeatures()
+                for f in xs2:
+                    if f["seg_fid"] != key:
+                        if f["fid"] in values[1:]: 
+                            lst = list(confluences[key])
+                            if f["fid"] not in lst:
+                                lst.append(f["fid"])
+                                confluences[key] = lst 
+                        if f["rbankgrid"] in values[1:]: 
+                            lst = list(confluences[key])
+                            if f["rbankgrid"] not in lst:
+                                lst.append(f["rbankgrid"])
+                                confluences[key] = lst    
+            QApplication.restoreOverrideCursor()
 
-                dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
-                save = dlg_tributaries.exec_()
-                if save:  
-                    dlg_tributaries.save()
+            dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
+            save = dlg_tributaries.exec_()
+            if save:  
+                dlg_tributaries.save()
 
-                dlg_tributaries.clear_confluences_rubber()
-                # self.lyrs.clear_rubber()
-
-                # chan_schem = self.lyrs.data["chan"]["qlyr"]
-                # chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
-                # rbank = self.lyrs.data["rbank"]["qlyr"]
-                # confluences = self.lyrs.data["chan_confluences"]["qlyr"]
-                # self.lyrs.lyrs_to_repaint = [grid_lyr, chan_schem, chan_elems, rbank, confluences]
-                # self.lyrs.repaint_layers()
+            dlg_tributaries.clear_confluences_rubber()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
