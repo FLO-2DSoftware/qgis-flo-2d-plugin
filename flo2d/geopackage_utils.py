@@ -437,6 +437,7 @@ class GeoPackageUtils(object):
             "7": (lambda x, y, s: (x - s / 2.414, y - s, x - s, y - s / 2.414)),
             "8": (lambda x, y, s: (x - s, y + s / 2.414, x - s / 2.414, y + s)),
         }
+        
         qry = """SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;""".format(table, field)
         # "qry" ends up as '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "grid" WHERE "fid" = ?;'''
 
@@ -444,7 +445,7 @@ class GeoPackageUtils(object):
 
         xc, yc = [float(i) for i in wkt_geom.strip("POINT()").split()]
         x1, y1, x2, y2 = functions[direction](
-            xc, yc, cellsize * 0.48
+            xc, yc, cellsize * 0.45
         )  # Get 2 points of a line from "functions" dictionary.
 
         gpb = """SELECT AsGPB(ST_GeomFromText('LINESTRING({0} {1}, {2} {3})'))""".format(x1, y1, x2, y2)

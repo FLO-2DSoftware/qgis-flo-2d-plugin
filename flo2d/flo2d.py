@@ -1981,7 +1981,7 @@ class Flo2D(object):
             levees = self.lyrs.data["levee_data"]["qlyr"]
             idx = levees.fields().indexOf("grid_fid")
             values = levees.uniqueValues(idx)
-
+            QApplication.restoreOverrideCursor()
             info = (
                 "Values assigned to the Schematic Levees layer!"
                 + "\n\nThere are now "

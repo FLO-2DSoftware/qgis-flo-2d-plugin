@@ -1281,6 +1281,7 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         Save changes to individual levee.
         """
 
+        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         levee_grid = self.individual_levee_element_cbo.currentText()
 
         if levee_grid == "":
@@ -1294,17 +1295,23 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
         try:
 
-            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
-            insert_failure_qry = """INSERT INTO levee_failure
-                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-                                    VALUES (?,?,?,?,?,?,?,?);"""
-
+            # Retrive previous levee user_line_fid:
+            user_line_fid = self.gutils.execute("SELECT user_line_fid FROM levee_data WHERE grid_fid = ?;", (levee_grid,)).fetchone()
+            user_line_fid = None if not user_line_fid else user_line_fid[0]
+            
             # Delete all features of this cell in levee_data and levee_failure:
             self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = ?;", (levee_grid,))
             self.gutils.execute("DELETE FROM levee_failure WHERE grid_fid = ?;", (levee_grid,))
+            
+            
+            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid, user_line_fid, geom) VALUES (?,?,?,?,?);"
+            insert_failure_qry = """INSERT INTO levee_failure
+                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+                                    VALUES (?,?,?,?,?,?,?,?);"""            
 
             if self.N_chbox.isChecked():
-                self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "1", cell_size)
+                self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(1)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1321,7 +1328,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.E_chbox.isChecked():
-                self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "2", cell_size)
+                self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(2)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1338,7 +1346,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.S_chbox.isChecked():
-                self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "3", cell_size)
+                self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(3)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1355,7 +1364,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.W_chbox.isChecked():
-                self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "4", cell_size)
+                self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(4)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1372,7 +1382,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.NE_chbox.isChecked():
-                self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "5", cell_size)
+                self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(5)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1389,7 +1400,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.SE_chbox.isChecked():
-                self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "6", cell_size)
+                self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(6)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1406,7 +1418,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.SW_chbox.isChecked():
-                self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "7", cell_size)
+                self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(7)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1423,7 +1436,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                     )
 
             if self.NW_chbox.isChecked():
-                self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid))
+                geom = self.gutils.build_levee(levee_grid, "8", cell_size)
+                self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid, user_line_fid, geom))
                 if self.failureData.get(8)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1439,144 +1453,16 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                         ),
                     )
 
-            # levee_data layer queries:
-            select_qry = "SELECT * FROM levee_data WHERE grid_fid = ? AND ldir = ?"
-            update_qry = "UPDATE levee_data SET ldir = ?, levcrest = ? WHERE grid_fid = ? AND ldir = ?"
-            insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
-            delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
-            delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
+            self.lyrs.lyrs_to_repaint = [
+                self.lyrs.data["levee_data"]["qlyr"],
+                self.lyrs.data["levee_failure"]["qlyr"]
+            ]
+            self.lyrs.repaint_layers()
+            
+            levees = self.lyrs.data["levee_data"]["qlyr"]
+            levees.triggerRepaint()
 
-            # levee_failure layer queries:
-            select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
-            insert_failure_qry = """INSERT INTO levee_failure
-                                     (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-                                    VALUES (?,?,?,?,?,?,?,?);"""
-            update_levee_failure_qry = """UPDATE levee_failure 
-                                            SET failevel = ?, 
-                                                failtime = ?, 
-                                                levbase = ?, 
-                                                failwidthmax  = ?, 
-                                                failrate = ?, 
-                                                failwidrate = ?
-                                            WHERE grid_fid = ? AND lfaildir = ? ; """
-
-            #             if self.N_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 1)).fetchone():
-            #                    self.gutils.execute(update_qry, (1, self.N_dbox.value(), int(levee_grid), 1))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (1,self.N_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 1)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 1))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 1))
-            #
-            #
-            #
-            #
-            #             if self.E_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 2)).fetchone():
-            #                    self.gutils.execute(update_qry, (2, self.E_dbox.value(), int(levee_grid), 2))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (2,self.E_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 2)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 2))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 2))
-            #
-            #
-            #
-            #
-            #             if self.S_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 3)).fetchone():
-            #                    self.gutils.execute(update_qry, (3, self.S_dbox.value(), int(levee_grid), 3))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (3,self.S_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 3)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 3))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 3))
-            #
-            #
-            #
-            #
-            #             if self.W_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 4)).fetchone():
-            #                    self.gutils.execute(update_qry, (4, self.W_dbox.value(), int(levee_grid), 4))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (4,self.W_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 4)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 4))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 4))
-            #
-            #
-            #
-            #
-            #             if self.NE_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if  self.gutils.execute(select_qry, (levee_grid, 5)).fetchone():
-            #                    self.gutils.execute(update_qry, (5, self.NE_dbox.value(), int(levee_grid), 5))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (5,self.NE_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 5)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 5))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 5))
-            #
-            #
-            #
-            #
-            #             if self.SE_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 6)).fetchone():
-            #                    self.gutils.execute(update_qry, (6, self.SE_dbox.value(), int(levee_grid), 6))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (6,self.SE_dbox.value(), levee_grid))
-            #             else:
-            #                 # This direction is not selected, if exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 6)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 6))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 6))
-            #
-            #
-            #
-            #
-            #             if self.SW_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 7)).fetchone():
-            #                    self.gutils.execute(update_qry, (7, self.SW_dbox.value(), int(levee_grid), 7))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (7,self.SW_dbox.value(), levee_grid))
-            #             else:
-            #                 # If this direction is not selected and exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 7)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 7))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 7))
-            #
-            #
-            #
-            #
-            #             if self.NW_chbox.isChecked():
-            #                 # Does this direction exists for this cell? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_qry, (levee_grid, 8)).fetchone():
-            #                    self.gutils.execute(update_qry, (8, self.NW_dbox.value(), int(levee_grid), 8))
-            #                 else:
-            #                     self.gutils.execute(insert_qry, (8,self.NW_dbox.value(), levee_grid))
-            #             else:
-            #                 # If this direction is not selected and exists, delete it:
-            # #                 if self.gutils.execute(select_qry, (levee_grid, 8)).fetchone():
-            #                 self.gutils.execute(delete_qry, (levee_grid, 8))
-            #                 self.gutils.execute(delete_failure_qry, (levee_grid, 8))
-
+            QApplication.restoreOverrideCursor()
             self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
 
         except Exception as e:
@@ -1586,72 +1472,404 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                 + "\n__________________________________________________",
                 e,
             )
-            return False
-
-        try:
-
-            select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
-            update_levee_failure_qry = """UPDATE levee_failure 
-                                            SET failevel = ?, 
-                                                failtime = ?, 
-                                                levbase = ?, 
-                                                failwidthmax  = ?, 
-                                                failrate = ?, 
-                                                failwidrate = ?
-                                            WHERE grid_fid = ? AND lfaildir = ? ; """
-
-            insert_failure_qry = """INSERT INTO levee_failure
-                             (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
-                            VALUES (?,?,?,?,?,?,?,?);"""
-
-            delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
-
-            #             for f in self.failureData:
-            #                 if f[0]:
-            #
-            #                 self.failureData[f[0]] = [True, f[1], f[2], f[3], f[4], f[5], f[6]]
-
-            #             if self.levee_failure_grp.isChecked():
-            #                 # Does this failure exists for this cell, in this direction? If so update, otherwise insert:
-            #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
-            #                     # Update:
-            #                     self.gutils.execute(update_levee_failure_qry,
-            #                                        (self.failure_elevation_dbox.value(),
-            #                                         self.failure_duration_dbox.value(),
-            #                                         self.failure_base_elevation_dbox.value(),
-            #                                         self.failure_max_width_dbox.value(),
-            #                                         self.failure_vertical_rate_dbox.value(),
-            #                                         self.failure_horizontal_rate_dbox.value(),
-            #                                         levee_grid, self.previousDirection
-            #                                         ))
-            #                 else:
-            #                     # Insert:
-            #                     self.gutils.execute(insert_failure_qry,
-            #                                        (levee_grid,
-            #                                         self.previousDirection,
-            #                                         self.failure_elevation_dbox.value(),
-            #                                         self.failure_duration_dbox.value(),
-            #                                         self.failure_base_elevation_dbox.value(),
-            #                                         self.failure_max_width_dbox.value(),
-            #                                         self.failure_vertical_rate_dbox.value(),
-            #                                         self.failure_horizontal_rate_dbox.value()
-            #                                         ))
-            #             else:
-            #                 # If this direction is not selected and exists, delete it:
-            #                 pass
-            #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
-            #                     self.gutils.execute(delete_failure_qry, (levee_grid, self.previousDirection))
-
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error(
-                "ERROR 290319.1204: error updating levee failures!"
-                + "\n__________________________________________________",
-                e,
-            )
-            return False
+            return False        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        # """
+        # Save changes to individual levee.
+        # """
+        #
+        # levee_grid = self.individual_levee_element_cbo.currentText()
+        #
+        # if levee_grid == "":
+        #     return
+        # else:
+        #     cell = int(levee_grid)
+        #     n_cells = number_of_elements(self.gutils, self.grid_lyr)          
+        #     if cell > n_cells or cell < 0:
+        #         self.uc.bar_warn("WARNING 221219.1141: Cell is outside the computational domain!")
+        #         return
+        #
+        # try:
+        #
+        #     insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
+        #     insert_failure_qry = """INSERT INTO levee_failure
+        #                              (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+        #                             VALUES (?,?,?,?,?,?,?,?);"""
+        #
+        #     # Delete all features of this cell in levee_data and levee_failure:
+        #     self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = ?;", (levee_grid,))
+        #     self.gutils.execute("DELETE FROM levee_failure WHERE grid_fid = ?;", (levee_grid,))
+        #
+        #     if self.N_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid))
+        #         if self.failureData.get(1)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     1,
+        #                     self.failureData.get(1)[1],
+        #                     self.failureData.get(1)[2],
+        #                     self.failureData.get(1)[3],
+        #                     self.failureData.get(1)[4],
+        #                     self.failureData.get(1)[5],
+        #                     self.failureData.get(1)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.E_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid))
+        #         if self.failureData.get(2)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     2,
+        #                     self.failureData.get(2)[1],
+        #                     self.failureData.get(2)[2],
+        #                     self.failureData.get(2)[3],
+        #                     self.failureData.get(2)[4],
+        #                     self.failureData.get(2)[5],
+        #                     self.failureData.get(2)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.S_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid))
+        #         if self.failureData.get(3)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     3,
+        #                     self.failureData.get(3)[1],
+        #                     self.failureData.get(3)[2],
+        #                     self.failureData.get(3)[3],
+        #                     self.failureData.get(3)[4],
+        #                     self.failureData.get(3)[5],
+        #                     self.failureData.get(3)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.W_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid))
+        #         if self.failureData.get(4)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     4,
+        #                     self.failureData.get(4)[1],
+        #                     self.failureData.get(4)[2],
+        #                     self.failureData.get(4)[3],
+        #                     self.failureData.get(4)[4],
+        #                     self.failureData.get(4)[5],
+        #                     self.failureData.get(4)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.NE_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid))
+        #         if self.failureData.get(5)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     5,
+        #                     self.failureData.get(5)[1],
+        #                     self.failureData.get(5)[2],
+        #                     self.failureData.get(5)[3],
+        #                     self.failureData.get(5)[4],
+        #                     self.failureData.get(5)[5],
+        #                     self.failureData.get(5)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.SE_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid))
+        #         if self.failureData.get(6)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     6,
+        #                     self.failureData.get(6)[1],
+        #                     self.failureData.get(6)[2],
+        #                     self.failureData.get(6)[3],
+        #                     self.failureData.get(6)[4],
+        #                     self.failureData.get(6)[5],
+        #                     self.failureData.get(6)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.SW_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid))
+        #         if self.failureData.get(7)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     7,
+        #                     self.failureData.get(7)[1],
+        #                     self.failureData.get(7)[2],
+        #                     self.failureData.get(7)[3],
+        #                     self.failureData.get(7)[4],
+        #                     self.failureData.get(7)[5],
+        #                     self.failureData.get(7)[6],
+        #                 ),
+        #             )
+        #
+        #     if self.NW_chbox.isChecked():
+        #         self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid))
+        #         if self.failureData.get(8)[0]:
+        #             self.gutils.execute(
+        #                 insert_failure_qry,
+        #                 (
+        #                     levee_grid,
+        #                     8,
+        #                     self.failureData.get(8)[1],
+        #                     self.failureData.get(8)[2],
+        #                     self.failureData.get(8)[3],
+        #                     self.failureData.get(8)[4],
+        #                     self.failureData.get(8)[5],
+        #                     self.failureData.get(8)[6],
+        #                 ),
+        #             )
+        #
+        #     # levee_data layer queries:
+        #     select_qry = "SELECT * FROM levee_data WHERE grid_fid = ? AND ldir = ?"
+        #     update_qry = "UPDATE levee_data SET ldir = ?, levcrest = ? WHERE grid_fid = ? AND ldir = ?"
+        #     insert_qry = "INSERT INTO levee_data (ldir, levcrest,  grid_fid ) VALUES (?,?,?);"
+        #     delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?"
+        #     delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
+        #
+        #     # levee_failure layer queries:
+        #     select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
+        #     insert_failure_qry = """INSERT INTO levee_failure
+        #                              (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+        #                             VALUES (?,?,?,?,?,?,?,?);"""
+        #     update_levee_failure_qry = """UPDATE levee_failure 
+        #                                     SET failevel = ?, 
+        #                                         failtime = ?, 
+        #                                         levbase = ?, 
+        #                                         failwidthmax  = ?, 
+        #                                         failrate = ?, 
+        #                                         failwidrate = ?
+        #                                     WHERE grid_fid = ? AND lfaildir = ? ; """
+        #
+        #     #             if self.N_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 1)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (1, self.N_dbox.value(), int(levee_grid), 1))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (1,self.N_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 1)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 1))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 1))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.E_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 2)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (2, self.E_dbox.value(), int(levee_grid), 2))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (2,self.E_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 2)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 2))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 2))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.S_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 3)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (3, self.S_dbox.value(), int(levee_grid), 3))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (3,self.S_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 3)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 3))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 3))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.W_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 4)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (4, self.W_dbox.value(), int(levee_grid), 4))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (4,self.W_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 4)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 4))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 4))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.NE_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if  self.gutils.execute(select_qry, (levee_grid, 5)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (5, self.NE_dbox.value(), int(levee_grid), 5))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (5,self.NE_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 5)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 5))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 5))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.SE_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 6)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (6, self.SE_dbox.value(), int(levee_grid), 6))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (6,self.SE_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # This direction is not selected, if exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 6)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 6))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 6))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.SW_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 7)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (7, self.SW_dbox.value(), int(levee_grid), 7))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (7,self.SW_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # If this direction is not selected and exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 7)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 7))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 7))
+        #     #
+        #     #
+        #     #
+        #     #
+        #     #             if self.NW_chbox.isChecked():
+        #     #                 # Does this direction exists for this cell? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_qry, (levee_grid, 8)).fetchone():
+        #     #                    self.gutils.execute(update_qry, (8, self.NW_dbox.value(), int(levee_grid), 8))
+        #     #                 else:
+        #     #                     self.gutils.execute(insert_qry, (8,self.NW_dbox.value(), levee_grid))
+        #     #             else:
+        #     #                 # If this direction is not selected and exists, delete it:
+        #     # #                 if self.gutils.execute(select_qry, (levee_grid, 8)).fetchone():
+        #     #                 self.gutils.execute(delete_qry, (levee_grid, 8))
+        #     #                 self.gutils.execute(delete_failure_qry, (levee_grid, 8))
+        #
+        #     self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
+        #
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error(
+        #         "ERROR 280319.1651: update of Individual Levee Data failed!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     return False
+        #
+        # try:
+        #
+        #     select_failure_qry = "SELECT * FROM levee_failure WHERE grid_fid = ? AND lfaildir = ?;"
+        #     update_levee_failure_qry = """UPDATE levee_failure 
+        #                                     SET failevel = ?, 
+        #                                         failtime = ?, 
+        #                                         levbase = ?, 
+        #                                         failwidthmax  = ?, 
+        #                                         failrate = ?, 
+        #                                         failwidrate = ?
+        #                                     WHERE grid_fid = ? AND lfaildir = ? ; """
+        #
+        #     insert_failure_qry = """INSERT INTO levee_failure
+        #                      (grid_fid, lfaildir,  failevel, failtime, levbase, failwidthmax, failrate, failwidrate ) 
+        #                     VALUES (?,?,?,?,?,?,?,?);"""
+        #
+        #     delete_failure_qry = "DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"
+        #
+        #     #             for f in self.failureData:
+        #     #                 if f[0]:
+        #     #
+        #     #                 self.failureData[f[0]] = [True, f[1], f[2], f[3], f[4], f[5], f[6]]
+        #
+        #     #             if self.levee_failure_grp.isChecked():
+        #     #                 # Does this failure exists for this cell, in this direction? If so update, otherwise insert:
+        #     #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
+        #     #                     # Update:
+        #     #                     self.gutils.execute(update_levee_failure_qry,
+        #     #                                        (self.failure_elevation_dbox.value(),
+        #     #                                         self.failure_duration_dbox.value(),
+        #     #                                         self.failure_base_elevation_dbox.value(),
+        #     #                                         self.failure_max_width_dbox.value(),
+        #     #                                         self.failure_vertical_rate_dbox.value(),
+        #     #                                         self.failure_horizontal_rate_dbox.value(),
+        #     #                                         levee_grid, self.previousDirection
+        #     #                                         ))
+        #     #                 else:
+        #     #                     # Insert:
+        #     #                     self.gutils.execute(insert_failure_qry,
+        #     #                                        (levee_grid,
+        #     #                                         self.previousDirection,
+        #     #                                         self.failure_elevation_dbox.value(),
+        #     #                                         self.failure_duration_dbox.value(),
+        #     #                                         self.failure_base_elevation_dbox.value(),
+        #     #                                         self.failure_max_width_dbox.value(),
+        #     #                                         self.failure_vertical_rate_dbox.value(),
+        #     #                                         self.failure_horizontal_rate_dbox.value()
+        #     #                                         ))
+        #     #             else:
+        #     #                 # If this direction is not selected and exists, delete it:
+        #     #                 pass
+        #     #                 if self.gutils.execute(select_failure_qry, (levee_grid, self.previousDirection) ).fetchone():
+        #     #                     self.gutils.execute(delete_failure_qry, (levee_grid, self.previousDirection))
+        #
+        #     return True
+        #
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error(
+        #         "ERROR 290319.1204: error updating levee failures!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     return False
 
     def highlight_cell(self, cell):
         try:
