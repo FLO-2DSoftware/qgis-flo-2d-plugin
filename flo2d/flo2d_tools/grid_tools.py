@@ -1530,6 +1530,18 @@ def grid_has_empty_elev(gutils):
     except StopIteration:
         return None
 
+def grid_has_empty_n_value(gutils):
+    """
+    Return number of grid elements that have no n_value defined.
+    """
+    qry = """SELECT count(*) FROM grid WHERE n_value IS NULL;"""
+    res = gutils.execute(qry)
+    try:
+        n = next(res)
+        return n[0]
+    except StopIteration:
+        return None
+
 def fid_from_grid_np(gutils, table_name, table_fids=None, grid_center = False, switch=False, *extra_fields):
     """
     Get a list of grid elements fids that intersect the given tables features.
