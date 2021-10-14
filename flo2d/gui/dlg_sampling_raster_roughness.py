@@ -15,15 +15,15 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsRasterLayer
 
-from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
+from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_n_value
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui("sampling_elev")
+uiDialog, qtBaseClass = load_ui("sampling_raster_roughness")
 
 
-class SamplingElevDialog(qtBaseClass, uiDialog):
+class SamplingRoughnessDialog(qtBaseClass, uiDialog):
 
     RTYPE = {1: "Byte", 2: "UInt16", 3: "Int16", 4: "UInt32", 5: "Int32", 6: "Float32", 7: "Float64"}
 
@@ -135,12 +135,12 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         if und:
             self.src_nodata = int(und)
 
-    def probe_elevation(self):
+    def probe_roughness(self):
         """
-        Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
+        Resample raster to be aligned with the grid, then probe values and update elements n_value attr.
         """
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
-        self.out_raster = "{}_interp.tif".format(self.src_raster[:-4])  # Raster name with suffix '_interp.tif'
+        self.out_raster = "{}_interp_n.tif".format(self.src_raster[:-4])  # Raster name with suffix '_interp_n.tif'
         try:
             if os.path.isfile(self.out_raster):
                 os.remove(self.out_raster)
@@ -186,13 +186,13 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         # self.con.execute(qryIndex)
         # self.con.commit()
         #
-        # print ("Writing elevations to geopackage")
+        # print ("Writing n values to geopackage")
         
-        qry = "UPDATE grid SET elevation=? WHERE fid=?;"
+        qry = "UPDATE grid SET n_value=? WHERE fid=?;"
         self.con.executemany(qry, sampler)
         self.con.commit()
         
-        # print ("Done Writing elevs to geopackage")
+        # print ("Done Writing n values to geopackage")
         # qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
         # self.con.execute(qryIndex)
         # self.con.commit()        
@@ -208,10 +208,10 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             self.uc.log_info(line)
 
     def show_probing_result_info(self):
-        null_nr = grid_has_empty_elev(self.gutils)
+        null_nr = grid_has_empty_n_value(self.gutils)
         if null_nr:
             msg = "Sampling done.\n"
-            msg += "Warning: There are {} grid elements that have no elevation value.".format(null_nr)
+            msg += "Warning: There are {} grid elements that have no n_value value.".format(null_nr)
             self.uc.show_info(msg)
         else:
             self.uc.show_info("Sampling done.")

@@ -42,6 +42,7 @@ from ..flo2d_tools.grid_tools import (
 from ..utils import second_smallest, set_min_max_elevs
 from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  #update this after elevation test is ok
 from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
@@ -69,6 +70,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         set_icon(self.xyz_elevation_btn, "sample_elev_xyz.svg")
         set_icon(self.polygon_elevation_btn, "sample_elev_polygon.svg")
         set_icon(self.roughness_btn, "sample_manning.svg")
+        set_icon(self.raster_roughness_btn, "sample_raster_roughness.svg")
         set_icon(self.arfwrf_btn, "eval_arfwrf.svg")
         set_icon(self.froude_btn, "sample_froude.svg")
         set_icon(self.tolerance_btn, "sample_tolerance.svg")
@@ -79,6 +81,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         self.create_grid_btn.clicked.connect(self.create_grid)
         self.raster_elevation_btn.clicked.connect(self.raster_elevation)
+        self.raster_roughness_btn.clicked.connect(self.raster_roughness)
         self.point_elevation_btn.clicked.connect(self.point_elevation)
         self.xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
@@ -265,6 +268,31 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1710: Probing grid elevation failed! Please check your raster layer.")
+
+    def raster_roughness(self):
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        cell_size = self.get_cell_size()
+        dlg = SamplingRoughnessDialog(self.con, self.iface, self.lyrs, cell_size)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            res = dlg.probe_roughness()
+            QApplication.restoreOverrideCursor()
+            if res:
+                dlg.show_probing_result_info()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("WARNING 060319.1710: Probing grid roughness failed! Please check your raster layer.")
 
     def point_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
