@@ -10,6 +10,9 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.35
+ -  Roughness from raster sampling tool added to Grid Tools.
+ -  Bug fix for floodplain cross section calculator when polyline is very long.
  <p>0.10.34
   - Tributaries dialog with 2 columns: tributaries cells and list of main potential cells.
  <p>0.10.33
