@@ -45,22 +45,24 @@ class TributariesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_table(self):
+        i = -1
         for row_position, confluence in enumerate(self.confluences.values()):
-            self.confluences_tblw.insertRow(row_position)
-            item = QTableWidgetItem()
-            item.setData(Qt.DisplayRole, confluence[0])
-            self.confluences_tblw.setItem(row_position, 0, item)
             if len(confluence) > 1:
+                i += 1
+                self.confluences_tblw.insertRow(i)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, confluence[0])
+                self.confluences_tblw.setItem(i, 0, item)
                 combo = QComboBox()
                 combo.setStyleSheet("QComboBox { border: 1px gray; } QFrame { border: 3px solid blue; }")
                 combo.addItem("")
                 for t in confluence[1:]:
                     combo.addItem(str(t))
                 combo.currentIndexChanged.connect(lambda : self.highlight_confluence() )       
-                self.confluences_tblw.setCellWidget(row_position,1,combo)  
+                self.confluences_tblw.setCellWidget(i,1,combo)  
                 
     def find_chan_confluences(self):
-        for row in range(0, self.confluences_tblw.rowCount() - 1):
+        for row in range(0, self.confluences_tblw.rowCount()):
             tributary = self.confluences_tblw.item(row, 0).text()
             conf_fid = self.gutils.execute("SELECT conf_fid FROM chan_confluences WHERE type = ? AND chan_elem_fid = ?;", (0, tributary,)).fetchone()
             if conf_fid:
@@ -111,7 +113,7 @@ class TributariesDialog(qtBaseClass, uiDialog):
     def save(self):   
         chan_conf_sql = ["""INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""", 4]
         
-        for row in range(0, self.confluences_tblw.rowCount() - 1):
+        for row in range(0, self.confluences_tblw.rowCount()):
             
             widget = self.confluences_tblw.cellWidget(row, 1)
             if widget:

@@ -1694,7 +1694,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 dlg_tributaries.save()
 
             dlg_tributaries.clear_confluences_rubber()
+        
+            self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
 
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
