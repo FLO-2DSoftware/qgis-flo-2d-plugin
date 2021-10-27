@@ -130,7 +130,8 @@ class LeveesElevation(ElevationCorrector):
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
-            user_point_features = self.user_points.getFeatures(QgsFeatureRequest().setFilterRect(feat.geometry().buffer(search_buffer,5).boundingBox()))
+            rect_bounds = feat.geometry().buffer(search_buffer,5).boundingBox()
+            user_point_features = self.user_points.getFeatures(QgsFeatureRequest().setFilterRect(rect_bounds))
             try:
                 qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
                 intervals = get_intervals(feat, user_point_features, self.ELEVATION_FIELD, search_buffer)
