@@ -130,12 +130,14 @@ class LeveesElevation(ElevationCorrector):
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
+            rect_bounds = feat.geometry().buffer(search_buffer,5).boundingBox()
+            user_point_features = self.user_points.getFeatures(QgsFeatureRequest().setFilterRect(rect_bounds))
             try:
                 qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
-                intervals = get_intervals(feat, self.user_points.getFeatures(), self.ELEVATION_FIELD, search_buffer)
+                intervals = get_intervals(feat, user_point_features, self.ELEVATION_FIELD, search_buffer)
             except TypeError:
                 qry = "UPDATE levee_data SET levcrest = levcrest + ? WHERE fid = ?;"
-                intervals = get_intervals(feat, self.user_points.getFeatures(), self.CORRECTION_FIELD, search_buffer)
+                intervals = get_intervals(feat, user_point_features, self.CORRECTION_FIELD, search_buffer)
             interpolated = interpolate_along_line(feat, self.schema_levees.getFeatures(), intervals)
             try:
                 for elev, fid in interpolated:
