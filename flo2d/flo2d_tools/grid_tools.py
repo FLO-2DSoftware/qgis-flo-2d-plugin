@@ -709,7 +709,7 @@ def poly2poly(base_polygons, polygons, request, area_percent, *columns):
         yield base_fid, base_parts
 
 
-def poly2poly_geos(base_polygons, polygons, request = None, *columns):
+def poly2poly_geos(base_polygons, polygons, request=None, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
 
@@ -748,6 +748,35 @@ def poly2poly_geos(base_polygons, polygons, request = None, *columns):
             base_parts.append(values)
         yield base_fid, base_parts
 
+
+def centroids2poly_geos(base_polygons, polygons, request=None, *columns):
+    """
+    Generator which calculates base polygons centroids intersections with another polygon layer.
+
+    """
+
+    allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+
+    base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
+    for feat in base_features:
+        base_geom = feat.geometry().centroid()
+        fids = index.intersects(base_geom.boundingBox())
+        if not fids:
+            continue
+        base_fid = feat.id()
+        base_geom_geos = base_geom.constGet()
+        base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
+        base_geom_engine.prepareGeometry()
+        base_parts = []
+        for fid in fids:
+            f, other_geom_engine = allfeatures[fid]
+            inter = other_geom_engine.intersects(base_geom_geos)
+            if inter is False:
+                continue
+            subarea = 1  # It's always counted as a whole area if other geom intersects with base polygon centroid
+            values = tuple(f[col] for col in columns) + (subarea,)
+            base_parts.append(values)
+        yield base_fid, base_parts
 
 
 def grid_roughness(grid, gridArea, roughness, col):
