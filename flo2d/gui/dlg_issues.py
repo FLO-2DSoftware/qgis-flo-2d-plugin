@@ -699,7 +699,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def description_tblw_cell_clicked(self, row, column):
-        cell = self.description_tblw.item(row, 0).text()
+        cell = self.sed_size_fraction_tblw.item(row, 0).text()
         self.find_cell(cell)
 
     def zoom_in(self):

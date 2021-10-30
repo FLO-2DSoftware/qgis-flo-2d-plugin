@@ -236,7 +236,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.floodplain_xs_chbox.setChecked(True)
                 self.floodplain_xs_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("mud") and not self.gutils.is_table_empty("sed"):
+            if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
                 self.mud_and_sed_chbox.setChecked(True)
                 self.mud_and_sed_chbox.setEnabled(True)
 
