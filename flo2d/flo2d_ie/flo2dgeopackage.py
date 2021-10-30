@@ -762,6 +762,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #         self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.
 
     def import_sed(self):
+
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
         sed_c_sql = [
             """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
@@ -2179,7 +2180,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
             line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
-            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n"
+            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
             line3 = "Z  {0}  {1}  {2}\n"
             line4 = "P  {0}  {1}\n"
             line5 = "D  {0}  {1}\n"
@@ -2221,7 +2222,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     aid = row[0]
                     dist_fid = row[1]
                     gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
-                    s.write(line8.format(gid, *row[1:]))
+                    s.write(line8.format(gid, *row[2:]))
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         s.write(line9.format(*nrow))
                 for aid, group_fid in self.execute(areas_g_sql):

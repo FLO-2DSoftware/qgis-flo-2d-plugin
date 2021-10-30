@@ -1102,6 +1102,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "sed",
+                    {
+                        "name": "Sediment Parameters",
+                        "sgroup": "Sediment Transport Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                    },
+                ),
+                (
                     "sed_groups",
                     {
                         "name": "Sediment Groups",
@@ -1112,6 +1123,17 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "sed_group_frac_data",
+                    {
+                        "name": "Sediment Groups Data",
+                        "sgroup": "Sediment Transport Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                    },
+                ),                
                 (
                     "sed_group_cells",
                     {
@@ -1145,6 +1167,18 @@ class Layers(object):
                         "readonly": True,
                     },
                 ),
+                
+                (
+                    "mud",
+                    {
+                        "name": "Mud Parameters",
+                        "sgroup": "Sediment Transport Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": True,
+                    },
+                ),
                 (
                     "mud_cells",
                     {
@@ -1155,7 +1189,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": True,
                     },
-                ),
+                ),                
                 # Channel  Tables:
                 (
                     "user_chan_r",

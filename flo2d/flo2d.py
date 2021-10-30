@@ -2067,20 +2067,25 @@ class Flo2D(object):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
+       
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
-        dlg_ms.show()
-        ok = dlg_ms.exec_()
-        if ok:
-            try:
-                dlg_ms.save_mud_sediment()
-            except Exception as e:
-                self.uc.show_error(
-                    "ERROR 051021.0815: couldn't save Mud and Sediment tables!"
-                    + "\n__________________________________________________",
-                    e,
-                )                
-        else:
-            return
+        repeat = True
+        while repeat:            
+            dlg_ms.show()
+            ok = dlg_ms.exec_()
+            if ok:
+                if dlg_ms.ok_to_save():
+                    try:
+                        dlg_ms.save_mud_sediment()
+                        repeat = False
+                    except Exception as e:
+                        self.uc.show_error(
+                            "ERROR 051021.0815: couldn't save Mud and Sediment tables!"
+                            + "\n__________________________________________________",
+                            e,
+                        )                
+            else:
+                return
 
     @staticmethod
     def show_help():
