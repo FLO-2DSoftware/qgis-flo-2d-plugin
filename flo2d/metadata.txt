@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.34
+version=0.10.35
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.36
+    Mud/sediment transport module added.
  <p>0.10.35
  -  Roughness from raster sampling tool added to Grid Tools.
  -  Bug fix for floodplain cross section calculator when polyline is very long.
