@@ -834,6 +834,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
                     load_outfalls = False
 
+            # Load conduits from shapefile:
             if load_conduits:
                 try:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -876,7 +877,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         conduit_shape = (
                             f[self.conduit_shape_FieldCbo.currentText()]
                             if self.conduit_shape_FieldCbo.currentText() != ""
-                            else 0
+                            else "CIRCULAR"
                         )
                         conduit_max_depth = (
                             f[self.conduit_max_depth_FieldCbo.currentText()]
@@ -996,7 +997,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             "losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0
                         )
                         feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
-                        feat.setAttribute("xsections_shape", "CIRCULAR")
+                        
+                        feat.setAttribute("xsections_shape", conduit_shape if conduit_shape != NULL else "CIRCULAR")
+                        # feat.setAttribute("xsections_shape", "CIRCULAR")
                         feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
                         feat.setAttribute(
                             "xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0
