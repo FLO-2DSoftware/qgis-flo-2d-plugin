@@ -35,14 +35,6 @@ from math import modf
 
 import numpy as np
 
-# from qgis.PyQt.QtWidgets import (QApplication, QDialogButtonBox, QInputDialog, QFileDialog,
-#                                 QTableWidgetItem, , , QTableView, QCompleter, QTableWidget, qApp )
-
-uiDialog_global, qtBaseClass = load_ui("global_breach_data")
-uiDialog_individual_breach, qtBaseClass = load_ui("individual_breach_data")
-uiDialog_levee_fragility, qtBaseClass = load_ui("levee_fragility_curves")
-uiDialog_individual_levees, qtBaseClass = load_ui("individual_levee_data")
-
 def timer(func):
     """Print the runtime of the decorated function"""
     @functools.wraps(func)
@@ -67,6 +59,7 @@ def timer1(func):
         return value
     return wrapper_timer
 
+uiDialog_global, qtBaseClass = load_ui("global_breach_data")
 class GlobalBreachDialog(qtBaseClass, uiDialog_global):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -265,7 +258,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
             )
             return False
 
-
+uiDialog_individual_breach, qtBaseClass = load_ui("individual_breach_data")
 class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -480,7 +473,7 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
             )
             return False
 
-
+uiDialog_levee_fragility, qtBaseClass = load_ui("levee_fragility_curves")
 class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -611,7 +604,7 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
 #                        +'\n__________________________________________________', e)
 #             return False
 
-
+uiDialog_individual_levees, qtBaseClass = load_ui("individual_levee_data")
 class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)

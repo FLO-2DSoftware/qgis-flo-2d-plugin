@@ -1952,12 +1952,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
             )
             self.populate_rtables()
-
+        
         elif not save:
             pass
         else:
             self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
 
+        self.lyrs.clear_rubber()
+        
     def show_conduits(self):
         """
         Shows conduits dialog.

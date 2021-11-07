@@ -9,10 +9,11 @@
 
 import os
 from qgis.PyQt.QtCore import Qt, QSettings, NULL
+from qgis.core import QgsFeatureRequest
 from ..flo2dobjects import InletRatingTable
 from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication, QFileDialog
 from qgis.PyQt.QtGui import QColor
-from .ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import m_fdata, float_or_zero, int_or_zero, is_number
@@ -32,10 +33,11 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
-
+        
         self.inlets_buttonBox.button(QDialogButtonBox.Save).setText(
             "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
         )
+        set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
         self.save_this_inlet_btn.setVisible(False)
         self.inletRT = None
         self.plot = plot
@@ -51,10 +53,19 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
         #         set_icon(self.change_name_btn, 'change_name.svg')
         set_icon(self.external_inflow_btn, "external_inflow.svg")
-
+        set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
+        set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
+        
         self.setup_connection()
-
+        
+        self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        self.grid_count = self.gutils.count('grid', field="fid")
+        
         self.inlet_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_inlet_in_table)
+        self.find_inlet_cell_btn.clicked.connect(self.find_inlet)
+        self.zoom_in_inlet_btn.clicked.connect(self.zoom_in_inlet_cell)
+        self.zoom_out_inlet_btn.clicked.connect(self.zoom_out_inlet_cell)
+
         self.inlets_buttonBox.accepted.connect(self.save_inlets)
         self.save_this_inlet_btn.clicked.connect(self.save_inlets)
 
@@ -143,7 +154,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 # Fill all text boxes with data of first feature of query (first cell in table user_swmm_nodes):
                 if row_number == 0:
                     if cell == 1:
-                        self.grid_element.setText(str(data))
+                        self.grid_element_le.setText(str(data))
                     elif cell == 2:
                         self.invert_elevation_dbox.setValue(data if data is not None else 0)
                     elif cell == 3:
@@ -224,6 +235,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.rt_previous_index = self.inlet_rating_table_cbo.currentIndex()
 
         self.block = False
+        
+        self.highlight_inlet_cell(self.grid_element_le.text())
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.inlets_tblw_cell_clicked(logicalIndex, 0)
@@ -379,7 +392,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         if not self.block:
             # Check if rating table is already assigned:
             if self.inlet_rating_table_cbo.currentText() != "":
-                grid = self.grid_element.text()
+                grid = self.grid_element_le.text()
                 inlet = self.inlet_cbo.currentText()
                 rt = self.inlet_rating_table_cbo.currentText().strip()
                 rti = self.inlet_rating_table_cbo.currentIndex()
@@ -444,7 +457,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
         self.block = True
 
-        self.grid_element.setText(self.inlets_tblw.item(row, 1).text())
+        self.grid_element_le.setText(self.inlets_tblw.item(row, 1).text())
         self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
         self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
         self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
@@ -506,7 +519,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             item = QTableWidgetItem()
             item = self.inlets_tblw.item(row, 1)
             if item is not None:
-                self.grid_element.setText(str(item.text()))
+                self.grid_element_le.setText(str(item.text()))
             self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
             self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
             self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
@@ -543,9 +556,74 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             else:
                 self.external_inflow_chbox.setChecked(False)
                 self.external_inflow_btn.setEnabled(False)
+                
+            self.highlight_inlet_cell(self.grid_element_le.text())
 
         else:
             self.uc.bar_warn("Inlet/Junction not found!")
+
+    def find_inlet(self):
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.grid_lyr is not None:
+                if self.grid_lyr:
+                    inlet = self.inlet_to_find_le.text()
+                    if inlet != "":
+                        indx = self.inlet_cbo.findText(inlet)
+                        if  indx != -1:
+                            self.inlet_cbo.setCurrentIndex(indx)
+                        else:
+                            self.uc.bar_warn("WARNING 071121.0746: inlet " + str(inlet) + " not found.")
+                    else:
+                        self.uc.bar_warn("WARNING  071121.0747: inlet " + str(inlet) + " not found.")
+        except ValueError:
+            self.uc.bar_warn("WARNING  071121.0748: inlet " + str(inlet) + " is not a levee cell.")
+            pass
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    def highlight_inlet_cell(self, cell):
+        try:
+            if self.grid_lyr is not None:
+                #                 if self.grid_lyr:
+                if cell != "":
+                    cell = int(cell)
+                    if self.grid_count >= cell and cell > 0:
+                        self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
+                        feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                        x, y = feat.geometry().centroid().asPoint()
+                        self.lyrs.zoom_to_all()
+                        center_canvas(self.iface, x, y)
+                        zoom(self.iface, 0.45)
+
+                    else:
+                        self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")
+                        self.lyrs.clear_rubber()
+                else:
+                    self.uc.bar_warn("WARNING 221219.1139: Cell " + str(cell) + " not found.")
+                    self.lyrs.clear_rubber()
+        except ValueError:
+            self.uc.bar_warn("WARNING 221219.1134: Cell " + str(cell) + "is not valid.")
+            self.lyrs.clear_rubber()
+            pass
+
+    def zoom_in_inlet_cell(self):
+        self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        x, y = self.currentCell.geometry().centroid().asPoint()
+        center_canvas(self.iface, x, y)
+        zoom(self.iface, 0.4)
+        # self.update_extent()
+        QApplication.restoreOverrideCursor()
+
+    def zoom_out_inlet_cell(self):
+        self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        x, y = self.currentCell.geometry().centroid().asPoint()
+        center_canvas(self.iface, x, y)
+        zoom(self.iface, -0.4)
+        # self.update_extent()
+        QApplication.restoreOverrideCursor()
 
     def save_inlets(self):
         """
