@@ -8,10 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
 from ..flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
 from .ui_utils import load_ui
-from qgis.core import QgsWkbTypes
+from qgis.core import QgsWkbTypes, QgsFeatureRequest
 from ..geopackage_utils import GeoPackageUtils
 
 uiDialog, qtBaseClass = load_ui("grid_elevation")
@@ -41,9 +40,14 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         self.elev_arf_chbox.stateChanged.connect(self.arf_checked)
         self.internal_selected_chbox.stateChanged.connect(self.selection_switch)
 
-        self.vector_cbo.currentIndexChanged.connect(self.populate_fields)
-        self.populate_vectors()
+        self.vector_polygon_cbo.currentIndexChanged.connect(self.populate_fields)
+        self.vector_polyline_cbo.currentIndexChanged.connect(self.populate_fields)
+
+        self.populate_polygon_vectors()
+        self.populate_polyline_vectors()
         self.populate_rasters()
+        self.polygon_rb.toggled.connect(self.populate_fields)
+        self.polyline_rb.toggled.connect(self.populate_fields)
         self.fields_grp.toggled.connect(self.fields_checked)
         self.stats_grp.toggled.connect(self.stats_checked)
         self.grid_chbox.toggled.connect(self.from_grid_checked)
@@ -105,11 +109,17 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
     def arf_method(self):
         self.internal_corrector.elevation_within_arf(self.stats_cbx.currentText())
 
-    def populate_vectors(self):
+    def populate_polygon_vectors(self):
         poly_lyrs = self.lyrs.list_group_vlayers()
-        for l in poly_lyrs:
-            if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                self.vector_cbo.addItem(l.name(), l)
+        for lyr in poly_lyrs:
+            if lyr.geometryType() == QgsWkbTypes.PolygonGeometry:
+                self.vector_polygon_cbo.addItem(lyr.name(), lyr)
+
+    def populate_polyline_vectors(self):
+        line_lyrs = self.lyrs.list_group_vlayers()
+        for lyr in line_lyrs:
+            if lyr.geometryType() == QgsWkbTypes.LineGeometry:
+                self.vector_polyline_cbo.addItem(lyr.name(), lyr)
 
     def populate_rasters(self):
         try:
@@ -119,13 +129,21 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         for r in rasters:
             self.raster_cbo.addItem(r.name(), r)
 
-    def populate_fields(self, idx):
+    def populate_fields(self):
         self.elev_cbo.clear()
         self.correction_cbo.clear()
-        lyr = self.vector_cbo.itemData(idx)
+        if self.polygon_rb.isChecked():
+            idx = self.vector_polygon_cbo.currentIndex()
+            lyr = self.vector_polygon_cbo.itemData(idx)
+        else:
+            idx = self.vector_polyline_cbo.currentIndex()
+            lyr = self.vector_polyline_cbo.itemData(idx)
         fields = [field.name() for field in lyr.fields() if field.isNumeric()]
         self.elev_cbo.addItems(fields)
         self.correction_cbo.addItems(fields)
+        if self.polyline_rb.isChecked():
+            self.buffer_field_cbo.clear()
+            self.buffer_field_cbo.addItems(fields)
 
     def fields_checked(self):
         if self.fields_grp.isChecked():
@@ -140,19 +158,33 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
         if self.grid_chbox.isChecked():
             self.raster_chbox.setChecked(False)
             self.raster_cbo.setDisabled(True)
+            self.stats_per_grid_chbox.setDisabled(True)
 
     def from_raster_checked(self):
         if self.raster_chbox.isChecked():
             self.raster_cbo.setEnabled(True)
+            self.stats_per_grid_chbox.setEnabled(True)
             self.grid_chbox.setChecked(False)
 
     def setup_external_method(self):
         self.external_corrector.setup_internal()
-        idx = self.vector_cbo.currentIndex()
-        polygon_lyr = self.vector_cbo.itemData(idx)
         predicate = self.predicate_cbo.currentText()
         only_selected = True if self.selected_chbox.isChecked() else False
         copy_features = True if self.copy_chbox.isChecked() else False
+        if self.polygon_rb.isChecked():
+            idx = self.vector_polygon_cbo.currentIndex()
+            polygon_lyr = self.vector_polygon_cbo.itemData(idx)
+        else:
+            idx = self.vector_polyline_cbo.currentIndex()
+            polyline_lyr = self.vector_polyline_cbo.itemData(idx)
+            buffer_field = self.buffer_field_cbo.currentText()
+            if only_selected:
+                buffer_request = QgsFeatureRequest().setFilterFids(polyline_lyr.selectedFeatureIds())
+                polygon_lyr = self.external_corrector.buffer_layer(polyline_lyr, buffer_field, buffer_request)
+                only_selected = False
+            else:
+                polygon_lyr = self.external_corrector.buffer_layer(polyline_lyr, buffer_field)
+
         self.external_corrector.setup_external(polygon_lyr, predicate, only_selected, copy_features)
 
         if self.fields_grp.isChecked():
@@ -167,7 +199,8 @@ class GridCorrectionDialog(qtBaseClass, uiDialog):
                 self.external_method = self.external_corrector.elevation_grid_statistics
             elif self.raster_chbox.isChecked():
                 raster_lyr = self.raster_cbo.itemData(self.raster_cbo.currentIndex())
-                self.external_corrector.setup_statistics(statistic, raster_lyr)
+                statistics_per_grid = self.stats_per_grid_chbox.isChecked()
+                self.external_corrector.setup_statistics(statistic, raster_lyr, statistics_per_grid)
                 self.external_method = self.external_corrector.elevation_raster_statistics
 
     def run_internal(self):

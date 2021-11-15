@@ -445,6 +445,7 @@ def intersection_spatial_index(vlayer, request=None):
 
     return allfeatures, index
 
+
 def count_polygon_vertices(geom):
     """
     Function for counting polygon vertices.
@@ -543,6 +544,7 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
             y_tmp -= cell_size
         x += cell_size
 
+
 def build_grid_and_tableColRow(boundary, cell_size):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
@@ -607,7 +609,8 @@ def assign_col_row_indexes_to_grid(grid, gutils):
     cur = gutils.con.cursor()
     cur.executemany(qry, qry_values)
     gutils.con.commit()      
-    
+
+
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
