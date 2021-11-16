@@ -8,10 +8,11 @@
 # of the License, or (at your option) any later version
 
 from ..utils import is_true, float_or_zero, int_or_zero, is_number
+from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
-
-from .ui_utils import load_ui
+from qgis.PyQt.QtGui import QColor
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -28,11 +29,20 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
+        self.block = False
+        
+        set_icon(self.find_outfall_cell_btn, "eye-svgrepo-com.svg")
+        set_icon(self.zoom_in_outfall_btn, "zoom_in.svg")
+        set_icon(self.zoom_out_outfall_btn, "zoom_out.svg")  
 
         self.outfalls_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Nodes-Outfalls' User Layer")
         self.outfall_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_outfall_in_table)
         self.outfalls_buttonBox.accepted.connect(self.save_outfalls)
 
+        self.find_outfall_cell_btn.clicked.connect(self.find_outfall)
+        self.zoom_in_outfall_btn.clicked.connect(self.zoom_in_outfall_cell)
+        self.zoom_out_outfall_btn.clicked.connect(self.zoom_out_outfall_cell)
+        
         # Connections from individual controls to particular cell in outfalls_tblw table widget:
         # self.grid_element.valueChanged.connect(self.grid_element_valueChanged)
         self.invert_elevation_dbox.valueChanged.connect(self.invert_elevation_dbox_valueChanged)
@@ -49,10 +59,14 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         #
         # self.set_header()
         self.setup_connection()
-        self.populate_outfalls()
-
+        
+        self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        self.grid_count = self.gutils.count('grid', field="fid")        
+        
         self.outfalls_tblw.cellClicked.connect(self.outfalls_tblw_cell_clicked)
         self.outfalls_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
+        
+        self.populate_outfalls()
 
     def set_header(self):
         self.outfalls_tblw.setHorizontalHeaderLabels(
@@ -98,6 +112,15 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     FROM user_swmm_nodes WHERE sd_type = 'O';"""
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
+            if not rows:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(
+                    "WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!"
+                )
+                return
+    
+            self.block = True            
+            
             self.outfalls_tblw.setRowCount(0)
             for row_number, row_data in enumerate(
                 rows
@@ -160,6 +183,16 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         ):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.outfalls_tblw.setItem(row_number, col_number - 1, item)
+                        
+            self.outfall_cbo.model().sort(0)
+            self.outfall_cbo.setCurrentIndex(0)
+            self.outfalls_tblw.sortItems(0, Qt.AscendingOrder)
+            self.outfalls_tblw.selectRow(0)                     
+                        
+            self.block = False   
+                     
+            self.highlight_outfall_cell(self.grid_element_txt.text())   
+                     
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
@@ -210,10 +243,24 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         pass
 
     def box_valueChanged(self, widget, col):
-        row = self.outfall_cbo.currentIndex()
-        item = QTableWidgetItem()
-        item.setData(Qt.EditRole, widget.value())
-        self.outfalls_tblw.setItem(row, col, item)
+        # if not self.block:        
+        #     row = self.outfall_cbo.currentIndex()
+        #     item = QTableWidgetItem()
+        #     item.setData(Qt.EditRole, widget.value())
+        #     self.outfalls_tblw.setItem(row, col, item)
+            
+            
+        if not self.block:
+            outfall = self.outfall_cbo.currentText()
+            row = 0
+            for i in range(1, self.outfalls_tblw.rowCount() - 1):
+                name = self.outfalls_tblw.item(i, 0).text()
+                if name == outfall:
+                    row = i
+                    break
+            item = QTableWidgetItem()
+            item.setData(Qt.EditRole, widget.value())
+            self.outfalls_tblw.setItem(row, col, item)            
 
     def checkbox_valueChanged(self, widget, col):
         row = self.outfall_cbo.currentIndex()
@@ -238,6 +285,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             self.outfall_cbo.blockSignals(False)
 
+            self.block = True
+            
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
             self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
             self.flap_gate_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 3).text()) else False)
@@ -265,58 +314,127 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 self.outfalls_tblw.setItem(row, 5, item)
 
             self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
+            
+            self.block = False
+            
+            self.highlight_outfall_cell(self.grid_element_txt.text())
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210618.1702: error assigning outfall values!", e)
 
     def fill_individual_controls_with_current_outfall_in_table(self):
-        # Highlight row in table:
-        row = self.outfall_cbo.currentIndex()
-        self.outfalls_tblw.selectRow(row)
-
-        # Load controls (text boxes, etc.) with selected row in table:
-        item = QTableWidgetItem()
-
-        item = self.outfalls_tblw.item(row, 1)
-        if item is not None:
-            self.grid_element_txt.setText(str(item.text()))
-
-        self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
-
-        item = self.outfalls_tblw.item(row, 3)
-        if item is not None:
-            self.flap_gate_chbox.setChecked(True if is_true(item.text()) else False)
-
-        #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1'
-        #                                             or item.text() == 'Yes' or item.text() == 'yes' else False)
-
-        item = self.outfalls_tblw.item(row, 4)
-        if item is not None:
-            self.allow_discharge_chbox.setChecked(True if is_true(item.text()) else False)
-
-        #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
-
-        item = self.outfalls_tblw.item(row, 5)
-        if item is not None:
-            itemTxt = item.text().upper()
-            if itemTxt in self.outfalls_tuple:
-                index = self.outfall_type_cbo.findText(itemTxt)
-            else:
-                if itemTxt == "":
-                    index = 0
-                else:
-                    if is_number(itemTxt):
-                        index = itemTxt
-                    else:
-                        index = 0
-            index = 4 if index > 4 else 0 if index < 0 else index
-            self.outfall_type_cbo.setCurrentIndex(index)
+        if not self.block:
+            # Highlight row in table:
+            row = self.outfall_cbo.currentIndex()
+            self.outfalls_tblw.selectRow(row)
+    
+            # Load controls (text boxes, etc.) with selected row in table:
             item = QTableWidgetItem()
-            item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
-            self.outfalls_tblw.setItem(row, 5, item)
+    
+            item = self.outfalls_tblw.item(row, 1)
+            if item is not None:
+                self.grid_element_txt.setText(str(item.text()))
+    
+            self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
+    
+            item = self.outfalls_tblw.item(row, 3)
+            if item is not None:
+                self.flap_gate_chbox.setChecked(True if is_true(item.text()) else False)
+    
+            #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1'
+            #                                             or item.text() == 'Yes' or item.text() == 'yes' else False)
+    
+            item = self.outfalls_tblw.item(row, 4)
+            if item is not None:
+                self.allow_discharge_chbox.setChecked(True if is_true(item.text()) else False)
+    
+            #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
+    
+            item = self.outfalls_tblw.item(row, 5)
+            if item is not None:
+                itemTxt = item.text().upper()
+                if itemTxt in self.outfalls_tuple:
+                    index = self.outfall_type_cbo.findText(itemTxt)
+                else:
+                    if itemTxt == "":
+                        index = 0
+                    else:
+                        if is_number(itemTxt):
+                            index = itemTxt
+                        else:
+                            index = 0
+                index = 4 if index > 4 else 0 if index < 0 else index
+                self.outfall_type_cbo.setCurrentIndex(index)
+                item = QTableWidgetItem()
+                item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
+                self.outfalls_tblw.setItem(row, 5, item)
+    
+            self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
+            
+            self.highlight_outfall_cell(self.grid_element_txt.text())
 
-        self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
+    def find_outfall(self):
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.grid_lyr is not None:
+                if self.grid_lyr:
+                    outfall = self.outfall_to_find_le.text()
+                    if outfall != "":
+                        indx = self.outfall_cbo.findText(outfall)
+                        if  indx != -1:
+                            self.outfall_cbo.setCurrentIndex(indx)
+                        else:
+                            self.uc.bar_warn("WARNING 121121.0746: outfall " + str(outfall) + " not found.")
+                    else:
+                        self.uc.bar_warn("WARNING  121121.0747: outfall " + str(outfall) + " not found.")
+        except ValueError:
+            self.uc.bar_warn("WARNING  121121.0748: outfall " + str(outfall) + " is not a levee cell.")
+            pass
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    def highlight_outfall_cell(self, cell):
+        try:
+            if self.grid_lyr is not None:
+                if cell != "":
+                    cell = int(cell)
+                    if self.grid_count >= cell and cell > 0:
+                        self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
+                        feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+                        x, y = feat.geometry().centroid().asPoint()
+                        self.lyrs.zoom_to_all()
+                        center_canvas(self.iface, x, y)
+                        zoom(self.iface, 0.45)
+
+                    else:
+                        self.uc.bar_warn("WARNING 121121.1140: Cell " + str(cell) + " not found.")
+                        self.lyrs.clear_rubber()
+                else:
+                    self.uc.bar_warn("WARNING 121121.1139: Cell " + str(cell) + " not found.")
+                    self.lyrs.clear_rubber()
+        except ValueError:
+            self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
+            self.lyrs.clear_rubber()
+            pass
+
+    def zoom_in_outfall_cell(self):
+        self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_txt.text()))))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        x, y = self.currentCell.geometry().centroid().asPoint()
+        center_canvas(self.iface, x, y)
+        zoom(self.iface, 0.4)
+        # self.update_extent()
+        QApplication.restoreOverrideCursor()
+
+    def zoom_out_outfall_cell(self):
+        self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_txt.text()))))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        x, y = self.currentCell.geometry().centroid().asPoint()
+        center_canvas(self.iface, x, y)
+        zoom(self.iface, -0.4)
+        # self.update_extent()
+        QApplication.restoreOverrideCursor()
 
     def save_outfalls(self):
         """
