@@ -8,13 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFields, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
+from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
 from qgis.analysis import QgsZonalStatistics
 from collections import defaultdict
-from .grid_tools import TINInterpolator, spatial_index, poly2grid, poly2poly, polygons_statistics, gridRegionGenerator
+from .grid_tools import TINInterpolator, spatial_index, spatial_centroids_index, poly2grid, poly2poly, polygons_statistics, gridRegionGenerator
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
 import functools
 import time
+
 
 def timer(func):
     """Print the runtime of the decorated function"""
@@ -27,6 +28,7 @@ def timer(func):
         print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
         return value
     return wrapper_timer
+
 
 class ElevationCorrector(object):
 
@@ -88,12 +90,33 @@ class ElevationCorrector(object):
             return
         epsg = vlayer.crs().authid()
         duplicate_name = "{}_duplicated".format(vlayer.name())
-        mem_layer = QgsVectorLayer("{}?crs={}".format(uri_type, epsg), duplicate_name, "memory")
+        mem_layer = QgsVectorLayer(f"{uri_type}?crs={epsg}", duplicate_name, "memory")
         mem_layer_data = mem_layer.dataProvider()
         attr = vlayer.dataProvider().fields().toList()
         mem_layer_data.addAttributes(attr)
         mem_layer.updateFields()
         mem_layer_data.addFeatures(feats)
+        return mem_layer
+
+    @staticmethod
+    def buffer_layer(vlayer, buffer_field, request=None):
+        epsg = vlayer.crs().authid()
+        duplicate_name = "{}_duplicated".format(vlayer.name())
+        mem_layer = QgsVectorLayer(f"Polygon?crs={epsg}", duplicate_name, "memory")
+        mem_layer_data = mem_layer.dataProvider()
+        attr = vlayer.dataProvider().fields().toList()
+        mem_layer_data.addAttributes(attr)
+        mem_layer.updateFields()
+        buffer_feats = []
+        for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
+            buffer_feat = QgsFeature(feat)
+            buffer_value = feat[buffer_field]
+            if not buffer_value:
+                continue
+            buffer_geom = feat.geometry().buffer(buffer_value, 5)
+            buffer_feat.setGeometry(buffer_geom)
+            buffer_feats.append(buffer_feat)
+        mem_layer_data.addFeatures(buffer_feats)
         return mem_layer
 
     @staticmethod
@@ -126,6 +149,7 @@ class LeveesElevation(ElevationCorrector):
         self.user_levees = self.lyrs.data["user_levee_lines"]["qlyr"]
         self.schema_levees = self.lyrs.data["levee_data"]["qlyr"]
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'levees';"
+
     @timer
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
@@ -145,6 +169,7 @@ class LeveesElevation(ElevationCorrector):
             except IndexError:
                 continue
         self.gutils.con.commit()
+
     def elevation_from_lines(self, regionReq=None):
         cur = self.gutils.con.cursor()
         # use moving window        
@@ -378,6 +403,7 @@ class ExternalElevation(ElevationCorrector):
 
         self.statistics = None
         self.raster = None
+        self.statistics_per_grid = None
 
         self.only_selected = None
         self.copy_features = None
@@ -399,9 +425,10 @@ class ExternalElevation(ElevationCorrector):
         self.elevation_field = elevation
         self.correction_field = correction
 
-    def setup_statistics(self, statistics, raster=None):
+    def setup_statistics(self, statistics, raster=None, statistics_per_grid=False):
         self.statistics = statistics
         self.raster = raster
+        self.statistics_per_grid = statistics_per_grid
 
     def import_features(self, fids_values):
         copy_request = QgsFeatureRequest().setFilterFids(list(fids_values.keys()))
@@ -512,10 +539,23 @@ class ExternalElevation(ElevationCorrector):
             stats = QgsZonalStatistics.Min
         else:
             raise ValueError
-
-        self.polygons = self.duplicate_layer(self.polygons, self.request)
+        if self.statistics_per_grid:
+            selected_polygons_layer = self.duplicate_layer(self.polygons, self.request)
+            grid_fids = set()
+            allfeatures, index = spatial_centroids_index(self.grid) if self.only_centroids else spatial_index(self.grid)
+            for poly_feat in selected_polygons_layer.getFeatures():
+                poly_geom = poly_feat.geometry()
+                for gid in index.intersects(poly_geom.boundingBox()):
+                    grid_feat = allfeatures[gid]
+                    if grid_feat.geometry().intersects(poly_geom):
+                        grid_fids.add(gid)
+            subgrid_request = QgsFeatureRequest().setFilterFids(list(grid_fids))
+            self.polygons = self.duplicate_layer(self.grid, subgrid_request)
+            self.only_centroids = True
+        else:
+            self.polygons = self.duplicate_layer(self.polygons, self.request)
         polygons_statistics(self.polygons, self.raster, stats)
+        self.request = None
         self.elevation_field = self.statistics.lower()
         self.correction_field = None
-        self.request = None
         self.elevation_attributes()

@@ -9,7 +9,7 @@
 # of the License, or (at your option) any later version
 from math import log, exp, log10
 from qgis.PyQt.QtWidgets import QApplication
-from .grid_tools import poly2poly_geos
+from .grid_tools import poly2poly_geos, centroids2poly_geos
 from ..user_communication import UserCommunication
 from qgis.utils import iface
 from qgis.PyQt.QtCore import QSettings
@@ -261,7 +261,7 @@ class InfiltrationCalculator(object):
 
     def scs_infiltration_single(self):
         grid_params = {}
-        curve_values = poly2poly_geos(self.grid_lyr, self.curve_lyr, None, self.curve_fld)
+        curve_values = centroids2poly_geos(self.grid_lyr, self.curve_lyr, None, self.curve_fld)
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
             grid_params[gid] = {"scsn": grid_cn}
@@ -271,7 +271,7 @@ class InfiltrationCalculator(object):
     def scs_infiltration_multi(self):
         grid_params = {}
         scs = SCPCurveNumber()
-        ground_values = poly2poly_geos(
+        ground_values = centroids2poly_geos(
             self.grid_lyr, self.combined_lyr, None, self.landsoil_fld, self.cd_fld, self.imp_fld
         )
         for gid, values in ground_values:

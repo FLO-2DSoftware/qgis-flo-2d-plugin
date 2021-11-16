@@ -445,6 +445,7 @@ def intersection_spatial_index(vlayer, request=None):
 
     return allfeatures, index
 
+
 def count_polygon_vertices(geom):
     """
     Function for counting polygon vertices.
@@ -543,6 +544,7 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
             y_tmp -= cell_size
         x += cell_size
 
+
 def build_grid_and_tableColRow(boundary, cell_size):
     """
     Generator which creates grid with given cell size and inside given boundary layer.
@@ -607,7 +609,8 @@ def assign_col_row_indexes_to_grid(grid, gutils):
     cur = gutils.con.cursor()
     cur.executemany(qry, qry_values)
     gutils.con.commit()      
-    
+
+
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
@@ -709,7 +712,7 @@ def poly2poly(base_polygons, polygons, request, area_percent, *columns):
         yield base_fid, base_parts
 
 
-def poly2poly_geos(base_polygons, polygons, request = None, *columns):
+def poly2poly_geos(base_polygons, polygons, request=None, *columns):
     """
     Generator which calculates base polygons intersections with another polygon layer.
 
@@ -748,6 +751,35 @@ def poly2poly_geos(base_polygons, polygons, request = None, *columns):
             base_parts.append(values)
         yield base_fid, base_parts
 
+
+def centroids2poly_geos(base_polygons, polygons, request=None, *columns):
+    """
+    Generator which calculates base polygons centroids intersections with another polygon layer.
+
+    """
+
+    allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+
+    base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
+    for feat in base_features:
+        base_geom = feat.geometry().centroid()
+        fids = index.intersects(base_geom.boundingBox())
+        if not fids:
+            continue
+        base_fid = feat.id()
+        base_geom_geos = base_geom.constGet()
+        base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
+        base_geom_engine.prepareGeometry()
+        base_parts = []
+        for fid in fids:
+            f, other_geom_engine = allfeatures[fid]
+            inter = other_geom_engine.intersects(base_geom_geos)
+            if inter is False:
+                continue
+            subarea = 1  # It's always counted as a whole area if other geom intersects with base polygon centroid
+            values = tuple(f[col] for col in columns) + (subarea,)
+            base_parts.append(values)
+        yield base_fid, base_parts
 
 
 def grid_roughness(grid, gridArea, roughness, col):
