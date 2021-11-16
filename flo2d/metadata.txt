@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.37
+version=0.10.38
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,10 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.38
+  - Individual conduits dialog: find, zoom-in, zoom-out functions.
+  - Individual outfalls dialog: find, zoom-in, zoom-out functions.
+  - Mud/Sediment Transport read "E" line.
  <p>0.10.37
     Individual Inlets dialog: find, zoom-in, zoom-out functions.
  <p>0.10.36

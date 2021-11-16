@@ -1919,7 +1919,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
-
+            
+        self.lyrs.clear_rubber()
+        
     def show_inlets(self):
         """
         Shows inlets dialog.
@@ -1987,6 +1989,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
                 return
+            
+        self.lyrs.clear_rubber()
 
     def auto_assign_conduits_nodes(self):
         """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""

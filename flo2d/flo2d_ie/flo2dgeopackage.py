@@ -809,7 +809,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data["M"]:
             sed_m_sql += [tuple(row)]
         for row in data["C"]:
-            erow = data["E"][0]
+            erow = ["10.0"]
+            if data["E"]:
+                erow = data["E"][0]
             if erow:
                 row += erow
             else:
