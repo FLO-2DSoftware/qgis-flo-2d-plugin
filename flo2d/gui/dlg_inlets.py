@@ -21,8 +21,6 @@ from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdi
 from math import isnan
 
 uiDialog, qtBaseClass = load_ui("inlets")
-
-
 class InletNodesDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -38,6 +36,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
         )
         set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
+        set_icon(self.external_inflow_btn, "external_inflow.svg")
+        set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
+        set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")        
+        
         self.save_this_inlet_btn.setVisible(False)
         self.inletRT = None
         self.plot = plot
@@ -51,11 +53,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.block = False
         self.rt_previous_index = -999
 
-        #         set_icon(self.change_name_btn, 'change_name.svg')
-        set_icon(self.external_inflow_btn, "external_inflow.svg")
-        set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
-        set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
-        
         self.setup_connection()
         
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -90,8 +87,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlet_rating_table_cbo.currentIndexChanged.connect(self.inlet_rating_table_cbo_changed)
 
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
-
-        #         self.inlet_rating_table_cbo.setDuplicatesEnabled(False)
 
         self.set_header()
 
@@ -309,7 +304,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     self.gutils.execute(delete_sql, (node,))
 
     def inlet_drain_type_cbo_currentIndexChanged(self):
-        #         if not self.block:
         row = self.inlet_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex() + 1)
@@ -379,11 +373,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             item.setData(Qt.EditRole, widget.value())
             self.inlets_tblw.setItem(row, col, item)
 
-    #             row = self.inlet_cbo.currentIndex()
-    #             item = QTableWidgetItem()
-    #             item.setData(Qt.EditRole, widget.value())
-    #             self.inlets_tblw.setItem(row, col, item)
-
     def inlet_rating_table_cbo_changed(self):
         self.inlet_rating_table_cbo_currentIndexChanged(self.inlet_rating_table_cbo)
 
@@ -417,19 +406,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             self.inlet_rating_table_cbo.setCurrentIndex(self.rt_previous_index)
                             self.block = False
                             return
-
-            #                 fid = self.gutils.execute("SELECT fid, grid_fid FROM swmmflort WHERE name = ?", (rt,)).fetchall()
-            #                 if fid:
-            #                     for f in fid:
-            #                         grid_fid = f[1]
-            #                         if grid_fid:
-            #                             if grid != grid_fid:
-            #                                 inlet = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE grid = ?;", (grid_fid,)).fetchone()
-            #                                 if inlet:
-            #                                     self.uc.show_info("Rating table  '" + rt + "'  already assigned to inlet  '" + inlet[0] +
-            #                                                       "'  of grid element  '" + str(grid_fid) + "'")
-            #                                     self.inlet_rating_table_cbo.setCurrentIndex(self.rt_previous_index)
-            #                                     return
 
             inlet = self.inlet_cbo.currentText()
             row = 0
@@ -494,6 +470,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.external_inflow_btn.setEnabled(False)
 
         self.block = False
+        
+        self.highlight_inlet_cell(self.grid_element_le.text())
 
     def fill_individual_controls_with_current_inlet_in_table(self):
         # Highlight row in table:
@@ -706,18 +684,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 if item is not None:
                     rt_name = str(item.text())
 
-                #                     if intype == '4': # Rating table.
-                #                         rt_name = str(item.text())
-                #                         idx = self.inlet_rating_table_cbo.findText(rt_name)
-                #                         if idx == -1:
-                #                             rt_name = ''
-                #                     else:
-                #                         rt_name = ''
-                #                 else:
-                #                     rt_name = ''
-
                 # See if rating table exists in swmmflort:
-
                 rt_fid = 0
                 if intype == "4" and rt_name != "":
                     #  See if there is rating table data for this inlet (Type 4 and rating table name defined):
@@ -905,15 +872,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         for i in range(self.inlet_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_plot()
-
-    #     def create_plot(self):
-    #         self.plot.clear()
-    #         if self.plot.plot.legend is not None:
-    #             self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
-    #         self.plot.plot.addLegend()
-    #
-    #         self.plot_item_name = 'Rating Tables'
-    #         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def create_plot(self, name):
         self.plot.clear()
