@@ -37,7 +37,32 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.current_lyr = None
         self.saveSelected = None
-
+        
+        self.shape = (
+            "CIRCULAR",
+            "FORCE_MAIN",
+            "FILLED_CIRCULAR",
+            "RECT_CLOSED",
+            "RECT_OPEN",
+            "TRAPEZOIDAL",
+            "TRIANGULAR",
+            "HORIZ_ELLIPSE",
+            "VERT_ELLIPSE",
+            "ARCH",
+            "PARABOLIC",
+            "POWER",
+            "RECT_TRIANGULAR",
+            "RECT_ROUND",
+            "MODBASKETHANDLE",
+            "EGG",
+            "HORSESHOE",
+            "GOTHIC",
+            "CATENARY",
+            "SEMIELLIPTICAL",
+            "BASKETHANDLE",
+            "SEMICIRCULAR",
+        )
+        
         self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText(
             "Assign Selected Inlets/Junctions, Outfalls, and Conduits"
         )
@@ -998,7 +1023,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         )
                         feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
                         
-                        feat.setAttribute("xsections_shape", conduit_shape if conduit_shape != NULL else "CIRCULAR")
+                        feat.setAttribute("xsections_shape", conduit_shape if conduit_shape in self.shape else "CIRCULAR")
                         # feat.setAttribute("xsections_shape", "CIRCULAR")
                         feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
                         feat.setAttribute(
