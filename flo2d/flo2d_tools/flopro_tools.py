@@ -58,7 +58,7 @@ class FLOPROExecutor(object):
                 
                        
                 self.uc.bar_info("Model started. " ) 
-                proc.wait()
+                # proc.wait()
                 return proc.returncode     
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!/n", e)
@@ -148,7 +148,7 @@ class TailingsDamBreachExecutor(object):
                 stderr=STDOUT,
                 universal_newlines=True,
             )
-            proc.wait()
+            # proc.wait()
             return proc.returncode
 
     def run(self):
