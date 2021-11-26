@@ -62,12 +62,12 @@ def clear_grid_index():
         grid_index[key][2] = 0
 
 def get_file_path(*paths):
-    temp_dir = os.path.dirname(os.path.realpath(__file__))
+    temp_dir = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(temp_dir, *paths)
     return path
 
 
-def add_egg(name):
+def add_egg_or_wheel(name):
     import sys
 
     dep = get_file_path("deps", name)
