@@ -214,7 +214,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         self.plot.clear()
         if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
 
         self.plot_item_name = "Rain timeseries"

@@ -437,7 +437,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         self.plot.clear()
         if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
         self.plot.plot.setTitle("")
 
@@ -507,7 +509,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     def create_plot(self, name):
         self.plot.clear()
         if self.plot.plot.legend is not None:
-            self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
         self.plot_item_name = "Rating Table:   " + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
