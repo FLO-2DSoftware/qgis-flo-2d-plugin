@@ -8,15 +8,13 @@ author=FLO-2D
 email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
+
 changelog=
  <p>0.10.39
-  - Storm Drain Pumps: pumps layers, dialog, import/export from/to .INP files.
-changelog=
+  - Storm Drain pumps functionality: layers, dialog, import/export .INP files.
  <p>0.10.38
   - Individual conduits dialog: find, zoom-in, zoom-out functions.
   - Individual outfalls dialog: find, zoom-in, zoom-out functions.
-  - Elevation correction from Polyline.
-  - Elevation correction cell level apply a min, max, or mean sampled from within a cell.
   - Mud/Sediment Transport read "E" line.
  <p>0.10.37
     Individual Inlets dialog: find, zoom-in, zoom-out functions.
