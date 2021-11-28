@@ -59,6 +59,7 @@ from datetime import date, time, timedelta, datetime
 from ..gui.dlg_outfalls import OutfallNodesDialog
 from ..gui.dlg_inlets import InletNodesDialog
 from ..gui.dlg_conduits import ConduitsDialog
+from ..gui.dlg_pumps import PumpsDialog
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from _ast import Pass
 
@@ -126,6 +127,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.grid_lyr = None
         self.user_swmm_nodes_lyr = None
         self.user_swmm_conduits_lyr = None
+        self.user_swmm_pumps_lyr = None
+        self.user_swmm_pumps_curve_data_lyr = None
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_inflows_time_series_lyr = None
@@ -218,6 +221,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
             self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
             self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+            self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
+            self.user_swmm_pumps_curve_data_lyr= self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
             self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
             self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
             self.swmm_inflows_time_series_lyr = self.lyrs.data["swmm_inflow_time_series"]["qlyr"]
@@ -232,7 +237,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
             self.outfalls_btn.clicked.connect(self.show_outfalls)
             self.inlets_btn.clicked.connect(self.show_inlets)
+            self.pumps_btn.clicked.connect(self.show_pumps)
             self.conduits_btn.clicked.connect(self.show_conduits)
+            
             self.assign_conduits_nodes_btn.clicked.connect(self.auto_assign_conduits_nodes)
             self.control_lyr.editingStopped.connect(self.check_simulate_SD_1)
             self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
@@ -730,6 +737,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         outside_nodes = ""
         outside_conduits = ""
+        outside_pumps = ""
         try:
             """
             Create an ordered dictionary "storm_drain.INP_groups".
@@ -779,6 +787,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
                 storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
+                
+                # Pumps:
+                storm_drain.create_INP_pumps_dictionary_with_pumps()        
 
                 # External inflows into table swmm_inflows:
                 storm_drain.create_INP_inflows_dictionary_with_inflows()
@@ -829,7 +840,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             VALUES (?, ?, ?, ?);"""
                     i = 0
                     for pattern in storm_drain.INP_patterns:
-
                         if pattern[2][1] == "HOURLY":
                             name = pattern[1][1]
                             description = pattern[0][1]
@@ -876,11 +886,36 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         e,
                     )
 
+                # Pump curves into table swmm_pumps_curve_data:
+                storm_drain.create_INP_curves_list_with_curves()      
+                try:
+                    if complete_or_create == "Create New":
+                        remove_features(self.user_swmm_pumps_curve_data_lyr)
+                    insert_curves_sql = """INSERT INTO swmm_pumps_curve_data
+                                            (   pump_curve_name, 
+                                                pump_curve_type, 
+                                                x_value,
+                                                y_value
+                                            ) 
+                                            VALUES (?, ?, ?, ?);"""
+                    for curve in storm_drain.INP_curves:
+                        self.gutils.execute(insert_curves_sql, (curve[0], curve[1], curve[2], curve[3]))
+                
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error(
+                        "ERROR 241121.0547: Reading storm drain pump curve data from SWMM input data failed!"
+                        + "\n__________________________________________________",
+                        e,
+                    )
+
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
             return
 
+        # Create Junctions and Outfalls layers:
         try:
             """
             Creates Storm Drain Nodes layer (Users layers).
@@ -948,8 +983,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 surcharge_depth = float(values["surcharge_depth"]) if "surcharge_depth" in values else 0
                 ponded_area = float(values["ponded_area"]) if "ponded_area" in values else 0
                 # Outfalls:
-                if name[0] == "O":
-                    XXXX = 0
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
                 outfall_invert_elev = float(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
                 tidal_curve = values["tidal_curve"] if "tidal_curve" in values else "..."
@@ -1065,158 +1098,236 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        try:
-            """
-            Creates Storm Drain Conduits layer (Users layers)
+        # Create Conduits layer:
+        if storm_drain.INP_conduits:
+            try:
+                """
+                Creates Storm Drain Conduits layer (Users layers)
+    
+                Creates "user_swmm_conduits" layer with attributes taken from
+                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+    
+                """
+    
+                # Transfer data from "storm_drain.INP_dict" to "user_swmm_conduits" layer:
+    
+                # replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits 
+                #                  SET   conduit_inlet  = ?,
+                #                        conduit_outlet  = ?, 
+                #                        conduit_length  = ?,
+                #                        conduit_manning  = ?, 
+                #                        conduit_inlet_offset  = ?,
+                #                        conduit_outlet_offset  = ?, 
+                #                        conduit_init_flow  = ?, 
+                #                        conduit_max_flow  = ?, 
+                #                        losses_inlet  = ?,
+                #                        losses_outlet  = ?, 
+                #                        losses_average  = ?, 
+                #                        losses_flapgate  = ?, 
+                #                        xsections_shape  = ?, 
+                #                        xsections_barrels  = ?, 
+                #                        xsections_max_depth  = ?, 
+                #                        xsections_geom2  = ?, 
+                #                        xsections_geom3  = ?,                                              
+                #                        xsections_geom4  = ?                      
+                #                  WHERE conduit_name = ?;"""
+    
+                fields = self.user_swmm_conduits_lyr.fields()
+                new_conduits = []
+                updated_conduits = 0
+                conduit_inlets_not_found = ""
+                conduit_outlets_not_found = ""
+    
+                for name, values in list(storm_drain.INP_conduits.items()):
+    
+                    go_go = True
+    
+                    conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
+                    conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
+                    conduit_length = float(values["conduit_length"]) if "conduit_length" in values else 0
+                    conduit_manning = float(values["conduit_manning"]) if "conduit_manning" in values else 0
+                    conduit_inlet_offset = float(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
+                    conduit_outlet_offset = (
+                        float(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
+                    )
+                    conduit_init_flow = float(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
+                    conduit_max_flow = float(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
+    
+                    conduit_losses_inlet = float(values["losses_inlet"]) if "losses_inlet" in values else 0
+                    conduit_losses_outlet = float(values["losses_outlet"]) if "losses_outlet" in values else 0
+                    conduit_losses_average = float(values["losses_average"]) if "losses_average" in values else 0
+    
+                    conduit_losses_flapgate = values["losses_flapgate"] if "losses_flapgate" in values else "False"
+                    conduit_losses_flapgate = "True" if is_true(conduit_losses_flapgate) else "False"
+    
+                    conduit_xsections_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
+                    conduit_xsections_barrels = float(values["xsections_barrels"]) if "xsections_barrels" in values else 0
+                    conduit_xsections_max_depth = (
+                        float(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
+                    )
+                    conduit_xsections_geom2 = float(values["xsections_geom2"]) if "xsections_geom2" in values else 0
+                    conduit_xsections_geom3 = float(values["xsections_geom3"]) if "xsections_geom3" in values else 0
+                    conduit_xsections_geom4 = float(values["xsections_geom4"]) if "xsections_geom4" in values else 0
+    
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+    
+                    if not conduit_inlet in storm_drain.INP_nodes:
+                        conduit_inlets_not_found +=  name + "\n"
+                        go_go = False
+                    if not conduit_outlet in storm_drain.INP_nodes:
+                        conduit_outlets_not_found +=  name + "\n"
+                        go_go = False
+    
+                    if not go_go:
+                        continue
+    
+                    x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
+                    y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
+                    x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
+                    y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
+    
+                    grid = self.gutils.grid_on_point(x1, y1)
+                    if grid is None:
+                        outside_conduits += name + "\n"
+                        continue
+    
+                    grid = self.gutils.grid_on_point(x2, y2)
+                    if grid is None:
+                        outside_conduits += name + "\n"
+                        continue
+    
+                    # NOTE: for now ALWAYS read all inlets   !!!:
+                    #                 if complete_or_create == "Create New":
+    
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    feat.setGeometry(geom)
+    
+                    feat.setAttribute("conduit_name", name)
+                    feat.setAttribute("conduit_inlet", conduit_inlet)
+                    feat.setAttribute("conduit_outlet", conduit_outlet)
+                    feat.setAttribute("conduit_length", conduit_length)
+                    feat.setAttribute("conduit_manning", conduit_manning)
+                    feat.setAttribute("conduit_inlet_offset", conduit_inlet_offset)
+                    feat.setAttribute("conduit_outlet_offset", conduit_outlet_offset)
+                    feat.setAttribute("conduit_init_flow", conduit_init_flow)
+                    feat.setAttribute("conduit_max_flow", conduit_max_flow)
+    
+                    feat.setAttribute("losses_inlet", conduit_losses_inlet)
+                    feat.setAttribute("losses_outlet", conduit_losses_outlet)
+                    feat.setAttribute("losses_average", conduit_losses_average)
+                    feat.setAttribute("losses_flapgate", conduit_losses_flapgate)
+    
+                    feat.setAttribute("xsections_shape", conduit_xsections_shape)
+                    feat.setAttribute("xsections_barrels", conduit_xsections_barrels)
+                    feat.setAttribute("xsections_max_depth", conduit_xsections_max_depth)
+                    feat.setAttribute("xsections_geom2", conduit_xsections_geom2)
+                    feat.setAttribute("xsections_geom3", conduit_xsections_geom3)
+                    feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
+    
+                    new_conduits.append(feat)
+                    updated_conduits += 1
+                    
+                if len(new_conduits) != 0:
+                    remove_features(self.user_swmm_conduits_lyr)
+                    self.user_swmm_conduits_lyr.startEditing()
+                    self.user_swmm_conduits_lyr.addFeatures(new_conduits)
+                    self.user_swmm_conduits_lyr.commitChanges()
+                    self.user_swmm_conduits_lyr.updateExtents()
+                    self.user_swmm_conduits_lyr.triggerRepaint()
+                    self.user_swmm_conduits_lyr.removeSelection()
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
 
-            Creates "user_swmm_conduits" layer with attributes taken from
-            the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+        # Create Pumps layer:
+        if storm_drain.INP_pumps:
+            try:
+                """
+                Creates Storm Drain Pumps layer (Users layers)
+    
+                Creates "user_swmm_pumps" layer with attributes taken from
+                the [PUMPS], and [CURVES] groups.
+    
+                """
+    
+                fields = self.user_swmm_pumps_lyr.fields()
+                new_pumps = []
+                updated_pumps = 0
+                pump_inlets_not_found = ""
+                pump_outlets_not_found = ""
+    
+                for name, values in list(storm_drain.INP_pumps.items()):
+    
+                    go_go = True
+    
+                    pump_inlet = values["pump_inlet"] if "pump_inlet" in values else None
+                    pump_outlet = values["pump_outlet"] if "pump_outlet" in values else None
+                    pump_curve = values["pump_curve"] if "pump_curve" in values else None
+                    pump_init_status = values["pump_init_status"] if "pump_init_status" in values else "OFF"
+                    # pump_init_status = "ON" if is_true(pump_init_status) else "ON"
+                    
+                    pump_startup_depth = float(values["pump_startup_depth"]) if "pump_startup_depth" in values else 0.0
+                    pump_shutoff_depth = float(values["pump_shutoff_depth"]) if "pump_shutoff_depth" in values else 0.0
 
-            """
-
-            # Transfer data from "storm_drain.INP_dict" to "user_swmm_conduits" layer:
-
-            replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits 
-                             SET   conduit_inlet  = ?,
-                                   conduit_outlet  = ?, 
-                                   conduit_length  = ?,
-                                   conduit_manning  = ?, 
-                                   conduit_inlet_offset  = ?,
-                                   conduit_outlet_offset  = ?, 
-                                   conduit_init_flow  = ?, 
-                                   conduit_max_flow  = ?, 
-                                   losses_inlet  = ?,
-                                   losses_outlet  = ?, 
-                                   losses_average  = ?, 
-                                   losses_flapgate  = ?, 
-                                   xsections_shape  = ?, 
-                                   xsections_barrels  = ?, 
-                                   xsections_max_depth  = ?, 
-                                   xsections_geom2  = ?, 
-                                   xsections_geom3  = ?,                                              
-                                   xsections_geom4  = ?                      
-                             WHERE conduit_name = ?;"""
-
-            fields = self.user_swmm_conduits_lyr.fields()
-            new_conduits = []
-            updated_conduits = 0
-            conduit_inlets_not_found = ""
-            conduit_outlets_not_found = ""
-
-            for name, values in list(storm_drain.INP_conduits.items()):
-
-                go_go = True
-
-                conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
-                conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
-                conduit_length = float(values["conduit_length"]) if "conduit_length" in values else 0
-                conduit_manning = float(values["conduit_manning"]) if "conduit_manning" in values else 0
-                conduit_inlet_offset = float(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
-                conduit_outlet_offset = (
-                    float(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
-                )
-                conduit_init_flow = float(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
-                conduit_max_flow = float(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
-
-                conduit_losses_inlet = float(values["losses_inlet"]) if "losses_inlet" in values else 0
-                conduit_losses_outlet = float(values["losses_outlet"]) if "losses_outlet" in values else 0
-                conduit_losses_average = float(values["losses_average"]) if "losses_average" in values else 0
-
-                conduit_losses_flapgate = values["losses_flapgate"] if "losses_flapgate" in values else "False"
-                conduit_losses_flapgate = "True" if is_true(conduit_losses_flapgate) else "False"
-
-                conduit_xsections_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
-                conduit_xsections_barrels = float(values["xsections_barrels"]) if "xsections_barrels" in values else 0
-                conduit_xsections_max_depth = (
-                    float(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
-                )
-                conduit_xsections_geom2 = float(values["xsections_geom2"]) if "xsections_geom2" in values else 0
-                conduit_xsections_geom3 = float(values["xsections_geom3"]) if "xsections_geom3" in values else 0
-                conduit_xsections_geom4 = float(values["xsections_geom4"]) if "xsections_geom4" in values else 0
-
-                feat = QgsFeature()
-                feat.setFields(fields)
-
-                if not conduit_inlet in storm_drain.INP_nodes:
-                    conduit_inlets_not_found += conduit_inlet + " \t(for conduit " + name + ")\n"
-                    go_go = False
-                if not conduit_outlet in storm_drain.INP_nodes:
-                    conduit_outlets_not_found += conduit_outlet + " \t(for conduit " + name + ")\n"
-                    go_go = False
-
-                if not go_go:
-                    continue
-
-                x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
-                y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
-                x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
-                y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
-
-                grid = self.gutils.grid_on_point(x1, y1)
-                if grid is None:
-                    outside_conduits += name + "\n"
-                    continue
-
-                grid = self.gutils.grid_on_point(x2, y2)
-                if grid is None:
-                    outside_conduits += name + "\n"
-                    continue
-
-                # NOTE: for now ALWAYS read all inlets   !!!:
-                #                 if complete_or_create == "Create New":
-
-                geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
-                feat.setGeometry(geom)
-
-                feat.setAttribute("conduit_name", name)
-                feat.setAttribute("conduit_inlet", conduit_inlet)
-                feat.setAttribute("conduit_outlet", conduit_outlet)
-                feat.setAttribute("conduit_length", conduit_length)
-                feat.setAttribute("conduit_manning", conduit_manning)
-                feat.setAttribute("conduit_inlet_offset", conduit_inlet_offset)
-                feat.setAttribute("conduit_outlet_offset", conduit_outlet_offset)
-                feat.setAttribute("conduit_init_flow", conduit_init_flow)
-                feat.setAttribute("conduit_max_flow", conduit_max_flow)
-
-                feat.setAttribute("losses_inlet", conduit_losses_inlet)
-                feat.setAttribute("losses_outlet", conduit_losses_outlet)
-                feat.setAttribute("losses_average", conduit_losses_average)
-                feat.setAttribute("losses_flapgate", conduit_losses_flapgate)
-
-                feat.setAttribute("xsections_shape", conduit_xsections_shape)
-                feat.setAttribute("xsections_barrels", conduit_xsections_barrels)
-                feat.setAttribute("xsections_max_depth", conduit_xsections_max_depth)
-                feat.setAttribute("xsections_geom2", conduit_xsections_geom2)
-                feat.setAttribute("xsections_geom3", conduit_xsections_geom3)
-                feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
-
-                new_conduits.append(feat)
-                updated_conduits += 1
-
-            #                 else:
-            #                     existing_conduit = self.gutils.execute("SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (name,)).fetchone()
-            #                     if existing_conduit:
-            #                         self.gutils.execute(replace_user_swmm_conduits_sql, (conduit_inlet, conduit_outlet, conduit_length, conduit_manning,
-            #                                                                              conduit_inlet_offset, conduit_outlet_offset, conduit_init_flow, conduit_max_flow,
-            #                                                                              conduit_losses_inlet, conduit_losses_outlet, conduit_losses_average, conduit_losses_flapgate,
-            #                                                                              conduit_xsections_shape, conduit_xsections_barrels, conduit_xsections_max_depth,
-            #                                                                              conduit_xsections_geom2, conduit_xsections_geom3, conduit_xsections_geom4,
-            #                                                                              name))
-            #                         updated_conduits += 1
-
-            #             if complete_or_create == "Create New" and len(new_conduits) != 0:
-            if len(new_conduits) != 0:
-                remove_features(self.user_swmm_conduits_lyr)
-                self.user_swmm_conduits_lyr.startEditing()
-                self.user_swmm_conduits_lyr.addFeatures(new_conduits)
-                self.user_swmm_conduits_lyr.commitChanges()
-                self.user_swmm_conduits_lyr.updateExtents()
-                self.user_swmm_conduits_lyr.triggerRepaint()
-                self.user_swmm_conduits_lyr.removeSelection()
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+    
+                    if not pump_inlet in storm_drain.INP_nodes:
+                        pump_inlets_not_found += name + "\n"
+                        go_go = False
+                    if not pump_outlet in storm_drain.INP_nodes:
+                        pump_outlets_not_found += name + "\n"
+                        go_go = False
+    
+                    if not go_go:
+                        continue
+    
+                    x1 = float(storm_drain.INP_nodes[pump_inlet]["x"])
+                    y1 = float(storm_drain.INP_nodes[pump_inlet]["y"])
+                    x2 = float(storm_drain.INP_nodes[pump_outlet]["x"])
+                    y2 = float(storm_drain.INP_nodes[pump_outlet]["y"])
+    
+                    grid = self.gutils.grid_on_point(x1, y1)
+                    if grid is None:
+                        outside_pumps += name + "\n"
+                        continue
+    
+                    grid = self.gutils.grid_on_point(x2, y2)
+                    if grid is None:
+                        outside_pumps += name + "\n"
+                        continue
+    
+                    # NOTE: for now ALWAYS read all inlets   !!!:
+                    #                 if complete_or_create == "Create New":
+    
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    feat.setGeometry(geom)
+    
+                    feat.setAttribute("pump_name", name)
+                    feat.setAttribute("pump_inlet", pump_inlet)
+                    feat.setAttribute("pump_outlet", pump_outlet)
+                    feat.setAttribute("pump_curve", pump_curve)
+                    feat.setAttribute("pump_init_status", pump_init_status)
+                    feat.setAttribute("pump_startup_depth", pump_startup_depth) 
+                    feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth)                        
+    
+                    new_pumps.append(feat)
+                    updated_pumps += 1
+                    
+                if len(new_pumps) != 0:
+                    remove_features(self.user_swmm_pumps_lyr)
+                    self.user_swmm_pumps_lyr.startEditing()
+                    self.user_swmm_pumps_lyr.addFeatures(new_pumps)
+                    self.user_swmm_pumps_lyr.commitChanges()
+                    self.user_swmm_pumps_lyr.updateExtents()
+                    self.user_swmm_pumps_lyr.triggerRepaint()
+                    self.user_swmm_pumps_lyr.removeSelection()
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Pumps layer failed!", e)
 
         QApplication.restoreOverrideCursor()
 
@@ -1229,12 +1340,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             if conduit_inlets_not_found != "":
                 self.uc.show_warn(
-                    "WARNING 060319.1732: The following conduit inlets were not found!\n\n" + conduit_inlets_not_found
+                    "WARNING 060319.1732: The following conduits have no inlet defined!\n\n" + conduit_inlets_not_found
                 )
 
             if conduit_outlets_not_found != "":
                 self.uc.show_warn(
-                    "WARNING 060319.1733: The following conduit outlets were not found!\n\n" + conduit_outlets_not_found
+                    "WARNING 060319.1733: The following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
                 )
 
             if complete_or_create == "Create New":
@@ -1245,8 +1356,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
                     + "* "
                     + str(len(new_conduits))
-                    + " conduits in the 'Storm Drain Conduits' layer ('User Layers' group). \n\n"
-                    "Click the 'Inlets/Junctions', 'Outfalls', and 'Conduits' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                    + " conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
+                    + "* "
+                    + str(len(new_pumps))
+                    + " pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"                    
+                    "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
@@ -1260,8 +1374,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
                     + "* "
                     + str(updated_conduits)
-                    + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. \n\n"
-                    "Click the 'Inlets/Junctions', 'Outfalls', and 'Conduits' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                    + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n\n"
+                    + "* "
+                    + str(updated_pumps)
+                    + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"                    
+                    "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
@@ -1357,6 +1474,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 with open(swmm_file, "w") as swmm_inp_file:
                     no_in_out_conduits = 0
+                    no_in_out_pumps = 0
                     # TITLE ##################################################
                     items = self.select_this_INP_group(INP_groups, "title")
                     swmm_inp_file.write("[TITLE]")
@@ -1539,6 +1657,52 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 070618.1620: error while exporting [CONDUITS] to .INP file!", e)
                         return
 
+
+                    # PUMPS ###################################################
+
+                    try:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[PUMPS]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet            Pump            Init.     Startup  Shutup"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;Name           Node             Node              Curve           Status    Depth    Depth"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ---------------- --------- -------- -------"
+                        )
+
+                        SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
+                                            pump_startup_depth, pump_shutoff_depth 
+                                            FROM user_swmm_pumps ORDER BY fid;"""
+
+                        line = (
+                            "\n{0:16} {1:<16} {2:<16} {3:<10} {4:<10} {5:<10.2f} {6:<10.2f}"
+                        )
+                        pumps_rows = self.gutils.execute(SD_pumps_sql).fetchall()
+                        if not pumps_rows:
+                            pass
+                        else:
+                            for row in pumps_rows:
+                                row = (
+                                    row[0],
+                                    "?" if row[1] is None else row[1],
+                                    "?" if row[2] is None else row[2],
+                                    "*" if row[3] is None else row[3],
+                                    "OFF" if row[4] is None else row[4],
+                                    0 if row[5] is None else row[5],
+                                    0 if row[6] is None else row[6],
+                                )
+                                if row[1] == "?" or row[2] == "?":
+                                    no_in_out_pumps += 1
+                                swmm_inp_file.write(line.format(*row))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 271121.0515: error while exporting [PUMPS] to .INP file!", e)
+                        return
+
+
                     # XSECTIONS ###################################################
                     try:
                         swmm_inp_file.write("\n")
@@ -1620,6 +1784,34 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1622: error while exporting [LOSSES] to .INP file!", e)
+                        return
+
+                    # CURVES ###################################################
+                    try:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[CURVES]")
+                        swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
+                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
+
+                        SD_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
+                                          FROM swmm_pumps_curve_data ORDER BY fid;"""
+
+                        line = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
+                        curves_rows = self.gutils.execute(SD_curves_sql).fetchall()
+                        if not curves_rows:
+                            pass
+                        else:
+                            typ = ""
+                            for row in curves_rows:
+                                lrow = list(row)
+                                if lrow[1] == typ:
+                                    lrow[1]= "     "  
+                                else:
+                                    typ = lrow[1]
+                                swmm_inp_file.write(line.format(*lrow))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!", e)
                         return
 
                     # REPORT ##################################################
@@ -1820,7 +2012,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "SNOWPACKS",
                         "DIVIDERS",
                         "STORAGE",
-                        "PUMPS",
+                        # "PUMPS",
                         "ORIFICES",
                         "WEIRS",
                         "OUTLETS",
@@ -1834,7 +2026,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "DWF",
                         "RDII",
                         "LOADINGS",
-                        "CURVES",
+                        # "CURVES",
                     ]
 
                     for group in future_groups:
@@ -1862,6 +2054,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "\t[OUTFALLS]\n"
                     + str(len(conduits_rows))
                     + "\t[CONDUITS]\n"
+                    + str(len(pumps_rows))
+                    + "\t[PUMPS]\n"                    
                     + str(len(xsections_rows))
                     + "\t[XSECTIONS]\n"
                     + str(len(losses_rows))
@@ -1882,6 +2076,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         + " conduits have no inlet and/or outlet! The value '?' was assigned to them.\n"
                         + "Please review them because it will cause errors during their processing.\n"
                     )
+                if no_in_out_pumps != 0:
+                    self.uc.show_warn(
+                        "WARNING 271121.0516: "
+                        + str(no_in_out_pumps)
+                        + " pumps have no inlet and/or outlet! The value '?' was assigned to them.\n"
+                        + "Please review them because it will cause errors during their processing.\n"
+                    )                    
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 
@@ -1927,7 +2128,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Shows inlets dialog.
 
         """
-        # See if table is empy:
+        # See if table is empty:
         if self.gutils.is_table_empty("user_swmm_nodes"):
             self.uc.show_warn(
                 'User Layer "Storm Drain Nodes" is empty!\n\n'
@@ -1961,7 +2162,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
 
         self.lyrs.clear_rubber()
-        
+
     def show_conduits(self):
         """
         Shows conduits dialog.
@@ -1991,6 +2192,36 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
             
         self.lyrs.clear_rubber()
+
+    def show_pumps(self):
+        """
+        Shows pumps dialog.
+
+        """
+        # See if there are pumps:
+        if self.gutils.is_table_empty("user_swmm_pumps"):
+            self.uc.show_warn(
+                'User Layer "Storm Drain Pumps" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            return
+
+        dlg_pumps = PumpsDialog(self.iface, self.lyrs)
+        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        save = dlg_pumps.exec_()
+        if save:
+            try:
+                dlg_pumps.save_pumps()
+                self.uc.bar_info(
+                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
+                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+                )
+            except Exception as e:
+                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
+                return
+            
+        self.lyrs.clear_rubber() 
 
     def auto_assign_conduits_nodes(self):
         """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""

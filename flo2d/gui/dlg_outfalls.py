@@ -301,12 +301,6 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 else:
                     itemTxt = "NORMAL"
                     index = self.outfall_type_cbo.findText(itemTxt)
-                #                     if itemTxt == "":
-                #                         index = 0
-                #                     else:
-                #                         if not itemTxt in ('FIXED', 'FREE', 'NORMAL', 'TIDAL CURVE', 'TIME SERIES'):
-                #                             itemTxt = "NORMAL"
-                #                         index = map(int, itemTxt)
                 index = 4 if index > 4 else 0 if index < 0 else index
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()

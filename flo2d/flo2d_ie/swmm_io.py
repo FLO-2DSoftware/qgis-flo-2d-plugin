@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from collections import OrderedDict
-from itertools import zip_longest
+from itertools import zip_longest, chain
 from qgis.PyQt.QtWidgets import QApplication
 from ..user_communication import UserCommunication
 
@@ -23,6 +23,8 @@ class StormDrainProject(object):
         # ordered as entered.
         self.INP_nodes = {}
         self.INP_conduits = {}
+        self.INP_pumps = {}
+        self.INP_curves = []
         self.INP_inflows = {}
         self.INP_patterns = []
         self.INP_timeseries = []
@@ -375,7 +377,7 @@ class StormDrainProject(object):
             return len(coord_list)
 
         except Exception as e:
-            self.uc.bar_warn("Reading coordinates from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 221121.1017: Reading coordinates from SWMM input data failed!")
             return 0
 
     def create_INP_conduits_dictionary_with_conduits(self):
@@ -399,7 +401,61 @@ class StormDrainProject(object):
                 conduit = conduit_dict.pop("conduit_name")
                 self.INP_conduits[conduit] = conduit_dict
         except Exception as e:
-            self.uc.bar_warn("Reading conduits from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
+
+
+    def create_INP_pumps_dictionary_with_pumps(self):
+        try:
+            pumps_cols = [
+                "pump_name",
+                "pump_inlet",
+                "pump_outlet",
+                "pump_curve",
+                "pump_init_status", 
+                "pump_startup_depth", 
+                "pump_shutoff_depth", 
+            ]
+            
+            pumps = self.select_this_INP_group("pumps")
+            if pumps:
+                for p in pumps:
+                    if not p or p[0] in self.ignore:
+                        continue
+                    pump_dict = dict(zip_longest(pumps_cols, p.split()))
+                    pump = pump_dict.pop("pump_name")
+                    self.INP_pumps[pump] = pump_dict
+        except Exception as e:
+            self.uc.bar_warn("WARNING 221121.1019: Reading pumps from SWMM input data failed!")
+
+    def create_INP_curves_dictionary_with_curves(self):
+        try:
+            curves_cols = [
+                "pump_curve_name",
+                "pump_curve_type",
+                "x_value",
+                "y_value", 
+            ]
+            
+            curves = self.select_this_INP_group("curves")
+            if curves:
+                for c in curves:
+                    if not c or c[0] in self.ignore:
+                        continue
+                    curve_list = list(zip_longest(curves_cols, c.split()))
+                    curve_dict = dict(zip_longest(curves_cols, c.split()))
+                    curve_name = curve_dict.pop("pump_curve_name")
+                    if curve_name in self.INP_curves:
+                        # self.INP_curves[key] |= curve_dict
+                        # self.INP_curves[curve_name] = self.INP_curves[curve_name].append(curve_list)
+                        next = dict()
+                        next[curve_list[0][1]] = curve_list[1:]
+                        a_dict = dict(chain(self.INP_curves.items(), next.items()))
+                        self.INP_curves = a_dict
+                    else:
+                        self.INP_curves[curve_name] =  curve_dict                   
+
+        except Exception as e:
+            self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)
 
     def add_LOSSES_to_INP_conduits_dictionary(self):
         try:
@@ -558,7 +614,7 @@ class StormDrainProject(object):
                     inflow = inflow_dict.pop("node_name")
                     self.INP_inflows[inflow] = inflow_dict
         except Exception as e:
-            self.uc.bar_warn("Reading inflows from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 221121.1021: Reading inflows from SWMM input data failed!")
 
     def create_INP_patterns_list_with_patterns(self):
         try:
@@ -581,7 +637,7 @@ class StormDrainProject(object):
                     pattern_list.insert(0, ["description", descr])
                     self.INP_patterns.append(pattern_list)
         except Exception as e:
-            self.uc.bar_warn("Reading patterns from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 221121.1020: Reading patterns from SWMM input data failed!")
 
     def create_INP_time_series_list_with_time_series(self):
         try:
@@ -605,4 +661,26 @@ class StormDrainProject(object):
                     time_list.insert(0, ["description", descr])
                     self.INP_timeseries.append(time_list)
         except Exception as e:
-            self.uc.bar_warn("Reading time series from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
+
+    def create_INP_curves_list_with_curves(self):
+        try:
+            prev_type = ""
+            curves = self.select_this_INP_group("curves")
+            if curves:
+                for c in curves:
+                    if not c or c[0] in self.ignore:
+                        continue
+                    items = c.split()
+                    if len(items) == 4:
+                        prev_type = items[1]
+                        self.INP_curves.append(items)    
+                    elif len(items) == 3:
+                        items.insert(1, prev_type)
+                        self.INP_curves.append(items)    
+                    else:
+                        self.uc.bar_warn("WARNING 251121.0538: Reading pumps curves from SWMM input data failed!")    
+                               
+            pass
+        except Exception as e:
+            self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)

@@ -42,10 +42,6 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.conduits_buttonBox.accepted.connect(self.save_conduits)
 
         # Connections from individual controls to particular cell in conduits_tblw table widget:
-        # self.from_inlet_txt.textChanged.connect(self.from_inlet_txt_textChanged)
-        # self.to_inlet_txt.textChanged.connect(self.to_inlet_txt_txtChanged)
-        # self.inlet_inv_dbox.valueChanged.connect(self.inlet_inv_dbox_valueChanged)
-        # self.outlet_inv_dbox.valueChanged.connect(self.outlet_inv_dbox_valueChanged)
         self.inlet_offset_dbox.valueChanged.connect(self.inlet_offset_dbox_valueChanged)
         self.outlet_offset_dbox.valueChanged.connect(self.outlet_offset_dbox_valueChanged)
 

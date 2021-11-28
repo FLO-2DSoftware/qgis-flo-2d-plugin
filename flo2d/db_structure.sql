@@ -1652,6 +1652,30 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_con
 SELECT gpkgAddGeometryColumn('user_swmm_conduits', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
 
+CREATE TABLE "user_swmm_pumps" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+--VARIABLES FROM .INP [PUMPS]:
+    "pump_name" TEXT,
+    "pump_inlet" TEXT,
+    "pump_outlet" TEXT,
+    "pump_curve" TEXT,
+    "pump_init_status" Text DEFAULT 'False',   
+    "pump_startup_depth" REAL DEFAULT 0.0,  
+    "pump_shutoff_depth" REAL DEFAULT 0.0
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_pumps', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_pumps', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_pumps', 'geom');
+
+CREATE TABLE "swmm_pumps_curve_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "pump_curve_name" TEXT, 
+    "pump_curve_type" TEXT,
+    "description" TEXT,
+    "x_value" REAL DEFAULT 0.0,
+    "y_value" REAL DEFAULT 0.0
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_pumps_curve_data', 'aspatial');
 
 -- SWMMFLO.DAT
 
