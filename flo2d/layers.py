@@ -265,6 +265,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_swmm_pumps",
+                    {
+                        "name": "Storm Drain Pumps",
+                        "sgroup": "User Layers",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),                
+                (
                     "user_swmm_nodes",
                     {
                         "name": "Storm Drain Nodes",
@@ -590,6 +601,16 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "swmm_pumps_curve_data",
+                    {
+                        "name": "Storm Drain Pumps Curve",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
                 # Infiltration Layers
                 (
                     "infil_areas_green",

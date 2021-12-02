@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.38
+version=0.10.39
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.39
+  - Storm Drain pumps functionality: layers, dialog, import/export .INP files.
  <p>0.10.38
   - Individual conduits dialog: find, zoom-in, zoom-out functions.
   - Individual outfalls dialog: find, zoom-in, zoom-out functions.
