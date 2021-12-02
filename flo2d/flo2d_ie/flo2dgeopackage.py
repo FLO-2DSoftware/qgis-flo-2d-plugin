@@ -1290,7 +1290,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if previous_iid != iid:
                             row = self.execute(inflow_sql, (iid,)).fetchone()
                             if row:
-                                row = [x if x is not None and x is not "" else 0 for x in row]
+                                row = [x if x is not None and x != "" else 0 for x in row]
                                 previous_oid = iid
                             else:
                                 warning += (
@@ -1410,7 +1410,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if previous_oid != oid:
                         row = self.execute(outflow_sql, (oid,)).fetchone()
                         if row is not None:
-                            row = [x if x is not None and x is not "" else 0 for x in row]
+                            row = [x if x is not None and x != "" else 0 for x in row]
                             previous_oid = oid
                         else:
                             warning += "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
@@ -1458,7 +1458,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Write lines 'O cell_id":            
                 if border is not None:
                     for b in border:
-                       o.write(o_line.format("O", b)) 
+                        o.write(o_line.format("O", b)) 
                 
             QApplication.restoreOverrideCursor()
             if warning != "":
