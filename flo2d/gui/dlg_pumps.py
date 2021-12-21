@@ -205,6 +205,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
             self.startup_depth_dbox.setValue(float(self.pumps_tblw.item(row, 5).text()))
             self.shutoff_depth_dbox.setValue(float(self.pumps_tblw.item(row, 6).text()))
             
+            self.highlight_pump(self.pump_name_cbo.currentText()) 
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 261121.0707: assignment of value failed!.\n", e)
