@@ -1831,6 +1831,27 @@ class Flo2D(object):
                 print ("in clear loop")
                 dletes = "Cell - Direction\n---------------\n"
                 levees = self.lyrs.data["levee_data"]["qlyr"]
+
+                # delete duplicate elements with the same direction and elevation too
+                qryIndex = "CREATE INDEX if not exists levee_dataFIDGRIDFIDLDIRLEVCEST  ON levee_data (fid, grid_fid, ldir, levcrest);"
+                self.gutils.con.execute(qryIndex)
+                self.gutils.con.commit()
+
+                levees_dup_qry = "SELECT min(fid), grid_fid, ldir, levcrest FROM levee_data GROUP BY grid_fid, ldir, levcrest HAVING COUNT(ldir) > 1 and count(levcrest) > 1 ORDER BY grid_fid"
+                leveeDups = self.gutils.execute(levees_dup_qry).fetchall()  # min FID, grid fid, ldir, min levcrest
+                # grab the values
+                print("Found {valer} levee elements with duplicated grid, ldir, and elev; deleting the duplicates;".format(valer=len(leveeDups)))
+                del_dup_data = ((item[1], item[2], item[3], item[0]) for item in leveeDups)  # grid fid, ldir, crest elev, fid
+
+                # delete any duplicates in directions that aren't the min elevation
+                levees_dup_delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? and ldir = ? and levcrest = ? and fid <> ?;"
+                self.gutils.con.executemany(levees_dup_delete_qry, (del_dup_data))
+                self.gutils.con.commit()
+
+                qryIndexDrop = "DROP INDEX if exists levee_dataFIDGRIDFIDLDIRLEVCEST;"
+                self.gutils.con.execute(qryIndex)
+                self.gutils.con.commit()
+
                 leveesToDelete = delete_levee_directions_duplicates_np(self.gutils, levees, cellIDNumpyArray) # pass grid layer if it exists
                 #leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
                 if len(leveesToDelete) > 0:

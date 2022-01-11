@@ -11,7 +11,7 @@ create one and import the project using this process.
 
 
 Before performing this task, set up a GeoPackage using `FLO-2D Plugin
-Settings <Flo-2D%20Settings.html>`__.
+Settings <toolbar/FLO-2D%20Settings.html>`__.
 
 1. To import a FLO-2D data
    files into a GeoPackage:
