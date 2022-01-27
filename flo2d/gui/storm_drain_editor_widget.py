@@ -1242,6 +1242,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
 
         # Create Pumps layer:
+        new_pumps = []
+        updated_pumps = 0
+        pump_inlets_not_found = ""
+        pump_outlets_not_found = ""  
+               
         if storm_drain.INP_pumps:
             try:
                 """
@@ -1253,10 +1258,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 """
     
                 fields = self.user_swmm_pumps_lyr.fields()
-                new_pumps = []
-                updated_pumps = 0
-                pump_inlets_not_found = ""
-                pump_outlets_not_found = ""
     
                 for name, values in list(storm_drain.INP_pumps.items()):
     
