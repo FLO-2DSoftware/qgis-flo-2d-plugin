@@ -1,8 +1,8 @@
 QGIS Tools
 ============
 
-QGIS Settings
--------------
+QGIS CRS Settings
+-----------------
 
 Setting up QGIS before starting a project. One startup setting makes
 adding layers and importing files easier. Set up the coordinate reference system (CRS) of imported
@@ -16,6 +16,23 @@ layers. Click Settings/Options
    example.
 
 .. image:: ../img/QGIS-General-Tools/qgisgeneraltools2.png
+
+
+QGIS Browser Setting
+--------------------
+
+If QGIS freezes when opened, there is a potential fix in the qgis.ini file.  This simple fix will stop QGIS from trying
+to read locked drives.
+
+The file is found here: C:\\Users\\ACCT NAME\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\default\\QGIS
+
+1. Open the file from the QGIS profile path.
+
+.. image:: ../img/QGIS-General-Tools/qgisbrowsersettings1.png
+
+2. Correct the file by adding the lines to qgis.ini file in any text editor as shown in the following image:
+
+.. image:: ../img/QGIS-General-Tools/qgisbrowsersettings.png
 
 
 Save Project
