@@ -759,7 +759,10 @@ class Flo2D(object):
                     self.files_not_used += dat + "\n"
                     continue
                 else:
-                    if os.path.getsize(os.path.join(last_dir, dat)) > 0:
+                    if dat == "MULT.DAT":
+                        self.files_used += dat + "\n"
+                        pass                    
+                    elif os.path.getsize(os.path.join(last_dir, dat)) > 0:
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
@@ -778,6 +781,8 @@ class Flo2D(object):
                             self.files_used += "CHANBANK.DAT" + "\n"
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
+                        if dat == "MULT.DAT":
+                            self.files_used += "SIMPLE_MULT.DAT" + "\n"                        
                         pass
 
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
@@ -1183,7 +1188,7 @@ class Flo2D(object):
             "import_swmmoutf",
             "import_wsurf",
             "import_wstime",
-        ]
+        ]      
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         fname, __ = QFileDialog.getOpenFileName(

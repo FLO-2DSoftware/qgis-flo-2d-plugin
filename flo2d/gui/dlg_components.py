@@ -96,6 +96,11 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.multiple_channels_chbox.setChecked(True)
                     self.multiple_channels_chbox.setEnabled(True)
 
+            if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+                if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
+                    self.multiple_channels_chbox.setChecked(True)
+                    self.multiple_channels_chbox.setEnabled(True)
+                    
             if os.path.isfile(last_dir + r"\BREACH.DAT"):
                 if os.path.getsize(last_dir + r"\BREACH.DAT") > 0:
                     self.breach_chbox.setChecked(True)
@@ -216,10 +221,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.levees_chbox.setChecked(True)
                 self.levees_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("mult"):
+            if not self.gutils.is_table_empty("mult") or self.gutils.is_table_empty("mult_cells") or not self.gutils.is_table_empty("simple_mult_cells"):
                 self.multiple_channels_chbox.setChecked(True)
                 self.multiple_channels_chbox.setEnabled(True)
-
+                
             if not self.gutils.is_table_empty("breach"):
                 self.breach_chbox.setChecked(True)
                 self.breach_chbox.setEnabled(True)

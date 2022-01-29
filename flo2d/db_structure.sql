@@ -1331,10 +1331,10 @@ CREATE TABLE "mult" (
     "xnmultall" REAL DEFAULT 0.0, -- XNMULTALL, global assignment of the multiple channel n-values
     "sslopemin" REAL DEFAULT 0.0, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
     "sslopemax" REAL DEFAULT 0.0, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
-    "avuld50" REAL DEFAULT 0.0 -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
+    "avuld50" REAL DEFAULT 0.0, -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
+    "simple_n" REAL DEFAULT 0.0 -- n_Manning for simplified multiple channels
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
-
 
 CREATE TABLE "mult_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1372,12 +1372,7 @@ SELECT gpkgAddGeometryColumn('mult_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_lines', 'geom');
 -- SELECT gpkgAddSpatialIndex('mult_lines', 'geom');
 
-
-
-
 -----------------------------
-
-
 
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_insert', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
@@ -1443,6 +1438,54 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_delete"
     END;
 
 -----------------------------------------------------
+
+-- SIMPLE_MULT.DAT
+
+CREATE TABLE "simple_mult_lines" (
+    "fid" INTEGER NOT NULL PRIMARY KEY
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('simple_mult_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('simple_mult_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('simple_mult_lines', 'geom');
+-- SELECT gpkgAddSpatialIndex('simple_mult_lines', 'geom');
+
+CREATE TABLE "simple_mult_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- equal to fid from grid table
+    "line_fid" INTEGER -- fid of area from mult_line table    
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('simple_mult_cells', 'aspatial');
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_simple_mult_line_insert', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_simple_mult_line_insert"
+    AFTER INSERT ON "simple_mult_lines"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_simple_mult_line_insert') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "simple_mult_cells" WHERE line_fid = NEW."fid";
+        INSERT INTO "simple_mult_cells" (line_fid, grid_fid)
+            SELECT NEW.fid, g.fid FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_simple_mult_line_update', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_mult_line_update"
+    AFTER UPDATE ON "simple_mult_lines"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_simple_mult_line_update') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "simple_mult_cells" WHERE line_fid = NEW."fid";
+        INSERT INTO "simple_mult_cells" (line_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_simple_mult_line_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_simple_mult_line_delete"
+    AFTER DELETE ON "simple_mult_lines"
+    BEGIN
+        DELETE FROM "simple_mult_cells" WHERE line_fid = OLD."fid";
+    END;
 
 -- LEVEE.DAT
 

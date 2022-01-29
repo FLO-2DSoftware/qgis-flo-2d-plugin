@@ -378,6 +378,17 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "simple_mult_lines",
+                    {
+                        "name": "Simple Mult. Channel Lines",
+                        "sgroup": "User Layers",
+                        "styles": ["mult_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
+                    },
+                ),                
                 # Schematic layers:
                 (
                     "chan",
@@ -1375,6 +1386,17 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "simple_mult_cells",
+                    {
+                        "name": "Simple Mult. Chann. Cells (simple_mult_cells)",
+                        "sgroup": "Multiple Channels Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                    },
+                ),                
                 # Multiple Structures Tables:
                 (
                     "struct",

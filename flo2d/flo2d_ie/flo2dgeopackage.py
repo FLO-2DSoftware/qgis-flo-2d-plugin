@@ -714,53 +714,76 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_mult(self):
-        mult_sql = [
-            """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                         xnmultall, sslopemin, sslopemax, avuld50) VALUES""",
-            8,
-        ]
-        mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
-        cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
+        # Import Multiple Channels (not simplified mult. channels):
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
 
-        self.clear_tables("mult", "mult_areas", "mult_cells")
-        head, data = self.parser.parse_mult()
-        mult_sql += [tuple(head)]
-        gids = (x[0] for x in data)
-        cells = self.grid_centroids(gids)
-        for i, row in enumerate(data, 1):
-            gid = row[0]
-            geom = self.build_square(cells[gid], self.shrink)
-            mult_area_sql += [(geom,) + tuple(row[1:])]
-            cells_sql += [
-                (
-                    i,
-                    gid,
-                )
-                + tuple(row[1:])
-            ]
-        self.gutils.disable_geom_triggers()
-        self.batch_execute(mult_sql, mult_area_sql, cells_sql)
-        self.gutils.enable_geom_triggers()
-        pass
+        try:
+            if os.path.isfile(last_dir + r"\MULT.DAT"):
+                if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
+                    mult_sql = [
+                        """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                                     xnmultall, sslopemin, sslopemax, avuld50) VALUES""",
+                        8,
+                    ]
+                    mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
+                    mult_cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
+            
+                    self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
+                    head, data = self.parser.parse_mult()
+                    mult_sql += [tuple(head)]
+                    gids = (x[0] for x in data)
+                    cells = self.grid_centroids(gids)
+                    for i, row in enumerate(data, 1):
+                        gid = row[0]
+                        geom = self.build_square(cells[gid], self.shrink)
+                        mult_area_sql += [(geom,) + tuple(row[1:])]
+                        mult_cells_sql += [
+                            (
+                                i,
+                                gid,
+                            )
+                            + tuple(row[1:])
+                        ]
+                    self.gutils.disable_geom_triggers()
+                    self.batch_execute(mult_sql, mult_area_sql, mult_cells_sql)
+                    self.gutils.enable_geom_triggers()
+            
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 280122.1920.: couldn't import MULT.DAT file!"
+                + "\n__________________________________________________",
+                e,
+            )
 
-    #         mult_sql = ['''INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-    #                                          xnmultall, sslopemin, sslopemax, avuld50) VALUES''', 8]
-    #         mult_area_sql = ['''INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES''', 5]
-    #         cells_sql = ['''INSERT INTO mult_cells (area_fid, grid_fid) VALUES''', 2]
-    #
-    #         self.clear_tables('mult', 'mult_areas', 'mult_cells')
-    #         head, data = self.parser.parse_mult()
-    #         mult_sql += [tuple(head)]
-    #         gids = (x[0] for x in data)
-    #         cells = self.grid_centroids(gids)
-    #         for i, row in enumerate(data, 1):
-    #             gid = row[0]
-    #             geom = self.build_square(cells[gid], self.shrink)
-    #             mult_area_sql += [(geom,) + tuple(row[1:])]
-    #             cells_sql += [(i, gid)]
-    #
-    #         self.batch_execute(mult_sql, mult_area_sql) # No need to include cells_sql, a trigger does the job.
-
+        # Import Simplified Multiple Channels:
+        try:
+            if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+                if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
+                    simple_mult_sql = """UPDATE mult SET simple_n = ?; """
+                    simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
+            
+                    self.clear_tables("simple_mult_lines", "simple_mult_cells")
+                    head, data = self.parser.parse_simple_mult()
+                    gids = (x[0] for x in data)
+                    cells = self.grid_centroids(gids)
+                    for row in data:
+                        gid = row[0]
+                        geom = self.build_square(cells[gid], self.shrink)
+                        simple_mult_cells_sql += [ (gid,) + tuple(row[1:]) ]
+                    self.gutils.disable_geom_triggers()
+                    self.gutils.execute(simple_mult_sql, (head))
+                    self.batch_execute(simple_mult_cells_sql)
+                    self.gutils.enable_geom_triggers()
+            
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 280122.1938.: couldn't import SIMPLE_MULT.DAT file!"
+                + "\n__________________________________________________",
+                e,
+            )            
+            
+            
     def import_sed(self):
 
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
@@ -2022,8 +2045,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # check if there is any multiple channel defined.
         try:
             if self.is_table_empty("mult"):
-                return False
+                if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
+                    return False
+                else:
+                    self.gutils.execute("""INSERT INTO mult DEFAULT VALUES;""")                   
+ 
             mult_sql = """SELECT * FROM mult;"""
+            
+            # Multiple Channels (not simplified):
             mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid;"""
             line1 = " {}" * 8 + "\n"
             line2 = " {}" * 5 + "\n"
@@ -2040,11 +2069,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     vals = [x if x is not None else "" for x in row]
                     m.write(line2.format(*vals))
 
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
+            return False
+        
+        try:
+            # Simplified Multiple Channels:
+            simple_mult_cell_sql = """SELECT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+            line1 = "{}" + "\n"
+            line2 = "{}" + "\n"
+
+            isany = self.execute(simple_mult_cell_sql).fetchone()
+            if isany:
+                simple_mult = os.path.join(outdir, "SIMPLE_MULT.DAT")
+                with open(simple_mult, "w") as sm:
+                    sm.write(line1.format(head[9]))
+                    for row in self.execute(simple_mult_cell_sql):
+                        vals = [x if x is not None else "" for x in row]
+                        sm.write(line2.format(*vals))
+            else:
+                s = QSettings()
+                last_dir = s.value("FLO-2D/lastGdsDir", "")                
+                if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+                    os.remove(last_dir + r"\SIMPLE_MULT.DAT")
+                    
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
             return False
 
     def export_tolspatial(self, outdir):

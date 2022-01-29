@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>696</width>
-    <height>656</height>
+    <width>844</width>
+    <height>666</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -950,22 +950,6 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="IMULTC">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="toolTip">
-                  <string>IMULTC</string>
-                 </property>
-                 <property name="text">
-                  <string>MC</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
                 <widget class="QCheckBox" name="MSTREET">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1000,7 +984,7 @@
               </layout>
              </item>
              <item row="1" column="0">
-              <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
                 <widget class="QCheckBox" name="LEVEE">
                  <property name="sizePolicy">
@@ -1018,58 +1002,20 @@
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout">
-                 <item>
-                  <widget class="QLabel" name="label">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Multipe Channels (Rills and Guillies)</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QComboBox" name="IMULTC_cbo">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>100</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>100</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>Multiple Channels</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Simplified Mult. Chan.</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>None</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                </layout>
+                <widget class="QCheckBox" name="IMULTC">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>IMULTC</string>
+                 </property>
+                 <property name="text">
+                  <string>Multiple Channels (Rills and Guillies)</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>

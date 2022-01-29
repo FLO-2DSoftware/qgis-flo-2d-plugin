@@ -41,6 +41,7 @@ class ParseDAT(object):
             "STREET.DAT": None,
             "ARF.DAT": None,
             "MULT.DAT": None,
+            "SIMPLE_MULT.DAT": None,
             "SED.DAT": None,
             "LEVEE.DAT": None,
             "FPXSEC.DAT": None,
@@ -223,27 +224,6 @@ class ParseDAT(object):
                 gid = row[1]
                 res[gid] = OrderedDict([("row", row)])
         return head, inf, res
-
-    #         inflow = self.dat_files['INFLOW.DAT']
-    #         par = self.single_parser(inflow)
-    #         head = dict(list(zip(['IHOURDAILY', 'IDEPLT'], next(par))))
-    #         inf = OrderedDict()
-    #         res = OrderedDict()
-    #         gid = None
-    #         for row in par:
-    #             char = row[0]
-    #             if char == 'C' or char == 'F':
-    #                 gid = row[-1]
-    #                 inf[gid] = OrderedDict([('row', row), ('time_series', [])])
-    #             elif char == 'H':
-    #                 self.fix_row_size(row, 4)
-    #                 inf[gid]['time_series'].append(row)
-    #             elif char == 'R':
-    #                 gid = row[1]
-    #                 res[gid] = OrderedDict([('row', row)])
-    #             else:
-    #                 pass
-    #         return head, inf, res
 
     def parse_outflow(self):
         outflow = self.dat_files["OUTFLOW.DAT"]
@@ -528,6 +508,17 @@ class ParseDAT(object):
             data.append(row)
         return head, data
 
+    def parse_simple_mult(self):
+        simple_mult = self.dat_files["SIMPLE_MULT.DAT"]
+        par = self.single_parser(simple_mult)
+        head = next(par)
+        self.fix_row_size(head, 1)
+        data = []
+        for row in par:
+            self.fix_row_size(row, 1)
+            data.append(row)
+        return head, data
+    
     def parse_sed(self):
         sed = self.dat_files["SED.DAT"]
         par = self.single_parser(sed)

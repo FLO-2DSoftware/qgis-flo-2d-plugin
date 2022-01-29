@@ -127,9 +127,9 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     _sed = True if db_val == 1 else False
                     continue
 
-                if key == "IMULTC":
-                    self.IMULTC_cbo.setCurrentIndex(db_val)
-                    continue
+                # if key == "IMULTC":
+                #     self.IMULTC_cbo.setCurrentIndex(db_val)
+                #     continue
 
                 widget = getattr(self, key)
                 if isinstance(widget, QCheckBox):
@@ -180,8 +180,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     val = _mud
                 elif key == "ISED":
                     val = _sed
-                elif key == "IMULTC":
-                    val = self.IMULTC_cbo.currentIndex()
+                # elif key == "IMULTC":
+                #     val = self.IMULTC_cbo.currentIndex()
                 else:
                     widget = getattr(self, key)
                     if isinstance(widget, QCheckBox):
