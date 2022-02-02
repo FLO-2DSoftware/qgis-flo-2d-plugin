@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>422</width>
-    <height>304</height>
+    <height>376</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>FLO-2D Widget</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_4">
+  <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
     <widget class="QGroupBox" name="muiltiple_channels_global_grp">
      <property name="sizePolicy">
@@ -490,7 +490,59 @@
           </item>
          </layout>
         </item>
-        <item>
+       </layout>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="individual_multiple_channels_data_btn">
+        <property name="text">
+         <string>Multiple Channels Cells</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>37</width>
+          <height>17</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>68</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="simplifie_MC_grp">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string>Simplified Mult. Channels</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
            <widget class="QLabel" name="label">
@@ -507,52 +559,45 @@
           </item>
          </layout>
         </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="simplified_mult_channel_cells_btn">
+            <property name="text">
+             <string>Simplified Mult. Cells</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
        </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="0">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>37</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="1">
-      <widget class="QPushButton" name="individual_multiple_channels_data_btn">
-       <property name="text">
-        <string>Multiple Channels Cells</string>
-       </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <spacer name="horizontalSpacer_2">
+     <item>
+      <spacer name="horizontalSpacer_4">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>40</width>
+         <width>68</width>
          <height>20</height>
         </size>
        </property>
       </spacer>
-     </item>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="simplified_mult_channel_cells_btn">
-       <property name="text">
-        <string>Simplified Mult. Cells</string>
-       </property>
-      </widget>
      </item>
     </layout>
    </item>
