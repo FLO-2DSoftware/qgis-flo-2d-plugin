@@ -1325,14 +1325,14 @@ INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, 
 CREATE TABLE "mult" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "wmc" REAL DEFAULT 0.0, -- WMC, incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded
-    "wdrall" REAL DEFAULT 0.0, -- WDRALL, global assignment of the multiple channel width
-    "dmall" REAL DEFAULT 0.0, -- DMALL, global assignment of the maximum depth
-    "nodchansall" INTEGER DEFAULT 0, -- NODCHNSALL, global assignment of the number of multiple channels
-    "xnmultall" REAL DEFAULT 0.0, -- XNMULTALL, global assignment of the multiple channel n-values
+    "wdrall" REAL DEFAULT 3.0, -- WDRALL, global assignment of the multiple channel width
+    "dmall" REAL DEFAULT 1.0, -- DMALL, global assignment of the maximum depth
+    "nodchansall" INTEGER DEFAULT 1, -- NODCHNSALL, global assignment of the number of multiple channels
+    "xnmultall" REAL DEFAULT 0.04, -- XNMULTALL, global assignment of the multiple channel n-values
     "sslopemin" REAL DEFAULT 0.0, -- SSLOPEMIN, minimum slope that multiple channel assignments will be made
     "sslopemax" REAL DEFAULT 0.0, -- SSLOPEMAX, maximum slope that multiple channel assignments will be made
     "avuld50" REAL DEFAULT 0.0, -- AVULD50, D50 sediment size that initiates the potential for channel avulsion
-    "simple_n" REAL DEFAULT 0.0 -- n_Manning for simplified multiple channels
+    "simple_n" REAL DEFAULT 0.04 -- n_Manning for simplified multiple channels
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult', 'aspatial');
 

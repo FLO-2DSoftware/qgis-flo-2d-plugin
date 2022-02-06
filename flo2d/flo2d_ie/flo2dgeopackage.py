@@ -715,39 +715,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_mult(self):
         # Import Multiple Channels (not simplified mult. channels):
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # s = QSettings()
+        # last_dir = s.value("FLO-2D/lastGdsDir", "")
 
         try:
-            if os.path.isfile(last_dir + r"\MULT.DAT"):
-                if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
-                    mult_sql = [
-                        """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                                     xnmultall, sslopemin, sslopemax, avuld50) VALUES""",
-                        8,
-                    ]
-                    mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
-                    mult_cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
+            # if os.path.isfile(last_dir + r"\MULT.DAT"):
+            #     if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
             
-                    self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
-                    head, data = self.parser.parse_mult()
-                    mult_sql += [tuple(head)]
-                    gids = (x[0] for x in data)
-                    cells = self.grid_centroids(gids)
-                    for i, row in enumerate(data, 1):
-                        gid = row[0]
-                        geom = self.build_square(cells[gid], self.shrink)
-                        mult_area_sql += [(geom,) + tuple(row[1:])]
-                        mult_cells_sql += [
-                            (
-                                i,
-                                gid,
-                            )
-                            + tuple(row[1:])
-                        ]
-                    self.gutils.disable_geom_triggers()
-                    self.batch_execute(mult_sql, mult_area_sql, mult_cells_sql)
-                    self.gutils.enable_geom_triggers()
+            self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
+            head, data = self.parser.parse_mult()
+            if head:
+                mult_sql = [
+                    """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+                mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
+                mult_cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
+                head.append("0.04")
+                mult_sql += [tuple(head)]
+                gids = (x[0] for x in data)
+                cells = self.grid_centroids(gids)
+                for i, row in enumerate(data, 1):
+                    gid = row[0]
+                    geom = self.build_square(cells[gid], self.shrink)
+                    mult_area_sql += [(geom,) + tuple(row[1:])]
+                    mult_cells_sql += [
+                        (
+                            i,
+                            gid,
+                        )
+                        + tuple(row[1:])
+                    ]
+                self.gutils.disable_geom_triggers()
+                self.batch_execute(mult_sql, mult_area_sql, mult_cells_sql)
+                self.gutils.enable_geom_triggers()
             
         except Exception as e:
             self.uc.show_error(
@@ -758,23 +758,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         # Import Simplified Multiple Channels:
         try:
-            if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-                if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
-                    simple_mult_sql = """UPDATE mult SET simple_n = ?; """
-                    simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
+            # if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+            #     if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
             
-                    self.clear_tables("simple_mult_lines", "simple_mult_cells")
-                    head, data = self.parser.parse_simple_mult()
-                    gids = (x[0] for x in data)
-                    cells = self.grid_centroids(gids)
-                    for row in data:
-                        gid = row[0]
-                        geom = self.build_square(cells[gid], self.shrink)
-                        simple_mult_cells_sql += [ (gid,) + tuple(row[1:]) ]
-                    self.gutils.disable_geom_triggers()
-                    self.gutils.execute(simple_mult_sql, (head))
-                    self.batch_execute(simple_mult_cells_sql)
-                    self.gutils.enable_geom_triggers()
+            self.clear_tables("simple_mult_lines", "simple_mult_cells")
+            head, data = self.parser.parse_simple_mult()
+            if head:
+                if self.is_table_empty("mult"):
+                    self.gutils.execute("""INSERT INTO mult DEFAULT VALUES;""")    
+                # simple_mult_sql = """INSERT INTO mult (simple_n ) VALUES (?)"""
+                simple_mult_sql = """UPDATE mult SET simple_n = ?; """
+                simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
+                gids = (x[0] for x in data)
+                cells = self.grid_centroids(gids)
+                for row in data:
+                    gid = row[0]
+                    geom = self.build_square(cells[gid], self.shrink)
+                    simple_mult_cells_sql += [ (gid,) + tuple(row[1:]) ]
+                self.gutils.disable_geom_triggers()
+                self.gutils.execute(simple_mult_sql, (head))
+                self.batch_execute(simple_mult_cells_sql)
+                self.gutils.enable_geom_triggers()
             
         except Exception as e:
             self.uc.show_error(
@@ -2048,7 +2052,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
                     return False
                 else:
-                    self.gutils.execute("""INSERT INTO mult DEFAULT VALUES;""")                   
+                    self.clear_tables("mult")
+                    sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+                    if self.gutils.get_cont_par("METRIC") == 0:
+                        self.gutils.execute(sql_mult_defaults, (0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04))
+                    else:
+                        self.gutils.execute(sql_mult_defaults, (0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04))
  
             mult_sql = """SELECT * FROM mult;"""
             
