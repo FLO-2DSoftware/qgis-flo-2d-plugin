@@ -12,7 +12,6 @@ import traceback
 from math import isclose
 from itertools import chain, groupby
 from operator import itemgetter
-from qgis.PyQt.QtCore import QSettings
 from .flo2d_parser import ParseDAT
 from ..gui.bc_editor_widget import BCEditorWidget
 from ..geopackage_utils import GeoPackageUtils
@@ -418,14 +417,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(last_dir + r"\CHAN.DAT"):
-            self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
-            return
-        if not os.path.isfile(last_dir + r"\CHANBANK.DAT"):
-            self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
-            return
+        # s = QSettings()
+        # last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # if not os.path.isfile(last_dir + r"\CHAN.DAT"):
+        #     self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
+        #     return
+        # if not os.path.isfile(last_dir + r"\CHANBANK.DAT"):
+        #     self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
+        #     return
 
         chan_sql = ["""INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""", 5]
         chan_elems_sql = [
@@ -714,14 +713,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_mult(self):
-        # Import Multiple Channels (not simplified mult. channels):
-        # s = QSettings()
-        # last_dir = s.value("FLO-2D/lastGdsDir", "")
-
-        try:
-            # if os.path.isfile(last_dir + r"\MULT.DAT"):
-            #     if os.path.getsize(last_dir + r"\MULT.DAT") > 0:
-            
+        try:   
             self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
             head, data = self.parser.parse_mult()
             if head:
@@ -757,10 +749,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
         # Import Simplified Multiple Channels:
-        try:
-            # if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-            #     if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
-            
+        try: 
             self.clear_tables("simple_mult_lines", "simple_mult_cells")
             head, data = self.parser.parse_simple_mult()
             if head:
@@ -2098,11 +2087,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in self.execute(simple_mult_cell_sql):
                         vals = [x if x is not None else "" for x in row]
                         sm.write(line2.format(*vals))
-            else:
-                s = QSettings()
-                last_dir = s.value("FLO-2D/lastGdsDir", "")                
-                if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-                    os.remove(last_dir + r"\SIMPLE_MULT.DAT")
+            # else:
+            #     s = QSettings()
+            #     last_dir = s.value("FLO-2D/lastGdsDir", "")                
+            #     if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+            #         os.remove(last_dir + r"\SIMPLE_MULT.DAT")
                     
             return True
 
