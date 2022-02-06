@@ -187,6 +187,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.remove_rtable_btn, "mActionDeleteSelected.svg")
         set_icon(self.rename_rtable_btn, "change_name.svg")
 
+        self.outfalls_btn.setVisible(False)
+        self.inlets_btn.setVisible(False)
+        self.pumps_btn.setVisible(False)
+        self.conduits_btn.setVisible(False)
+
         self.create_point_btn.clicked.connect(self.create_swmm_point)
         self.save_changes_btn.clicked.connect(self.save_swmm_edits)
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
@@ -235,6 +240,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
             self.import_inp_btn.clicked.connect(self.import_storm_drain_INP_file)
             self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
+            
             self.outfalls_btn.clicked.connect(self.show_outfalls)
             self.inlets_btn.clicked.connect(self.show_inlets)
             self.pumps_btn.clicked.connect(self.show_pumps)
@@ -250,6 +256,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.populate_rtables_data()
             self.SD_rating_table_cbo.activated.connect(self.populate_rtables_data)
             self.SD_rating_table_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)
+            self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
+            self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
 
     def split_INP_into_groups_dictionary_by_tags_to_export(self, inp_file):
         """
@@ -2118,7 +2126,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "Outfalls saved to 'Storm Drain-Outfalls' User Layer!\n\n"
                     + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
                 )
-            except Exception as e:
+            except Exception:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
             
@@ -2188,7 +2196,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "Conduits saved to 'Storm Drain-Conduits' User Layer!\n\n"
                     + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
                 )
-            except Exception as e:
+            except Exception:
                 self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
                 return
             
@@ -2218,11 +2226,76 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
                     + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
                 )
-            except Exception as e:
+            except Exception:
                 self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
                 return
             
         self.lyrs.clear_rubber() 
+
+    def show_orificies(self):
+        self.uc.show_info("To be implemented.")
+        return
+        """
+        Shows pumps dialog.
+
+        """
+        # See if there are pumps:
+        if self.gutils.is_table_empty("user_swmm_pumps"):
+            self.uc.show_warn(
+                'User Layer "Storm Drain Pumps" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            return
+
+        dlg_pumps = PumpsDialog(self.iface, self.lyrs)
+        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        save = dlg_pumps.exec_()
+        if save:
+            try:
+                dlg_pumps.save_pumps()
+                self.uc.bar_info(
+                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
+                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+                )
+            except Exception:
+                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
+                return
+            
+        self.lyrs.clear_rubber() 
+
+    def show_weirs(self):
+        self.uc.show_info("To be implemented.")
+        return        
+        """
+        Shows pumps dialog.
+
+        """
+        # See if there are pumps:
+        if self.gutils.is_table_empty("user_swmm_pumps"):
+            self.uc.show_warn(
+                'User Layer "Storm Drain Pumps" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            return
+
+        dlg_pumps = PumpsDialog(self.iface, self.lyrs)
+        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        save = dlg_pumps.exec_()
+        if save:
+            try:
+                dlg_pumps.save_pumps()
+                self.uc.bar_info(
+                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
+                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+                )
+            except Exception:
+                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
+                return
+            
+        self.lyrs.clear_rubber() 
+
 
     def auto_assign_conduits_nodes(self):
         """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
@@ -2713,6 +2786,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.inletRT.del_rating_table(rt_fid)
                         self.populate_rtables()
 
+    def nodes_component_changed(self):
+        idx = self.SD_nodes_components_cbo.currentIndex()
+        if idx == 1:
+            self.show_inlets()
+        elif idx == 2:
+            self.show_outfalls()
+        self.SD_nodes_components_cbo.setCurrentIndex(0)  
+
+    def links_component_changed(self):
+        idx = self.SD_links_components_cbo.currentIndex()
+        if idx == 1:
+            self.show_conduits()
+        elif idx == 2:
+            self.show_pumps()
+        elif idx == 3:
+            self.show_orificies()  
+        elif idx == 4:
+            self.show_weirs()                       
+            
+        self.SD_links_components_cbo.setCurrentIndex(0) 
+               
     def rename_rtables(self):
         if not self.inletRT:
             return
