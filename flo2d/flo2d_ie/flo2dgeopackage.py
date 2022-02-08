@@ -2045,9 +2045,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
                                                  xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
                     if self.gutils.get_cont_par("METRIC") == 0:
-                        self.gutils.execute(sql_mult_defaults, (0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04))
+                        sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
                     else:
-                        self.gutils.execute(sql_mult_defaults, (0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04))
+                        sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
+                    self.gutils.batch_execute (sql_mult_defaults)   
  
             mult_sql = """SELECT * FROM mult;"""
             
