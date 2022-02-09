@@ -2035,71 +2035,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_mult(self, outdir):
-        # check if there is any multiple channel defined.
-        try:
-            if self.is_table_empty("mult"):
-                if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
-                    return False
-                else:
-                    self.clear_tables("mult")
-                    sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
-                    if self.gutils.get_cont_par("METRIC") == 0:
-                        sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
-                    else:
-                        sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
-                    self.gutils.batch_execute (sql_mult_defaults)   
- 
-            mult_sql = """SELECT * FROM mult;"""
+        if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
+                return False 
             
-            # Multiple Channels (not simplified):
-            mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid;"""
-            line1 = " {}" * 8 + "\n"
-            line2 = " {}" * 5 + "\n"
-
-            head = self.execute(mult_sql).fetchone()
-            if head is None:
-                return False
+        if self.is_table_empty("mult"):
+            # Assign defaults to multiple channels globals:
+            self.clear_tables("mult")
+            sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                         xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+            if self.gutils.get_cont_par("METRIC") == 0:
+                sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
             else:
-                pass
-            mult = os.path.join(outdir, "MULT.DAT")
-            with open(mult, "w") as m:
-                m.write(line1.format(*head[1:]).replace("None", ""))
-                for row in self.execute(mult_cell_sql):
-                    vals = [x if x is not None else "" for x in row]
-                    m.write(line2.format(*vals))
+                sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
+            self.gutils.batch_execute (sql_mult_defaults)  
+            
+        mult_sql = """SELECT * FROM mult;"""    
+        head = self.execute(mult_sql).fetchone()                      
+            
+        # Check if there is any multiple channel cells defined.     
+        if not self.is_table_empty("mult_cells"):        
+            try: 
+                # Multiple Channels (not simplified):
+                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid;"""
+                line1 = " {}" * 8 + "\n"
+                line2 = " {}" * 5 + "\n"
+    
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
-            return False
-        
-        try:
-            # Simplified Multiple Channels:
-            simple_mult_cell_sql = """SELECT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
-            line1 = "{}" + "\n"
-            line2 = "{}" + "\n"
-
-            isany = self.execute(simple_mult_cell_sql).fetchone()
-            if isany:
-                simple_mult = os.path.join(outdir, "SIMPLE_MULT.DAT")
-                with open(simple_mult, "w") as sm:
-                    sm.write(line1.format(head[9]))
-                    for row in self.execute(simple_mult_cell_sql):
+                mult = os.path.join(outdir, "MULT.DAT")
+                with open(mult, "w") as m:
+                    m.write(line1.format(*head[1:]).replace("None", ""))
+                    for row in self.execute(mult_cell_sql):
                         vals = [x if x is not None else "" for x in row]
-                        sm.write(line2.format(*vals))
-            # else:
-            #     s = QSettings()
-            #     last_dir = s.value("FLO-2D/lastGdsDir", "")                
-            #     if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-            #         os.remove(last_dir + r"\SIMPLE_MULT.DAT")
-                    
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
-            return False
+                        m.write(line2.format(*vals))
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
+                return False
+        
+        if not self.is_table_empty("simple_mult_cells") :
+            try:
+                # Simplified Multiple Channels:
+                simple_mult_cell_sql = """SELECT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                line1 = "{}" + "\n"
+                line2 = "{}" + "\n"
+    
+                isany = self.execute(simple_mult_cell_sql).fetchone()
+                if isany:
+                    simple_mult = os.path.join(outdir, "SIMPLE_MULT.DAT")
+                    with open(simple_mult, "w") as sm:
+                        sm.write(line1.format(head[9]))
+                        for row in self.execute(simple_mult_cell_sql):
+                            vals = [x if x is not None else "" for x in row]
+                            sm.write(line2.format(*vals))           
+                return True
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
+                return False
 
     def export_tolspatial(self, outdir):
         # check if there is any tolerance data defined.
