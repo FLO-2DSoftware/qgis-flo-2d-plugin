@@ -310,12 +310,12 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>5</x>
         <y>11</y>
-        <width>317</width>
+        <width>333</width>
         <height>24</height>
        </rect>
       </property>
@@ -547,6 +547,9 @@
             <width>181</width>
             <height>25</height>
            </size>
+          </property>
+          <property name="duplicatesEnabled">
+           <bool>false</bool>
           </property>
           <item>
            <property name="text">

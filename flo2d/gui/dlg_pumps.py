@@ -94,8 +94,10 @@ class PumpsDialog(qtBaseClass, uiDialog):
                         # Fill the list of pump names:
                         self.pump_name_cbo.addItem(data, row_data[0])
                     if column == 4:  
-                        # Fill the list of curve names:  
-                        self.pump_curve_cbo.addItem(data, row_data[4])
+                        # Fill the list of curve names: 
+                        index= self.pump_curve_cbo.findText(data) 
+                        if index == -1:
+                            self.pump_curve_cbo.addItem(data, row_data[4])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_pumps):
                     if row_number == 0:
@@ -230,7 +232,30 @@ class PumpsDialog(qtBaseClass, uiDialog):
             item = self.pumps_tblw.item(row, 2)
             if item is not None:
                 self.to_node_txt.setText(str(item.text()))
+
+            item = self.pumps_tblw.item(row, 3)
+            if item is not None:
+                indx = self.pump_curve_cbo.findText(item.text())
+                if indx != -1:
+                    self.pump_curve_cbo.setCurrentIndex(indx)
+                else:
+                    self.uc.bar_warn("WARNING 100222.1811: pump curve not found.")
+
+            item = self.pumps_tblw.item(row, 4)
+            if item is not None:
+                if item.text() in ('ON', 'on', 'On', '1'):
+                    self.pump_init_status_cbo.setCurrentIndex(0)  
+                else:  
+                    self.pump_init_status_cbo.setCurrentIndex(1)  
                 
+            item = self.pumps_tblw.item(row, 5)
+            if item is not None:
+                self.startup_depth_dbox.setValue(float(str(item.text())))
+
+            item = self.pumps_tblw.item(row, 6)
+            if item is not None:
+                self.shutoff_depth_dbox.setValue(float(str(item.text())))
+
             self.highlight_pump(self.pump_name_cbo.currentText()) 
           
         except Exception as e:
