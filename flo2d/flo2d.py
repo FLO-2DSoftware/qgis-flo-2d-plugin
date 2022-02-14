@@ -1617,18 +1617,20 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used                            
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                if self.uc.question("There are no simple multiple cells in the project but\n" +
-                                                    "There is a SIMPLE_MULT.DAT file in the directory.\n\n" +
-                                                    "Delete the file?"):
+                                if self.uc.question("There are no simple multiple channel cells in the project but\n" +
+                                                    "there is a SIMPLE_MULT.DAT file in the directory.\n" +
+                                                    "If the file is not deleted it will be used by the model.\n\n" +
+                                                    "Delete SIMPLE_MULT.DAT?"):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
 
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
-                                if self.uc.question("There are no multiple cells in the project but\n" +
-                                                    "There is a MULT.DAT file in the directory.\n\n" +
-                                                    "Delete the file?"):
+                                if self.uc.question("There are no multiple channel cells in the project but\n" +
+                                                    "there is a MULT.DAT file in the directory.\n" +
+                                                    "If the file is not deleted it will be used by the model.\n\n" +
+                                                    "Delete MULT.DAT?"):
                                     os.remove(outdir + r"\MULT.DAT")
                       
                     if self.files_used != "":

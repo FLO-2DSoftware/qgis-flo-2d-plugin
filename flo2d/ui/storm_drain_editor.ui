@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>426</width>
-    <height>433</height>
+    <height>441</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -335,7 +335,7 @@
             </property>
             <item>
              <property name="text">
-              <string/>
+              <string>  Select Component  </string>
              </property>
             </item>
             <item>
@@ -370,11 +370,11 @@
              </sizepolicy>
             </property>
             <property name="currentText">
-             <string/>
+             <string>  Select Link  </string>
             </property>
             <item>
              <property name="text">
-              <string/>
+              <string>  Select Link  </string>
              </property>
             </item>
             <item>
