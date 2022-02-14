@@ -47,10 +47,6 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             self.mc_d50_dbox.valueChanged.connect(self.update_global_multiple_channels_data)
             self.simple_manning_dbox.valueChanged.connect(self.update_global_multiple_channels_data)
 
-    #             self.initial_breach_width_depth_ratio_dbox.valueChanged.connect(self.update_general_breach_data)
-    #             self.weir_coefficient_dbox.editingFinished.connect(self.update_general_breach_data)
-    #             self.time_to_initial_failure_dbox.valueChanged.connect(self.update_general_breach_data)
-
     def populate_multiple_channels_widget(self):
         qry = "SELECT wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n FROM mult"
 
@@ -69,7 +65,9 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
         self.simple_manning_dbox.setValue(float_or_zero(row[8]))
 
     def update_global_multiple_channels_data(self):
-        self.fill_global_multiple_channels_with_defauts_if_empty()
+        if self.gutils.is_table_empty("mult"):
+            self.gutils.fill_empty_mult_globals()
+            
         qry = """UPDATE mult SET wmc = ?, wdrall = ?, dmall = ?, nodchansall = ?, xnmultall = ?, sslopemin = ?, sslopemax = ?, avuld50 = ?, simple_n = ?; """
 
         wmc = self.mc_incremental_dbox.value()
@@ -119,10 +117,3 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
 
         dlg_individual_simplified_multiple_channels = IndividualSimplifiedMultipleChannelsDialog(self.iface, self.lyrs)
         dlg_individual_simplified_multiple_channels.exec_()
-
-    def fill_global_multiple_channels_with_defauts_if_empty(self):
-        if self.gutils.is_table_empty("mult"):
-            sql = """INSERT INTO mult DEFAULT VALUES;"""
-            self.gutils.execute(
-                sql,
-            )

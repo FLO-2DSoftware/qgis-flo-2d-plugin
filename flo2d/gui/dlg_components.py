@@ -55,12 +55,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.components_note_lbl.setVisible(False)
             self.mannings_n_and_Topo_chbox.setVisible(False)
 
-            #             # Check if MANNINGS_N.DAT exist:
-            #             if not os.path.isfile(last_dir + '\MANNINGS_N.DAT') or  os.path.getsize(last_dir + '\MANNINGS_N.DAT') == 0:
-            #                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
-            #
-            #             else:
-
             if os.path.isfile(last_dir + r"\CHAN.DAT"):
                 if os.path.getsize(last_dir + r"\CHAN.DAT") > 0:
                     self.channels_chbox.setChecked(True)
@@ -221,10 +215,22 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.levees_chbox.setChecked(True)
                 self.levees_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("mult") or self.gutils.is_table_empty("mult_cells") or not self.gutils.is_table_empty("simple_mult_cells"):
-                self.multiple_channels_chbox.setChecked(True)
-                self.multiple_channels_chbox.setEnabled(True)
-                
+            # Multiple channels:
+            if options["IMULTC"] == "1":
+                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off.")  
+                    self.gutils.set_cont_par("IMULTC", 0)
+                    # self.multiple_channels_chbox.setChecked(False)
+                    # self.multiple_channels_chbox.setEnabled(False)
+                    QApplication.setOverrideCursor(Qt.WaitCursor)  
+                else: # There are Mult or simple channels cells:                     
+                    if self.gutils.is_table_empty("mult"):
+                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
+                        self.gutils.fill_empty_mult_globals() 
+                    self.multiple_channels_chbox.setChecked(True)             
+                    self.multiple_channels_chbox.setEnabled(True)                                                 
+                            
             if not self.gutils.is_table_empty("breach"):
                 self.breach_chbox.setChecked(True)
                 self.breach_chbox.setEnabled(True)

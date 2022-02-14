@@ -609,6 +609,16 @@ class GeoPackageUtils(object):
     def fill_empty_struct_names(self):
         qry = """UPDATE struct SET structname = 'Structure_' ||  cast(fid as text) WHERE structname IS NULL;"""
         self.execute(qry)
+        
+    def fill_empty_mult_globals(self): 
+        self.clear_tables("mult")
+        sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                     xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+        if self.get_cont_par("METRIC") == "1":
+            sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
+        else:
+            sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
+        self.batch_execute(sql_mult_defaults) 
 
     def set_def_n(self):
         def_n = self.get_cont_par("MANNING")

@@ -754,8 +754,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             head, data = self.parser.parse_simple_mult()
             if head:
                 if self.is_table_empty("mult"):
-                    self.gutils.execute("""INSERT INTO mult DEFAULT VALUES;""")    
-                # simple_mult_sql = """INSERT INTO mult (simple_n ) VALUES (?)"""
+                    self.gutils.fill_empty_mult_globals()             
                 simple_mult_sql = """UPDATE mult SET simple_n = ?; """
                 simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
                 gids = (x[0] for x in data)
@@ -2035,20 +2034,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_mult(self, outdir):
+        rtrn = True
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
                 return False 
             
         if self.is_table_empty("mult"):
             # Assign defaults to multiple channels globals:
-            self.clear_tables("mult")
-            sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                         xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
-            if self.gutils.get_cont_par("METRIC") == 0:
-                sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
-            else:
-                sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
-            self.gutils.batch_execute (sql_mult_defaults)  
-            
+            self.gutils.fill_empty_mult_globals()
+ 
         mult_sql = """SELECT * FROM mult;"""    
         head = self.execute(mult_sql).fetchone()                      
             
@@ -2067,7 +2060,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in self.execute(mult_cell_sql):
                         vals = [x if x is not None else "" for x in row]
                         m.write(line2.format(*vals))
-    
+                
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
@@ -2094,7 +2087,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
-
+            
+        return rtrn
+    
     def export_tolspatial(self, outdir):
         # check if there is any tolerance data defined.
         try:
