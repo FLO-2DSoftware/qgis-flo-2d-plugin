@@ -449,7 +449,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.n_sbox.setValue(fcn)
 
         self.update_table()
-
         self.create_plot()
         self.update_plot()
 

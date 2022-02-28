@@ -173,7 +173,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/add_bc_data.svg</normaloff>../img/add_bc_data.svg</iconset>
+         <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
        </property>
        <property name="iconSize">
         <size>

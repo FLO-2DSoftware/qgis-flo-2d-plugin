@@ -615,7 +615,7 @@ class Layers(object):
                 (
                     "swmm_pumps_curve_data",
                     {
-                        "name": "Storm Drain Pumps Curve",
+                        "name": "Storm Drain Pumps Curve Data",
                         "sgroup": "Storm Drain",
                         "styles": None,
                         "attrs_edit_widgets": {},

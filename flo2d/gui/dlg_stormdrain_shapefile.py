@@ -23,12 +23,11 @@ uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
 
 
 class StormDrainShapefile(qtBaseClass, uiDialog):
-    def __init__(self, con, iface, layers, tables):
+    def __init__(self, con, iface, layers):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         self.lyrs = layers
-        self.tables = tables
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
@@ -64,7 +63,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         )
         
         self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText(
-            "Assign Selected Inlets/Junctions, Outfalls, and Conduits"
+            "Assign Selected Fields"
         )
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlets_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfalls_attributes)
@@ -118,9 +117,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_conduit_average_loss_btn.clicked.connect(self.clear_conduit_average_loss)
         self.clear_conduit_flap_gate_btn.clicked.connect(self.clear_conduit_flap_gate)
 
+
+        # Connections to clear pump fields.
+        self.clear_pump_name_btn.clicked.connect(self.clear_pump_name)
+        self.clear_pump_from_inlet_btn.clicked.connect(self.clear_pump_from_inlet)
+        self.clear_pump_to_outlet_btn.clicked.connect(self.clear_pump_to_outlet)
+        self.clear_pump_initial_status_btn.clicked.connect(self.clear_pump_initial_status)
+        self.clear_pump_startup_depth_btn.clicked.connect(self.clear_pump_startup_depth)
+        self.clear_pump_shutoff_depth_btn.clicked.connect(self.clear_pump_shutoff_depth)
+        self.clear_pump_curve_name_btn.clicked.connect(self.clear_pump_curve_name)
+        self.clear_pump_curve_type_btn.clicked.connect(self.clear_pump_curve_type)
+        self.clear_pump_curve_description_btn.clicked.connect(self.clear_pump_curve_description)
+
         self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlets_attributes)
         self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfalls_attributes)
         self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduits_attributes)
+        self.clear_all_pumps_btn.clicked.connect(self.clear_all_pumps_attributes)
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
 
@@ -141,6 +153,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 if l.geometryType() == QgsWkbTypes.LineGeometry:
                     if l.featureCount() > 0:
                         self.conduits_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                        self.pumps_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
                     pass
 
@@ -163,6 +176,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.conduits_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_conduits_attributes(self.conduits_shapefile_cbo.currentIndex())
 
+
+            previous_pump = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
+            idx = self.pumps_shapefile_cbo.findText(previous_conduit)
+            if idx != -1:
+                self.pumps_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_pumps_attributes(self.pumps_shapefile_cbo.currentIndex())
+                
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -249,6 +269,32 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
+    def populate_pumps_attributes(self, idx):
+        try:
+            uri = self.pumps_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+
+            for combo_pumps in self.pumps_fields_groupBox.findChildren(QComboBox):
+                combo_pumps.clear()
+                combo_pumps.setLayer(self.current_lyr)
+
+            nFeatures = self.current_lyr.featureCount()
+            self.pumps_fields_groupBox.setTitle(
+                "Pumps Fields Selection (from '"
+                + self.pumps_shapefile_cbo.currentText()
+                + "' layer with "
+                + str(nFeatures)
+                + " features (lines))"
+            )
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 230222.0953: there are not defined or visible line layers to select pumps components!"
+                + "\n__________________________________________________",
+                e,
+            )
+            
     # CLEAR INLETS FIELDS:
     def clear_inlets_name(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
@@ -379,6 +425,36 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_conduit_flap_gate(self):
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
 
+        # CLEAR PUMPS FIELDS:
+
+    def clear_pump_name(self):
+        self.pump_name_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_from_inlet(self):
+        self.pump_from_inlet_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_to_outlet(self):
+        self.pump_to_outlet_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_initial_status(self):
+        self.pump_initial_status_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_startup_depth(self):
+        self.pump_startup_depth_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_shutoff_depth(self):
+        self.pump_shutoff_depth_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_pump_curve_name(self):
+        self.pump_curve_name_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_curve_type(self):
+        self.pump_curve_type_FieldCbo.setCurrentIndex(-1)
+
+    def clear_pump_curve_description(self):
+        self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
+
+
     def clear_all_inlets_attributes(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
         self.inlets_type_FieldCbo.setCurrentIndex(-1)
@@ -426,6 +502,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.conduit_exit_loss_FieldCbo.setCurrentIndex(-1)
         self.conduit_average_loss_FieldCbo.setCurrentIndex(-1)
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
+
+    def clear_all_pumps_attributes(self):
+        self.pump_name_FieldCbo.setCurrentIndex(-1)
+        self.pump_from_inlet_FieldCbo.setCurrentIndex(-1)
+        self.pump_to_outlet_FieldCbo.setCurrentIndex(-1)
+        self.pump_initial_status_FieldCbo.setCurrentIndex(-1)
+        self.pump_startup_depth_FieldCbo.setCurrentIndex(-1)
+        self.pump_shutoff_depth_FieldCbo.setCurrentIndex(-1)
+        self.pump_curve_name_FieldCbo.setCurrentIndex(-1)
+        self.pump_curve_type_FieldCbo.setCurrentIndex(-1)
+        self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
 
     def assign_components_from_shapefile(self):
         self.uc.clear_bar_messages()
@@ -1169,6 +1256,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_conduits_flap_gate", self.conduit_flap_gate_FieldCbo.currentIndex())
 
     def restore_storm_drain_shapefile_fields(self):
+        
+        self.clear_all_inlets_attributes
+        self.clear_all_outfalls_attributes
+        self.clear_all_conduits_attributes
+        self.clear_all_pumps_attributes()
+        
         s = QSettings()
 
         # Inlets/Junctions:

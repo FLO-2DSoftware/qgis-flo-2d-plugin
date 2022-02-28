@@ -71,7 +71,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.delete_bc_btn, "mActionDeleteSelected.svg")
-        set_icon(self.add_data_btn, "add_bc_data.svg")
+        set_icon(self.add_data_btn, "add_table_data.svg")
         set_icon(self.schem_bc_btn, "schematize_bc.svg")
         set_icon(self.change_bc_name_btn, "change_name.svg")
         set_icon(self.change_inflow_data_name_btn, "change_name.svg")

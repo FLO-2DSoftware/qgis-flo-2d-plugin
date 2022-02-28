@@ -882,7 +882,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.plot.plot.addLegend()
         self.plot_item_name = "Rating Table:   " + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
-        self.plot.plot.setTitle("Rating Table   " + name)
+        self.plot.plot.setTitle("Rating Table:   " + name)
 
     def update_plot(self):
         if not self.plot_item_name:

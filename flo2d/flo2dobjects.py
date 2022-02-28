@@ -904,8 +904,6 @@ class Outflow(GeoPackageUtils):
         name_qry = """UPDATE outflow_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;"""
         self.execute(name_qry, (rowid,))
         self.set_new_data_fid(rowid)
-#         if not name:
-#             self.name = "Time series {}".format(rowid)
         if fetch:
             return self.get_time_series()
 
@@ -1685,8 +1683,6 @@ class InletRatingTable(GeoPackageUtils):
             rt = self.execute("SELECT fid, name FROM swmmflort ORDER BY name COLLATE NOCASE;").fetchall()
         else:
             rt = self.execute("SELECT fid, name FROM swmmflort ORDER BY fid;").fetchall()
-        #         if not rt:
-        #             rt = self.add_rating_table(fetch=True)
         return rt
 
     def add_rating_table(self, name=None):
@@ -1766,3 +1762,95 @@ class InletRatingTable(GeoPackageUtils):
                 rt_fid,
             ),
         )
+
+class PumpCurves(GeoPackageUtils):
+    """
+    Pumps data representation.
+    """
+
+    def __init__(self, con, iface):
+        super(PumpCurves, self).__init__(con, iface)
+        self.name = None
+
+    def get_pump_curves(self, order_by="name"):
+        if order_by == "name":
+            crv = self.execute("SELECT DISTINCT fid, pump_curve_name FROM swmm_pumps_curve_data ORDER BY pump_curve_name COLLATE NOCASE;").fetchall()
+        else:
+            crv = self.execute("SELECT fid, pump_curve_name FROM swmm_pumps_curve_data ORDER BY fid;").fetchall()
+        # if not crv:
+        #     crv = self.add_pump_curve() 
+        return crv
+
+    def add_pump_curve(self, name=None):
+        if name == None:
+            qry = """INSERT INTO swmm_pumps_curve_data (pump_curve_name) VALUES (?);"""
+            rowid = self.execute(qry, (name,), get_rowid=True)
+            name_qry = """UPDATE swmm_pumps_curve_data SET pump_curve_name =  'Pump Curve ' || cast(fid as text) WHERE fid = ?;"""
+            self.execute(name_qry, (rowid,))
+            if not name:
+                self.name = "Pump Curve {}".format(rowid)
+            return self.name
+        else:
+            sel_qry = "SELECT fid FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;"
+            fid = self.execute(sel_qry, (name,)).fetchone()
+            if fid:
+                del_qry2 = "DELETE FROM swmm_pumps_curve_data WHERE fid = ?;"
+                self.execute(del_qry2, (fid[0],))
+                del_qry = "DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;"
+                self.execute(del_qry, (name,))
+            qry = """INSERT INTO swmm_pumps_curve_data (pump_curve_name) VALUES (?);"""
+            rowid = self.execute(qry, (name,), get_rowid=True)
+            name_qry = """UPDATE swmm_pumps_curve_data SET pump_curve_name =  ? WHERE fid = ?;"""
+            self.execute(
+                name_qry,
+                (
+                    name,
+                    rowid,
+                ),
+            )
+            return name
+
+    def del_pump_curve(self, name):
+        self.execute("DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;", (name,))
+        self.execute("UPDATE user_swmm_pumps SET pump_curve = '*' WHERE pump_curve = ?", (name,))
+
+    def get_pump_curve_data(self, name):
+        qry = "SELECT x_value, y_value FROM swmm_pumps_curve_data WHERE pump_curve_name = ? ORDER BY x_value;"
+        curve_data = self.execute(qry, (name,)).fetchall()
+        if not curve_data:
+            # add a new curve:
+            curve_data = self.add_pump_curve_data(name, fetch=True)
+        return curve_data
+
+    def add_pump_curve_data(self, name, rows=5, fetch=False):
+        """
+        Add new rows to swmm_pumps_curve_data for a given name.
+        """
+        qry = "INSERT INTO swmm_pumps_curve_data (pump_curve_name, x_value, y_value) VALUES (?, 0, 0);"
+        self.execute_many(qry, ([name],) * rows)
+        if fetch:
+            return self.get_pump_curve_data(name)
+
+    def set_pump_curve_data(self, pc_fid, name, data):
+        qry = "UPDATE swmm_pumps_curve_data SET pump_curve_name=? WHERE fid=?;"
+        self.execute(
+            qry,
+            (
+                name,
+                pc_fid,
+            ),
+        )
+        # qry = "DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;"
+        # self.execute(qry, (rt_fid,))
+        # qry = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);"
+        # self.execute_many(qry, data)
+
+    def set_pump_curve_name(self, name, new_name):
+        # fids = self.execute("SELECT fid FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;", (name,)).fetchall()
+        # qry = "UPDATE swmm_pumps_curve_data SET pump_curve_name = ? WHERE fid = ?;"
+        # v = []
+        # for f in fids:
+        #     v.append((new_name, f[0]))
+        # self.execute_many( qry, v)
+        self.execute("UPDATE swmm_pumps_curve_data SET pump_curve_name = ? WHERE pump_curve_name = ?;", (new_name, name,))
+        self.execute("UPDATE user_swmm_pumps SET pump_curve = ? WHERE pump_curve = ?;", (new_name, name,))
