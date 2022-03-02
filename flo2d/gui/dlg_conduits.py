@@ -118,6 +118,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, shape)
+        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)     
         self.conduits_tblw.setItem(row, 5, item)
 
     def barrels_sbox_valueChanged(self):
@@ -168,11 +169,15 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, widget.value())
+        if col in (0,1,2,5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)        
         self.conduits_tblw.setItem(row, col, item)
 
     def checkbox_valueChanged(self, widget, col):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
+        if col in (0,1,2,5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)          
         self.conduits_tblw.setItem(row, col, item)
         self.conduits_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
@@ -181,6 +186,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         item = QTableWidgetItem()
         data = widget.currentText()
         item.setData(Qt.EditRole, data)
+        if col in (0,1,2,5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)          
         self.conduits_tblw.setItem(row, col, item)
 
     def conduits_tblw_cell_clicked(self, row, column):
@@ -333,7 +340,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
 
                     if element > 0:  # For this row omit fid number
-                        if element == 1 or element == 2 or element == 3:
+                        if element in (1,2,3,6):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.conduits_tblw.setItem(row_number, element - 1, item)
                         

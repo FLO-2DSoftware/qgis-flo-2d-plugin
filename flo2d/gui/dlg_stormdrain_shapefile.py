@@ -34,8 +34,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+        self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.current_lyr = None
         self.saveSelected = None
+        self.TRUE = ("1", "YES", "Yes", "yes", "TRUE", "True", "true", "ON", "on")
+        self.FALSE = ("0", "NO", "No",  "FALSE", "False", "false", "OFF", "off", "Off")
         
         self.shape = (
             "CIRCULAR",
@@ -68,7 +71,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlets_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfalls_attributes)
         self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduits_attributes)
-
+        self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pumps_attributes)
+        
         # Connections to clear inlets fields.
         self.clear_inlets_name_btn.clicked.connect(self.clear_inlets_name)
         self.clear_inlets_type_btn.clicked.connect(self.clear_inlets_type)
@@ -116,7 +120,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_conduit_exit_loss_btn.clicked.connect(self.clear_conduit_exit_loss)
         self.clear_conduit_average_loss_btn.clicked.connect(self.clear_conduit_average_loss)
         self.clear_conduit_flap_gate_btn.clicked.connect(self.clear_conduit_flap_gate)
-
 
         # Connections to clear pump fields.
         self.clear_pump_name_btn.clicked.connect(self.clear_pump_name)
@@ -178,7 +181,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
 
             previous_pump = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
-            idx = self.pumps_shapefile_cbo.findText(previous_conduit)
+            idx = self.pumps_shapefile_cbo.findText(previous_pump)
             if idx != -1:
                 self.pumps_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_pumps_attributes(self.pumps_shapefile_cbo.currentIndex())
@@ -366,7 +369,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_outfall_time_series(self):
         self.outfall_time_series_FieldCbo.setCurrentIndex(-1)
 
-        # CLEAR CONDUITS FIELDS:
+    # CLEAR CONDUITS FIELDS:
 
     def clear_conduit_name(self):
         self.conduit_name_FieldCbo.setCurrentIndex(-1)
@@ -425,7 +428,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_conduit_flap_gate(self):
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
 
-        # CLEAR PUMPS FIELDS:
+    # CLEAR PUMPS FIELDS:
 
     def clear_pump_name(self):
         self.pump_name_FieldCbo.setCurrentIndex(-1)
@@ -527,6 +530,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         load_inlets = False
         load_outfalls = False
         load_conduits = False
+        load_pumps = False
 
         unit = int(self.gutils.get_cont_par("METRIC"))
 
@@ -543,6 +547,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         for combo_conduit in self.conduits_fields_groupBox.findChildren(QComboBox):
             if combo_conduit.currentIndex() != -1:
                 load_conduits = True
+                break
+
+        for combo_pump in self.pumps_fields_groupBox.findChildren(QComboBox):
+            if combo_pump.currentIndex() != -1:
+                load_pumps = True
                 break
 
         if load_inlets:
@@ -565,7 +574,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.uc.show_info("The 'Conduit Name' field must be selected if the Conduits component is picked!")
                 return
 
-        if not load_inlets and not load_outfalls and not load_conduits:
+        if load_pumps:
+            if self.pump_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Pump Name' field must be selected if the Pumps component is picked!")
+                return
+
+        if not load_inlets and not load_outfalls and not load_conduits and not load_pumps:
             self.uc.bar_warn("No data was selected!")
             self.save_storm_drain_shapefile_fields()
 
@@ -1163,23 +1178,170 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
                     load_conduits = False
 
+            # Load pumps from shapefile:
+            if load_pumps:
+                try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    fields = self.user_swmm_pumps_lyr.fields()
+                    new_feats = []
+                    outside_pumps = ""
+                    wrong_status = 0
+
+                    pumps_shapefile = self.pumps_shapefile_cbo.currentText()
+                    lyr = self.lyrs.get_layer_by_name(pumps_shapefile, self.lyrs.group).layer()
+                    pumps_shapefile_fts = lyr.getFeatures()
+                    no_in_out = 0
+
+                    for f in pumps_shapefile_fts:
+
+                        pump_name = (
+                            f[self.pump_name_FieldCbo.currentText()]
+                            if self.pump_name_FieldCbo.currentText() != ""
+                            else ""
+                        )
+                        pump_inlet = (
+                            f[self.pump_from_inlet_FieldCbo.currentText()]
+                            if self.pump_from_inlet_FieldCbo.currentText() != ""
+                            else "?"
+                        )
+                        pump_outlet = (
+                            f[self.pump_to_outlet_FieldCbo.currentText()]
+                            if self.pump_to_outlet_FieldCbo.currentText() != ""
+                            else "?"
+                        )
+                        
+                        status = f[self.pump_initial_status_FieldCbo.currentText()]
+                        if status in self.TRUE:
+                            status = "ON"
+                        elif  status in self.FALSE: 
+                            status = "OFF"  
+                        else:
+                            status = "OFF"
+                            wrong_status += 1
+                        pump_initial_status = status
+                        # pump_initial_status = (
+                        #     f[self.pump_initial_status_FieldCbo.currentText()]
+                        #     if self.pump_initial_status_FieldCbo.currentText() != ""
+                        #     else "OFF"
+                        # )
+                        pump_startup_depth = (
+                            f[self.pump_startup_depth_FieldCbo.currentText()]
+                            if self.pump_startup_depth_FieldCbo.currentText() != ""
+                            else 0
+                        )
+                        pump_shutoff_depth = (
+                            f[self.pump_shutoff_depth_FieldCbo.currentText()]
+                            if self.pump_shutoff_depth_FieldCbo.currentText() != ""
+                            else 0.0
+                        )
+                        pump_curve_name = (
+                            f[self.pump_curve_name_FieldCbo.currentText()]
+                            if self.pump_curve_name_FieldCbo.currentText() != ""
+                            else 0.0
+                        )
+
+                        if pump_inlet == "?" or pump_outlet == "?":
+                            no_in_out += 1
+
+                        feat = QgsFeature()
+                        feat.setFields(fields)
+
+                        geom = f.geometry()
+                        if geom is None or geom.type() != 1:
+                            self.uc.show_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
+                            continue
+
+                        points = extractPoints(geom)
+                        if points is None:
+                            self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
+                            continue
+
+                        cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                        if cell is None:
+                            outside_pumps += "\n" + pump_name
+                            continue
+
+                        cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                        if cell is None:
+                            outside_pumps += "\n" + pump_name
+                            continue
+
+                        new_geom = QgsGeometry.fromPolylineXY(points)
+                        feat.setGeometry(new_geom)
+
+                        feat.setAttribute("pump_name", pump_name)
+                        feat.setAttribute("pump_inlet", pump_inlet)
+                        feat.setAttribute("pump_outlet", pump_outlet)
+                        feat.setAttribute("pump_init_status", pump_initial_status)
+                        feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
+                        feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
+                        feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "")
+                        
+                        new_feats.append(feat)
+
+                    if new_feats:
+                        if not self.pumps_append_chbox.isChecked():
+                            remove_features(self.user_swmm_pumps_lyr)
+
+                        self.user_swmm_pumps_lyr.startEditing()
+                        self.user_swmm_pumps_lyr.addFeatures(new_feats)
+                        self.user_swmm_pumps_lyr.commitChanges()
+                        self.user_swmm_pumps_lyr.updateExtents()
+                        self.user_swmm_pumps_lyr.triggerRepaint()
+                        self.user_swmm_pumps_lyr.removeSelection()
+                    else:
+                        load_pumps = False
+
+                    QApplication.restoreOverrideCursor()
+
+                    if no_in_out != 0:
+                        self.uc.show_warn(
+                            "WARNING 280222.1030: "
+                            + str(no_in_out)
+                            + " pumps have no inlet and/or outlet!\n\n"
+                            + "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n"
+                            + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
+                        )
+
+                    if outside_pumps != "":
+                        self.uc.show_warn(
+                            "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
+                            + outside_pumps
+                        )
+
+                    if wrong_status > 0:
+                        self.uc.show_info("WARNING 010322.1054: there were " + str(wrong_status) + " pumps with wrong initial status!\n\n" +
+                                          "All wrong initial status were changed to 'OFF'.\n\n" + 
+                                          "Edit them as wished with the 'Pumps' dialog from the Storm Drain Editor widget.")
+                
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error(
+                        "ERROR 280222.1032: creation of Storm Drain Pumps User layer failed after reading "
+                        + str(len(new_feats))
+                        + " pumps!"
+                        + "\n__________________________________________________",
+                        e,
+                    )
+                    load_pumps = False
+
             self.save_storm_drain_shapefile_fields()
 
             QApplication.restoreOverrideCursor()
 
-            if (load_inlets or load_outfalls) and load_conduits:
+            if (load_inlets or load_outfalls) and load_conduits and load_pumps:
                 self.uc.show_info(
-                    "Importing Storm Drain nodes and conduits data finished!\n\n"
-                    + "The 'Storm Drain Nodes' and 'Storm Drain Conduits' layers were created in the 'User Layers' group.\n\n"
-                    "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                    "Importing Storm Drain nodes and links data finished!\n\n"
+                    + "The 'Storm Drain Nodes', 'Storm Drain Conduits', and  'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
+                    "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
-            elif not (load_inlets or load_outfalls) and load_conduits:
+            elif not (load_inlets or load_outfalls) and load_conduits and load_pumps:
                 self.uc.show_info(
                     "Importing Storm Drain conduits data finished!\n\n"
-                    + "The 'Storm Drain Conduits' layer was created in the 'User Layers' group.\n\n"
-                    "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                    + "The 'Storm Drain Conduits' and 'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
+                    "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
@@ -1187,7 +1349,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.uc.show_info(
                     "Importing Storm Drain nodes data finished!\n\n"
                     + "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
-                    "Use the 'Inlets', 'Outfalls', and/or 'Conduits' buttons in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+                    "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
@@ -1221,7 +1383,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_inlets_time_for_clogging", self.inlets_time_for_clogging_FieldCbo.currentIndex())
 
         # Outfalls
-        #         s.setValue('sf_outfalls_layer', self.outfalls_shapefile_cbo.currentIndex())
         s.setValue("sf_outfalls_layer_name", self.outfalls_shapefile_cbo.currentText())
         s.setValue("sf_outfalls_name", self.outfall_name_FieldCbo.currentIndex())
         s.setValue("sf_outfalls_invert_elevation", self.outfall_invert_elevation_FieldCbo.currentIndex())
@@ -1233,7 +1394,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_outfalls_time_series", self.outfall_time_series_FieldCbo.currentIndex())
 
         # Conduits:
-        #         s.setValue('sf_conduits_layer', self.conduits_shapefile_cbo.currentIndex())
         s.setValue("sf_conduits_layer_name", self.conduits_shapefile_cbo.currentText())
         s.setValue("sf_conduits_name", self.conduit_name_FieldCbo.currentIndex())
         s.setValue("sf_conduits_from_inlet", self.conduit_from_inlet_FieldCbo.currentIndex())
@@ -1255,6 +1415,18 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_conduits_average_loss", self.conduit_average_loss_FieldCbo.currentIndex())
         s.setValue("sf_conduits_flap_gate", self.conduit_flap_gate_FieldCbo.currentIndex())
 
+        # Pumps:
+        s.setValue("sf_pumps_layer_name", self.pumps_shapefile_cbo.currentText())
+        s.setValue("sf_pump_name", self.pump_name_FieldCbo.currentIndex())
+        s.setValue("sf_pump_from_inlet", self.pump_from_inlet_FieldCbo.currentIndex())
+        s.setValue("sf_pump_to_outlet", self.pump_to_outlet_FieldCbo.currentIndex())
+        s.setValue("sf_pump_init_status", self.pump_initial_status_FieldCbo.currentIndex())
+        s.setValue("sf_pump_startup_depth", self.pump_startup_depth_FieldCbo.currentIndex())
+        s.setValue("sf_pump_shutoff_depth", self.pump_shutoff_depth_FieldCbo.currentIndex())
+        s.setValue("sf_pump_curve_name", self.pump_curve_name_FieldCbo.currentIndex())
+        s.setValue("sf_pump_curve_type", self.pump_curve_type_FieldCbo.currentIndex())
+        s.setValue("sf_pump_curve_description", self.pump_curve_description_FieldCbo.currentIndex())
+
     def restore_storm_drain_shapefile_fields(self):
         
         self.clear_all_inlets_attributes
@@ -1265,9 +1437,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s = QSettings()
 
         # Inlets/Junctions:
-        #         val = int(0 if s.value('sf_inlets_layer') is None else s.value('sf_inlets_layer'))
-        #         self.inlets_shapefile_cbo.setCurrentIndex(val)
-
         name = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
         if name == self.inlets_shapefile_cbo.currentText():
             val = int(-1 if s.value("sf_inlets_name") is None else s.value("sf_inlets_name"))
@@ -1316,9 +1485,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)
 
         # Outfalls
-        #         val = int(0 if s.value('sf_outfalls_layer') is None else s.value('sf_outfalls_layer'))
-        #         self.outfalls_shapefile_cbo.setCurrentIndex(val)
-
         name = "" if s.value("sf_outfalls_layer_name") is None else s.value("sf_outfalls_layer_name")
         if name == self.outfalls_shapefile_cbo.currentText():
 
@@ -1349,9 +1515,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.outfall_time_series_FieldCbo.setCurrentIndex(val)
 
         # Conduits:
-        #         val = int(0 if s.value('sf_conduits_layer') is None else s.value('sf_conduits_layer'))
-        #         self.conduits_shapefile_cbo.setCurrentIndex(val)
-
         name = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
         if name == self.conduits_shapefile_cbo.currentText():
 
@@ -1411,3 +1574,37 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_conduits_flap_gate") is None else s.value("sf_conduits_flap_gate"))
             self.conduit_flap_gate_FieldCbo.setCurrentIndex(val)
+
+        # Pumps:
+        name = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
+        if name == self.pumps_shapefile_cbo.currentText():
+
+            val = int(-1 if s.value("sf_pump_name") is None else s.value("sf_pump_name"))
+            self.pump_name_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_from_inlet") is None else s.value("sf_pump_from_inlet"))
+            self.pump_from_inlet_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_to_outlet") is None else s.value("sf_pump_to_outlet"))
+            self.pump_to_outlet_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_initial_status") is None else s.value("sf_pump_initial_status"))
+            self.pump_initial_status_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_startup_depth") is None else s.value("sf_pump_startup_depth"))
+            self.pump_startup_depth_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_shutoff_depth") is None else s.value("sf_pump_shutoff_depth"))
+            self.pump_shutoff_depth_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_curve_name") is None else s.value("sf_pump_curve_name"))
+            self.pump_curve_name_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_curve_type") is None else s.value("sf_pump_curve_type"))
+            self.pump_curve_type_FieldCbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("sf_pump_curve_description") is None else s.value("sf_pump_curve_description"))
+            self.pump_curve_description_FieldCbo.setCurrentIndex(val)
+                      
+            
+            

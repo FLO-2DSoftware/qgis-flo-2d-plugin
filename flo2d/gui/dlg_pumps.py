@@ -70,7 +70,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
         self.startup_depth_dbox.valueChanged.connect(self.startup_depth_dbox_valueChanged)
         self.shutoff_depth_dbox.valueChanged.connect(self.shutoff_depth_dbox_valueChanged)
 
-        self.on_off = ("ON","OFF")
+        self.ON_OFF = ("ON","OFF")
         
         self.setup_connection()
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -104,7 +104,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
                         pump_startup_depth,
                         pump_shutoff_depth
                 FROM user_swmm_pumps;"""
-
+        wrong_status = 0
         try:
             rows = self.gutils.execute(qry).fetchall()
             self.pumps_tblw.setRowCount(0)
@@ -138,7 +138,11 @@ class PumpsDialog(qtBaseClass, uiDialog):
                                 index = 0
                             self.pump_curve_cbo.setCurrentIndex(index)
                             
-                        elif column == 5:           
+                        elif column == 5:
+                            if data not in ("ON", "On", "on", "OFF", "Off", "off"):  
+                                wrong_status += 1 
+                                data = "OFF"  
+                                item.setData(Qt.DisplayRole, data) 
                             index = self.pump_init_status_cbo.findText(data)
                             if index == -1:
                                 index = 0
@@ -151,12 +155,21 @@ class PumpsDialog(qtBaseClass, uiDialog):
                             self.shutoff_depth_dbox.setValue(data)
 
                     if column > 0:  # Omit fid number (in column = 0)
-                        if column == 1 or column == 2 or column == 3:
+                        if column in (1, 2, 3, 4, 5):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        if column == 5:
+                            if data not in ("ON", "On", "on", "OFF", "Off", "off"):  
+                                wrong_status += 1 
+                                data = "OFF"  
+                                item.setData(Qt.DisplayRole, data)  
                         self.pumps_tblw.setItem(row_number, column - 1, item)
                         
             self.highlight_pump(self.pump_name_cbo.currentText())                        
-
+            QApplication.restoreOverrideCursor()
+            if wrong_status > 0:
+                self.uc.show_info("WARNING 280222.1910: there were " + str(wrong_status) + " pumps with wrong initial status!\n\n" +
+                                  "All wrong initial status were changed to 'OFF' in this dialog.\n\n" + 
+                                  "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Pumps' User layers.")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 251121.0705: assignment of value from pumps users layer failed!.\n", e)
@@ -181,11 +194,15 @@ class PumpsDialog(qtBaseClass, uiDialog):
         row = self.pump_name_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, widget.value())
+        if col in (0, 1, 2, 3, 4):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.pumps_tblw.setItem(row, col, item)
 
     def checkbox_valueChanged(self, widget, col):
         row = self.pump_name_cbo.currentIndex()
         item = QTableWidgetItem()
+        if col in (0, 1, 2, 3, 4):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)        
         self.pumps_tblw.setItem(row, col, item)
         self.pumps_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
@@ -194,6 +211,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
         item = QTableWidgetItem()
         data = widget.currentText()
         item.setData(Qt.EditRole, data)
+        if col in (0, 1, 2, 3, 4):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)        
         self.pumps_tblw.setItem(row, col, item)
 
     def pump_curve_cbo_currentIndexChanged(self):

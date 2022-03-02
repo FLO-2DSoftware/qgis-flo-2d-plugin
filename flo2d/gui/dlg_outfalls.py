@@ -173,14 +173,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             self.time_series_cbo.setCurrentIndex(0)
 
                     if col_number > 0:  # For this row disable some elements and omit fid number
-                        if (
-                            col_number == 1
-                            or col_number == 2
-                            or col_number == 6
-                            or col_number == 7
-                            or col_number == 8
-                            or col_number == 9
-                        ):
+                        if (col_number in  (1, 2, 4, 5, 6, 8, 9)):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.outfalls_tblw.setItem(row_number, col_number - 1, item)
                         
@@ -260,11 +253,15 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     break
             item = QTableWidgetItem()
             item.setData(Qt.EditRole, widget.value())
+            if (col in  (0, 1, 3, 4, 5, 7, 8)):
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)            
             self.outfalls_tblw.setItem(row, col, item)            
 
     def checkbox_valueChanged(self, widget, col):
         row = self.outfall_cbo.currentIndex()
         item = QTableWidgetItem()
+        if (col in  (0, 1, 3, 4, 5, 7, 8)):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)          
         self.outfalls_tblw.setItem(row, col, item)
         self.outfalls_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
@@ -273,6 +270,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         item = QTableWidgetItem()
         data = widget.currentText()
         item.setData(Qt.EditRole, data)
+        if (col in  (0, 1, 3, 4, 5, 7, 8)):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)            
         self.outfalls_tblw.setItem(row, col, item)
 
     def outfalls_tblw_cell_clicked(self, row, column):
@@ -305,6 +304,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()
                 item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)   
                 self.outfalls_tblw.setItem(row, 5, item)
 
             self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
@@ -362,6 +362,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()
                 item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
+                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)   
                 self.outfalls_tblw.setItem(row, 5, item)
     
             self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))

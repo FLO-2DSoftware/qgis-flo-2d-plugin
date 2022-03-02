@@ -41,7 +41,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -3846,6 +3846,9 @@
               <layout class="QGridLayout" name="gridLayout_43">
                <item row="1" column="0">
                 <widget class="QLabel" name="label_54">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="text">
                   <string>Curve Type</string>
                  </property>
@@ -3866,6 +3869,9 @@
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="label_55">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="text">
                   <string>Curve Description</string>
                  </property>
@@ -3880,6 +3886,9 @@
               <layout class="QGridLayout" name="gridLayout_44">
                <item row="1" column="0">
                 <widget class="QgsFieldComboBox" name="pump_curve_type_FieldCbo">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -3930,6 +3939,9 @@
                </item>
                <item row="2" column="0">
                 <widget class="QgsFieldComboBox" name="pump_curve_description_FieldCbo">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -3961,6 +3973,9 @@
             <layout class="QGridLayout" name="gridLayout_45">
              <item row="1" column="0">
               <widget class="QPushButton" name="clear_pump_curve_type_btn">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -3986,6 +4001,9 @@
              </item>
              <item row="2" column="0">
               <widget class="QPushButton" name="clear_pump_curve_description_btn">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                  <horstretch>0</horstretch>

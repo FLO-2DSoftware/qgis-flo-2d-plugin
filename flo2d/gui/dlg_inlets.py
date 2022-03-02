@@ -183,7 +183,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                         self.inlet_rating_table_cbo.setCurrentIndex(idx)
 
-                if cell == 1 or cell == 2:
+                if cell == 0 or cell == 1:
                     item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
                 # See if rating tables exist:
