@@ -214,6 +214,9 @@
          <layout class="QHBoxLayout" name="horizontalLayout_10">
           <item>
            <widget class="QLabel" name="label_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Pump Type</string>
             </property>
@@ -248,26 +251,9 @@
               <height>22</height>
              </size>
             </property>
-            <item>
-             <property name="text">
-              <string>TYPE1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>TYPE2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>TYPE3</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>TYPE4</string>
-             </property>
-            </item>
+            <property name="currentText">
+             <string/>
+            </property>
            </widget>
           </item>
          </layout>
@@ -276,6 +262,9 @@
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
            <widget class="QLabel" name="label_6">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Description</string>
             </property>

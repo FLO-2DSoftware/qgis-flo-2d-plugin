@@ -588,7 +588,7 @@ class StormDrainProject(object):
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!\n"
-                + "                   Are the coordinates missing?"
+                + "                   Are coordinates missing?"
                 + "\n__________________________________________________",
                 e,
             )

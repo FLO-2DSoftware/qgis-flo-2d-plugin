@@ -772,6 +772,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         outside_nodes = ""
         outside_conduits = ""
         outside_pumps = ""
+        error_msg = "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file
         try:
             """
             Create an ordered dictionary "storm_drain.INP_groups".
@@ -1279,7 +1280,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         new_pumps = []
         updated_pumps = 0
         pump_inlets_not_found = ""
-        pump_outlets_not_found = ""  
+        pump_outlets_not_found = ""
+        pump_data_missing = ""  
                  
         if storm_drain.INP_pumps:
             try:
@@ -1294,9 +1296,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 fields = self.user_swmm_pumps_lyr.fields()
     
                 for name, values in list(storm_drain.INP_pumps.items()):
-    
-                    go_go = True
-    
+                    if values["pump_shutoff_depth"] == None:
+                        pump_data_missing = "\nError(s) in [PUMP] group. Are values missing?" 
+                        continue
+                        
                     pump_inlet = values["pump_inlet"] if "pump_inlet" in values else None
                     pump_outlet = values["pump_outlet"] if "pump_outlet" in values else None
                     pump_curve = values["pump_curve"] if "pump_curve" in values else None
@@ -1306,15 +1309,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     pump_startup_depth = float(values["pump_startup_depth"]) if "pump_startup_depth" in values else 0.0
                     pump_shutoff_depth = float(values["pump_shutoff_depth"]) if "pump_shutoff_depth" in values else 0.0
 
-                    feat = QgsFeature()
-                    feat.setFields(fields)
-    
                     if not pump_inlet in storm_drain.INP_nodes:
                         pump_inlets_not_found += name + "\n"
-                        go_go = False
+                        continue
                     if not pump_outlet in storm_drain.INP_nodes:
                         pump_outlets_not_found += name + "\n"
-                        go_go = False
+                        continue
     
                     if not go_go:
                         continue
@@ -1338,8 +1338,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     #                 if complete_or_create == "Create New":
     
                     geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    
+                    feat = QgsFeature()
+                    feat.setFields(fields)                   
                     feat.setGeometry(geom)
-    
                     feat.setAttribute("pump_name", name)
                     feat.setAttribute("pump_inlet", pump_inlet)
                     feat.setAttribute("pump_outlet", pump_outlet)
@@ -1362,27 +1364,49 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Pumps layer failed!", e)
+                self.uc.show_error("ERROR 050618.1805: creation of Storm Drain Pumps layer failed!", e)
 
         QApplication.restoreOverrideCursor()
 
+
         if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0:
-            self.uc.show_info(
-                "WARNING 261220.1631:\n\nFile "
-                + swmm_file
-                + "\n\ndoes not have nodes or conduits inside the domain of this project."
-            )
+            info += "\nThere are no nodes or conduits inside the domain of this project."
+            # self.uc.show_info(
+            #     "WARNING 261220.1631:\n\nFile "
+            #     + swmm_file
+            #     + "\n\ndoes not have nodes or conduits inside the domain of this project."
+            # )
         else:
             if conduit_inlets_not_found != "":
-                self.uc.show_warn(
-                    "WARNING 060319.1732: The following conduits have no inlet defined!\n\n" + conduit_inlets_not_found
-                )
+                error_msg += "\n\nThe following conduits have no inlet defined!\n" + conduit_inlets_not_found
+                # self.uc.show_warn(
+                #     "WARNING 060319.1732: The following conduits have no inlet defined!\n\n" + conduit_inlets_not_found
+                # )
 
             if conduit_outlets_not_found != "":
-                self.uc.show_warn(
-                    "WARNING 060319.1733: The following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
-                )
+                error_msg += "\n\nThe following conduits have no outlet defined!\n" + conduit_outlets_not_found
+                # self.uc.show_warn(
+                #     "WARNING 060319.1733: The following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
+                # )
 
+            if pump_data_missing != "":
+                error_msg += "\n" + pump_data_missing
+                
+            if pump_inlets_not_found != "":
+                error_msg += "\n\nThe following pumps have no inlet defined!\n" + pump_inlets_not_found
+                # self.uc.show_warn(
+                #     "WARNING 040322.1212: The following pumps have no inlet defined!\n\n" + pump_inlets_not_found
+                # )
+
+            if pump_outlets_not_found != "":
+                error_msg += "\n\nThe following pumps have no outlet defined!\n" + pump_outlets_not_found
+                # self.uc.show_warn(
+                #     "WARNING 040322.1213: The following pumps have no outlet defined!\n\n" + pump_outlets_not_found
+                # )
+
+            if error_msg !=  "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
+                self.uc.show_critical(error_msg)
+                
             if complete_or_create == "Create New":
                 self.uc.show_info(
                     "Importing Storm Drain data finished!\n\n"
@@ -1417,6 +1441,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
+                
             if outside_nodes != "":
                 msgBox = QMessageBox()
                 msgBox.setIcon(QMessageBox.Warning)
@@ -1436,6 +1461,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 msgBox.setDetailedText(outside_conduits)
                 msgBox.setStandardButtons(QMessageBox.Ok)
                 msgBox.exec_()
+                
+            if outside_pumps != "":
+                msgBox = QMessageBox()
+                msgBox.setIcon(QMessageBox.Warning)
+                msgBox.setWindowTitle("Storm Drain pumps outside domain")
+                msgBox.setText("WARNING 050322.0522:")
+                msgBox.setInformativeText("The following Pumps are outside the domain:")
+                msgBox.setDetailedText(outside_conduits)
+                msgBox.setStandardButtons(QMessageBox.Ok)
+                msgBox.exec_()                
                 
         self.populate_curves_cbo()
         self.update_pump_curve_data()
@@ -1486,7 +1521,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value("FLO-2D/lastSWMMDir", "")
             swmm_file, __ = QFileDialog.getSaveFileName(
-                None, "Select SWMM input file to update", directory=last_dir, filter="(*.inp *.INP*)"
+                None, "Select SWMM output file to update", directory=last_dir, filter="(*.inp *.INP*)"
             )
 
             if not swmm_file:
@@ -1676,8 +1711,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             for row in conduits_rows:
                                 row = (
                                     row[0],
-                                    "?" if row[1] is None else row[1],
-                                    "?" if row[2] is None else row[2],
+                                    "?" if row[1] is None or row[1] == "" else row[1],
+                                    "?" if row[2] is None or row[2] == "" else row[2],
                                     0 if row[3] is None else row[3],
                                     0 if row[4] is None else row[4],
                                     0 if row[5] is None else row[5],
@@ -1686,7 +1721,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if row[8] is None else row[8],
                                 )
                                 if row[1] == "?" or row[2] == "?":
-                                    no_in_out_conduits += 1
+                                    no_in_out_conduits += 1  
                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
@@ -1723,8 +1758,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             for row in pumps_rows:
                                 row = (
                                     row[0],
-                                    "?" if row[1] is None else row[1],
-                                    "?" if row[2] is None else row[2],
+                                    "?" if row[1] is None or row[1] == "" else row[1],
+                                    "?" if row[2] is None or row[2] == "" else row[2],
                                     "*" if row[3] is None else row[3],
                                     "OFF" if row[4] is None else row[4],
                                     0 if row[5] is None else row[5],
@@ -1847,7 +1882,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 swmm_inp_file.write(line.format(*lrow))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!", e)
+                        self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n" + 
+                                           "Is the name or type of the curve missing in 'Storm Drain Pumps Curve Data' table?", e)
                         return
 
                     # REPORT ##################################################
@@ -2107,16 +2143,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 if no_in_out_conduits != 0:
                     self.uc.show_warn(
-                        "WARNING 060319.1734: "
+                        "WARNING 060319.1734: Storm Drain (export .INP file):\n\n"
                         + str(no_in_out_conduits)
-                        + " conduits have no inlet and/or outlet! The value '?' was assigned to them.\n"
+                        + " conduits have no inlet and/or outlet! The value '?' was written.\n"
                         + "Please review them because it will cause errors during their processing.\n"
                     )
                 if no_in_out_pumps != 0:
                     self.uc.show_warn(
-                        "WARNING 271121.0516: "
+                        "WARNING 271121.0516: Storm Drain (export .INP file):\n\n"
                         + str(no_in_out_pumps)
-                        + " pumps have no inlet and/or outlet! The value '?' was assigned to them.\n"
+                        + " pumps have no inlet and/or outlet! The value '?' was written.\n"
                         + "Please review them because it will cause errors during their processing.\n"
                     )                    
         except Exception as e:
@@ -3069,7 +3105,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         ptype = "Pump" + self.pump_curve_type_cbo.currentText()[4]
         desc = self.pump_curve_description_le.text()
         self.gutils.execute("UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?", (ptype, desc, curve))
-        self.show_pump_curve_table_and_plot()
+        # self.show_pump_curve_table_and_plot()
         
     def show_pump_curve_type_and_description(self):
         curve = self.pump_curve_cbo.currentText()

@@ -788,6 +788,8 @@ class Flo2D(object):
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
+                        if dat == "SWMMFLO.DAT":
+                            self.files_used += "SWMM.INP" + "\n"                            
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
                         if dat == "MULT.DAT":
@@ -1610,6 +1612,8 @@ class Flo2D(object):
                 finally:
                     QApplication.restoreOverrideCursor()
 
+                    if "Storm Drain" in dlg_components.components:
+                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
                     # Delete .DAT files the model will try to use if existing:
                     if "export_mult" in export_calls:

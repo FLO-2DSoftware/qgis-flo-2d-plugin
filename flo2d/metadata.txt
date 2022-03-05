@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.41
+version=0.10.42
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.42
+  - Export GDS files: includes SWMMN.INP file when Storm Drain is exported.
  <p>0.10.41
   - Storm Drains: 
   -   Transfer pumps funtionality to SD widget. 
