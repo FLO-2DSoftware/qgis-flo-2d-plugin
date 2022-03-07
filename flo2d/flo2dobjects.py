@@ -1783,12 +1783,12 @@ class PumpCurves(GeoPackageUtils):
 
     def add_pump_curve(self, name=None):
         if name == None:
-            qry = """INSERT INTO swmm_pumps_curve_data (pump_curve_name) VALUES (?);"""
-            rowid = self.execute(qry, (name,), get_rowid=True)
-            name_qry = """UPDATE swmm_pumps_curve_data SET pump_curve_name =  'Pump Curve ' || cast(fid as text) WHERE fid = ?;"""
+            qry = """INSERT INTO swmm_pumps_curve_data (pump_curve_name, pump_curve_type) VALUES (?, ?);"""
+            rowid = self.execute(qry, (name,"Pump1"), get_rowid=True)
+            name_qry = """UPDATE swmm_pumps_curve_data SET pump_curve_name =  'PumpCurve' || cast(fid as text) WHERE fid = ?;"""
             self.execute(name_qry, (rowid,))
             if not name:
-                self.name = "Pump Curve {}".format(rowid)
+                self.name = "PumpCurve{}".format(rowid)
             return self.name
         else:
             sel_qry = "SELECT fid FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;"
@@ -1831,19 +1831,12 @@ class PumpCurves(GeoPackageUtils):
         if fetch:
             return self.get_pump_curve_data(name)
 
-    def set_pump_curve_data(self, pc_fid, name, data):
-        qry = "UPDATE swmm_pumps_curve_data SET pump_curve_name=? WHERE fid=?;"
-        self.execute(
-            qry,
-            (
-                name,
-                pc_fid,
-            ),
-        )
-        # qry = "DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;"
-        # self.execute(qry, (rt_fid,))
-        # qry = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);"
-        # self.execute_many(qry, data)
+    def set_pump_curve_data(self, name, data):
+        qry = "DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;"
+        self.execute(qry, (name,))        
+        qry = "INSERT INTO swmm_pumps_curve_data (pump_curve_name, x_value, y_value) VALUES (?, ?, ?);"
+        self.execute_many(qry, data)
+
 
     def set_pump_curve_name(self, name, new_name):
         # fids = self.execute("SELECT fid FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;", (name,)).fetchall()

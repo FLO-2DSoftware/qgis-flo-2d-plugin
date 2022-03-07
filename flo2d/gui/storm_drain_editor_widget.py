@@ -11,7 +11,7 @@
 import os
 import traceback
 from collections import OrderedDict
-from qgis.PyQt.QtCore import QSettings, Qt, QVariant, QTime
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant, QTime, pyqtSignal
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
@@ -115,22 +115,32 @@ uiDialog, qtBaseClass = load_ui("storm_drain_editor")
 
 
 class StormDrainEditorWidget(qtBaseClass, uiDialog):
+    before_paste = pyqtSignal()
+    after_paste = pyqtSignal()
+    after_delete = pyqtSignal()
+    
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
         
         self.plot = plot 
-        self.table_dock = table
+        # self.table_dock = table
         self.tview = table.tview 
+        # self.rt_tview = table.tview 
+        # self.pump_tview = table.tview 
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = None
         self.table = table
+        
         self.inlet_data_model = StandardItemModel()
         self.pumps_data_model = StandardItemModel()
         
+        # self.rt_tview.setModel(self.inlet_data_model)  
+        # self.pump_tview.setModel(self.pumps_data_model)  
+              
         self.grid_lyr = None
         self.user_swmm_nodes_lyr = None
         self.user_swmm_conduits_lyr = None
@@ -231,14 +241,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.inlet_grp.toggled.connect(self.inlet_checked)
         # self.outlet_grp.toggled.connect(self.outlet_checked)
         #
-        self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
-        # self.table.before_paste.connect(self.block_saving)
-        # self.table.after_paste.connect(self.unblock_saving)
-        # self.table.after_delete.connect(self.dummy)
+        self.inlet_data_model.dataChanged.connect(self.save_table_data)
         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
-
-        self.pumps_data_model.dataChanged.connect(self.save_pump_curve_data)
-        self.pumps_data_model.itemDataChanged.connect(self.tview.itemDataChangedSlot)
+        
+        self.table.before_paste.connect(self.block_saving)
+        self.table.after_paste.connect(self.unblock_saving)
+        self.table.after_delete.connect(self.save_table_data)
+        
+        self.pumps_data_model.dataChanged.connect(self.save_table_data)
+        self.pumps_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
         self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
@@ -250,7 +261,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.import_inp_btn.clicked.connect(self.import_storm_drain_INP_file)
         self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)  
         
-        self.pump_curve_cbo.activated.connect(self.show_pump_curve_table_and_plot)
+        self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)    
                   
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
@@ -271,9 +282,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
         
-        # self.check_simulate_SD_1()
-        self.populate_rtables()
-        self.populate_curves_cbo()   
+        self.populate_rtables_combo()
+        self.populate_pump_curves_and_data()
+        # self.populate_pump_curves_combo(True)   
         self.show_pump_curve_type_and_description()   
             
     def setup_connection(self):
@@ -924,15 +935,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Pump curves into table swmm_pumps_curve_data:
                 storm_drain.create_INP_curves_list_with_curves()      
                 try:
-                    if complete_or_create == "Create New":
-                        remove_features(self.user_swmm_pumps_curve_data_lyr)
                     insert_curves_sql = """INSERT INTO swmm_pumps_curve_data
                                             (   pump_curve_name, 
                                                 pump_curve_type, 
                                                 x_value,
                                                 y_value
                                             ) 
-                                            VALUES (?, ?, ?, ?);"""
+                                            VALUES (?, ?, ?, ?);"""   
+                                                             
+                    # if complete_or_create == "Create New":
+                    #     remove_features(self.user_swmm_pumps_curve_data_lyr)
+                    
+                    remove_features(self.user_swmm_pumps_curve_data_lyr)                       
                     for curve in storm_drain.INP_curves:
                         self.gutils.execute(insert_curves_sql, (curve[0], curve[1], curve[2], curve[3])) 
                 
@@ -1369,111 +1383,112 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
 
-        if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0:
-            info += "\nThere are no nodes or conduits inside the domain of this project."
+        if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0 and len(new_pumps) == 0:
+            error_msg += "\nThere are no nodes or links inside the domain of this project."
             # self.uc.show_info(
             #     "WARNING 261220.1631:\n\nFile "
             #     + swmm_file
             #     + "\n\ndoes not have nodes or conduits inside the domain of this project."
             # )
+        if conduit_inlets_not_found != "":
+            error_msg += "\n\nThe following conduits have no inlet defined!\n" + conduit_inlets_not_found
+            # self.uc.show_warn(
+            #     "WARNING 060319.1732: The following conduits have no inlet defined!\n\n" + conduit_inlets_not_found
+            # )
+
+        if conduit_outlets_not_found != "":
+            error_msg += "\n\nThe following conduits have no outlet defined!\n" + conduit_outlets_not_found
+            # self.uc.show_warn(
+            #     "WARNING 060319.1733: The following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
+            # )
+
+        if pump_data_missing != "":
+            error_msg += "\n" + pump_data_missing
+            
+        if pump_inlets_not_found != "":
+            error_msg += "\n\nThe following pumps have no inlet defined!\n" + pump_inlets_not_found
+            # self.uc.show_warn(
+            #     "WARNING 040322.1212: The following pumps have no inlet defined!\n\n" + pump_inlets_not_found
+            # )
+
+        if pump_outlets_not_found != "":
+            error_msg += "\n\nThe following pumps have no outlet defined!\n" + pump_outlets_not_found
+            # self.uc.show_warn(
+            #     "WARNING 040322.1213: The following pumps have no outlet defined!\n\n" + pump_outlets_not_found
+            # )
+
+        if error_msg !=  "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
+            self.uc.show_critical(error_msg)
+            
+        if complete_or_create == "Create New":
+            self.uc.show_info(
+                "Importing Storm Drain data finished!\n\n"
+                + "* "
+                + str(len(new_nodes))
+                + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
+                + "* "
+                + str(len(new_conduits))
+                + " conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
+                + "* "
+                + str(len(new_pumps))
+                + " pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"                    
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                "later export the .DAT files used by the FLO-2D model."
+            )
         else:
-            if conduit_inlets_not_found != "":
-                error_msg += "\n\nThe following conduits have no inlet defined!\n" + conduit_inlets_not_found
-                # self.uc.show_warn(
-                #     "WARNING 060319.1732: The following conduits have no inlet defined!\n\n" + conduit_inlets_not_found
-                # )
+            self.uc.show_info(
+                "Storm Drain data was updated from file\n"
+                + swmm_file
+                + "\n\n"
+                + "* "
+                + str(updated_nodes)
+                + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
+                + "* "
+                + str(updated_conduits)
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n\n"
+                + "* "
+                + str(updated_pumps)
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"                    
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                "later export the .DAT files used by the FLO-2D model."
+            )
+            
+        if outside_nodes != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain points outside domain")
+            msgBox.setText("WARNING 221220.0336:")
+            msgBox.setInformativeText("The following Storm Drain points are outside the domain:")
+            msgBox.setDetailedText(outside_nodes)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()
 
-            if conduit_outlets_not_found != "":
-                error_msg += "\n\nThe following conduits have no outlet defined!\n" + conduit_outlets_not_found
-                # self.uc.show_warn(
-                #     "WARNING 060319.1733: The following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
-                # )
-
-            if pump_data_missing != "":
-                error_msg += "\n" + pump_data_missing
+        if outside_conduits != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain conduits outside domain")
+            msgBox.setText("WARNING 221220.0337:")
+            msgBox.setInformativeText("The following Conduits are outside the domain:")
+            msgBox.setDetailedText(outside_conduits)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()
+            
+        if outside_pumps != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain pumps outside domain")
+            msgBox.setText("WARNING 050322.0522:")
+            msgBox.setInformativeText("The following Pumps are outside the domain:")
+            msgBox.setDetailedText(outside_conduits)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()                
                 
-            if pump_inlets_not_found != "":
-                error_msg += "\n\nThe following pumps have no inlet defined!\n" + pump_inlets_not_found
-                # self.uc.show_warn(
-                #     "WARNING 040322.1212: The following pumps have no inlet defined!\n\n" + pump_inlets_not_found
-                # )
-
-            if pump_outlets_not_found != "":
-                error_msg += "\n\nThe following pumps have no outlet defined!\n" + pump_outlets_not_found
-                # self.uc.show_warn(
-                #     "WARNING 040322.1213: The following pumps have no outlet defined!\n\n" + pump_outlets_not_found
-                # )
-
-            if error_msg !=  "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
-                self.uc.show_critical(error_msg)
-                
-            if complete_or_create == "Create New":
-                self.uc.show_info(
-                    "Importing Storm Drain data finished!\n\n"
-                    + "* "
-                    + str(len(new_nodes))
-                    + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
-                    + "* "
-                    + str(len(new_conduits))
-                    + " conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
-                    + "* "
-                    + str(len(new_pumps))
-                    + " pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"                    
-                    "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-                    "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-                    "later export the .DAT files used by the FLO-2D model."
-                )
-            else:
-                self.uc.show_info(
-                    "Storm Drain data was updated from file\n"
-                    + swmm_file
-                    + "\n\n"
-                    + "* "
-                    + str(updated_nodes)
-                    + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
-                    + "* "
-                    + str(updated_conduits)
-                    + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n\n"
-                    + "* "
-                    + str(updated_pumps)
-                    + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"                    
-                    "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-                    "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-                    "later export the .DAT files used by the FLO-2D model."
-                )
-                
-            if outside_nodes != "":
-                msgBox = QMessageBox()
-                msgBox.setIcon(QMessageBox.Warning)
-                msgBox.setWindowTitle("Storm Drain points outside domain")
-                msgBox.setText("WARNING 221220.0336:")
-                msgBox.setInformativeText("The following Storm Drain points are outside the domain:")
-                msgBox.setDetailedText(outside_nodes)
-                msgBox.setStandardButtons(QMessageBox.Ok)
-                msgBox.exec_()
-
-            if outside_conduits != "":
-                msgBox = QMessageBox()
-                msgBox.setIcon(QMessageBox.Warning)
-                msgBox.setWindowTitle("Storm Drain conduits outside domain")
-                msgBox.setText("WARNING 221220.0337:")
-                msgBox.setInformativeText("The following Conduits are outside the domain:")
-                msgBox.setDetailedText(outside_conduits)
-                msgBox.setStandardButtons(QMessageBox.Ok)
-                msgBox.exec_()
-                
-            if outside_pumps != "":
-                msgBox = QMessageBox()
-                msgBox.setIcon(QMessageBox.Warning)
-                msgBox.setWindowTitle("Storm Drain pumps outside domain")
-                msgBox.setText("WARNING 050322.0522:")
-                msgBox.setInformativeText("The following Pumps are outside the domain:")
-                msgBox.setDetailedText(outside_conduits)
-                msgBox.setStandardButtons(QMessageBox.Ok)
-                msgBox.exec_()                
-                
-        self.populate_curves_cbo()
+        self.populate_pump_curves_combo(False)
+        self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
+        self.pump_curve_cbo.blockSignals(False)
 
     def import_INP_action(self):
         msg = QMessageBox()
@@ -1872,14 +1887,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         if not curves_rows:
                             pass
                         else:
-                            typ = ""
+                            name = ""
                             for row in curves_rows:
                                 lrow = list(row)
-                                if lrow[1] == typ:
+                                if lrow[0] == name:
                                     lrow[1]= "     "  
                                 else:
-                                    typ = lrow[1]
+                                    name = lrow[0]
                                 swmm_inp_file.write(line.format(*lrow))
+                                                            
+                            # typ = ""
+                            # for row in curves_rows:
+                            #     lrow = list(row)
+                            #     if lrow[1] == typ:
+                            #         lrow[1]= "     "  
+                            #     else:
+                            #         typ = lrow[1]
+                            #     swmm_inp_file.write(line.format(*lrow))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n" + 
@@ -2226,7 +2250,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
                 + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
             )
-            self.populate_rtables()
+            self.populate_rtables_combo()
         
         elif not save:
             pass
@@ -2664,12 +2688,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         #     self.uc.bar_warn("Storm drain components not saved!")
 
     def block_saving(self):
-        try_disconnect(self.inlet_data_model.dataChanged, self.save_rtables_data)
+        model = self.tview.model()
+        if model == self.inlet_data_model:
+            try_disconnect(self.inlet_data_model.dataChanged, self.save_rtables_data)
+        elif model == self.pumps_data_model:
+            try_disconnect(self.pumps_data_model.dataChanged, self.save_pump_curve_data) 
 
     def unblock_saving(self):
-        self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
-
-    def itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
+        model = self.tview.model()
+        if model == self.inlet_data_model:
+            self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
+        elif model == self.pumps_data_model:
+            self.pumps_data_model.dataChanged.connect(self.save_pump_curve_data)       
+    
+    def inlet_itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
         """
         Slot used to push changes of existing items onto undoStack.
         """
@@ -2679,12 +2711,33 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             self.tview.undoStack.push(command)
             return True
-
+    def pump_itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
+        if role == Qt.EditRole:
+            command = CommandItemEdit(
+                self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
+            )
+            self.tview.undoStack.push(command)
+            return True
+ 
+    def itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
+        if role == Qt.EditRole:
+            command = CommandItemEdit(
+                self, item, old_value, new_value, "Text changed from '{0}' to '{1}'".format(old_value, new_value)
+            )
+            self.tview.undoStack.push(command)
+            return True       
+        
     def populate_rtables_and_data(self):
-        self.populate_rtables()
+        self.populate_rtables_combo()
         self.show_rating_table_and_plot()
 
-    def populate_rtables(self):
+    def populate_rtables_combo(self):
         self.SD_rating_table_cbo.clear()
         duplicates = ""
         for row in self.inletRT.get_rating_tables():
@@ -2805,7 +2858,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not self.inletRT:
             return
         newRT = self.inletRT.add_rating_table(name)
-        self.populate_rtables()
+        self.populate_rtables_combo()
         newIdx = self.SD_rating_table_cbo.findText(newRT)
         if newIdx == -1:
             self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count() - 1)
@@ -2817,7 +2870,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not self.inletRT:
             return
         newRT = self.inletRT.add_rating_table(name)
-        self.populate_rtables()
+        self.populate_rtables_combo()
         newIdx = self.SD_rating_table_cbo.findText(newRT)
         if newIdx == -1:
             self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count() - 1)
@@ -2846,7 +2899,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 idx = self.SD_rating_table_cbo.currentIndex()
                 rt_fid = self.SD_rating_table_cbo.itemData(idx)
                 self.inletRT.del_rating_table(rt_fid)
-                # self.populate_rtables()
+                # self.populate_rtables_combo()
             else:
                 if self.uc.question(
                     "WARNING 040319.0444:\n\nRating table '"
@@ -2865,7 +2918,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         idx = self.SD_rating_table_cbo.currentIndex()
                         rt_fid = self.SD_rating_table_cbo.itemData(idx)
                         self.inletRT.del_rating_table(rt_fid)
-                        # self.populate_rtables()
+                        # self.populate_rtables_combo()
         self.populate_rtables_and_data()
         
         if self.SD_rating_table_cbo.currentIndex() == -1:
@@ -2896,14 +2949,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         idx = self.SD_rating_table_cbo.currentIndex()
         rt_fid = self.SD_rating_table_cbo.itemData(idx)
         self.inletRT.set_rating_table_data_name(rt_fid, new_name)
-        self.populate_rtables()
+        self.populate_rtables_combo()
 
+    def save_table_data(self):
+        model = self.tview.model()
+        if model == self.inlet_data_model:
+            self.save_rtables_data()
+        elif model == self.pumps_data_model:
+            self.save_pump_curve_data()
+        
     def save_rtables_data(self):
         idx = self.SD_rating_table_cbo.currentIndex()
         rt_fid = self.SD_rating_table_cbo.itemData(idx)
-        self.update_plot()
+        self.update_rt_plot()
         rt_data = []
-
         for i in range(self.inlet_data_model.rowCount()):
             # save only rows with a number in the first column
             if is_number(m_fdata(self.inlet_data_model, i, 0)) and not isnan(m_fdata(self.inlet_data_model, i, 0)):
@@ -2912,6 +2971,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 pass
         data_name = self.SD_rating_table_cbo.currentText()
         self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
+        self.update_rt_plot()
 
     def create_rt_plot(self, name):
         self.plot.clear()
@@ -2935,12 +2995,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
 # PUMPS:
 
-    def populate_curves_and_data(self):
-        self.populate_curves_cbo()
-        # self.show_pump_curve_table_and_plot()
+    def populate_pump_curves_and_data(self):
+        self.populate_pump_curves_combo(True)
+        self.show_pump_curve_table_and_plot()
 
-    def populate_curves_cbo(self):
-        self.pump_curve_cbo.blockSignals(True)
+    def populate_pump_curves_combo(self, block = True):
+        self.pump_curve_cbo.blockSignals(block)
         self.pump_curve_cbo.clear()
         duplicates = ""
         for row in self.PumpCurv.get_pump_curves():
@@ -2950,21 +3010,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.pump_curve_cbo.addItem(name, pc_fid) 
                 else:  
                     duplicates += name + "\n"     
-        self.pump_curve_cbo.blockSignals(False)  
-                          
-    def show_pump_curve_table_and_plot(self):
-        curve_name = self.pump_curve_cbo.currentText()
-        if curve_name == "*":
+        self.pump_curve_cbo.blockSignals(not block)  
+ 
+    def current_cbo_pump_curve_index_changed(self, idx=0):
+        if not self.pump_curve_cbo.count():
             return
-    
-        self.show_pump_curve_type_and_description()
-        
-        # if curve_fid is None:
-        #     # self.plot.clear()
-        #     # self.tview.undoStack.clear()
-        #     # self.tview.setModel(self.pumps_data_model)
-        #     # self.pump_data_model.clear()
-        #     return            
+        fid = self.pump_curve_cbo.currentData()
+        if fid is None:
+            fid = -1
+
+        self.show_pump_curve_table_and_plot() 
+                                
+    def show_pump_curve_table_and_plot(self):
+
+        idx = self.pump_curve_cbo.currentIndex()
+        curve_fid = self.pump_curve_cbo.itemData(idx)
+        curve_name = self.pump_curve_cbo.currentText()
+        if curve_fid is None:
+            #             self.uc.bar_warn("No curve table defined!")
+            return             
 
         self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
         if not self.curve_data:
@@ -3003,8 +3067,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.setColumnWidth(col, 100)
         for i in range(self.pumps_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
-        self.update_plot()
-        
+        self.update_pump_plot()
+
+
     def create_pump_plot(self, name):
         self.plot.clear()
         if self.plot.plot.legend is not None:
@@ -3018,7 +3083,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
         
 
-    def update_plot(self):
+    def update_pump_plot(self):
         if not self.plot_item_name:
             return
         self.d1, self.d2 = [[], []]
@@ -3027,7 +3092,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.d2.append(m_fdata(self.pumps_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
-
     def add_one_pump_curve(self):
         self.add_single_pump_curve()
         
@@ -3035,7 +3099,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not self.PumpCurv:
             return
         newPC = self.PumpCurv.add_pump_curve(name)
-        self.populate_curves_cbo()
+        self.populate_pump_curves_combo(True)
         newIdx = self.pump_curve_cbo.findText(newPC)
         if newIdx == -1:
             self.pump_curve_cbo.setCurrentIndex(self.pump_curve_cbo.count() - 1)
@@ -3051,7 +3115,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if pc_name == "*":
             return
         self.PumpCurv.del_pump_curve(pc_name)
-        self.populate_curves_cbo()
+        self.populate_pump_curves_combo(False)
         
         if self.pump_curve_cbo.currentIndex() == -1:
             self.plot.clear()
@@ -3064,10 +3128,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.clear()
             self.tview.setModel(self.pumps_data_model)
             self.pumps_data_model.clear()
+            
+        self.show_pump_curve_table_and_plot()    
 
     def refresh_PC_PlotAndTable(self):
+        # idx = self.pump_curve_cbo.currentIndex()
         self.show_pump_curve_type_and_description()
-        idx = self.pump_curve_cbo.currentIndex()
         
     def rename_pump_curve(self):
         if not self.PumpCurv:
@@ -3084,28 +3150,35 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         name = self.pump_curve_cbo.currentText()
         self.PumpCurv.set_pump_curve_name(name, new_name)
         
-        self.populate_curves_cbo()
+        self.populate_pump_curves_combo(True)
 
     def save_pump_curve_data(self):
         idx = self.pump_curve_cbo.currentIndex()
         pc_fid = self.pump_curve_cbo.itemData(idx)
-        self.update_plot()
+        data_name = self.pump_curve_cbo.currentText()
+        self.update_pump_plot()
         pc_data = []
         for i in range(self.pumps_data_model.rowCount()):
             # save only rows with a number in the first column
             if is_number(m_fdata(self.pumps_data_model, i, 0)) and not isnan(m_fdata(self.pumps_data_model, i, 0)):
-                pc_data.append((pc_fid, m_fdata(self.pumps_data_model, i, 0), m_fdata(self.pumps_data_model, i, 1)))
+                pc_data.append((data_name, m_fdata(self.pumps_data_model, i, 0), m_fdata(self.pumps_data_model, i, 1)))
             else:
                 pass
-        data_name = self.pump_curve_cbo.currentText()
-        self.PumpCurv.set_pump_curve_data(pc_fid, data_name, pc_data)    
         
+        self.PumpCurv.set_pump_curve_data(data_name, pc_data) 
+           
+        curve = self.pump_curve_cbo.currentText()
+        ptype = "Pump" + self.pump_curve_type_cbo.currentText()[4]
+        desc = self.pump_curve_description_le.text()
+        self.gutils.execute("UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?", (ptype, desc, curve))
+
+      
     def update_pump_curve_data(self):
         curve = self.pump_curve_cbo.currentText()
         ptype = "Pump" + self.pump_curve_type_cbo.currentText()[4]
         desc = self.pump_curve_description_le.text()
         self.gutils.execute("UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?", (ptype, desc, curve))
-        # self.show_pump_curve_table_and_plot()
+        self.show_pump_curve_table_and_plot()
         
     def show_pump_curve_type_and_description(self):
         curve = self.pump_curve_cbo.currentText()
@@ -3119,3 +3192,5 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.pump_curve_description_le.setText(desc)       
    
         
+    def dummy(self):
+        pass

@@ -1588,7 +1588,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             val = int(-1 if s.value("sf_pump_to_outlet") is None else s.value("sf_pump_to_outlet"))
             self.pump_to_outlet_FieldCbo.setCurrentIndex(val)
 
-            val = int(-1 if s.value("sf_pump_initial_status") is None else s.value("sf_pump_initial_status"))
+            val = int(-1 if s.value("sf_pump_init_status") is None else s.value("sf_pump_init_status"))
             self.pump_initial_status_FieldCbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("sf_pump_startup_depth") is None else s.value("sf_pump_startup_depth"))

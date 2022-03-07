@@ -455,8 +455,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.sample_elevation_current_R_T_V_btn.setEnabled(typ == "R" or typ == "T" or typ == "V")
         self.sample_elevation_current_natural_btn.setEnabled(typ == "N" and self.raster_radio_btn.isChecked())
 
-        # highlight_selected_xsection_b(self.lyrs.data['user_xsections']['qlyr'], self.xs_cbo.currentIndex()+1)
-
     def update_table(self):
 
         row = self.xs.get_row()

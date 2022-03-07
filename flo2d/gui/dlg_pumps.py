@@ -14,7 +14,6 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox, QInputDialog
 from .table_editor_widget import StandardItemModel, StandardItem
 from .ui_utils import load_ui, set_icon, center_canvas, zoom, try_disconnect
-from ..flo2dobjects import PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from math import isnan
@@ -48,24 +47,16 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
         self.find_pump_btn.clicked.connect(self.find_pump)
         self.zoom_in_pump_btn.clicked.connect(self.zoom_in_pump)
-        self.zoom_out_pump_btn.clicked.connect(self.zoom_out_pump)
-        
-        # set_icon(self.show_pump_curve_btn, "call_dialog.svg")      
+        self.zoom_out_pump_btn.clicked.connect(self.zoom_out_pump)   
         
         self.pumps_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Pumps' User Layer")
         self.pump_name_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_pump_in_table)
         
         self.pumps_buttonBox.accepted.connect(self.save_pumps)
 
-        self.pump_curve_cbo.activated.connect(self.show_pump_curve_table_and_plot)
-        self.pump_curve_cbo.currentIndexChanged.connect(self.pump_curve_cbo_currentIndexChanged)
+        # self.pump_curve_cbo.activated.connect(self.show_pump_curve_table_and_plot)
+        self.pump_curve_cbo.currentIndexChanged.connect(self.pump_curve_cbo_currentIndexChanged)      
         
-        
-        self.add_pump_curve_btn.clicked.connect(self.add_pump_curve)
-        self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
-        self.rename_pump_curve_btn.clicked.connect(self.rename_pump_curve)        
-        
-        # self.show_pump_curve_btn.clicked.connect(self.show_pump_curve_clicked)
         self.pump_init_status_cbo.currentIndexChanged.connect(self.pump_init_status_cbo_currentIndexChanged)
         self.startup_depth_dbox.valueChanged.connect(self.startup_depth_dbox_valueChanged)
         self.shutoff_depth_dbox.valueChanged.connect(self.shutoff_depth_dbox_valueChanged)
@@ -92,7 +83,6 @@ class PumpsDialog(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.PumpCurv = PumpCurves(self.con, self.iface)
 
     def populate_pumps(self):
         qry = """SELECT fid,
@@ -106,6 +96,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 FROM user_swmm_pumps;"""
         wrong_status = 0
         try:
+            self.populate_curves() 
             rows = self.gutils.execute(qry).fetchall()
             self.pumps_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows): 
@@ -118,11 +109,11 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     if column == 1:  
                         # Fill the list of pump names:
                         self.pump_name_cbo.addItem(data, row_data[0])
-                    if column == 4:  
-                        # Fill the list of curve names: 
-                        index= self.pump_curve_cbo.findText(data) 
-                        if index == -1:
-                            self.pump_curve_cbo.addItem(data, row_data[4])
+                    # if column == 4:  
+                    #     # Fill the list of curve names: 
+                    #     index= self.pump_curve_cbo.findText(data) 
+                    #     if index == -1:
+                    #         self.pump_curve_cbo.addItem(data, row_data[4])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_pumps):
                     if row_number == 0:
@@ -217,7 +208,13 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
     def pump_curve_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.pump_curve_cbo, 3)
-                
+        self.pump_curve_type_lbl.setText("Pump Type:")
+        self.pump_curve_description_lbl.setText("Description:") 
+        name = self.pump_curve_cbo.currentText()
+        curve = self.gutils.execute("SELECT pump_curve_type, description FROM swmm_pumps_curve_data WHERE pump_curve_name = ?", (name,)).fetchone()
+        if curve:
+            self.pump_curve_type_lbl.setText("Pump Type: " + curve[0] if curve[0] != None else "")
+            self.pump_curve_description_lbl.setText("Description: " + curve[1] if curve[1] != None else "") 
 
     def pump_init_status_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.pump_init_status_cbo, 4)        
@@ -434,63 +431,66 @@ class PumpsDialog(qtBaseClass, uiDialog):
             )
 
     def block_saving(self):
-        try_disconnect(self.pump_data_model.dataChanged, self.save_pump_curve_data)
+        try_disconnect(self.pumps_data_model.dataChanged, self.save_pump_curve_data)
 
     def unblock_saving(self):
-        self.pump_data_model.dataChanged.connect(self.save_pump_curve_data)
-        
-    def populate_curves_and_data(self):
-        self.populate_curves()
-        self.show_pump_curve_table_and_plot()
+        self.pumps_data_model.dataChanged.connect(self.save_pump_curve_data)
 
     def populate_curves(self):
         self.pump_curve_cbo.clear()
-        for row in self.PumpCurv.get_pump_curves_names():
-            pc_fid, name = [x if x is not None else "" for x in row]
-            if name != "":
-                if self.pump_curve_cbo.findText(name) == -1:
-                    self.pump_curve_cbo.addItem(name, pc_fid)     
+        self.pump_curve_cbo.addItem("*")           
+        curve = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data")
+        for c in curve:
+            self.pump_curve_cbo.addItem(c[0])       
         
-    def show_pump_curve_table_and_plot(self):
-        idx = self.pump_curve_cbo.currentIndex()
-        curve_fid = self.pump_curve_cbo.itemData(idx)
-        curve_name = self.pump_curve_cbo.currentText()
-        # if curve_name == "*":
-        #     return
-        #
-
-        if curve_fid is None:
-            # self.plot.clear()
-            # self.tview.undoStack.clear()
-            # self.tview.setModel(self.pumps_data_model)
-            # self.pump_data_model.clear()
-            return            
-
-        self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
-        if not self.curve_data:
-            return
-        self.create_plot(curve_name)
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.pumps_data_model)
-        self.pumps_data_model.clear()
-        self.pumps_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
-        self.d1, self.d2 = [[], []]
-        for row in self.curve_data:
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-            self.pumps_data_model.appendRow(items)
-            self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            self.d2.append(row[1] if not row[1] is None else float("NaN"))
-        rc = self.pumps_data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [StandardItem(x) for x in ("",) * 2]
-                self.pumps_data_model.appendRow(items)
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(2):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(self.pumps_data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        self.update_plot()
+        # self.pump_curve_cbo.clear()
+        # self.pump_curve_cbo.addItem("*")    
+        # for row in self.PumpCurv.get_pump_curves():
+        #     pc_fid, name = [x if x is not None else "" for x in row]
+        #     if name != "":
+        #         if self.pump_curve_cbo.findText(name) == -1:
+        #             self.pump_curve_cbo.addItem(name, pc_fid)     
+        
+    # def show_pump_curve_table_and_plot(self):
+    #     idx = self.pump_curve_cbo.currentIndex()
+    #     curve_fid = self.pump_curve_cbo.itemData(idx)
+    #     curve_name = self.pump_curve_cbo.currentText()
+    #     # if curve_name == "*":
+    #     #     return
+    #     #
+    #
+    #     if curve_fid is None:
+    #         self.plot.clear()
+    #         self.tview.undoStack.clear()
+    #         self.tview.setModel(self.pumps_data_model)
+    #         self.pumps_data_model.clear()
+    #         return            
+    #
+    #     self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
+    #     if not self.curve_data:
+    #         return
+    #     self.create_plot(curve_name)
+    #     self.tview.undoStack.clear()
+    #     self.tview.setModel(self.pumps_data_model)
+    #     self.pumps_data_model.clear()
+    #     self.pumps_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
+    #     self.d1, self.d2 = [[], []]
+    #     for row in self.curve_data:
+    #         items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
+    #         self.pumps_data_model.appendRow(items)
+    #         self.d1.append(row[0] if not row[0] is None else float("NaN"))
+    #         self.d2.append(row[1] if not row[1] is None else float("NaN"))
+    #     rc = self.pumps_data_model.rowCount()
+    #     if rc < 500:
+    #         for row in range(rc, 500 + 1):
+    #             items = [StandardItem(x) for x in ("",) * 2]
+    #             self.pumps_data_model.appendRow(items)
+    #     self.tview.horizontalHeader().setStretchLastSection(True)
+    #     for col in range(2):
+    #         self.tview.setColumnWidth(col, 100)
+    #     for i in range(self.pumps_data_model.rowCount()):
+    #         self.tview.setRowHeight(i, 20)
+    #     self.update_plot()
         
     def create_plot(self, name):
         self.plot.clear()
@@ -510,55 +510,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             self.d1.append(m_fdata(self.pumps_data_model, i, 0))
             self.d2.append(m_fdata(self.pumps_data_model, i, 1))
-        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
-
-    def add_pump_curve(self, name=None):
-        if not self.PumpCurv:
-            return
-        newRT = self.PumpCurv.add_pump_curve(name)
-        self.populate_curves()
-        newIdx = self.pump_curve_cbo.findText(newRT)
-        if newIdx == -1:
-            self.pump_curve_cbo.setCurrentIndex(self.pump_curve_cbo.count() - 1)
-        else:
-            self.pump_curve_cbo.setCurrentIndex(newIdx)
-            self.show_pump_curve_table_and_plot()
-
-    def delete_pump_curve(self):
-        if not self.PumpCurv:
-            return
-        pc_name = self.pump_curve_cbo.currentText()
-        if pc_name == "*":
-            return
-        self.PumpCurv.del_pump_curve(pc_name)
-        
-        if self.pump_curve_cbo.currentIndex() == -1:
-            self.plot.clear()
-            if self.plot.plot.legend is not None:
-                plot_scene = self.plot.plot.legend.scene()
-                if plot_scene is not None:
-                    plot_scene.removeItem(self.plot.plot.legend)
-            self.plot.plot.addLegend()
-        
-            self.tview.undoStack.clear()
-            self.tview.setModel(self.pumps_data_model)
-            self.pumps_data_model.clear()        
-
-    def rename_pump_curve(self):
-        if not self.PumpCurv:
-            return
-        new_name, ok = QInputDialog.getText(None, "Change pump name table name", "New name:")
-        if not ok or not new_name:
-            return
-        if not self.pump_curve_cbo.findText(new_name) == -1:
-            msg = "WARNING 200222.0512: Pump curve with name {} already exists in the database. Please, choose another name.".format(
-                new_name
-            )
-            self.uc.show_warn(msg)
-            return
-        name = self.pump_curve_cbo.currentText()
-        self.PumpCurv.set_pump_curve_name(name, new_name)
-        self.populate_curves()
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])       
 
     def save_pump_curve_data(self):
         idx = self.pump_curve_cbo.currentIndex()
