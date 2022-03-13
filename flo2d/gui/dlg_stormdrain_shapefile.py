@@ -68,10 +68,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText(
             "Assign Selected Fields"
         )
-        self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlets_attributes)
-        self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfalls_attributes)
-        self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduits_attributes)
-        self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pumps_attributes)
+        self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlet_attributes)
+        self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
+        self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduit_attributes)
+        self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pump_attributes)
         
         # Connections to clear inlets fields.
         self.clear_inlets_name_btn.clicked.connect(self.clear_inlets_name)
@@ -132,10 +132,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_pump_curve_type_btn.clicked.connect(self.clear_pump_curve_type)
         self.clear_pump_curve_description_btn.clicked.connect(self.clear_pump_curve_description)
 
-        self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlets_attributes)
-        self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfalls_attributes)
-        self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduits_attributes)
-        self.clear_all_pumps_btn.clicked.connect(self.clear_all_pumps_attributes)
+        self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlet_attributes)
+        self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfall_attributes)
+        self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduit_attributes)
+        self.clear_all_pumps_btn.clicked.connect(self.clear_all_pump_attributes)
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
 
@@ -165,26 +165,26 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             idx = self.inlets_shapefile_cbo.findText(previous_inlet)
             if idx != -1:
                 self.inlets_shapefile_cbo.setCurrentIndex(idx)
-                self.populate_inlets_attributes(self.inlets_shapefile_cbo.currentIndex())
+                self.populate_inlet_attributes(self.inlets_shapefile_cbo.currentIndex())
 
             previous_outfall = "" if s.value("sf_outfalls_layer_name") is None else s.value("sf_outfalls_layer_name")
             idx = self.outfalls_shapefile_cbo.findText(previous_outfall)
             if idx != -1:
                 self.outfalls_shapefile_cbo.setCurrentIndex(idx)
-                self.populate_outfalls_attributes(self.outfalls_shapefile_cbo.currentIndex())
+                self.populate_outfall_attributes(self.outfalls_shapefile_cbo.currentIndex())
 
             previous_conduit = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
             idx = self.conduits_shapefile_cbo.findText(previous_conduit)
             if idx != -1:
                 self.conduits_shapefile_cbo.setCurrentIndex(idx)
-                self.populate_conduits_attributes(self.conduits_shapefile_cbo.currentIndex())
+                self.populate_conduit_attributes(self.conduits_shapefile_cbo.currentIndex())
 
 
             previous_pump = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
             idx = self.pumps_shapefile_cbo.findText(previous_pump)
             if idx != -1:
                 self.pumps_shapefile_cbo.setCurrentIndex(idx)
-                self.populate_pumps_attributes(self.pumps_shapefile_cbo.currentIndex())
+                self.populate_pump_attributes(self.pumps_shapefile_cbo.currentIndex())
                 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -194,7 +194,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
-    def populate_inlets_attributes(self, idx):
+    def populate_inlet_attributes(self, idx):
         try:
             uri = self.inlets_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
@@ -212,6 +212,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (points))"
             )
+            
+            self.restore_SD_shapefile_inlet_fields()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -220,7 +223,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
-    def populate_outfalls_attributes(self, idx):
+    def populate_outfall_attributes(self, idx):
         try:
             uri = self.outfalls_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
@@ -238,6 +241,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (points))"
             )
+            
+            self.restore_SD_shapefile_outfall_fields()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -246,7 +252,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
-    def populate_conduits_attributes(self, idx):
+    def populate_conduit_attributes(self, idx):
         try:
             uri = self.conduits_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
@@ -264,6 +270,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
+            
+            self.restore_SD_shapefile_conduit_fields()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -272,7 +281,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
-    def populate_pumps_attributes(self, idx):
+    def populate_pump_attributes(self, idx):
         try:
             uri = self.pumps_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
@@ -290,6 +299,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
+            
+            self.restore_SD_shapefile_pump_fields()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -458,7 +470,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
 
 
-    def clear_all_inlets_attributes(self):
+    def clear_all_inlet_attributes(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
         self.inlets_type_FieldCbo.setCurrentIndex(-1)
         self.inlets_invert_elevation_FieldCbo.setCurrentIndex(-1)
@@ -475,7 +487,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.inlets_width_area_FieldCbo.setCurrentIndex(-1)
         self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(-1)
 
-    def clear_all_outfalls_attributes(self):
+    def clear_all_outfall_attributes(self):
         self.outfall_name_FieldCbo.setCurrentIndex(-1)
         self.outfall_invert_elevation_FieldCbo.setCurrentIndex(-1)
         self.outfall_flap_gate_FieldCbo.setCurrentIndex(-1)
@@ -485,7 +497,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.outfall_tidal_curve_FieldCbo.setCurrentIndex(-1)
         self.outfall_time_series_FieldCbo.setCurrentIndex(-1)
 
-    def clear_all_conduits_attributes(self):
+    def clear_all_conduit_attributes(self):
         self.conduit_name_FieldCbo.setCurrentIndex(-1)
         self.conduit_from_inlet_FieldCbo.setCurrentIndex(-1)
         self.conduit_to_outlet_FieldCbo.setCurrentIndex(-1)
@@ -506,7 +518,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.conduit_average_loss_FieldCbo.setCurrentIndex(-1)
         self.conduit_flap_gate_FieldCbo.setCurrentIndex(-1)
 
-    def clear_all_pumps_attributes(self):
+    def clear_all_pump_attributes(self):
         self.pump_name_FieldCbo.setCurrentIndex(-1)
         self.pump_from_inlet_FieldCbo.setCurrentIndex(-1)
         self.pump_to_outlet_FieldCbo.setCurrentIndex(-1)
@@ -1154,10 +1166,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     if no_in_out != 0:
                         self.uc.show_warn(
-                            "WARNING 060319.1703: "
+                            "WARNING 060319.1703:\n"
                             + str(no_in_out)
                             + " conduits have no inlet and/or outlet!\n\n"
-                            + "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n"
+                            + "If inside the domain, the value '?' will be assigned to them.\nThey will cause errors during their processing.\n\n"
                             + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?"
                         )
 
@@ -1210,7 +1222,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             else "?"
                         )
                         
-                        status = f[self.pump_initial_status_FieldCbo.currentText()]
+                        status = (
+                             f[self.pump_initial_status_FieldCbo.currentText()]
+                             if self.pump_initial_status_FieldCbo.currentText() != ""
+                             else "OFF"
+                        )
                         if status in self.TRUE:
                             status = "ON"
                         elif  status in self.FALSE: 
@@ -1296,10 +1312,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     if no_in_out != 0:
                         self.uc.show_warn(
-                            "WARNING 280222.1030: "
+                            "WARNING 280222.1030:\n"
                             + str(no_in_out)
                             + " pumps have no inlet and/or outlet!\n\n"
-                            + "The value '?' was assigned to them.\n They will cause errors during their processing.\n\n"
+                            + "If inside the domain, the value '?' will be assigned to them.\nThey will cause errors during their processing.\n\n"
                             + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
                         )
 
@@ -1355,7 +1371,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             #     )
 
             else:
-                self.uc.show_info("No Storm Drain nodes or conduits selected!")
+                self.uc.show_info("No Storm Drain nodes or links selected!")
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
@@ -1429,16 +1445,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def restore_storm_drain_shapefile_fields(self):
         
-        self.clear_all_inlets_attributes
-        self.clear_all_outfalls_attributes
-        self.clear_all_conduits_attributes
-        self.clear_all_pumps_attributes()
+        self.clear_all_inlet_attributes()
+        self.clear_all_outfall_attributes()
+        self.clear_all_conduit_attributes()
+        self.clear_all_pump_attributes()
         
-        s = QSettings()
-
+        self.restore_SD_shapefile_inlet_fields()
+        self.restore_SD_shapefile_outfall_fields()
+        self.restore_SD_shapefile_conduit_fields()
+        self.restore_SD_shapefile_pump_fields()
+        
+    def restore_SD_shapefile_inlet_fields(self):  
         # Inlets/Junctions:
+        s = QSettings()
         name = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
         if name == self.inlets_shapefile_cbo.currentText():
+            
             val = int(-1 if s.value("sf_inlets_name") is None else s.value("sf_inlets_name"))
             self.inlets_name_FieldCbo.setCurrentIndex(val)
 
@@ -1477,23 +1499,26 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_inlets_curb_height") is None else s.value("sf_inlets_curb_height"))
             self.inlets_curb_height_FieldCbo.setCurrentIndex(val)
-
+            
             val = int(-1 if s.value("sf_inlets_clogging_factor") is None else s.value("sf_inlets_clogging_factor"))
             self.inlets_clogging_factor_FieldCbo.setCurrentIndex(val)
-
+            
             val = int(-1 if s.value("sf_inlets_time_for_clogging") is None else s.value("sf_inlets_time_for_clogging"))
             self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)
-
+        
+        else:
+            self.clear_all_inlet_attributes()
+                
+    def restore_SD_shapefile_outfall_fields(self):  
         # Outfalls
+        s = QSettings()
         name = "" if s.value("sf_outfalls_layer_name") is None else s.value("sf_outfalls_layer_name")
         if name == self.outfalls_shapefile_cbo.currentText():
 
             val = int(-1 if s.value("sf_outfalls_name") is None else s.value("sf_outfalls_name"))
             self.outfall_name_FieldCbo.setCurrentIndex(val)
 
-            val = int(
-                -1 if s.value("sf_outfalls_invert_elevation") is None else s.value("sf_outfalls_invert_elevation")
-            )
+            val = int(-1 if s.value("sf_outfalls_invert_elevation") is None else s.value("sf_outfalls_invert_elevation"))
             self.outfall_invert_elevation_FieldCbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("sf_outfalls_flap_gate") is None else s.value("sf_outfalls_flap_gate"))
@@ -1513,98 +1538,83 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_outfalls_time_series") is None else s.value("sf_outfalls_time_series"))
             self.outfall_time_series_FieldCbo.setCurrentIndex(val)
+                    
+        else:
+            self.clear_all_outfall_attributes()
 
+    def restore_SD_shapefile_conduit_fields(self):  
         # Conduits:
+        s = QSettings()
         name = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
         if name == self.conduits_shapefile_cbo.currentText():
-
             val = int(-1 if s.value("sf_conduits_name") is None else s.value("sf_conduits_name"))
             self.conduit_name_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_from_inlet") is None else s.value("sf_conduits_from_inlet"))
             self.conduit_from_inlet_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_to_outlet") is None else s.value("sf_conduits_to_outlet"))
             self.conduit_to_outlet_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_inlet_offset") is None else s.value("sf_conduits_inlet_offset"))
             self.conduit_inlet_offset_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_outlet_offset") is None else s.value("sf_conduits_outlet_offset"))
             self.conduit_outlet_offset_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_shape") is None else s.value("sf_conduits_shape"))
             self.conduit_shape_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_barrels") is None else s.value("sf_conduits_barrels"))
             self.conduit_barrels_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_max_depth") is None else s.value("sf_conduits_max_depth"))
             self.conduit_max_depth_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_geom2") is None else s.value("sf_conduits_geom2"))
             self.conduit_geom2_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_geom3") is None else s.value("sf_conduits_geom3"))
             self.conduit_geom3_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_geom4") is None else s.value("sf_conduits_geom4"))
             self.conduit_geom4_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_length") is None else s.value("sf_conduits_length"))
             self.conduit_length_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_manning") is None else s.value("sf_conduits_manning"))
             self.conduit_manning_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_initial_flow") is None else s.value("sf_conduits_initial_flow"))
             self.conduit_initial_flow_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_max_flow") is None else s.value("sf_conduits_max_flow"))
             self.conduit_max_flow_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_entry_loss") is None else s.value("sf_conduits_entry_loss"))
             self.conduit_entry_loss_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_exit_loss") is None else s.value("sf_conduits_exit_loss"))
             self.conduit_exit_loss_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_average_loss") is None else s.value("sf_conduits_average_loss"))
             self.conduit_average_loss_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_conduits_flap_gate") is None else s.value("sf_conduits_flap_gate"))
             self.conduit_flap_gate_FieldCbo.setCurrentIndex(val)
-
+                    
+        else:
+            self.clear_all_conduit_attributes()    
+                    
+    def restore_SD_shapefile_pump_fields(self): 
         # Pumps:
+        s = QSettings()
         name = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
         if name == self.pumps_shapefile_cbo.currentText():
-
             val = int(-1 if s.value("sf_pump_name") is None else s.value("sf_pump_name"))
             self.pump_name_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_from_inlet") is None else s.value("sf_pump_from_inlet"))
             self.pump_from_inlet_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_to_outlet") is None else s.value("sf_pump_to_outlet"))
             self.pump_to_outlet_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_init_status") is None else s.value("sf_pump_init_status"))
             self.pump_initial_status_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_startup_depth") is None else s.value("sf_pump_startup_depth"))
             self.pump_startup_depth_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_shutoff_depth") is None else s.value("sf_pump_shutoff_depth"))
             self.pump_shutoff_depth_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_curve_name") is None else s.value("sf_pump_curve_name"))
             self.pump_curve_name_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_curve_type") is None else s.value("sf_pump_curve_type"))
             self.pump_curve_type_FieldCbo.setCurrentIndex(val)
-
             val = int(-1 if s.value("sf_pump_curve_description") is None else s.value("sf_pump_curve_description"))
             self.pump_curve_description_FieldCbo.setCurrentIndex(val)
+                    
+        else:
+            self.clear_all_pump_attributes()
+
                       
-            
             
