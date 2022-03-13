@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 from collections import OrderedDict
 from itertools import zip_longest, chain
+from ..utils import float_or_zero
 from qgis.PyQt.QtWidgets import QApplication
 from ..user_communication import UserCommunication
 
@@ -46,9 +47,7 @@ class StormDrainProject(object):
         """
         try:
             with open(self.inp_file) as swmm_inp:  # open(file, mode='r',...) defaults to mode 'r' read.
-                for chunk in swmm_inp.read().split(
-                    "["
-                ):  #  chunk gets all text (including newlines) until next '[' (may be empty).
+                for chunk in swmm_inp.read().split("["):  #  chunk gets all text (including newlines) until next '[' (may be empty).
                     try:
                         key, value = chunk.split("]")  # divide chunk into:
                         # key = name of group (e.g. JUNCTIONS) and
@@ -489,16 +488,36 @@ class StormDrainProject(object):
             if xsections is not None:
                 for xs in xsections:
                     if not xs or xs[0] in self.ignore:
-                        continue
+                        continue                        
                     xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
                     xsec = xsections_dict.pop("conduit_name")
-                    self.INP_conduits[xsec].update(
-                        xsections_dict
-                    )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-                    # an already existing key in dictionary INP_conduits.
+                    
+                    if xsec in self.INP_conduits:
+                        self.INP_conduits[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                                                                    # an already existing key in dictionary INP_conduits.  
+                    else:                         
+                        if self.uc.question("ERROR 090322.1623: xsection '" +  xsec+ "' in group [XSECTIONS] does't exist in [CONDUITS] group!\n\n" +
+                                          "Would you like to continue importing [XSECTIONS]?"): 
+                            continue
+                        else:
+                            return   
+                        
+                          
+            # if xsections is not None:
+            #     for xs in xsections:
+            #         if not xs or xs[0] in self.ignore:
+            #             continue
+            #         xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
+            #         xsec = xsections_dict.pop("conduit_name")
+            #         self.INP_conduits[xsec].update(
+            #             xsections_dict
+            #         )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+            #         # an already existing key in dictionary INP_conduits.
+
+                                                         
         except Exception as e:
             self.uc.show_error(
-                "ERROR 1706180704.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
+                "ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
             )
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):

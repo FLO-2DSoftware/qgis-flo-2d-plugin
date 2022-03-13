@@ -52,7 +52,7 @@ from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2dobjects import InletRatingTable, PumpCurves
-from ..utils import is_number, m_fdata, is_true
+from ..utils import is_number, m_fdata, is_true, float_or_zero
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan, modf, floor
 from datetime import date, time, timedelta, datetime
@@ -115,26 +115,20 @@ uiDialog, qtBaseClass = load_ui("storm_drain_editor")
 
 
 class StormDrainEditorWidget(qtBaseClass, uiDialog):
-    before_paste = pyqtSignal()
-    after_paste = pyqtSignal()
-    after_delete = pyqtSignal()
-    
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
-        
         self.plot = plot 
-        # self.table_dock = table
+        self.SD_table = table
         self.tview = table.tview 
-        # self.rt_tview = table.tview 
-        # self.pump_tview = table.tview 
         self.lyrs = lyrs
+        self.con = None
+        self.gutils = None
+        
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.gutils = None
-        self.table = table
-        
+         
         self.inlet_data_model = StandardItemModel()
         self.pumps_data_model = StandardItemModel()
         
@@ -193,7 +187,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.delete_btn, "mActionDeleteSelected.svg")
+        set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
 
         set_icon(self.show_table_btn, "show_cont_table.svg")
@@ -227,7 +221,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.create_point_btn.clicked.connect(self.create_swmm_point)
         self.save_changes_btn.clicked.connect(self.save_swmm_edits)
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
-        self.delete_btn.clicked.connect(self.delete_cur_swmm)
+        self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
 
         self.show_table_btn.clicked.connect(self.show_rating_table_and_plot)
@@ -241,14 +235,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.inlet_grp.toggled.connect(self.inlet_checked)
         # self.outlet_grp.toggled.connect(self.outlet_checked)
         #
-        self.inlet_data_model.dataChanged.connect(self.save_table_data)
         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         
-        self.table.before_paste.connect(self.block_saving)
-        self.table.after_paste.connect(self.unblock_saving)
-        self.table.after_delete.connect(self.save_table_data)
+        self.inlet_data_model.dataChanged.connect(self.save_SD_table_data)
+         
+        self.SD_table.before_paste.connect(self.block_saving)
+        self.SD_table.after_paste.connect(self.unblock_saving)
+        self.SD_table.after_delete.connect(self.save_SD_table_data)    
         
-        self.pumps_data_model.dataChanged.connect(self.save_table_data)
+        self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
         self.pumps_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
@@ -993,14 +988,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     rim_elev_inp = ?, 
                                     rim_elev = ?, 
                                     ge_elev = ?, 
-                                    difference = ?                      
+                                    difference = ?                          
                              WHERE name = ?;"""
 
             new_nodes = []
             updated_nodes = 0
-            for name, values in list(
-                storm_drain.INP_nodes.items()
-            ):  # "INP_nodes dictionary contains attributes names and
+            for name, values in list(storm_drain.INP_nodes.items()):  
+                # "INP_nodes dictionary contains attributes names and
                 # values taken from the .INP file.
                 if subcatchments is not None:
                     if "subcatchment" in values:
@@ -1026,14 +1020,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         sd_type = "J"
 
                 # Inlets/Junctions:
-                junction_invert_elev = float(values["junction_invert_elev"]) if "junction_invert_elev" in values else 0
-                max_depth = float(values["max_depth"]) if "max_depth" in values else 0
-                init_depth = float(values["init_depth"]) if "init_depth" in values else 0
-                surcharge_depth = float(values["surcharge_depth"]) if "surcharge_depth" in values else 0
-                ponded_area = float(values["ponded_area"]) if "ponded_area" in values else 0
+                junction_invert_elev = float_or_zero(values["junction_invert_elev"]) if "junction_invert_elev" in values else 0
+                max_depth = float_or_zero(values["max_depth"]) if "max_depth" in values else 0
+                init_depth = float_or_zero(values["init_depth"]) if "init_depth" in values else 0
+                surcharge_depth = float_or_zero(values["surcharge_depth"]) if "surcharge_depth" in values else 0
+                ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
                 # Outfalls:
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
-                outfall_invert_elev = float(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
+                outfall_invert_elev = float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
                 tidal_curve = values["tidal_curve"] if "tidal_curve" in values else "..."
                 time_series = values["time_series"] if "time_series" in values else "..."
 
@@ -1188,35 +1182,33 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 conduit_outlets_not_found = ""
     
                 for name, values in list(storm_drain.INP_conduits.items()):
-    
+
                     go_go = True
     
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
                     conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
-                    conduit_length = float(values["conduit_length"]) if "conduit_length" in values else 0
-                    conduit_manning = float(values["conduit_manning"]) if "conduit_manning" in values else 0
-                    conduit_inlet_offset = float(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
-                    conduit_outlet_offset = (
-                        float(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
+                    conduit_length = float_or_zero(values["conduit_length"]) if "conduit_length" in values else 0
+                    conduit_manning = float_or_zero(values["conduit_manning"]) if "conduit_manning" in values else 0
+                    conduit_inlet_offset = float_or_zero(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
+                    conduit_outlet_offset = (float_or_zero(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
                     )
-                    conduit_init_flow = float(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
-                    conduit_max_flow = float(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
+                    conduit_init_flow = float_or_zero(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
+                    conduit_max_flow = float_or_zero(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
     
-                    conduit_losses_inlet = float(values["losses_inlet"]) if "losses_inlet" in values else 0
-                    conduit_losses_outlet = float(values["losses_outlet"]) if "losses_outlet" in values else 0
-                    conduit_losses_average = float(values["losses_average"]) if "losses_average" in values else 0
+                    conduit_losses_inlet = float_or_zero(values["losses_inlet"]) if "losses_inlet" in values else 0
+                    conduit_losses_outlet = float_or_zero(values["losses_outlet"]) if "losses_outlet" in values else 0
+                    conduit_losses_average = float_or_zero(values["losses_average"]) if "losses_average" in values else 0
     
                     conduit_losses_flapgate = values["losses_flapgate"] if "losses_flapgate" in values else "False"
                     conduit_losses_flapgate = "True" if is_true(conduit_losses_flapgate) else "False"
     
                     conduit_xsections_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
-                    conduit_xsections_barrels = float(values["xsections_barrels"]) if "xsections_barrels" in values else 0
-                    conduit_xsections_max_depth = (
-                        float(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
+                    conduit_xsections_barrels = float_or_zero(values["xsections_barrels"]) if "xsections_barrels" in values else 0
+                    conduit_xsections_max_depth = (float_or_zero(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
                     )
-                    conduit_xsections_geom2 = float(values["xsections_geom2"]) if "xsections_geom2" in values else 0
-                    conduit_xsections_geom3 = float(values["xsections_geom3"]) if "xsections_geom3" in values else 0
-                    conduit_xsections_geom4 = float(values["xsections_geom4"]) if "xsections_geom4" in values else 0
+                    conduit_xsections_geom2 = float_or_zero(values["xsections_geom2"]) if "xsections_geom2" in values else 0
+                    conduit_xsections_geom3 = float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0
+                    conduit_xsections_geom4 = float_or_zero(values["xsections_geom4"]) if "xsections_geom4" in values else 0
     
                     feat = QgsFeature()
                     feat.setFields(fields)
@@ -1320,8 +1312,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     pump_init_status = values["pump_init_status"] if "pump_init_status" in values else "OFF"
                     # pump_init_status = "ON" if is_true(pump_init_status) else "ON"
                     
-                    pump_startup_depth = float(values["pump_startup_depth"]) if "pump_startup_depth" in values else 0.0
-                    pump_shutoff_depth = float(values["pump_shutoff_depth"]) if "pump_shutoff_depth" in values else 0.0
+                    pump_startup_depth = float_or_zero(values["pump_startup_depth"]) if "pump_startup_depth" in values else 0.0
+                    pump_shutoff_depth = float_or_zero(values["pump_shutoff_depth"]) if "pump_shutoff_depth" in values else 0.0
 
                     if not pump_inlet in storm_drain.INP_nodes:
                         pump_inlets_not_found += name + "\n"
@@ -2201,10 +2193,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not rows:
             self.uc.bar_warn("No outfalls defined in 'Storm Drain Nodes' User Layer!")
             return
-
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_outfalls = OutfallNodesDialog(self.iface, self.lyrs)
         dlg_outfalls.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_outfalls.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
         save = dlg_outfalls.exec_()
         if save:
             try:
@@ -2241,9 +2235,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        dlg_inlets = InletNodesDialog(self.iface, self.plot, self.table, self.lyrs)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
+        
         save = dlg_inlets.exec_()
         if save:
             self.uc.show_info(
@@ -2271,10 +2268,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_conduits = ConduitsDialog(self.iface, self.lyrs)
         dlg_conduits.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_conduits.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
         save = dlg_conduits.exec_()
         if save:
             try:
@@ -2301,10 +2300,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-
-        dlg_pumps = PumpsDialog(self.iface, self.plot, self.table, self.lyrs)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        dlg_pumps = PumpsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
         save = dlg_pumps.exec_()
         if save:
             try:
@@ -2334,9 +2334,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_pumps = PumpsDialog(self.iface, self.lyrs)
         dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
         save = dlg_pumps.exec_()
         if save:
             try:
@@ -2365,10 +2367,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_pumps = PumpsDialog(self.iface, self.lyrs)
         dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
         save = dlg_pumps.exec_()
         if save:
             try:
@@ -2690,16 +2694,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def block_saving(self):
         model = self.tview.model()
         if model == self.inlet_data_model:
-            try_disconnect(self.inlet_data_model.dataChanged, self.save_rtables_data)
+            try_disconnect(self.inlet_data_model.dataChanged, self.save_SD_table_data)
         elif model == self.pumps_data_model:
-            try_disconnect(self.pumps_data_model.dataChanged, self.save_pump_curve_data) 
+            try_disconnect(self.pumps_data_model.dataChanged, self.save_SD_table_data) 
 
     def unblock_saving(self):
         model = self.tview.model()
         if model == self.inlet_data_model:
-            self.inlet_data_model.dataChanged.connect(self.save_rtables_data)
+            self.inlet_data_model.dataChanged.connect(self.save_SD_table_data)
         elif model == self.pumps_data_model:
-            self.pumps_data_model.dataChanged.connect(self.save_pump_curve_data)       
+            self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)       
     
     def inlet_itemDataChangedSlot(self, item, old_value, new_value, role, save=True):
         """
@@ -2738,6 +2742,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.show_rating_table_and_plot()
 
     def populate_rtables_combo(self):
+        
+        # self.SD_table.before_paste.connect(self.block_saving)
+        # self.SD_table.after_paste.connect(self.unblock_saving)
+        # self.SD_table.after_delete.connect(self.save_SD_table_data) 
+        
         self.SD_rating_table_cbo.clear()
         duplicates = ""
         for row in self.inletRT.get_rating_tables():
@@ -2749,6 +2758,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     duplicates += name + "\n"
 
     def show_rating_table_and_plot(self):
+        
+        # self.SD_table.before_paste.connect(self.block_saving)
+        # self.SD_table.after_paste.connect(self.unblock_saving)
+        # self.SD_table.after_delete.connect(self.save_SD_table_data) 
+        # self.SD_table.connect_delete(True)
+        
+           
         idx = self.SD_rating_table_cbo.currentIndex()
         rt_fid = self.SD_rating_table_cbo.itemData(idx)
         rt_name = self.SD_rating_table_cbo.currentText()
@@ -2781,6 +2797,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.inlet_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_rt_plot()
+
 
     def check_simulate_SD_1(self):
         qry = """SELECT value FROM cont WHERE name = 'SWMM';"""
@@ -2951,7 +2968,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inletRT.set_rating_table_data_name(rt_fid, new_name)
         self.populate_rtables_combo()
 
-    def save_table_data(self):
+    def save_SD_table_data(self):
         model = self.tview.model()
         if model == self.inlet_data_model:
             self.save_rtables_data()
@@ -2980,9 +2997,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
+        
         self.plot_item_name = "Rating Table:   " + name
-        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
         self.plot.plot.setTitle("Rating Table:   " + name)
+        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+        
 
     def update_rt_plot(self):
         if not self.plot_item_name:
@@ -3082,7 +3101,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle("Pump Curve:   " + name)
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
         
-
     def update_pump_plot(self):
         if not self.plot_item_name:
             return

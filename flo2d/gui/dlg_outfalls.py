@@ -275,6 +275,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.outfalls_tblw.setItem(row, col, item)
 
     def outfalls_tblw_cell_clicked(self, row, column):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.outfall_cbo.blockSignals(True)
 
@@ -313,11 +314,14 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             
             self.highlight_outfall_cell(self.grid_element_txt.text())
 
+            QApplication.restoreOverrideCursor()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210618.1702: error assigning outfall values!", e)
 
     def fill_individual_controls_with_current_outfall_in_table(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         if not self.block:
             # Highlight row in table:
             row = self.outfall_cbo.currentIndex()
@@ -368,7 +372,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
             
             self.highlight_outfall_cell(self.grid_element_txt.text())
-
+            
+        QApplication.restoreOverrideCursor()
+        
     def find_outfall(self):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -390,6 +396,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def highlight_outfall_cell(self, cell):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.grid_lyr is not None:
                 if cell != "":
@@ -408,7 +415,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 121121.1139: Cell " + str(cell) + " not found.")
                     self.lyrs.clear_rubber()
+                    
+            QApplication.restoreOverrideCursor() 
+                   
         except ValueError:
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
             self.lyrs.clear_rubber()
             pass

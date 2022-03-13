@@ -127,14 +127,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
-
         self.plot = plot
-
-        self.table = table
+        self.xs_table = table
         self.tview = table.tview
         self.lyrs = lyrs
         self.con = None
         self.gutils = None
+        
         self.user_xs_lyr = None
         self.xs = None
         self.cur_xs_fid = None
@@ -198,9 +197,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_type_cbo.activated.connect(self.cur_xsec_type_changed)
         self.n_sbox.valueChanged.connect(self.save_n)
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
-        self.table.before_paste.connect(self.block_saving)
-        self.table.after_paste.connect(self.unblock_saving)
-        self.table.after_delete.connect(self.save_xs_data)
+        self.xs_table.before_paste.connect(self.block_saving)
+        self.xs_table.after_paste.connect(self.unblock_saving)
+        self.xs_table.after_delete.connect(self.save_xs_data)
 
         self.raster_combobox = QgsMapLayerComboBox()
         self.raster_combobox.setFilters(QgsMapLayerProxyModel.RasterLayer)
@@ -209,6 +208,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.raster_radio_btn.toggled.connect(self.raster_combobox.setEnabled)
         self.raster_radio_btn.toggled.connect(self.update_sample_elevation_btn)
         self.update_sample_elevation_btn(self.raster_radio_btn.isChecked())
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+            self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
+            self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
+            self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def update_sample_elevation_btn(self, is_checked):
         if self.xs is not None:
@@ -224,16 +234,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def unblock_saving(self):
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
 
-    def setup_connection(self):
-        con = self.iface.f2d["con"]
-        if con is None:
-            return
-        else:
-            self.con = con
-            self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
-            self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
-            self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def switch2selected(self):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo, use_fid=True)
@@ -462,10 +462,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         typ = row["type"]
         if typ == "N":
             xy = self.xs.get_chan_natural_data()
-            self.table.connect_delete(True)
+            self.xs_table.connect_delete(True)
         else:
             xy = None
-            self.table.connect_delete(False)  # disable data or row delete function if table editor
+            self.xs_table.connect_delete(False)  # disable data or row delete function if table editor
         self.xs_data_model.clear()
         self.tview.undoStack.clear()
 

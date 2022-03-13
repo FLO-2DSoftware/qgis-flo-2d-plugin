@@ -26,6 +26,7 @@ class ChannelProfile(QgsMapToolIdentify):
     # type str and int, respectively, that will be 'emmited' on the signal.
     # See self.feature_picked.emit(table, fid), where 'table' will be the table ´chan' and
     # 'fid' the id fid of the segment selected.
+    
     def __init__(self, canvas, lyrs):
         self.canvas = canvas
         self.lyrs = lyrs

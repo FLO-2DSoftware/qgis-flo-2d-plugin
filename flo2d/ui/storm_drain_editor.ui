@@ -96,7 +96,7 @@
     </widget>
    </item>
    <item row="0" column="3">
-    <widget class="QToolButton" name="delete_btn">
+    <widget class="QToolButton" name="sd_delete_btn">
      <property name="enabled">
       <bool>false</bool>
      </property>

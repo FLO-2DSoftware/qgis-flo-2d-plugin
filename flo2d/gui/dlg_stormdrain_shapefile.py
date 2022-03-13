@@ -1329,30 +1329,30 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
 
-            if (load_inlets or load_outfalls) and load_conduits and load_pumps:
+            if (load_inlets or load_outfalls or load_conduits or load_pumps):
                 self.uc.show_info(
-                    "Importing Storm Drain nodes and links data finished!\n\n"
-                    + "The 'Storm Drain Nodes', 'Storm Drain Conduits', and  'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
+                    "Importing Storm Drain nodes and/or links data finished!\n\n"
+                    + "The 'Storm Drain Conduits', 'Storm Drain Pumps', and/or  'Storm Drain Nodes' layers were created in the 'User Layers' group.\n\n"
                     "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
                     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                     "later export the .DAT files used by the FLO-2D model."
                 )
-            elif not (load_inlets or load_outfalls) and load_conduits and load_pumps:
-                self.uc.show_info(
-                    "Importing Storm Drain conduits data finished!\n\n"
-                    + "The 'Storm Drain Conduits' and 'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
-                    "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                    "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-                    "later export the .DAT files used by the FLO-2D model."
-                )
-            elif (load_inlets or load_outfalls) and not load_conduits:
-                self.uc.show_info(
-                    "Importing Storm Drain nodes data finished!\n\n"
-                    + "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
-                    "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                    "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-                    "later export the .DAT files used by the FLO-2D model."
-                )
+            # elif not (load_inlets or load_outfalls) and load_conduits and load_pumps:
+            #     self.uc.show_info(
+            #         "Importing Storm Drain conduits data finished!\n\n"
+            #         + "The 'Storm Drain Conduits' and 'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
+            #         "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+            #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+            #         "later export the .DAT files used by the FLO-2D model."
+            #     )
+            # elif (load_inlets or load_outfalls) and not load_conduits:
+            #     self.uc.show_info(
+            #         "Importing Storm Drain nodes data finished!\n\n"
+            #         + "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
+            #         "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
+            #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+            #         "later export the .DAT files used by the FLO-2D model."
+            #     )
 
             else:
                 self.uc.show_info("No Storm Drain nodes or conduits selected!")

@@ -191,6 +191,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.conduits_tblw.setItem(row, col, item)
 
     def conduits_tblw_cell_clicked(self, row, column):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             # self.blockSignals(True)
             self.conduit_name_cbo.blockSignals(True)
@@ -235,6 +236,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.flap_gate_chbox.setChecked(True if self.conduits_tblw.item(row, 18).text() == "True" else False)
 
             self.highlight_conduit(self.conduit_name_cbo.currentText())   
+            
+            QApplication.restoreOverrideCursor()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -354,6 +357,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.conduits_tblw_cell_clicked(logicalIndex, 0)
 
     def fill_individual_controls_with_current_conduit_in_table(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             # Highlight row in table:
             row = self.conduit_name_cbo.currentIndex()
@@ -444,6 +448,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                 )
                 
             self.highlight_conduit(self.conduit_name_cbo.currentText()) 
+            
+            QApplication.restoreOverrideCursor()
           
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -470,6 +476,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def highlight_conduit(self, conduit):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.conduits_lyr is not None:
                 if conduit != "":
@@ -483,7 +490,11 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 091121.1139: conduit " + str(conduit) + " not found.")
                     self.lyrs.clear_rubber()
+                    
+            QApplication.restoreOverrideCursor()
+                    
         except ValueError:
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 091121.1134: conduit " + str(conduit) + " is not valid.")
             self.lyrs.clear_rubber()
             pass

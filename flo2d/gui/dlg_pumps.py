@@ -220,6 +220,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
         self.combo_valueChanged(self.pump_init_status_cbo, 4)        
 
     def pumps_tblw_cell_clicked(self, row, column):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             # self.blockSignals(True)
             self.pump_name_cbo.blockSignals(True)
@@ -248,6 +249,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
             
             self.highlight_pump(self.pump_name_cbo.currentText()) 
             
+            QApplication.restoreOverrideCursor()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 261121.0707: assignment of value failed!.\n", e)
@@ -256,6 +259,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
         self.pumps_tblw_cell_clicked(logicalIndex, 0)
 
     def fill_individual_controls_with_current_pump_in_table(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             # highlight row in table:
             row = self.pump_name_cbo.currentIndex()
@@ -297,6 +301,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
             self.highlight_pump(self.pump_name_cbo.currentText()) 
           
+            QApplication.restoreOverrideCursor()
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0631: assignment of value failed!.\n", e)
@@ -322,6 +328,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def highlight_pump(self, pump):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.pumps_lyr is not None:
                 if pump != "":
@@ -335,7 +342,11 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 251121.1139: pump '" + str(pump) + "' not found.")
                     self.lyrs.clear_rubber()
+                    
+            QApplication.restoreOverrideCursor()
+                    
         except ValueError:
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 251121.1134: pump '" + str(pump) + "' is not valid.")
             self.lyrs.clear_rubber()
             pass

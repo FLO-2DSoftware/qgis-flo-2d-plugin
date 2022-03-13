@@ -424,7 +424,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.uc.show_info("TABLE CHANGED in " + str(I) + "  " + str(J))
 
     def inlets_tblw_cell_clicked(self, row, column):
-
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.inlet_cbo.blockSignals(True)
         name = self.inlets_tblw.item(row, 0).text()
         idx = self.inlet_cbo.findText(name)
@@ -472,6 +472,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.block = False
         
         self.highlight_inlet_cell(self.grid_element_le.text())
+        
+        QApplication.restoreOverrideCursor()
 
     def fill_individual_controls_with_current_inlet_in_table(self):
         # Highlight row in table:
@@ -490,6 +492,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 break
 
         if found:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             row = i
             self.inlets_tblw.selectRow(row)
             inlet_type_index = -1
@@ -536,6 +539,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 self.external_inflow_btn.setEnabled(False)
                 
             self.highlight_inlet_cell(self.grid_element_le.text())
+            QApplication.restoreOverrideCursor()
+            
 
         else:
             self.uc.bar_warn("Inlet/Junction not found!")
@@ -561,6 +566,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def highlight_inlet_cell(self, cell):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.grid_lyr is not None:
                 #                 if self.grid_lyr:
@@ -580,7 +586,11 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 221219.1139: Cell " + str(cell) + " not found.")
                     self.lyrs.clear_rubber()
+                    
+            QApplication.restoreOverrideCursor()
+            
         except ValueError:
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 221219.1134: Cell " + str(cell) + "is not valid.")
             self.lyrs.clear_rubber()
             pass
