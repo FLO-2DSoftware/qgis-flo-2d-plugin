@@ -130,7 +130,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
          
         self.inlet_data_model = StandardItemModel()
+        self.tview.setModel(self.inlet_data_model)
         self.pumps_data_model = StandardItemModel()
+        
         
         # self.rt_tview.setModel(self.inlet_data_model)  
         # self.pump_tview.setModel(self.pumps_data_model)  
@@ -236,15 +238,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.outlet_grp.toggled.connect(self.outlet_checked)
         #
         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
-        
         self.inlet_data_model.dataChanged.connect(self.save_SD_table_data)
          
         self.SD_table.before_paste.connect(self.block_saving)
         self.SD_table.after_paste.connect(self.unblock_saving)
         self.SD_table.after_delete.connect(self.save_SD_table_data)    
         
-        self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
         self.pumps_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
+        self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
         
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
         self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
@@ -2763,7 +2764,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.SD_table.after_paste.connect(self.unblock_saving)
         # self.SD_table.after_delete.connect(self.save_SD_table_data) 
         # self.SD_table.connect_delete(True)
-        
+
+        self.SD_table.after_delete.disconnect() 
+        self.SD_table.after_delete.connect(self.save_SD_table_data)        
            
         idx = self.SD_rating_table_cbo.currentIndex()
         rt_fid = self.SD_rating_table_cbo.itemData(idx)

@@ -419,6 +419,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if fid is None:
             fid = -1
 
+        self.xs_table.after_delete.disconnect() 
+        self.xs_table.after_delete.connect(self.save_xs_data)  
+        
         self.current_xsec_changed(fid)
 
     def current_xsec_changed(self, fid=-1):
