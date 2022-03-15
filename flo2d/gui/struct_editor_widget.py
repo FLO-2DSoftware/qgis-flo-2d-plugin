@@ -31,7 +31,7 @@ from PyQt5.QtGui import QClipboard
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtGui import QColor
 
-from .ui_utils import load_ui, center_canvas, set_icon
+from .ui_utils import load_ui, center_canvas, set_icon, try_disconnect
 from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Structure
 from ..user_communication import UserCommunication
@@ -45,9 +45,9 @@ uiDialog, qtBaseClass = load_ui("struct_editor")
 
 class StructEditorWidget(qtBaseClass, uiDialog):
 
-    before_paste = pyqtSignal()
-    after_paste = pyqtSignal()
-    after_delete = pyqtSignal()
+    # before_paste = pyqtSignal()
+    # after_paste = pyqtSignal()
+    # after_delete = pyqtSignal()
 
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -99,6 +99,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
         self.bridge_variables_btn.clicked.connect(self.show_bridge)
         self.import_rating_table_btn.clicked.connect(self.import_struct_table)
+        
+        self.table.before_paste.connect(self.block_saving)
+        self.table.after_paste.connect(self.unblock_saving)
+        self.table.after_delete.connect(self.save_data)   
 
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         if not self.iface.f2d["con"]:
@@ -125,6 +129,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             cur_name_idx = i
         self.struct_cbo.setCurrentIndex(cur_name_idx)
         self.struct_changed()
+
+
+    def block_saving(self):
+        try_disconnect(self.data_model.dataChanged, self.save_data)
+
+    def unblock_saving(self):
+        self.data_model.dataChanged.connect(self.save_data)
+
 
     def struct_changed(self):
         cur_struct_idx = self.struct_cbo.currentIndex()
@@ -433,8 +445,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         }
 
     def show_table_data(self):
-        #         try:
 
+        self.table.after_delete.disconnect() 
+        self.table.after_delete.connect(self.save_data)  
+        
         self.plot.clear()
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
@@ -502,9 +516,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if aRT:
             self.create_plot(rt_name)
             self.update_plot()
-
-    #         except Exception:
-    #             self.uc.bar_error("ERROR 290120.0652: can't show hydraulic structure table " + rt_name)
 
     def create_plot(self, name):
         self.plot.clear()

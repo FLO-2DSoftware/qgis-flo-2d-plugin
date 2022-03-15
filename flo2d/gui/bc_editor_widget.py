@@ -52,7 +52,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.populate_hydrograph_cbo()
         self.con = None
         self.gutils = None
-        self.twidget = table
+        self.bc_table = table
         self.bc_data_model = StandardItemModel()
 
         self.inflow_frame.setDisabled(True)
@@ -104,8 +104,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.outflow_data_cbo.activated.connect(self.outflow_data_changed)
         self.outflow_hydro_cbo.activated.connect(self.outflow_hydrograph_changed)
         self.bc_data_model.dataChanged.connect(self.save_bc_data)
-        self.twidget.before_paste.connect(self.block_saving)
-        self.twidget.after_paste.connect(self.unblock_saving)
+        
+        self.bc_table.before_paste.connect(self.block_saving)
+        self.bc_table.after_paste.connect(self.unblock_saving)
+        self.bc_table.after_delete.connect(self.save_bc_data)
+        
         self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
         self.outflow_type_cbo.model().item(10).setEnabled(False)
@@ -473,6 +476,10 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         Get current time series data, populate data table and create plot.
         """
+
+        self.bc_table.after_delete.disconnect() 
+        self.bc_table.after_delete.connect(self.save_bc_data)         
+        
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
         self.create_inflow_plot()
@@ -542,6 +549,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 pass
         data_name = self.inflow_tseries_cbo.currentText()
         self.inflow.set_time_series_data(data_name, ts_data)
+        self.update_inflow_plot()       
 
     def schematize_inflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -890,7 +898,9 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 pass
         data_name = self.outflow_data_cbo.currentText()
         self.outflow.set_data(data_name, data)
-
+        self.outflow.set_time_series_data(data_name, data)
+        self.update_outflow_plot() 
+        
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:

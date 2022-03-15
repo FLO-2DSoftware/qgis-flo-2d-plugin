@@ -231,12 +231,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.add_one_rtable_btn.clicked.connect(self.add_one_rt)
         self.rename_rtable_btn.clicked.connect(self.rename_rtables)
 
-        # self.change_name_btn.clicked.connect(self.rename_swmm)
-        #
-        # self.recalculate_btn.clicked.connect(self.recalculate_max_depth)
-        # self.inlet_grp.toggled.connect(self.inlet_checked)
-        # self.outlet_grp.toggled.connect(self.outlet_checked)
-        #
         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         self.inlet_data_model.dataChanged.connect(self.save_SD_table_data)
          
@@ -2744,10 +2738,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def populate_rtables_combo(self):
         
-        # self.SD_table.before_paste.connect(self.block_saving)
-        # self.SD_table.after_paste.connect(self.unblock_saving)
-        # self.SD_table.after_delete.connect(self.save_SD_table_data) 
-        
         self.SD_rating_table_cbo.clear()
         duplicates = ""
         for row in self.inletRT.get_rating_tables():
@@ -2759,11 +2749,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     duplicates += name + "\n"
 
     def show_rating_table_and_plot(self):
-        
-        # self.SD_table.before_paste.connect(self.block_saving)
-        # self.SD_table.after_paste.connect(self.unblock_saving)
-        # self.SD_table.after_delete.connect(self.save_SD_table_data) 
-        # self.SD_table.connect_delete(True)
 
         self.SD_table.after_delete.disconnect() 
         self.SD_table.after_delete.connect(self.save_SD_table_data)        
@@ -2952,8 +2937,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.clear()
             self.tview.setModel(self.inlet_data_model)
             self.inlet_data_model.clear() 
-
-               
+  
     def rename_rtables(self):
         if not self.inletRT:
             return
@@ -3005,7 +2989,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle("Rating Table:   " + name)
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
         
-
     def update_rt_plot(self):
         if not self.plot_item_name:
             return
@@ -3044,6 +3027,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.show_pump_curve_table_and_plot() 
                                 
     def show_pump_curve_table_and_plot(self):
+
+        self.SD_table.after_delete.disconnect() 
+        self.SD_table.after_delete.connect(self.save_SD_table_data)  
 
         idx = self.pump_curve_cbo.currentIndex()
         curve_fid = self.pump_curve_cbo.itemData(idx)

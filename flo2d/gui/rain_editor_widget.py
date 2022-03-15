@@ -103,6 +103,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rain_data_model.dataChanged.connect(self.save_tseries_data)
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
+        self.table.after_delete.connect(self.populate_tseries_data) 
         self.rain_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
     def setup_connection(self):
@@ -358,6 +359,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Get current time series data, populate data table and create plot.
         """
+        self.table.after_delete.disconnect() 
+        self.table.after_delete.connect(self.save_tseries_data)        
+        
         cur_ts_idx = self.tseries_cbo.currentIndex()
         cur_ts_fid = self.tseries_cbo.itemData(cur_ts_idx)
         self.rain.series_fid = cur_ts_fid
