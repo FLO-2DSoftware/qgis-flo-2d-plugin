@@ -568,6 +568,9 @@
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="simple_manning_dbox">
+            <property name="decimals">
+             <number>4</number>
+            </property>
             <property name="value">
              <double>0.040000000000000</double>
             </property>
