@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
+    <width>522</width>
     <height>560</height>
    </rect>
   </property>
@@ -251,7 +251,7 @@
       <string>Components</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="2" column="0">
+      <item row="1" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
          <spacer name="horizontalSpacer_4">
@@ -270,92 +270,6 @@
          <widget class="QPushButton" name="assign_conduits_nodes_btn">
           <property name="text">
            <string>Auto-assign conduits nodes</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="1" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="inlets_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>95</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>95</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Inlets/Junctions</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="outfalls_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>61</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Outfalls</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="conduits_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>61</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Conduits</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pumps_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>61</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Pumps</string>
           </property>
          </widget>
         </item>
@@ -460,133 +374,190 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QComboBox" name="SD_rating_table_cbo">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>200</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>500</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="maxVisibleItems">
-           <number>20</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QToolButton" name="show_table_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Show inlet rating table</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="add_one_rtable_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Add inlet rating table</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="remove_rtable_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Remove inlet rating table</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="rename_rtable_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Rename inlet rating table</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="import_rating_table_btn">
+       <widget class="QComboBox" name="SD_rating_table_cbo">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>140</width>
+          <width>200</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>140</width>
+          <width>500</width>
           <height>16777215</height>
          </size>
         </property>
-        <property name="text">
-         <string>Import Rating Table ...</string>
+        <property name="maxVisibleItems">
+         <number>20</number>
         </property>
        </widget>
+      </item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QToolButton" name="show_rating_table_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Show inlet rating table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="add_one_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Add inlet rating table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="add_predefined_rtable_btn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rain time series.&lt;/p&gt;&lt;p&gt;Select one or more files. Each file must be a list of pairs (time, distribution).&lt;/p&gt;&lt;p&gt;The distribution is a % of the total storm.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Add</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionOpenFile.svg</normaloff>../img/mActionOpenFile.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>25</width>
+            <height>25</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="remove_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Remove inlet rating table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="rename_rtable_btn">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>30</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Rename inlet rating table</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -602,115 +573,11 @@
      <property name="flat">
       <bool>false</bool>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Curve Name</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="pump_curve_cbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>190</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>190</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="insertPolicy">
-             <enum>QComboBox::InsertAtBottom</enum>
-            </property>
-            <property name="duplicatesEnabled">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QToolButton" name="add_pump_curve_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Add pump curve</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="remove_pump_curve_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Remove pump curve</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QToolButton" name="rename_pump_curve_btn">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="toolTip">
-             <string>Rename pump curve</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_11">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
            <widget class="QLabel" name="label_3">
             <property name="maximumSize">
@@ -784,7 +651,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
            <widget class="QLabel" name="label_6">
             <property name="text">
@@ -814,6 +681,196 @@
               <width>190</width>
               <height>22</height>
              </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QComboBox" name="pump_curve_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>200</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>500</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAtBottom</enum>
+          </property>
+          <property name="duplicatesEnabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QToolButton" name="show_pump_table_btn">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Show pump curve</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="add_pump_curve_btn">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Add pump curve</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="add_predefined_pump_curve_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Add predefined pump curve</string>
+            </property>
+            <property name="text">
+             <string>Add</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/mActionOpenFile.svg</normaloff>../img/mActionOpenFile.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>25</width>
+              <height>25</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="remove_pump_curve_btn">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Remove pump curve</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="rename_pump_curve_btn">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>31</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Rename pump curve</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
             </property>
            </widget>
           </item>

@@ -127,6 +127,9 @@ class Flo2D(object):
 
         self.f2d_widget.grid_tools.setup_connection()
         self.f2d_widget.profile_tool.setup_connection()
+        
+        self.f2d_widget.rain_editor.setup_connection()
+        self.f2d_widget.rain_editor.rain_properties()
 
         self.f2d_widget.bc_editor.setup_connection()
         self.f2d_widget.bc_editor.populate_bcs(widget_setup = True)
@@ -138,11 +141,7 @@ class Flo2D(object):
 
         self.f2d_widget.struct_editor.populate_structs()
 
-        self.f2d_widget.rain_editor.setup_connection()
-        self.f2d_widget.rain_editor.rain_properties()
-
         self.f2d_widget.channels_editor.setup_connection()
-        #         self.f2d_widget.channels_editor.rain_properties()
 
         self.f2d_widget.xs_editor.setup_connection()
         self.f2d_widget.xs_editor.populate_xsec_cbo()

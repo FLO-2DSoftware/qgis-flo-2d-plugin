@@ -52,7 +52,11 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.add_tseries_btn, "mActionAddRainTimeSeries.svg")
         set_icon(self.add_predefined_tseries_btn, "mActionOpenFile.svg")
         set_icon(self.rename_tseries_btn, "change_name.svg")
-
+        
+        self.table.before_paste.connect(self.block_saving)
+        self.table.after_paste.connect(self.unblock_saving)
+        self.table.after_delete.connect(self.populate_tseries_data) 
+        
     def block_saving(self):
         try_disconnect(self.rain_data_model.dataChanged, self.save_tseries_data)
 
@@ -101,9 +105,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.remove_tseries_btn.clicked.connect(self.delete_tseries)
         self.rename_tseries_btn.clicked.connect(self.rename_tseries)
         self.rain_data_model.dataChanged.connect(self.save_tseries_data)
-        self.table.before_paste.connect(self.block_saving)
-        self.table.after_paste.connect(self.unblock_saving)
-        self.table.after_delete.connect(self.populate_tseries_data) 
         self.rain_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
 
     def setup_connection(self):
@@ -284,10 +285,16 @@ class RainEditorWidget(qtBaseClass, uiDialog):
     def add_tseries(self):
         if not self.rain:
             return
-        self.rain.add_time_series()
+        rtn = self.rain.add_time_series()
         self.populate_tseries()
-        # self.tseries_cbo.setCurrentIndex(len(self.tseries_cbo)-1)
-
+        if type(rtn) is str:
+            newIdx = self.tseries_cbo.findText(rtn)
+            if newIdx == -1:
+                self.tseries_cbo.setCurrentIndex(self.tseries_cbo.count() - 1)
+            else:
+                self.tseries_cbo.setCurrentIndex(newIdx)
+        self.populate_tseries_data()     
+             
     def add_predefined_tseries(self):
         self.uc.clear_bar_messages()
         s = QSettings()

@@ -192,10 +192,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
 
-        set_icon(self.show_table_btn, "show_cont_table.svg")
+        set_icon(self.show_rating_table_btn, "show_cont_table.svg")
         set_icon(self.add_one_rtable_btn, "add_table_data.svg")
+        set_icon(self.add_predefined_rtable_btn, "mActionOpenFile.svg")
         set_icon(self.remove_rtable_btn, "mActionDeleteSelected.svg")
         set_icon(self.rename_rtable_btn, "change_name.svg")
+
+        set_icon(self.show_pump_table_btn, "show_cont_table.svg")
+        set_icon(self.add_pump_curve_btn, "add_table_data.svg")
+        set_icon(self.add_predefined_pump_curve_btn, "mActionOpenFile.svg")
+        set_icon(self.remove_pump_curve_btn, "mActionDeleteSelected.svg")
+        set_icon(self.rename_pump_curve_btn, "change_name.svg")
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
@@ -214,11 +221,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
         self.inletRT = InletRatingTable(self.con, self.iface)
         self.PumpCurv = PumpCurves(self.con, self.iface)
-        
-        self.outfalls_btn.setVisible(False)
-        self.inlets_btn.setVisible(False)
-        self.pumps_btn.setVisible(False)
-        self.conduits_btn.setVisible(False)
 
         self.create_point_btn.clicked.connect(self.create_swmm_point)
         self.save_changes_btn.clicked.connect(self.save_swmm_edits)
@@ -226,10 +228,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
 
-        self.show_table_btn.clicked.connect(self.show_rating_table_and_plot)
-        self.remove_rtable_btn.clicked.connect(self.delete_rtables)
+        self.show_rating_table_btn.clicked.connect(self.show_rating_table_and_plot)
         self.add_one_rtable_btn.clicked.connect(self.add_one_rt)
+        self.add_predefined_rtable_btn.clicked.connect(self.SD_import_rating_table)
+        self.remove_rtable_btn.clicked.connect(self.delete_rtables)
         self.rename_rtable_btn.clicked.connect(self.rename_rtables)
+    
+        self.show_pump_table_btn.clicked.connect(self.show_pump_curve_table_and_plot)
+        self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
+        # self.add_predefined_pump_curve_btn.clicked.connect()
+        self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
+        self.rename_pump_curve_btn.clicked.connect(self.rename_pump_curve) 
 
         self.inlet_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         self.inlet_data_model.dataChanged.connect(self.save_SD_table_data)
@@ -240,11 +249,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
         self.pumps_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
-        
-        self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
-        self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
-        self.rename_pump_curve_btn.clicked.connect(self.rename_pump_curve) 
-        
+
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
         
@@ -256,18 +261,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                   
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
-
-        self.outfalls_btn.clicked.connect(self.show_outfalls)
-        self.inlets_btn.clicked.connect(self.show_inlets)
-        self.pumps_btn.clicked.connect(self.show_pumps)
-        self.conduits_btn.clicked.connect(self.show_conduits)
         
         self.assign_conduits_nodes_btn.clicked.connect(self.auto_assign_conduits_nodes)
         
-        self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
-
+        # self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
+        
         self.SD_rating_table_cbo.activated.connect(self.show_rating_table_and_plot)
-        self.SD_rating_table_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)
+        # self.SD_rating_table_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)
                  
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
@@ -2882,8 +2882,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             self.SD_rating_table_cbo.setCurrentIndex(newIdx)
 
-    def refresh_SD_PlotAndTable(self):
-        idx = self.SD_rating_table_cbo.currentIndex()
+    # def refresh_SD_PlotAndTable(self):
+    #     idx = self.SD_rating_table_cbo.currentIndex()
 
     def delete_rtables(self):
         if not self.inletRT:

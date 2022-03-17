@@ -677,7 +677,7 @@ class Inflow(GeoPackageUtils):
         """
         Add new rows to inflow_time_series_data for a given ts_fid.
         """
-        qry = "INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);"
+        qry = "INSERT INTO inflow_time_series_data (series_fid, time, value) VALUES (?, 0, 0);"
         self.execute_many(qry, ([ts_fid],) * rows)
         if fetch:
             return self.get_time_series_data()
@@ -901,7 +901,7 @@ class Outflow(GeoPackageUtils):
     def add_time_series(self, name=None, fetch=False):
         qry = """INSERT INTO outflow_time_series (name) VALUES (?);"""
         rowid = self.execute(qry, (name,), get_rowid=True)
-        name_qry = """UPDATE outflow_time_series SET name =  'Time series ' || cast(fid as text) WHERE fid = ?;"""
+        name_qry = """UPDATE outflow_time_series SET name =  'Time Series ' || cast(fid as text) WHERE fid = ?;"""
         self.execute(name_qry, (rowid,))
         self.set_new_data_fid(rowid)
         if fetch:
@@ -1120,7 +1120,7 @@ class Outflow(GeoPackageUtils):
         """
         Add new rows to outflow_time_series_data for a given ts_fid.
         """
-        qry = "INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);"
+        qry = "INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES (?, 0, 0);"
         self.execute_many(qry, ([ts_fid],) * rows)
         if fetch:
             return self.get_time_series_data()
@@ -1174,7 +1174,7 @@ class Outflow(GeoPackageUtils):
 
     def get_new_data_name(self, fid):
         if self.typ in [5, 6, 7, 8]:
-            return "Time series {}".format(fid)
+            return "OutTimeSeries {}".format(fid)
         elif self.typ in [9, 10]:
             return "Q(h) parameters {}".format(fid)
         elif self.typ == 11:
@@ -1299,6 +1299,8 @@ class Rain(GeoPackageUtils):
 
         if fetch:
             return self.get_time_series()
+        else:
+            return self.name
 
     def del_time_series(self):
         qry = "DELETE FROM rain_time_series_data WHERE series_fid = ?;"
@@ -1321,7 +1323,7 @@ class Rain(GeoPackageUtils):
         """
         Add new rows to rain_time_series_data for a given ts_fid.
         """
-        qry = "INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, NULL, NULL);"
+        qry = "INSERT INTO rain_time_series_data (series_fid, time, value) VALUES (?, 0, 0);"
         self.execute_many(qry, ([ts_fid],) * rows)
         if fetch:
             return self.get_time_series_data()

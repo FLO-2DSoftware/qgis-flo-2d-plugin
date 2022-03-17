@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.43
+version=0.10.44
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.44
+  - Tables and Plots: improve and fix after_delete signal of TableEditorWidget class and its instances.
  <p>0.10.43
   - Storm Drains: improve or fix functionality of 'Select components from shapefile layer'.
  <p>0.10.42

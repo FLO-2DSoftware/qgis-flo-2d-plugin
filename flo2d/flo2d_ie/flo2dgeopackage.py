@@ -2577,7 +2577,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             error_mentioned = False
             with open(swmmflort, "w") as s:
                 for fid, gid, rtname in swmmflort_rows:
-                    #                 for fid, gid, rtname in swmmflort_rows:
                     rtname = rtname.strip()
                     if gid is not None:
                         if str(gid).strip() != "":

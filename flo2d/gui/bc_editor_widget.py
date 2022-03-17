@@ -54,6 +54,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.bc_table = table
         self.bc_data_model = StandardItemModel()
+        self.bc_tview.setModel(self.bc_data_model)
 
         self.inflow_frame.setDisabled(True)
         self.outflow_frame.setDisabled(True)
@@ -453,7 +454,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             row = [x if x is not None else "" for x in row]
             ts_fid, ts_name = row
             if not ts_name:
-                ts_name = "Time series {}".format(ts_fid)
+                ts_name = "Time Series {}".format(ts_fid)
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
             if ts_fid == self.inflow.time_series_fid:
                 cur_idx = i
@@ -483,9 +484,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
         cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
         self.create_inflow_plot()
+        
         self.bc_tview.undoStack.clear()
         self.bc_tview.setModel(self.bc_data_model)
         self.inflow.time_series_fid = cur_ts_fid
+        
         self.infow_tseries_data = self.inflow.get_time_series_data()
         self.bc_data_model.clear()
         self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
@@ -500,16 +503,22 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.od.append(row[1] if not row[1] is None else float("NaN"))
             self.om.append(row[2] if not row[2] is None else float("NaN"))
         rc = self.bc_data_model.rowCount()
+        
         if rc < 500:
             for row in range(rc, 500 + 1):
                 items = [StandardItem(x) for x in ("",) * 3]
                 self.bc_data_model.appendRow(items)
+                
         self.bc_tview.resizeColumnsToContents()
+        
         for i in range(self.bc_data_model.rowCount()):
             self.bc_tview.setRowHeight(i, 20)
+            
         self.bc_tview.horizontalHeader().setStretchLastSection(True)
+        
         for i in range(3):
             self.bc_tview.setColumnWidth(i, 90)
+            
         self.save_inflow()
         self.create_inflow_plot()
 
@@ -616,8 +625,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             return
         self.inflow.add_time_series()
         self.populate_inflow_data_cbo()
-        ts_nr = self.inflow_tseries_cbo.count()
-        self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
+        # ts_nr = self.inflow_tseries_cbo.count()
+        # self.inflow_tseries_cbo.setCurrentIndex(ts_nr - 1)
 
     # OUTFLOWS
 
@@ -786,6 +795,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.populate_outflow_data_cbo()
 
     def outflow_data_changed(self):
+        
         self.outflow.get_cur_data_fid()
         out_nr = self.outflow_data_cbo.count()
         if not out_nr:
