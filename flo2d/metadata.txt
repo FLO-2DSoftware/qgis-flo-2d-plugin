@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.44
+version=0.10.45
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,10 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.45
+  - Simplified multiple channels: 
+    - Do not write duplicate cells in SIMPLE_MULT.DAT.
+    - Increase simplified multiple channels n-Manning to 4 decimals.
  <p>0.10.44
   - Tables and Plots: improve and fix after_delete signal of TableEditorWidget class and its instances.
  <p>0.10.43

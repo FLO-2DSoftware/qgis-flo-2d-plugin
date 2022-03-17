@@ -2069,7 +2069,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("simple_mult_cells") :
             try:
                 # Simplified Multiple Channels:
-                simple_mult_cell_sql = """SELECT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
                 line1 = "{}" + "\n"
                 line2 = "{}" + "\n"
     

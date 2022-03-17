@@ -3196,8 +3196,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             ind = self.pump_curve_type_cbo.findText(typ)     
             if ind != -1:
                 self.pump_curve_type_cbo.setCurrentIndex(ind)
-            self.pump_curve_description_le.setText(desc)       
-   
+            self.pump_curve_description_le.setText(desc)        
         
     def dummy(self):
         pass
