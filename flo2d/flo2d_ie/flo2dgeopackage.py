@@ -2049,7 +2049,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("mult_cells"):        
             try: 
                 # Multiple Channels (not simplified):
-                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid;"""
+                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
                 line1 = " {}" * 8 + "\n"
                 line2 = " {}" * 5 + "\n"
     
@@ -2057,7 +2057,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 mult = os.path.join(outdir, "MULT.DAT")
                 with open(mult, "w") as m:
                     m.write(line1.format(*head[1:]).replace("None", ""))
-                    for row in self.execute(mult_cell_sql):
+                    
+                    mult_cells  = self.execute(mult_cell_sql).fetchall()
+                    
+                    seen = set()
+                    result = []
+                    for a, b, c, d, e in mult_cells:
+                        if not a in seen:
+                            seen.add(a)
+                            result.append((a, b, c, d, e))
+
+                    for row in result:
                         vals = [x if x is not None else "" for x in row]
                         m.write(line2.format(*vals))
                 
