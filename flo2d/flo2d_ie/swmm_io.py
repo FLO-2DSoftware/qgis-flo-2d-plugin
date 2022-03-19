@@ -685,6 +685,7 @@ class StormDrainProject(object):
     def create_INP_curves_list_with_curves(self):
         try:
             prev_type = ""
+            msg = ""
             curves = self.select_this_INP_group("curves")
             if curves:
                 for c in curves:
@@ -698,8 +699,11 @@ class StormDrainProject(object):
                         items.insert(1, prev_type)
                         self.INP_curves.append(items)    
                     else:
-                        self.uc.bar_warn("WARNING 251121.0538: Reading pumps curves from SWMM input data failed!")    
+                        msg += c + "\n"
+                
+                if msg:
+                    msg = "WARNING 251121.0538: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n" + msg
+                    self.uc.show_warn(msg)            
                                
-            pass
         except Exception as e:
             self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)

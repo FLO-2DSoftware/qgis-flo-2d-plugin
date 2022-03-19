@@ -89,6 +89,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             QApplication.clipboard().setText(stream.getvalue())
 
     def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.before_paste.emit()
         paste_str = QApplication.clipboard().text()
         rows = paste_str.split("\n")
@@ -100,6 +101,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             sel_col = top_left_idx.column()
             sel_row = top_left_idx.row()
             if sel_col + num_cols > self.tview.model().columnCount():
+                QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("Too many columns to paste.")
                 return
             if sel_row + num_rows > self.tview.model().rowCount():
@@ -125,7 +127,8 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             self.tview.model().dataChanged.emit(
                 top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols)
             )
-
+        QApplication.restoreOverrideCursor()
+        
     def delete_selection(self):
         indices = []
         for i in self.tview.selectionModel().selectedRows():

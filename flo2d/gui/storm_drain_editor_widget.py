@@ -236,7 +236,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     
         self.show_pump_table_btn.clicked.connect(self.show_pump_curve_table_and_plot)
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
-        # self.add_predefined_pump_curve_btn.clicked.connect()
+        self.add_predefined_pump_curve_btn.clicked.connect(self.SD_import_pump_curves)
         self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
         self.rename_pump_curve_btn.clicked.connect(self.rename_pump_curve) 
 
@@ -464,9 +464,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if self.schematize_inlets_and_outfalls():
             self.uc.show_info(
-                "Schematizing of Storm Drains Inlets and Outfalls finished!\n\n"
-                + "The 'Storm Drain Inlets', 'Storm Drain Outfalls' and/or Rating Tables layers were updated.\n\n"
-                + "(NOTE: the 'Export GDS files' tool will write those layer attributes into the SWMMFLO.DAT and SWMMOUTF.DAT files)"
+                "Schematizing Storm Drains finished!\n\n"
+                + "The storm drain Inlets, Outfalls, and/or rating tables were updated.\n\n"
+                + "(Note: The ‘Export Data Files’ tool will write the layer attributes into the SWMMFLO.DAT, SWMMFLORT.DAT, and SWMMOUTF.DAT files)"
             )
 
     #             if self.schematize_conduits():
@@ -2953,8 +2953,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         idx = self.SD_rating_table_cbo.currentIndex()
         rt_fid = self.SD_rating_table_cbo.itemData(idx)
         self.inletRT.set_rating_table_data_name(rt_fid, new_name)
+        
         self.populate_rtables_combo()
-
+        idx = self.SD_rating_table_cbo.findText(new_name)
+        self.SD_rating_table_cbo.setCurrentIndex(idx)
+        self.show_rating_table_and_plot()        
+        
     def save_SD_table_data(self):
         model = self.tview.model()
         if model == self.inlet_data_model:
@@ -3009,12 +3013,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.clear()
         duplicates = ""
         for row in self.PumpCurv.get_pump_curves():
-            pc_fid, name = [x if x is not None else "" for x in row]
-            if name != "":
-                if self.pump_curve_cbo.findText(name) == -1:
-                    self.pump_curve_cbo.addItem(name, pc_fid) 
-                else:  
-                    duplicates += name + "\n"     
+            if row:
+                pc_fid, name = [x if x is not None else "" for x in row]
+                if name != "":
+                    if self.pump_curve_cbo.findText(name) == -1:
+                        self.pump_curve_cbo.addItem(name, pc_fid) 
+                    else:  
+                        duplicates += name + "\n"     
         self.pump_curve_cbo.blockSignals(not block)  
  
     def current_cbo_pump_curve_index_changed(self, idx=0):
@@ -3061,7 +3066,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pumps_data_model.setHorizontalHeaderLabels([x, y])
         self.d1, self.d2 = [[], []]
         for row in self.curve_data:
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
+            items = [StandardItem("{:.4f}".format(xx)) if xx is not None else StandardItem("") for xx in row]
             self.pumps_data_model.appendRow(items)
             self.d1.append(row[0] if not row[0] is None else float("NaN"))
             self.d2.append(row[1] if not row[1] is None else float("NaN"))
@@ -3148,6 +3153,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         new_name, ok = QInputDialog.getText(None, "Change curve name", "New name:")
         if not ok or not new_name:
             return
+        if len(new_name.split()) > 1:
+            self.uc.show_warn("Do not use spaces in the new name!")
+            return
         if not self.pump_curve_cbo.findText(new_name) == -1:
             msg = "WARNING 200222.0512: Pump curve with name {} already exists in the database. Please, choose another name.".format(
                 new_name
@@ -3158,6 +3166,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv.set_pump_curve_name(name, new_name)
         
         self.populate_pump_curves_combo(True)
+        idx = self.pump_curve_cbo.findText(new_name)
+        self.pump_curve_cbo.setCurrentIndex(idx)
+        self.show_pump_curve_table_and_plot()
 
     def save_pump_curve_data(self):
         idx = self.pump_curve_cbo.currentIndex()
@@ -3188,15 +3199,83 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.show_pump_curve_table_and_plot()
         
     def show_pump_curve_type_and_description(self):
-        curve = self.pump_curve_cbo.currentText()
-        if curve:
-            typ, desc = self.gutils.execute("SELECT pump_curve_type, description FROM swmm_pumps_curve_data WHERE pump_curve_name = ?", (curve,)).fetchone() 
-            if not typ:
-                typ = "Pump1"    
-            ind = self.pump_curve_type_cbo.findText(typ)     
-            if ind != -1:
-                self.pump_curve_type_cbo.setCurrentIndex(ind)
-            self.pump_curve_description_le.setText(desc)        
+        if self.pump_curve_cbo.count():
+            curve = self.pump_curve_cbo.currentText()
+            if curve:
+                typ, desc = self.gutils.execute("SELECT pump_curve_type, description FROM swmm_pumps_curve_data WHERE pump_curve_name = ?", (curve,)).fetchone() 
+                if not typ:
+                    typ = "Pump1"    
+                ind = self.pump_curve_type_cbo.findText(typ)     
+                if ind != -1:
+                    self.pump_curve_type_cbo.setCurrentIndex(ind)
+                self.pump_curve_description_le.setText(desc)        
         
-    def dummy(self):
-        pass
+    def SD_import_pump_curves(self):
+        """
+        Reads one or more pump curve table files.
+        """
+        self.uc.clear_bar_messages()
+
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        curve_files, __ = QFileDialog.getOpenFileNames(
+            None,
+            "Select pump curve files",
+            directory=last_dir,
+            filter="(*.TXT *.DAT);;(*.TXT);;(*.DAT);;(*.*)",
+        )
+
+        if not curve_files:
+            return
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_files[0]))
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            del_sql = "DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?"
+            data_sql = "INSERT INTO swmm_pumps_curve_data (pump_curve_name, pump_curve_type, description, x_value, y_value) VALUES (?, ?, ?, ?, ?)"
+            
+            read = 0
+            no_files = ""
+            for cf in curve_files:
+                filename = os.path.splitext(os.path.basename(cf))[0]
+                
+                # Delete pump curve if it already exists:
+                self.gutils.execute(del_sql, (filename,))                
+
+                with open(cf, "r") as f1:
+                    read += 1
+                    for line in f1:
+                        row = line.split()
+                        if row:
+                            if not len(row) == 2:
+                                no_files +=  os.path.basename(cf) + "\n"
+                                read -= 1
+                                break
+                            try:
+                                r0 = float(row[0])
+                                r1 = float(row[1])
+                            except ValueError:
+                                no_files +=  os.path.basename(cf) + "\n"
+                                read -= 1
+                                break
+                            self.gutils.execute(data_sql, (filename, "Pump1", "imported", r0, r1) )            
+                
+            self.populate_pump_curves_and_data()
+            QApplication.restoreOverrideCursor()
+            msg = str(read) + "  pump curve files were imported. "
+            if no_files:
+                msg = msg + "\n\n ..but the following files could not be imported.\n(Ensure that files have rows with pair of values):\n\n" + no_files
+            self.uc.show_info(msg)
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 180322.0925: reading pump curve files failed!", e)
+            return            
+            
+            

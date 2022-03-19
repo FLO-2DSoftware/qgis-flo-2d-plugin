@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.45
+version=0.10.46
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,9 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.46
+  - Do not write duplicates in MULT.DAT.
+  - Import SD pump curves: 
  <p>0.10.45
   - Simplified multiple channels: 
     - Do not write duplicate cells in SIMPLE_MULT.DAT.
