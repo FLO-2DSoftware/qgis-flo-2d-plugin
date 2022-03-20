@@ -195,7 +195,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.channels_chbox.setChecked(True)
                 self.channels_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("arfwrf"):
+            if not self.gutils.is_table_empty("blocked_cells"):
                 self.reduction_factors_chbox.setChecked(True)
                 self.reduction_factors_chbox.setEnabled(True)
 

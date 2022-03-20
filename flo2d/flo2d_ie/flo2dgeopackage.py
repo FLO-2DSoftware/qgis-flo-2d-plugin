@@ -1969,7 +1969,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_arf(self, outdir):
         # check if there are any grid cells with ARF defined.
         try:
-            if self.is_table_empty("arfwrf"):
+            if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
             tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
