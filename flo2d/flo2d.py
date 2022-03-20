@@ -869,6 +869,11 @@ class Flo2D(object):
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 return
+            
+            # Check if TOLER.DAT exist:
+            if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
+                self.uc.show_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                return
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
             ok = dlg_components.exec_()
