@@ -76,9 +76,13 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
             return_code = debug_simulation.run()
             if return_code != 0:
                 self.uc.show_warn(
-                    "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
+                   "FLOPRO.EXE debug executed.\n\n"
                     + "Program finished with return code " + str(return_code)
-                )
+                )                
+                # self.uc.show_warn(
+                #     "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
+                #     + "Program finished with return code " + str(return_code)
+                # )
             else:
                 self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))     
 

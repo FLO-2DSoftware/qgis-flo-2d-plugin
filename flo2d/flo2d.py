@@ -583,13 +583,13 @@ class Flo2D(object):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
                 return_code = simulation.run()
-                if return_code != 0:
-                    self.uc.show_warn(
-                        "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
-                        + "Program finished with return code " + str(return_code)
-                    )
-                else:
-                    self.uc.show_info( "Model finished with return code "  + str(return_code))       
+                # if return_code != 0:
+                #     self.uc.show_warn(
+                #         "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
+                #         + "Program finished with return code " + str(return_code)
+                #     )
+                # else:
+                #     self.uc.show_info( "Model finished with return code "  + str(return_code))       
                 
                             
             else:
