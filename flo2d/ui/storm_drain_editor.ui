@@ -25,6 +25,18 @@
      <property name="enabled">
       <bool>false</bool>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
      <property name="toolTip">
       <string>Add storm drain ooint</string>
      </property>
@@ -47,6 +59,18 @@
     <widget class="QToolButton" name="save_changes_btn">
      <property name="enabled">
       <bool>false</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
      </property>
      <property name="toolTip">
       <string>Save current storm drain points</string>
@@ -71,10 +95,16 @@
      <property name="enabled">
       <bool>false</bool>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
      <property name="maximumSize">
       <size>
-       <width>16777215</width>
-       <height>16777215</height>
+       <width>31</width>
+       <height>30</height>
       </size>
      </property>
      <property name="toolTip">
@@ -100,6 +130,18 @@
      <property name="enabled">
       <bool>false</bool>
      </property>
+     <property name="minimumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
      <property name="toolTip">
       <string>Delete Current storm drain point</string>
      </property>
@@ -122,6 +164,18 @@
     <widget class="QToolButton" name="schema_storm_drain_btn">
      <property name="enabled">
       <bool>true</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>31</width>
+       <height>30</height>
+      </size>
      </property>
      <property name="toolTip">
       <string>Schematize storm drain components</string>
