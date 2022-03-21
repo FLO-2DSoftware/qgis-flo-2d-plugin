@@ -262,8 +262,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
         
-        self.assign_conduits_nodes_btn.clicked.connect(self.auto_assign_conduits_nodes)
-        
         # self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
         
         self.SD_rating_table_cbo.activated.connect(self.show_rating_table_and_plot)
@@ -271,6 +269,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                  
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
+        self.SD_auto_assign_link_nodes_cbo.currentIndexChanged.connect(self.auto_assign_changed)
         
         self.populate_rtables_combo()
         self.populate_pump_curves_and_data()
@@ -2382,21 +2381,32 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
         self.lyrs.clear_rubber() 
 
+    def auto_assign_conduit_nodes(self):
+        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
 
-    def auto_assign_conduits_nodes(self):
-        """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
-        proceed = self.uc.question("Do you want to overwrite Conduits Inlet and Outlet nodes names?")
+    def auto_assign_pump_nodes(self):
+        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
+        
+    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
+        """Auto assign Conduits, Pumps, Orificies, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+        proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
         if not proceed:
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            conduit_fields = self.user_swmm_conduits_lyr.fields()
-            conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
-            conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
+            layer = (self.user_swmm_conduits_lyr if link_name == "Conduits"  else
+            self.user_swmm_pumps_lyr if link_name == "Pumps" else  
+            self.user_swmm_orificies_lyr if link_name == "Orificies" else  
+            self.user_swmm_weirs_lyr if link_name == "Weirs" else  self.user_swmm_conduits_lyr)                                                    
+              
+            link_fields = layer.fields()
+        
+            link_inlet_fld_idx = link_fields.lookupField(link_inlet)
+            link_outlet_fld_idx = link_fields.lookupField(link_outlet)
             nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
             buffer_distance, segments = 5.0, 5
-            conduit_nodes = {}
-            for feat in self.user_swmm_conduits_lyr.getFeatures():
+            link_nodes = {}
+            for feat in layer.getFeatures():
                 fid = feat.id()
                 geom = feat.geometry()
                 geom_poly = geom.asPolyline()
@@ -2431,21 +2441,85 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     outlet_name = closest_outlet_feat["name"]
                 else:
                     outlet_name = None
-                conduit_nodes[fid] = inlet_name, outlet_name
+                link_nodes[fid] = inlet_name, outlet_name
 
-            self.user_swmm_conduits_lyr.startEditing()
-            for fid, (inlet_name, outlet_name) in conduit_nodes.items():
-                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
-                self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
-            self.user_swmm_conduits_lyr.commitChanges()
-            self.user_swmm_conduits_lyr.triggerRepaint()
+            layer.startEditing()
+            for fid, (inlet_name, outlet_name) in link_nodes.items():
+                layer.changeAttributeValue(fid, link_inlet_fld_idx, inlet_name)
+                layer.changeAttributeValue(fid, link_outlet_fld_idx, outlet_name)
+            layer.commitChanges()
+            layer.triggerRepaint()
             QApplication.restoreOverrideCursor()
             self.uc.show_info(
-                "Inlet and Outlet node names successfully assigned to " + str(len(conduit_nodes)) + " Conduits!"
+                "Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
             )
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: Couldn't assign Conduits nodes!", e)
+            self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
+            
+    # def auto_assign_conduits_nodes(self):
+    #     """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+    #     proceed = self.uc.question("Do you want to overwrite Conduits Inlet and Outlet nodes names?")
+    #     if not proceed:
+    #         return
+    #     try:
+    #         QApplication.setOverrideCursor(Qt.WaitCursor)
+    #         conduit_fields = self.user_swmm_conduits_lyr.fields()
+    #         conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
+    #         conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
+    #         nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
+    #         buffer_distance, segments = 5.0, 5
+    #         conduit_nodes = {}
+    #         for feat in self.user_swmm_conduits_lyr.getFeatures():
+    #             fid = feat.id()
+    #             geom = feat.geometry()
+    #             geom_poly = geom.asPolyline()
+    #             start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
+    #             start_geom = QgsGeometry.fromPointXY(start_pnt)
+    #             end_geom = QgsGeometry.fromPointXY(end_pnt)
+    #             start_buffer = start_geom.buffer(buffer_distance, segments)
+    #             end_buffer = end_geom.buffer(buffer_distance, segments)
+    #             start_nodes, end_nodes = [], []
+    #
+    #             start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
+    #             for node_id in start_nodes_ids:
+    #                 node_feat = nodes_features[node_id]
+    #                 if node_feat.geometry().within(start_buffer):
+    #                     start_nodes.append(node_feat)
+    #
+    #             end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
+    #             for node_id in end_nodes_ids:
+    #                 node_feat = nodes_features[node_id]
+    #                 if node_feat.geometry().within(end_buffer):
+    #                     end_nodes.append(node_feat)
+    #
+    #             start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
+    #             end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
+    #             closest_inlet_feat = start_nodes[0] if start_nodes else None
+    #             closest_outlet_feat = end_nodes[0] if end_nodes else None
+    #             if closest_inlet_feat is not None:
+    #                 inlet_name = closest_inlet_feat["name"]
+    #             else:
+    #                 inlet_name = None
+    #             if closest_outlet_feat is not None:
+    #                 outlet_name = closest_outlet_feat["name"]
+    #             else:
+    #                 outlet_name = None
+    #             conduit_nodes[fid] = inlet_name, outlet_name
+    #
+    #         self.user_swmm_conduits_lyr.startEditing()
+    #         for fid, (inlet_name, outlet_name) in conduit_nodes.items():
+    #             self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
+    #             self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
+    #         self.user_swmm_conduits_lyr.commitChanges()
+    #         self.user_swmm_conduits_lyr.triggerRepaint()
+    #         QApplication.restoreOverrideCursor()
+    #         self.uc.show_info(
+    #             "Inlet and Outlet node names successfully assigned to " + str(len(conduit_nodes)) + " Conduits!"
+    #         )
+    #     except Exception as e:
+    #         QApplication.restoreOverrideCursor()
+    #         self.uc.show_error("ERROR: Couldn't assign Conduits nodes!", e)
 
     def SD_import_rating_table(self):
         """
@@ -2855,6 +2929,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.show_weirs()                       
             
         self.SD_links_components_cbo.setCurrentIndex(0) 
+
+    def auto_assign_changed(self):
+        idx = self.SD_auto_assign_link_nodes_cbo.currentIndex()
+        if idx == 1:
+            self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+        elif idx == 2:
+            self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
+        elif idx == 3:
+            pass
+        elif idx == 4:
+            pass                  
+            
+        self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0) 
 
     def add_one_rt(self):
         self.add_single_rtable()

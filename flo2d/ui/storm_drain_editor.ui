@@ -329,42 +329,6 @@
       <string>Components</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="assign_conduits_nodes_btn">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Auto-assign conduits nodes</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
       <item row="0" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
@@ -475,6 +439,86 @@
            </widget>
           </item>
          </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>98</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QComboBox" name="SD_auto_assign_link_nodes_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>165</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>165</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="currentText">
+           <string>* Auto-assign link nodes *</string>
+          </property>
+          <item>
+           <property name="text">
+            <string>* Auto-assign link nodes *</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Conduits</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Pumps</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Orificies</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Weirs</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>98</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -1002,6 +1046,33 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>create_point_btn</tabstop>
+  <tabstop>save_changes_btn</tabstop>
+  <tabstop>revert_changes_btn</tabstop>
+  <tabstop>sd_delete_btn</tabstop>
+  <tabstop>schema_storm_drain_btn</tabstop>
+  <tabstop>simulate_stormdrain_chbox</tabstop>
+  <tabstop>import_shapefile_btn</tabstop>
+  <tabstop>import_inp_btn</tabstop>
+  <tabstop>export_inp_btn</tabstop>
+  <tabstop>SD_nodes_components_cbo</tabstop>
+  <tabstop>SD_links_components_cbo</tabstop>
+  <tabstop>SD_rating_table_cbo</tabstop>
+  <tabstop>show_rating_table_btn</tabstop>
+  <tabstop>add_one_rtable_btn</tabstop>
+  <tabstop>add_predefined_rtable_btn</tabstop>
+  <tabstop>remove_rtable_btn</tabstop>
+  <tabstop>rename_rtable_btn</tabstop>
+  <tabstop>pump_curve_cbo</tabstop>
+  <tabstop>show_pump_table_btn</tabstop>
+  <tabstop>add_pump_curve_btn</tabstop>
+  <tabstop>add_predefined_pump_curve_btn</tabstop>
+  <tabstop>remove_pump_curve_btn</tabstop>
+  <tabstop>rename_pump_curve_btn</tabstop>
+  <tabstop>pump_curve_type_cbo</tabstop>
+  <tabstop>pump_curve_description_le</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

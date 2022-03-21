@@ -1169,7 +1169,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             "WARNING 060319.1703:\n"
                             + str(no_in_out)
                             + " conduits have no inlet and/or outlet!\n\n"
-                            + "If inside the domain, the value '?' will be assigned to them.\nThey will cause errors during their processing.\n\n"
+                            + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
                             + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?"
                         )
 
@@ -1315,7 +1315,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             "WARNING 280222.1030:\n"
                             + str(no_in_out)
                             + " pumps have no inlet and/or outlet!\n\n"
-                            + "If inside the domain, the value '?' will be assigned to them.\nThey will cause errors during their processing.\n\n"
+                            + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
                             + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
                         )
 
