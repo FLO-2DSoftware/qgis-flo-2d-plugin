@@ -1491,12 +1491,12 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_simple_mult_line_update"
     END;
 
   
---INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_simple_mult_line_delete', 1);
---CREATE TRIGGER IF NOT EXISTS "find_cells_simple_mult_line_delete"
---    AFTER DELETE ON "simple_mult_lines"
---    BEGIN
---        DELETE FROM "simple_mult_cells" WHERE line_fid = OLD."fid";
---    END; 
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_simple_mult_line_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_simple_mult_line_delete"
+    AFTER DELETE ON "simple_mult_lines"
+    BEGIN
+        DELETE FROM "simple_mult_cells" WHERE line_fid = OLD."fid";
+    END; 
 
 --INSERT INTO trigger_control (name, enabled) VALUES ('find_lines_simple_mult_cells_delete', 1);
 --CREATE TRIGGER IF NOT EXISTS "find_lines_simple_mult_cells_delete"
