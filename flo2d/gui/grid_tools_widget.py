@@ -691,7 +691,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return
             else:
                 pass
-            if not self.gutils.is_table_empty("arfwrf"):
+            if not self.gutils.is_table_empty("blocked_cells"):
                 q = "There are some ARFs and WRFs already defined in the database. Overwrite them?\n\n"
                 q += "Please, note that the new reduction factors will be evaluated for existing blocked areas ONLY."
                 if not self.uc.question(q):
