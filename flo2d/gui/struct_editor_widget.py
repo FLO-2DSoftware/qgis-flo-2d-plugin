@@ -45,10 +45,6 @@ uiDialog, qtBaseClass = load_ui("struct_editor")
 
 class StructEditorWidget(qtBaseClass, uiDialog):
 
-    # before_paste = pyqtSignal()
-    # after_paste = pyqtSignal()
-    # after_delete = pyqtSignal()
-
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -139,6 +135,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
 
     def struct_changed(self):
+
+        self.table.after_delete.disconnect() 
+        self.table.after_delete.connect(self.save_data)          
+        
         cur_struct_idx = self.struct_cbo.currentIndex()
         sdata = self.struct_cbo.itemData(cur_struct_idx)
         if sdata:
@@ -167,6 +167,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.culvert_width_sbox.setValue(self.struct.cdiameter)
 
         self.show_table_data()
+
 
     def type_changed(self, idx):
         if not self.struct:
