@@ -1915,7 +1915,7 @@ CREATE TABLE "breach_global" (
     "gbratio" REAL DEFAULT 0.0, -- GBRATIO, global ratio of the initial breach width to breach depth
     "gweircoef" REAL DEFAULT 3.0, -- GWEIRCOEF, global weir coefficient for piping or breach channel weir for an unspecified failure location
     "gbreachtime" REAL DEFAULT 0.0, -- GBREACHTIME, cumulative duration (hrs) that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL
-    "useglobaldata" INTEGER DEFAULT 1, -- switch to determine if global data is written
+    "useglobaldata" INTEGER DEFAULT 0, -- switch to determine if global data is written
     "gzu" REAL DEFAULT 0.0, -- GZU, global slope of the upstream face of the levee or dam for an unspecified failure location
     "gzd" REAL DEFAULT 0.0, -- GZD, global slope of the downstream face of the levee or dam
     "gzc" REAL DEFAULT 0.0, -- GZC, global average slope of the upstream and downstream face of the levee or dam core material

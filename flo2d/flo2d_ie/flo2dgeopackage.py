@@ -2449,7 +2449,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 b.write(line.format("G", "  ".join(row_slice)))
                             else:
                                 pass
-                        c += 1
+                c += 1
 
                 for row in local_rows:
                     fid = row[0]
