@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.47
+version=0.10.48
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,9 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.48
+  - SD write/read water depth (for FIXED type boundary condition) to .INP file
+  - Breach.DAT:(breach failure) write lines as B2 (not B1).
  <p>0.10.47
   - SD Auto-assign pump inlet and outlet nodes.
  <p>0.10.46

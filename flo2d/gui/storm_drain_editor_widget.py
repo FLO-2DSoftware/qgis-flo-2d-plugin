@@ -769,9 +769,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        
         outside_nodes = ""
         outside_conduits = ""
         outside_pumps = ""
+        
+        new_nodes = []
+        updated_nodes = 0
+                    
+        new_conduits = []
+        updated_conduits = 0
+        conduit_inlets_not_found = ""
+        conduit_outlets_not_found = ""  
+        
         error_msg = "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file
         try:
             """
@@ -975,6 +985,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     outfall_invert_elev = ?, 
                                     tidal_curve = ?, 
                                     time_series = ?,
+                                    water_depth = ?,
                                     flapgate = ?, 
                                     swmm_allow_discharge = ?, 
                                     invert_elev_inp = ?, 
@@ -1024,6 +1035,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 outfall_invert_elev = float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
                 tidal_curve = values["tidal_curve"] if "tidal_curve" in values else "..."
                 time_series = values["time_series"] if "time_series" in values else "..."
+                water_depth = values["water_depth"] if "water_depth" in values else 0
+                if outfall_type == "FIXED":
+                    water_depth = values["series"]
 
                 flapgate = values["tide_gate"] if "tide_gate" in values else "False"
                 flapgate = "True" if is_true(flapgate) else "False"
@@ -1064,6 +1078,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
                     feat.setAttribute("tidal_curve", tidal_curve)
                     feat.setAttribute("time_series", time_series)
+                    feat.setAttribute("water_depth", water_depth)
                     feat.setAttribute("flapgate", flapgate)
                     feat.setAttribute("swmm_allow_discharge", allow_discharge)
                     feat.setAttribute("invert_elev_inp", junction_invert_elev)
@@ -1081,7 +1096,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("curbheight", 0)
                     feat.setAttribute("swmm_clogging_factor", 0)
                     feat.setAttribute("swmm_time_for_clogging", 0)
-                    feat.setAttribute("water_depth", 0)
                     feat.setAttribute("rt_fid", 0)
                     feat.setAttribute("outf_flo", 0)
 
@@ -1104,6 +1118,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 outfall_invert_elev,
                                 tidal_curve,
                                 time_series,
+                                water_depth,
                                 flapgate,
                                 allow_discharge,
                                 junction_invert_elev,
@@ -1647,7 +1662,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n;;Name           Elev.      Type         Time Series       Gate")
                         swmm_inp_file.write("\n;;-------------- ---------- ------------ ----------------  ----")
 
-                        SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate 
+                        SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
                                           FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
 
                         line = "\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}"
@@ -1664,6 +1679,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     "   " if lrow[3] is None else lrow[3],
                                     0 if lrow[4] is None else lrow[4],
                                     0 if lrow[5] is None else lrow[5],
+                                    0 if lrow[6] is None else lrow[6],
                                 ]
                                 lrow[3] = "   " if lrow[3] == "..." else lrow[3]
                                 lrow[4] = "   " if lrow[4] == "..." else lrow[4]
@@ -1672,12 +1688,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     lrow[2] = "NORMAL"
                                 if lrow[2] == "TIME SERIES":
                                     lrow[3] = lrow[4]
+                                if lrow[2] == "FIXED":
+                                    lrow[3] = lrow[6]                                    
                                 lrow[5] = "YES" if lrow[5] in ("True", "true", "Yes", "yes", "1") else "NO"
                                 swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[5]))
-                    #                                 row = (row[0], 0 if row[1] is None else row[1], 0 if row[2] is None else row[2],
-                    #                                        "   "  if row[3] is None else row[3] , 0 if row[4] is None else row[4])
 
-                    #                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
