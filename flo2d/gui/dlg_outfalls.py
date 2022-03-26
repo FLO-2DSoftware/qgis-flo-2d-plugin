@@ -34,7 +34,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         set_icon(self.find_outfall_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_outfall_btn, "zoom_in.svg")
         set_icon(self.zoom_out_outfall_btn, "zoom_out.svg")  
-
+        
+        self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES")
+        
+        self.setup_connection()
+        
         self.outfalls_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Nodes-Outfalls' User Layer")
         self.outfall_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_outfall_in_table)
         self.outfalls_buttonBox.accepted.connect(self.save_outfalls)
@@ -53,12 +57,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.tidal_curve_cbo.currentIndexChanged.connect(self.tidal_curve_cbo_currentIndexChanged)
         self.time_series_cbo.currentIndexChanged.connect(self.time_series_cbo_currentIndexChanged)
 
-        self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES")
         # self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
         # self.open_time_series_btn.clicked.connect(self.open_time_series)
         #
         # self.set_header()
-        self.setup_connection()
+        
         
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.grid_count = self.gutils.count('grid', field="fid")        
@@ -120,27 +123,19 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 return
     
             self.block = True            
-            
+       
             self.outfalls_tblw.setRowCount(0)
-            for row_number, row_data in enumerate(
-                rows
-            ):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
-
+            for row_number, row_data in enumerate(rows):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
                 self.outfalls_tblw.insertRow(row_number)
-                for col_number, data in enumerate(
-                    row_data
-                ):  # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
+                for col_number, data in enumerate(row_data):  # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
                     if col_number == 6 and data not in self.outfalls_tuple:
                         data = "NORMAL"
                     item = QTableWidgetItem()
-                    item.setData(
-                        Qt.DisplayRole, data if data is not None else 0
+                    item.setData(Qt.DisplayRole, data if data is not None else 0
                     )  # item gets value of data (as QTableWidgetItem Class)
 
                     # Fill the list of outfall names:
-                    if (
-                        col_number == 1
-                    ):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
+                    if (col_number == 1):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
                         self.outfall_cbo.addItem(data, row_data[0])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
@@ -178,12 +173,12 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         self.outfalls_tblw.setItem(row_number, col_number - 1, item)
                         
             self.outfall_cbo.model().sort(0)
-            self.outfall_cbo.setCurrentIndex(0)
+            
             self.outfalls_tblw.sortItems(0, Qt.AscendingOrder)
             self.outfalls_tblw.selectRow(0)                     
                         
             self.block = False   
-                     
+            self.outfall_cbo.setCurrentIndex(0)         
             self.highlight_outfall_cell(self.grid_element_txt.text())   
                      
         except Exception as e:
@@ -205,21 +200,34 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
     def out_fall_type_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.outfall_type_cbo, 5)
 
-        self.water_depth_dbox.setEnabled(False)
-        self.tidal_curve_cbo.setEnabled(False)
-        self.time_series_cbo.setEnabled(False)
-        self.open_tidal_curve_btn.setEnabled(False)
-        self.open_time_series_btn.setEnabled(False)
+        self.disableTypes()
+
         idx = self.outfall_type_cbo.currentIndex()
+        
         if idx == 0:
             self.water_depth_dbox.setEnabled(True)
+            self.label_5.setEnabled(True)
         elif idx == 3:
             self.tidal_curve_cbo.setEnabled(True)
+            self.label_7.setEnabled(True)
             self.open_tidal_curve_btn.setEnabled(True)
         elif idx == 4:
             self.time_series_cbo.setEnabled(True)
+            self.label_8.setEnabled(True)
             self.open_time_series_btn.setEnabled(True)
 
+    def disableTypes(self):
+        self.water_depth_dbox.setEnabled(False)
+        self.label_5.setEnabled(False)
+        
+        self.tidal_curve_cbo.setEnabled(False)
+        self.label_7.setEnabled(False)
+        
+        self.time_series_cbo.setEnabled(False)
+        self.label_8.setEnabled(False)
+        
+        self.open_tidal_curve_btn.setEnabled(False)
+        self.open_time_series_btn.setEnabled(False)   
     def water_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.water_depth_dbox, 6)
 
@@ -499,12 +507,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 7)
             # if item is not None:
             tidal_curve = str(item.text()) if item is not None else ""
-            # tidal_curve = ""
 
             item = self.outfalls_tblw.item(row, 8)
             # if item is not None:
             time_series = str(item.text()) if item is not None else ""
-            # time_series = ""
 
             self.gutils.execute(
                 update_qry,
