@@ -2043,7 +2043,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.gutils.fill_empty_mult_globals()
  
         mult_sql = """SELECT * FROM mult;"""    
-        head = self.execute(mult_sql).fetchone()                      
+        head = self.execute(mult_sql).fetchone()  
+        mults = []                    
             
         # Check if there is any multiple channel cells defined.     
         if not self.is_table_empty("mult_cells"):        
@@ -2061,13 +2062,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     mult_cells  = self.execute(mult_cell_sql).fetchall()
                     
                     seen = set()
-                    result = []
                     for a, b, c, d, e in mult_cells:
                         if not a in seen:
                             seen.add(a)
-                            result.append((a, b, c, d, e))
+                            mults.append((a, b, c, d, e))
 
-                    for row in result:
+                    for row in mults:
                         vals = [x if x is not None else "" for x in row]
                         m.write(line2.format(*vals))
                 
@@ -2086,11 +2086,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 isany = self.execute(simple_mult_cell_sql).fetchone()
                 if isany:
                     simple_mult = os.path.join(outdir, "SIMPLE_MULT.DAT")
+                    repeats = ""
                     with open(simple_mult, "w") as sm:
                         sm.write(line1.format(head[9]))
                         for row in self.execute(simple_mult_cell_sql):
-                            vals = [x if x is not None else "" for x in row]
-                            sm.write(line2.format(*vals))           
+                            # See if grid number in row is any grid element in mults:
+                            if [item for item in mults if item[0] == row[0]]:
+                                repeats += str(row[0]) + "  "
+                            else:
+                                vals = [x if x is not None else "" for x in row]
+                                sm.write(line2.format(*vals)) 
+                if repeats:
+                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)                        
                 return True
     
             except Exception as e:

@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.48
+version=0.10.49
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.49
+  - Multiple Channels: delete cells from SIMPLE_MULT.DAT that are in MULT.DAT.
  <p>0.10.48
   - SD write/read water depth (for FIXED type boundary condition) to .INP file
   - Breach.DAT:(breach failure) write lines as B2 (not B1).
