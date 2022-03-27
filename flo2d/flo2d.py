@@ -764,7 +764,8 @@ class Flo2D(object):
                             pass                                 
                     else:
                         self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
-                        self.files_not_used += dat + "\n"
+                        if dat not in ["WSURF.DAT", "WSTIME.DAT"]:
+                            self.files_not_used += dat + "\n"
                         continue                            
                 else:
                     if dat == "MULT.DAT":
@@ -1132,8 +1133,7 @@ class Flo2D(object):
                         self.uc.show_info(
                             "Files read by this project:\n\n"
                             + self.files_used
-                            + "\n\nFiles not found or empty:\n\n"
-                            + self.files_not_used
+                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
                         )
 
                     msg = ""
@@ -1432,8 +1432,7 @@ class Flo2D(object):
                         self.uc.show_info(
                             "Files read by this project:\n\n"
                             + self.files_used
-                            + "\n\nFiles not found or empty:\n\n"
-                            + self.files_not_used
+                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
                         )
 
                     msg = ""
