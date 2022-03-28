@@ -371,7 +371,8 @@ class GridElevation(ElevationCorrector):
         cell_size = feat.geometry().area()
         qry_values = []
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
-        request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
+        # request = QgsFeatureRequest().setFilterExpression('"calc_arf" = 1')
+        request = None
         for fid, parts in poly2poly(self.blocked_areas, self.grid, request, False, "fid", "elevation"):
             gids, elevs, subareas = [], [], []
             for gid, elev, area in parts:
