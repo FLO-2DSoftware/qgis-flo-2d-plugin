@@ -1385,7 +1385,6 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_insert"
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
 
-
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_update', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
     AFTER UPDATE ON "mult_areas"
@@ -1396,7 +1395,6 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_mult_update"
         SELECT NEW.fid, g.fid FROM grid as g
         WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
-
 
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_mult_delete', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_mult_delete"
