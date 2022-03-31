@@ -23,13 +23,17 @@ class StormDrainProject(object):
         self.INP_groups = OrderedDict()  # ".INP_groups" will contain all groups [xxxx] in .INP file,
         # ordered as entered.
         self.INP_nodes = {}
-        self.INP_conduits = {}
-        self.INP_pumps = {}
-        self.INP_curves = []
         self.INP_inflows = {}
         self.INP_patterns = []
-        self.INP_timeseries = []
-
+        self.INP_timeseries = []       
+        self.INP_conduits = {}
+        
+        self.INP_pumps = {}
+        self.INP_curves = []
+        
+        self.INP_orifices = {}
+        self.INP_weirs = {}
+        
     def split_INP_groups_dictionary_by_tags(self):
         """
         Creates an ordered dictionary INP_groups with all groups in [xxxx] .INP
@@ -423,8 +427,58 @@ class StormDrainProject(object):
                     pump_dict = dict(zip_longest(pumps_cols, p.split()))
                     pump = pump_dict.pop("pump_name")
                     self.INP_pumps[pump] = pump_dict
-        except Exception as e:
+        except Exception:
             self.uc.bar_warn("WARNING 221121.1019: Reading pumps from SWMM input data failed!")
+
+
+    def create_INP_orifices_dictionary_with_orifices(self):
+        try:
+            orificies_cols = [
+                "ori_name",
+                "ori_inlet",
+                "ori_outlet",
+                "ori_type",
+                "ori_crest_height", 
+                "ori_disch_coeff", 
+                "ori_flap_gate", 
+                "ori_open_close_time", 
+            ]
+            
+            orificies = self.select_this_INP_group("orifices")
+            if orificies:
+                for ori in orificies:
+                    if not ori or ori[0] in self.ignore:
+                        continue
+                    ori_dict = dict(zip_longest(orificies_cols, ori.split()))
+                    orifice = ori_dict.pop("ori_name")
+                    self.INP_orifices[orifice] = ori_dict
+        except Exception as e:
+            self.uc.show_error("WARNING 300322.0923: Reading orifices from SWMM input data failed!", e)
+
+    def create_INP_weirs_dictionary_with_weirs(self):
+        try:
+            weirs_cols = [
+                "weir_name",
+                "weir_inlet",
+                "weir_outlet",
+                "weir_type",
+                "weir_crest_height", 
+                "weir_disch_coeff", 
+                "weir_flap_gate", 
+                "weir_end_con", 
+                "weir_end_coeff", 
+            ]
+            
+            weirs = self.select_this_INP_group("weirs")
+            if weirs:
+                for we in weirs:
+                    if not we or we[0] in self.ignore:
+                        continue
+                    weir_dict = dict(zip_longest(weirs_cols, we.split()))
+                    weir = weir_dict.pop("weir_name")
+                    self.INP_weirs[weir] = weir_dict
+        except Exception as e:
+            self.uc.show_error("WARNING 300322.0928: Reading weirs from SWMM input data failed!", e)
 
     def create_INP_curves_dictionary_with_curves(self):
         try:
@@ -444,11 +498,9 @@ class StormDrainProject(object):
                     curve_dict = dict(zip_longest(curves_cols, c.split()))
                     curve_name = curve_dict.pop("pump_curve_name")
                     if curve_name in self.INP_curves:
-                        # self.INP_curves[key] |= curve_dict
-                        # self.INP_curves[curve_name] = self.INP_curves[curve_name].append(curve_list)
-                        next = dict()
-                        next[curve_list[0][1]] = curve_list[1:]
-                        a_dict = dict(chain(self.INP_curves.items(), next.items()))
+                        nxt = dict()
+                        nxt[curve_list[0][1]] = curve_list[1:]
+                        a_dict = dict(chain(self.INP_curves.items(), nxt.items()))
                         self.INP_curves = a_dict
                     else:
                         self.INP_curves[curve_name] =  curve_dict                   
@@ -494,31 +546,43 @@ class StormDrainProject(object):
                     
                     if xsec in self.INP_conduits:
                         self.INP_conduits[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-                                                                    # an already existing key in dictionary INP_conduits.  
-                    else:                         
-                        if self.uc.question("ERROR 090322.1623: xsection '" +  xsec+ "' in group [XSECTIONS] does't exist in [CONDUITS] group!\n\n" +
-                                          "Would you like to continue importing [XSECTIONS]?"): 
-                            continue
-                        else:
-                            return   
-                        
-                          
-            # if xsections is not None:
-            #     for xs in xsections:
-            #         if not xs or xs[0] in self.ignore:
-            #             continue
-            #         xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
-            #         xsec = xsections_dict.pop("conduit_name")
-            #         self.INP_conduits[xsec].update(
-            #             xsections_dict
-            #         )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-            #         # an already existing key in dictionary INP_conduits.
-
+                                                                        # an already existing key in dictionary INP_conduits.   
                                                          
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
             )
+
+
+    def add_XSECTIONS_to_INP_orifies_dictionary(self):
+        try:
+            xsections_cols = [
+                "orifice_name",
+                "xsections_shape",
+                "xsections_height",
+                "xsections_width",
+                "xsections_geom3",
+                "xsections_geom4",
+                "xsections_barrels",
+            ]
+            xsections = self.select_this_INP_group("xsections")
+            if xsections is not None:
+                for xs in xsections:
+                    if not xs or xs[0] in self.ignore:
+                        continue                        
+                    xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
+                    xsec = xsections_dict.pop("orifice_name")
+                    
+                    if xsec in self.INP_orifices:
+                        self.INP_orifices[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                                                                        # an already existing key in dictionary INP_orifices.   
+                                                         
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 310322.1014: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
+            )
+
+
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):
         try:

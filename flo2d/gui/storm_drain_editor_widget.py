@@ -208,6 +208,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
+        self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
+        self.user_swmm_weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
         self.user_swmm_pumps_curve_data_lyr= self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
         self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
         self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
@@ -769,16 +771,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        
-        outside_nodes = ""
-        outside_conduits = ""
-        outside_pumps = ""
-        
         new_nodes = []
+        outside_nodes = ""
         updated_nodes = 0
-                    
+        
         new_conduits = []
+        outside_conduits = ""
         updated_conduits = 0
+        
+        new_pumps = []
+        outside_pumps = ""
+        updated_pumps = 0        
+
+        new_orifices = []
+        outside_orifices = ""
+        updated_orifices = 0   
+                  
+        new_weirs = []
+        outside_weirs = ""
+        updated_weirs = 0   
+        
         conduit_inlets_not_found = ""
         conduit_outlets_not_found = ""  
         
@@ -829,12 +841,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # Conduits:
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
-
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
                 storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
                 
                 # Pumps:
                 storm_drain.create_INP_pumps_dictionary_with_pumps()        
+
+                
+                # Orifices:
+                storm_drain.create_INP_orifices_dictionary_with_orifices()        
+                storm_drain.add_XSECTIONS_to_INP_orifies_dictionary()
+                
+                # Weirs:
+                storm_drain.create_INP_weirs_dictionary_with_weirs()        
+
 
                 # External inflows into table swmm_inflows:
                 storm_drain.create_INP_inflows_dictionary_with_inflows()
@@ -963,7 +983,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
             return
 
-        # JUNCTIONS/OUTFALLS: Create Junctions and Outfalls layers:
+        # JUNCTIONS/OUTFALLS: Create User Junctions and Outfalls layers:
         try:
             """
             Creates Storm Drain Nodes layer (Users layers).
@@ -1150,7 +1170,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        # CONDUITS: Create Conduits layer:
+        # CONDUITS: Create User Conduits layer:
         if storm_drain.INP_conduits:
             try:
                 """
@@ -1185,8 +1205,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 #                  WHERE conduit_name = ?;"""
     
                 fields = self.user_swmm_conduits_lyr.fields()
-                new_conduits = []
-                updated_conduits = 0
                 conduit_inlets_not_found = ""
                 conduit_outlets_not_found = ""
     
@@ -1291,9 +1309,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
 
-        # PUMPS: Create Pumps layer:
-        new_pumps = []
-        updated_pumps = 0
+        # PUMPS: Create User Pumps layer:
         pump_inlets_not_found = ""
         pump_outlets_not_found = ""
         pump_data_missing = ""  
@@ -1329,9 +1345,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         continue
                     if not pump_outlet in storm_drain.INP_nodes:
                         pump_outlets_not_found += name + "\n"
-                        continue
-    
-                    if not go_go:
                         continue
     
                     x1 = float(storm_drain.INP_nodes[pump_inlet]["x"])
@@ -1380,6 +1393,101 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 050618.1805: creation of Storm Drain Pumps layer failed!", e)
+
+
+
+        # ORIFICES: Create User Orifices layer:
+        orifice_inlets_not_found = ""
+        orifice_outlets_not_found = ""
+                 
+        if storm_drain.INP_orifices:
+            try:
+                """
+                Creates Storm Drain Orifices layer (Users layers)
+    
+                Creates "user_swmm_orifice" layer with attributes taken from
+                the [ORIFICES], and [XSECTIONS] groups.
+    
+                """
+    
+                fields = self.user_swmm_orifices_lyr.fields()
+    
+                for name, values in list(storm_drain.INP_orifices.items()):
+                        
+                    orifice_inlet = values["ori_inlet"] if "ori_inlet" in values else None
+                    orifice_outlet = values["ori_inlet"] if "ori_inlet" in values else None
+                    orifice_type = values["ori_type"] if "ori_type" in values else "SIDE"
+                    orifice_crest_height = float_or_zero(values["ori_crest_height"]) if "ori_crest_height" in values else 0.0                    
+                    orifice_disch_coeff = float_or_zero(values["ori_disch_coeff"]) if "ori_disch_coeff" in values else 0.0       
+                    orifice_flap = values["ori_flap_gate"] if "ori_flap_gate" in values else "NO"
+                    orifice_open_close_time = float_or_zero(values["ori_open_close_time"]) if "ori_open_close_time" in values else 0.0        
+                    orifice_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
+                    orifice_height = float_or_zero(values["xsections_height"]) if "xsections_height" in values else 0.0    
+                    orifice_width = float_or_zero(values["xsections_width"]) if "xsections_width" in values else 0.0    
+   
+                   
+                    if not orifice_inlet in storm_drain.INP_nodes:
+                        orifice_inlets_not_found += name + "\n"
+                        continue
+                    if not orifice_outlet in storm_drain.INP_nodes:
+                        orifice_outlets_not_found += name + "\n"
+                        continue
+    
+                    x1 = float(storm_drain.INP_nodes[orifice_inlet]["x"])
+                    y1 = float(storm_drain.INP_nodes[orifice_inlet]["y"])
+                    x2 = float(storm_drain.INP_nodes[orifice_outlet]["x"])
+                    y2 = float(storm_drain.INP_nodes[orifice_outlet]["y"])
+    
+                    grid = self.gutils.grid_on_point(x1, y1)
+                    if grid is None:
+                        outside_orifices += name + "\n"
+                        continue
+    
+                    grid = self.gutils.grid_on_point(x2, y2)
+                    if grid is None:
+                        outside_orifices += name + "\n"
+                        continue
+    
+                    # NOTE: for now ALWAYS read all inlets   !!!:
+                    #                 if complete_or_create == "Create New":
+    
+    
+    
+    
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    
+                    feat = QgsFeature()
+                    feat.setFields(fields)                   
+                    feat.setGeometry(geom)
+                    feat.setAttribute("orifice_name", name)
+                    feat.setAttribute("orifice_inlet", orifice_inlet)
+                    feat.setAttribute("orifice_outlet", orifice_outlet)
+                    feat.setAttribute("orifice_type", orifice_type)
+                    feat.setAttribute("orifice_crest_height", orifice_crest_height)
+                    feat.setAttribute("orifice_disch_coeff", orifice_disch_coeff) 
+                    feat.setAttribute("orifice_flap_gate", orifice_flap)  
+                    feat.setAttribute("orifice_open_close_time", orifice_open_close_time) 
+                    feat.setAttribute("orifice_shape", orifice_shape) 
+                    feat.setAttribute("orifice_height", orifice_height) 
+                    feat.setAttribute("orifice_width", orifice_width) 
+                             
+                    new_orifices.append(feat)
+                    updated_orifices += 1
+                    
+                if len(new_orifices) != 0:
+                    remove_features(self.user_swmm_orifices_lyr)
+                    self.user_swmm_orifices_lyr.startEditing()
+                    self.user_swmm_orifices_lyr.addFeatures(new_orifices)
+                    self.user_swmm_orifices_lyr.commitChanges()
+                    self.user_swmm_orifices_lyr.updateExtents()
+                    self.user_swmm_orifices_lyr.triggerRepaint()
+                    self.user_swmm_orifices_lyr.removeSelection()
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 310322.0853: creation of Storm Drain Orifices layer failed!", e)
+
+
 
         QApplication.restoreOverrideCursor()
 
@@ -1746,7 +1854,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
 
                     # PUMPS ###################################################
-
                     try:
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[PUMPS]")
@@ -2330,15 +2437,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def show_orificies(self):
         self.uc.show_info("To be implemented.")
-        return
-        """
-        Shows pumps dialog.
+        return            
 
         """
-        # See if there are pumps:
-        if self.gutils.is_table_empty("user_swmm_pumps"):
+        Shows orifices dialog.
+
+        """
+        # See if there are orifices:
+        if self.gutils.is_table_empty("user_swmm_orifices"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Pumps" is empty!\n\n'
+                'User Layer "Storm Drain Orifices" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return

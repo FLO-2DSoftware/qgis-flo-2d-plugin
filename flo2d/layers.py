@@ -274,7 +274,29 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),                
+                ),  
+                (
+                    "user_swmm_orifices",
+                    {
+                        "name": "Storm Drain Orifices",
+                        "sgroup": "User Layers",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),  
+                (
+                    "user_swmm_weirs",
+                    {
+                        "name": "Storm Drain Weirs",
+                        "sgroup": "User Layers",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),                  
                 (
                     "user_swmm_nodes",
                     {

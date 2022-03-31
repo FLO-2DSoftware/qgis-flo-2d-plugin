@@ -72,7 +72,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
         self.gutils = None
         self.equation = 0
         self.ratio = 0
-        self.weird = 0
+        self.weir = 0
         self.time = 0
         self.setup_connection()
         self.populate_global_breach_dialog()
@@ -215,7 +215,7 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
                 (
                     self.equation,
                     self.ratio,
-                    self.weird,
+                    self.weir,
                     self.time,
                     self.use_global_data_chbox.isChecked(),
                     self.gzu_dbox.value(),

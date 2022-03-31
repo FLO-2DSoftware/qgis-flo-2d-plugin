@@ -1739,6 +1739,47 @@ CREATE TABLE "swmm_pumps_curve_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_pumps_curve_data', 'aspatial');
 
+CREATE TABLE "user_swmm_orifices" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+--VARIABLES FROM .INP:
+    "orifice_name" TEXT,                        -- [ORIFICES]
+    "orifice_inlet" TEXT,                       -- [ORIFICES]
+    "orifice_outlet" TEXT,                      -- [ORIFICES]
+    "orifice_type" TEXT,                        -- [ORIFICES]
+    "orifice_crest_height" REAL DEFAULT 0.0,    -- [ORIFICES]   
+    "orifice_disch_coeff" REAL DEFAULT 0.0,     -- [ORIFICES]  
+    "orifice_flap_gate" TEXT DEFAULT "NO",      -- [ORIFICES]
+    "orifice_open_close_time" REAL DEFAULT 0.0, -- [ORIFICES]
+    "orifice_shape" TEXT DEFAULT "CIRCULAR",    -- [XSECTIONS] 
+    "orifice_height" REAL DEFAULT 0.0,          -- [XSECTIONS] Geom1
+    "orifice_width" REAL DEFAULT 0.0            -- [XSECTIONS] Geom2   
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_orifices', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_orifices', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_orifices', 'geom');
+
+CREATE TABLE "user_swmm_weirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+--VARIABLES FROM .INP:
+    "weir_name" TEXT,                          -- [WEIRS]
+    "weir_inlet" TEXT,                         -- [WEIRS]
+    "weir_outlet" TEXT,                        -- [WEIRS]
+    "weir_type" TEXT,                          -- [WEIRS]
+    "weir_crest_height" REAL DEFAULT 0.0,      -- [WEIRS] Inlet Offset in EPA SWMM
+    "weir_disch_coeff" REAL DEFAULT 0.0,       -- [WEIRS] 
+    "weir_flap_gate" TEXT DEFAULT "NO",        -- [WEIRS]
+    "weir_end_contrac" INTEGER DEFAULT 0,      -- [WEIRS]
+    "weir_end_coeff" REAL DEFAULT 0.0,         -- [WEIRS]
+    "weir_shape" TEXT DEFAULT "TRIANGULAR",    -- [XSECTION] always TRIANGULAR
+    "weir_height" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom1
+    "weir_length" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom2
+    "weir_side_slope" REAL DEFAULT 0.0         -- [XSECTIONS] Geom3 and Geom4 (Side Slope in EPA SWMM) 
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_weirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_weirs', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_weirs', 'geom');
+
+
 -- SWMMFLO.DAT
 
 CREATE TABLE "swmmflo" (

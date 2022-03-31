@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.50
+version=0.10.51
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -10,6 +10,9 @@ about=QGIS tools for FLO-2D
 
 
 changelog=
+ <p>0.10.51
+  - Import .INP orifices.
+  - Create SD orifices and weirs user layes.
  <p>0.10.50
   - Import message: WSURF.DAT and WSTIME.DAT removed from message.
  <p>0.10.49

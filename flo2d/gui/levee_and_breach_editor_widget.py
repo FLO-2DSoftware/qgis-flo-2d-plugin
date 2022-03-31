@@ -142,7 +142,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         dlg_global_breach = GlobalBreachDialog(self.iface, self.lyrs)
         dlg_global_breach.equation = self.transport_eq_cbo.currentIndex() + 1
         dlg_global_breach.ratio = self.initial_breach_width_depth_ratio_dbox.value()
-        dlg_global_breach.weird = self.weir_coefficient_dbox.value()
+        dlg_global_breach.weir = self.weir_coefficient_dbox.value()
         dlg_global_breach.time = self.time_to_initial_failure_dbox.value()
 
         save = dlg_global_breach.exec_()
@@ -260,9 +260,9 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         qry = """UPDATE breach_global SET ibreachsedeqn = ?,  gbratio = ?, gweircoef = ?, gbreachtime = ?; """
         equation = self.transport_eq_cbo.currentIndex() + 1
         ratio = self.initial_breach_width_depth_ratio_dbox.value()
-        weird = self.weir_coefficient_dbox.value()
+        weir = self.weir_coefficient_dbox.value()
         time = self.time_to_initial_failure_dbox.value()
-        self.gutils.execute(qry, (equation, ratio, weird, time))
+        self.gutils.execute(qry, (equation, ratio, weir, time))
 
     def update_transport_eq(self):
         self.fill_breach_global_with_defauts_if_empty()
@@ -276,7 +276,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         value = self.initial_breach_width_depth_ratio_dbox.value()
         self.gutils.execute(qry, (value,))
 
-    def update_weird_coefficient(self):
+    def update_weir_coefficient(self):
         self.fill_breach_global_with_defauts_if_empty()
         qry = """UPDATE breach_global SET gweircoef = ?;"""
         value = self.weir_coefficient_dbox.value()
