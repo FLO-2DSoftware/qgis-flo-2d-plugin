@@ -34,6 +34,8 @@ class StormDrainProject(object):
         self.INP_orifices = {}
         self.INP_weirs = {}
         
+        self.status_report = ""
+        
     def split_INP_groups_dictionary_by_tags(self):
         """
         Creates an ordered dictionary INP_groups with all groups in [xxxx] .INP
@@ -518,12 +520,15 @@ class StormDrainProject(object):
                         continue
                     losses_dict = dict(zip_longest(losses_cols, lo.split()))
                     loss = losses_dict.pop("conduit_name")
-                    self.INP_conduits[loss].update(
-                        losses_dict
-                    )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
-                    # an already existing key in dictionary INP_conduits.
+                    if loss in self.INP_conduits:   
+                        self.INP_conduits[loss].update(
+                            losses_dict
+                        )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
+                        # an already existing key in dictionary INP_conduits.
+                    else:
+                        self.status_report +=  "\n\nUndefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo  
         except Exception as e:
-            self.uc.show_error("ERROR 170618.0701: couldn't create a [LOSSES] group from storm drain .INP file!", e)
+            self.uc.show_error("ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!", e)
 
     def add_XSECTIONS_to_INP_conduits_dictionary(self):
         try:

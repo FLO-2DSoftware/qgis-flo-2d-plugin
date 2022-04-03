@@ -466,7 +466,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if self.schematize_inlets_and_outfalls():
             self.uc.show_info(
                 "Schematizing Storm Drains finished!\n\n"
-                + "The storm drain Inlets, Outfalls, and/or rating tables were updated.\n\n"
+                + "The storm drain Inlets, outfalls, and/or rating tables were updated.\n\n"
                 + "(Note: The ‘Export Data Files’ tool will write the layer attributes into the SWMMFLO.DAT, SWMMFLORT.DAT, and SWMMOUTF.DAT files)"
             )
 
@@ -1452,8 +1452,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     #                 if complete_or_create == "Create New":
     
     
-    
-    
                     geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     
                     feat = QgsFeature()
@@ -1593,7 +1591,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setDetailedText(outside_conduits)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()                
-                
+               
+        if storm_drain.status_report:
+            # msgBox = QMessageBox()
+            # msgBox.setIcon(QMessageBox.Warning)
+            # msgBox.setWindowTitle("Stotus Report")
+            # msgBox.setText("WARNING 050322.0522:")
+            # msgBox.setInformativeText("The following errors were found:")
+            # msgBox.setDetailedText(storm_drain.status_report)
+            # msgBox.setStandardButtons(QMessageBox.Ok)
+            # msgBox.exec_()             
+            
+            
+            msgBox = QMessageBox()
+            msgBox.setText(storm_drain.status_report)
+            msgBox.exec_()                      
+            
+            
+            # self.uc.show_critical(storm_drain.status_report)
+                            
         self.populate_pump_curves_combo(False)
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
@@ -1643,7 +1659,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             INP_groups = OrderedDict()
 
             s = QSettings()
-            last_dir = s.value("FLO-2D/lastSWMMDir", "")
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
             swmm_file, __ = QFileDialog.getSaveFileName(
                 None, "Select SWMM output file to update", directory=last_dir, filter="(*.inp *.INP*)"
             )
@@ -1651,8 +1667,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if not swmm_file:
                 return
 
-            s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
-            last_dir = s.value("FLO-2D/lastSWMMDir", "")
+            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
 
             if os.path.isfile(swmm_file):
                 # File exist, therefore import groups:
@@ -1858,13 +1874,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[PUMPS]")
                         swmm_inp_file.write(
-                            "\n;;               Inlet            Outlet            Pump            Init.     Startup  Shutup"
+                            "\n;;               Inlet            Outlet           Pump             Init.      Startup    Shutup"
                         )
                         swmm_inp_file.write(
-                            "\n;;Name           Node             Node              Curve           Status    Depth    Depth"
+                            "\n;;Name           Node             Node             Curve            Status     Depth      Depth"
                         )
                         swmm_inp_file.write(
-                            "\n;;-------------- ---------------- ---------------- ---------------- --------- -------- -------"
+                            "\n;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------"
                         )
 
                         SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
@@ -1872,7 +1888,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             FROM user_swmm_pumps ORDER BY fid;"""
 
                         line = (
-                            "\n{0:16} {1:<16} {2:<16} {3:<10} {4:<10} {5:<10.2f} {6:<10.2f}"
+                            "\n{0:16} {1:<16} {2:<16} {3:<16} {4:<10} {5:<10.2f} {6:<10.2f}"
                         )
                         pumps_rows = self.gutils.execute(SD_pumps_sql).fetchall()
                         if not pumps_rows:
@@ -1897,6 +1913,51 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         return
 
 
+                    # ORIFICES ###################################################
+                    try:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[ORIFICES]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Time"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
+                        )
+
+                        SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
+                                            orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
+                                            FROM user_swmm_orifices ORDER BY fid;"""
+
+                        line = (
+                            "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<10.2f} {6:<10} {7:<10.2f}"
+                        )
+                        orifices_rows = self.gutils.execute(SD_orifices_sql).fetchall()
+                        if not orifices_rows:
+                            pass
+                        else:
+                            for row in orifices_rows:
+                                row = (
+                                    row[0],
+                                    "?" if row[1] is None or row[1] == "" else row[1],
+                                    "?" if row[2] is None or row[2] == "" else row[2],
+                                    "SIDE" if row[3] is None else row[3],
+                                    0 if row[4] is None else row[4],
+                                    0 if row[5] is None else row[5],
+                                    "NO" if row[6] is None else row[6],
+                                    0 if row[7] is None else row[7],
+                                )
+                                if row[1] == "?" or row[2] == "?":
+                                    no_in_out_pumps += 1
+                                swmm_inp_file.write(line.format(*row))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 310322.1548: error while exporting [ORIFICES] to .INP file!", e)
+                        return
+
+
                     # XSECTIONS ###################################################
                     try:
                         swmm_inp_file.write("\n")
@@ -1908,7 +1969,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             "\n;;-------------- ------------ ---------- ---------- ---------- ---------- ----------"
                         )
 
-                        SD_xsections_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, xsections_geom3, xsections_geom4, xsections_barrels
+                        SD_xsections_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
+                                                xsections_geom3, xsections_geom4, xsections_barrels
                                           FROM user_swmm_conduits ORDER BY fid;"""
 
                         line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
@@ -2579,70 +2641,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
-            
-    # def auto_assign_conduits_nodes(self):
-    #     """Auto assign Conduits (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
-    #     proceed = self.uc.question("Do you want to overwrite Conduits Inlet and Outlet nodes names?")
-    #     if not proceed:
-    #         return
-    #     try:
-    #         QApplication.setOverrideCursor(Qt.WaitCursor)
-    #         conduit_fields = self.user_swmm_conduits_lyr.fields()
-    #         conduit_inlet_fld_idx = conduit_fields.lookupField("conduit_inlet")
-    #         conduit_outlet_fld_idx = conduit_fields.lookupField("conduit_outlet")
-    #         nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
-    #         buffer_distance, segments = 5.0, 5
-    #         conduit_nodes = {}
-    #         for feat in self.user_swmm_conduits_lyr.getFeatures():
-    #             fid = feat.id()
-    #             geom = feat.geometry()
-    #             geom_poly = geom.asPolyline()
-    #             start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
-    #             start_geom = QgsGeometry.fromPointXY(start_pnt)
-    #             end_geom = QgsGeometry.fromPointXY(end_pnt)
-    #             start_buffer = start_geom.buffer(buffer_distance, segments)
-    #             end_buffer = end_geom.buffer(buffer_distance, segments)
-    #             start_nodes, end_nodes = [], []
-    #
-    #             start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
-    #             for node_id in start_nodes_ids:
-    #                 node_feat = nodes_features[node_id]
-    #                 if node_feat.geometry().within(start_buffer):
-    #                     start_nodes.append(node_feat)
-    #
-    #             end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
-    #             for node_id in end_nodes_ids:
-    #                 node_feat = nodes_features[node_id]
-    #                 if node_feat.geometry().within(end_buffer):
-    #                     end_nodes.append(node_feat)
-    #
-    #             start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
-    #             end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
-    #             closest_inlet_feat = start_nodes[0] if start_nodes else None
-    #             closest_outlet_feat = end_nodes[0] if end_nodes else None
-    #             if closest_inlet_feat is not None:
-    #                 inlet_name = closest_inlet_feat["name"]
-    #             else:
-    #                 inlet_name = None
-    #             if closest_outlet_feat is not None:
-    #                 outlet_name = closest_outlet_feat["name"]
-    #             else:
-    #                 outlet_name = None
-    #             conduit_nodes[fid] = inlet_name, outlet_name
-    #
-    #         self.user_swmm_conduits_lyr.startEditing()
-    #         for fid, (inlet_name, outlet_name) in conduit_nodes.items():
-    #             self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_inlet_fld_idx, inlet_name)
-    #             self.user_swmm_conduits_lyr.changeAttributeValue(fid, conduit_outlet_fld_idx, outlet_name)
-    #         self.user_swmm_conduits_lyr.commitChanges()
-    #         self.user_swmm_conduits_lyr.triggerRepaint()
-    #         QApplication.restoreOverrideCursor()
-    #         self.uc.show_info(
-    #             "Inlet and Outlet node names successfully assigned to " + str(len(conduit_nodes)) + " Conduits!"
-    #         )
-    #     except Exception as e:
-    #         QApplication.restoreOverrideCursor()
-    #         self.uc.show_error("ERROR: Couldn't assign Conduits nodes!", e)
 
     def SD_import_rating_table(self):
         """
