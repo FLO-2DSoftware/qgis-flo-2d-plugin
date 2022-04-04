@@ -526,7 +526,7 @@ class StormDrainProject(object):
                         )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
                         # an already existing key in dictionary INP_conduits.
                     else:
-                        self.status_report +=  "\n\nUndefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo  
+                        self.status_report +=  "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
         except Exception as e:
             self.uc.show_error("ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!", e)
 

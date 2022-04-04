@@ -25,6 +25,11 @@ from qgis.PyQt.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QPushButton,
+    QWidget, 
+    QScrollArea,
+    QVBoxLayout,
+    QLabel,
+    
 )
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (
@@ -47,7 +52,7 @@ from qgis.core import (
 )
 from .ui_utils import load_ui, try_disconnect, set_icon
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from ..user_communication import UserCommunication, ScrollMessageBox, ScrollMessageBox2
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2d_tools.grid_tools import spatial_index
@@ -110,10 +115,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                 e,
             )
 
-
 uiDialog, qtBaseClass = load_ui("storm_drain_editor")
-
-
 class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -1593,22 +1595,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.exec_()                
                
         if storm_drain.status_report:
-            # msgBox = QMessageBox()
-            # msgBox.setIcon(QMessageBox.Warning)
-            # msgBox.setWindowTitle("Stotus Report")
-            # msgBox.setText("WARNING 050322.0522:")
-            # msgBox.setInformativeText("The following errors were found:")
-            # msgBox.setDetailedText(storm_drain.status_report)
-            # msgBox.setStandardButtons(QMessageBox.Ok)
-            # msgBox.exec_()             
+            # result = ScrollMessageBox(storm_drain.status_report, None)
+            # result.setWindowTitle("Storm Drain import status")  
+            # result.exec_() 
             
-            
-            msgBox = QMessageBox()
-            msgBox.setText(storm_drain.status_report)
-            msgBox.exec_()                      
-            
-            
-            # self.uc.show_critical(storm_drain.status_report)
+            result2 = ScrollMessageBox2(QMessageBox.Warning,"Storm Drain import status", storm_drain.status_report) 
+            # result2.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
+            result2.exec_()            
                             
         self.populate_pump_curves_combo(False)
         self.pump_curve_cbo.blockSignals(True)

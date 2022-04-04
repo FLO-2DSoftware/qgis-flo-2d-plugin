@@ -12,7 +12,7 @@
 # pylint: disable=C0325
 import sys
 import traceback
-from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog
+from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog,  QWidget, QScrollArea, QVBoxLayout, QLabel, QGridLayout, QSizePolicy
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsMessageLog, Qgis
 
@@ -172,21 +172,33 @@ class UserCommunication(object):
         self.iface.mainWindow().repaint()
         
         return pb  
- 
-        # pb = QProgressBar()
-        # pb.setMinimum(min)
-        # pb.setMaximum(max)
-        # pb.setValue(init_value)
-        # pb.setFormat("%v of %m")
-        # pb.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
-        # pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
-        #
-        # pmb = self.iface.messageBar().createMessage(message)
-        # pmb.layout().addWidget(pb)
-        # self.iface.messageBar().pushWidget(pmb, Qgis.Info) 
-        #
-        # return pb   
- 
-    
+
     def clear_bar_messages(self):
         self.iface.messageBar().clearWidgets()
+        
+class ScrollMessageBox(QMessageBox):
+    def __init__(self, msg, *args, **kwargs):
+        QMessageBox.__init__(self, *args, **kwargs)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        self.content = QWidget()
+        scroll.setWidget(self.content)
+        lay = QVBoxLayout(self.content)
+        lay.addWidget(QLabel(msg, self))
+        self.layout().addWidget(scroll, 0, 0, 1, self.layout().columnCount())
+        self.setStyleSheet("QScrollArea{min-width:300 px; min-height: 400px}")   
+
+class ScrollMessageBox2(QMessageBox):
+    def __init__(self, *args, **kwargs):
+        QMessageBox.__init__(self, *args, **kwargs)
+        chldn = self.children()
+        scrll = QScrollArea(self)
+        scrll.setWidgetResizable(True)
+        grd = self.findChild(QGridLayout)
+        lbl = QLabel(chldn[1].text(), self)
+        lbl.setWordWrap(True)
+        scrll.setWidget(lbl)
+        scrll.setMinimumSize (700,300)
+        # grd.addWidget(scrll,0,1)
+        grd.addWidget(scrll, 0, 1, 1, self.layout().columnCount())
+        chldn[1].setText('')
