@@ -109,11 +109,6 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     if column == 1:  
                         # Fill the list of pump names:
                         self.pump_name_cbo.addItem(data, row_data[0])
-                    # if column == 4:  
-                    #     # Fill the list of curve names: 
-                    #     index= self.pump_curve_cbo.findText(data) 
-                    #     if index == -1:
-                    #         self.pump_curve_cbo.addItem(data, row_data[4])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_pumps):
                     if row_number == 0:
@@ -305,7 +300,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 200618.0631: assignment of value failed!.\n", e)
+            self.uc.show_error("ERROR 200618.0633: assignment of value failed!.\n", e)
 
     def find_pump(self):
         try:
