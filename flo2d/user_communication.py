@@ -172,7 +172,7 @@ class UserCommunication(object):
         self.iface.mainWindow().repaint()
         
         return pb  
-
+    
     def clear_bar_messages(self):
         self.iface.messageBar().clearWidgets()
         

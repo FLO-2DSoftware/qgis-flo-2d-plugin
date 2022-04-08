@@ -399,12 +399,13 @@ class StormDrainProject(object):
                 "conduit_max_flow",
             ]
             conduits = self.select_this_INP_group("condu")
-            for cond in conduits:
-                if not cond or cond[0] in self.ignore:
-                    continue
-                conduit_dict = dict(zip_longest(conduit_cols, cond.split()))
-                conduit = conduit_dict.pop("conduit_name")
-                self.INP_conduits[conduit] = conduit_dict
+            if conduits:
+                for cond in conduits:
+                    if not cond or cond[0] in self.ignore:
+                        continue
+                    conduit_dict = dict(zip_longest(conduit_cols, cond.split()))
+                    conduit = conduit_dict.pop("conduit_name")
+                    self.INP_conduits[conduit] = conduit_dict
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
 
@@ -552,6 +553,12 @@ class StormDrainProject(object):
                     if xsec in self.INP_conduits:
                         self.INP_conduits[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
                                                                         # an already existing key in dictionary INP_conduits.   
+                    elif xsec in self.INP_orifices:  
+                        pass   
+                    elif xsec in self.INP_weirs:  
+                        pass                                         
+                    else:
+                        self.status_report +=  "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
                                                          
         except Exception as e:
             self.uc.show_error(

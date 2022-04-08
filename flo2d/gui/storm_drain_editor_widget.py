@@ -65,6 +65,7 @@ from ..gui.dlg_outfalls import OutfallNodesDialog
 from ..gui.dlg_inlets import InletNodesDialog
 from ..gui.dlg_conduits import ConduitsDialog
 from ..gui.dlg_pumps import PumpsDialog
+from ..gui.dlg_orifices import OrificesDialog
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from _ast import Pass
 
@@ -115,7 +116,10 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                 e,
             )
 
+
 uiDialog, qtBaseClass = load_ui("storm_drain_editor")
+
+
 class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -844,25 +848,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Conduits:
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
-                storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
                 
                 # Pumps:
                 storm_drain.create_INP_pumps_dictionary_with_pumps()        
 
-                
                 # Orifices:
                 storm_drain.create_INP_orifices_dictionary_with_orifices()        
-                storm_drain.add_XSECTIONS_to_INP_orifies_dictionary()
                 
                 # Weirs:
                 storm_drain.create_INP_weirs_dictionary_with_weirs()        
 
+                storm_drain.add_XSECTIONS_to_INP_orifies_dictionary()
+                storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
 
                 # External inflows into table swmm_inflows:
                 storm_drain.create_INP_inflows_dictionary_with_inflows()
+                
+                if complete_or_create == "Create New":
+                    remove_features(self.swmm_inflows_lyr)   
+                                 
                 try:
-                    if complete_or_create == "Create New":
-                        remove_features(self.swmm_inflows_lyr)
+
                     insert_inflows_sql = """INSERT INTO swmm_inflows 
                                             (   node_name, 
                                                 constituent, 
@@ -894,10 +900,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # Inflows patterns into table swmm_inflow_patterns:
                 storm_drain.create_INP_patterns_list_with_patterns()
+                
+                if complete_or_create == "Create New":
+                    remove_features(self.swmm_inflow_patterns_lyr)                
+                
                 try:
                     description = ""
-                    if complete_or_create == "Create New":
-                        remove_features(self.swmm_inflow_patterns_lyr)
                     insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
                                             (   pattern_name, 
                                                 pattern_description, 
@@ -928,9 +936,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # Inflow time series into table swmm_time_series:
                 storm_drain.create_INP_time_series_list_with_time_series()
+                
+                if complete_or_create == "Create New":
+                    remove_features(self.swmm_inflows_time_series_lyr)  
+                                  
                 try:
-                    if complete_or_create == "Create New":
-                        remove_features(self.swmm_inflows_time_series_lyr)
+
                     insert_times_sql = """INSERT INTO swmm_inflow_time_series 
                                             (   time_series_name, 
                                                 time_series_description, 
@@ -1173,6 +1184,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         # CONDUITS: Create User Conduits layer:
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_conduits_lyr) 
+                     
         if storm_drain.INP_conduits:
             try:
                 """
@@ -1296,10 +1310,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
     
                     new_conduits.append(feat)
-                    updated_conduits += 1
-                    
+                    updated_conduits += 1 
+                                     
                 if len(new_conduits) != 0:
-                    remove_features(self.user_swmm_conduits_lyr)
                     self.user_swmm_conduits_lyr.startEditing()
                     self.user_swmm_conduits_lyr.addFeatures(new_conduits)
                     self.user_swmm_conduits_lyr.commitChanges()
@@ -1310,12 +1323,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
-
+        
         # PUMPS: Create User Pumps layer:
         pump_inlets_not_found = ""
         pump_outlets_not_found = ""
         pump_data_missing = ""  
-                 
+        
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_pumps_lyr) 
+                                                 
         if storm_drain.INP_pumps:
             try:
                 """
@@ -1382,9 +1398,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     
                     new_pumps.append(feat)
                     updated_pumps += 1
-                    
+
+
                 if len(new_pumps) != 0:
-                    remove_features(self.user_swmm_pumps_lyr)
                     self.user_swmm_pumps_lyr.startEditing()
                     self.user_swmm_pumps_lyr.addFeatures(new_pumps)
                     self.user_swmm_pumps_lyr.commitChanges()
@@ -1401,7 +1417,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # ORIFICES: Create User Orifices layer:
         orifice_inlets_not_found = ""
         orifice_outlets_not_found = ""
-                 
+
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_orifices_lyr)
+                    
         if storm_drain.INP_orifices:
             try:
                 """
@@ -1417,7 +1436,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 for name, values in list(storm_drain.INP_orifices.items()):
                         
                     orifice_inlet = values["ori_inlet"] if "ori_inlet" in values else None
-                    orifice_outlet = values["ori_inlet"] if "ori_inlet" in values else None
+                    orifice_outlet = values["ori_outlet"] if "ori_outlet" in values else None
                     orifice_type = values["ori_type"] if "ori_type" in values else "SIDE"
                     orifice_crest_height = float_or_zero(values["ori_crest_height"]) if "ori_crest_height" in values else 0.0                    
                     orifice_disch_coeff = float_or_zero(values["ori_disch_coeff"]) if "ori_disch_coeff" in values else 0.0       
@@ -1473,9 +1492,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                              
                     new_orifices.append(feat)
                     updated_orifices += 1
-                    
+
                 if len(new_orifices) != 0:
-                    remove_features(self.user_swmm_orifices_lyr)
                     self.user_swmm_orifices_lyr.startEditing()
                     self.user_swmm_orifices_lyr.addFeatures(new_orifices)
                     self.user_swmm_orifices_lyr.commitChanges()
@@ -1492,7 +1510,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
 
-        if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0 and len(new_pumps) == 0:
+        if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0 and len(new_pumps) == 0 and len(new_orifices):
             error_msg += "\nThere are no nodes or links inside the domain of this project."
             # self.uc.show_info(
             #     "WARNING 261220.1631:\n\nFile "
@@ -1534,14 +1552,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "Importing Storm Drain data finished!\n\n"
                 + "* "
                 + str(len(new_nodes))
-                + " nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
+                + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
                 + "* "
                 + str(len(new_conduits))
-                + " conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
                 + "* "
                 + str(len(new_pumps))
-                + " pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"                    
-                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"    
+                + "* "
+                + str(len(new_orifices))
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group). \n\n"                         
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', and 'Orifices' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
@@ -1558,8 +1579,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n\n"
                 + "* "
                 + str(updated_pumps)
-                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"                    
-                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', and 'Pumps' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"    
+                
+                + "* "
+                + str(updated_orifices)
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated. \n\n"                                 
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', and 'Orifices' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
@@ -1590,19 +1615,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setWindowTitle("Storm Drain pumps outside domain")
             msgBox.setText("WARNING 050322.0522:")
             msgBox.setInformativeText("The following Pumps are outside the domain:")
-            msgBox.setDetailedText(outside_conduits)
+            msgBox.setDetailedText(outside_pumps)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()                
+
+        if outside_orifices != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain orifices outside domain")
+            msgBox.setText("WARNING 080422.0522:")
+            msgBox.setInformativeText("The following Orifices are outside the domain:")
+            msgBox.setDetailedText(outside_orifices)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()
                
         if storm_drain.status_report:
-            # result = ScrollMessageBox(storm_drain.status_report, None)
-            # result.setWindowTitle("Storm Drain import status")  
-            # result.exec_() 
-            
             result2 = ScrollMessageBox2(QMessageBox.Warning,"Storm Drain import status", storm_drain.status_report) 
-            # result2.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
             result2.exec_()            
-                            
+
         self.populate_pump_curves_combo(False)
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
@@ -1743,19 +1773,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # JUNCTIONS ##################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[JUNCTIONS]")
-                        swmm_inp_file.write("\n;;               Invert     Max.       Init.      Surcharge  Ponded")
-                        swmm_inp_file.write("\n;;Name           Elev.      Depth      Depth      Depth      Area")
-                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ---------- ----------")
-
                         SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
                                           FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "J" ORDER BY fid;"""
-                        line = "\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}"
+
                         junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
                         if not junctions_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[JUNCTIONS]")
+                            swmm_inp_file.write("\n;;               Invert     Max.       Init.      Surcharge  Ponded")
+                            swmm_inp_file.write("\n;;Name           Elev.      Depth      Depth      Depth      Area")
+                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ---------- ----------")
+                            
+                            line = "\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}"                            
+                            
                             for row in junctions_rows:
                                 row = (
                                     row[0],
@@ -1773,20 +1805,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # OUTFALLS ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[OUTFALLS]")
-                        swmm_inp_file.write("\n;;               Invert     Outfall      Stage/Table       Tide")
-                        swmm_inp_file.write("\n;;Name           Elev.      Type         Time Series       Gate")
-                        swmm_inp_file.write("\n;;-------------- ---------- ------------ ----------------  ----")
-
                         SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
                                           FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
 
-                        line = "\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}"
                         outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
                         if not outfalls_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[OUTFALLS]")
+                            swmm_inp_file.write("\n;;               Invert     Outfall      Stage/Table       Tide")
+                            swmm_inp_file.write("\n;;Name           Elev.      Type         Time Series       Gate")
+                            swmm_inp_file.write("\n;;-------------- ---------- ------------ ----------------  ----")
+
+                            line = "\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}"
+                            
                             for row in outfalls_rows:
                                 lrow = list(row)
                                 lrow = [
@@ -1818,29 +1851,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     # CONDUITS ###################################################
 
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[CONDUITS]")
-                        swmm_inp_file.write(
-                            "\n;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max."
-                        )
-                        swmm_inp_file.write(
-                            "\n;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------"
-                        )
-
                         SD_conduits_sql = """SELECT conduit_name, conduit_inlet, conduit_outlet, conduit_length, conduit_manning, conduit_inlet_offset, 
                                                 conduit_outlet_offset, conduit_init_flow, conduit_max_flow 
                                           FROM user_swmm_conduits ORDER BY fid;"""
 
-                        line = (
-                            "\n{0:16} {1:<16} {2:<16} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10.2f} {7:<10.2f} {8:<10.2f}"
-                        )
                         conduits_rows = self.gutils.execute(SD_conduits_sql).fetchall()
                         if not conduits_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[CONDUITS]")
+                            swmm_inp_file.write(
+                                "\n;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max."
+                            )
+                            swmm_inp_file.write(
+                                "\n;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------"
+                            )                            
+                            
+                            line = ("\n{0:16} {1:<16} {2:<16} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10.2f} {7:<10.2f} {8:<10.2f}") 
+                            
                             for row in conduits_rows:
                                 row = (
                                     row[0],
@@ -1864,29 +1896,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # PUMPS ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[PUMPS]")
-                        swmm_inp_file.write(
-                            "\n;;               Inlet            Outlet           Pump             Init.      Startup    Shutup"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;Name           Node             Node             Curve            Status     Depth      Depth"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------"
-                        )
-
                         SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
                                             pump_startup_depth, pump_shutoff_depth 
                                             FROM user_swmm_pumps ORDER BY fid;"""
 
-                        line = (
-                            "\n{0:16} {1:<16} {2:<16} {3:<16} {4:<10} {5:<10.2f} {6:<10.2f}"
-                        )
                         pumps_rows = self.gutils.execute(SD_pumps_sql).fetchall()
                         if not pumps_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[PUMPS]")
+                            swmm_inp_file.write(
+                                "\n;;               Inlet            Outlet           Pump             Init.      Startup    Shutup"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;Name           Node             Node             Curve            Status     Depth      Depth"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------"
+                            )                            
+                            
+                            line = ("\n{0:16} {1:<16} {2:<16} {3:<16} {4:<10} {5:<10.2f} {6:<10.2f}")
+                            
                             for row in pumps_rows:
                                 row = (
                                     row[0],
@@ -1908,29 +1939,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # ORIFICES ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[ORIFICES]")
-                        swmm_inp_file.write(
-                            "\n;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Time"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
-                        )
-
                         SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
                                             orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
                                             FROM user_swmm_orifices ORDER BY fid;"""
 
-                        line = (
-                            "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<10.2f} {6:<10} {7:<10.2f}"
-                        )
                         orifices_rows = self.gutils.execute(SD_orifices_sql).fetchall()
                         if not orifices_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[ORIFICES]")
+                            swmm_inp_file.write(
+                                "\n;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Time"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
+                            )                            
+
+                            line = ("\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<10.2f} {6:<10} {7:<10.2f}")
+                            
                             for row in orifices_rows:
                                 row = (
                                     row[0],
@@ -1962,18 +1992,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             "\n;;-------------- ------------ ---------- ---------- ---------- ---------- ----------"
                         )
 
-                        SD_xsections_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
+                        # XSections from user conduits:
+                        SD_xsections_1_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
                                                 xsections_geom3, xsections_geom4, xsections_barrels
-                                          FROM user_swmm_conduits ORDER BY fid;"""
+                                          FROM user_swmm_conduits ORDER BY fid;"""                                          
 
                         line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
-                        xsections_rows = self.gutils.execute(SD_xsections_sql).fetchall()
-                        if not xsections_rows:
+                        xsections_rows_1 = self.gutils.execute(SD_xsections_1_sql).fetchall()
+                        if not xsections_rows_1:
                             pass
                         else:
                             no_xs = 0
 
-                            for row in xsections_rows:
+                            for row in xsections_rows_1:
                                 lrow = list(row)
                                 lrow = (
                                     "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
@@ -1984,15 +2015,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     "?" if lrow[5] is None or lrow[0] == "" else lrow[5],
                                     "?" if lrow[6] is None or lrow[0] == "" else lrow[6],
                                 )
-                                if (
-                                    row[0] == "?"
-                                    or row[1] == "?"
-                                    or row[2] == "?"
-                                    or row[3] == "?"
-                                    or row[4] == "?"
-                                    or row[5] == "?"
-                                    or row[6] == "?"
-                                ):
+                                if (row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?" or row[4] == "?" or row[5] == "?" or row[6] == "?"):
                                     no_xs += 1
                                 lrow = (
                                     lrow[0],
@@ -2005,6 +2028,42 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
+                              
+                        # XSections from user orifices:
+                        SD_xsections_2_sql = """SELECT orifice_name, orifice_shape, orifice_height, orifice_width
+                                          FROM user_swmm_orifices ORDER BY fid;"""                                          
+
+                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
+                        xsections_rows_2 = self.gutils.execute(SD_xsections_2_sql).fetchall()
+                        if not xsections_rows_2:
+                            pass
+                        else:
+                            no_xs = 0
+
+                            for row in xsections_rows_2:
+                                lrow = list(row)
+                                lrow = (
+                                    "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
+                                    "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
+                                    "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
+                                    "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
+                                    0.0,
+                                    0.0,
+                                    0,
+                                )
+                                if (row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?"):
+                                    no_xs += 1
+                                lrow = (
+                                    lrow[0],
+                                    lrow[1],
+                                    0.0 if lrow[2] == "?" else lrow[2],
+                                    0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
+                                    0.0,
+                                    0.0,
+                                    0,                                    
+                                )
+                                row = tuple(lrow)
+                                swmm_inp_file.write(line.format(*row))
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
@@ -2013,19 +2072,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # LOSSES ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[LOSSES]")
-                        swmm_inp_file.write("\n;;Link           Inlet      Outlet     Average    Flap Gate")
-                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ----------")
-
                         SD_losses_sql = """SELECT conduit_name, losses_inlet, losses_outlet, losses_average, losses_flapgate
                                           FROM user_swmm_conduits ORDER BY fid;"""
 
-                        line = "\n{0:16} {1:<10} {2:<10} {3:<10.2f} {4:<10}"
                         losses_rows = self.gutils.execute(SD_losses_sql).fetchall()
                         if not losses_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[LOSSES]")
+                            swmm_inp_file.write("\n;;Link           Inlet      Outlet     Average    Flap Gate")
+                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ----------")                           
+                            
+                            
+                            line = "\n{0:16} {1:<10} {2:<10} {3:<10.2f} {4:<10}"
+                            
                             for row in losses_rows:
                                 lrow = list(row)
                                 lrow[4] = "YES" if lrow[4] in ("True", "true", "Yes", "yes", "1") else "NO"
@@ -2037,19 +2098,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # CURVES ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[CURVES]")
-                        swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
-                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
 
                         SD_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
                                           FROM swmm_pumps_curve_data ORDER BY fid;"""
 
-                        line = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
                         curves_rows = self.gutils.execute(SD_curves_sql).fetchall()
                         if not curves_rows:
                             pass
                         else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[CURVES]")
+                            swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
+                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")                            
+                            
+                            line = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
+                            
                             name = ""
                             for row in curves_rows:
                                 lrow = list(row)
@@ -2272,8 +2335,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "DIVIDERS",
                         "STORAGE",
                         # "PUMPS",
-                        "ORIFICES",
-                        "WEIRS",
+                        # "ORIFICES",
+                        # "WEIRS",
                         "OUTLETS",
                         "TRANSECTS",
                         "POLLUTANTS",
@@ -2314,8 +2377,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(len(conduits_rows))
                     + "\t[CONDUITS]\n"
                     + str(len(pumps_rows))
-                    + "\t[PUMPS]\n"                    
-                    + str(len(xsections_rows))
+                    + "\t[PUMPS]\n"     
+                    + str(len(orifices_rows))
+                    + "\t[ORIFICES]\n"                            
+                    + str(len(xsections_rows_1) + len(xsections_rows_2))
                     + "\t[XSECTIONS]\n"
                     + str(len(losses_rows))
                     + "\t[LOSSES]\n"
@@ -2491,9 +2556,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber() 
 
     def show_orificies(self):
-        self.uc.show_info("To be implemented.")
-        return            
-
         """
         Shows orifices dialog.
 
@@ -2507,20 +2569,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        dlg_pumps = PumpsDialog(self.iface, self.lyrs)
-        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_orifices = OrificesDialog(self.iface, self.lyrs)
+        dlg_orifices.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_orifices.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
         QApplication.restoreOverrideCursor()
-        save = dlg_pumps.exec_()
+        save = dlg_orifices.exec_()
         if save:
             try:
-                dlg_pumps.save_pumps()
+                dlg_orifices.save_orifices()
                 self.uc.bar_info(
-                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
+                    "Orifices saved to 'Storm Drain Orifices' User Layer!\n\n"
                     + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
                 )
             except Exception:
-                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
+                self.uc.bar_warn("Could not save orifices! Please check if they are correct.")
                 return
             
         self.lyrs.clear_rubber() 
