@@ -406,6 +406,10 @@ class StormDrainProject(object):
                     conduit_dict = dict(zip_longest(conduit_cols, cond.split()))
                     conduit = conduit_dict.pop("conduit_name")
                     self.INP_conduits[conduit] = conduit_dict
+                    
+                    if conduit_dict["conduit_inlet"] == "?" or conduit_dict["conduit_outlet"] == "?":
+                        self.status_report +=  "Undefined Node (?) reference at \n[CONDUITS]\n" + cond + "\n\n"                                        
+                    
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
 
