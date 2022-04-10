@@ -1768,9 +1768,9 @@ CREATE TABLE "user_swmm_weirs" (
     "weir_crest_height" REAL DEFAULT 0.0,      -- [WEIRS] Inlet Offset in EPA SWMM
     "weir_disch_coeff" REAL DEFAULT 0.0,       -- [WEIRS] 
     "weir_flap_gate" TEXT DEFAULT "NO",        -- [WEIRS]
-    "weir_end_contrac" INTEGER DEFAULT 0,      -- [WEIRS]
+    "weir_end_contrac" TEXT DEFAULT "0",       -- [WEIRS]
     "weir_end_coeff" REAL DEFAULT 0.0,         -- [WEIRS]
-    "weir_shape" TEXT DEFAULT "TRIANGULAR",    -- [XSECTION] always TRIANGULAR
+    "weir_shape" TEXT,                         -- [XSECTION] 
     "weir_height" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom1
     "weir_length" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom2
     "weir_side_slope" REAL DEFAULT 0.0         -- [XSECTIONS] Geom3 and Geom4 (Side Slope in EPA SWMM) 

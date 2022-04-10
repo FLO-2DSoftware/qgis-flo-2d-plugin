@@ -57,7 +57,7 @@ from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2dobjects import InletRatingTable, PumpCurves
-from ..utils import is_number, m_fdata, is_true, float_or_zero
+from ..utils import is_number, m_fdata, is_true, float_or_zero, int_or_zero
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan, modf, floor
 from datetime import date, time, timedelta, datetime
@@ -66,6 +66,7 @@ from ..gui.dlg_inlets import InletNodesDialog
 from ..gui.dlg_conduits import ConduitsDialog
 from ..gui.dlg_pumps import PumpsDialog
 from ..gui.dlg_orifices import OrificesDialog
+from ..gui.dlg_weirs import WeirsDialog
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from _ast import Pass
 
@@ -858,7 +859,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Weirs:
                 storm_drain.create_INP_weirs_dictionary_with_weirs()        
 
-                storm_drain.add_XSECTIONS_to_INP_orifies_dictionary()
+                storm_drain.add_XSECTIONS_to_INP_orifices_dictionary()
+                storm_drain.add_XSECTIONS_to_INP_weirs_dictionary()
                 storm_drain.add_XSECTIONS_to_INP_conduits_dictionary()
 
                 # External inflows into table swmm_inflows:
@@ -1412,8 +1414,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 050618.1805: creation of Storm Drain Pumps layer failed!", e)
 
-
-
         # ORIFICES: Create User Orifices layer:
         orifice_inlets_not_found = ""
         orifice_outlets_not_found = ""
@@ -1505,10 +1505,102 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 310322.0853: creation of Storm Drain Orifices layer failed!", e)
 
+        # WEIRS: Create User Weirs layer:
+        weir_inlets_not_found = ""
+        weir_outlets_not_found = ""
+
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_weirs_lyr)
+                    
+        if storm_drain.INP_weirs:
+            try:
+                """
+                Creates Storm Drain Weirs layer (Users layers)
+    
+                Creates "user_swmm_weirs" layer with attributes taken from
+                the [WEIRS], and [XSECTIONS] groups.
+    
+                """
+    
+                fields = self.user_swmm_weirs_lyr.fields()
+    
+                for name, values in list(storm_drain.INP_weirs.items()):
+                        
+                    weir_inlet = values["weir_inlet"] if "weir_inlet" in values else None
+                    weir_outlet = values["weir_outlet"] if "weir_outlet" in values else None
+                    weir_type = values["weir_type"] if "weir_type" in values else "TRANSVERSE"
+                    weir_crest_height = float_or_zero(values["weir_crest_height"]) if "weir_crest_height" in values else 0.0                    
+                    weir_disch_coeff = float_or_zero(values["weir_disch_coeff"]) if "weir_disch_coeff" in values else 0.0       
+                    weir_flap = values["weir_flap_gate"] if "weir_flap_gate" in values else "NO"
+                    weir_end_contrac = int_or_zero(values["weir_end_contrac"]) if "weir_end_contrac" in values else 0      
+                    weir_end_coeff = float_or_zero(values["weir_end_coeff"]) if "weir_end_coeff" in values else 0.0        
+                    weir_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
+                    weir_height = float_or_zero(values["xsections_height"]) if "xsections_height" in values else 0.0    
+                    weir_length = float_or_zero(values["xsections_width"]) if "xsections_width" in values else 0.0    
+                    weir_side_slope = float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0.0       
+                    
+                    if not weir_inlet in storm_drain.INP_nodes:
+                        weir_inlets_not_found += name + "\n"
+                        continue
+                    if not weir_outlet in storm_drain.INP_nodes:
+                        weir_outlets_not_found += name + "\n"
+                        continue
+    
+                    x1 = float(storm_drain.INP_nodes[weir_inlet]["x"])
+                    y1 = float(storm_drain.INP_nodes[weir_inlet]["y"])
+                    x2 = float(storm_drain.INP_nodes[weir_outlet]["x"])
+                    y2 = float(storm_drain.INP_nodes[weir_outlet]["y"])
+    
+                    grid = self.gutils.grid_on_point(x1, y1)
+                    if grid is None:
+                        outside_weirs += name + "\n"
+                        continue
+    
+                    grid = self.gutils.grid_on_point(x2, y2)
+                    if grid is None:
+                        outside_weirs += name + "\n"
+                        continue
+    
+                    # NOTE: for now ALWAYS read all inlets   !!!:
+                    #                 if complete_or_create == "Create New":
+    
+    
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    
+                    feat = QgsFeature()
+                    feat.setFields(fields)                   
+                    feat.setGeometry(geom)
+                    feat.setAttribute("weir_name", name)
+                    feat.setAttribute("weir_inlet", weir_inlet)
+                    feat.setAttribute("weir_outlet", weir_outlet)
+                    feat.setAttribute("weir_type", weir_type)
+                    feat.setAttribute("weir_crest_height", weir_crest_height)
+                    feat.setAttribute("weir_disch_coeff", weir_disch_coeff) 
+                    feat.setAttribute("weir_flap_gate", weir_flap)  
+                    feat.setAttribute("weir_end_contrac", weir_end_contrac) 
+                    feat.setAttribute("weir_end_coeff", weir_end_coeff) 
+                    feat.setAttribute("weir_shape", weir_shape) 
+                    feat.setAttribute("weir_height", weir_height) 
+                    feat.setAttribute("weir_length", weir_length) 
+                    feat.setAttribute("weir_side_slope", weir_side_slope) 
+                             
+                    new_weirs.append(feat)
+                    updated_weirs += 1
+
+                if len(new_weirs) != 0:
+                    self.user_swmm_weirs_lyr.startEditing()
+                    self.user_swmm_weirs_lyr.addFeatures(new_weirs)
+                    self.user_swmm_weirs_lyr.commitChanges()
+                    self.user_swmm_weirs_lyr.updateExtents()
+                    self.user_swmm_weirs_lyr.triggerRepaint()
+                    self.user_swmm_weirs_lyr.removeSelection()
+    
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
 
 
         QApplication.restoreOverrideCursor()
-
 
         if complete_or_create == "Create New" and len(new_nodes) == 0 and len(new_conduits) == 0 and len(new_pumps) == 0 and len(new_orifices):
             error_msg += "\nThere are no nodes or links inside the domain of this project."
@@ -1561,8 +1653,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"    
                 + "* "
                 + str(len(new_orifices))
-                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group). \n\n"                         
-                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', and 'Orifices' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group). \n\n"  
+                + "* "
+                + str(len(new_weirs))
+                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group). \n\n"                             
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
@@ -1580,11 +1675,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "* "
                 + str(updated_pumps)
                 + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"    
-                
                 + "* "
                 + str(updated_orifices)
-                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated. \n\n"                                 
-                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', and 'Orifices' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated. \n\n" 
+                + "* "
+                + str(updated_weirs)
+                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group). \n\n"                  
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
@@ -1709,6 +1806,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 with open(swmm_file, "w") as swmm_inp_file:
                     no_in_out_conduits = 0
                     no_in_out_pumps = 0
+                    no_in_out_orifices = 0
+                    no_in_out_weirs = 0 
+                                       
                     # TITLE ##################################################
                     items = self.select_this_INP_group(INP_groups, "title")
                     swmm_inp_file.write("[TITLE]")
@@ -1959,7 +2059,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
                             )                            
 
-                            line = ("\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<10.2f} {6:<10} {7:<10.2f}")
+                            line = ("\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<9.2f}")
                             
                             for row in orifices_rows:
                                 row = (
@@ -1973,14 +2073,57 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if row[7] is None else row[7],
                                 )
                                 if row[1] == "?" or row[2] == "?":
-                                    no_in_out_pumps += 1
+                                    no_in_out_orifices += 1
                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 310322.1548: error while exporting [ORIFICES] to .INP file!", e)
                         return
 
+                    # WEIRS ###################################################
+                    try:
+                        SD_weirs_sql = """SELECT weir_name, weir_inlet, weir_outlet, weir_type, weir_crest_height, 
+                                            weir_disch_coeff, weir_flap_gate, weir_end_contrac, weir_end_coeff 
+                                            FROM user_swmm_weirs ORDER BY fid;"""
 
+                        weirs_rows = self.gutils.execute(SD_weirs_sql).fetchall()
+                        if not weirs_rows:
+                            pass
+                        else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[WEIRS]")
+                            swmm_inp_file.write(
+                                "\n;;               Inlet            Outlet           Weir         Crest      Disch.      Flap      End      End"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Con.     Coeff."
+                            )
+                            swmm_inp_file.write(
+                                "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -------  ---------"
+                            )                            
+
+                            line = ("\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<8} {8:<9.2f}")
+                            
+                            for row in weirs_rows:
+                                row = (
+                                    row[0],
+                                    "?" if row[1] is None or row[1] == "" else row[1],
+                                    "?" if row[2] is None or row[2] == "" else row[2],
+                                    "TRANSVERSE" if row[3] is None else row[3],
+                                    0 if row[4] is None else row[4],
+                                    0 if row[5] is None else row[5],
+                                    "NO" if row[6] is None else row[6],
+                                    "0" if row[7] is None else row[7],
+                                    0 if row[8] is None else row[8],
+                                )
+                                if row[1] == "?" or row[2] == "?":
+                                    no_in_out_weirs += 1
+                                swmm_inp_file.write(line.format(*row))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 090422.0557: error while exporting [WEIRS] to .INP file!", e)
+                        return
+                    
                     # XSECTIONS ###################################################
                     try:
                         swmm_inp_file.write("\n")
@@ -2033,7 +2176,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         SD_xsections_2_sql = """SELECT orifice_name, orifice_shape, orifice_height, orifice_width
                                           FROM user_swmm_orifices ORDER BY fid;"""                                          
 
-                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
+                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
                         xsections_rows_2 = self.gutils.execute(SD_xsections_2_sql).fetchall()
                         if not xsections_rows_2:
                             pass
@@ -2064,10 +2207,46 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
+ 
+                        # XSections from user weirs:
+                        SD_xsections_3_sql = """SELECT weir_name, weir_shape, weir_height, weir_length, weir_side_slope, weir_side_slope
+                                          FROM user_swmm_weirs ORDER BY fid;"""                                          
+
+                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
+                        xsections_rows_3 = self.gutils.execute(SD_xsections_3_sql).fetchall()
+                        if not xsections_rows_3:
+                            pass
+                        else:
+                            no_xs = 0
+
+                            for row in xsections_rows_3:
+                                lrow = list(row)
+                                lrow = (
+                                    "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
+                                    "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
+                                    "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
+                                    "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
+                                    "?" if lrow[4] is None or lrow[4] == "" else lrow[4],
+                                    "?" if lrow[5] is None or lrow[5] == "" else lrow[5],
+                                    0,
+                                )
+                                if (row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?"):
+                                    no_xs += 1
+                                lrow = (
+                                    lrow[0],
+                                    lrow[1],
+                                    0.0 if lrow[2] == "?" else lrow[2],
+                                    0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
+                                    0.0 if lrow[4] == "?" else lrow[4],
+                                    0.0 if lrow[5] == "?" else lrow[5],
+                                    0,                                    
+                                )
+                                row = tuple(lrow)
+                                swmm_inp_file.write(line.format(*row))
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1621: error while exporting [XSECTIONS] to .INP file!", e)
+                        self.uc.show_error("ERROR 090422.0601: error while exporting [XSECTIONS] to .INP file!", e)
                         return
 
                     # LOSSES ###################################################
@@ -2400,13 +2579,30 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         + " conduits have no inlet and/or outlet! The value '?' was written.\n"
                         + "Please review them because it will cause errors during their processing.\n"
                     )
+                    
                 if no_in_out_pumps != 0:
                     self.uc.show_warn(
                         "WARNING 271121.0516: Storm Drain (export .INP file):\n\n"
                         + str(no_in_out_pumps)
                         + " pumps have no inlet and/or outlet! The value '?' was written.\n"
                         + "Please review them because it will cause errors during their processing.\n"
-                    )                    
+                    )  
+                    
+                if no_in_out_orifices != 0:
+                    self.uc.show_warn(
+                        "WARNING 090422.0554: Storm Drain (export .INP file):\n\n"
+                        + str(no_in_out_orifices)
+                        + " orifices have no inlet and/or outlet! The value '?' was written.\n"
+                        + "Please review them because it will cause errors during their processing.\n"
+                    ) 
+                    
+                if no_in_out_weirs != 0:
+                    self.uc.show_warn(
+                        "WARNING 090422.0555: Storm Drain (export .INP file):\n\n"
+                        + str(no_in_out_weirs)
+                        + " weirs have no inlet and/or outlet! The value '?' was written.\n"
+                        + "Please review them because it will cause errors during their processing.\n"
+                    )  
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 
@@ -2588,38 +2784,36 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber() 
 
     def show_weirs(self):
-        self.uc.show_info("To be implemented.")
-        return        
         """
-        Shows pumps dialog.
+        Shows weirs dialog.
 
         """
-        # See if there are pumps:
-        if self.gutils.is_table_empty("user_swmm_pumps"):
+        # See if there are weirs:
+        if self.gutils.is_table_empty("user_swmm_weirs"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Pumps" is empty!\n\n'
+                'User Layer "Storm Drain Weirs" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-        
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        dlg_pumps = PumpsDialog(self.iface, self.lyrs)
-        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_weirs = WeirsDialog(self.iface, self.lyrs)
+        dlg_weirs.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_weirs.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
         QApplication.restoreOverrideCursor()
-        save = dlg_pumps.exec_()
+        save = dlg_weirs.exec_()
         if save:
             try:
-                dlg_pumps.save_pumps()
+                dlg_weirs.save_weirs()
                 self.uc.bar_info(
-                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
+                    "Weirs saved to 'Storm Drain Weirs' User Layer!\n\n"
                     + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
                 )
             except Exception:
-                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
+                self.uc.bar_warn("Could not save weirs! Please check if they are correct.")
                 return
             
-        self.lyrs.clear_rubber() 
+        self.lyrs.clear_rubber()
 
     def auto_assign_conduit_nodes(self):
         self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")

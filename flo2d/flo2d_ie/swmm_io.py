@@ -472,7 +472,7 @@ class StormDrainProject(object):
                 "weir_crest_height", 
                 "weir_disch_coeff", 
                 "weir_flap_gate", 
-                "weir_end_con", 
+                "weir_end_contrac", 
                 "weir_end_coeff", 
             ]
             
@@ -570,7 +570,7 @@ class StormDrainProject(object):
             )
 
 
-    def add_XSECTIONS_to_INP_orifies_dictionary(self):
+    def add_XSECTIONS_to_INP_orifices_dictionary(self):
         try:
             xsections_cols = [
                 "orifice_name",
@@ -599,6 +599,33 @@ class StormDrainProject(object):
             )
 
 
+    def add_XSECTIONS_to_INP_weirs_dictionary(self):
+        try:
+            xsections_cols = [
+                "weir_name",
+                "xsections_shape",
+                "xsections_height",
+                "xsections_width",
+                "xsections_geom3",
+                "xsections_geom4",
+                "xsections_barrels",
+            ]
+            xsections = self.select_this_INP_group("xsections")
+            if xsections is not None:
+                for xs in xsections:
+                    if not xs or xs[0] in self.ignore:
+                        continue                        
+                    xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
+                    xsec = xsections_dict.pop("weir_name")
+                    
+                    if xsec in self.INP_weirs:
+                        self.INP_weirs[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                                                                        # an already existing key in dictionary INP_weirs.   
+                                                         
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR 080422.1050: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
+            )
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):
         try:
