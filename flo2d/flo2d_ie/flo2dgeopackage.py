@@ -2021,9 +2021,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             cll = 0
                         cll = [cll if cll is not None else 0]
                         cell = row[0]
+                        arf_value = row[2]
                         if cll[0] == 1:
-                            cell = -cell
-                        a.write(line3.format(cell, *row[2:]))
+                            arf_value = -arf_value
+                        a.write(line3.format(cell, arf_value, *row[3:]))
             #                     a.write(line3.format(*row))
 
             return True
