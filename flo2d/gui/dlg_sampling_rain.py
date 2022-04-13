@@ -164,8 +164,14 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         else:
             pass
         sampler = raster2grid(self.grid, self.out_raster)
+
         qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
         self.con.executemany(qry, sampler)
+        qry = """SELECT MAX(arf) FROM rain_arf_cells;"""
+        max_val = self.con.execute(qry).fetchone()[0]
+        if max_val > 0:
+            qry = """UPDATE rain_arf_cells SET arf = arf/{0};""".format(max_val)
+            self.con.execute(qry)
         self.con.commit()
         return True
 

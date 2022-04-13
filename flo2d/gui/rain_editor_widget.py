@@ -469,7 +469,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("WARNING 060319.1726: Probing grid elevation failed! Please check your raster layer.")
+            self.uc.show_warn("WARNING 060319.1726: Probing grid rain failed! Please check your raster layer.")
 
     def get_cell_size(self):
         """

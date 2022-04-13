@@ -1516,7 +1516,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-            max_arf = self.get_max("rain_arf_cells", "arf")
             rain = os.path.join(outdir, "RAIN.DAT")
             with open(rain, "w") as r:
 
@@ -1549,7 +1548,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
                     for row in self.execute(rain_cells_sql):
-                        r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1] / max_arf)))
+                        r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1])))
 
             return True
 
