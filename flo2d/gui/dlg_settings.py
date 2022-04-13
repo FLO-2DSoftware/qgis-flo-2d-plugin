@@ -107,7 +107,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
         proj = self.gutils.get_cont_par("PROJ")
         cs = QgsCoordinateReferenceSystem()
-        cs.createFromProj4(proj)
+        cs.createFromProj(proj)
         self.projectionSelector.setCrs(cs)
         self.crs = self.projectionSelector.crs()
         if self.gutils.get_cont_par("METRIC") == "1":
