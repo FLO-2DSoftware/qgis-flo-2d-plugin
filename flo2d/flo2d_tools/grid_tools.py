@@ -2560,8 +2560,7 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
         myRange = QgsRendererRange(low,maxi, symbol, '{0:.2f}'.format(low) + ' - ' + '{0:.2f}'.format(maxi))                   
         myRangeList.append(myRange)
 
-        myRenderer = QgsGraduatedSymbolRenderer("elevation", myRangeList)  
-        myRenderer.setMode(QgsGraduatedSymbolRenderer.Custom)               
+        myRenderer = QgsGraduatedSymbolRenderer("elevation", myRangeList)
     
         elevs_lyr.setRenderer(myRenderer)  
         elevs_lyr.triggerRepaint()
