@@ -136,8 +136,6 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             "-of GTiff",
             "-ot {}".format(self.RTYPE[self.raster_type]),
             "-tr {0} {0}".format(self.cell_size),
-            '-s_srs "{}"'.format(self.src_srs),
-            '-t_srs "{}"'.format(self.out_srs),
             "-te {}".format(" ".join([str(c) for c in self.output_bounds])),
             '-te_srs "{}"'.format(self.out_srs),
             "-dstnodata {}".format(self.src_nodata),
@@ -145,6 +143,12 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             "-co COMPRESS=LZW",
             "-wo OPTIMIZE_SIZE=TRUE",
         ]
+
+        if len(self.src_srs) > 0:
+            opts.append('-s_srs "{}"'.format(self.src_srs))
+        if len(self.out_srs) > 0:
+            opts.append('-t_srs "{}"'.format(self.out_srs))
+
         if self.multiThreadChBox.isChecked():
             opts.append("-multi -wo NUM_THREADS=ALL_CPUS")
         else:
@@ -160,8 +164,14 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         else:
             pass
         sampler = raster2grid(self.grid, self.out_raster)
+
         qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
         self.con.executemany(qry, sampler)
+        qry = """SELECT MAX(arf) FROM rain_arf_cells;"""
+        max_val = self.con.execute(qry).fetchone()[0]
+        if max_val > 0:
+            qry = """UPDATE rain_arf_cells SET arf = arf/{0};""".format(max_val)
+            self.con.execute(qry)
         self.con.commit()
         return True
 
