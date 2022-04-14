@@ -20,8 +20,6 @@ from ..user_communication import UserCommunication
 from ..flo2d_tools.schema2user_tools import remove_features
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
-
-
 class StormDrainShapefile(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
         qtBaseClass.__init__(self)
@@ -35,6 +33,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
+        self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
+        self.user_swmm_weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
         self.current_lyr = None
         self.saveSelected = None
         self.TRUE = ("1", "YES", "Yes", "yes", "TRUE", "True", "true", "ON", "on")
@@ -72,6 +72,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
         self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduit_attributes)
         self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pump_attributes)
+        self.orifices_shapefile_cbo.currentIndexChanged.connect(self.populate_orifices_attributes)
+        self.weirs_shapefile_cbo.currentIndexChanged.connect(self.populate_weirs_attributes)
         
         # Connections to clear inlets fields.
         self.clear_inlets_name_btn.clicked.connect(self.clear_inlets_name)
@@ -132,13 +134,54 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_pump_curve_type_btn.clicked.connect(self.clear_pump_curve_type)
         self.clear_pump_curve_description_btn.clicked.connect(self.clear_pump_curve_description)
 
+        # Connections to clear orifices fields.
+        self.clear_orifice_name_btn.clicked.connect(self.clear_orifice_name)
+        self.clear_orifice_from_inlet_btn.clicked.connect(self.clear_orifice_from_inlet)
+        self.clear_orifice_to_outlet_btn.clicked.connect(self.clear_orifice_to_outlet)
+        self.clear_orifice_type_btn.clicked.connect(self.clear_orifice_type)
+        self.clear_orifice_crest_height_btn.clicked.connect(self.clear_orifice_crest_height)
+        self.clear_orifice_discharge_coeff_btn.clicked.connect(self.clear_orifice_discharge_coeff)
+        self.clear_orifice_flap_gate_btn.clicked.connect(self.clear_orifice_flap_gate)
+        self.clear_orifice_time_open_close_btn.clicked.connect(self.clear_orifice_time_open_close)
+        self.clear_orifice_shape_btn.clicked.connect(self.clear_orifice_shape)
+        self.clear_orifice_height_btn.clicked.connect(self.clear_orifice_height)
+        self.clear_orifice_width_btn.clicked.connect(self.clear_orifice_width)
+
+        # Connections to clear weirs fields.
+        self.clear_weir_name_btn.clicked.connect(self.clear_weir_name)
+        self.clear_weir_from_inlet_btn.clicked.connect(self.clear_weir_from_inlet)
+        self.clear_weir_to_outlet_btn.clicked.connect(self.clear_weir_to_outlet)
+        self.clear_weir_type_btn.clicked.connect(self.clear_weir_type)
+        self.clear_weir_crest_height_btn.clicked.connect(self.clear_weir_crest_height)
+        self.clear_weir_discharge_coeff_btn.clicked.connect(self.clear_weir_discharge_coeff)
+        self.clear_weir_flap_gate_btn.clicked.connect(self.clear_weir_flap_gate)
+        self.clear_weir_end_contrac_btn.clicked.connect(self.clear_weir_end_contrac)
+        self.clear_weir_end_coeff_btn.clicked.connect(self.clear_weir_end_coeff)
+        self.clear_weir_side_slope_btn.clicked.connect(self.clear_weir_side_slope)
+        self.clear_weir_shape_btn.clicked.connect(self.clear_weir_shape)
+        self.clear_weir_height_btn.clicked.connect(self.clear_weir_height)
+        self.clear_weir_length_btn.clicked.connect(self.clear_weir_length)
+
+
         self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlet_attributes)
         self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfall_attributes)
         self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduit_attributes)
         self.clear_all_pumps_btn.clicked.connect(self.clear_all_pump_attributes)
+        self.clear_all_orifices_btn.clicked.connect(self.clear_all_orifice_attributes)
+        self.clear_all_weirs_btn.clicked.connect(self.clear_all_weir_attributes)
+        
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
 
+        self.load_inlets = False
+        self.load_outfalls = False
+        self.load_conduits = False
+        self.load_pumps = False
+        self.load_orifices = False
+        self.load_weirs = False
+
+        self.unit = int(self.gutils.get_cont_par("METRIC"))
+        
         self.setup_layers_comboxes()
 
         self.restore_storm_drain_shapefile_fields()
@@ -157,6 +200,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     if l.featureCount() > 0:
                         self.conduits_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.pumps_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                        self.orifices_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                        self.weirs_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
                     pass
 
@@ -179,12 +224,23 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.conduits_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_conduit_attributes(self.conduits_shapefile_cbo.currentIndex())
 
-
             previous_pump = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
             idx = self.pumps_shapefile_cbo.findText(previous_pump)
             if idx != -1:
                 self.pumps_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_pump_attributes(self.pumps_shapefile_cbo.currentIndex())
+
+            previous_orifice = "" if s.value("sf_orifices_layer_name") is None else s.value("sf_orifices_layer_name")
+            idx = self.orifices_shapefile_cbo.findText(previous_orifice)
+            if idx != -1:
+                self.orifices_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_orifices_attributes(self.orifices_shapefile_cbo.currentIndex())
+ 
+            previous_weir = "" if s.value("sf_weirs_layer_name") is None else s.value("sf_weirs_layer_name")
+            idx = self.weirs_shapefile_cbo.findText(previous_weir)
+            if idx != -1:
+                self.weirs_shapefile_cbo.setCurrentIndex(idx)
+                self.populate_weirs_attributes(self.weirs_shapefile_cbo.currentIndex())
                 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -213,7 +269,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + " features (points))"
             )
             
-            self.restore_SD_shapefile_inlet_fields()
+            self.restore_SD_shapefile_inlet_field_names()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -242,7 +298,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + " features (points))"
             )
             
-            self.restore_SD_shapefile_outfall_fields()
+            self.restore_SD_shapefile_outfall_field_names()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -271,7 +327,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + " features (lines))"
             )
             
-            self.restore_SD_shapefile_conduit_fields()
+            self.restore_SD_shapefile_conduit_field_names()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -300,7 +356,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + " features (lines))"
             )
             
-            self.restore_SD_shapefile_pump_fields()
+            self.restore_SD_shapefile_pump_field_names()
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -309,6 +365,66 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+ 
+    def populate_orifices_attributes(self, idx):
+        try:
+            uri = self.orifices_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+
+            for combo_orifices in self.orifices_fields_groupBox.findChildren(QComboBox):
+                combo_orifices.clear()
+                combo_orifices.setLayer(self.current_lyr)
+
+            nFeatures = self.current_lyr.featureCount()
+            self.orifices_fields_groupBox.setTitle(
+                "Orifices Fields Selection (from '"
+                + self.orifices_shapefile_cbo.currentText()
+                + "' layer with "
+                + str(nFeatures)
+                + " features (lines))"
+            )
+            
+            self.restore_SD_shapefile_orifice_field_names()
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 230222.0954: there are not defined or visible line layers to select orifice components!"
+                + "\n__________________________________________________",
+                e,
+            )
+
+ 
+    def populate_weirs_attributes(self, idx):
+        try:
+            uri = self.weirs_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+
+            for combo_weirs in self.weirs_fields_groupBox.findChildren(QComboBox):
+                combo_weirs.clear()
+                combo_weirs.setLayer(self.current_lyr)
+
+            nFeatures = self.current_lyr.featureCount()
+            self.weirs_fields_groupBox.setTitle(
+                "Weirs Fields Selection (from '"
+                + self.weirs_shapefile_cbo.currentText()
+                + "' layer with "
+                + str(nFeatures)
+                + " features (lines))"
+            )
+            
+            self.restore_SD_shapefile_weir_field_names()
+            
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 120422.0508: there are not defined or visible line layers to select weir components!"
+                + "\n__________________________________________________",
+                e,
+            )
+  
             
     # CLEAR INLETS FIELDS:
     def clear_inlets_name(self):
@@ -469,6 +585,83 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_pump_curve_description(self):
         self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
 
+    # CLEAR ORIFICE FIELDS:
+
+    def clear_orifice_name(self):
+        self.orifice_name_FieldCbo.setCurrentIndex(-1)
+
+    def clear_orifice_from_inlet(self):
+        self.orifice_from_inlet_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_to_outlet(self):
+        self.orifice_to_outlet_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_type(self):
+        self.orifice_type_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_crest_height(self):
+        self.orifice_crest_height_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_discharge_coeff(self):
+        self.orifice_discharge_coeff_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_flap_gate(self):
+        self.orifice_flap_gate_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_time_open_close(self):
+        self.orifice_time_open_close_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_shape(self):
+        self.orifice_shape_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_height(self):
+        self.orifice_height_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_orifice_width(self):
+        self.orifice_width_FieldCbo.setCurrentIndex(-1)
+
+    # CLEAR WEIR FIELDS:
+
+    def clear_weir_name(self):
+        self.weir_name_FieldCbo.setCurrentIndex(-1)
+
+    def clear_weir_from_inlet(self):
+        self.weir_from_inlet_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_to_outlet(self):
+        self.weir_to_outlet_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_type(self):
+        self.weir_type_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_crest_height(self):
+        self.weir_crest_height_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_discharge_coeff(self):
+        self.weir_discharge_coeff_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_flap_gate(self):
+        self.weir_flap_gate_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_end_contrac(self):
+        self.weir_end_contrac_FieldCbo.setCurrentIndex(-1)
+    
+    def clear_weir_end_coeff(self):
+        self.weir_end_coeff_FieldCbo.setCurrentIndex(-1)
+
+    def clear_weir_side_slope(self):
+        self.weir_side_slope_FieldCbo.setCurrentIndex(-1)
+                
+    def clear_weir_shape(self):
+        self.weir_shape_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_height(self):
+        self.weir_height_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_weir_length(self):
+        self.weir_length_FieldCbo.setCurrentIndex(-1)
+
+
 
     def clear_all_inlet_attributes(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
@@ -528,6 +721,34 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.pump_curve_name_FieldCbo.setCurrentIndex(-1)
         self.pump_curve_type_FieldCbo.setCurrentIndex(-1)
         self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
+        
+    def clear_all_orifice_attributes(self):
+        self.orifice_name_FieldCbo.setCurrentIndex(-1)
+        self.orifice_from_inlet_FieldCbo.setCurrentIndex(-1)
+        self.orifice_to_outlet_FieldCbo.setCurrentIndex(-1)
+        self.orifice_type_FieldCbo.setCurrentIndex(-1)
+        self.orifice_crest_height_FieldCbo.setCurrentIndex(-1)
+        self.orifice_discharge_coeff_FieldCbo.setCurrentIndex(-1)
+        self.orifice_flap_gate_FieldCbo.setCurrentIndex(-1)
+        self.orifice_time_open_close_FieldCbo.setCurrentIndex(-1)
+        self.orifice_shape_FieldCbo.setCurrentIndex(-1)
+        self.orifice_height_FieldCbo.setCurrentIndex(-1)
+        self.orifice_width_FieldCbo.setCurrentIndex(-1)        
+
+    def clear_all_weir_attributes(self):
+        self.weir_name_FieldCbo.setCurrentIndex(-1)
+        self.weir_from_inlet_FieldCbo.setCurrentIndex(-1)
+        self.weir_to_outlet_FieldCbo.setCurrentIndex(-1)
+        self.weir_type_FieldCbo.setCurrentIndex(-1)
+        self.weir_crest_height_FieldCbo.setCurrentIndex(-1)
+        self.weir_discharge_coeff_FieldCbo.setCurrentIndex(-1)
+        self.weir_flap_gate_FieldCbo.setCurrentIndex(-1)
+        self.weir_end_contrac_FieldCbo.setCurrentIndex(-1)
+        self.weir_end_coeff_FieldCbo.setCurrentIndex(-1)
+        self.weir_side_slope_FieldCbo.setCurrentIndex(-1)        
+        self.weir_shape_FieldCbo.setCurrentIndex(-1)
+        self.weir_height_FieldCbo.setCurrentIndex(-1)
+        self.weir_length_FieldCbo.setCurrentIndex(-1)        
 
     def assign_components_from_shapefile(self):
         self.uc.clear_bar_messages()
@@ -539,813 +760,85 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        load_inlets = False
-        load_outfalls = False
-        load_conduits = False
-        load_pumps = False
-
-        unit = int(self.gutils.get_cont_par("METRIC"))
-
         for combo_inlet in self.inlets_fields_groupBox.findChildren(QComboBox):
             if combo_inlet.currentIndex() != -1:
-                load_inlets = True
+                self.load_inlets = True
                 break
-
         for combo_outfall in self.outfalls_fields_groupBox.findChildren(QComboBox):
             if combo_outfall.currentIndex() != -1:
-                load_outfalls = True
+                self.load_outfalls = True
                 break
-
         for combo_conduit in self.conduits_fields_groupBox.findChildren(QComboBox):
             if combo_conduit.currentIndex() != -1:
-                load_conduits = True
+                self.load_conduits = True
                 break
-
         for combo_pump in self.pumps_fields_groupBox.findChildren(QComboBox):
             if combo_pump.currentIndex() != -1:
-                load_pumps = True
+                self.load_pumps = True
                 break
-
-        if load_inlets:
+        for combo_orifice in self.orifices_fields_groupBox.findChildren(QComboBox):
+            if combo_orifice.currentIndex() != -1:
+                self.load_orifices = True
+                break
+        for combo_weir in self.weirs_fields_groupBox.findChildren(QComboBox):
+            if combo_weir.currentIndex() != -1:
+                self.load_weirs = True
+                break
+            
+            
+        if self.load_inlets:
             if self.inlets_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info(
                     "The 'Inlet Name' field must be selected if the Inlets/Junctions component is picked!"
                 )
                 return
-
-        if load_outfalls:
+        if self.load_outfalls:
             if self.outfall_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("The 'Outfall Name' field must be selected if the Outfalls component is picked!")
                 return
-
-        if load_conduits:
+        if self.load_conduits:
             if self.conduit_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("The 'Conduit Name' field must be selected if the Conduits component is picked!")
                 return
-
-        if load_pumps:
+        if self.load_pumps:
             if self.pump_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("The 'Pump Name' field must be selected if the Pumps component is picked!")
                 return
-
-        if not load_inlets and not load_outfalls and not load_conduits and not load_pumps:
+        if self.load_orifices:
+            if self.orifice_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Orifice Name' field must be selected if the Orifices component is picked!")
+                return
+        if self.load_weirs:
+            if self.weir_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Weir Name' field must be selected if the Weirs component is picked!")
+                return            
+            
+        if (not self.load_inlets and not self.load_outfalls and not self.load_conduits and 
+            not self.load_pumps and not self.load_orifices and not self.load_weirs):
             self.uc.bar_warn("No data was selected!")
             self.save_storm_drain_shapefile_fields()
 
         else:
-            # Load inlets from shapefile:
-            if load_inlets:
-                mame = ""
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
 
-                    fields = self.user_swmm_nodes_lyr.fields()
-                    new_feats = []
-                    outside_inlets = ""
-
-                    inlets_shapefile = self.inlets_shapefile_cbo.currentText()
-                    group = self.lyrs.group
-                    #                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer()
-                    lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
-
-                    inlets_shapefile_fts = lyr.getFeatures()
-                    modified = 0
-                    for f in inlets_shapefile_fts:
-                        grid = 0
-                        sd_type = "I"
-                        name = (
-                            f[self.inlets_name_FieldCbo.currentText()]
-                            if self.inlets_name_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        intype = (
-                            f[self.inlets_type_FieldCbo.currentText()]
-                            if self.inlets_type_FieldCbo.currentText() != ""
-                            else 1
-                        )
-                        junction_invert_elev = (
-                            f[self.inlets_invert_elevation_FieldCbo.currentText()]
-                            if self.inlets_invert_elevation_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        max_depth = (
-                            f[self.inlets_max_depth_FieldCbo.currentText()]
-                            if self.inlets_max_depth_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        init_depth = (
-                            f[self.inlets_init_depth_FieldCbo.currentText()]
-                            if self.inlets_init_depth_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        surcharge_depth = (
-                            f[self.inlets_surcharge_depth_FieldCbo.currentText()]
-                            if self.inlets_surcharge_depth_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        ponded_area = (
-                            f[self.inlets_ponded_area_FieldCbo.currentText()]
-                            if self.inlets_ponded_area_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_length = (
-                            f[self.inlets_length_perimeter_FieldCbo.currentText()]
-                            if self.inlets_length_perimeter_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_width = (
-                            f[self.inlets_width_area_FieldCbo.currentText()]
-                            if self.inlets_width_area_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_height = (
-                            f[self.inlets_height_sag_surch_FieldCbo.currentText()]
-                            if self.inlets_height_sag_surch_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_coeff = (
-                            f[self.inlets_weir_coeff_FieldCbo.currentText()]
-                            if self.inlets_weir_coeff_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_feature = (
-                            f[self.inlets_feature_FieldCbo.currentText()]
-                            if self.inlets_feature_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        curbheight = (
-                            f[self.inlets_curb_height_FieldCbo.currentText()]
-                            if self.inlets_curb_height_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_clogging_factor = (
-                            f[self.inlets_clogging_factor_FieldCbo.currentText()]
-                            if self.inlets_clogging_factor_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        swmm_time_for_clogging = (
-                            f[self.inlets_time_for_clogging_FieldCbo.currentText()]
-                            if self.inlets_time_for_clogging_FieldCbo.currentText() != ""
-                            else 0
-                        )
-
-                        feat = QgsFeature()
-                        feat.setFields(fields)
-
-                        if f.geometry() is None:
-                            self.uc.show_warn(
-                                "WARNING 280920.1816: Error processing geometry of inlet/junction  " + name
-                            )
-                            continue
-
-                        geom = f.geometry()
-                        if geom is None or geom.type() != 0:
-                            self.uc.show_warn(
-                                "WARNING 060319.1822: Error processing geometry of inlet/junction  " + name
-                            )
-                            continue
-
-                        point = geom.asPoint()
-                        if point is None:
-                            self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
-                            continue
-
-                        cell = self.gutils.grid_on_point(point.x(), point.y())
-                        if cell is None:
-                            outside_inlets += "\n" + name
-                            continue
-
-                        new_geom = QgsGeometry.fromPointXY(point)
-                        feat.setGeometry(new_geom)
-
-                        feat.setAttribute("grid", cell)
-                        feat.setAttribute("sd_type", "I")
-                        feat.setAttribute("name", name)
-                        feat.setAttribute("intype", intype)
-                        feat.setAttribute("junction_invert_elev", junction_invert_elev)
-                        feat.setAttribute("max_depth", max_depth)
-                        feat.setAttribute("init_depth", init_depth)
-                        feat.setAttribute("surcharge_depth", surcharge_depth)
-                        feat.setAttribute("ponded_area", ponded_area)
-                        feat.setAttribute("outfall_invert_elev", 0)
-                        feat.setAttribute("outfall_type", "NORMAL")
-                        feat.setAttribute("tidal_curve", "...")
-                        feat.setAttribute("time_series", "...")
-                        feat.setAttribute("flapgate", "False")
-                        feat.setAttribute("swmm_length", swmm_length)
-                        feat.setAttribute("swmm_width", swmm_width)
-                        feat.setAttribute("swmm_height", swmm_height)
-
-                        # Check valid ranges and maybe assign defaults inlet type:
-
-                        if intype in {1, 3, 5}:
-                            if unit == 1:  # Metric
-                                if 1.3 <= swmm_coeff <= 1.9:
-                                    # OK
-                                    pass
-                                else:
-                                    swmm_coeff = 1.60
-                                    modified += 1
-                            else:  # English
-                                if 2.85 <= swmm_coeff <= 3.30:
-                                    # OK
-                                    pass
-                                else:
-                                    swmm_coeff = 3.00
-                                    modified += 1
-                        elif intype == 2:
-                            if unit == 1:  # Metric
-                                if 1.0 <= swmm_coeff <= 1.6:
-                                    # OK
-                                    pass
-                                else:
-                                    swmm_coeff = 1.25
-                                    modified += 1
-                            else:  # English
-                                if 2.0 <= swmm_coeff <= 2.6:
-                                    # OK
-                                    pass
-                                else:
-                                    swmm_coeff = 2.30
-                                    modified += 1
-
-                        feat.setAttribute("swmm_coeff", swmm_coeff)
-                        feat.setAttribute("swmm_feature", swmm_feature)
-                        feat.setAttribute("curbheight", curbheight)
-                        feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
-                        feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
-                        feat.setAttribute("swmm_allow_discharge", "True")
-                        feat.setAttribute("water_depth", 0)
-                        feat.setAttribute("rt_fid", 0)
-                        feat.setAttribute("outf_flo", 0)
-                        feat.setAttribute("invert_elev_inp", 0)
-                        feat.setAttribute("max_depth_inp", 0)
-                        feat.setAttribute("rim_elev_inp", 0)
-                        feat.setAttribute("rim_elev", 0)
-                        feat.setAttribute("ge_elev", 0)
-                        feat.setAttribute("difference", 0)               
-                    
-                        new_feats.append(feat)
- 
-                    if new_feats:
-                        if not self.inlets_append_chbox.isChecked():
-                            remove_features(self.user_swmm_nodes_lyr)
-
-                        self.user_swmm_nodes_lyr.startEditing()
-                        self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                        self.user_swmm_nodes_lyr.commitChanges()
-                        self.user_swmm_nodes_lyr.updateExtents()
-                        self.user_swmm_nodes_lyr.triggerRepaint()
-                        self.user_swmm_nodes_lyr.removeSelection()
-                    else:
-                        load_inlets = False
-
-                    QApplication.restoreOverrideCursor()
-
-                    if outside_inlets != "":
-                        self.uc.show_warn(
-                            "WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n"
-                            + outside_inlets
-                        )
-
-                    if modified > 0:
-                        self.uc.bar_warn(
-                            "WARNING 050820.1901: "
-                            + str(modified)
-                            + " Weir Coefficients in shapefile are outside valid ranges. "
-                            + "Default values were assigned to "
-                            + str(modified)
-                            + " inlets!"
-                        )
-
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_error(
-                        "ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed after reading "
-                        + str(len(new_feats))
-                        + " inlets!"
-                        + "\n__________________________________________________",
-                        e,
-                    )
-                    load_inlets = False
-
-            # Load outfalls from shapefile:
-            if load_outfalls:
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    fields = self.user_swmm_nodes_lyr.fields()
-                    new_feats = []
-                    outside_outfalls = ""
-
-                    outfalls_shapefile = self.outfalls_shapefile_cbo.currentText()
-                    lyr = self.lyrs.get_layer_by_name(outfalls_shapefile, self.lyrs.group).layer()
-                    outfalls_shapefile_fts = lyr.getFeatures()
-
-                    for f in outfalls_shapefile_fts:
-                        grid = 0
-                        sd_type = "O"
-                        name = (
-                            f[self.outfall_name_FieldCbo.currentText()]
-                            if self.outfall_name_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        intype = 1
-                        outfall_invert_elev = (
-                            f[self.outfall_invert_elevation_FieldCbo.currentText()]
-                            if self.outfall_invert_elevation_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        flapgate = (
-                            f[self.outfall_flap_gate_FieldCbo.currentText()]
-                            if self.outfall_flap_gate_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        flapgate = "True" if is_true(flapgate) else "False"
-                        swmm_allow_discharge = (
-                            f[self.outfall_allow_discharge_FieldCbo.currentText()]
-                            if self.outfall_allow_discharge_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        swmm_allow_discharge = "True" if is_true(swmm_allow_discharge) else "False"
-                        outfall_type = (
-                            f[self.outfall_type_FieldCbo.currentText()]
-                            if self.outfall_type_FieldCbo.currentText() != ""
-                            else ""
-                        )
-
-                        # water_depth = f[self.outfall_water_depth_FieldCbo.currentText()] if self.outfall_water_depth_FieldCbo.currentText() != "" else ""
-                        water_depth = self.outfall_water_depth_FieldCbo.currentText()
-                        water_depth = f[water_depth] if water_depth != "" and water_depth is not None else ""
-
-                        feat = QgsFeature()
-                        feat.setFields(fields)
-
-                        if f.geometry() is None:
-                            self.uc.show_warn("WARNING 261220.1013: Error processing geometry of outfall  " + name)
-                            continue
-
-                        geom = f.geometry()
-                        if geom is None or geom.type() != 0:
-                            self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall  " + name)
-                            continue
-
-                        point = geom.asPoint()
-                        if point is None:
-                            self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
-                            continue
-
-                        cell = self.gutils.grid_on_point(point.x(), point.y())
-                        if cell is None:
-                            outside_outfalls += "\n" + name
-                            continue
-
-                        new_geom = QgsGeometry.fromPointXY(point)
-                        feat.setGeometry(new_geom)
-
-                        feat.setAttribute("grid", cell)
-                        feat.setAttribute("sd_type", "O")
-                        feat.setAttribute("name", name)
-                        feat.setAttribute("intype", 1)
-                        feat.setAttribute("junction_invert_elev", 0)
-                        feat.setAttribute("max_depth", 0)
-                        feat.setAttribute("init_depth", 0)
-                        feat.setAttribute("surcharge_depth", 0)
-                        feat.setAttribute("ponded_area", 0)
-                        feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
-                        feat.setAttribute("outfall_type", outfall_type)
-                        feat.setAttribute("tidal_curve", "...")
-                        feat.setAttribute("time_series", "...")
-                        feat.setAttribute("flapgate", flapgate)
-                        feat.setAttribute("swmm_length", 0)
-                        feat.setAttribute("swmm_width", 0)
-                        feat.setAttribute("swmm_height", 0)
-                        feat.setAttribute("swmm_coeff", 0)
-                        feat.setAttribute("swmm_feature", 0)
-                        feat.setAttribute("curbheight", 0)
-                        feat.setAttribute("swmm_clogging_factor", 0)
-                        feat.setAttribute("swmm_time_for_clogging", 0)
-                        feat.setAttribute("swmm_allow_discharge", swmm_allow_discharge)
-                        feat.setAttribute("water_depth", 0)
-                        feat.setAttribute("rt_fid", 0)
-                        feat.setAttribute("outf_flo", 0)
-                        feat.setAttribute("invert_elev_inp", 0)
-                        feat.setAttribute("max_depth_inp", 0)
-                        feat.setAttribute("rim_elev_inp", 0)
-                        feat.setAttribute("rim_elev", 0)
-                        feat.setAttribute("ge_elev", 0)
-                        feat.setAttribute("difference", 0)
-
-                        new_feats.append(feat)
-
-                    if new_feats:
-                        if not self.outfall_append_chbox.isChecked() and not load_inlets:
-                            remove_features(self.user_swmm_nodes_lyr)
-
-                        self.user_swmm_nodes_lyr.startEditing()
-                        self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                        self.user_swmm_nodes_lyr.commitChanges()
-                        self.user_swmm_nodes_lyr.updateExtents()
-                        self.user_swmm_nodes_lyr.triggerRepaint()
-                        self.user_swmm_nodes_lyr.removeSelection()
-                    else:
-                        load_outfalls = False
-
-                    QApplication.restoreOverrideCursor()
-
-                    if outside_outfalls != "":
-                        self.uc.show_warn(
-                            "WARNING 060319.1700: The following outfalls are outside the computational domain!\n"
-                            + outside_outfalls
-                        )
-
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_error(
-                        "ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed after reading "
-                        + str(len(new_feats))
-                        + " outfalls!"
-                        + "\n__________________________________________________",
-                        e,
-                    )
-                    load_outfalls = False
-
-            # Load conduits from shapefile:
-            if load_conduits:
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    fields = self.user_swmm_conduits_lyr.fields()
-                    new_feats = []
-                    outside_conduits = ""
-
-                    conduits_shapefile = self.conduits_shapefile_cbo.currentText()
-                    lyr = self.lyrs.get_layer_by_name(conduits_shapefile, self.lyrs.group).layer()
-                    conduits_shapefile_fts = lyr.getFeatures()
-                    no_in_out = 0
-
-                    for f in conduits_shapefile_fts:
-
-                        conduit_name = (
-                            f[self.conduit_name_FieldCbo.currentText()]
-                            if self.conduit_name_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        conduit_inlet = (
-                            f[self.conduit_from_inlet_FieldCbo.currentText()]
-                            if self.conduit_from_inlet_FieldCbo.currentText() != ""
-                            else "?"
-                        )
-                        conduit_outlet = (
-                            f[self.conduit_to_outlet_FieldCbo.currentText()]
-                            if self.conduit_to_outlet_FieldCbo.currentText() != ""
-                            else "?"
-                        )
-                        conduit_inlet_offset = (
-                            f[self.conduit_inlet_offset_FieldCbo.currentText()]
-                            if self.conduit_inlet_offset_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        conduit_outlet_offset = (
-                            f[self.conduit_outlet_offset_FieldCbo.currentText()]
-                            if self.conduit_outlet_offset_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        conduit_shape = (
-                            f[self.conduit_shape_FieldCbo.currentText()]
-                            if self.conduit_shape_FieldCbo.currentText() != ""
-                            else "CIRCULAR"
-                        )
-                        conduit_max_depth = (
-                            f[self.conduit_max_depth_FieldCbo.currentText()]
-                            if self.conduit_max_depth_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_geom2 = (
-                            f[self.conduit_geom2_FieldCbo.currentText()]
-                            if self.conduit_geom2_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_geom3 = (
-                            f[self.conduit_geom3_FieldCbo.currentText()]
-                            if self.conduit_geom3_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_geom4 = (
-                            f[self.conduit_geom4_FieldCbo.currentText()]
-                            if self.conduit_geom4_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_barrels = (
-                            f[self.conduit_barrels_FieldCbo.currentText()]
-                            if self.conduit_barrels_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        conduit_length = (
-                            f[self.conduit_length_FieldCbo.currentText()]
-                            if self.conduit_length_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_manning = (
-                            f[self.conduit_manning_FieldCbo.currentText()]
-                            if self.conduit_manning_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_init_flow = (
-                            f[self.conduit_initial_flow_FieldCbo.currentText()]
-                            if self.conduit_initial_flow_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_max_flow = (
-                            f[self.conduit_max_flow_FieldCbo.currentText()]
-                            if self.conduit_max_flow_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_entry_loss = (
-                            f[self.conduit_entry_loss_FieldCbo.currentText()]
-                            if self.conduit_entry_loss_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_exit_loss = (
-                            f[self.conduit_exit_loss_FieldCbo.currentText()]
-                            if self.conduit_exit_loss_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduit_loss_average = (
-                            f[self.conduit_average_loss_FieldCbo.currentText()]
-                            if self.conduit_average_loss_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        conduits_flap_gate = (
-                            f[self.conduit_flap_gate_FieldCbo.currentText()]
-                            if self.conduit_flap_gate_FieldCbo.currentText() != ""
-                            else 0
-                        )
-
-                        if conduit_inlet == "?" or conduit_outlet == "?":
-                            no_in_out += 1
-
-                        feat = QgsFeature()
-                        feat.setFields(fields)
-
-                        geom = f.geometry()
-                        if geom is None or geom.type() != 1:
-                            #                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn(
-                                "WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name
-                            )
-                            continue
-
-                        points = extractPoints(geom)
-                        if points is None:
-                            #                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
-                            continue
-
-                        cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                        if cell is None:
-                            outside_conduits += "\n" + conduit_name
-                            continue
-
-                        cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                        if cell is None:
-                            outside_conduits += "\n" + conduit_name
-                            continue
-
-                        new_geom = QgsGeometry.fromPolylineXY(points)
-                        feat.setGeometry(new_geom)
-
-                        feat.setAttribute("conduit_name", conduit_name)
-                        feat.setAttribute("conduit_inlet", conduit_inlet)
-                        feat.setAttribute("conduit_outlet", conduit_outlet)
-                        feat.setAttribute(
-                            "conduit_inlet_offset", conduit_inlet_offset if conduit_inlet_offset != NULL else 0.0
-                        )
-                        feat.setAttribute(
-                            "conduit_outlet_offset", conduit_outlet_offset if conduit_outlet_offset != NULL else 0.0
-                        )
-                        feat.setAttribute("conduit_length", conduit_length if conduit_length != NULL else 0.0)
-                        feat.setAttribute("conduit_manning", conduit_manning if conduit_manning != NULL else 0.0)
-                        feat.setAttribute("conduit_init_flow", conduit_init_flow if conduit_init_flow != NULL else 0.0)
-                        feat.setAttribute("conduit_max_flow", conduit_max_flow if conduit_max_flow != NULL else 0.0)
-                        feat.setAttribute("losses_inlet", conduit_entry_loss if conduit_entry_loss != NULL else 0.0)
-                        feat.setAttribute("losses_outlet", conduit_exit_loss if conduit_exit_loss != NULL else 0.0)
-                        feat.setAttribute(
-                            "losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0
-                        )
-                        feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
-                        
-                        feat.setAttribute("xsections_shape", conduit_shape if conduit_shape in self.shape else "CIRCULAR")
-                        # feat.setAttribute("xsections_shape", "CIRCULAR")
-                        feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
-                        feat.setAttribute(
-                            "xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0
-                        )
-                        feat.setAttribute("xsections_geom2", conduit_geom2 if conduit_geom2 != NULL else 0.0)
-                        feat.setAttribute("xsections_geom3", conduit_geom3 if conduit_geom3 != NULL else 0.0)
-                        feat.setAttribute("xsections_geom4", conduit_geom4 if conduit_geom4 != NULL else 0.0)
-
-                        new_feats.append(feat)
-
-                    if new_feats:
-                        if not self.conduits_append_chbox.isChecked():
-                            remove_features(self.user_swmm_conduits_lyr)
-
-                        self.user_swmm_conduits_lyr.startEditing()
-                        self.user_swmm_conduits_lyr.addFeatures(new_feats)
-                        self.user_swmm_conduits_lyr.commitChanges()
-                        self.user_swmm_conduits_lyr.updateExtents()
-                        self.user_swmm_conduits_lyr.triggerRepaint()
-                        self.user_swmm_conduits_lyr.removeSelection()
-                    else:
-                        load_conduits = False
-
-                    QApplication.restoreOverrideCursor()
-
-                    if no_in_out != 0:
-                        self.uc.show_warn(
-                            "WARNING 060319.1703:\n"
-                            + str(no_in_out)
-                            + " conduits have no inlet and/or outlet!\n\n"
-                            + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                            + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?"
-                        )
-
-                    if outside_conduits != "":
-                        self.uc.show_warn(
-                            "WARNING 231220.0954: The following conduits are outside the computational domain!\n"
-                            + outside_conduits
-                        )
-
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_error(
-                        "ERROR 070618.0500: creation of Storm Drain Conduits User layer failed after reading "
-                        + str(len(new_feats))
-                        + " conduits!"
-                        + "\n__________________________________________________",
-                        e,
-                    )
-                    load_conduits = False
-
-            # Load pumps from shapefile:
-            if load_pumps:
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    fields = self.user_swmm_pumps_lyr.fields()
-                    new_feats = []
-                    outside_pumps = ""
-                    wrong_status = 0
-
-                    pumps_shapefile = self.pumps_shapefile_cbo.currentText()
-                    lyr = self.lyrs.get_layer_by_name(pumps_shapefile, self.lyrs.group).layer()
-                    pumps_shapefile_fts = lyr.getFeatures()
-                    no_in_out = 0
-
-                    for f in pumps_shapefile_fts:
-
-                        pump_name = (
-                            f[self.pump_name_FieldCbo.currentText()]
-                            if self.pump_name_FieldCbo.currentText() != ""
-                            else ""
-                        )
-                        pump_inlet = (
-                            f[self.pump_from_inlet_FieldCbo.currentText()]
-                            if self.pump_from_inlet_FieldCbo.currentText() != ""
-                            else "?"
-                        )
-                        pump_outlet = (
-                            f[self.pump_to_outlet_FieldCbo.currentText()]
-                            if self.pump_to_outlet_FieldCbo.currentText() != ""
-                            else "?"
-                        )
-                        
-                        status = (
-                             f[self.pump_initial_status_FieldCbo.currentText()]
-                             if self.pump_initial_status_FieldCbo.currentText() != ""
-                             else "OFF"
-                        )
-                        if status in self.TRUE:
-                            status = "ON"
-                        elif  status in self.FALSE: 
-                            status = "OFF"  
-                        else:
-                            status = "OFF"
-                            wrong_status += 1
-                        pump_initial_status = status
-                        # pump_initial_status = (
-                        #     f[self.pump_initial_status_FieldCbo.currentText()]
-                        #     if self.pump_initial_status_FieldCbo.currentText() != ""
-                        #     else "OFF"
-                        # )
-                        pump_startup_depth = (
-                            f[self.pump_startup_depth_FieldCbo.currentText()]
-                            if self.pump_startup_depth_FieldCbo.currentText() != ""
-                            else 0
-                        )
-                        pump_shutoff_depth = (
-                            f[self.pump_shutoff_depth_FieldCbo.currentText()]
-                            if self.pump_shutoff_depth_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-                        pump_curve_name = (
-                            f[self.pump_curve_name_FieldCbo.currentText()]
-                            if self.pump_curve_name_FieldCbo.currentText() != ""
-                            else 0.0
-                        )
-
-                        if pump_inlet == "?" or pump_outlet == "?":
-                            no_in_out += 1
-
-                        feat = QgsFeature()
-                        feat.setFields(fields)
-
-                        geom = f.geometry()
-                        if geom is None or geom.type() != 1:
-                            self.uc.show_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
-                            continue
-
-                        points = extractPoints(geom)
-                        if points is None:
-                            self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
-                            continue
-
-                        cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                        if cell is None:
-                            outside_pumps += "\n" + pump_name
-                            continue
-
-                        cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                        if cell is None:
-                            outside_pumps += "\n" + pump_name
-                            continue
-
-                        new_geom = QgsGeometry.fromPolylineXY(points)
-                        feat.setGeometry(new_geom)
-
-                        feat.setAttribute("pump_name", pump_name)
-                        feat.setAttribute("pump_inlet", pump_inlet)
-                        feat.setAttribute("pump_outlet", pump_outlet)
-                        feat.setAttribute("pump_init_status", pump_initial_status)
-                        feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
-                        feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
-                        feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "")
-                        
-                        new_feats.append(feat)
-
-                    if new_feats:
-                        if not self.pumps_append_chbox.isChecked():
-                            remove_features(self.user_swmm_pumps_lyr)
-
-                        self.user_swmm_pumps_lyr.startEditing()
-                        self.user_swmm_pumps_lyr.addFeatures(new_feats)
-                        self.user_swmm_pumps_lyr.commitChanges()
-                        self.user_swmm_pumps_lyr.updateExtents()
-                        self.user_swmm_pumps_lyr.triggerRepaint()
-                        self.user_swmm_pumps_lyr.removeSelection()
-                    else:
-                        load_pumps = False
-
-                    QApplication.restoreOverrideCursor()
-
-                    if no_in_out != 0:
-                        self.uc.show_warn(
-                            "WARNING 280222.1030:\n"
-                            + str(no_in_out)
-                            + " pumps have no inlet and/or outlet!\n\n"
-                            + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                            + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
-                        )
-
-                    if outside_pumps != "":
-                        self.uc.show_warn(
-                            "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
-                            + outside_pumps
-                        )
-
-                    if wrong_status > 0:
-                        self.uc.show_info("WARNING 010322.1054: there were " + str(wrong_status) + " pumps with wrong initial status!\n\n" +
-                                          "All wrong initial status were changed to 'OFF'.\n\n" + 
-                                          "Edit them as wished with the 'Pumps' dialog from the Storm Drain Editor widget.")
-                
-                except Exception as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_error(
-                        "ERROR 280222.1032: creation of Storm Drain Pumps User layer failed after reading "
-                        + str(len(new_feats))
-                        + " pumps!"
-                        + "\n__________________________________________________",
-                        e,
-                    )
-                    load_pumps = False
-
-            self.save_storm_drain_shapefile_fields()
+            self.load_inlets_from_shapefile()        
+            self.load_outfalls_from_shapefile()                    
+            self.load_conduits_from_shapefile()
+            self.load_pumps_from_shapefile()        
+            self.load_orifices_from_shapefile()
+            self.load_weirs_from_shapefile()
+            
+            self.save_storm_drain_shapefile_field_names()
 
             QApplication.restoreOverrideCursor()
 
-            if (load_inlets or load_outfalls or load_conduits or load_pumps):
+            if (self.load_inlets or self.load_outfalls or self.load_conduits or 
+                self.load_pumps or self.load_orifices or self.load_weirs):
                 self.uc.show_info(
                             "Importing Nodes and Links finished!\n\n" +
                             "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n" +
@@ -1379,14 +872,1082 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.uc.show_info("No Storm Drain nodes or links selected!")
 
+
+
+    def load_inlets_from_shapefile(self):
+        if self.load_inlets:
+            mame = ""
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_nodes_lyr.fields()
+                new_feats = []
+                outside_inlets = ""
+                inlets_shapefile = self.inlets_shapefile_cbo.currentText()
+                group = self.lyrs.group
+                #                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer()
+                lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
+        
+                inlets_shapefile_fts = lyr.getFeatures()
+                modified = 0
+                for f in inlets_shapefile_fts:
+                    grid = 0
+                    sd_type = "I"
+                    name = (
+                        f[self.inlets_name_FieldCbo.currentText()]
+                        if self.inlets_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    intype = (
+                        f[self.inlets_type_FieldCbo.currentText()]
+                        if self.inlets_type_FieldCbo.currentText() != ""
+                        else 1
+                    )
+                    junction_invert_elev = (
+                        f[self.inlets_invert_elevation_FieldCbo.currentText()]
+                        if self.inlets_invert_elevation_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    max_depth = (
+                        f[self.inlets_max_depth_FieldCbo.currentText()]
+                        if self.inlets_max_depth_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    init_depth = (
+                        f[self.inlets_init_depth_FieldCbo.currentText()]
+                        if self.inlets_init_depth_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    surcharge_depth = (
+                        f[self.inlets_surcharge_depth_FieldCbo.currentText()]
+                        if self.inlets_surcharge_depth_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    ponded_area = (
+                        f[self.inlets_ponded_area_FieldCbo.currentText()]
+                        if self.inlets_ponded_area_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_length = (
+                        f[self.inlets_length_perimeter_FieldCbo.currentText()]
+                        if self.inlets_length_perimeter_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_width = (
+                        f[self.inlets_width_area_FieldCbo.currentText()]
+                        if self.inlets_width_area_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_height = (
+                        f[self.inlets_height_sag_surch_FieldCbo.currentText()]
+                        if self.inlets_height_sag_surch_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_coeff = (
+                        f[self.inlets_weir_coeff_FieldCbo.currentText()]
+                        if self.inlets_weir_coeff_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_feature = (
+                        f[self.inlets_feature_FieldCbo.currentText()]
+                        if self.inlets_feature_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    curbheight = (
+                        f[self.inlets_curb_height_FieldCbo.currentText()]
+                        if self.inlets_curb_height_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_clogging_factor = (
+                        f[self.inlets_clogging_factor_FieldCbo.currentText()]
+                        if self.inlets_clogging_factor_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    swmm_time_for_clogging = (
+                        f[self.inlets_time_for_clogging_FieldCbo.currentText()]
+                        if self.inlets_time_for_clogging_FieldCbo.currentText() != ""
+                        else 0
+                    )
+        
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+        
+                    if f.geometry() is None:
+                        self.uc.show_warn(
+                            "WARNING 280920.1816: Error processing geometry of inlet/junction  " + name
+                        )
+                        continue
+        
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 0:
+                        self.uc.show_warn(
+                            "WARNING 060319.1822: Error processing geometry of inlet/junction  " + name
+                        )
+                        continue
+        
+                    point = geom.asPoint()
+                    if point is None:
+                        self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
+                        continue
+        
+                    cell = self.gutils.grid_on_point(point.x(), point.y())
+                    if cell is None:
+                        outside_inlets += "\n" + name
+                        continue
+        
+                    new_geom = QgsGeometry.fromPointXY(point)
+                    feat.setGeometry(new_geom)
+        
+                    feat.setAttribute("grid", cell)
+                    feat.setAttribute("sd_type", "I")
+                    feat.setAttribute("name", name)
+                    feat.setAttribute("intype", intype)
+                    feat.setAttribute("junction_invert_elev", junction_invert_elev)
+                    feat.setAttribute("max_depth", max_depth)
+                    feat.setAttribute("init_depth", init_depth)
+                    feat.setAttribute("surcharge_depth", surcharge_depth)
+                    feat.setAttribute("ponded_area", ponded_area)
+                    feat.setAttribute("outfall_invert_elev", 0)
+                    feat.setAttribute("outfall_type", "NORMAL")
+                    feat.setAttribute("tidal_curve", "...")
+                    feat.setAttribute("time_series", "...")
+                    feat.setAttribute("flapgate", "False")
+                    feat.setAttribute("swmm_length", swmm_length)
+                    feat.setAttribute("swmm_width", swmm_width)
+                    feat.setAttribute("swmm_height", swmm_height)
+        
+                    # Check valid ranges and maybe assign defaults inlet type:
+        
+                    if intype in {1, 3, 5}:
+                        if self.unit  == 1:  # Metric
+                            if 1.3 <= swmm_coeff <= 1.9:
+                                # OK
+                                pass
+                            else:
+                                swmm_coeff = 1.60
+                                modified += 1
+                        else:  # English
+                            if 2.85 <= swmm_coeff <= 3.30:
+                                # OK
+                                pass
+                            else:
+                                swmm_coeff = 3.00
+                                modified += 1
+                    elif intype == 2:
+                        if self.unit  == 1:  # Metric
+                            if 1.0 <= swmm_coeff <= 1.6:
+                                # OK
+                                pass
+                            else:
+                                swmm_coeff = 1.25
+                                modified += 1
+                        else:  # English
+                            if 2.0 <= swmm_coeff <= 2.6:
+                                # OK
+                                pass
+                            else:
+                                swmm_coeff = 2.30
+                                modified += 1
+        
+                    feat.setAttribute("swmm_coeff", swmm_coeff)
+                    feat.setAttribute("swmm_feature", swmm_feature)
+                    feat.setAttribute("curbheight", curbheight)
+                    feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
+                    feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
+                    feat.setAttribute("swmm_allow_discharge", "True")
+                    feat.setAttribute("water_depth", 0)
+                    feat.setAttribute("rt_fid", 0)
+                    feat.setAttribute("outf_flo", 0)
+                    feat.setAttribute("invert_elev_inp", 0)
+                    feat.setAttribute("max_depth_inp", 0)
+                    feat.setAttribute("rim_elev_inp", 0)
+                    feat.setAttribute("rim_elev", 0)
+                    feat.setAttribute("ge_elev", 0)
+                    feat.setAttribute("difference", 0)               
+                
+                    new_feats.append(feat)
+        
+                if new_feats:
+                    if not self.inlets_append_chbox.isChecked():
+                        remove_features(self.user_swmm_nodes_lyr)
+        
+                    self.user_swmm_nodes_lyr.startEditing()
+                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
+                    self.user_swmm_nodes_lyr.commitChanges()
+                    self.user_swmm_nodes_lyr.updateExtents()
+                    self.user_swmm_nodes_lyr.triggerRepaint()
+                    self.user_swmm_nodes_lyr.removeSelection()
+                else:
+                    self.load_inlets = False
+        
+                QApplication.restoreOverrideCursor()
+        
+                if outside_inlets != "":
+                    self.uc.show_warn(
+                        "WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n"
+                        + outside_inlets
+                    )
+        
+                if modified > 0:
+                    self.uc.bar_warn(
+                        "WARNING 050820.1901: "
+                        + str(modified)
+                        + " Weir Coefficients in shapefile are outside valid ranges. "
+                        + "Default values were assigned to "
+                        + str(modified)
+                        + " inlets!"
+                    )
+        
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed after reading "
+                    + str(len(new_feats))
+                    + " inlets!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_inlets = False        
+        
+        
+        
+    def load_outfalls_from_shapefile(self):
+        if self.load_outfalls:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_nodes_lyr.fields()
+                new_feats = []
+                outside_outfalls = ""
+
+                outfalls_shapefile = self.outfalls_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(outfalls_shapefile, self.lyrs.group).layer()
+                outfalls_shapefile_fts = lyr.getFeatures()
+
+                for f in outfalls_shapefile_fts:
+                    grid = 0
+                    sd_type = "O"
+                    name = (
+                        f[self.outfall_name_FieldCbo.currentText()]
+                        if self.outfall_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    intype = 1
+                    outfall_invert_elev = (
+                        f[self.outfall_invert_elevation_FieldCbo.currentText()]
+                        if self.outfall_invert_elevation_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    flapgate = (
+                        f[self.outfall_flap_gate_FieldCbo.currentText()]
+                        if self.outfall_flap_gate_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    flapgate = "True" if is_true(flapgate) else "False"
+                    swmm_allow_discharge = (
+                        f[self.outfall_allow_discharge_FieldCbo.currentText()]
+                        if self.outfall_allow_discharge_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    swmm_allow_discharge = "True" if is_true(swmm_allow_discharge) else "False"
+                    outfall_type = (
+                        f[self.outfall_type_FieldCbo.currentText()]
+                        if self.outfall_type_FieldCbo.currentText() != ""
+                        else ""
+                    )
+
+                    # water_depth = f[self.outfall_water_depth_FieldCbo.currentText()] if self.outfall_water_depth_FieldCbo.currentText() != "" else ""
+                    water_depth = self.outfall_water_depth_FieldCbo.currentText()
+                    water_depth = f[water_depth] if water_depth != "" and water_depth is not None else ""
+
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+
+                    if f.geometry() is None:
+                        self.uc.show_warn("WARNING 261220.1013: Error processing geometry of outfall  " + name)
+                        continue
+
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 0:
+                        self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall  " + name)
+                        continue
+
+                    point = geom.asPoint()
+                    if point is None:
+                        self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
+                        continue
+
+                    cell = self.gutils.grid_on_point(point.x(), point.y())
+                    if cell is None:
+                        outside_outfalls += "\n" + name
+                        continue
+
+                    new_geom = QgsGeometry.fromPointXY(point)
+                    feat.setGeometry(new_geom)
+
+                    feat.setAttribute("grid", cell)
+                    feat.setAttribute("sd_type", "O")
+                    feat.setAttribute("name", name)
+                    feat.setAttribute("intype", 1)
+                    feat.setAttribute("junction_invert_elev", 0)
+                    feat.setAttribute("max_depth", 0)
+                    feat.setAttribute("init_depth", 0)
+                    feat.setAttribute("surcharge_depth", 0)
+                    feat.setAttribute("ponded_area", 0)
+                    feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
+                    feat.setAttribute("outfall_type", outfall_type)
+                    feat.setAttribute("tidal_curve", "...")
+                    feat.setAttribute("time_series", "...")
+                    feat.setAttribute("flapgate", flapgate)
+                    feat.setAttribute("swmm_length", 0)
+                    feat.setAttribute("swmm_width", 0)
+                    feat.setAttribute("swmm_height", 0)
+                    feat.setAttribute("swmm_coeff", 0)
+                    feat.setAttribute("swmm_feature", 0)
+                    feat.setAttribute("curbheight", 0)
+                    feat.setAttribute("swmm_clogging_factor", 0)
+                    feat.setAttribute("swmm_time_for_clogging", 0)
+                    feat.setAttribute("swmm_allow_discharge", swmm_allow_discharge)
+                    feat.setAttribute("water_depth", 0)
+                    feat.setAttribute("rt_fid", 0)
+                    feat.setAttribute("outf_flo", 0)
+                    feat.setAttribute("invert_elev_inp", 0)
+                    feat.setAttribute("max_depth_inp", 0)
+                    feat.setAttribute("rim_elev_inp", 0)
+                    feat.setAttribute("rim_elev", 0)
+                    feat.setAttribute("ge_elev", 0)
+                    feat.setAttribute("difference", 0)
+
+                    new_feats.append(feat)
+
+                if new_feats:
+                    if not self.outfall_append_chbox.isChecked() and not self.load_inlets:
+                        remove_features(self.user_swmm_nodes_lyr)
+
+                    self.user_swmm_nodes_lyr.startEditing()
+                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
+                    self.user_swmm_nodes_lyr.commitChanges()
+                    self.user_swmm_nodes_lyr.updateExtents()
+                    self.user_swmm_nodes_lyr.triggerRepaint()
+                    self.user_swmm_nodes_lyr.removeSelection()
+                else:
+                    self.load_outfalls = False
+
+                QApplication.restoreOverrideCursor()
+
+                if outside_outfalls != "":
+                    self.uc.show_warn(
+                        "WARNING 060319.1700: The following outfalls are outside the computational domain!\n"
+                        + outside_outfalls
+                    )
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed after reading "
+                    + str(len(new_feats))
+                    + " outfalls!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_outfalls = False        
+        
+        
+        
+    def load_conduits_from_shapefile(self):
+        if self.load_conduits:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_conduits_lyr.fields()
+                new_feats = []
+                outside_conduits = ""
+
+                conduits_shapefile = self.conduits_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(conduits_shapefile, self.lyrs.group).layer()
+                conduits_shapefile_fts = lyr.getFeatures()
+                no_in_out = 0
+
+                for f in conduits_shapefile_fts:
+
+                    conduit_name = (
+                        f[self.conduit_name_FieldCbo.currentText()]
+                        if self.conduit_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    conduit_inlet = (
+                        f[self.conduit_from_inlet_FieldCbo.currentText()]
+                        if self.conduit_from_inlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    conduit_outlet = (
+                        f[self.conduit_to_outlet_FieldCbo.currentText()]
+                        if self.conduit_to_outlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    conduit_inlet_offset = (
+                        f[self.conduit_inlet_offset_FieldCbo.currentText()]
+                        if self.conduit_inlet_offset_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    conduit_outlet_offset = (
+                        f[self.conduit_outlet_offset_FieldCbo.currentText()]
+                        if self.conduit_outlet_offset_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    conduit_shape = (
+                        f[self.conduit_shape_FieldCbo.currentText()]
+                        if self.conduit_shape_FieldCbo.currentText() != ""
+                        else "CIRCULAR"
+                    )
+                    conduit_max_depth = (
+                        f[self.conduit_max_depth_FieldCbo.currentText()]
+                        if self.conduit_max_depth_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_geom2 = (
+                        f[self.conduit_geom2_FieldCbo.currentText()]
+                        if self.conduit_geom2_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_geom3 = (
+                        f[self.conduit_geom3_FieldCbo.currentText()]
+                        if self.conduit_geom3_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_geom4 = (
+                        f[self.conduit_geom4_FieldCbo.currentText()]
+                        if self.conduit_geom4_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_barrels = (
+                        f[self.conduit_barrels_FieldCbo.currentText()]
+                        if self.conduit_barrels_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    conduit_length = (
+                        f[self.conduit_length_FieldCbo.currentText()]
+                        if self.conduit_length_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_manning = (
+                        f[self.conduit_manning_FieldCbo.currentText()]
+                        if self.conduit_manning_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_init_flow = (
+                        f[self.conduit_initial_flow_FieldCbo.currentText()]
+                        if self.conduit_initial_flow_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_max_flow = (
+                        f[self.conduit_max_flow_FieldCbo.currentText()]
+                        if self.conduit_max_flow_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_entry_loss = (
+                        f[self.conduit_entry_loss_FieldCbo.currentText()]
+                        if self.conduit_entry_loss_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_exit_loss = (
+                        f[self.conduit_exit_loss_FieldCbo.currentText()]
+                        if self.conduit_exit_loss_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduit_loss_average = (
+                        f[self.conduit_average_loss_FieldCbo.currentText()]
+                        if self.conduit_average_loss_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    conduits_flap_gate = (
+                        f[self.conduit_flap_gate_FieldCbo.currentText()]
+                        if self.conduit_flap_gate_FieldCbo.currentText() != ""
+                        else 0
+                    )
+
+                    if conduit_inlet == "?" or conduit_outlet == "?":
+                        no_in_out += 1
+
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 1:
+                        #                             QApplication.restoreOverrideCursor()
+                        self.uc.show_warn(
+                            "WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name
+                        )
+                        continue
+
+                    points = extractPoints(geom)
+                    if points is None:
+                        #                             QApplication.restoreOverrideCursor()
+                        self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
+                        continue
+
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_conduits += "\n" + conduit_name
+                        continue
+
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_conduits += "\n" + conduit_name
+                        continue
+
+                    new_geom = QgsGeometry.fromPolylineXY(points)
+                    feat.setGeometry(new_geom)
+
+                    feat.setAttribute("conduit_name", conduit_name)
+                    feat.setAttribute("conduit_inlet", conduit_inlet)
+                    feat.setAttribute("conduit_outlet", conduit_outlet)
+                    feat.setAttribute(
+                        "conduit_inlet_offset", conduit_inlet_offset if conduit_inlet_offset != NULL else 0.0
+                    )
+                    feat.setAttribute(
+                        "conduit_outlet_offset", conduit_outlet_offset if conduit_outlet_offset != NULL else 0.0
+                    )
+                    feat.setAttribute("conduit_length", conduit_length if conduit_length != NULL else 0.0)
+                    feat.setAttribute("conduit_manning", conduit_manning if conduit_manning != NULL else 0.0)
+                    feat.setAttribute("conduit_init_flow", conduit_init_flow if conduit_init_flow != NULL else 0.0)
+                    feat.setAttribute("conduit_max_flow", conduit_max_flow if conduit_max_flow != NULL else 0.0)
+                    feat.setAttribute("losses_inlet", conduit_entry_loss if conduit_entry_loss != NULL else 0.0)
+                    feat.setAttribute("losses_outlet", conduit_exit_loss if conduit_exit_loss != NULL else 0.0)
+                    feat.setAttribute(
+                        "losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0
+                    )
+                    feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
+                    
+                    feat.setAttribute("xsections_shape", conduit_shape if conduit_shape in self.shape else "CIRCULAR")
+                    # feat.setAttribute("xsections_shape", "CIRCULAR")
+                    feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
+                    feat.setAttribute(
+                        "xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0
+                    )
+                    feat.setAttribute("xsections_geom2", conduit_geom2 if conduit_geom2 != NULL else 0.0)
+                    feat.setAttribute("xsections_geom3", conduit_geom3 if conduit_geom3 != NULL else 0.0)
+                    feat.setAttribute("xsections_geom4", conduit_geom4 if conduit_geom4 != NULL else 0.0)
+
+                    new_feats.append(feat)
+
+                if new_feats:
+                    if not self.conduits_append_chbox.isChecked():
+                        remove_features(self.user_swmm_conduits_lyr)
+
+                    self.user_swmm_conduits_lyr.startEditing()
+                    self.user_swmm_conduits_lyr.addFeatures(new_feats)
+                    self.user_swmm_conduits_lyr.commitChanges()
+                    self.user_swmm_conduits_lyr.updateExtents()
+                    self.user_swmm_conduits_lyr.triggerRepaint()
+                    self.user_swmm_conduits_lyr.removeSelection()
+                else:
+                    self.load_conduits = False
+
+                QApplication.restoreOverrideCursor()
+
+                if no_in_out != 0:
+                    self.uc.show_warn(
+                        "WARNING 060319.1703:\n"
+                        + str(no_in_out)
+                        + " conduits have no inlet and/or outlet!\n\n"
+                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?"
+                    )
+
+                if outside_conduits != "":
+                    self.uc.show_warn(
+                        "WARNING 231220.0954: The following conduits are outside the computational domain!\n"
+                        + outside_conduits
+                    )
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 070618.0500: creation of Storm Drain Conduits User layer failed after reading "
+                    + str(len(new_feats))
+                    + " conduits!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_conduits = False        
+        
+        
+    def load_pumps_from_shapefile(self):
+        if self.load_pumps:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_pumps_lyr.fields()
+                new_feats = []
+                outside_pumps = ""
+                wrong_status = 0
+    
+                pumps_shapefile = self.pumps_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(pumps_shapefile, self.lyrs.group).layer()
+                pumps_shapefile_fts = lyr.getFeatures()
+                no_in_out = 0
+    
+                for f in pumps_shapefile_fts:
+    
+                    pump_name = (
+                        f[self.pump_name_FieldCbo.currentText()]
+                        if self.pump_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    pump_inlet = (
+                        f[self.pump_from_inlet_FieldCbo.currentText()]
+                        if self.pump_from_inlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    pump_outlet = (
+                        f[self.pump_to_outlet_FieldCbo.currentText()]
+                        if self.pump_to_outlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    
+                    status = (
+                         f[self.pump_initial_status_FieldCbo.currentText()]
+                         if self.pump_initial_status_FieldCbo.currentText() != ""
+                         else "OFF"
+                    )
+                    if status in self.TRUE:
+                        status = "ON"
+                    elif  status in self.FALSE: 
+                        status = "OFF"  
+                    else:
+                        status = "OFF"
+                        wrong_status += 1
+                    pump_initial_status = status
+                    # pump_initial_status = (
+                    #     f[self.pump_initial_status_FieldCbo.currentText()]
+                    #     if self.pump_initial_status_FieldCbo.currentText() != ""
+                    #     else "OFF"
+                    # )
+                    pump_startup_depth = (
+                        f[self.pump_startup_depth_FieldCbo.currentText()]
+                        if self.pump_startup_depth_FieldCbo.currentText() != ""
+                        else 0
+                    )
+                    pump_shutoff_depth = (
+                        f[self.pump_shutoff_depth_FieldCbo.currentText()]
+                        if self.pump_shutoff_depth_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    pump_curve_name = (
+                        f[self.pump_curve_name_FieldCbo.currentText()]
+                        if self.pump_curve_name_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+    
+                    if pump_inlet == "?" or pump_outlet == "?":
+                        no_in_out += 1
+    
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+    
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 1:
+                        self.uc.show_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
+                        continue
+    
+                    points = extractPoints(geom)
+                    if points is None:
+                        self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_pumps += "\n" + pump_name
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_pumps += "\n" + pump_name
+                        continue
+    
+                    new_geom = QgsGeometry.fromPolylineXY(points)
+                    feat.setGeometry(new_geom)
+    
+                    feat.setAttribute("pump_name", pump_name)
+                    feat.setAttribute("pump_inlet", pump_inlet)
+                    feat.setAttribute("pump_outlet", pump_outlet)
+                    feat.setAttribute("pump_init_status", pump_initial_status)
+                    feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
+                    feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
+                    feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "")
+                    
+                    new_feats.append(feat)
+    
+                if new_feats:
+                    if not self.pumps_append_chbox.isChecked():
+                        remove_features(self.user_swmm_pumps_lyr)
+    
+                    self.user_swmm_pumps_lyr.startEditing()
+                    self.user_swmm_pumps_lyr.addFeatures(new_feats)
+                    self.user_swmm_pumps_lyr.commitChanges()
+                    self.user_swmm_pumps_lyr.updateExtents()
+                    self.user_swmm_pumps_lyr.triggerRepaint()
+                    self.user_swmm_pumps_lyr.removeSelection()
+                else:
+                    self.load_pumps = False
+    
+                QApplication.restoreOverrideCursor()
+    
+                if no_in_out != 0:
+                    self.uc.show_warn(
+                        "WARNING 280222.1030:\n"
+                        + str(no_in_out)
+                        + " pumps have no inlet and/or outlet!\n\n"
+                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
+                    )
+    
+                if outside_pumps != "":
+                    self.uc.show_warn(
+                        "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
+                        + outside_pumps
+                    )
+    
+                if wrong_status > 0:
+                    self.uc.show_info("WARNING 010322.1054: there were " + str(wrong_status) + " pumps with wrong initial status!\n\n" +
+                                      "All wrong initial status were changed to 'OFF'.\n\n" + 
+                                      "Edit them as wished with the 'Pumps' dialog from the Storm Drain Editor widget.")
+            
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 280222.1032: creation of Storm Drain Pumps User layer failed after reading "
+                    + str(len(new_feats))
+                    + " pumps!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_pumps = False        
+        
+        
+    def load_orifices_from_shapefile(self):
+        if self.load_orifices:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_orifices_lyr.fields()
+                new_feats = []
+                outside_orifices = ""
+    
+                orifices_shapefile = self.orifices_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(orifices_shapefile, self.lyrs.group).layer()
+                orifices_shapefile_fts = lyr.getFeatures()
+                no_in_out = 0
+    
+                for f in orifices_shapefile_fts:
+    
+                    orifice_name = (
+                        f[self.orifice_name_FieldCbo.currentText()]
+                        if self.orifice_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    orifice_inlet = (
+                        f[self.orifice_from_inlet_FieldCbo.currentText()]
+                        if self.orifice_from_inlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    orifice_outlet = (
+                        f[self.orifice_to_outlet_FieldCbo.currentText()]
+                        if self.orifice_to_outlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    orifice_type = (
+                        f[self.orifice_type_FieldCbo.currentText()]
+                        if self.orifice_type_FieldCbo.currentText() in ["SIDE", "BOTTOM"]
+                        else "SIDE"
+                    )
+                    orifice_crest_height = (
+                        f[self.orifice_crest_height_FieldCbo.currentText()]
+                        if self.orifice_crest_height_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    orifice_disch_coeff = (
+                        f[self.orifice_discharge_coeff_FieldCbo.currentText()]
+                        if self.orifice_discharge_coeff_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    orifice_flap_gate = (
+                        f[self.orifice_flap_gate_FieldCbo.currentText()]
+                        if self.orifice_flap_gate_FieldCbo.currentText() in ["NO", "YES"]
+                        else "NO"
+                    )
+                    orifice_open_close_time = (
+                        f[self.orifice_time_open_close_FieldCbo.currentText()]
+                        if self.orifice_time_open_close_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    orifice_shape = (
+                        f[self.orifice_shape_FieldCbo.currentText()]
+                        if self.orifice_shape_FieldCbo.currentText() in  ["CIRCULAR", "RECT_CLOSED"]
+                        else "CIRCULAR"
+                    )
+                    orifice_height = (
+                        f[self.orifice_height_FieldCbo.currentText()]
+                        if self.orifice_height_FieldCbo.currentText() != ""
+                        else "0.0"
+                    )
+                    orifice_width = (
+                        f[self.orifice_width_FieldCbo.currentText()]
+                        if self.orifice_width_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                  
+    
+                    if orifice_inlet == "?" or orifice_outlet == "?":
+                        no_in_out += 1
+    
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+    
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 1:
+                        self.uc.show_warn("WARNING 110422.0808: Error processing geometry of orifice  " + orifice_name)
+                        continue
+    
+                    points = extractPoints(geom)
+                    if points is None:
+                        self.uc.show_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_orifices += "\n" + orifice_name
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_orifices += "\n" + orifice_name
+                        continue
+    
+                    new_geom = QgsGeometry.fromPolylineXY(points)
+                    feat.setGeometry(new_geom)
+    
+                    feat.setAttribute("orifice_name", orifice_name)
+                    feat.setAttribute("orifice_inlet", orifice_inlet)
+                    feat.setAttribute("orifice_outlet", orifice_outlet)
+                    feat.setAttribute("orifice_type", orifice_type)
+                    feat.setAttribute("orifice_crest_height", orifice_crest_height)
+                    feat.setAttribute("orifice_disch_coeff", orifice_disch_coeff)
+                    feat.setAttribute("orifice_flap_gate", orifice_flap_gate)
+                    feat.setAttribute("orifice_open_close_time", orifice_open_close_time)
+                    feat.setAttribute("orifice_shape", orifice_shape)
+                    feat.setAttribute("orifice_height", orifice_height) 
+                    feat.setAttribute("orifice_width", orifice_width)                           
+                    new_feats.append(feat)
+    
+                if new_feats:
+                    if not self.orifices_append_chbox.isChecked():
+                        remove_features(self.user_swmm_orifices_lyr)
+    
+                    self.user_swmm_orifices_lyr.startEditing()
+                    self.user_swmm_orifices_lyr.addFeatures(new_feats)
+                    self.user_swmm_orifices_lyr.commitChanges()
+                    self.user_swmm_orifices_lyr.updateExtents()
+                    self.user_swmm_orifices_lyr.triggerRepaint()
+                    self.user_swmm_orifices_lyr.removeSelection()
+                else:
+                    self.load_orifices = False
+    
+                QApplication.restoreOverrideCursor()
+    
+                if no_in_out != 0:
+                    self.uc.show_warn(
+                        "WARNING 110422.0810:\n"
+                        + str(no_in_out)
+                        + " orifices have no inlet and/or outlet!\n\n"
+                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
+                    )
+    
+                if outside_orifices != "":
+                    self.uc.show_warn(
+                        "WARNING 110422.0811: The following orifices are outside the computational domain!\n"
+                        + outside_orifices
+                    )
+            
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 110422.0813: creation of Storm Drain Orifices User layer failed after reading "
+                    + str(len(new_feats))
+                    + " orifices!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_orifices = False        
+
+    def load_weirs_from_shapefile(self):
+        if self.load_weirs:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_weirs_lyr.fields()
+                new_feats = []
+                outside_weirs = ""
+    
+                weirs_shapefile = self.weirs_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(weirs_shapefile, self.lyrs.group).layer()
+                weirs_shapefile_fts = lyr.getFeatures()
+                no_in_out = 0
+    
+                for f in weirs_shapefile_fts:
+                    weir_name = (
+                        f[self.weir_name_FieldCbo.currentText()]
+                        if self.weir_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    weir_inlet = (
+                        f[self.weir_from_inlet_FieldCbo.currentText()]
+                        if self.weir_from_inlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    weir_outlet = (
+                        f[self.weir_to_outlet_FieldCbo.currentText()]
+                        if self.weir_to_outlet_FieldCbo.currentText() != ""
+                        else "?"
+                    )
+                    weir_type = (
+                        f[self.weir_type_FieldCbo.currentText()]
+                        if self.weir_type_FieldCbo.currentText() in ["SIDE", "BOTTOM"]
+                        else "SIDE"
+                    )
+                    weir_crest_height = (
+                        f[self.weir_crest_height_FieldCbo.currentText()]
+                        if self.weir_crest_height_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    weir_disch_coeff = (
+                        f[self.weir_discharge_coeff_FieldCbo.currentText()]
+                        if self.weir_discharge_coeff_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    weir_flap_gate = (
+                        f[self.weir_flap_gate_FieldCbo.currentText()]
+                        if self.weir_flap_gate_FieldCbo.currentText() in ["NO", "YES"]
+                        else "NO"
+                    )
+                    weir_end_contrac = (
+                        f[self.weir_end_contrac_FieldCbo.currentText()]
+                        if self.weir_end_contrac_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    weir_end_coeff = (
+                        f[self.weir_end_coeff_FieldCbo.currentText()]
+                        if self.weir_end_coeff_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    weir_side_slope = (
+                        f[self.weir_side_slope_FieldCbo.currentText()]
+                        if self.weir_side_slope_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    weir_shape = (
+                        f[self.weir_shape_FieldCbo.currentText()]
+                        if self.weir_shape_FieldCbo.currentText() in  ["CIRCULAR", "RECT_CLOSED"]
+                        else "CIRCULAR"
+                    )
+                    weir_height = (
+                        f[self.weir_height_FieldCbo.currentText()]
+                        if self.weir_height_FieldCbo.currentText() != ""
+                        else "0.0"
+                    )
+                    weir_length = (
+                        f[self.weir_length_FieldCbo.currentText()]
+                        if self.weir_length_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                  
+    
+                    if weir_inlet == "?" or weir_outlet == "?":
+                        no_in_out += 1
+    
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+    
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 1:
+                        self.uc.show_warn("WARNING 120422.0838: Error processing geometry of weir  " + weir_name)
+                        continue
+    
+                    points = extractPoints(geom)
+                    if points is None:
+                        self.uc.show_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_weirs += "\n" + weir_name
+                        continue
+    
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_weirs += "\n" + weir_name
+                        continue
+    
+                    new_geom = QgsGeometry.fromPolylineXY(points)
+                    feat.setGeometry(new_geom)
+    
+                    feat.setAttribute("weir_name", weir_name)
+                    feat.setAttribute("weir_inlet", weir_inlet)
+                    feat.setAttribute("weir_outlet", weir_outlet)
+                    feat.setAttribute("weir_type", weir_type)
+                    feat.setAttribute("weir_crest_height", weir_crest_height)
+                    feat.setAttribute("weir_disch_coeff", weir_disch_coeff)
+                    feat.setAttribute("weir_flap_gate", weir_flap_gate)
+                    feat.setAttribute("weir_end_contrac", weir_end_contrac)
+                    feat.setAttribute("weir_end_coeff", weir_end_coeff)
+                    feat.setAttribute("weir_side_slope", weir_side_slope)
+                    feat.setAttribute("weir_shape", weir_shape)
+                    feat.setAttribute("weir_height", weir_height) 
+                    feat.setAttribute("weir_length", weir_length)                           
+                    new_feats.append(feat)
+    
+                if new_feats:
+                    if not self.weirs_append_chbox.isChecked():
+                        remove_features(self.user_swmm_weirs_lyr)
+    
+                    self.user_swmm_weirs_lyr.startEditing()
+                    self.user_swmm_weirs_lyr.addFeatures(new_feats)
+                    self.user_swmm_weirs_lyr.commitChanges()
+                    self.user_swmm_weirs_lyr.updateExtents()
+                    self.user_swmm_weirs_lyr.triggerRepaint()
+                    self.user_swmm_weirs_lyr.removeSelection()
+                else:
+                    self.load_weirs = False
+    
+                QApplication.restoreOverrideCursor()
+    
+                if no_in_out != 0:
+                    self.uc.show_warn(
+                        "WARNING 120422.0844:\n"
+                        + str(no_in_out)
+                        + " weirs have no inlet and/or outlet!\n\n"
+                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
+                    )
+    
+                if outside_weirs != "":
+                    self.uc.show_warn(
+                        "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
+                        + outside_weirs
+                    )
+            
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 110422.0846: creation of Storm Drain Weirs User layer failed after reading "
+                    + str(len(new_feats))
+                    + " weirs!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_weirs= False        
+
+
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
 
-    def save_storm_drain_shapefile_fields(self):
+    def save_storm_drain_shapefile_field_names(self):
         s = QSettings()
 
-        # Inlets/Junctions:
-        #         s.setValue('sf_inlets_layer', self.inlets_shapefile_cbo.currentIndex())
         s.setValue("sf_inlets_layer_name", self.inlets_shapefile_cbo.currentText())
         s.setValue("sf_inlets_name", self.inlets_name_FieldCbo.currentIndex())
         s.setValue("sf_inlets_type", self.inlets_type_FieldCbo.currentIndex())
@@ -1449,19 +2010,54 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_pump_curve_type", self.pump_curve_type_FieldCbo.currentIndex())
         s.setValue("sf_pump_curve_description", self.pump_curve_description_FieldCbo.currentIndex())
 
+        # Orifices:
+        s.setValue("sf_orifices_layer_name", self.orifices_shapefile_cbo.currentText())
+        s.setValue("sf_orifice_name", self.orifice_name_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_from_inlet", self.orifice_from_inlet_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_to_outlet", self.orifice_to_outlet_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_type", self.orifice_type_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_crest_height", self.orifice_crest_height_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_disch_coeff", self.orifice_discharge_coeff_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_flap_gate", self.orifice_flap_gate_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_open_close_time", self.orifice_time_open_close_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_shape", self.orifice_shape_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_height", self.orifice_height_FieldCbo.currentIndex())
+        s.setValue("sf_orifice_width", self.orifice_width_FieldCbo.currentIndex())
+
+        # Weirs:
+        s.setValue("sf_weirs_layer_name", self.weirs_shapefile_cbo.currentText())
+        s.setValue("sf_weir_name", self.weir_name_FieldCbo.currentIndex())
+        s.setValue("sf_weir_from_inlet", self.weir_from_inlet_FieldCbo.currentIndex())
+        s.setValue("sf_weir_to_outlet", self.weir_to_outlet_FieldCbo.currentIndex())
+        s.setValue("sf_weir_type", self.weir_type_FieldCbo.currentIndex())
+        s.setValue("sf_weir_crest_height", self.weir_crest_height_FieldCbo.currentIndex())
+        s.setValue("sf_weir_disch_coeff", self.weir_discharge_coeff_FieldCbo.currentIndex())
+        s.setValue("sf_weir_flap_gate", self.weir_flap_gate_FieldCbo.currentIndex())
+        s.setValue("sf_weir_end_contrac", self.weir_end_contrac_FieldCbo.currentIndex())
+        s.setValue("sf_weir_end_coeff", self.weir_end_coeff_FieldCbo.currentIndex())
+        s.setValue("sf_weir_side_slope", self.weir_side_slope_FieldCbo.currentIndex())
+        s.setValue("sf_weir_shape", self.weir_shape_FieldCbo.currentIndex())
+        s.setValue("sf_weir_height", self.weir_height_FieldCbo.currentIndex())
+        s.setValue("sf_weir_length", self.weir_length_FieldCbo.currentIndex())
+
+
     def restore_storm_drain_shapefile_fields(self):
         
         self.clear_all_inlet_attributes()
         self.clear_all_outfall_attributes()
         self.clear_all_conduit_attributes()
         self.clear_all_pump_attributes()
+        self.clear_all_orifice_attributes()
+        self.clear_all_weir_attributes()
         
-        self.restore_SD_shapefile_inlet_fields()
-        self.restore_SD_shapefile_outfall_fields()
-        self.restore_SD_shapefile_conduit_fields()
-        self.restore_SD_shapefile_pump_fields()
+        self.restore_SD_shapefile_inlet_field_names()
+        self.restore_SD_shapefile_outfall_field_names()
+        self.restore_SD_shapefile_conduit_field_names()
+        self.restore_SD_shapefile_pump_field_names()
+        self.restore_SD_shapefile_orifice_field_names()
+        self.restore_SD_shapefile_weir_field_names()
         
-    def restore_SD_shapefile_inlet_fields(self):  
+    def restore_SD_shapefile_inlet_field_names(self):  
         # Inlets/Junctions:
         s = QSettings()
         name = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
@@ -1515,7 +2111,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             self.clear_all_inlet_attributes()
                 
-    def restore_SD_shapefile_outfall_fields(self):  
+    def restore_SD_shapefile_outfall_field_names(self):  
         # Outfalls
         s = QSettings()
         name = "" if s.value("sf_outfalls_layer_name") is None else s.value("sf_outfalls_layer_name")
@@ -1548,7 +2144,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             self.clear_all_outfall_attributes()
 
-    def restore_SD_shapefile_conduit_fields(self):  
+    def restore_SD_shapefile_conduit_field_names(self):  
         # Conduits:
         s = QSettings()
         name = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
@@ -1595,7 +2191,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             self.clear_all_conduit_attributes()    
                     
-    def restore_SD_shapefile_pump_fields(self): 
+    def restore_SD_shapefile_pump_field_names(self): 
         # Pumps:
         s = QSettings()
         name = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
@@ -1622,5 +2218,69 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             self.clear_all_pump_attributes()
 
-                      
-            
+                    
+    def restore_SD_shapefile_orifice_field_names(self): 
+        # Orifices:
+        s = QSettings()
+        name = "" if s.value("sf_orifices_layer_name") is None else s.value("sf_orifices_layer_name")
+        if name == self.orifices_shapefile_cbo.currentText():
+            val = int(-1 if s.value("sf_orifice_name") is None else s.value("sf_orifice_name"))
+            self.orifice_name_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_from_inlet") is None else s.value("sf_orifice_from_inlet"))
+            self.orifice_from_inlet_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_to_outlet") is None else s.value("sf_orifice_to_outlet"))
+            self.orifice_to_outlet_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_type") is None else s.value("sf_orifice_type"))
+            self.orifice_type_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_crest_height") is None else s.value("sf_orifice_crest_height"))
+            self.orifice_crest_height_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_disch_coeff") is None else s.value("sf_orifice_disch_coeff"))
+            self.orifice_discharge_coeff_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_flap_gate") is None else s.value("sf_orifice_flap_gate"))
+            self.orifice_flap_gate_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_open_close_time") is None else s.value("sf_orifice_open_close_time"))
+            self.orifice_time_open_close_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_shape") is None else s.value("sf_orifice_shape"))
+            self.orifice_shape_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_height") is None else s.value("sf_orifice_height"))
+            self.orifice_height_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_orifice_width") is None else s.value("sf_orifice_width"))
+            self.orifice_width_FieldCbo.setCurrentIndex(val)           
+        else:
+            self.clear_all_orifice_attributes()                                          
+ 
+                     
+    def restore_SD_shapefile_weir_field_names(self): 
+        # Weirs:
+        s = QSettings()
+        name = "" if s.value("sf_weirs_layer_name") is None else s.value("sf_weirs_layer_name")
+        if name == self.weirs_shapefile_cbo.currentText():
+            val = int(-1 if s.value("sf_weir_name") is None else s.value("sf_weir_name"))
+            self.weir_name_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_weir_from_inlet") is None else s.value("sf_weir_from_inlet"))
+            self.weir_from_inlet_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_weir_to_outlet") is None else s.value("sf_weir_to_outlet"))
+            self.weir_to_outlet_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_weir_type") is None else s.value("sf_weir_type"))
+            self.weir_type_FieldCbo.setCurrentIndex(val)
+            val = int(-1 if s.value("sf_weir_crest_height") is None else s.value("sf_weir_crest_height"))
+            self.weir_crest_height_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_disch_coeff") is None else s.value("sf_weir_disch_coeff"))
+            self.weir_discharge_coeff_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_flap_gate") is None else s.value("sf_weir_flap_gate"))
+            self.weir_flap_gate_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_end_contrac") is None else s.value("sf_weir_end_contrac"))
+            self.weir_end_contrac_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_end_coeff") is None else s.value("sf_weir_end_coeff"))
+            self.weir_end_coeff_FieldCbo.setCurrentIndex(val)                         
+            val = int(-1 if s.value("sf_weir_side_slope") is None else s.value("sf_weir_side_slope"))
+            self.weir_side_slope_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_shape") is None else s.value("sf_weir_shape"))
+            self.weir_shape_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_height") is None else s.value("sf_weir_height"))
+            self.weir_height_FieldCbo.setCurrentIndex(val)            
+            val = int(-1 if s.value("sf_weir_length") is None else s.value("sf_weir_length"))
+            self.weir_length_FieldCbo.setCurrentIndex(val)           
+        else:
+            self.clear_all_weir_attributes()                                          
+                     
