@@ -2558,8 +2558,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(len(pumps_rows))
                     + "\t[PUMPS]\n"     
                     + str(len(orifices_rows))
-                    + "\t[ORIFICES]\n"                            
-                    + str(len(xsections_rows_1) + len(xsections_rows_2))
+                    + "\t[ORIFICES]\n"   
+                    + str(len(weirs_rows))
+                    + "\t[WEIRS]\n"                                              
+                    + str(len(xsections_rows_1) + len(xsections_rows_2) + len(xsections_rows_3))
                     + "\t[XSECTIONS]\n"
                     + str(len(losses_rows))
                     + "\t[LOSSES]\n"
