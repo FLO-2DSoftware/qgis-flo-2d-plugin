@@ -3287,6 +3287,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.show_inlets()
         elif idx == 2:
             self.show_outfalls()
+            
         self.SD_nodes_components_cbo.setCurrentIndex(0)  
 
     def links_component_changed(self):
@@ -3309,12 +3310,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         elif idx == 2:
             self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
         elif idx == 3:
-            pass
+            self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
         elif idx == 4:
-            pass                  
-            
+            self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")                
+        elif idx == 5:
+            pass  
+                   
         self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0) 
-
+        
     def add_one_rt(self):
         self.add_single_rtable()
 
