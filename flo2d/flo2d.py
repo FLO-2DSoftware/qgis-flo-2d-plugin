@@ -429,10 +429,29 @@ class Flo2D(object):
         pa = s.value("plot_dock/area", Qt.BottomDockWidgetArea, type=int)
         ga = s.value("grid_info_dock/area", Qt.TopDockWidgetArea, type=int)
 
-        self.iface.addDockWidget(ma, self.f2d_dock)
-        self.iface.addDockWidget(ta, self.f2d_table_dock)
-        self.iface.addDockWidget(pa, self.f2d_plot_dock)
-        self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
+        if ma == 0:
+            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
+            self.f2d_dock.setFloating(True)
+        else:
+            self.iface.addDockWidget(ma, self.f2d_dock)
+
+        if ta == 0:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+            self.f2d_table_dock.setFloating(True)
+        else:
+            self.iface.addDockWidget(ta, self.f2d_table_dock)
+
+        if pa == 0:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+            self.f2d_plot_dock.setFloating(True)
+        else:
+            self.iface.addDockWidget(pa, self.f2d_plot_dock)
+
+        if ga == 0:
+            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+            self.f2d_grid_info_dock.setFloating(True)
+        else:
+            self.iface.addDockWidget(ga, self.f2d_grid_info_dock)
 
     def unload(self):
         """
