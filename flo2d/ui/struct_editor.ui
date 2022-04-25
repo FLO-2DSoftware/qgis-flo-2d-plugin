@@ -685,7 +685,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Culvert of conduit width</string>
+               <string>Circular diameter or box culvert height</string>
               </property>
              </widget>
             </item>
