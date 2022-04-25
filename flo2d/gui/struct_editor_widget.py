@@ -545,7 +545,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if is_number(m_fdata(self.data_model, i, 0)) and not isnan(m_fdata(self.data_model, i, 0)):
                 data.append([m_fdata(self.data_model, i, j) for j in range(self.data_model.columnCount())])
         self.struct.set_table_data(data)
-        self.update_plot()
+        # self.update_plot()
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)
