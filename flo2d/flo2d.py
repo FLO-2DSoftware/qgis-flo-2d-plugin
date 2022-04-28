@@ -1901,7 +1901,7 @@ class Flo2D(object):
                 self.gutils.con.commit()
 
                 qryIndexDrop = "DROP INDEX if exists levee_dataFIDGRIDFIDLDIRLEVCEST;"
-                self.gutils.con.execute(qryIndex)
+                self.gutils.con.execute(qryIndexDrop)
                 self.gutils.con.commit()
 
                 leveesToDelete = delete_levee_directions_duplicates_np(self.gutils, levees, cellIDNumpyArray) # pass grid layer if it exists
