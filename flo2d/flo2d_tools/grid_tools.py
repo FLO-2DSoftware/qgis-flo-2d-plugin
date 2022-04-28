@@ -933,20 +933,21 @@ def calculate_spatial_variable_from_lines(grid, lines, request=None):
     """
     
     allfeatures, index = spatial_index(lines, request)
-    features = grid.getFeatures() if request is None else grid.getFeatures(request)
-    for feat in features:  # for each grid feature
-        geom = feat.geometry()  # cell square (a polygon)
-        gelev = feat['elevation']
-        fids = index.intersects(geom.boundingBox())  # c
-        for fid in fids:
-            f = allfeatures[fid]
-            fgeom = f.geometry()
-            inter = fgeom.intersects(geom)
-            if inter is True:
-                centroid = geom.centroid()
-                yield (f.id(), feat.id(), gelev)
-            else:
-                pass
+
+    if len(allfeatures) != 0:
+        features = grid.getFeatures() if request is None else grid.getFeatures(request)
+        for feat in features:  # for each grid feature
+            geom = feat.geometry()  # cell square (a polygon)
+            gelev = feat['elevation']
+            fids = index.intersects(geom.boundingBox())  # c
+            for fid in fids:
+                f = allfeatures[fid]
+                fgeom = f.geometry()
+                inter = fgeom.intersects(geom)
+                if inter is True:
+                    yield f.id(), feat.id(), gelev
+                else:
+                    pass
     
 
 def calculate_gutter_variable_from_lines(grid, lines):
@@ -1618,9 +1619,12 @@ def fid_from_grid_features(gutils, grid, linefeatures) :
         for result in calculate_spatial_variable_from_lines(grid, linefeatures, region): # returns grid id, line id, grid elev
             # currently, this goes one line at a time
             retVals.append(result)
-        yield (retVals, region)
+
+        if len(retVals) != 0:
+            yield (retVals, region)
+        else:
+            pass
     # return cell ids and elevations
-    #return retVals
 
 def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False, *extra_fields):
     """
