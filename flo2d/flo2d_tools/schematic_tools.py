@@ -294,7 +294,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         raise e
         # self.uc.show_error("ERROR 291219.0428: Error while creating schematic levees octagons!.\n", e)
         
-def delete_levee_directions_duplicates_np(gutils, levees, cellIDNumpyArray = None):
+def delete_redundant_levee_directions_np(gutils, cellIDNumpyArray = None):
     # create a numpy array of the levee segments with a float in each
     # to limit memory, do 2 (opposing directions) at a time
     # shift the NP arrays accordingly to look for conflicts and then delete segments as needed
