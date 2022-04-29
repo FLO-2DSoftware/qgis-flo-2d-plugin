@@ -9,7 +9,7 @@
 
 import sys
 from qgis.PyQt.QtWidgets import QDialogButtonBox
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, QgsRectangle
+from qgis.core import QgsProject, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFeatureRequest, QgsRectangle
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtWidgets import QApplication, QComboBox
 from qgis.PyQt.QtCore import Qt, QSettings
@@ -230,8 +230,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 
                 # iterate over wall elements using the extents of the grid
                 userLeveeLinesAddedCounter = 0
-                starttime=datetime.datetime.now()
-                
+
                 if self.ask_append:
                     if not self.levees_append_chbox.isChecked():
                         if not self.gutils.is_table_empty("user_levee_lines"):
@@ -259,126 +258,124 @@ class WallsShapefile(qtBaseClass, uiDialog):
                                 + "Would you like to continue?"
                             ):
                                 return
-                for regionReq in gridRegionGenerator(self.gutils, self.grid_lyr, regionPadding = 0):
-                    wall_shapefile_feats = lyr.getFeatures(regionReq)
-                    
-                    levee_lines_fields = self.user_levee_lines_lyr.fields()
-                    new_levee_lines_feats = []
-    
-                    for feat in wall_shapefile_feats:
-                        # Set new levee lines:
-    
-                        item = feat[self.crest_elevation_FieldCbo.currentText()]
-                        elev = float(item) if item and item != "" else 0.0
-                        
-    
-                        item = feat[self.name_FieldCbo.currentText()]
-                        name = str(item) if item and item != "" else str(int(feat["fid"]))
-                        
-                        try:
-                            item = feat[self.correction_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        item = feat[self.correction_FieldCbo.currentText()]
-                        correction = float(item) if item and item != "" else 0.0
-    
-                        # Set failure:
-                        try:
-                            item = feat[self.failure_height_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        failElev = float_or_zero(item)
-                        
-                        try:
-                            item = feat[self.duration_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        
-                        failDuration = float_or_zero(item)
-                        
-                        try:
-                            item = feat[self.base_elevation_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        failBaseElev = float_or_zero(item)
-                        
-                        try:
-                            item = feat[self.maximum_width_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        failMaxWidth = float_or_zero(item)
-    
-                        try:
-                            item = feat[self.vertical_fail_rate_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        failVRate = float_or_zero(item)
-    
-                        try:
-                            item = feat[self.horizontal_fail_rate_FieldCbo.currentText()]
-                        except:
-                            item = 0.0
-                        failHRate = float_or_zero(item)
-    
-                        levee_feat = QgsFeature()
-                        levee_feat.setFields(levee_lines_fields)
-    
-                        if levee_lines_fields.indexFromName("failDuration") == -1:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.show_warn(
-                                "ERROR 060120.0629.: fields missing!\nThe User Levee Lines layer do not have all the required fields.\n\n"
-                                + "Your project is old. Please create a new project and import your old data."
-                            )
-                            return
-    
-                        geom = feat.geometry()
-                        if geom is None:
-                            self.uc.show_warn("WARNING 071219.0428: Error processing geometry of walls '" + name + "' !")
-                            continue
-    
-                        points = extractPoints(geom)
-                        if points is None:
-                            self.uc.show_warn("WARNING 071219.0429: Wall line " + name + " is faulty!")
-                            continue
-    
-                        new_geom = QgsGeometry.fromPolylineXY(points)
-                        if new_geom is None:
-                            continue
-    
-                        levee_feat.setGeometry(new_geom)
-    
-                        levee_feat.setAttribute("elev", elev)
-                        levee_feat.setAttribute("name", name)
-                        levee_feat.setAttribute("correction", correction)
-    
-                        # Failure Data:
-                        if self.failure_groupBox.isChecked():
-                            if self.fail_elev_radio.isChecked():
-                                levee_feat.setAttribute("failElev", failElev)
-                                levee_feat.setAttribute("failDepth", 0.0)
-                            else:  # use depth => compute fail from highest adjacent cell elevation.
-                                levee_feat.setAttribute("failElev", 0.0)
-                                levee_feat.setAttribute("failDepth", failElev)
-                        else:
-                            levee_feat.setAttribute("failElev", 0.0)
+
+                starttime=datetime.datetime.now()
+                
+                extent_request = QgsFeatureRequest()
+                extent_request.setDestinationCrs(self.grid_lyr.crs(), QgsProject.instance().transformContext())
+                extent_request.setFilterRect(self.grid_lyr.extent())
+                wall_features = lyr.getFeatures(extent_request)
+
+                levee_lines_fields = self.user_levee_lines_lyr.fields()
+
+                self.user_levee_lines_lyr.startEditing()
+
+                for wall_feat in wall_features:
+
+                    item = wall_feat[self.crest_elevation_FieldCbo.currentText()]
+                    elev = float(item) if item and item != "" else 0.0
+
+                    item = wall_feat[self.name_FieldCbo.currentText()]
+                    name = str(item) if item and item != "" else str(int(wall_feat["fid"]))
+
+                    try:
+                        item = wall_feat[self.correction_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    item = wall_feat[self.correction_FieldCbo.currentText()]
+                    correction = float(item) if item and item != "" else 0.0
+
+                    # Set failure:
+                    try:
+                        item = wall_feat[self.failure_height_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    failElev = float_or_zero(item)
+
+                    try:
+                        item = wall_feat[self.duration_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+
+                    failDuration = float_or_zero(item)
+
+                    try:
+                        item = wall_feat[self.base_elevation_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    failBaseElev = float_or_zero(item)
+
+                    try:
+                        item = wall_feat[self.maximum_width_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    failMaxWidth = float_or_zero(item)
+
+                    try:
+                        item = wall_feat[self.vertical_fail_rate_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    failVRate = float_or_zero(item)
+
+                    try:
+                        item = wall_feat[self.horizontal_fail_rate_FieldCbo.currentText()]
+                    except:
+                        item = 0.0
+                    failHRate = float_or_zero(item)
+
+                    levee_feat = QgsFeature()
+                    levee_feat.setFields(levee_lines_fields)
+
+                    if levee_lines_fields.indexFromName("failDuration") == -1:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_warn(
+                            "ERROR 060120.0629.: fields missing!\nThe User Levee Lines layer do not have all the required fields.\n\n"
+                            + "Your project is old. Please create a new project and import your old data."
+                        )
+                        return
+
+                    geom = wall_feat.geometry()
+                    if geom is None:
+                        self.uc.show_warn("WARNING 071219.0428: Error processing geometry of walls '" + name + "' !")
+                        continue
+
+                    points = extractPoints(geom)
+                    if points is None:
+                        self.uc.show_warn("WARNING 071219.0429: Wall line " + name + " is faulty!")
+                        continue
+
+                    new_geom = QgsGeometry.fromPolylineXY(points)
+                    if new_geom is None:
+                        continue
+
+                    levee_feat.setGeometry(new_geom)
+
+                    levee_feat.setAttribute("elev", elev)
+                    levee_feat.setAttribute("name", name)
+                    levee_feat.setAttribute("correction", correction)
+
+                    # Failure Data:
+                    if self.failure_groupBox.isChecked():
+                        if self.fail_elev_radio.isChecked():
+                            levee_feat.setAttribute("failElev", failElev)
                             levee_feat.setAttribute("failDepth", 0.0)
-    
-                        levee_feat.setAttribute("failDuration", failDuration)
-                        levee_feat.setAttribute("failBaseElev", failBaseElev)
-                        levee_feat.setAttribute("failMaxWidth", failMaxWidth)
-                        levee_feat.setAttribute("failVRate", failVRate)
-                        levee_feat.setAttribute("failHRate", failHRate)
-    
-                        new_levee_lines_feats.append(levee_feat)
-    
-                    QApplication.restoreOverrideCursor()   
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-    
-                    # Add features to User Levee Lines:
-                    self.user_levee_lines_lyr.startEditing()
-                    self.user_levee_lines_lyr.addFeatures(new_levee_lines_feats)
-                    self.user_levee_lines_lyr.commitChanges()
-                    userLeveeLinesAddedCounter += len(new_levee_lines_feats)
+                        else:  # use depth => compute fail from highest adjacent cell elevation.
+                            levee_feat.setAttribute("failElev", 0.0)
+                            levee_feat.setAttribute("failDepth", failElev)
+                    else:
+                        levee_feat.setAttribute("failElev", 0.0)
+                        levee_feat.setAttribute("failDepth", 0.0)
+
+                    levee_feat.setAttribute("failDuration", failDuration)
+                    levee_feat.setAttribute("failBaseElev", failBaseElev)
+                    levee_feat.setAttribute("failMaxWidth", failMaxWidth)
+                    levee_feat.setAttribute("failVRate", failVRate)
+                    levee_feat.setAttribute("failHRate", failHRate)
+
+                    self.user_levee_lines_lyr.addFeature(levee_feat)
+                    userLeveeLinesAddedCounter += 1
+
+                self.user_levee_lines_lyr.commitChanges()
                 self.user_levee_lines_lyr.updateExtents()
                 self.user_levee_lines_lyr.triggerRepaint()
                 self.user_levee_lines_lyr.removeSelection()
