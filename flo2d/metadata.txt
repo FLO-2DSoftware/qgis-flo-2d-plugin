@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.56
+version=0.10.57
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.57
+  - Multiple channels and simple multiple channels lines uses ST_Crosses predicate instead of ST_Intersects.
  <p>0.10.56
   - Structures editor widget change label to "Circuler diameter or box culvert height".
  <p>0.10.55
