@@ -161,6 +161,13 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
     grid_centroid = gfeat.geometry().centroid().asPoint()
     lg_isect = gfeat.geometry().intersection(lfeat.geometry())
     pts = []
+
+    if lg_isect is None:
+        return None
+
+    if lg_isect.type() == QgsWkbTypes.PointGeometry:
+        return None
+
     if lg_isect.isMultipart():
         for part in lg_isect.asMultiPolyline():
             p1 = part[0]
@@ -294,7 +301,7 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         raise e
         # self.uc.show_error("ERROR 291219.0428: Error while creating schematic levees octagons!.\n", e)
         
-def delete_levee_directions_duplicates_np(gutils, levees, cellIDNumpyArray = None):
+def delete_redundant_levee_directions_np(gutils, cellIDNumpyArray = None):
     # create a numpy array of the levee segments with a float in each
     # to limit memory, do 2 (opposing directions) at a time
     # shift the NP arrays accordingly to look for conflicts and then delete segments as needed
@@ -345,20 +352,26 @@ def delete_levee_directions_duplicates_np(gutils, levees, cellIDNumpyArray = Non
         
         # assign dir lists to leveeArray based upon the cellID array
         # get the indices for the levee element cellIDs by finding where they fall in the sorted list
-        dir1pos = np.searchsorted(flatID[idssorted], dir1List[:,0])
-        # now pull their indices in the actual list
-        dir1indices = idssorted[dir1pos]
         maskdir1 = np.zeros(flatID.shape, dtype=int) + int(nullVal)
-        maskdir1[dir1indices] = dir1List[:,0] # set assigned ids
+        if len(dir1List) != 0:
+            dir1pos = np.searchsorted(flatID[idssorted], dir1List[:, 0])
+            dir1indices = idssorted[dir1pos]
+            maskdir1[dir1indices] = dir1List[:, 0]  # set assigned ids
+            del dir1pos, dir1indices
+
+        # now pull their indices in the actual list
         leveeArray[1:-1,1:-1,0] = np.reshape(maskdir1, (cellIDNumpyArray.shape[0], cellIDNumpyArray.shape[1]))
-        del dir1pos, dir1indices, maskdir1
-        
-        dir2pos = np.searchsorted(flatID[idssorted], dir2List[:,0])
-        dir2indices = idssorted[dir2pos]
+        del maskdir1
+
         maskdir2 = np.zeros(flatID.shape, dtype=int) + int(nullVal)
-        maskdir2[dir2indices] = dir2List[:,0] # set assigned ids
+        if len(dir2List) != 0:
+            dir2pos = np.searchsorted(flatID[idssorted], dir2List[:,0])
+            dir2indices = idssorted[dir2pos]
+            maskdir2[dir2indices] = dir2List[:,0] # set assigned ids
+            del dir2pos, dir2indices
+
         leveeArray[1:-1,1:-1,1] = np.reshape(maskdir2, (cellIDNumpyArray.shape[0], cellIDNumpyArray.shape[1]))
-        del dir2pos, dir2indices, maskdir2
+        del maskdir2
                 
         # roll the bottom array, based upon direction and look for counts > 1
         rolls = rollOrientations[n]
@@ -581,6 +594,8 @@ def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
         # for each line crossing a grid element
         for lid, gid, elev in lid_gid_elev:
             pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
+            if pts is None:
+                pass
             if gid not in gids:
                 schem_lines[gid] = {}
                 schem_lines[gid]["lines"] = {}

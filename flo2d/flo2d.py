@@ -31,7 +31,7 @@ from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.grid_tools import grid_has_empty_elev
-from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_levee_directions_duplicates, delete_levee_directions_duplicates_np
+from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_redundant_levee_directions_np
 from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor, MapperExecutor, ProgramExecutor
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_hazus import HazusDialog
@@ -1901,10 +1901,10 @@ class Flo2D(object):
                 self.gutils.con.commit()
 
                 qryIndexDrop = "DROP INDEX if exists levee_dataFIDGRIDFIDLDIRLEVCEST;"
-                self.gutils.con.execute(qryIndex)
+                self.gutils.con.execute(qryIndexDrop)
                 self.gutils.con.commit()
 
-                leveesToDelete = delete_levee_directions_duplicates_np(self.gutils, levees, cellIDNumpyArray) # pass grid layer if it exists
+                leveesToDelete = delete_redundant_levee_directions_np(self.gutils, cellIDNumpyArray) # pass grid layer if it exists
                 #leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
                 if len(leveesToDelete) > 0:
                     k = 0
@@ -1969,7 +1969,7 @@ class Flo2D(object):
                     m.setText(
                         "There are "
                         + str(len(leveesToDelete))
-                        + " levees directions duplicated. "
+                        + " redundant levees directions. "
                         + "They have lower crest elevation than the opposite direction.\n\n"
                         + "Would you like to delete them?"
                     )
