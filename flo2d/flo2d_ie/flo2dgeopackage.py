@@ -1578,7 +1578,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         r.write(line2.format(row[0], "0"))
                     else:
                         # r.write(line2.format(*row))
-                        r.write(line2.format(row[0], "{0:.6f}".format(float(row[1]))))
+                        r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
                         # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
 
             return True
