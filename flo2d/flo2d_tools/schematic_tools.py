@@ -161,6 +161,13 @@ def levee_grid_isect_pts(levee_fid, grid_fid, levee_lyr, grid_lyr, with_centroid
     grid_centroid = gfeat.geometry().centroid().asPoint()
     lg_isect = gfeat.geometry().intersection(lfeat.geometry())
     pts = []
+
+    if lg_isect is None:
+        return None
+
+    if lg_isect.type() == QgsWkbTypes.PointGeometry:
+        return None
+
     if lg_isect.isMultipart():
         for part in lg_isect.asMultiPolyline():
             p1 = part[0]
@@ -587,6 +594,8 @@ def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
         # for each line crossing a grid element
         for lid, gid, elev in lid_gid_elev:
             pts, c = levee_grid_isect_pts(lid, gid, levee_lyr, grid_lyr)
+            if pts is None:
+                pass
             if gid not in gids:
                 schem_lines[gid] = {}
                 schem_lines[gid]["lines"] = {}
