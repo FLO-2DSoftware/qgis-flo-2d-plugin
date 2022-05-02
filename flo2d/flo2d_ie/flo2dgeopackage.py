@@ -2271,9 +2271,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     s.write(line3.format(*row[1:]))
                     for prow in self.execute(sed_p_sql, (dist_fid,)):
                         s.write(line4.format(*prow))
-                for aid, debrisv in self.execute(areas_d_sql):
-                    gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
-                    s.write(line5.format(gid, debrisv))
+                if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                    for aid, debrisv in self.execute(areas_d_sql):
+                        gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
+                        s.write(line5.format(gid, debrisv))
                 if e_data is not None:
                     s.write(line6.format(e_data))
                 else:

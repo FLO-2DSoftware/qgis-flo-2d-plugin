@@ -128,7 +128,7 @@
       <enum>QTabWidget::Triangular</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="mud_debris_tab">
       <attribute name="title">
@@ -611,6 +611,9 @@
             <property name="checkable">
              <bool>true</bool>
             </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
             <layout class="QGridLayout" name="gridLayout_4">
              <item row="1" column="0">
               <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -829,7 +832,7 @@
            <bool>true</bool>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <widget class="QWidget" name="layoutWidget">
            <property name="geometry">
@@ -1134,7 +1137,7 @@
            <bool>true</bool>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <widget class="QWidget" name="layoutWidget">
            <property name="geometry">
