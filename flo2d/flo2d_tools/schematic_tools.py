@@ -232,7 +232,8 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                                               levbase, failwidthmax, failrate, failwidrate)
                                          VALUES (?,?,?,?,?,?,?,?);"""
     
-            select_fail_qry = """SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, failVRate, failHRate
+            select_user_levees_qry = """SELECT failElev, failDepth, failDuration, failBaseElev, failMaxWidth, 
+                                                            failVRate, failHRate, elev, correction
                                 FROM user_levee_lines 
                                 WHERE fid = ?"""
     
@@ -250,29 +251,27 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                     if sides:
                         for side in sides:
                             if side not in list(grid_levee_seg[gid]["sides"].keys()):
-    
+
+                                side_elev=elev
                                 grid_levee_seg[gid]["sides"][side] = lid
                                 ldir = octagon_levee_dirs[side]
                                 c = gdata["centroid"]
-                                data.append(
-                                    (
-                                        gid,
-                                        ldir,
-                                        elev,
-                                        lid,
-                                        "LINESTRING({0} {1}, {2} {3})".format(*levee_dir_pts[ldir](c.x(), c.y(), sh, oh)),
-                                    )
-                                )
-    
-                                fail = gutils.con.execute(select_fail_qry, (lid,)).fetchone()
-                                if fail:
-                                    if not all(v == 0 for v in fail):
-                                        if not fail[0] == 0.0:
+
+                                user_levees_data = gutils.con.execute(select_user_levees_qry, (lid,)).fetchone()
+                                if user_levees_data:
+                                    if not all(v == 0 for v in user_levees_data):
+                                        if not user_levees_data[0] == 0.0:
                                             # failElev selected, use it.
                                             fail_data.append(
-                                                (gid, ldir, fail[0], fail[2], fail[3], fail[4], fail[5], fail[6])
+                                                (gid, ldir,
+                                                 user_levees_data[0],
+                                                 user_levees_data[2],
+                                                 user_levees_data[3],
+                                                 user_levees_data[4],
+                                                 user_levees_data[5],
+                                                 user_levees_data[6])
                                             )
-                                        elif not fail[1] == 0.0:
+                                        elif not user_levees_data[1] == 0.0:
                                             # failDepth selected, use adjacent cell elevations to calculate fail elevation.
     
                                             adj_cell, adj_elev = get_adjacent_cell_elevation(
@@ -282,15 +281,36 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                             max_elev = max(adj_elev, grid_elev)
     
                                             fail_data.append(
-                                                (gid, ldir, max_elev + fail[1], fail[2], fail[3], fail[4], fail[5], fail[6])
+                                                (gid, ldir, max_elev +
+                                                 user_levees_data[1],
+                                                 user_levees_data[2],
+                                                 user_levees_data[3],
+                                                 user_levees_data[4],
+                                                 user_levees_data[5],
+                                                 user_levees_data[6])
                                             )
                                         else:  # do not set failure data for this direction.
                                             pass
-    
-            
+
+                                        if user_levees_data[7] is None: # crest elevation in user levees not defined
+                                            adj_cell, adj_elev = get_adjacent_cell_elevation(
+                                                gutils, grid_lyr, gid, ldir, cell_size
+                                            )
+                                            side_elev = max(adj_elev, elev)
+
+                                data.append(
+                                    (
+                                        gid,
+                                        ldir,
+                                        side_elev,
+                                        lid,
+                                        "LINESTRING({0} {1}, {2} {3})".format(
+                                            *levee_dir_pts[ldir](c.x(), c.y(), sh, oh)),
+                                    )
+                                )
+
             gutils.con.executemany(ins_levees_sql, data)
     
-            
             gutils.con.executemany(ins_levees_failure_sql, fail_data)
     
             gutils.con.commit()
