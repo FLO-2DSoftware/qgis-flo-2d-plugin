@@ -821,7 +821,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.eff_cbo, self.soil_depth_cbo]
+        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.soil_depth_cbo]
         self.land_combos = [self.saturation_cbo, self.vc_cbo, self.ia_cbo, self.rtimpl_cbo]
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
@@ -886,7 +886,6 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         s.setValue("ga_soil_layer_name", self.soil_cbo.currentText())
         s.setValue("ga_soil_XKSAT", self.xksat_cbo.currentIndex())
         s.setValue("ga_soil_rtimps", self.rtimps_cbo.currentIndex())
-        s.setValue("ga_soil_eff_imp", self.eff_cbo.currentIndex())
         s.setValue("ga_soil_depth", self.soil_depth_cbo.currentIndex())
 
         s.setValue("ga_land_layer_name", self.land_cbo.currentText())
@@ -905,9 +904,6 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             val = int(-1 if s.value("ga_soil_rtimps") is None else s.value("ga_soil_rtimps"))
             self.rtimps_cbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("ga_soil_eff_imp") is None else s.value("ga_soil_eff_imp"))
-            self.eff_cbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("ga_soil_depth") is None else s.value("ga_soil_depth"))
             self.soil_depth_cbo.setCurrentIndex(val)

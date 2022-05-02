@@ -28,7 +28,6 @@ class InfiltrationCalculator(object):
         # Soil fields
         self.xksat_fld = None
         self.rtimps_fld = None
-        self.eff_fld = None
         self.soil_depth_fld = None
 
         # Land use fields
@@ -54,7 +53,6 @@ class InfiltrationCalculator(object):
         vcCheck,
         xksat_fld="XKSAT",
         rtimps_fld="field_4",
-        eff_fld="field_5",
         soil_depth_fld="soil_depth",
         saturation_fld="field_6",
         vc_fld="field_5",
@@ -68,7 +66,6 @@ class InfiltrationCalculator(object):
         # Soil fields
         self.xksat_fld = xksat_fld
         self.rtimps_fld = rtimps_fld
-        self.eff_fld = eff_fld
         self.soil_depth_fld = soil_depth_fld
 
         # Land use fields
@@ -109,7 +106,6 @@ class InfiltrationCalculator(object):
                     None,
                     self.xksat_fld,
                     self.rtimps_fld,
-                    self.eff_fld,
                     self.soil_depth_fld,
                 )
             except Exception as e:
@@ -123,14 +119,13 @@ class InfiltrationCalculator(object):
             for gid, values in soil_values:
                 try:
                     xksat_parts = [(row[0], row[-1]) for row in values]
-                    imp_parts = [(row[1] * 0.01, row[2] * 0.01, row[-1]) for row in values]
+                    imp_parts = [(row[1] * 0.01, row[-1]) for row in values]
                     avg_soil_depth = sum(row[3] * row[-1] for row in values)
                     avg_xksat = green_ampt.calculate_xksat(xksat_parts)
 
                     #                     avg_xksat = green_ampt.calculate_xksat(xksat_parts)
                     psif = green_ampt.calculate_psif(avg_xksat)
                     rtimp_n = green_ampt.calculate_rtimp_n(imp_parts)
-                    eff = green_ampt.calculate_eff(imp_parts)
                     if rtimp_n > 1.0:
                         rtimp_n = 1.0
 
@@ -142,7 +137,6 @@ class InfiltrationCalculator(object):
                         "rtimpn": rtimp_n,
                         "rtimpf": rtimp_n,
                         "soil_depth": avg_soil_depth,
-                        "eff": eff,
                     }
                 except Exception as e:
                     self.uc.show_error(
@@ -165,7 +159,6 @@ class InfiltrationCalculator(object):
                     params = grid_params[gid]
                     avg_xksat = params["hydc"]
                     rtimp_n = params["rtimpf"]
-                    eff = params["eff"]
 
                     vc_parts = [(row[1], row[-1]) for row in values]
                     ia_parts = [(row[2], row[-1]) for row in values]
@@ -183,7 +176,7 @@ class InfiltrationCalculator(object):
 
                     rtimpl = green_ampt.calculate_rtimp_l(rtimp_parts)
                     # perform summary rtimp calc = RTIMPl + EFF/100 * RTIMPn per FCDMC eq 4.6
-                    rtimp = rtimpl + eff * rtimp_n
+                    rtimp = max(rtimpl, rtimp_n)
                     if rtimp > 1.0:
                         rtimp = 1.0
 
@@ -214,7 +207,6 @@ class InfiltrationCalculator(object):
                         str(grid_params[gid]["soilParts"]),
                         str(grid_params[gid]["soilhydc"]),
                         str(grid_params[gid]["rtimpn"]),
-                        str(grid_params[gid]["eff"]),
                         str(grid_params[gid]["soil_depth"]),
                         str(grid_params[gid]["luParts"]),
                         str(round(grid_params[gid]["hydc"] / grid_params[gid]["soilhydc"], 5)),
@@ -234,7 +226,6 @@ class InfiltrationCalculator(object):
                                 "NumSoilPartsInGrid",
                                 "SoilXKSAT",
                                 "SoilRTIMP",
-                                "RTIMP_EFF",
                                 "InfilDepth",
                                 "NumLUPartsInGrid",
                                 "VCAdjustment",
@@ -392,22 +383,12 @@ class GreenAmpt(object):
     def calculate_rtimp_n(parts, globalRockOutCrop=0.2):
         # calculated naturall occuring RTIMP without consideration of the effective impervious area
         # rtimp_gen_n = (area * (float(rtimps) * float(eff)) for rtimps, eff, area in parts)
-        rtimp_gen_n = [area * (float(rtimps)) for rtimps, eff, area in parts]
-        areaTotal = sum(area for rtimps, eff, area in parts)
+        rtimp_gen_n = [area * (float(rtimps)) for rtimps, area in parts]
+        areaTotal = sum(area for rtimps, area in parts)
         if areaTotal < 1.0:
             rtimp_gen_n.append((1.0 - areaTotal) * globalRockOutCrop)
         rtimp_n = sum(rtimp_gen_n)
         return rtimp_n
-
-    @staticmethod
-    def calculate_eff(parts, globalEff=1.0):
-        # calculate the area weightint of the effective rock cover, per FCDMC guidance
-        eff_calc = [area * (float(eff)) for rtimps, eff, area in parts]
-        areaTotal = sum(area for rtimps, eff, area in parts)
-        if areaTotal < 1.0:
-            eff_calc.append((1.0 - areaTotal) * globalEff)
-        eff_calc = sum(eff_calc)
-        return eff_calc
 
     @staticmethod
     def calculate_rtimp_l(parts, globalRTIMPL=0.2):
