@@ -186,25 +186,33 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         s = QSettings()
         last_dir = s.value("FLO-2D/lastHDF", "")
-        hdf_file, __ = QFileDialog.getSaveFileName(
-            None, "Export Rainfall to HDF file", directory=last_dir, filter="*.hdf5"
-        )
-        if not hdf_file:
+        # hdf_file, __ = QFileDialog.getSaveFileName(
+        #     None, "Export Rainfall to HDF file", directory=last_dir, filter="*.hdf5"
+        # )        
+        hdf_dir = QFileDialog.getExistingDirectory(
+            None, "Select directory to export RAINCELL.HDF5 binary file", last_dir)
+        if not hdf_dir:
             return
+        hdf_file = hdf_dir + "/RAINCELL.HDF5"
         s.setValue("FLO-2D/lastHDF", os.path.dirname(hdf_file))
+        # s.setValue("FLO-2D/lastHDF", hdf_file)
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
             header = self.gutils.execute(qry_header).fetchone()
-            rainintime, irinters, timestamp = header
-            header_data = [rainintime, irinters, timestamp]
-            qry_data = "SELECT iraindum FROM raincell_data ORDER BY rrgrid, time_interval;"
-            data = self.gutils.execute(qry_data).fetchall()
-            data = [data[i : i + irinters] for i in range(0, len(data), irinters)]
-            hdf_processor = HDFProcessor(hdf_file)
-            hdf_processor.export_rainfall_to_binary_hdf5(header_data, data)
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("Exporting Rainfall Data finished!")
+            if header:
+                rainintime, irinters, timestamp = header
+                header_data = [rainintime, irinters, timestamp]
+                qry_data = "SELECT iraindum FROM raincell_data ORDER BY rrgrid, time_interval;"
+                data = self.gutils.execute(qry_data).fetchall()
+                data = [data[i : i + irinters] for i in range(0, len(data), irinters)]
+                hdf_processor = HDFProcessor(hdf_file)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, data)
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("Exporting Rainfall Data finished!")
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files.")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
