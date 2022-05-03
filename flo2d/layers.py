@@ -256,7 +256,7 @@ class Layers(object):
                 (
                     "user_effective_impervious_area",
                     {
-                        "name": "Effective impervious Areas",
+                        "name": "Effective Impervious Areas",
                         "sgroup": "User Layers",
                         "styles": ["user_effective_impervious_area.qml"],
                         "attrs_edit_widgets": {},
