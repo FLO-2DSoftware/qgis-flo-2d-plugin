@@ -20,7 +20,7 @@ from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..utils import m_fdata
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import poly2grid
+from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
 
 uiDialog, qtBaseClass = load_ui("infil_editor")
@@ -38,6 +38,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.grid_lyr = None
         self.infil_lyr = None
+        self.eff_lyr = None
         self.schema_green = None
         self.schema_scs = None
         self.schema_horton = None
@@ -121,6 +122,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
             self.infil_lyr = self.lyrs.data["user_infiltration"]["qlyr"]
+            self.eff_lyr = self.lyrs.data["user_effective_impervious_area"]["qlyr"]
             self.schema_green = self.lyrs.data["infil_areas_green"]["qlyr"]
             self.schema_scs = self.lyrs.data["infil_areas_scs"]["qlyr"]
             self.schema_horton = self.lyrs.data["infil_areas_horton"]["qlyr"]
@@ -518,7 +520,23 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vcCheck, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
+
             if grid_params:
+
+                # apply effective impervious area layer
+                eff_values = poly2poly_geos(
+                    self.grid_lyr,
+                    self.eff_lyr,
+                    None,
+                    "eff"
+                )
+                try:
+                    for gid, values in eff_values:
+                        fact = 1-sum((1-row[0]*0.01)*row[-1] for row in values)
+                        grid_params[gid]["rtimpf"] *= fact
+                except Exception:
+                    pass
+
                 self.gutils.clear_tables("infil_areas_green", "infil_cells_green")
                 qry_areas = """INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
                 qry_cells = """INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);"""
