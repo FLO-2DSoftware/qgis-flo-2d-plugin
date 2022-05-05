@@ -2873,6 +2873,24 @@ CREATE TRIGGER "default_infiltration_name"
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
+CREATE TABLE "user_effective_impervious_area" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "eff" REAL DEFAULT 100
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_effective_impervious_area', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_effective_impervious_area', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_effective_impervious_area', 'geom');
+
+CREATE TRIGGER "default_effective_impervious_area_name"
+    AFTER INSERT ON "user_effective_impervious_area"
+    BEGIN
+        UPDATE "user_effective_impervious_area"
+        SET name = ('Effective impervious area ' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
+
 -- RAINCELL
 CREATE TABLE "raincell" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

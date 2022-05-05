@@ -254,6 +254,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_effective_impervious_area",
+                    {
+                        "name": "Effective Impervious Areas",
+                        "sgroup": "User Layers",
+                        "styles": ["user_effective_impervious_area.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),
+                (
                     "user_swmm_conduits",
                     {
                         "name": "Storm Drain Conduits",
