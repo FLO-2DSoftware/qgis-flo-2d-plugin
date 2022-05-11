@@ -1121,7 +1121,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                # Sediment Transport:
+                # Sediment Transport areas (with polygon geometry (square)):
                 (
                     "sed_supply_areas",
                     {
@@ -1166,21 +1166,22 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                # Other sediment transport tables:
                 (
                     "sed",
                     {
-                        "name": "Sediment Parameters",
+                        "name": "Sediment General Parameters",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
                     },
-                ),
+                ),               
                 (
                     "sed_groups",
                     {
-                        "name": "Sediment Groups",
+                        "name": "Sediment Size Fraction Groups",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1191,7 +1192,7 @@ class Layers(object):
                 (
                     "sed_group_frac_data",
                     {
-                        "name": "Sediment Groups Data",
+                        "name": "Sediment Size Fraction Groups Data",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
@@ -1202,25 +1203,36 @@ class Layers(object):
                 (
                     "sed_group_cells",
                     {
-                        "name": "Group Cells",
+                        "name": "Sediment Size Fraction Group Cells",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
                     },
-                ),
+                ),       
                 (
                     "sed_supply_cells",
                     {
-                        "name": "Supply Cells",
+                        "name": "Supply Rating Curve Nodes",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
                     },
-                ),
+                ),                
+                (
+                    "sed_supply_frac_data",
+                    {
+                        "name": "Supply Rating Curve Data",
+                        "sgroup": "Sediment Transport Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": True,
+                    },
+                ),                                
                 (
                     "sed_rigid_cells",
                     {

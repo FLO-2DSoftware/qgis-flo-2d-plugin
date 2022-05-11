@@ -2252,15 +2252,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line9 = "N  {0}  {1}\n"
             line10 = "G  {0}  {1}\n"
 
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
+
             m_data = self.execute(sed_m_sql).fetchone()
             ce_data = self.execute(sed_ce_sql).fetchone()
-            if m_data is None and ce_data is None:
+            
+            if ISED == "0" and MUD == "0":
                 return False
-            else:
-                pass
+            
+            # if m_data is None and ce_data is None:
+            #     return False
+            # else:
+            #     pass
             sed = os.path.join(outdir, "SED.DAT")
             with open(sed, "w") as s:
-                if m_data is not None:
+                if MUD == "1" and m_data is not None:
                     s.write(line1.format(*m_data))
                     e_data = None
                 else:
@@ -2288,10 +2295,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     s.write(line8.format(gid, *row[2:]))
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         s.write(line9.format(*nrow))
-                for aid, group_fid in self.execute(areas_g_sql):
-                    gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
-                    s.write(line10.format(gid, group_fid))
-
+                          
+                areas_g = self.execute(areas_g_sql)
+                if areas_g:
+                    for aid, group_fid in areas_g:
+                        gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
+                        s.write(line10.format(gid, group_fid))
+                        
+                # for aid, group_fid in self.execute(areas_g_sql):
+                #     gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
+                #     s.write(line10.format(gid, group_fid))
             return True
 
         except Exception as e:
