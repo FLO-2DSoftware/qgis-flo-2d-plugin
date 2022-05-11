@@ -273,7 +273,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 for wall_feat in wall_features:
 
                     item = wall_feat[self.crest_elevation_FieldCbo.currentText()]
-                    elev = float(item) if item and item != "" else 0.0
+                    elev = float(item) if item and item != "" else None
 
                     item = wall_feat[self.name_FieldCbo.currentText()]
                     name = str(item) if item and item != "" else str(int(wall_feat["fid"]))
@@ -283,7 +283,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     except:
                         item = 0.0
                     item = wall_feat[self.correction_FieldCbo.currentText()]
-                    correction = float(item) if item and item != "" else 0.0
+                    correction = float(item) if item and item != "" else None
 
                     # Set failure:
                     try:
@@ -350,9 +350,11 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
                     levee_feat.setGeometry(new_geom)
 
-                    levee_feat.setAttribute("elev", elev)
+                    if elev is not None:
+                        levee_feat.setAttribute("elev", elev)
                     levee_feat.setAttribute("name", name)
-                    levee_feat.setAttribute("correction", correction)
+                    if elev is not None:
+                        levee_feat.setAttribute("correction", correction)
 
                     # Failure Data:
                     if self.failure_groupBox.isChecked():
