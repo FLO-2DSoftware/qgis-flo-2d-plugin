@@ -2088,6 +2088,8 @@ CREATE TABLE "mud_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud_cells', 'aspatial');
 
+-- SED 
+
 CREATE TABLE "sed" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "isedeqg" INTEGER, -- ISEDEQG, transport equation number used in sediment routing for overland flow
@@ -2115,7 +2117,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_groups', 'aspatia
 
 CREATE TABLE "sed_group_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "group_fid" INTEGER -- sediment group fid for area (from sed_groups table)
+    "group_fid" INTEGER DEFAULT 1 -- sediment group fid for area (from sed_groups table)
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -2191,7 +2193,40 @@ CREATE TABLE "sed_supply_frac_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
+-----------------------------
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_insert', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_insert"
+    AFTER INSERT ON "sed_group_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_areas_insert') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "sed_group_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "sed_group_cells" (area_fid, grid_fid)
+            SELECT NEW.fid, g.fid FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+    
+    
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_update', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_update"
+    AFTER UPDATE ON "sed_group_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_areas_update') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "sed_group_cells" WHERE area_fid = OLD."fid";
+        INSERT INTO "sed_group_cells" (area_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_delete"
+    AFTER DELETE ON "sed_group_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_areas_delete')
+    BEGIN
+        DELETE FROM "sed_group_cells" WHERE area_fid = OLD."fid";
+    END;    
+
 -- USERS Layers
+
 CREATE TABLE "user_fpxsec" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "iflo" INTEGER DEFAULT 1, -- IFLO, general direction that the flow is expected to cross the floodplain cross section

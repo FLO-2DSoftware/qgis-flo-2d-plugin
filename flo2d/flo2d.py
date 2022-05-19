@@ -770,6 +770,7 @@ class Flo2D(object):
         n_not_found = 0
 
         for call in calls:
+            
             dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
                 if self.f2g.parser.dat_files[dat] is None:
@@ -801,7 +802,12 @@ class Flo2D(object):
 
             try:
                 start_time = time.time()
+                
+                # if call == "import_sed":
+                #     self.gutils.disable_geom_triggers()                
                 method = getattr(self.f2g, call)
+                # self.gutils.enable_geom_triggers()
+                
                 if method(*args):
                     if call.startswith("export"):
                         self.files_used += dat + "\n"
@@ -816,7 +822,8 @@ class Flo2D(object):
                         pass
 
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
-
+            
+            
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())

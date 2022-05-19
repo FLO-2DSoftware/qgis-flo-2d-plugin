@@ -2295,12 +2295,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     s.write(line8.format(gid, *row[2:]))
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         s.write(line9.format(*nrow))
-                          
+
                 areas_g = self.execute(areas_g_sql)
                 if areas_g:
                     for aid, group_fid in areas_g:
-                        gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
-                        s.write(line10.format(gid, group_fid))
+                        gids = self.execute(cells_g_sql, (aid,)).fetchall()
+                        if gids:
+                            for g in gids:
+                                s.write(line10.format(g[0], group_fid))
+
+
+                          
+                # areas_g = self.execute(areas_g_sql)
+                # if areas_g:
+                #     for aid, group_fid in areas_g:
+                #         gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
+                #         s.write(line10.format(gid, group_fid))
                         
                 # for aid, group_fid in self.execute(areas_g_sql):
                 #     gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
