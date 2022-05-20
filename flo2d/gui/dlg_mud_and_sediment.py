@@ -9,7 +9,7 @@
 
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QApplication
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QApplication, QInputDialog
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -27,7 +27,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.gutils = None
         
         self.equations = ["Zeller and Fullerton", "Yang", "Engelund and Hansen", "Ackers and White", "Laursen",
-                          "Tofaletti, MPM-Woo", "MPM-Smart", "Karim-Kennedy", "Parker-Klingeman-McLean", "Van-Rijn" ]
+                          "Tofaletti", "MPM-Woo", "MPM-Smart", "Karim-Kennedy", "Parker-Klingeman-McLean", "Van-Rijn" ]
         
         # Icons:
       
@@ -60,24 +60,17 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rating_curve_tblw.setColumnWidth(2, 80)
         self.sed_rating_curve_tblw.setColumnWidth(3, 80)
         
-        self.sed_size_fraction_tblw.setColumnHidden(3,True)
-        self.sed_rating_curve_tblw.setColumnHidden(4,True)
-        # self.sed_size_fraction_grp.setStyleSheet("border: 2px solid Red")
-        
-        # Connections:
-        
-        # self.save_changes_sed_btn.clicked.connect(self.delete_rigit_bed_cell)        
-        # self.create_polygon_sed_btn.clicked.connect(self.create_polygon_sed)
-        # self.save_changes_sed_btn.clicked.connect(self.save_sed_lyrs_edits)
-        # self.revert_changes_sed_btn.clicked.connect(self.cancel_sed_lyrs_edits)
-        # self.delete_sed_btn.clicked.connect(self.delete_sed)
-        
+        self.sed_size_fraction_tblw.setColumnHidden(3,False)
+        self.sed_rating_curve_tblw.setColumnHidden(4,True) 
+
         # Radio buttons connections:
         self.mud_debris_transport_radio.clicked.connect(self.show_mud)
         self.sediment_transport_radio.clicked.connect(self.show_sediment)
         self.none_transport_radio.clicked.connect(self.show_none)
         
         # Size Fractions connections:
+        self.sed_size_fraction_grp.toggled.connect(self.sed_size_fraction_grp_checked)
+        
         self.sed_size_fraction_tblw.cellClicked.connect(self.sed_size_fraction_tblw_clicked) 
         self.sed_size_fraction_dp_tblw.cellChanged.connect(self.sed_size_fraction_dp_tblw_cellchanged) 
         self.sed_size_grid_tblw.cellChanged.connect(self.sed_size_grid_tblw_cellchanged) 
@@ -88,8 +81,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         
         self.sed_delete_size_fraction_btn.clicked.connect(self.sed_delete_size_fraction_btn_clicked)
         self.sed_delete_size_fraction_dp_btn.clicked.connect(self.sed_delete_size_fraction_dp_btn_clicked)
+        self.sed_delete_size_fraction_cell_btn.clicked.connect(self.sed_delete_size_fraction_cell_btn_clicked)
         
         # Supply Rating Curve connections:
+        self.sed_rating_curve_grp.toggled.connect(self.sed_rating_curve_grp_checked)
         self.sed_rating_curve_tblw.cellClicked.connect(self.sed_rating_curve_tblw_clicked)
         self.sed_rating_curve_dp_tblw.cellChanged.connect(self.sed_rating_curve_dp_tblw_cellchanged) 
         
@@ -97,15 +92,57 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_add_rating_curve_dp_btn.clicked.connect(self.sed_add_rating_curve_dp_btn_clicked)
         
         self.sed_delete_rating_curve_btn.clicked.connect(self.sed_delete_rating_curve_btn_clicked)
-        
         self.sed_delete_rating_curve_dp_btn.clicked.connect(self.sed_delete_rating_curve_dp_btn_clicked)
+
+        # Rigid bed connections:
         self.add_rigid_bed_btn.clicked.connect(self.sed_add_rigid_bed_cell_btn_clicked)
         self.delete_rigid_bed_btn.clicked.connect(self.sed_delete_rigid_bed_btn_clicked)
-        
-        self.sed_rigid_nodes_tblw.cellChanged.connect(self.sed_rigid_nodes_tblw_cellchanged) 
-        self.sed_delete_size_fraction_cell_btn.clicked.connect(self.sed_delete_size_fraction_cell_btn_clicked)
+        self.sed_rigid_nodes_tblw.cellChanged.connect(self.sed_rigid_nodes_tblw_cellchanged)
         
         self.setup_connection()
+        
+        # Create temporary tables:
+        # Fractions:
+        self.gutils.execute("DROP TABLE IF EXISTS sed_group_frac_data_tmp")        
+        self.gutils.execute('''CREATE TABLE sed_group_frac_data_tmp 
+                                ( fid INTEGER PRIMARY KEY NOT NULL,     
+                                  dist_fid INTEGER,
+                                  sediam REAL,
+                                  sedpercent REAL
+                                )
+                            '''
+                            ) 
+        self.gutils.execute("INSERT INTO sed_group_frac_data_tmp SELECT fid, dist_fid, sediam, sedpercent FROM sed_group_frac_data")         
+        
+        # Grid elements (two tables are used):
+        self.gutils.execute("DROP TABLE IF EXISTS sed_group_areas_tmp")         
+        self.gutils.execute("CREATE TABLE sed_group_areas_tmp ( fid INTEGER PRIMARY KEY NOT NULL, group_fid INTEGER)")
+        self.gutils.execute("INSERT INTO sed_group_areas_tmp SELECT fid, group_fid FROM sed_group_areas")
+        
+        
+        self.gutils.execute("DROP TABLE IF EXISTS sed_group_cells_tmp")        
+        self.gutils.execute('''CREATE TABLE sed_group_cells_tmp 
+                                ( fid INTEGER PRIMARY KEY NOT NULL,     
+                                  grid_fid INTEGER,
+                                  area_fid INTEGER
+                                )
+                            '''
+                            ) 
+        self.gutils.execute("INSERT INTO sed_group_cells_tmp SELECT fid, grid_fid, area_fid FROM sed_group_cells")        
+        
+        # Supply rating Curves::
+        self.gutils.execute("DROP TABLE IF EXISTS sed_supply_frac_data_tmp")        
+        self.gutils.execute('''CREATE TABLE sed_supply_frac_data_tmp 
+                                ( fid INTEGER PRIMARY KEY NOT NULL,     
+                                  dist_fid INTEGER,
+                                  ssediam REAL,
+                                  ssedpercent REAL
+                                )
+                            '''
+                            ) 
+        self.gutils.execute("INSERT INTO sed_supply_frac_data_tmp SELECT fid, dist_fid, ssediam, ssedpercent FROM sed_supply_frac_data")         
+                
+        
         self.populate_mud_and_sediment()
 
     def setup_connection(self):
@@ -178,12 +215,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                         combo.setCurrentIndex(sf[0]-1)
                                               
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, sf[1]) 
-                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                           
+                        item.setData(Qt.DisplayRole, sf[1])                           
                         self.sed_size_fraction_tblw.setItem(row_number, 1, item)
                         item = QTableWidgetItem()
-                        item.setData(Qt.DisplayRole, sf[2]) 
-                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                             
+                        item.setData(Qt.DisplayRole, sf[2])                              
                         self.sed_size_fraction_tblw.setItem(row_number, 2, item) 
                         item = QTableWidgetItem()
                         item.setData(Qt.DisplayRole, sf[3])                         
@@ -239,18 +274,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 
                 # Load Rigid cells:
                 self.load_rigid_nodes_table()
-                # self.sed_rigid_nodes_tblw.setRowCount()
-                # rigid_cells = self.gutils.execute("SELECT grid_fid, area_fid FROM sed_rigid_cells ORDER BY grid_fid").fetchall()
-                # if rigid_cells:
-                #     for rc in rigid_cells:
-                #
-                #         item = QTableWidgetItem()
-                #         item.setData(Qt.DisplayRole, rc[1])                         
-                #         self.sed_rating_curve_tblw.setItem(row_number, 1, item)
-                        
-                    # for index in range(self.sed_rigid_nodes_listw.count()):
-                    #     item = self.sed_rigid_nodes_listw.item(index)
-                    #     item.setFlags(item.flags() | Qt.ItemIsEditable)
         
             # Unblock signals:
             self.sed_size_fraction_tblw.blockSignals(False);
@@ -263,8 +286,16 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                      
         else:
             self.none_transport_radio.click()
-            
+ 
+    def sed_size_fraction_grp_checked(self):
+        self.sed_size_fraction_grp.setChecked(self.sed_size_fraction_grp.isChecked())
+
+    def sed_rating_curve_grp_checked(self):
+        self.sed_rating_curve_grp.setChecked(self.sed_rating_curve_grp.isChecked())
+                            
     def show_mud(self):
+        self.gutils.set_cont_par("MUD", 1)
+        self.gutils.set_cont_par("ISED", 0)
         self.mud_sediment_tabWidget.setTabEnabled(1, False) 
         self.mud_sediment_tabWidget.setTabEnabled(2, False) 
         self.mud_sediment_tabWidget.setTabEnabled(0, True)  
@@ -273,6 +304,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         
         
     def show_sediment(self):
+        self.gutils.set_cont_par("MUD", 0)
+        self.gutils.set_cont_par("ISED", 1)
         self.mud_sediment_tabWidget.setTabEnabled(0, False) 
         self.mud_sediment_tabWidget.setTabEnabled(2, False)
         self.mud_sediment_tabWidget.setTabEnabled(1, True) 
@@ -280,8 +313,9 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.mud_sediment_tabWidget.setCurrentIndex(1) 
         
     def show_none(self):
+        self.gutils.set_cont_par("MUD", 0)
+        self.gutils.set_cont_par("ISED", 0)        
         self.mud_sediment_tabWidget.setTabEnabled(0, False) 
-        # self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")   
         self.mud_sediment_tabWidget.setTabEnabled(1, False) 
         self.mud_sediment_tabWidget.setTabEnabled(2, True) 
         self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")     
@@ -295,41 +329,51 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             
             first = "WARNING 281021.0528: Sediment transport data not saved!\n\n" 
             wrng = first
-            # Check cell numbers in size fractions nodes table:
-            for row in range(0, self.sed_size_grid_tblw.rowCount()):
-                item_cell = self.sed_size_grid_tblw.item(row, 0)
-                if not item_cell:
-                    wrng += "* Assign cell number to all size fraction grid elements.\n\n"
-                    break
-                elif item_cell.text() == "":
-                    wrng += "* Assign cell number to all size fraction grid elements.\n\n" 
-                    break                
-            
-            # Check cell numbers in supply rating curve table:
-            for row in range(0, self.sed_rating_curve_tblw.rowCount()):
-                item_cell = self.sed_rating_curve_tblw.item(row, 0)
-                if not item_cell:
-                    wrng += "* Assign cell number to all supply rating curves.\n\n"
-                    break
-                elif item_cell.text() == "":
-                    wrng += "* Assign cell number to all supply rating curves.\n\n"
-                    break
-
-            # Check cell numbers in bed rigid nodes:
-            for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
-                item_cell = self.sed_rigid_nodes_tblw.item(row, 0)
-                if not item_cell: 
-                    wrng +=  "* Assign a valid cell number to all rigid bed cells.\n\n" 
-                    break             
-                elif item_cell.text() == "":
-                    wrng += "* Assign a valid cell number to all rigid bed cells.\n\n"
-                    break
-            
-            if wrng == first:  
-                return True   
-            else:
-                self.uc.show_warn(wrng) 
-                return False    
+            if self.sed_size_fraction_grp.isChecked() and self.sed_size_fraction_tblw.rowCount() == 0:
+                    self.uc.show_warn("WARNING 060522.0957: checkbox of Size Fractions is selected but\n" +
+                        "no size fraction parameters (Equation, Bed Thick, and Concentration) are given !") 
+                    return False
+                
+            if self.sed_rating_curve_grp.isChecked() and self.sed_rating_curve_tblw.rowCount() == 0:
+                    self.uc.show_warn("WARNING 170522.0805: checkbox of Supply Rating Curves is selected but\n" +
+                        "no Rating Curve parameters (Node, Chan/FP, Coeff., and Exp.) are given !")     
+                    return False
+            else:    
+                # Check cell numbers in size fractions nodes table:
+                for row in range(0, self.sed_size_grid_tblw.rowCount()):
+                    item_cell = self.sed_size_grid_tblw.item(row, 0)
+                    if not item_cell:
+                        wrng += "* Assign cell number to all size fraction grid elements.\n\n"
+                        break
+                    elif item_cell.text() == "":
+                        wrng += "* Assign cell number to all size fraction grid elements.\n\n" 
+                        break                
+                
+                # Check cell numbers in supply rating curve table:
+                for row in range(0, self.sed_rating_curve_tblw.rowCount()):
+                    item_cell = self.sed_rating_curve_tblw.item(row, 0)
+                    if not item_cell:
+                        wrng += "* Assign cell number to all supply rating curves.\n\n"
+                        break
+                    elif item_cell.text() == "":
+                        wrng += "* Assign cell number to all supply rating curves.\n\n"
+                        break
+    
+                # Check cell numbers in bed rigid nodes:
+                for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
+                    item_cell = self.sed_rigid_nodes_tblw.item(row, 0)
+                    if not item_cell: 
+                        wrng +=  "* Assign a valid cell number to all rigid bed cells.\n\n" 
+                        break             
+                    elif item_cell.text() == "":
+                        wrng += "* Assign a valid cell number to all rigid bed cells.\n\n"
+                        break
+                
+                if wrng == first:  
+                    return True   
+                else:
+                    self.uc.show_warn(wrng) 
+                    return False    
             
         elif self.none_transport_radio.isChecked():
             return True                 
@@ -337,8 +381,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
     def save_mud_sediment(self): 
         try:
             if self.mud_debris_transport_radio.isChecked():
-                self.gutils.set_cont_par("ISED", 0)
                 self.gutils.set_cont_par("MUD", 1) 
+                self.gutils.set_cont_par("ISED", 0)
                 self.gutils.set_cont_par("IDEBRV", self.mud_basin_grp.isChecked()) 
                 
                 mud_sql  = "INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (?,?,?,?,?,?);" 
@@ -362,9 +406,11 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.gutils.execute("INSERT INTO mud_cells (grid_fid, area_fid) VALUES (?,?);", (grid_fid, area_fid))             
                 
             elif self.sediment_transport_radio.isChecked():              
-                    
+                self.gutils.disable_geom_triggers()
+ 
                 self.gutils.set_cont_par("MUD", 0) 
                 self.gutils.set_cont_par("ISED", 1) 
+                cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
                 
                 # Save global sediment transport parameters:
                 isedeqg = self.sed_transp_eq_cbo.currentIndex() + 1
@@ -392,13 +438,38 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     bed_thick = self.sed_size_fraction_tblw.item(row, 1).text()
                     conc = self.sed_size_fraction_tblw.item(row, 2).text()
                     dist_fid  = self.sed_size_fraction_tblw.item(row, 3).text()
-                    sed_sql += [(isedeqi, bed_thick , conc, dist_fid)]
+                    sed_sql += [(isedeqi, bed_thick , conc, row + 1)]
                 self.gutils.clear_tables("sed_groups")
-                self.gutils.batch_execute(sed_sql)            
-    
+                self.gutils.batch_execute(sed_sql)  
+                
+                # Size Fractions data::
+                self.gutils.clear_tables("sed_group_frac_data") 
+                self.gutils.execute("INSERT INTO sed_group_frac_data SELECT fid, dist_fid, sediam, sedpercent FROM sed_group_frac_data_tmp") 
+            
+                # Size Fraction Cells (2 tables involved):  
+                areas_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
+                cells_sql = ["""INSERT INTO sed_group_cells (grid_fid, area_fid) VALUES""", 2]
+                
+                areas = self.gutils.execute("SELECT * FROM sed_group_areas_tmp").fetchall()
+                cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()
+                self.gutils.clear_tables("sed_group_areas", "sed_group_cells")
+                if cells:
+                    if len(cells) > 0:
+                        for i in range(0, len(cells)):
+                            grid_number, area_fid = cells[i][1], cells[i][2]
+                            centroid = self.gutils.single_centroid(grid_number)
+                            geom = self.gutils.build_square(centroid, cell_size * 0.95)
+                            group_fid = self.gutils.execute("SELECT group_fid FROM sed_group_areas_tmp WHERE fid = ?;", (area_fid,)).fetchone()
+                            # group_fid = areas[area_fid - 1][1]
+                            areas_sql += [(geom, group_fid[0] )]
+                            cells_sql += [(cells[i][1], i + 1)]
+                            
+                        self.gutils.batch_execute(areas_sql,cells_sql) 
+                areas = self.gutils.execute("SELECT * FROM sed_group_areas").fetchall()
+                cells = self.gutils.execute("SELECT * FROM sed_group_cells").fetchall()                  
+
                 # Save Supply Rating Curve table:
                 sr_curve_sql  = ["""INSERT INTO sed_supply_areas (isedcfp, ased, bsed, dist_fid) VALUES""", 4]
-                self.gutils.clear_tables("sed_supply_cells")
                 for row in range(0, self.sed_rating_curve_tblw.rowCount()):
                     node = self.sed_rating_curve_tblw.item(row, 0).text()
                     self.gutils.execute("INSERT INTO sed_supply_cells (grid_fid, area_fid) VALUES (?, ?);", (node, str(row + 1)))
@@ -409,7 +480,12 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     sr_curve_sql += [(isedcfp , ased, bsed, dist_fid)]
                 self.gutils.clear_tables("sed_supply_areas")
                 self.gutils.batch_execute(sr_curve_sql) 
-    
+                
+                # Supply Rating Curve data::
+                self.gutils.clear_tables("sed_supply_frac_data") 
+                self.gutils.execute("INSERT INTO sed_supply_frac_data SELECT fid, dist_fid, ssediam, ssedpercent FROM sed_supply_frac_data_tmp") 
+                
+                self.gutils.enable_geom_triggers()   
             else:
                 self.gutils.set_cont_par("MUD", 0) 
                 self.gutils.set_cont_par("ISED", 0)              
@@ -423,7 +499,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.lyrs.enter_edit_mode("sed_rigid_areas")
 
     def sed_size_fraction_tblw_clicked(self, row):
-        
         # Find sediment size distribution (diameter, %):
         self.load_size_fraction_routing_fractions_table(row)       
         # Find cells with this distribution:
@@ -435,12 +510,12 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         if current_row != -1:
             current_dist_fid = self.sed_size_fraction_tblw.item(current_row, 3).text()
             if int(current_dist_fid) > 0:
-                insert_rt_sql  = ["""INSERT INTO sed_group_frac_data (sediam, sedpercent, dist_fid) VALUES""", 3]
+                insert_rt_sql  = ["""INSERT INTO sed_group_frac_data_tmp (sediam, sedpercent, dist_fid) VALUES""", 3]
                 for rw in range(0, self.sed_size_fraction_dp_tblw.rowCount()):
                     sediam = self.sed_size_fraction_dp_tblw.item(rw, 0).text()
                     sedpercent = self.sed_size_fraction_dp_tblw.item(rw, 1).text()
                     insert_rt_sql += [(sediam, sedpercent, current_dist_fid)]
-                self.gutils.execute("DELETE FROM sed_group_frac_data WHERE dist_fid = ?;", (current_dist_fid,))    
+                self.gutils.execute("DELETE FROM sed_group_frac_data_tmp WHERE dist_fid = ?;", (current_dist_fid,))    
                 self.gutils.batch_execute(insert_rt_sql) 
 
     def sed_rating_curve_dp_tblw_cellchanged(self, row, col):
@@ -449,46 +524,34 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         if current_row != -1:
             current_dist_fid = self.sed_rating_curve_tblw.item(current_row, 4).text()
             if int(current_dist_fid) > 0:
-                insert_rt_sql  = ["""INSERT INTO sed_supply_frac_data (ssediam, ssedpercent, dist_fid) VALUES""", 3]
+                insert_rt_sql  = ["""INSERT INTO sed_supply_frac_data_tmp (ssediam, ssedpercent, dist_fid) VALUES""", 3]
                 for rw in range(0, self.sed_rating_curve_dp_tblw.rowCount()):
                     ssediam = self.sed_rating_curve_dp_tblw.item(rw, 0).text()
                     ssedpercent = self.sed_rating_curve_dp_tblw.item(rw, 1).text()
                     insert_rt_sql += [(ssediam, ssedpercent, current_dist_fid)]
-                self.gutils.execute("DELETE FROM sed_supply_frac_data WHERE dist_fid = ?;", (current_dist_fid,))    
+                self.gutils.execute("DELETE FROM sed_supply_frac_data_tmp WHERE dist_fid = ?;", (current_dist_fid,))    
                 self.gutils.batch_execute(insert_rt_sql) 
                 
-    def sed_size_grid_tblw_cellchanged(self, row, col):
-        # Save Size Fractions cells:
-        
-        # Check cell numbers in size grid nodes:
-        # for row in range(0, self.sed_size_grid_tblw.rowCount()):
-        #     item_cell = self.sed_size_grid_tblw.item(row, 0)
-        #     if not item_cell:                
-        #         self.uc.show_info("Assign a valid cell number to all size fraction grid elements!") 
-        #         return  
-        #     elif item_cell.text() == "":                
-        #         self.uc.show_info("Assign a valid cell number to all size fraction grid elements!") 
-        #         return           
-
-        
+    def sed_size_grid_tblw_cellchanged(self, row, col):         
+   
         # Delete all features in 'sed_group_cells' and 'sed_group_areas' related to current row of Size Fraction table:   
-        sed_group_areas_fid_qry = "SELECT fid FROM sed_group_areas WHERE group_fid = ?;"
+        sed_group_areas_fid_qry = "SELECT fid FROM sed_group_areas_tmp WHERE group_fid = ?;"
         current_row = self.sed_size_fraction_tblw.currentRow() + 1
         sed_group_areas_fid = self.gutils.execute(sed_group_areas_fid_qry, (current_row,)).fetchall()
         if sed_group_areas_fid:
             for fid in sed_group_areas_fid:
-                self.gutils.execute("DELETE FROM sed_group_cells WHERE area_fid = ?;", (fid[0],))
-            self.gutils.execute("DELETE FROM sed_group_areas WHERE group_fid = ?;", (current_row,))    
+                self.gutils.execute("DELETE FROM sed_group_cells_tmp WHERE area_fid = ?;", (fid[0],))
+            self.gutils.execute("DELETE FROM sed_group_areas_tmp WHERE group_fid = ?;", (current_row,))    
 
         # Insert rows from Grid Element widget table into 'sed_group_cells' and 'sed_group_areas': 
-        insert_sed_group_areas_sql  = ["""INSERT INTO sed_group_areas (group_fid) VALUES""", 1]  
+        insert_sed_group_areas_sql  = ["""INSERT INTO sed_group_areas_tmp (group_fid) VALUES""", 1]  
         for dummy in range(0, self.sed_size_grid_tblw.rowCount()): 
             insert_sed_group_areas_sql +=  [(str(current_row))] 
         self.gutils.batch_execute(insert_sed_group_areas_sql)    
 
         sed_group_areas_fid = self.gutils.execute(sed_group_areas_fid_qry, (current_row,)).fetchall()
         if sed_group_areas_fid:
-            insert_sed_group_cells_sql  = ["""INSERT INTO sed_group_cells (grid_fid, area_fid) VALUES""", 2]  
+            insert_sed_group_cells_sql  = ["""INSERT INTO sed_group_cells_tmp (grid_fid, area_fid) VALUES""", 2]  
             for i,fid in enumerate(sed_group_areas_fid):
                 cell_item = self.sed_size_grid_tblw.item(i,0)
                 if cell_item:
@@ -503,9 +566,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             if not item_cell:                
                 self.uc.show_info("Assign a valid cell number to all rigid bed cells!") 
                 return  
-            elif item_cell.text() == "":                
-                self.uc.show_info("Assign a valid cell number to all rigid bed cells!") 
-                return        
+            elif item_cell.text() == "": 
+                return              
+                # self.uc.show_info("Assign a valid cell number to all rigid bed cells!") 
+                # return        
 
         # Save Supply rigid nodes table:
         rigid_insert_sql  = ["""INSERT INTO sed_rigid_cells (grid_fid, area_fid) VALUES""", 2]
@@ -597,7 +661,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
 
 
     def load_rc_routing_fractions(self, dist_fid):
-        routing_data_qry = "SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid =? ORDER BY ssediam;"
+        routing_data_qry = "SELECT ssediam, ssedpercent FROM sed_supply_frac_data_tmp WHERE dist_fid =? ORDER BY ssediam;"
         routing_fractions = self.gutils.execute(routing_data_qry, (dist_fid,)).fetchall()
         if routing_fractions:
             for row_number, ss_dp in enumerate(routing_fractions):
@@ -610,7 +674,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.sed_rating_curve_dp_tblw.setItem(row_number, 1, item)        
     
     def load_size_routing_fractions_table(self, dist_fid):
-        routing_data_qry = "SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid =?  ORDER BY sediam;"
+        routing_data_qry = "SELECT sediam, sedpercent FROM sed_group_frac_data_tmp WHERE dist_fid =?  ORDER BY sediam;"
         routing_fractions = self.gutils.execute(routing_data_qry, (dist_fid,)).fetchall()
         if routing_fractions:
             self.sed_size_fraction_dp_tblw.setRowCount(0)
@@ -624,11 +688,14 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.sed_size_fraction_dp_tblw.setItem(row_number, 1, item)
 
     def load_size_fraction_cells_table(self, row):
+        
+        dist_fid  = self.sed_size_fraction_tblw.item(row, 3).text()
+
         self.sed_size_grid_tblw.blockSignals(True) 
         self.sed_size_grid_tblw.setRowCount(0)  
-        sed_group_cells_qry = """SELECT grid_fid FROM sed_group_cells WHERE area_fid IN 
-                            (SELECT fid FROM sed_group_areas WHERE group_fid = ?) ORDER BY grid_fid"""
-        sed_group_cells = self.gutils.execute(sed_group_cells_qry, (row+1,)).fetchall()
+        sed_group_cells_qry = """SELECT grid_fid FROM sed_group_cells_tmp WHERE area_fid IN 
+                            (SELECT fid FROM sed_group_areas_tmp WHERE group_fid = ?) ORDER BY grid_fid"""
+        sed_group_cells = self.gutils.execute(sed_group_cells_qry, (dist_fid,)).fetchall()
         if sed_group_cells:
             for row_number, cell in enumerate(sed_group_cells):
                 self.sed_size_grid_tblw.insertRow(row_number)
@@ -641,8 +708,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rigid_nodes_tblw.blockSignals(True) 
         self.sed_rigid_nodes_tblw.setRowCount(0)  
         rigid_cells_qry = """SELECT grid_fid, area_fid FROM sed_rigid_cells ORDER BY grid_fid"""
-        # sed_group_cells_qry = """SELECT grid_fid FROM sed_group_cells WHERE area_fid IN 
-        #                     (SELECT fid FROM sed_group_areas WHERE group_fid = ?) ORDER BY grid_fid"""
+
         sed_rigid_cells = self.gutils.execute(rigid_cells_qry).fetchall()
         if sed_rigid_cells:
             for row_number, cell in enumerate(sed_rigid_cells):
@@ -654,16 +720,32 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
 
         
     def sed_add_size_fraction_cell_btn_clicked(self):
-        n_rows = self.sed_size_grid_tblw.rowCount()
-        self.sed_size_grid_tblw.insertRow(n_rows)
-        self.sed_size_grid_tblw.selectRow(n_rows)
-        self.sed_size_grid_tblw.setFocus()
+        while True:
+            grid, ok = QInputDialog.getInt(None, "Add Grid Number", "Grid element number:", min = 1, step = 0)
+            if not ok or not grid:
+                return        
+            else:
+                n_rows = self.sed_size_grid_tblw.rowCount()
+                self.sed_size_grid_tblw.insertRow(n_rows)
+                itm = QTableWidgetItem()
+                itm.setData(Qt.EditRole, grid)
+                self.sed_size_grid_tblw.setItem(n_rows, 0, itm)            
+                self.sed_size_grid_tblw.selectRow(n_rows)
+                self.sed_size_grid_tblw.setFocus()
 
     def sed_add_rigid_bed_cell_btn_clicked(self):
-        n_rows = self.sed_rigid_nodes_tblw.rowCount()
-        self.sed_rigid_nodes_tblw.insertRow(n_rows)
-        self.sed_rigid_nodes_tblw.selectRow(n_rows)
-        self.sed_rigid_nodes_tblw.setFocus()        
+        while True:
+            grid, ok = QInputDialog.getInt(None, "Add Rigid Ned Node", "Cell element number:", min = 1, step = 0)
+            if not ok or not grid:
+                return 
+            else:         
+                n_rows = self.sed_rigid_nodes_tblw.rowCount()
+                self.sed_rigid_nodes_tblw.insertRow(n_rows)
+                itm = QTableWidgetItem()
+                itm.setData(Qt.EditRole, grid)
+                self.sed_rigid_nodes_tblw.setItem(n_rows, 0, itm)             
+                self.sed_rigid_nodes_tblw.selectRow(n_rows)
+                self.sed_rigid_nodes_tblw.setFocus()        
 
     def sed_add_size_fraction_dp_btn_clicked(self):
         self.sed_size_fraction_dp_tblw.blockSignals(True)
@@ -705,30 +787,82 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rating_curve_dp_tblw.selectRow(n_rows+1)
         self.sed_rating_curve_dp_tblw.setFocus()
  
-    def sed_delete_size_fraction_btn_clicked(self):  
-        self.sed_size_fraction_tblw.removeRow(self.sed_size_fraction_tblw.currentRow())  
-        
+    def sed_delete_size_fraction_btn_clicked(self):
+        if self.sed_size_fraction_tblw.rowCount() > 0:
+            row =  self.sed_size_fraction_tblw.currentRow()
+            dist_fid  = self.sed_size_fraction_tblw.item(row, 3).text()
+
+            group_data = self.gutils.execute("SELECT * FROM sed_group_frac_data_tmp").fetchall()     
+            group_cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()     
+            group_areas = self.gutils.execute("SELECT * FROM sed_group_areas_tmp").fetchall() 
+            
+            self.sed_size_grid_tblw.blockSignals(True) 
+            group_areas_fids = self.gutils.execute("SELECT fid FROM sed_group_areas_tmp WHERE group_fid = ?;", (dist_fid,)).fetchall()
+            if group_areas_fids:
+                for fid in group_areas_fids:
+                    self.gutils.execute("DELETE FROM sed_group_cells_tmp WHERE area_fid  = ?;", (fid[0],))                    
+            self.gutils.execute("DELETE FROM sed_group_areas_tmp WHERE group_fid = ?;", (dist_fid,))
+            
+            
+            self.gutils.execute("UPDATE sed_group_areas_tmp SET group_fid = group_fid - 1 WHERE group_fid > ?;", (int(dist_fid),)) 
+ 
+            self.gutils.execute("DELETE FROM sed_group_frac_data_tmp WHERE dist_fid = ?;", (dist_fid,))
+            self.gutils.execute("UPDATE sed_group_frac_data_tmp SET dist_fid = dist_fid - 1 WHERE dist_fid > ?;", (int(dist_fid),))   
+                      
+            groups= self.gutils.execute("SELECT * FROM sed_groups").fetchall()   
+            group_data = self.gutils.execute("SELECT * FROM sed_group_frac_data_tmp").fetchall()     
+            group_cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()     
+            group_areas = self.gutils.execute("SELECT * FROM sed_group_areas_tmp").fetchall()   
+            
+
+            self.sed_size_grid_tblw.blockSignals(False)  
+              
+            self.sed_size_fraction_tblw.removeRow(row) 
+            if self.sed_size_fraction_tblw.rowCount() > 0:
+                for i in range(0, self.sed_size_fraction_tblw.rowCount()):
+                    self.sed_size_fraction_tblw.item(i, 3).setText(str(i+1))        
+                self.sed_size_fraction_tblw_clicked(0)
+                self.sed_size_fraction_tblw.selectRow(0)
+            else:
+                self.sed_size_fraction_dp_tblw.setRowCount(0)
+                self.sed_size_grid_tblw.setRowCount(0)
+                    
+            self.sed_size_fraction_tblw.setFocus()   
+                 
     def sed_delete_size_fraction_dp_btn_clicked(self):
         self.sed_size_fraction_dp_tblw.removeRow(self.sed_size_fraction_dp_tblw.currentRow()) 
         self.sed_size_fraction_dp_tblw_cellchanged(0,0)       
-
+        self.sed_size_fraction_dp_tblw.selectRow(0)
+        self.sed_size_fraction_dp_tblw.setFocus()        
         
     def sed_delete_rating_curve_dp_btn_clicked(self):
         self.sed_rating_curve_dp_tblw.removeRow(self.sed_rating_curve_dp_tblw.currentRow()) 
         self.sed_rating_curve_dp_tblw_cellchanged(0,0)
+        self.sed_rating_curve_dp_tblw.selectRow(0)
+        self.sed_rating_curve_dp_tblw.setFocus()         
 
-    def sed_delete_rating_curve_btn_clicked(self):  
-        self.sed_rating_curve_tblw.removeRow(self.sed_rating_curve_tblw.currentRow()) 
+    def sed_delete_rating_curve_btn_clicked(self):   
+        if self.sed_rating_curve_tblw.rowCount() > 0:
+            row =  self.sed_rating_curve_tblw.currentRow()
+            dist_fid  = self.sed_rating_curve_tblw.item(row, 4).text()
+            self.gutils.execute("DELETE FROM sed_supply_frac_data_tmp WHERE dist_fid = ?;", (dist_fid,)) 
+        
+            self.sed_rating_curve_tblw.removeRow(row) 
+            self.sed_rating_curve_tblw_clicked(0) 
+            self.sed_rating_curve_tblw.selectRow(0)
+            self.sed_rating_curve_tblw.setFocus()            
 
     def sed_delete_size_fraction_cell_btn_clicked(self):
         self.sed_size_grid_tblw.removeRow(self.sed_size_grid_tblw.currentRow()) 
-        # self.sed_size_grid_tblw.blockSignals(True)
         self.sed_size_grid_tblw_cellchanged(0,0)
-        # self.sed_size_grid_tblw.blockSignals(False)
-        
+        self.sed_size_grid_tblw.selectRow(0)
+        self.sed_size_grid_tblw.setFocus()  
+              
     def sed_delete_rigid_bed_btn_clicked(self):
         self.sed_rigid_nodes_tblw.removeRow(self.sed_rigid_nodes_tblw.currentRow()) 
         self.sed_rigid_nodes_tblw_cellchanged(0,0)
+        self.sed_rigid_nodes_tblw.selectRow(0)
+        self.sed_rigid_nodes_tblw.setFocus()        
                    
     def save_sed_lyrs_edits(self):
         """

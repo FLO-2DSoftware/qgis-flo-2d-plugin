@@ -938,6 +938,9 @@ def calculate_spatial_variable_from_lines(grid, lines, request=None):
         features = grid.getFeatures() if request is None else grid.getFeatures(request)
         for feat in features:  # for each grid feature
             geom = feat.geometry()  # cell square (a polygon)
+            cellCentroid=geom.centroid()
+            if cellCentroid is None or not request.filterRect().contains(cellCentroid.asPoint()):
+                continue
             gelev = feat['elevation']
             fids = index.intersects(geom.boundingBox())  # c
             for fid in fids:

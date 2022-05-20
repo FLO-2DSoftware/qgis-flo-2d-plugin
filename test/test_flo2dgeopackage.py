@@ -151,7 +151,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(c, 15)
 
     @unittest.skip("Test need to be updated due to logic changes.")
-    def test_import_mult.skip(self):
+    def test_import_mult(self):
         self.f2g.import_mult()
         areas = self.f2g.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
         self.assertEqual(areas, 17)

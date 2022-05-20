@@ -198,7 +198,56 @@
     </DiagramCategory>
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" linePlacementFlags="10" placement="0" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
-  <annotationform></annotationform>
+  <fieldConfiguration>
+    <field name="fid">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="group_fid">
+      <editWidget type="ValueMap">
+        <config>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="1" name="1" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="2" name="2" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="3" name="3" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="4" name="4" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="5" name="5" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="6" name="6" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="7" name="7" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="8" name="8" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="9" name="9" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="10" name="10" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+  </fieldConfiguration>  
+<annotationform></annotationform>
   <excludeAttributesWMS/>
   <excludeAttributesWFS/>
   <attributeactions/>
