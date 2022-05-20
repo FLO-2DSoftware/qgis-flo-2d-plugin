@@ -17,21 +17,30 @@ Walls that have the potential for failure due to collapse should also be
 identified. The shapefile must have polyline geometry and should have
 the following attributes:
 
--  Name – feature name (string) (required)
+-  **Name** – feature name (string).  The Name field is required by the dialog box but the values
+   can be null.
 
--  Elevation – crest elevation (float) (required)
+-  **Elevation** – crest elevation (float).  For walls, this is the top elevation of the wall.  If NULL, the Wall Height
+   calculation will be applied when the walls are converted to FLO-2D Levees.  The Wall Elevation calculation takes the
+   grid element elevation + correction field as the final wall elevation.
 
--  Correction – elevation correction (float) (NULL ok)
+-  **Correction** – elevation correction (float) (required) (NULL ok)
+   Null correction is OK.  The correction field is ignored if it is NULL.  If Elevation is NULL and a positive value is
+   applied in this field, it will be used to calculate a wall elevation.  The calculation is applied based on the grid
+   element elevation + correction field value.
 
--  Fail elevation or fail depth (float) (NULL ok)
+-  **Fail elevation or fail depth** (float) (NULL ok)
+   If a fail elevation is used, it will be applied uniformly to each levee cell along the wall.
+   If a depth is used instead of an elevation, the plugin will calculate the fail elevation by adding the fail depth to
+   the highest grid elevation across the wall.
 
--  Duration (float) (NULL ok)
+-  **Duration** (float) (NULL ok)
 
--  Maximum fail width (float) (NULL ok)
+-  **Maximum fail width** (float) (NULL ok)
 
--  Vertical fail rate (float) (NULL ok)
+-  **Vertical fail rate** (float) (NULL ok)
 
--  Horizontal fail rate (float) (NULL ok)
+-  **Horizontal fail rate** (float) (NULL ok)
 
 .. image:: ../img/Walls/walls1.png
 

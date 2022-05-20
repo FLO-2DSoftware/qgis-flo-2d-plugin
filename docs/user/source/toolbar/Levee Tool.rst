@@ -8,6 +8,17 @@ uses data from 5 sources:
 
 .. image:: ../img/Levee-Tool/leveetool2.png
 
+The levee crest elevation sources have a hierarchy.
+
+ - Elevation polygon crest will supersede the levee line elevation crest.
+ - If elevation points are applied to a line, they will supersede the levee line elevation.
+ - The elevation polygon will supersede the elevation points.
+
+The following image shows that if points are applied to a levee line, the line elevation is ignored and the point
+elevation is applied until the line crosses a polygon.  The polygon elevation is used in that case.
+
+.. image:: ../img/Levee-Tool/leveetool2a.png
+
 The method to create levees or dams from each source is outlined below.
 
 Create Levee Lines
@@ -64,7 +75,7 @@ Create a Levee Polygon
 
 .. image:: ../img/Levee-Tool/leveetool11.png
 
-.. image:: ../img/Levee-Tool/leveetool002.gif
+.. image:: ../img/Levee-Tool/levee002.gif
 
 Create Levee Points
 -------------------
@@ -176,11 +187,11 @@ Levee from Import External 3D Levee Lines
 1. The levee data comes from an external point text file with a \*.xyz
    extension:
 
--  X coordinate of the center of the levee crest
+ - X coordinate of the center of the levee crest
 
--  Y coordinate of the center of the levee crest
+ - Y coordinate of the center of the levee crest
 
--  Z crest elevation of the levee
+ - Z crest elevation of the levee
 
 2. The levee points should be in order from one side of the levee to the other.
    The direction or starting point is not important so long as the levee points

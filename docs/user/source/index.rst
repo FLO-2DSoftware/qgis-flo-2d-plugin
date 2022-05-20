@@ -37,7 +37,7 @@ Table of Contents
    /toolbar/Run FLO-2D
    /toolbar/Import Geo Package
    /toolbar/Import Data Files
-   /toolbar/Imported Selected Component Files
+   /toolbar/Import Selected Component Files
    /toolbar/Export Project
    /toolbar/Import RAS Channel
    /toolbar/Control Variables
@@ -49,7 +49,10 @@ Table of Contents
    /toolbar/Levee Tool
    /toolbar/Levee Tool Walls
    /toolbar/Hazus Tool
+   /toolbar/Tailings Dam Tool
+   /toolbar/Mud and Sediment Transport Tool
    /toolbar/Debug Tool
+   /toolbar/Help
 
 .. toctree::
    :maxdepth: 1
