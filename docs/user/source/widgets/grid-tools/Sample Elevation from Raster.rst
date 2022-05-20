@@ -57,9 +57,9 @@ Troubleshooting
 ---------------
 
 1. If the project or the data is on a server, this function may fail.
-   Ensure all data is on the workstation.
+   Ensure all data is on the computer drive.
 
-2. If the raster has the wrong CRS or does not have complete coverage,
+2. If the raster has the wrong Coordinate Reference System (CRS) or does not have complete coverage,
    the following message will be displayed. Save the raster with the
    correct CRS and make sure it has complete coverage.
 
@@ -72,8 +72,8 @@ Troubleshooting
 
 4. If the grid layer elevation data does not seem accurate, review the
    origin vs layer extent. If the layer extent is offset from the
-   origin, the raster realign will be inaccurate. Re-create the raster
-   so that the origin and extent are not offset.
+   origin, the raster realign will be inaccurate. Try using the Align to
+   elevation raster when creating a grid.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster6.png
 

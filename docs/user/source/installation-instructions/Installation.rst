@@ -5,7 +5,7 @@ QGIS Installation – Stand Alone
 -------------------------------
 
 Download the QGIS Installer.
-`www.flo-2d.com/qgis-plugin <http://www.flo-2d.com/qgis-plugin>`__
+`FLO-2D Set-up <https://documentation.flo-2d.com/Intro/Set-up.html>`__
 
 Run the installer and follow the installation instructions.
 Use the default for all options.
@@ -14,7 +14,7 @@ Installing FLO-2D Plugin
 ------------------------
 
 1. Download the
-   Plugin zipped file `www.flo-2d.com/qgis-plugin-flo-2d <http://www.flo-2d.com/qgis-plugin-flo-2d>`__
+   Plugin zipped file `FLO-2D Set-up <https://documentation.flo-2d.com/Intro/Set-up.html>`__
 
 2. Open Manage
    and install Plugins

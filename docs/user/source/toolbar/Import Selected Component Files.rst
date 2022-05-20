@@ -25,6 +25,3 @@ Import Selected Component Files
    FLO-2D Components to load into the project.
 
 .. image:: ../img/Imported-Selected-Component-Files/import003.png
-
-
-.. |import004| image:: ../img/Imported-Selected-Component-Files/import004.png
