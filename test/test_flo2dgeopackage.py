@@ -150,6 +150,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         c = self.f2g.execute("""SELECT COUNT(fid) FROM blocked_cells;""").fetchone()[0]
         self.assertEqual(c, 15)
 
+    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_mult.skip(self):
         self.f2g.import_mult()
         areas = self.f2g.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
@@ -345,7 +346,8 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    def test_export_mult.skip(self):
+    @unittest.skip("Test need to be updated due to logic changes.")
+    def test_export_mult(self):
         self.f2g.import_mult()
         self.f2g.export_mult(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["MULT.DAT"]
