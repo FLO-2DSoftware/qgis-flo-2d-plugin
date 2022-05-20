@@ -345,7 +345,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    def test_export_mult(self):
+    def test_export_mult.skip(self):
         self.f2g.import_mult()
         self.f2g.export_mult(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["MULT.DAT"]
