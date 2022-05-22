@@ -91,46 +91,92 @@ Channel Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt011.png
 
-Green-Ampt Infiltration Calculator
--------------------------------------
+Green-Ampt Infiltration Calculator FCDMC Method
+------------------------------------------------
 
-To use the Green-Ampt calculator, the user must prepare soil and landuse shapefiles.
-The soils data is acquired from the United States Department of Agriculture Web Soil Survey (USDA, 2017).
-The data is organized by soil group.
-The land use data can be acquired from various sources but is generally available from the United States Geological Survey Land Cover website (USGS,
-2017).
-The land use data can account for vegetative cover and impervious cover.
+To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare soil and
+landuse and eff shapefiles.  The data is provided by the District.  See the FCDMC hydrology manual for a more detailed
+discussion on modeling with the Green and Ampt method.
 
-1. Prepare the data into  
-   shapefiles using QGIS or import them into QGIS.
+1. Prepare the Soil data shapefile as seen in the following figure.
 
-.. image:: ../../img/Infiltration-Editor/Infilt012.png
+ - ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
+ - XKSAT is the hydraulic conductivity for the soil group. in/hr
+ - Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
 
-2. The infiltration  
-   polygons need the attributes listed below.
+.. image:: ../../img/Infiltration-Editor/infil001.png
 
-.. image:: ../../img/Infiltration-Editor/Infilt013.png
+2. Prepare the Landuse data shapefile as seen in the following figure.
 
-3. To run the calculator,  
+ - Saturation is the initial saturation condition.  wet, dry, or normal
+ - Initial Abstraction storage depth that must be reached before infiltration begins.  in or mm
+ - Impervious area is the percentage of impermeability for a given polygon.  0 to 100
+ - Vegetative cover is not used by FCDMC.
+
+.. image:: ../../img/Infiltration-Editor/infil002.png
+
+3. Prepare the EFF data shapefile as seen in the following figure.
+
+ - Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
+   applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
+   multiply the RTIMP grid * the EFF to determine a final RTIMP.  0 to 100
+
+.. image:: ../../img/Infiltration-Editor/infil003.png
+
+4. To run the calculator,
    click the Calculate Green-Ampt button.
 
 .. image:: ../../img/Infiltration-Editor/Infilt014.png
 
-4. Fill the form and  
+5. Fill the form and
    click OK.
-
-5. The Plugin will
-   assign spatially variable infiltration data to each cell using an intersection and weighted average.
 
 .. image:: ../../img/Infiltration-Editor/Infilt015.png
 
-6. When the infiltration  
+
+6. The calculator uses the following
+   methods for the FCDMC Green-Ampt Infiltration.
+
+
+    - **Hydraulic Conductivity** (XKSAT) is calculated by an intersection between the soil polygons and the grid with
+      a log weighted average calculation.
+
+    .. image:: ../../img/Infiltration-Editor/infil004.png
+
+
+    - **Capillary suction** (PSIF) is derived from a lookup table in the FCDMC Hydrology Manual Composite Values of PSIF
+      and DTHETA as a Function of XKSAT.
+
+    .. image:: ../../img/Infiltration-Editor/infil005.png
+
+
+    - **Soil moisture deficit** (DTHETA) is the volumetric measurement of the soil moisture storage capacity.  It is also
+      derived from a FCDMC table for Composite Values of PSIF and DTHETA as a function of XKSAT.  The following lookup
+      lookup tables are applied based on the Initial Saturation Condition.
+
+    .. image:: ../../img/Infiltration-Editor/infil007.png
+
+
+    - **Initial abstraction** (IA) is the intersection between the Landuse polygons and the grid with an area weighted
+      average calculation.
+
+    .. image:: ../../img/Infiltration-Editor/infil008.png
+
+
+    - **Impervious** - (RTIMP) is the percent impervious for the grid element.  This calculation
+      is taken from an area weighted average of the RTIMPmax and the grid element.
+
+        - RTIMPmax - Intersection(Landuse, Soil) makes a temporary polygon layer of the maximum of the parts from RTIMPlu and RockOut.
+        - RTIMPgrid - Intersection(RTIMPmax, Grid) calculates the area weighted average RTIMP for each grid element.
+        - RTIMPfinal - Intersection(EFFareas, Grid) samples the EFFareas * 0.01 * RTIMPgrid for any grid centroid within an EFF polygon.
+
+7. When the infiltration
    calculator is finished, the following message will appear.
 
 .. image:: ../../img/Infiltration-Editor/Infilt016.png
 
-7. The INFIL.DAT file  
-   looks like this.
+8. The INFIL.DAT file
+   looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.
 
 .. image:: ../../img/Infiltration-Editor/Infilt017.png
 
@@ -210,6 +256,30 @@ Create a polygon to represent an area of infiltration.
 
 .. image:: ../../img/Infiltration-Editor/Infilt025.png
 
+Curve Number Generator
+-----------------------
+
+1. If necessary,
+   add the Plugin Curve Number Generator.
+
+.. image:: ../../img/Infiltration-Editor/Module311.png
+
+
+2. Open the Curve
+   Number Generator.
+
+.. image:: ../../img/Infiltration-Editor/Module312.png
+
+
+3. Set the Area Boundary
+   to the Grid.  Check the boxes and click OK.
+
+.. image:: ../../img/Infiltration-Editor/Module313.png
+
+
+4. Click Close when
+   process is finished.  The Curve Number Polygon Layer can be used in the next section.
+
 SCS Calculator Single Shapefile
 -------------------------------
 
@@ -241,8 +311,8 @@ This option will add spatially variable infiltration data to the grid from a sha
 
 .. image:: ../../img/Infiltration-Editor/Infilt029.png
 
-SCS Calculator Single Shapefile Multiple Fields
------------------------------------------------
+SCS Calculator Single Shapefile Multiple Fields Pima County Method
+-------------------------------------------------------------------
 
 Use this option for Pima County to calculate SCS curve number data from a single layer with multiple fields.
 This is a vector layer with polygon features and field to define the landuse/soil group, vegetation coverage and impervious space.
@@ -334,7 +404,7 @@ Troubleshooting
 1. Infiltration calculators all use intersection tools.
    This can cause problems if the shapefiles are not set up correctly.
    Specifically, land use and soils shapefiles that may have been converted from raster data.
-   If errors persist, use “fix geometry”, “simplify”, and “dissolve” on the source shapefiles.
+   If errors persist, try “fix geometry”, “simplify”, and “dissolve” on the source shapefiles.
    These tools are part of the QGIS Processing Toolbox.
    They can also be corrected in ArcGIS if the datasets are very large.
 
@@ -342,4 +412,5 @@ Troubleshooting
    If a grid element is outside the coverage of the infiltration, QGIS will show an error.
 
 3. Make sure the shapefile fields have a correctly defined number type.
-   The shapefiles that are supplied with the QGIS Lessons will help define the Field Variable Format such as string, whole number or decimal number.
+   The shapefiles that are supplied with the QGIS Lessons will help define the Field Variable Format such as string,
+   whole number or decimal number.

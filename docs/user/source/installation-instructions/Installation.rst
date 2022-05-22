@@ -24,7 +24,8 @@ Installing FLO-2D Plugin
 
 4. The Plugin
    is installed here:
-   "C:\Users\user\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\flo2d"__
+
+   C:\\Users\\user\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\default\\python\\plugins\\flo2d
 
 5. In QGIS,
    from the main menu, select *Plugins* >> *Manage and Install Plugins*

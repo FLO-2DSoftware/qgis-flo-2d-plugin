@@ -17,30 +17,37 @@ Walls that have the potential for failure due to collapse should also be
 identified. The shapefile must have polyline geometry and should have
 the following attributes:
 
--  **Name** – feature name (string).  The Name field is required by the dialog box but the values
+-  **Name** – Feature name (string).  The Name field is required by the dialog box but the values
    can be null.
 
--  **Elevation** – crest elevation (float).  For walls, this is the top elevation of the wall.  If NULL, the Wall Height
-   calculation will be applied when the walls are converted to FLO-2D Levees.  The Wall Elevation calculation takes the
-   grid element elevation + correction field as the final wall elevation.
+-  **Elevation** – crest elevation (ft or m) (real).  For walls, this is the top elevation of the wall.  This field is
+   required but can be NULL.  If NULL, the wall elevation is calculated from the correction field.  This happens when
+   the walls are converted to FLO-2D Levees using the Levee Tool.  The Wall Elevation calculation takes the max grid
+   element elevation + correction field as the final wall elevation.
 
--  **Correction** – elevation correction (float) (required) (NULL ok)
+-  **Correction** – elevation correction (ft or m) (real)
    Null correction is OK.  The correction field is ignored if it is NULL.  If Elevation is NULL and a positive value is
-   applied in this field, it will be used to calculate a wall elevation.  The calculation is applied based on the grid
-   element elevation + correction field value.
+   applied in this field, it will be used to calculate a wall elevation.  The calculation is applied based on the max grid
+   element elevation + correction field value.  If the elevation field is not null, the correction field is added to the
+   crest elevation.
 
--  **Fail elevation or fail depth** (float) (NULL ok)
+-  **Fail elevation or fail depth** (ft or m) (real) (NULL ok)
    If a fail elevation is used, it will be applied uniformly to each levee cell along the wall.
    If a depth is used instead of an elevation, the plugin will calculate the fail elevation by adding the fail depth to
    the highest grid elevation across the wall.
 
--  **Duration** (float) (NULL ok)
+-  **Duration** (hrs) (real) (NULL ok)
+   If Duration is not NULL or 0, the duration (hr) that the levee will fail after the FAILEVEL is exceeded
+   by the calculated water surface elevation.
 
--  **Maximum fail width** (float) (NULL ok)
+-  **Maximum fail width** (ft or m) (real) (NULL ok)
+   The maximum width to which the levee will fail.  This variable is not used for walls and should be 0.
 
--  **Vertical fail rate** (float) (NULL ok)
+-  **Vertical fail rate** (ft/hr or m/hr) (real) (NULL ok)
+   The rate of vertical levee or dam failure. Set 0 for wall collapse.
 
--  **Horizontal fail rate** (float) (NULL ok)
+-  **Horizontal fail rate** (ft/hr or m/hr) (real) (NULL ok)
+   The rate at which the levee breach widens. Set 0 for wall collapse.
 
 .. image:: ../img/Walls/walls1.png
 
@@ -54,7 +61,7 @@ Add Walls to Levee Lines
 ------------------------
 
 1. Move the
-   Walls shapefile to the top of the User Layers.
+   Walls shapefile to the top of the User Layers group.
 
 .. image:: ../img/Walls/walls2.png
  
