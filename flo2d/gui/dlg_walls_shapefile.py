@@ -287,11 +287,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     item = wall_feat[self.name_FieldCbo.currentText()]
                     name = str(item) if item and item != "" else str(int(wall_feat["fid"]))
 
-                    try:
-                        item = wall_feat[self.correction_FieldCbo.currentText()]
-                    except:
-                        item = 0.0
-
                     item = wall_feat[self.correction_FieldCbo.currentText()]
                     correction = float(item) if item and item != "" else None
 
@@ -301,7 +296,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     if elev is not None:
                         levee_feat.setAttribute("elev", elev)
                     levee_feat.setAttribute("name", name)
-                    if elev is not None:
+                    if correction is not None:
                         levee_feat.setAttribute("correction", correction)
 
                     # Set failure:
