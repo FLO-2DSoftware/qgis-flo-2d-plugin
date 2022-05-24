@@ -2,11 +2,13 @@ Levee Elevation Tool
 =====================
 
 .. image:: ../img/Buttons/Leveetool.png
+
  
 The Levee Elevation Tool will create levees, berms, walls and dams. It
 uses data from 5 sources:
 
 .. image:: ../img/Levee-Tool/leveetool2.png
+
 
 The levee crest elevation sources have a hierarchy.
 
@@ -18,6 +20,7 @@ The following image shows that if points are applied to a levee line, the line e
 elevation is applied until the line crosses a polygon.  The polygon elevation is used in that case.
 
 .. image:: ../img/Levee-Tool/leveetool2a.png
+
 
 The method to create levees or dams from each source is outlined below.
 
@@ -73,9 +76,12 @@ Create a Levee Polygon
 
 .. image:: ../img/Levee-Tool/leveetool10.png
 
+
 .. image:: ../img/Levee-Tool/leveetool11.png
 
+
 .. image:: ../img/Levee-Tool/levee002.gif
+
 
 Create Levee Points
 -------------------
@@ -115,6 +121,7 @@ Levee from Elevation Polygon
 
 .. image:: ../img/Buttons/Leveetool.png
 
+
 The polygon layer is also used to define a uniform elevation for a
 levee.
 
@@ -138,12 +145,15 @@ levee.
 
 .. image:: ../img/Levee-Tool/leveetool15.png
 
+
 .. image:: ../img/Levee-Tool/leveetool16.png
+
 
 Levee from Elevation Points within Search Radius
 ------------------------------------------------
 
 .. image:: ../img/Buttons/Leveetool.png
+
 
 1. Click the
    Levee Elevation Tool button.
@@ -168,6 +178,7 @@ Levee from Levee User Lines
 
 .. image:: ../img/Buttons/Leveetool.png
 
+
 1. Click the
    Levee Elevation Tool button.
 
@@ -179,10 +190,12 @@ Levee from Levee User Lines
 
 .. image:: ../img/Levee-Tool/leveetool18.png
 
+
 Levee from Import External 3D Levee Lines
 -----------------------------------------
 
 .. image:: ../img/Buttons/Leveetool.png
+
 
 1. The levee data comes from an external point text file with a \*.xyz
    extension:
@@ -200,10 +213,12 @@ Levee from Import External 3D Levee Lines
 
 .. image:: ../img/Levee-Tool/leveetool19.png
 
+
 3. Call the levee data from the Levee Elevation Tool by clicking the “…”
    button under Import external 3D lines.
 
 .. image:: ../img/Levee-Tool/leveetool20.png
+
 
 4. Once the data is
    identified, click the Import 3D levee lines button.

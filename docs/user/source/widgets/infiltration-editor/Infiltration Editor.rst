@@ -47,6 +47,7 @@ Create a polygon to represent an area of infiltration.
 
 .. image:: ../../img/Infiltration-Editor/Infilt005.png
 
+
 An alternate method to fill data to use the Attribute Table for the Infiltration User Layer.
 
 1. Right click  
@@ -54,10 +55,12 @@ An alternate method to fill data to use the Attribute Table for the Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt006.png
 
+
 2. Click the Edit Pencil and start editing the data.
    Save and close the window.
 
 .. image:: ../../img/Infiltration-Editor/Infilt007.png
+
 
 3. The data will  
    automatically update in the widget.
@@ -67,10 +70,12 @@ An alternate method to fill data to use the Attribute Table for the Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt008.png
 
+
 The infiltration polygons outline areas of cells that have similar infiltration characteristics.
 In the following image, the infiltration areas are different for urban, desert and desert drainage.
 
 .. image:: ../../img/Infiltration-Editor/Infilt009.png
+
 
 Channel Infiltration
 ---------------------
@@ -94,17 +99,18 @@ Channel Infiltration
 Green-Ampt Infiltration Calculator FCDMC Method
 ------------------------------------------------
 
-To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare soil and
-landuse and eff shapefiles.  The data is provided by the District.  See the FCDMC hydrology manual for a more detailed
+To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare soil,
+landuse, and eff shapefiles.  The data is provided by the District.  See the FCDMC hydrology manual for a more detailed
 discussion on modeling with the Green and Ampt method.
 
-1. Prepare the Soil data shapefile as seen in the following figure.
+1. Prepare the soil data shapefile as seen in the following figure.
 
  - ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
  - XKSAT is the hydraulic conductivity for the soil group. in/hr
  - Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
 
 .. image:: ../../img/Infiltration-Editor/infil001.png
+
 
 2. Prepare the Landuse data shapefile as seen in the following figure.
 
@@ -115,6 +121,7 @@ discussion on modeling with the Green and Ampt method.
 
 .. image:: ../../img/Infiltration-Editor/infil002.png
 
+
 3. Prepare the EFF data shapefile as seen in the following figure.
 
  - Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
@@ -123,10 +130,12 @@ discussion on modeling with the Green and Ampt method.
 
 .. image:: ../../img/Infiltration-Editor/infil003.png
 
+
 4. To run the calculator,
    click the Calculate Green-Ampt button.
 
 .. image:: ../../img/Infiltration-Editor/Infilt014.png
+
 
 5. Fill the form and
    click OK.
@@ -138,37 +147,44 @@ discussion on modeling with the Green and Ampt method.
    methods for the FCDMC Green-Ampt Infiltration.
 
 
-    - **Hydraulic Conductivity** (XKSAT) is calculated by an intersection between the soil polygons and the grid with
-      a log weighted average calculation.
+**Hydraulic Conductivity** (XKSAT) is calculated by an intersection between the soil polygons and the grid with
+a log weighted average calculation.
 
-    .. image:: ../../img/Infiltration-Editor/infil004.png
-
-
-    - **Capillary suction** (PSIF) is derived from a lookup table in the FCDMC Hydrology Manual Composite Values of PSIF
-      and DTHETA as a Function of XKSAT.
-
-    .. image:: ../../img/Infiltration-Editor/infil005.png
+.. image:: ../../img/Infiltration-Editor/infil004.png
 
 
-    - **Soil moisture deficit** (DTHETA) is the volumetric measurement of the soil moisture storage capacity.  It is also
-      derived from a FCDMC table for Composite Values of PSIF and DTHETA as a function of XKSAT.  The following lookup
-      lookup tables are applied based on the Initial Saturation Condition.
+**Capillary suction** (PSIF) is derived from a lookup table in the FCDMC Hydrology Manual Composite Values of PSIF
+and DTHETA as a Function of XKSAT.
 
-    .. image:: ../../img/Infiltration-Editor/infil007.png
-
-
-    - **Initial abstraction** (IA) is the intersection between the Landuse polygons and the grid with an area weighted
-      average calculation.
-
-    .. image:: ../../img/Infiltration-Editor/infil008.png
+.. image:: ../../img/Infiltration-Editor/infil005.png
 
 
-    - **Impervious** - (RTIMP) is the percent impervious for the grid element.  This calculation
-      is taken from an area weighted average of the RTIMPmax and the grid element.
+**Soil moisture deficit** (DTHETA) is the volumetric measurement of the soil moisture storage capacity.  It is also
+derived from a FCDMC table for Composite Values of PSIF and DTHETA as a function of XKSAT.  The following lookup
+lookup tables are applied based on the Initial Saturation Condition.
 
-        - RTIMPmax - Intersection(Landuse, Soil) makes a temporary polygon layer of the maximum of the parts from RTIMPlu and RockOut.
-        - RTIMPgrid - Intersection(RTIMPmax, Grid) calculates the area weighted average RTIMP for each grid element.
-        - RTIMPfinal - Intersection(EFFareas, Grid) samples the EFFareas * 0.01 * RTIMPgrid for any grid centroid within an EFF polygon.
+.. image:: ../../img/Infiltration-Editor/infil007.png
+
+
+**Initial abstraction** (IA) is the intersection between the Landuse polygons and the grid with an area weighted
+average calculation.
+
+.. image:: ../../img/Infiltration-Editor/infil008.png
+
+
+**Impervious** - (RTIMP) is the percent impervious for the grid element.  This calculation
+is taken from an area weighted average of the RTIMPmax and the grid element.
+
+**RTIMPmax** - Intersection(Landuse, Soil) makes a temporary polygon
+layer of the maximum of the parts from RTIMPlu and RockOut.
+
+**RTIMPgrid** - Intersection(RTIMPmax, Grid)
+calculates the area weighted average RTIMP for each grid element.
+
+.. image:: ../../img/Infiltration-Editor/infil009.png
+
+**RTIMPfinal** - Intersection(EFFareas, Grid)
+samples the EFFareas * 0.01 * RTIMPgrid for any grid centroid within an EFF polygon.
 
 7. When the infiltration
    calculator is finished, the following message will appear.

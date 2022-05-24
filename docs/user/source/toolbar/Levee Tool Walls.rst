@@ -20,16 +20,22 @@ the following attributes:
 -  **Name** – Feature name (string).  The Name field is required by the dialog box but the values
    can be null.
 
--  **Elevation** – crest elevation (ft or m) (real).  For walls, this is the top elevation of the wall.  This field is
-   required but can be NULL.  If NULL, the wall elevation is calculated from the correction field.  This happens when
-   the walls are converted to FLO-2D Levees using the Levee Tool.  The Wall Elevation calculation takes the max grid
-   element elevation + correction field as the final wall elevation.
+-  **Elevation** – Crest elevation (ft or m) (real).  For walls, this is the top elevation of the wall.  This field is
+   required but can be NULL.  If NULL, the wall elevation is calculated from the correction field and described in correction
+   as an elevation.
 
--  **Correction** – elevation correction (ft or m) (real)
-   Null correction is OK.  The correction field is ignored if it is NULL.  If Elevation is NULL and a positive value is
-   applied in this field, it will be used to calculate a wall elevation.  The calculation is applied based on the max grid
-   element elevation + correction field value.  If the elevation field is not null, the correction field is added to the
-   crest elevation.
+-  **Correction** – Elevation correction (ft or m) (real)
+   Null correction is OK.
+
+   - The correction field is ignored if it is NULL.  If Elevation is not NULL and Correction is
+     positive, it will be added to the elevation of the wall.
+
+   - If Elevation is not NULL and Correction is negative, it will be subtracted from the elevation of the wall.
+
+   - If Elevation is NULL and Correction is filled, the Correction  is used as a wall height and is applied to a wall
+     elevation calculation using the grid max grid element + the wall height.
+
+.. image:: ../img/Walls/walls1a.png
 
 -  **Fail elevation or fail depth** (ft or m) (real) (NULL ok)
    If a fail elevation is used, it will be applied uniformly to each levee cell along the wall.
@@ -50,6 +56,7 @@ the following attributes:
    The rate at which the levee breach widens. Set 0 for wall collapse.
 
 .. image:: ../img/Walls/walls1.png
+
 
 In the case of walls, the failure data is usually set to default = 0 because they collapse when
 the fail depth or fail elevation is achieved.  For walls, the only required failure data is the
