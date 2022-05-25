@@ -8,8 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from math import log, exp, log10
+from qgis.core import QgsGeometry, QgsSpatialIndex, QgsFeature, QgsField, QgsFields
 from qgis.PyQt.QtWidgets import QApplication
-from .grid_tools import poly2poly_geos, centroids2poly_geos
+from .grid_tools import poly2poly_geos_from_features, intersection_spatial_index, centroids2poly_geos, gridRegionGenerator
 from ..user_communication import UserCommunication
 from qgis.utils import iface
 from qgis.PyQt.QtCore import QSettings
@@ -17,13 +18,14 @@ import os
 
 
 class InfiltrationCalculator(object):
-    def __init__(self, grid_lyr, iface):
+    def __init__(self, grid_lyr, iface, gutils):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = grid_lyr
         self.soil_lyr = None
         self.land_lyr = None
         self.curve_lyr = None
         self.combined_lyr = None
+        self.gutils = gutils
 
         # Soil fields
         self.xksat_fld = None
@@ -99,98 +101,142 @@ class InfiltrationCalculator(object):
             grid_params = {}
             green_ampt = GreenAmpt()
 
-            try:
-                soil_values = poly2poly_geos(
-                    self.grid_lyr,
-                    self.soil_lyr,
-                    None,
-                    self.xksat_fld,
-                    self.rtimps_fld,
-                    self.soil_depth_fld,
-                )
-            except Exception as e:
-                self.uc.show_error(
-                    "ERROR 051218.2035: Green-Ampt infiltration failed\nwhile intersecting soil layer with grid."
-                    + "\n__________________________________________________",
-                    e,
-                )
-                return grid_params
+            for request in gridRegionGenerator(self.gutils, self.grid_lyr, showProgress=True):
 
-            for gid, values in soil_values:
+                soil_features, soil_index = intersection_spatial_index(self.soil_lyr, request)
+                land_features, land_index = intersection_spatial_index(self.land_lyr, request)
+
+                rtimp_features = {}
+                rtimp_index = QgsSpatialIndex()
+                rtimp_fields = QgsFields()
+                rtimp_fields.append(QgsField('rtimp'))
+
+                rtimp_fid = 0
+
+                for soil_feat, engine in soil_features.values():
+                    soil_rtimp = soil_feat[self.rtimps_fld]
+                    rtimp_geom = soil_feat.geometry()
+                    land_fids = land_index.intersects(rtimp_geom.boundingBox())
+                    for land_fid in land_fids:
+                        land_feat, land_engine = land_features[land_fid]
+                        land_rtimp = land_feat[self.rtimpl_fld]
+                        if land_rtimp < soil_rtimp:
+                            continue
+
+                        rtimp_geom = rtimp_geom.makeDifference(land_feat.geometry())
+
+                    if not rtimp_geom:
+                        continue
+
+                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
+                    rtimp_feat.setGeometry(rtimp_geom)
+                    rtimp_feat[0] = soil_rtimp
+                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
+                    rtimp_index.insertFeature(rtimp_feat)
+                    rtimp_fid = rtimp_fid + 1
+
+                for land_feat, engine in land_features.values():
+                    land_rtimp = land_feat[self.rtimpl_fld]
+                    rtimp_geom = land_feat.geometry()
+                    soil_fids = soil_index.intersects(rtimp_geom.boundingBox())
+                    for soil_fid in soil_fids:
+                        soil_feat, soil_engine = soil_features[soil_fid]
+                        soil_rtimp = soil_feat[self.rtimps_fld]
+                        if soil_rtimp < land_rtimp:
+                            continue
+
+                        rtimp_geom = rtimp_geom.makeDifference(soil_feat.geometry())
+
+                    if not rtimp_geom:
+                        continue
+
+                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
+                    rtimp_feat.setGeometry(rtimp_geom)
+                    rtimp_feat[0] = land_rtimp
+                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
+                    rtimp_index.insertFeature(rtimp_feat)
+                    rtimp_fid = rtimp_fid + 1
+
                 try:
-                    xksat_parts = [(row[0], row[-1]) for row in values]
-                    imp_parts = [(row[1] * 0.01, row[-1]) for row in values]
-                    avg_soil_depth = sum(row[3] * row[-1] for row in values)
-                    avg_xksat = green_ampt.calculate_xksat(xksat_parts)
 
-                    #                     avg_xksat = green_ampt.calculate_xksat(xksat_parts)
-                    psif = green_ampt.calculate_psif(avg_xksat)
-                    rtimp_n = green_ampt.calculate_rtimp_n(imp_parts)
-                    if rtimp_n > 1.0:
-                        rtimp_n = 1.0
-
-                    grid_params[gid] = {
-                        "soilParts": len(values),
-                        "soilhydc": avg_xksat,
-                        "hydc": avg_xksat,
-                        "soils": psif,
-                        "rtimpn": rtimp_n,
-                        "rtimpf": rtimp_n,
-                        "soil_depth": avg_soil_depth,
-                    }
+                    soil_values = poly2poly_geos_from_features(
+                        self.grid_lyr,
+                        soil_features,
+                        soil_index,
+                        request,
+                        self.xksat_fld,
+                        self.soil_depth_fld,
+                    )
                 except Exception as e:
                     self.uc.show_error(
-                        "ERROR 1401181951.2035: Green-Ampt infiltration failed"
-                        + "\nwhile intersecting soil layer with grid {}".format(gid)
+                        "ERROR 051218.2035: Green-Ampt infiltration failed\nwhile intersecting soil layer with grid."
                         + "\n__________________________________________________",
                         e,
                     )
                     return grid_params
 
-            #                 except ValueError as e:
-            #                     raise ValueError('Calculation of soil variables failed for grid cell with fid: {}'.format(gid)) from e
+                for gid, values in soil_values:
+                    try:
+                        xksat_parts = [(row[0], row[-1]) for row in values]
+                        avg_soil_depth = sum(row[1] * row[-1] for row in values)
+                        avg_xksat = green_ampt.calculate_xksat(xksat_parts)
 
-            land_values = poly2poly_geos(
-                self.grid_lyr, self.land_lyr, None, self.saturation_fld, self.vc_fld, self.ia_fld, self.rtimpl_fld
-            )
+                        psif = green_ampt.calculate_psif(avg_xksat)
 
-            for gid, values in land_values:
-                try:
+                        grid_params[gid] = {
+                            "soilParts": len(values),
+                            "soilhydc": avg_xksat,
+                            "hydc": avg_xksat,
+                            "soils": psif,
+                            "soil_depth": avg_soil_depth,
+                        }
+                    except Exception as e:
+                        self.uc.show_error(
+                            "ERROR 1401181951.2035: Green-Ampt infiltration failed"
+                            + "\nwhile intersecting soil layer with grid {}".format(gid)
+                            + "\n__________________________________________________",
+                            e,
+                        )
+                        return grid_params
+
+
+                land_values = poly2poly_geos_from_features(
+                    self.grid_lyr, land_features, land_index, request, self.saturation_fld, self.vc_fld, self.ia_fld)
+
+                for gid, values in land_values:
+                    try:
+                        params = grid_params[gid]
+                        avg_xksat = params["hydc"]
+
+                        vc_parts = [(row[1], row[-1]) for row in values]
+                        ia_parts = [(row[2], row[-1]) for row in values]
+
+                        dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
+                        if self.vcCheck == True:
+                            # perform vc adjusment
+                            xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
+                        else:
+                            # don't perform vc adjusment
+                            xksatc = avg_xksat
+
+                        iabstr = green_ampt.calculate_iabstr(ia_parts)
+
+                        params["dtheta"] = dtheta
+                        params["hydc"] = xksatc
+                        params["abstrinf"] = iabstr
+                        params["luParts"] = len(values)
+
+
+
+                    except ValueError as e:
+                        raise ValueError("Calculation of land use variables failed for grid cell with fid: {}".format(gid))
+
+                rtimp_values = poly2poly_geos_from_features( self.grid_lyr, rtimp_features, rtimp_index, request, 'rtimp'  )
+
+                for gid, values in rtimp_values:
                     params = grid_params[gid]
-                    avg_xksat = params["hydc"]
-                    rtimp_n = params["rtimpf"]
-
-                    vc_parts = [(row[1], row[-1]) for row in values]
-                    ia_parts = [(row[2], row[-1]) for row in values]
-                    rtimp_parts = [(row[3] * 0.01, row[-1]) for row in values]
-
-                    dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                    if self.vcCheck == True:
-                        # perform vc adjusment
-                        xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
-                    else:
-                        # don't perform vc adjusment
-                        xksatc = avg_xksat
-                    #                     xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts, self.vcCheck)
-                    iabstr = green_ampt.calculate_iabstr(ia_parts)
-
-                    rtimpl = green_ampt.calculate_rtimp_l(rtimp_parts)
-                    # perform summary rtimp calc = RTIMPl + EFF/100 * RTIMPn per FCDMC eq 4.6
-                    rtimp = max(rtimpl, rtimp_n)
-                    if rtimp > 1.0:
-                        rtimp = 1.0
-
-                    params["dtheta"] = dtheta
-                    params["hydc"] = xksatc
-                    params["abstrinf"] = iabstr
-                    params["rtimpf"] = rtimp
-                    params["luParts"] = len(values)
-
-                #                     grid_params[gid] = {'hydc': avg_xksat, 'soils': psif, 'rtimpf': rtimp_1, 'soil_depth': avg_soil_depth,
-                #                                         'theta': dtheta,' hydc': xksatc, 'abstrinf': iabstr, 'rtimpf': rtimp}
-
-                except ValueError as e:
-                    raise ValueError("Calculation of land use variables failed for grid cell with fid: {}".format(gid))
+                    rtimp_part = [(row[0]*0.01, row[-1]) for row in values]
+                    params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_part)
 
             if writeDiagnosticCSV == True:
                 # write a diagnostic CSV file with all fo the information for the calculations in it
@@ -206,7 +252,7 @@ class InfiltrationCalculator(object):
                         str(gid),
                         str(grid_params[gid]["soilParts"]),
                         str(grid_params[gid]["soilhydc"]),
-                        str(grid_params[gid]["rtimpn"]),
+                        str(grid_params[gid]["rtimpf"]),
                         str(grid_params[gid]["soil_depth"]),
                         str(grid_params[gid]["luParts"]),
                         str(round(grid_params[gid]["hydc"] / grid_params[gid]["soilhydc"], 5)),
@@ -214,7 +260,6 @@ class InfiltrationCalculator(object):
                         str(grid_params[gid]["dtheta"]),
                         str(grid_params[gid]["abstrinf"]),
                         str(grid_params[gid]["soils"]),
-                        str(grid_params[gid]["rtimpf"]),
                     )
                     for gid in gids
                 )
