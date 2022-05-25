@@ -416,7 +416,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.tab_heads = {
             0: ["HDEPEXC", "COEFQ", "EXPQ", "COEFA", "EXPA", "REPDEP", "RQCOEF", "RQEXP", "RACOEF", "RAEXP"],
             1: ["HDEPTH", "QTABLE", "ATABLE"],
-            2: ["TYPEC", "TYPEEN", "CULVERTN", "KE", "CUBASE"],
+            2: ["TYPEC", "TYPEEN", "CULVERTN", "KE", "CUBASE", "MULTBARRELS"],
         }
         self.tab_tips = {
             0: [

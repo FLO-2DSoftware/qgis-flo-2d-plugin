@@ -591,8 +591,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ]
             ratt_sql = ["""INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""", 4]
             culvert_sql = [
-                """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES""",
-                6,
+                """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
+                7,
             ]
             storm_sql = ["""INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""", 3]
             bridge_sql = [
@@ -1867,7 +1867,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line2 = "C" + "  {}" * 5 + "\n"
             line3 = "R" + "  {}" * 5 + "\n"
             line4 = "T" + "  {}" * 3 + "\n"
-            line5 = "F" + "  {}" * 5 + "\n"
+            line5 = "F" + "  {}" * 6 + "\n"
             line6 = "D" + "  {}" * 2 + "\n"
             line7a = "B" + "  {}" * 9 + "\n"
             line7b = "B" + "  {}" * 15 + "\n"

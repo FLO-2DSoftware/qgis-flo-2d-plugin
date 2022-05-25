@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-from subprocess import Popen, PIPE, STDOUT, CREATE_NO_WINDOW, check_call, CalledProcessError, run, call
+from subprocess import Popen, PIPE, STDOUT,  check_call, CalledProcessError, run, call
 from contextlib import contextmanager
 from ..user_communication import UserCommunication
 

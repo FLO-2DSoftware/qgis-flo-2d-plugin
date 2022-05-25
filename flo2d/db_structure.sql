@@ -1108,7 +1108,8 @@ CREATE TABLE "culvert_equations" (
     "typeen" INTEGER, -- TYPEEN, culvert switch for entrance type 1, 2, or 3
     "culvertn" REAL, -- CULVERTN, culvert Manning’s roughness coefficient
     "ke" REAL, -- KE, culvert entrance loss coefficient
-    "cubase" REAL -- CUBASE, flow width of box culvert for TYPEC = 1. For a circular culvert, CUBASE = 0
+    "cubase" REAL, -- CUBASE, flow width of box culvert for TYPEC = 1. For a circular culvert, CUBASE = 0
+    "multibarrels" INTEGER -- MULTBARRELS, Multiple barrel option for generalized culvert equation
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('culvert_equations', 'aspatial');
 
