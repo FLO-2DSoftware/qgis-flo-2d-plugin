@@ -517,25 +517,26 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             dlg.save_green_ampt_shapefile_fields()
             self.gutils.disable_geom_triggers()
             soil_lyr, land_lyr, fields, vcCheck = dlg.green_ampt_parameters()
-            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface)
+            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vcCheck, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
 
             if grid_params:
 
                 # apply effective impervious area layer
-                eff_values = poly2poly_geos(
-                    self.grid_lyr,
-                    self.eff_lyr,
-                    None,
-                    "eff"
-                )
-                try:
-                    for gid, values in eff_values:
-                        fact = 1-sum((1-row[0]*0.01)*row[-1] for row in values)
-                        grid_params[gid]["rtimpf"] *= fact
-                except Exception:
-                    pass
+                if self.eff_lyr is not None:
+                    eff_values = poly2poly_geos(
+                        self.grid_lyr,
+                        self.eff_lyr,
+                        None,
+                        "eff"
+                    )
+                    try:
+                        for gid, values in eff_values:
+                            fact = 1-sum((1-row[0]*0.01)*row[-1] for row in values)
+                            grid_params[gid]["rtimpf"] *= fact
+                    except Exception:
+                        pass
 
                 self.gutils.clear_tables("infil_areas_green", "infil_cells_green")
                 qry_areas = """INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
@@ -606,7 +607,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.gutils.disable_geom_triggers()
-            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface)
+            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             if dlg.single_grp.isChecked():
                 single_lyr, single_fields = dlg.single_scs_parameters()
                 inf_calc.setup_scs_single(single_lyr, *single_fields)

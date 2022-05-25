@@ -719,12 +719,20 @@ def poly2poly_geos(base_polygons, polygons, request=None, *columns):
     """
 
     allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
-    #     allfeatures, index = intersection_spatial_index(polygons)
 
+    return poly2poly_geos_from_features(base_polygons, allfeatures, index, request=request, *columns)
+
+
+
+def poly2poly_geos_from_features(base_polygons, polygons_features, polygon_spatial_index, request=None, *columns):
+    """
+    Generator which calculates base polygons intersections with polygons features that is indexed in a spatial index
+
+    """
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
         base_geom = feat.geometry()
-        fids = index.intersects(base_geom.boundingBox())
+        fids = polygon_spatial_index.intersects(base_geom.boundingBox())
         if not fids:
             continue
         base_fid = feat.id()
@@ -734,7 +742,7 @@ def poly2poly_geos(base_polygons, polygons, request=None, *columns):
         base_geom_engine.prepareGeometry()
         base_parts = []
         for fid in fids:
-            f, other_geom_engine = allfeatures[fid]
+            f, other_geom_engine = polygons_features[fid]
             inter = other_geom_engine.intersects(base_geom_geos)
             if inter is False:
                 continue
@@ -750,6 +758,7 @@ def poly2poly_geos(base_polygons, polygons, request=None, *columns):
             values = tuple(f[col] for col in columns) + (subarea,)
             base_parts.append(values)
         yield base_fid, base_parts
+
 
 
 def centroids2poly_geos(base_polygons, polygons, request=None, *columns):
