@@ -441,11 +441,11 @@ class ParseDAT(object):
         hystruct = self.dat_files["HYSTRUC.DAT"]
         par = self.single_parser(hystruct)
         data = []
-        chars = {"S": 10, "C": 6, "R": 6, "T": 4, "F": 6, "D": 3, "B": 15}
+        chars = {"S": 10, "C": 6, "R": 6, "T": 4, "F": 7, "D": 3, "B": 15}
         firstB = True
         for row in par:
             char = row[0]
-            self.fix_row_size(row, chars[char])
+            self.fix_row_size(row, chars[char], default=1)
             if char == "S":
                 params = defaultdict(list)
                 row.append(params)

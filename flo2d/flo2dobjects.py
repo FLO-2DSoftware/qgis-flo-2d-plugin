@@ -1624,10 +1624,10 @@ class Structure(GeoPackageUtils):
                 res = [""] * 3
         elif self.icurvtable == 2:
             # culvert equation
-            qry_tab = "SELECT typec, typeen, culvertn, ke, cubase FROM culvert_equations WHERE struct_fid = ?;"
+            qry_tab = "SELECT typec, typeen, culvertn, ke, cubase, multibarrels FROM culvert_equations WHERE struct_fid = ?;"
             res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
-                res = [""] * 5
+                res = [""] * 6
         else:
             if not res:
                 res = [""] * 3
@@ -1665,8 +1665,8 @@ class Structure(GeoPackageUtils):
             # culvert equation
             qry = "DELETE FROM culvert_equations WHERE struct_fid = ?;"
             self.execute(qry, (self.fid,))
-            qry = "INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES ({}, ?, ?, ?, ?, ?);"
-            self.execute_many(qry.format(self.fid), [row[:5] for row in data])
+            qry = "INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES ({}, ?, ?, ?, ?, ?, ?);"
+            self.execute_many(qry.format(self.fid), [row[:6] for row in data])
         else:
             pass
 
