@@ -15,6 +15,7 @@ from operator import itemgetter
 from .flo2d_parser import ParseDAT
 from ..gui.bc_editor_widget import BCEditorWidget
 from ..geopackage_utils import GeoPackageUtils
+from ..utils import float_or_zero
 from qgis.PyQt.QtWidgets import QApplication
 
 from ..utils import get_BC_Border, BC_BORDER
@@ -57,6 +58,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
         self.clear_tables("cont")
         cont = self.parser.parse_cont()
+        if len(cont["ITIMTEP"]) > 1:
+            cont["ITIMTEP"] = cont["ITIMTEP"][0]
         toler = self.parser.parse_toler()
         cont.update(toler)
         for option in cont:
@@ -1214,6 +1217,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         lst += rline.format(val)
                     lst += "\n"
                     if lst.isspace() is False:
+                        if row[0] == "ITIMTEP":
+                            if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
+                                _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"])-1]
+                                if float_or_zero(options["STARTIMTEP"]) == 0.0 and float_or_zero(options["ENDTIMTEP"]) == 0.0:
+                                    lst = " " + _itimtep + " " + options["TIMTEP"] 
+                                else:    
+                                    lst = " " + _itimtep + " " + options["TIMTEP"] + " " + options["STARTIMTEP"] + " " + options["ENDTIMTEP"]
+                            else:
+                                lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
                         c.write(lst)
                     else:
                         pass

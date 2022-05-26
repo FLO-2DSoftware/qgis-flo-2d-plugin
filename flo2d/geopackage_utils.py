@@ -163,6 +163,8 @@ class GeoPackageUtils(object):
         ["IDEBRV", "Debris Switch"],
         ["build", "Executable Build"],
         ["ITIMTEP", "Time Series Selection Switch"],
+        ["STARTIMTEP", "Start time for time series output"],
+        ["ENDTIMTEP", "End time for time series output"],        
         ["XCONC", "Global Sediment Concentration"],
         ["ICHANNEL", "Channel Switch"],
         ["TIMTEP", "Time Series Output Interval"],

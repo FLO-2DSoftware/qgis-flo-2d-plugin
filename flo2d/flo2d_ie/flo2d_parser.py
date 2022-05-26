@@ -66,7 +66,7 @@ class ParseDAT(object):
             ["AMANN", "DEPTHDUR", "XCONC", "XARF", "FROUDL", "SHALLOWN", "ENCROACH"],
             ["NOPRTFP", "DEPRESSDEPTH"],
             ["NOPRTC"],
-            ["ITIMTEP", "TIMTEP"],
+            ["ITIMTEP", "TIMTEP", "STARTIMTEP", "ENDTIMTEP"],
             ["GRAPTIM"],
         ]
         self.toler_rows = [
