@@ -9,6 +9,7 @@
 
 from qgis.PyQt import QtCore
 from .ui_utils import load_ui
+from ..utils import float_or_zero
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from collections import OrderedDict
@@ -59,6 +60,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             ["IRAIN", {"label": "Rain Switch", "type": "s", "dat": "CONT"}],
             ["ISED", {"label": "Sediment Transport Switch", "type": "s", "dat": "CONT"}],
             ["ITIMTEP", {"label": "Time Series Selection Switch", "type": "s5", "dat": "CONT"}],
+            ["STARTIMTEP", {"label": "Time Series Start Time", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},],
+            ["ENDTIMTEP", {"label": "Time Series End Time", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},],
             ["IWRFS", {"label": "Building Switch", "type": "s", "dat": "CONT"}],
             ["LEVEE", {"label": "Levee Switch", "type": "s", "dat": "CONT"}],
             ["LGPLOT", {"label": "Graphic Mode", "type": "s2", "dat": "CONT"}],
@@ -97,6 +100,13 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
+    
+        self._startimtep = 1111
+        self._endtimtep = 9999
+        
+        self.use_time_interval_grp.toggled.connect(self.use_time_interval_grp_checked)
+        self.ITIMTEP.currentIndexChanged.connect(self.ITIMTEP_currentIndexChanged)
+        
         self.polulate_values_JJ()
 
     def set_spinbox_JJ(self, key, spin):
@@ -127,10 +137,6 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     _sed = True if db_val == 1 else False
                     continue
 
-                # if key == "IMULTC":
-                #     self.IMULTC_cbo.setCurrentIndex(db_val)
-                #     continue
-
                 widget = getattr(self, key)
                 if isinstance(widget, QCheckBox):
                     if db_val == 1:
@@ -142,6 +148,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     widget.setValue(db_val)
                 else:
                     widget.setCurrentIndex(db_val)
+                    
+                if key == "STARTIMTEP" :
+                    self._startimtep = float_or_zero(db_val)
+                if key == "ENDTIMTEP":
+                    self._endtimtep = float_or_zero(db_val)        
 
             widget = getattr(self, "ISED")
             if _mud and not _sed:
@@ -150,6 +161,10 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 widget.setCurrentIndex(1)
             else:
                 widget.setCurrentIndex(2)
+                
+            self.ITIMTEP_currentIndexChanged()    
+               
+            self.use_time_interval_grp.setChecked(self._startimtep != 0.0 or self._endtimtep  != 0.0)  
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -159,8 +174,30 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 e,
             )
 
+    def use_time_interval_grp_checked(self):
+        if self.use_time_interval_grp.isChecked():
+            self.STARTIMTEP.setValue(self._startimtep)
+            self.ENDTIMTEP.setValue(self._endtimtep)
+        else:
+            self.STARTIMTEP.setValue(0.00)
+            self.ENDTIMTEP.setValue(0.00) 
+
+    def ITIMTEP_currentIndexChanged(self):
+        if  self.ITIMTEP.currentIndex() == 0:
+            self.use_time_interval_grp.setChecked(False)
+            self.use_time_interval_grp.setDisabled(True)
+        else:
+            self.use_time_interval_grp.setChecked(True)
+            self.use_time_interval_grp.setDisabled(False)
+                                
     def save_parameters_JJ(self):
         try:
+            if self.use_time_interval_grp.isChecked():
+                if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():
+                    self.uc.show_warn(
+                        "WARNING 220522.0526: time lapse end time must be greater than start time.")
+                    return False              
+            
             # See value of combobox 'ISED' for later set parameters MUD and ISED in 'for key...' loop.
             _mud = 0
             _sed = 0
@@ -202,7 +239,9 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 control_lyr.startEditing()
                 control_lyr.commitChanges()
                 QCoreApplication.processEvents()
-
+            return True
+    
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1806: Could not save FLO-2D parameters!!", e)
+            return False

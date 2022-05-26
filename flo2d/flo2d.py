@@ -1189,6 +1189,7 @@ class Flo2D(object):
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
+            "import_cont_toler",
             "import_tolspatial",
             "import_inflow",
             "import_outflow",
@@ -1733,14 +1734,18 @@ class Flo2D(object):
     def show_cont_toler(self):
         try:
             dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
-            save = dlg_control.exec_()
-            if save:
-                try:
-                    dlg_control.save_parameters_JJ()
-                    self.uc.bar_info("Parameters saved!", dur=3)
-                except Exception as e:
-                    self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
-                    return
+            while True:
+                save = dlg_control.exec_()
+                if save:
+                    try:
+                        if dlg_control.save_parameters_JJ():
+                            self.uc.bar_info("Parameters saved!", dur=3)
+                            break
+                    except Exception as e:
+                        self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
+                        return
+                else:
+                    break    
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
@@ -2133,12 +2138,6 @@ class Flo2D(object):
             ok = dlg_errors.exec_()
             if ok:
                 break
-            #                 if dlg_errors.current_project_radio.isChecked():
-            #                     break
-            #                 elif dlg_errors.debug_file_lineEdit.text() == "":
-            #                     self.uc.show_warn("Select a DEBUG file!")
-            #                 else:
-            #                     break
             else:
                 return
 
