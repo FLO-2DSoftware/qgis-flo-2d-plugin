@@ -1529,7 +1529,6 @@ class Flo2D(object):
                 "export_inflow",
                 "export_outflow",
                 "export_rain",
-                "export_raincell",
                 "export_evapor",
                 "export_infil",
                 "export_chan",
@@ -1606,7 +1605,6 @@ class Flo2D(object):
     
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
-                    export_calls.remove("export_raincell")
     
                 if "Storm Drain" not in dlg_components.components:
                     export_calls.remove("export_swmmflo")
