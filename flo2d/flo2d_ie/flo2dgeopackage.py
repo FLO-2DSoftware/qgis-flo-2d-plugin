@@ -16,8 +16,8 @@ from .flo2d_parser import ParseDAT
 from ..gui.bc_editor_widget import BCEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from ..utils import float_or_zero
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
-
 from ..utils import get_BC_Border, BC_BORDER
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -1570,6 +1570,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_raincell(self, outdir):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.is_table_empty("raincell"):
                 return False
@@ -1599,6 +1600,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1558: exporting RAINCELL.DAT failed!.\n", e)
             return False
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def export_infil(self, outdir):
         # check if there is any infiltration defined.

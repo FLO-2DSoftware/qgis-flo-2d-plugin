@@ -818,8 +818,7 @@ ASCII files</string>
                </size>
               </property>
               <property name="text">
-               <string>Export RealTime Rainfall
-to binary HDF</string>
+               <string>Export RealTime Rainfall</string>
               </property>
              </widget>
             </item>

@@ -12,7 +12,7 @@
 # pylint: disable=C0325
 import sys
 import traceback
-from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog,  QWidget, QScrollArea, QVBoxLayout, QLabel, QGridLayout, QSizePolicy
+from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog,  QWidget, QScrollArea, QVBoxLayout, QLabel, QGridLayout, QSizePolicy, QCheckBox
 from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsMessageLog, Qgis
 
@@ -131,6 +131,26 @@ class UserCommunication(object):
             return True if m.exec_() == QMessageBox.Yes else False
         else:
             print(msg)
+
+    def dialog_with_2_customized_buttons(self, title, msg, text1, text2):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle(title)
+        msgBox.setText(msg)
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close )
+        msgBox.setDefaultButton(QMessageBox.Yes)
+        buttonY = msgBox.button(QMessageBox.Yes)
+        buttonY.setText(text1)
+        buttonN = msgBox.button(QMessageBox.No)
+        buttonN.setText(text2)
+        
+        # grid = QGridLayout
+        # index = grid.indexOf(checkbox)
+        # row, column, rowSpan, columnSpan = int
+        # grid.getItemPosition(index, row, column, rowSpan, columnSpan)
+        # grid.addWidget(geometryCheckBox, row + 1,  column, rowSpan, columnSpan)
+        
+        ret = msgBox.exec()
+        return ret
 
     def customized_question(self, title, text, standard_buttons=QMessageBox.No | QMessageBox.Yes, default=QMessageBox.Yes, icon=QMessageBox.Information):
         if self.iface is not None:
