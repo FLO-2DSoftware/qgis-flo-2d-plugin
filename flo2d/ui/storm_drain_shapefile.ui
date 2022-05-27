@@ -41,7 +41,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -5552,7 +5552,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Lenth</string>
+               <string>Length</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

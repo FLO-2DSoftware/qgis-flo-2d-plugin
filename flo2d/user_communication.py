@@ -135,7 +135,8 @@ class UserCommunication(object):
     def dialog_with_2_customized_buttons(self, title, msg, text1, text2):
         msgBox = QMessageBox()
         msgBox.setWindowTitle(title)
-        msgBox.setText(msg)
+        if msg != "":
+            msgBox.setText(msg)
         msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close )
         msgBox.setDefaultButton(QMessageBox.Yes)
         buttonY = msgBox.button(QMessageBox.Yes)

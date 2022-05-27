@@ -181,8 +181,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             )
 
     def export_rainfall_to_binary_hdf5(self):
-        export = self.uc.dialog_with_2_customized_buttons("Export RAINCELL", "", 
-                                                          " Export RAINCELL.DAT ", " Export RAINCELL.HDF5 ")
+        export = self.uc.dialog_with_2_customized_buttons("Select RAINCELL file to export", "", 
+                                                          " RAINCELL.DAT ", " RAINCELL.HDF5 ")
         if (export == QMessageBox.Yes):
             # self.uc.show_info("Export RAINCELL.DAT")
             if self.gutils.is_table_empty("grid"): 
