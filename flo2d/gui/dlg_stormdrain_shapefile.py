@@ -1515,11 +1515,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         status = "OFF"
                         wrong_status += 1
                     pump_initial_status = status
-                    # pump_initial_status = (
-                    #     f[self.pump_initial_status_FieldCbo.currentText()]
-                    #     if self.pump_initial_status_FieldCbo.currentText() != ""
-                    #     else "OFF"
-                    # )
+
                     pump_startup_depth = (
                         f[self.pump_startup_depth_FieldCbo.currentText()]
                         if self.pump_startup_depth_FieldCbo.currentText() != ""
@@ -1533,7 +1529,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     pump_curve_name = (
                         f[self.pump_curve_name_FieldCbo.currentText()]
                         if self.pump_curve_name_FieldCbo.currentText() != ""
-                        else 0.0
+                        else "*"
                     )
     
                     if pump_inlet == "?" or pump_outlet == "?":
@@ -1571,7 +1567,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("pump_init_status", pump_initial_status)
                     feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
                     feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
-                    feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "")
+                    feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "*")
                     
                     new_feats.append(feat)
     
