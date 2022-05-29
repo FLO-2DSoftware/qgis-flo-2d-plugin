@@ -965,110 +965,121 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             return 0
 
     def select_outflows_according_to_type(self):
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         no_outflow, time_stage_1,  time_stage_2, border= [], [], [], []
-        if not self.gutils.is_table_empty("outflow_cells"):
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
-            if cells:
-                for cell in cells:
-                    grid_fid, outflow_fid, geom_type = cell
-                    if geom_type == "polygon":
-
-                        row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND fid = ?;",
-                                                    (geom_type, outflow_fid,)).fetchone()
-
-                        if row:
-                            if row[0] == 0: # Outflow type selected as 'No Outflow'. Tag it to remove it,
-                                no_outflow.append(grid_fid)
-                            elif row[0] in [0, 1, 4, 5, 7]:
-                                if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
-                                    # Remove diagonals:
-
-                                    currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
-                                    n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = self.adjacent_grids(currentCell, cell_size)
-                                
-                                    a = nw_grid is None and n_grid and w_grid
-                                    b = sw_grid is None and w_grid and s_grid
-                                    c = se_grid is None and e_grid and s_grid
-                                    d = ne_grid is None and n_grid and e_grid
-                                    if a or b or c or d:
-                                        # It is a diagonal cell, remove it:
-                                        no_outflow.append(grid_fid)
-                                    else: # Find addjacent inner cells:
-                                        border.append(grid_fid)
-                                        if row[0] == 5:  # Time stage => select adjacent inner cells
-                                              
-                                            this = None
-                                            if w_grid and e_grid and s_grid:
-                                                this = s_grid
-                                            elif n_grid and s_grid  and w_grid:
-                                                this = w_grid
-                                            elif w_grid  and e_grid and n_grid :
-                                                this = n_grid
-                                            elif n_grid and s_grid  and e_grid :
-                                                this = e_grid
-                                                
-                                            if this is not None:
-                                                if this not in time_stage_1:
-                                                    time_stage_1.append(this) 
-
-
-                                            if False:
-                                                pass
-                                            elif w_grid and not e_grid and s_grid:
-                                                this = s_grid
-                                            elif n_grid and not s_grid and w_grid:
-                                                this = w_grid     
-                                            elif w_grid  and not e_grid and n_grid and ne_grid:
-                                                this = n_grid     
-                                            elif n_grid and not s_grid  and e_grid :
-                                                this = e_grid
-                                            elif not n_grid  and not w_grid and e_grid:
-                                                this = e_grid
-                                             
-                                            if this is not None:                       
-                                                if this not in time_stage_1 + time_stage_2:
-                                                    adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "N", cell_size)
-                                                    if adj_cell is not None:
-                                                        adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "E", cell_size)  
+        try:
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+            if not self.gutils.is_table_empty("outflow_cells"):
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
+                if cells:
+                    for cell in cells:
+                        grid_fid, outflow_fid, geom_type = cell
+                        if geom_type == "polygon":
+    
+                            row = self.gutils.execute("SELECT type FROM outflow WHERE geom_type = ? AND fid = ?;",
+                                                        (geom_type, outflow_fid,)).fetchone()
+    
+                            if row:
+                                if row[0] == 0: # Outflow type selected as 'No Outflow'. Tag it to remove it,
+                                    no_outflow.append(grid_fid)
+                                elif row[0] in [0, 1, 4, 5, 7]:
+                                    if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
+                                        # Remove diagonals:
+    
+                                        currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
+                                        n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = self.adjacent_grids(currentCell, cell_size)
+                                    
+                                        a = nw_grid is None and n_grid and w_grid
+                                        b = sw_grid is None and w_grid and s_grid
+                                        c = se_grid is None and e_grid and s_grid
+                                        d = ne_grid is None and n_grid and e_grid
+                                        if a or b or c or d:
+                                            # It is a diagonal cell, remove it:
+                                            no_outflow.append(grid_fid)
+                                        else: # Find addjacent inner cells:
+                                            border.append(grid_fid)
+                                            if row[0] == 5:  # Time stage => select adjacent inner cells
+                                                  
+                                                this = None
+                                                if w_grid and e_grid and s_grid:
+                                                    this = s_grid
+                                                elif n_grid and s_grid  and w_grid:
+                                                    this = w_grid
+                                                elif w_grid  and e_grid and n_grid :
+                                                    this = n_grid
+                                                elif n_grid and s_grid  and e_grid :
+                                                    this = e_grid
+                                                    
+                                                if this is not None:
+                                                    if this not in time_stage_1:
+                                                        time_stage_1.append(this) 
+    
+    
+                                                if False:
+                                                    pass
+                                                elif w_grid and not e_grid and s_grid:
+                                                    this = s_grid
+                                                elif n_grid and not s_grid and w_grid:
+                                                    this = w_grid     
+                                                elif w_grid  and not e_grid and n_grid and ne_grid:
+                                                    this = n_grid     
+                                                elif n_grid and not s_grid  and e_grid :
+                                                    this = e_grid
+                                                elif not n_grid  and not w_grid and e_grid:
+                                                    this = e_grid
+                                                 
+                                                if this is not None:                       
+                                                    if this not in time_stage_1 + time_stage_2:
+                                                        adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "N", cell_size)
                                                         if adj_cell is not None:
-                                                            adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "S", cell_size) 
+                                                            adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "E", cell_size)  
                                                             if adj_cell is not None:
-                                                                adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "W", cell_size) 
-                                                                if adj_cell is not None:                                                
-                                                                    time_stage_2.append(this)                     
-                                                
-                                else:
-                                    no_outflow.append(grid_fid)
-
-                    elif geom_type == "line" or geom_type == "point":
-                        rows = self.gutils.execute(
-                            "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                            (
-                                geom_type,
-                                outflow_fid,
-                            ),
-                        ).fetchall()
-                        if rows:
-                            for row in rows:
-                                if row[0] == 0:  # No outflow
-                                    no_outflow.append(grid_fid)
-                if no_outflow:
-                    if time_stage_1:
-                        for cell in time_stage_1:
-                            if cell in no_outflow:
-                                no_outflow.remove(cell)
-
-                    if time_stage_2:
-                        for cell in time_stage_2:
-                            if cell in no_outflow:
-                                no_outflow.remove(cell)
-                                
-                    for cell in no_outflow:
-                        self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))
-                        
-        return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border
+                                                                adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "S", cell_size) 
+                                                                if adj_cell is not None:
+                                                                    adj_cell = get_adjacent_cell(self.gutils, grid_lyr, this, "W", cell_size) 
+                                                                    if adj_cell is not None:                                                
+                                                                        time_stage_2.append(this)                     
+                                                    
+                                    else:
+                                        no_outflow.append(grid_fid)
+    
+                        elif geom_type == "line" or geom_type == "point":
+                            rows = self.gutils.execute(
+                                "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                                (
+                                    geom_type,
+                                    outflow_fid,
+                                ),
+                            ).fetchall()
+                            if rows:
+                                for row in rows:
+                                    if row[0] == 0:  # No outflow
+                                        no_outflow.append(grid_fid)
+                    if no_outflow:
+                        if time_stage_1:
+                            for cell in time_stage_1:
+                                if cell in no_outflow:
+                                    no_outflow.remove(cell)
+    
+                        if time_stage_2:
+                            for cell in time_stage_2:
+                                if cell in no_outflow:
+                                    no_outflow.remove(cell)
+                                    
+                        for cell in no_outflow:
+                            self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))
+                            
+            return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border
+        
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 280522.0729: error selecting outflows according to type!!"
+                + "\n__________________________________________________",
+                e,
+            )
+        finally:
+            return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border        
 
     def adjacent_grids(self, currentCell, cell_size):
         xx, yy = currentCell.geometry().centroid().asPoint()

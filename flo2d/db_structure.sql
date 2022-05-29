@@ -639,47 +639,6 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_n', 'aspatial');
 -- UNION ALL
 -- SELECT DISTINCT ichangrid, seg_fid FROM chan_n;
 
--- CREATE TABLE "rightbanks" (
---     "fid" INTEGER NOT NULL PRIMARY KEY,
---     "seg_fid" INTEGER
--- );
--- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rightbanks', 'features', 4326);
--- SELECT gpkgAddGeometryColumn('rightbanks', 'geom', 'LINESTRING', 0, 0, 0);
--- SELECT gpkgAddGeometryTriggers('rightbanks', 'geom');
--- -- SELECT gpkgAddSpatialIndex('rightbanks', 'geom');
---
--- CREATE TRIGGER "find_rbank_n_insert"
---     AFTER INSERT ON "chan_n"
---     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---     BEGIN
---         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
---         INSERT INTO "rightbanks" (seg_fid, geom)
---             SELECT
---                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
---             WHERE
---                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
---             GROUP BY seg_fid;
---     END;
---
--- CREATE TRIGGER "find_rbank_n_update"
---     AFTER UPDATE ON "chan_n"
---     WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---     BEGIN
---         DELETE FROM "rightbanks" WHERE seg_fid = NEW."seg_fid";
---         INSERT INTO "rightbanks" (seg_fid, geom)
---             SELECT
---                 NEW.seg_fid, AsGPB(MakeLine(Centroid(CastAutomagic(g.geom)))) AS geom FROM chan_n AS ch, grid AS g
---             WHERE
---                 NEW.rbankgrid = g.fid AND seg_fid = NEW.seg_fid
---             GROUP BY seg_fid;
---     END;
---
--- CREATE TRIGGER "find_rbank_n_delete"
---     AFTER DELETE ON "chan_n"
---     BEGIN
---         DELETE FROM "rightbanks" WHERE seg_fid = OLD."seg_fid";
---     END;
-
 CREATE TABLE "chan_confluences" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "conf_fid" INTEGER, -- confluence fid
@@ -752,16 +711,6 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells
 --    BEGIN
 --        DELETE FROM "noexchange_chan_cells" WHERE noex_fid = OLD."fid";
 --    END;
-
---CREATE TABLE "user_noexchange_chan_areas" (
---    "fid" INTEGER PRIMARY KEY NOT NULL,
---    "chan_seg_fid" INTEGER,
---    "note" TEXT
---);
---INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_noexchange_chan_areas', 'features', 4326);
---SELECT gpkgAddGeometryColumn('user_noexchange_chan_areas', 'geom', 'POLYGON', 0, 0, 0);
---SELECT gpkgAddGeometryTriggers('user_noexchange_chan_areas', 'geom');
-
 
 CREATE TABLE "chan_wsel" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -896,7 +845,7 @@ CREATE TRIGGER "find_infil_cells_green_delete"
        DELETE FROM "infil_cells_green" WHERE infil_area_fid = OLD."fid";
    END;
 
-    -- SCS
+-- SCS
 
 CREATE TABLE "infil_areas_scs" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -944,7 +893,7 @@ CREATE TRIGGER "find_infil_cells_scs_delete"
        DELETE FROM "infil_cells_scs" WHERE infil_area_fid = OLD."fid";
    END;
 
-    -- HORTON
+-- HORTON
 
 CREATE TABLE "infil_areas_horton" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -994,7 +943,7 @@ CREATE TRIGGER "find_infil_cells_horton_delete"
        DELETE FROM "infil_cells_horton" WHERE infil_area_fid = OLD."fid";
    END;
 
-    -- CHANNELS
+-- CHANNELS
 
 CREATE TABLE "infil_areas_chan" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1209,47 +1158,6 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('street_elems', 'aspat
 
 
 -- ARF.DAT
-
--- CREATE TABLE "blocked_areas_tot" (
---     "fid" INTEGER NOT NULL PRIMARY KEY
--- );
--- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('blocked_areas_tot', 'features', 4326);
--- SELECT gpkgAddGeometryColumn('blocked_areas_tot', 'geom', 'POLYGON', 0, 0, 0);
--- SELECT gpkgAddGeometryTriggers('blocked_areas_tot', 'geom');
--- -- SELECT gpkgAddSpatialIndex('blocked_areas_tot', 'geom');
--- 
--- CREATE TABLE "blocked_cells_tot" (
---     "fid" INTEGER NOT NULL PRIMARY KEY,
---     "grid_fid" INTEGER, -- equal to fid from grid table
---     "area_fid" INTEGER -- fid of area from blocked_areas_tot table
--- );
--- INSERT INTO gpkg_contents (table_name, data_type) VALUES ('blocked_cells_tot', 'aspatial');
-
---CREATE TRIGGER "find_cells_arf_tot_insert"
---    AFTER INSERT ON "blocked_areas_tot"
---    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
---        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
---            SELECT NEW.fid, g.fid FROM grid as g
---            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_cells_arf_tot_update"
---    AFTER UPDATE ON "blocked_areas_tot"
---    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "blocked_cells_tot" WHERE area_fid = NEW."fid";
---        INSERT INTO "blocked_cells_tot" (area_fid, grid_fid)
---        SELECT NEW.fid, g.fid FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_cells_arf_tot_delete"
---    AFTER DELETE ON "blocked_areas_tot"
---    BEGIN
---        DELETE FROM "blocked_cells_tot" WHERE area_fid = OLD."fid";
---    END;
 
 CREATE TABLE "user_blocked_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -2445,17 +2353,6 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_li
 SELECT gpkgAddGeometryColumn('user_levee_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_levee_lines', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_levee_lines', 'geom');
-
--- CREATE TABLE "user_levee_polygons" (
---     "fid" INTEGER PRIMARY KEY NOT NULL,
---     "name" TEXT,
---     "elev" REAL,
---     "correction" REAL
--- );
--- INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_levee_polygons', 'features', 4326);
--- SELECT gpkgAddGeometryColumn('user_levee_polygons', 'geom', 'POLYGON', 0, 0, 0);
--- SELECT gpkgAddGeometryTriggers('user_levee_polygons', 'geom');
--- SELECT gpkgAddSpatialIndex('user_levee_polygons', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

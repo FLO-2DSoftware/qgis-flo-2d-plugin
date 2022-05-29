@@ -222,6 +222,8 @@ class GeoPackageUtils(object):
             columns = ", ".join(import_names)
             try:
                 qry = insert_sql.format(tab, columns)
+                # if tab == "infil_areas_green":
+                #     continue
                 self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
