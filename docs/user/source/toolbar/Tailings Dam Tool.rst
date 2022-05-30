@@ -8,14 +8,14 @@ The tailings dam tool button will load the tailings dam executable in the Projec
 Assign the FLO-2D Pro folder to the first field.  This is where the Tailings Dam Tool program should be located.
 If it is not there, please install Build 21.
 
-https://documentation.flo-2d.com/Intro/Set-up.html
+`FLO-2D Setup <https://documentation.flo-2d.com/Intro/Set-up.html>`_
 
 Assign the location where the INFLOW.DAT file should be saved to the Project Folder.  This should be the same location
 where all of the \*.DAT files will be saved.
 
 For a full tutorial, please visit this page:
 
-https://documentation.flo-2d.com/Advanced-Lessons/Module%207.html
+`Tailing Dam Tutoiral <https://documentation.flo-2d.com/Advanced-Lessons/Module%207.html>`_
 
 Contact-Us_ to get the data for the tutorial.
 

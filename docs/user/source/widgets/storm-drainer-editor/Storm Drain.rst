@@ -1,9 +1,12 @@
 Storm Drain Editor
 ==================
 
-The Storm Drain Editor tool has several functions to prepare the data that integrates the FLO-2D surface water model with the storm drain model.
-This document will explain the functionality of each button.
+The Storm Drain Editor tool has several functions to prepare the data that integrates the FLO-2D surface water model
+with the storm drain model.  This document will explain the functionality of each button.
+
 For a step-by-step tutorial, use the QGIS Workshop Lessons or the Self-Help training package.
+
+`Storm Drain Tutorial <https://documentation.flo-2d.com/Workshops/Lesson%203.html>`_
 
 .. image:: ../../img/Storm-Drain/Storm002.png
 
@@ -33,18 +36,27 @@ Either way, this information will serve as a template for the data needed to cre
 
 The shapefiles can be described as follow:
 
+-  Lesson3InletsJunctions.shp is a point shapefile that contains the inlets nodes, manholes, and junctions.
 -  Lesson3Outfalls.shp is a point shapefile that contains the outfalls.
-
 -  Lesson3Conduits.shp is a line shapefile that contains the conduits system.
+-  Lesson3Pumps.shp is a line shapefile that contains the pump system. (Not required)
+-  Lesson3Orifices.shp is a line shapefile that contains the orifices system. (Not required)
+-  Lesson3Weirs.shp is a line shapefile that contains the weirs system. (Not Required)
 
--  Lesson3InletsJunctions.shp is a point shapefile that contains the Inlets, pumps, and Junctions.
+The following data must be available in the shapefile to create the storm drain data
+files: SWMM.INP, SWMMFLO.DAT, SWMMOUTF.DAT and SWMMFLORT.DAT.
 
-The following data must be available in the shapefile to create the SWMM.INP files and the associated storm drain data files: SWMMFLO.DAT,
-SWMMOUTF.DAT and SWMMFLORT.DAT.
+.. image:: ../../img/Storm-Drain/Storm005a.png
 
-.. image:: ../../img/Storm-Drain/Storm005.png
+.. image:: ../../img/Storm-Drain/Storm005b.png
 
-.. image:: ../../img/Storm-Drain/Storm006.png
+.. image:: ../../img/Storm-Drain/Storm005c.png
+
+.. image:: ../../img/Storm-Drain/Storm005d.png
+
+.. image:: ../../img/Storm-Drain/Storm005e.png
+
+.. image:: ../../img/Storm-Drain/Storm005f.png
 
 Inlets/Junctions Shapefile
 --------------------------
@@ -59,19 +71,6 @@ The fields from the attribute table are selected using the Select Components fro
 
 .. image:: ../../img/Storm-Drain/Storm009.png
 
-Conduits Shapefiles
--------------------
-
-This is a sample of the attributes table for the conduit shapefile.
-
-.. image:: ../../img/Storm-Drain/Storm010.png
-
-The fields from the attribute table are selected using the Select Components from Shapefile dialog box.
-
-.. image:: ../../img/Storm-Drain/Storm008.png
-
-.. image:: ../../img/Storm-Drain/Storm011.png
-
 Outfall Shapefiles
 ------------------
 
@@ -83,7 +82,60 @@ The fields from the attribute table are selected using the Select Components fro
 
 .. image:: ../../img/Storm-Drain/Storm008.png
 
-.. image:: ../../img/Storm-Drain/Storm013.png
+.. image:: ../../img/Storm-Drain/Storm009a.png
+
+Conduits Shapefiles
+-------------------
+
+This is a sample of the attributes table for the conduit shapefile.
+
+.. image:: ../../img/Storm-Drain/Storm010.png
+
+The fields from the attribute table are selected using the Select Components from Shapefile dialog box.
+
+.. image:: ../../img/Storm-Drain/Storm008.png
+
+.. image:: ../../img/Storm-Drain/Storm009b.png
+
+Pumps Shapefiles
+-------------------
+
+This is a sample of the attributes table for the conduit shapefile.
+
+.. image:: ../../img/Storm-Drain/Storm010a.png
+
+The fields from the attribute table are selected using the Select Components from Shapefile dialog box.
+
+.. image:: ../../img/Storm-Drain/Storm008.png
+
+.. image:: ../../img/Storm-Drain/Storm009c.png
+
+Orifices Shapefiles
+-------------------
+
+This is a sample of the attributes table for the conduit shapefile.
+
+.. image:: ../../img/Storm-Drain/Storm010b.png
+
+The fields from the attribute table are selected using the Select Components from Shapefile dialog box.
+
+.. image:: ../../img/Storm-Drain/Storm008.png
+
+.. image:: ../../img/Storm-Drain/Storm009d.png
+
+Weirs Shapefiles
+-------------------
+
+This is a sample of the attributes table for the conduit shapefile.
+
+.. image:: ../../img/Storm-Drain/Storm010c.png
+
+The fields from the attribute table are selected using the Select Components from Shapefile dialog box.
+
+.. image:: ../../img/Storm-Drain/Storm008.png
+
+.. image:: ../../img/Storm-Drain/Storm009e.png
+
 
 Import SWMM.inp
 ---------------
@@ -95,8 +147,9 @@ Import SWMM.inp
 .. image:: ../../img/Storm-Drain/Storm014.png
 
 This button loads inlets/junctions, outfalls and conduits from an \*.INP file.
-The Storm Drain data needs to be schematized; the table components that can be opened from the Storm Drain Editor will contain the variables from the
-SWMM.inp file.
+The Storm Drain data needs to be schematized; the table components that can be opened from the Storm Drain Editor will
+contain the variables from the SWMM.inp file.
+
 Additional data is needed for the SWMMFLO.DAT, SWMMOUTF.DAT and SWMMFLORT.DAT files.
 
 QGIS FLO-2D layers will be filled up with the data from the following \*.INP groups:
@@ -125,6 +178,10 @@ Data save in the Components tables is written to the .INP file using this functi
 
 Components: Inlets/Junctions
 ----------------------------
+
+.. note:: Important!!!  While it is possible to edit and correct attributes in the following dialog boxes, it is
+          recommended to make editorial changes in the original shapefiles so that those files carry forward as the
+          project evolves.  The process to recalculate the storm drain from the shapefiles is very fast and effective.
 
 Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.
 
@@ -156,18 +213,52 @@ A dialog is shown with data for the selected component, in this case the Outfall
 
 .. image:: ../../img/Storm-Drain/Storm021.png
 
+Components: Pumps
+--------------------
+
+Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.
+
+.. image:: ../../img/Storm-Drain/Storm020a.png
+
+A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.
+
+.. image:: ../../img/Storm-Drain/Storm021a.png
+
+Components: Orifices
+--------------------
+
+Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.
+
+.. image:: ../../img/Storm-Drain/Storm020b.png
+
+A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.
+
+.. image:: ../../img/Storm-Drain/Storm021b.png
+
+Components: Weirs
+-----------------
+
+Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.
+
+.. image:: ../../img/Storm-Drain/Storm020c.png
+
+A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.
+
+.. image:: ../../img/Storm-Drain/Storm021c.png
+
 Auto-assign conduit nodes
 -------------------------
 
-This tool will automatically fill the node names required for the conduit connections.
+This tool will automatically fill the node names required for the conduit connections.  Use this calculator individually
+by clicking each option once.  If the option isn't used, i.e. weirs are not used, it is not necessary to click that option.
 
 .. image:: ../../img/Storm-Drain/Storm022.png
 
-Conduits are connected to the node they touch both upstream and downstream by the name of the node.
+Links are connected to the node they touch on the upstream and downstream end of each polyline by the name of the node.
 
 .. image:: ../../img/Storm-Drain/Storm023.png
 
-In a storm drain network there is a separate conduit feature between each node.
+In a storm drain network there is a separate link feature between each node.
 The auto-assign button finds the node in proximity of the end of each feature and assigns it to the table.
 It is important to orient the conduit features so that the first vertex is near the inlet node and the last vertex is near the outlet node.
 See the flow direction arrows in the following image.

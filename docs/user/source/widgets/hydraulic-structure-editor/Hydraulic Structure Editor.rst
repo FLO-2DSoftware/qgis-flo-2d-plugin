@@ -65,15 +65,23 @@ The channel segments are split up to allow for the width of the roadway.
 Floodplain to Floodplain Structure
 ----------------------------------
 
+Culvert Type:
+
+-  Floodplain to Floodplain
+
+-  Rating Table
+
 This example will model a culvert system between two floodplain nodes.
 The invert elevation of the inlet node is set by the grid element elevation.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau008.png
 
+
 1. Click the Add
    Structure button.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau009.png
+
 
 2. Digitize a culvert
    by clicking on two cells closest to the inlet and outlet on the map.
@@ -83,10 +91,12 @@ The invert elevation of the inlet node is set by the grid element elevation.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau010.png
 
+
 4. Click
    Save.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau011.png
+
 
 5. Fill in the data
    on the Structure Editor and the Table Editor.
@@ -99,15 +109,18 @@ The invert elevation of the inlet node is set by the grid element elevation.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau012.png
 
+
 8. Fill the
    rating table.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau013.png
 
+
 9. Click Schematize
    to write the data to the schematic layers.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau007.png
+
 
 Floodplain to Channel Structure
 -------------------------------
@@ -175,10 +188,14 @@ Bridge parameters can be defined for a structure.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau020.png
 
+
 The USGS bridge tables are used to define the flow though a bridge with bridge geometry and discharge coefficients.
 See Bridge tutorial and Bridge guidelines for a detailed guide.
 
+https://documentation.flo-2d.com/Advanced-Lessons/Module%202%20Part%203.html
+
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau021.png
+
 
 Import Rating Tables
 --------------------
@@ -198,7 +215,7 @@ Import Rating Tables
 5. The columns
    can be space or tab delimited.
 
-6. No
-   header.
+6. Do not put
+   a header in the rating table data file.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau022.png
