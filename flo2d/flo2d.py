@@ -1990,8 +1990,8 @@ class Flo2D(object):
                     # Spacer                        width, height, h policy, v policy
                     horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred, QSizePolicy.Preferred)
                     #                     verticalSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
-                    #layout = m.layout()
-                    #layout.addItem(horizontalSpacer)
+                    layout = m.layout()
+                    layout.addItem(horizontalSpacer)
                     #                     layout.addItem(verticalSpacer)
 
                     #                     m.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding);
