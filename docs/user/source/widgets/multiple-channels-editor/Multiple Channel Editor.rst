@@ -1,68 +1,123 @@
 Multiple Channels Editor
 ========================
 
+Multiple channel system is used to represent rill and gully flow in an effort make the time of concentration more effective
+on a floodplain.
 
-The multiple channel editor is used to set up the global parameters for the MULT.DAT file.
+An overview of the tool is discussed below but see the tutorial for a more detailed description of how to set up the data
+using QGIS.
+https://documentation.flo-2d.com/Advanced-Lessons/Module%205%20Part%203.html
+
+-The Build 22 Data Input Manual has detailed instructions on each variable.
+
+-The Build 22 FLO-2D Reference Manual has specific information on how FLO-2D models rill and gully flow.
+
+The manuals are installed on the computer along with
+the Build 22 Update and can be found here:
+
+C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\flo_help\\Manuals
+
+Global Data
+------------
+1. The multiple channel
+   is used to set up the global parameters for the MULT.DAT and SIMPLE_MULT.DAT files.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl002.png
+
+2. The data is saved to
+   the multiple channel global parameters table.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl002a.png
 
 
 Multiple Channel Lines
 ----------------------
 
 The Multiple Channel Lines layer is used to set the path of the multiple channels.
-This layer is in the Schematic Layer group.
-Enter the data using the QGIS vector editor in the toolbar.
+This layer is in the User Layers group.
+
+1. Highlight the Multiple Channel Lines layer and click the QGIS vector
+   polyline editor pencil in the toolbar.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl003.png
 
 
-.. image:: ../../img/Multiple-Channel-Editor/mutipl004.png
-
-
-1. Digitize the drainages,
+2. Use polylines to digitize the drainages,
    rills or gullies in the project area.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl009.png
 
 
-
-2. Assign the spatially variable data to each line.
-   The multiple channel lines are split into segments wherever a new channel begins or ends or when new data is required.
+3. Assign the width, depth,
+   channel connection, and n-value variable attributes to each line.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl005.png
  
 
-3. Save and close the editor to commit the data to the geopackage.
+4. Save and close the editor to commit the data to the geopackage using a sql trigger.
    This will automatically write the data to the Multiple Tables and assign the grid elements.
-   It also enables the Individual Multiple Channel Data button.
 
-.. image:: ../../img/Multiple-Channel-Editor/mutipl006.png
-
-
-Individual cells can be edited with this dialog box.
-
-.. image:: ../../img/Multiple-Channel-Editor/mutipl007.png
+.. image:: ../../img/Multiple-Channel-Editor/mutipl004.png
 
 
-If multiple layer edits are required, they should be made in the Multiple Channel Line layer.
+5. Any edits to the polyline will result in an update to the table data.
+
+Simple Multiple Channel Lines
+------------------------------
+
+The Simple Multiple Channel Lines layer is used to set the path of the multiple channels that only require a single attribute.
+This layer is also in the User Layers group.
+
+1. Highlight the Simple Mult. Channel Lines layer and click the QGIS vector
+   polyline editor pencil in the toolbar.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl010.png
 
 
+2. Use polylines to digitize the drainages,
+   rills or gullies in the project area.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl011.png
+
+
+3. This layer uses a global n-value attribute only so no spatial data is required for individual lines.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl012.png
+
+
+4. Save and close the editor to commit the data to the geopackage using a sql trigger.
+   This will automatically write the data to the Multiple Tables and assign the grid elements.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl013.png
+
+
+5. Any edits to the polyline will result in an update to the table data.
 
 Multiple Channel Areas
 ----------------------
 
-When a channel is imported into QGIS using the Import FLO-2D Component button, the data is written to the Multiple Channel Areas layer as grid element sized
-polygons.
+This layer is activated when data is imported into the geopackage from an existing MULTCHAN.DAT file.  It is not used
+for editorial purposes.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl014.png
 
 Export MULT.DAT Files
 ----------------------
 
-To export the MULT.DAT file, check the Multiple Channel checkbox and click save.
-The MULT.DAT file will be written the next time the project data is exported.
+1. To export the MULT.DAT file,
+   check the Multiple Channel checkbox and click save.
+
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl008.png
 
+2. The MULT.DAT file will be
+   written the next time the project data is exported.
 
-.. |mutipl009| image:: ../../img/Multiple-Channel-Editor/mutipl009.png
+.. image:: ../../img/Multiple-Channel-Editor/mutipl015.png
 
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl016.png
+
+3. The data files are MULT.DAT and SIMPLE_MULT.DAT and can be reviewed in the Data Input Manual Build 22.
+
+.. image:: ../../img/Multiple-Channel-Editor/mutipl017.png
