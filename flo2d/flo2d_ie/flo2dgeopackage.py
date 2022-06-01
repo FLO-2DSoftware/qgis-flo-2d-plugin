@@ -698,11 +698,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.clear_tables("blocked_cells")
             head, data = self.parser.parse_arf()
             cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (x[0] for x in chain(data["T"], data["PB"]))
+            gids = [abs(int(x[0])) for x in chain(data["T"], data["PB"])]
             cells = self.grid_centroids(gids, buffers=True)
 
             for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                gid = row[0]
+                gid = abs(int(row[0]))
                 centroid = cells[gid]
                 cells_sql += [(centroid, i) + tuple(row)]
 
@@ -2027,7 +2027,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     row = [x if x is not None else "" for x in row]
                     # Is there any side blocked? If not omit it:
                     any_blocked = sum(row) - row[0] - row[1]
-                    if any_blocked > 0:
+                    if any_blocked != 0:
                         collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                         if collapse:
                             cll = collapse[0]
@@ -2039,7 +2039,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if cll[0] == 1:
                             arf_value = -arf_value
                         a.write(line3.format(cell, arf_value, *row[3:]))
-            #                     a.write(line3.format(*row))
 
             return True
 
