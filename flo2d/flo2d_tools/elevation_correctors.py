@@ -165,7 +165,7 @@ class LeveesElevation(ElevationCorrector):
             interpolated = interpolate_along_line(feat, self.schema_levees.getFeatures(), intervals)
             try:
                 for elev, fid in interpolated:
-                    cur.execute(qry, (round(elev, 3), fid))
+                    cur.execute(qry, (round(elev, 4), fid))
             except IndexError:
                 continue
         self.gutils.con.commit()
@@ -181,7 +181,7 @@ class LeveesElevation(ElevationCorrector):
         qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
         qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
         
-        for regionReqSwatch in gridRegionGenerator(self.gutils, grid, regionPadding = 0, showProgress=True) if regionReq is None else [regionReq]:
+        for regionReqSwatch in gridRegionGenerator(self.gutils, grid, regionPadding=0, showProgress=True) if regionReq is None else [regionReq]:
             feats = []
             featsElevNullPlusCorrect = []
             for feat in self.user_levees.getFeatures(regionReqSwatch):
@@ -193,20 +193,20 @@ class LeveesElevation(ElevationCorrector):
                     continue
                 elif elev != NULL and cor != NULL:
                     val = elev + cor
-                    feats.append((round(val, 3), fid))
+                    feats.append((round(val, 4), fid))
                 elif elev != NULL and cor == NULL:
                     val = elev
-                    feats.append((round(val, 3), fid))
+                    feats.append((round(val, 4), fid))
                 elif elev == NULL and cor != NULL:
                     val = cor
-                    featsElevNullPlusCorrect.append((round(val,3), fid))
+                    featsElevNullPlusCorrect.append((round(val, 4), fid))
                 else:
                     continue
             if len(feats) > 0:
-                print ("Writing %i levee features with elevations to db" % len(feats))
+                print("Writing %i levee features with elevations to db" % len(feats))
                 cur.executemany(qry, feats)
             if len(featsElevNullPlusCorrect) > 0:
-                print ("Writing %i levee features without an assigned elevation to db" % len(featsElevNullPlusCorrect))
+                print("Writing %i levee features without an assigned elevation to db" % len(featsElevNullPlusCorrect))
                 cur.executemany(qryElevNullPlusCorrect, featsElevNullPlusCorrect)
             if len(feats) > 0 or len(featsElevNullPlusCorrect) > 0:
                 self.gutils.con.commit()
@@ -220,7 +220,7 @@ class LeveesElevation(ElevationCorrector):
                 feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD
             )
             for elev, fid in poly_values:
-                qry_values.append((round(elev, 3), fid))
+                qry_values.append((round(elev, 4), fid))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -268,9 +268,9 @@ class GridElevation(ElevationCorrector):
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:
-                el = round(el, 3)
+                el = round(el, 4)
             if not cor_null:
-                cor = round(cor, 3)
+                cor = round(cor, 4)
 
             if not el_null and cor_null:
                 cur.execute(set_qry, (el, fid))
@@ -301,7 +301,7 @@ class GridElevation(ElevationCorrector):
             succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            qry_values.append((round(value, 3), feat.id()))
+            qry_values.append((round(value, 4), feat.id()))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -343,7 +343,7 @@ class GridElevation(ElevationCorrector):
             succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
             if succes != 0:
                 continue
-            qry_values.append((round(value, 3), feat.id()))
+            qry_values.append((round(value, 4), feat.id()))
         cur = self.gutils.con.cursor()
         cur.executemany(qry, qry_values)
         self.gutils.con.commit()
@@ -382,7 +382,7 @@ class GridElevation(ElevationCorrector):
                 elevs.append(elev)
             if not elevs:
                 continue
-            elevation = round(calculation_method(elevs), 3)
+            elevation = round(calculation_method(elevs), 4)
             for g in gids:
                 qry_values.append((elevation, g))
         cur = self.gutils.con.cursor()
@@ -473,9 +473,9 @@ class ExternalElevation(ElevationCorrector):
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:
-                el = round(el, 3)
+                el = round(el, 4)
             if not cor_null:
-                cor = round(cor, 3)
+                cor = round(cor, 4)
 
             if not el_null and cor_null:
                 qry_values.append((set_qry, (el, gid)))
@@ -523,7 +523,7 @@ class ExternalElevation(ElevationCorrector):
             elevs = []
             for grid_feat in self.grid.getFeatures(grid_request):
                 elevs.append(grid_feat["elevation"])
-            elevation = round(calculation_method(elevs), 3)
+            elevation = round(calculation_method(elevs), 4)
             fids_elevs[fid] = {"elev": elevation}
             for g in grids_fids:
                 cur.execute(qry, (elevation, g))
