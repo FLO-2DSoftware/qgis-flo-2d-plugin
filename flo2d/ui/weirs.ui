@@ -820,31 +820,11 @@
                  </size>
                 </property>
                 <property name="currentText">
-                 <string>CIRCULAR</string>
+                 <string>TRIANGULAR</string>
                 </property>
                 <item>
                  <property name="text">
-                  <string>CIRCULAR</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>FORCE_MAIN</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>FILLED_CIRCULAR</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>RECT_CLOSED</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>RECT_OPEN</string>
+                  <string>TRIANGULAR</string>
                  </property>
                 </item>
                 <item>
@@ -854,82 +834,7 @@
                 </item>
                 <item>
                  <property name="text">
-                  <string>TRIANGULAR</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>HORIZ_ELLIPSE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>VERT_ELLIPSE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>ARCH</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>PARABOLIC</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>POWER</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>RECT_TRIANGULAR</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>RECT_ROUND</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>MODBASKETHANDLE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>EGG</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>HORSESHOE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>GOTHIC</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>CATENARY</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>SEMIELLIPTICAL</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>BASKETHANDLE</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>SEMICIRCULAR</string>
+                  <string>RECT_CLOSED</string>
                  </property>
                 </item>
                </widget>

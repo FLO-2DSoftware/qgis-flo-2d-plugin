@@ -56,28 +56,9 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
 
         self.shape = (
-            "CIRCULAR",
-            "FORCE_MAIN",
-            "FILLED_CIRCULAR",
-            "RECT_CLOSED",
-            "RECT_OPEN",
-            "TRAPEZOIDAL",
             "TRIANGULAR",
-            "HORIZ_ELLIPSE",
-            "VERT_ELLIPSE",
-            "ARCH",
-            "PARABOLIC",
-            "POWER",
-            "RECT_TRIANGULAR",
-            "RECT_ROUND",
-            "MODBASKETHANDLE",
-            "EGG",
-            "HORSESHOE",
-            "GOTHIC",
-            "CATENARY",
-            "SEMIELLIPTICAL",
-            "BASKETHANDLE",
-            "SEMICIRCULAR",
+            "TRAPEZOIDAL",
+            "RECT_CLOSED"
         )
         
         self.setup_connection()
@@ -177,7 +158,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                         elif column == 11:
                             if data.upper() not in self.shape:  
                                 wrong_status += 1 
-                                data = "TRIANGULAR"  
+                                data = "RECT_CLOSE"  
                                 item.setData(Qt.DisplayRole, data) 
                             index = self.weir_shape_cbo.findText(data)
                             if index == -1:
@@ -521,7 +502,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
             item = self.weirs_tblw.item(row, 10)
             if item is not None:
                 shape = str(item.text())
-                weir_shape = shape if shape in self.shape else "CIRCULAR"                
+                weir_shape = shape if shape in self.shape else "RECT_CLOSED"               
 
             item = self.weirs_tblw.item(row, 11)
             if item is not None:

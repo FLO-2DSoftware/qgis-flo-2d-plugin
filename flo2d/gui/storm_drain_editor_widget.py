@@ -1534,7 +1534,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     weir_flap = values["weir_flap_gate"] if "weir_flap_gate" in values else "NO"
                     weir_end_contrac = int_or_zero(values["weir_end_contrac"]) if "weir_end_contrac" in values else 0      
                     weir_end_coeff = float_or_zero(values["weir_end_coeff"]) if "weir_end_coeff" in values else 0.0        
-                    weir_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
+                    weir_shape = values["xsections_shape"] if "xsections_shape" in values else "RECT_CLOSED"
                     weir_height = float_or_zero(values["xsections_height"]) if "xsections_height" in values else 0.0    
                     weir_length = float_or_zero(values["xsections_width"]) if "xsections_width" in values else 0.0    
                     weir_side_slope = float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0.0       

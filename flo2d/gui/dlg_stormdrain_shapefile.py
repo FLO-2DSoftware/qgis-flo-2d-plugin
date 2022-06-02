@@ -1784,6 +1784,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(weirs_shapefile, self.lyrs.group).layer()
                 weirs_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
+                wrong_types = 0
+                wrong_shapes = 0
     
                 for f in weirs_shapefile_fts:
                     weir_name = (
@@ -1801,11 +1803,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
-                    weir_type = (
-                        f[self.weir_type_FieldCbo.currentText()]
-                        if self.weir_type_FieldCbo.currentText() in ["SIDE", "BOTTOM"]
-                        else "SIDE"
-                    )
+                    weir_type = (f[self.weir_type_FieldCbo.currentText()])
+                    if not weir_type in ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"]:
+                        weir_type =  "TRANSVERSE"
+                        wrong_types += 1
+    
                     weir_crest_height = (
                         f[self.weir_crest_height_FieldCbo.currentText()]
                         if self.weir_crest_height_FieldCbo.currentText() != ""
@@ -1836,11 +1838,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_side_slope_FieldCbo.currentText() != ""
                         else 0.0
                     )
-                    weir_shape = (
-                        f[self.weir_shape_FieldCbo.currentText()]
-                        if self.weir_shape_FieldCbo.currentText() in  ["CIRCULAR", "RECT_CLOSED"]
-                        else "CIRCULAR"
-                    )
+                    weir_shape = (f[self.weir_shape_FieldCbo.currentText()])
+                    if not weir_shape in  ["TRIANGULAR", "TRAPEZOIDAL", "RECT_CLOSED"]:
+                        weir_shape = "RECT_CLOSED"
+                        wrong_shapes += 1
+    
                     weir_height = (
                         f[self.weir_height_FieldCbo.currentText()]
                         if self.weir_height_FieldCbo.currentText() != ""
@@ -1925,7 +1927,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
                         + outside_weirs
                     )
-            
+                 
+                msg = ""   
+                if wrong_types > 0:
+                    msg += "\nThere are " + str(wrong_types) + " weirs with wrong type!"
+                if wrong_shapes > 0:
+                    msg += "\nThere are " + str(wrong_shapes) + " weirs with wrong shape!"
+                if msg != "":
+                    self.uc.show_info("WARNING 020622.0540:\n" + msg + "\n\nDefault values were assigned.")        
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
