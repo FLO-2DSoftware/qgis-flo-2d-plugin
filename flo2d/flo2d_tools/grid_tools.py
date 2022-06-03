@@ -1204,8 +1204,10 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
     if showProgress == True:
         progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
         progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
+        QApplication.processEvents()
 
-        progress = 0.0
     while regionCounter < regionCount:
         for row in range(rowCount):
             yMin = gridExt.yMinimum() + ySpan / rowCount * row - regionPadding / 2.0
@@ -1221,8 +1223,7 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
                 if showProgress == True:
                     if progDialog.wasCanceled() == True:
                         break
-                    progress = regionCounter/regionCount * 100.0
-                    progDialog.setValue(progress)
+                    progDialog.setValue(regionCounter/regionCount * 100.0)
                     QApplication.processEvents()
                 print ("Processing region: %s of %s" % (regionCounter, regionCount))
                 yield request
