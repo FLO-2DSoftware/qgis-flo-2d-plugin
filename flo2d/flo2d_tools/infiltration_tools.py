@@ -113,46 +113,46 @@ class InfiltrationCalculator(object):
 
                 rtimp_fid = 0
 
-                for soil_feat, engine in soil_features.values():
-                    soil_rtimp = soil_feat[self.rtimps_fld]
-                    rtimp_geom = soil_feat.geometry()
-                    land_fids = land_index.intersects(rtimp_geom.boundingBox())
-                    for land_fid in land_fids:
-                        land_feat, land_engine = land_features[land_fid]
-                        land_rtimp = land_feat[self.rtimpl_fld]
-                        if land_rtimp < soil_rtimp:
-                            continue
-
-                        rtimp_geom = rtimp_geom.makeDifference(land_feat.geometry())
-
-                    if not rtimp_geom:
-                        continue
-
-                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
-                    rtimp_feat.setGeometry(rtimp_geom)
-                    rtimp_feat[0] = soil_rtimp
-                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
-                    rtimp_index.insertFeature(rtimp_feat)
-                    rtimp_fid = rtimp_fid + 1
-
                 for land_feat, engine in land_features.values():
                     land_rtimp = land_feat[self.rtimpl_fld]
                     rtimp_geom = land_feat.geometry()
+
                     soil_fids = soil_index.intersects(rtimp_geom.boundingBox())
                     for soil_fid in soil_fids:
                         soil_feat, soil_engine = soil_features[soil_fid]
                         soil_rtimp = soil_feat[self.rtimps_fld]
-                        if soil_rtimp < land_rtimp:
-                            continue
+                        if soil_rtimp > land_rtimp:
+                            rtimp_geom = rtimp_geom.difference(soil_feat.geometry())
 
-                        rtimp_geom = rtimp_geom.makeDifference(soil_feat.geometry())
-
-                    if not rtimp_geom:
+                    if rtimp_geom.isEmpty():
                         continue
 
                     rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
                     rtimp_feat.setGeometry(rtimp_geom)
                     rtimp_feat[0] = land_rtimp
+                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
+                    rtimp_index.insertFeature(rtimp_feat)
+                    rtimp_fid = rtimp_fid + 1
+
+                rtimp_id_for_land = rtimp_fid - 1
+
+                for soil_feat, engine in soil_features.values():
+                    soil_rtimp = soil_feat[self.rtimps_fld]
+                    rtimp_geom = QgsGeometry(soil_feat.geometry())
+
+                    land_fids = rtimp_index.intersects(rtimp_geom.boundingBox())
+                    for land_fid in land_fids:
+                        if land_fid > rtimp_id_for_land:
+                            continue
+                        land_feat, land_engine = rtimp_features[land_fid]
+                        rtimp_geom = rtimp_geom.difference(land_feat.geometry())
+
+                    if rtimp_geom.isEmpty():
+                        continue
+
+                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
+                    rtimp_feat.setGeometry(rtimp_geom)
+                    rtimp_feat[0] = soil_rtimp
                     rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
                     rtimp_index.insertFeature(rtimp_feat)
                     rtimp_fid = rtimp_fid + 1
