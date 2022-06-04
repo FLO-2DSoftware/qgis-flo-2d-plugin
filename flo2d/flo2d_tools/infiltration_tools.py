@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from math import log, exp, log10
-from qgis.core import QgsGeometry, QgsSpatialIndex, QgsFeature, QgsField, QgsFields
+from qgis.core import QgsGeometry, QgsSpatialIndex, QgsFeature, QgsField, QgsFields, QgsProject, QgsRectangle, QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QApplication
 from .grid_tools import poly2poly_geos_from_features, intersection_spatial_index, centroids2poly_geos, gridRegionGenerator
 from ..user_communication import UserCommunication
@@ -101,10 +101,21 @@ class InfiltrationCalculator(object):
             grid_params = {}
             green_ampt = GreenAmpt()
 
-            for request in gridRegionGenerator(self.gutils, self.grid_lyr, showProgress=True):
+            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=10, regionPadding=5, showProgress=True):
 
-                soil_features, soil_index = intersection_spatial_index(self.soil_lyr, request)
-                land_features, land_index = intersection_spatial_index(self.land_lyr, request)
+                # calculate extent of concerned grid element
+                grid_elems=self.grid_lyr.getFeatures(request)
+                grid_elem_extent = QgsRectangle()
+                grid_elem_extent.setMinimal()
+                for grid_elem in grid_elems:
+                    grid_elem_extent.combineExtentWith(grid_elem.geometry().boundingBox())
+
+                grid_elem_extent.grow(grid_elem_extent.width()/20.0)
+                soil_and_land_request=QgsFeatureRequest()
+                soil_and_land_request.setFilterRect(grid_elem_extent)
+
+                soil_features, soil_index = intersection_spatial_index(self.soil_lyr, soil_and_land_request, clip=True)
+                land_features, land_index = intersection_spatial_index(self.land_lyr, soil_and_land_request, clip=True)
 
                 rtimp_features = {}
                 rtimp_index = QgsSpatialIndex()
@@ -158,7 +169,6 @@ class InfiltrationCalculator(object):
                     rtimp_fid = rtimp_fid + 1
 
                 try:
-
                     soil_values = poly2poly_geos_from_features(
                         self.grid_lyr,
                         soil_features,

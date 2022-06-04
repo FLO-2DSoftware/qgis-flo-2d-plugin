@@ -573,6 +573,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     no_inter = ""
                     for nope in non_intercepted:
                         no_inter += "\n" + str(nope)
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_info(
                         "WARNING 150119.0354: Calculating Green-Ampt parameters finished, but \n"
                         + str(len(non_intercepted))
@@ -592,12 +593,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
-            QApplication.restoreOverrideCursor()
             self.uc.show_error(
                 "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
                 + "\n__________________________________________________",
                 e,
             )
+
+        QApplication.restoreOverrideCursor()
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)

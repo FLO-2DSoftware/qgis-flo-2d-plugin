@@ -410,9 +410,10 @@ def spatial_centroids_index(vlayer, request=None):
     return allfeatures, index
 
 
-def intersection_spatial_index(vlayer, request=None):
+def intersection_spatial_index(vlayer, request=None, clip = False):
     """
     Creating optimized for intersections spatial index over collection of features.
+    If clip id True and request not None, all geometry are clipped in the request rectangle filter
     """
     allfeatures = {}
     index = QgsSpatialIndex()
@@ -420,6 +421,9 @@ def intersection_spatial_index(vlayer, request=None):
     if len(all_feature_id) == 0:
         return allfeatures, index
     max_fid = max(all_feature_id) + 1
+
+    if request is not None:
+        extent_geom=QgsGeometry.fromRect(request.filterRect())
 
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         geom = feat.geometry()
@@ -437,7 +441,15 @@ def intersection_spatial_index(vlayer, request=None):
             engine = QgsGeometry.createGeometryEngine(g.constGet())
             engine.prepareGeometry()
             feat_copy = QgsFeature(feat)
-            feat_copy.setGeometry(g)
+            if clip:
+                clipped_geom = QgsGeometry(engine.intersection(extent_geom.constGet()))
+                if clipped_geom.isNull() or clipped_geom.isEmpty():
+                    continue
+                feat_copy.setGeometry(clipped_geom)
+                engine = QgsGeometry.createGeometryEngine(clipped_geom.constGet())
+                engine.prepareGeometry()
+            else:
+                feat_copy.setGeometry(g)
             if new_fid is True:
                 fid = max_fid
                 feat_copy.setId(fid)
