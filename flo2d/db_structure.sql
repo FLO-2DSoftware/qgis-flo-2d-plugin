@@ -1972,18 +1972,18 @@ CREATE TRIGGER IF NOT EXISTS "find_breach_cells_delete"
 
 CREATE TABLE "mud" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "va" REAL, -- VA, coefficient in the viscosity versus sediment concentration by volume relationship
-    "vb" REAL, -- VB, exponent in the viscosity versus sediment concentration by volume relationship
-    "ysa" REAL, -- YSA, coefficient of the yield stress versus sediment concentration
-    "ysb" REAL, -- YSB, exponent of yield stress versus sediment concentration
-    "sgsm" REAL, -- SGSM, mudflow mixtures specific gravity
-    "xkx" REAL -- XKX, the laminar flow resistance parameter for overland flow
+    "va" REAL DEFAULT 1.0, -- VA, coefficient in the viscosity versus sediment concentration by volume relationship
+    "vb" REAL DEFAULT 0.0, -- VB, exponent in the viscosity versus sediment concentration by volume relationship
+    "ysa" REAL DEFAULT 1.0, -- YSA, coefficient of the yield stress versus sediment concentration
+    "ysb" REAL DEFAULT 0.0, -- YSB, exponent of yield stress versus sediment concentration
+    "sgsm" REAL DEFAULT 2.5, -- SGSM, mudflow mixtures specific gravity
+    "xkx" REAL DEFAULT 4285 -- XKX, the laminar flow resistance parameter for overland flow
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud', 'aspatial');
 
 CREATE TABLE "mud_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "debrisv" REAL -- DEBRISV, volume of the debris basin
+    "debrisv" REAL DEFAULT 0.0 -- DEBRISV, volume of the debris basin
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mud_areas', 'features', 4326);
 SELECT gpkgAddGeometryColumn('mud_areas', 'geom', 'POLYGON', 0, 0, 0);
@@ -1997,20 +1997,18 @@ CREATE TABLE "mud_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mud_cells', 'aspatial');
 
--- SED 
-
 CREATE TABLE "sed" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "isedeqg" INTEGER, -- ISEDEQG, transport equation number used in sediment routing for overland flow
-    "isedsizefrac" INTEGER, -- ISEDSIZEFRAC, switch, if 1 sediment routing will be performed by size fraction, 0 for sed routing not by size fraction
-    "dfifty" REAL, -- DFIFTY, sediment size (D50) in mm for sediment routing
-    "sgrad" REAL, -- SGRAD, sediment gradation coefficient (non-dimensional)
-    "sgst" REAL, -- SGST, sediment specific gravity
-    "dryspwt" REAL, -- DRYSPWT, dry specific weight of the sediment
-    "cvfg" REAL, -- CVFG, fine sediment volumetric concentration for overland, channel, and streets
-    "isedsupply" INTEGER, -- ISEDSUPPLY, if 1 sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area, otherwise 0
-    "isedisplay" INTEGER, -- ISEDISPLAY, grid element number for which the sediment transport capacity for all the sediment transport equations will be listed by output
-    "scourdep" REAL -- maximum allowable scour depth for all floodplain elements
+    "isedeqg" INTEGER DEFAULT 1, -- ISEDEQG, transport equation number used in sediment routing for overland flow
+    "isedsizefrac" INTEGER DEFAULT 0, -- ISEDSIZEFRAC, switch, if 1 sediment routing will be performed by size fraction, 0 for sed routing not by size fraction
+    "dfifty" REAL DEFAULT 0.0625, -- DFIFTY, sediment size (D50) in mm for sediment routing
+    "sgrad" REAL DEFAULT 2.5, -- SGRAD, sediment gradation coefficient (non-dimensional)
+    "sgst" REAL DEFAULT 2.5, -- SGST, sediment specific gravity
+    "dryspwt" REAL DEFAULT 14700.0, -- DRYSPWT, dry specific weight of the sediment
+    "cvfg" REAL DEFAULT 0.03000, -- CVFG, fine sediment volumetric concentration for overland, channel, and streets
+    "isedsupply" INTEGER DEFAULT 0, -- ISEDSUPPLY, if 1 sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area, otherwise 0
+    "isedisplay" INTEGER DEFAULT 0, -- ISEDISPLAY, grid element number for which the sediment transport capacity for all the sediment transport equations will be listed by output
+    "scourdep" REAL DEFAULT 3.0 -- maximum allowable scour depth for all floodplain elements
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed', 'aspatial');
 
@@ -2102,7 +2100,8 @@ CREATE TABLE "sed_supply_frac_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
------------------------------
+---SED TRIGGERS
+
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_insert', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_insert"
     AFTER INSERT ON "sed_group_areas"
@@ -2133,6 +2132,24 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_delete"
     BEGIN
         DELETE FROM "sed_group_cells" WHERE area_fid = OLD."fid";
     END;    
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_sed_rigid_cells_insert', 1);
+CREATE TRIGGER IF NOT EXISTS "find_sed_rigid_cells_insert"
+    AFTER INSERT ON "sed_rigid_areas"
+    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "sed_rigid_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "sed_rigid_cells" (area_fid, grid_fid) SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_sed_rigid_cell_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_sed_rigid_cell_delete"
+    AFTER DELETE ON "sed_rigid_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_sed_rigid_cell_delete')
+    BEGIN
+        DELETE FROM "sed_rigid_cells" WHERE area_fid = OLD."fid";
+    END;
 
 -- USERS Layers
 

@@ -217,8 +217,6 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     val = _mud
                 elif key == "ISED":
                     val = _sed
-                # elif key == "IMULTC":
-                #     val = self.IMULTC_cbo.currentIndex()
                 else:
                     widget = getattr(self, key)
                     if isinstance(widget, QCheckBox):
@@ -238,7 +236,13 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 control_lyr = self.lyrs.data["cont"]["qlyr"]
                 control_lyr.startEditing()
                 control_lyr.commitChanges()
-                QCoreApplication.processEvents()
+                QCoreApplication.processEvents()          
+                
+            if _mud == 1:
+                self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
+            elif _sed == 1:
+                self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);") 
+                            
             return True
     
         except Exception as e:

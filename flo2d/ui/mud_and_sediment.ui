@@ -35,6 +35,20 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout_10">
+   <item row="3" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item row="0" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_29">
      <item>
@@ -42,9 +56,12 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>148</width>
+         <width>250</width>
          <height>20</height>
         </size>
        </property>
@@ -80,31 +97,33 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>148</width>
+         <width>150</width>
          <height>20</height>
         </size>
        </property>
       </spacer>
      </item>
-    </layout>
-   </item>
-   <item row="2" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+      <widget class="QPushButton" name="sed_transp_restore_defaults_btn">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       <property name="text">
+        <string>Restore Defaults</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="1" column="0">
+   <item row="2" column="0">
     <widget class="QTabWidget" name="mud_sediment_tabWidget">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
@@ -516,10 +535,13 @@
                       </size>
                      </property>
                      <property name="decimals">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="maximum">
                       <double>50000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>4285.000000000000000</double>
                      </property>
                     </widget>
                    </item>
@@ -699,10 +721,13 @@
                   </size>
                  </property>
                  <property name="decimals">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <property name="maximum">
                   <double>1000000.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>4285.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -1269,12 +1294,12 @@
          </layout>
         </widget>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>30</x>
+          <x>0</x>
           <y>10</y>
-          <width>826</width>
+          <width>861</width>
           <height>111</height>
          </rect>
         </property>
@@ -1287,7 +1312,7 @@
               <widget class="QLabel" name="label_6">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>110</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1298,7 +1323,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>Transport equation for sediment routing</string>
+                <string>Sediment transport eqn.</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1613,7 +1638,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>Sediment D50 size (mm)</string>
+                <string>D50 (mm)</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1665,7 +1690,7 @@
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>70</width>
+                 <width>80</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1676,7 +1701,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sed Gradation coeff.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>Gradiation coeff.</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1730,8 +1755,14 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDTRAN.OUT Report Node&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDTRAN.OUT Node&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1780,7 +1811,7 @@
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>70</width>
+                 <width>80</width>
                  <height>0</height>
                 </size>
                </property>
@@ -1791,7 +1822,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>Maximum scour depth</string>
+                <string>Max. scour depth</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1835,7 +1866,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>439</x>
@@ -2176,13 +2207,13 @@
              <property name="minimumSize">
               <size>
                <width>250</width>
-               <height>210</height>
+               <height>180</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
                <width>250</width>
-               <height>210</height>
+               <height>180</height>
               </size>
              </property>
              <property name="title">

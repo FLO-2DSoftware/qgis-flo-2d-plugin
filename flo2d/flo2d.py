@@ -802,11 +802,8 @@ class Flo2D(object):
 
             try:
                 start_time = time.time()
-                
-                # if call == "import_sed":
-                #     self.gutils.disable_geom_triggers()                
+                               
                 method = getattr(self.f2g, call)
-                # self.gutils.enable_geom_triggers()
                 
                 if method(*args):
                     if call.startswith("export"):
