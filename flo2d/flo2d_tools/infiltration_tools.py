@@ -7,7 +7,7 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from math import log, exp, log10
+from math import log, exp, log10, sqrt
 from qgis.core import QgsGeometry, QgsSpatialIndex, QgsFeature, QgsField, QgsFields, QgsProject, QgsRectangle, QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QApplication
 from .grid_tools import poly2poly_geos_from_features, intersection_spatial_index, centroids2poly_geos, gridRegionGenerator
@@ -101,10 +101,13 @@ class InfiltrationCalculator(object):
             grid_params = {}
             green_ampt = GreenAmpt()
 
-            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=10, regionPadding=5, showProgress=True):
+            grid_element_count = self.grid_lyr.featureCount()
+            gris_span = int(max(sqrt(grid_element_count) /10,10))
+
+            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=gris_span, regionPadding=5, showProgress=True):
 
                 # calculate extent of concerned grid element
-                grid_elems=self.grid_lyr.getFeatures(request)
+                grid_elems = self.grid_lyr.getFeatures(request)
                 grid_elem_extent = QgsRectangle()
                 grid_elem_extent.setMinimal()
                 for grid_elem in grid_elems:
@@ -126,47 +129,24 @@ class InfiltrationCalculator(object):
 
                 for land_feat, engine in land_features.values():
                     land_rtimp = land_feat[self.rtimpl_fld]
-                    rtimp_geom = land_feat.geometry()
+                    land_geom = land_feat.geometry()
 
-                    soil_fids = soil_index.intersects(rtimp_geom.boundingBox())
+                    soil_fids = soil_index.intersects(land_geom.boundingBox())
                     for soil_fid in soil_fids:
                         soil_feat, soil_engine = soil_features[soil_fid]
                         soil_rtimp = soil_feat[self.rtimps_fld]
-                        if soil_rtimp > land_rtimp:
-                            rtimp_geom = rtimp_geom.difference(soil_feat.geometry())
+                        rtimp_geom = land_geom.intersection(soil_feat.geometry())
 
-                    if rtimp_geom.isEmpty():
-                        continue
-
-                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
-                    rtimp_feat.setGeometry(rtimp_geom)
-                    rtimp_feat[0] = land_rtimp
-                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
-                    rtimp_index.insertFeature(rtimp_feat)
-                    rtimp_fid = rtimp_fid + 1
-
-                rtimp_id_for_land = rtimp_fid - 1
-
-                for soil_feat, engine in soil_features.values():
-                    soil_rtimp = soil_feat[self.rtimps_fld]
-                    rtimp_geom = QgsGeometry(soil_feat.geometry())
-
-                    land_fids = rtimp_index.intersects(rtimp_geom.boundingBox())
-                    for land_fid in land_fids:
-                        if land_fid > rtimp_id_for_land:
+                        if rtimp_geom.isEmpty():
                             continue
-                        land_feat, land_engine = rtimp_features[land_fid]
-                        rtimp_geom = rtimp_geom.difference(land_feat.geometry())
 
-                    if rtimp_geom.isEmpty():
-                        continue
+                        rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
 
-                    rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
-                    rtimp_feat.setGeometry(rtimp_geom)
-                    rtimp_feat[0] = soil_rtimp
-                    rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
-                    rtimp_index.insertFeature(rtimp_feat)
-                    rtimp_fid = rtimp_fid + 1
+                        rtimp_feat.setGeometry(rtimp_geom)
+                        rtimp_feat[0] = max(land_rtimp, soil_rtimp)
+                        rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
+                        rtimp_index.insertFeature(rtimp_feat)
+                        rtimp_fid = rtimp_fid + 1
 
                 try:
                     soil_values = poly2poly_geos_from_features(
