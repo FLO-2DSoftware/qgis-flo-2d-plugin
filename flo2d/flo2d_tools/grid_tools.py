@@ -410,13 +410,21 @@ def spatial_centroids_index(vlayer, request=None):
     return allfeatures, index
 
 
-def intersection_spatial_index(vlayer, request=None):
+def intersection_spatial_index(vlayer, request=None, clip = False):
     """
     Creating optimized for intersections spatial index over collection of features.
+    If clip id True and request not None, all geometry are clipped in the request rectangle filter
     """
     allfeatures = {}
     index = QgsSpatialIndex()
-    max_fid = max(vlayer.allFeatureIds()) + 1
+    all_feature_id = vlayer.allFeatureIds()
+    if len(all_feature_id) == 0:
+        return allfeatures, index
+    max_fid = max(all_feature_id) + 1
+
+    if request is not None:
+        extent_geom=QgsGeometry.fromRect(request.filterRect())
+
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         geom = feat.geometry()
         if not geom.isGeosValid():
@@ -433,7 +441,15 @@ def intersection_spatial_index(vlayer, request=None):
             engine = QgsGeometry.createGeometryEngine(g.constGet())
             engine.prepareGeometry()
             feat_copy = QgsFeature(feat)
-            feat_copy.setGeometry(g)
+            if clip:
+                clipped_geom = QgsGeometry(engine.intersection(extent_geom.constGet()))
+                if clipped_geom.isNull() or clipped_geom.isEmpty():
+                    continue
+                feat_copy.setGeometry(clipped_geom)
+                engine = QgsGeometry.createGeometryEngine(clipped_geom.constGet())
+                engine.prepareGeometry()
+            else:
+                feat_copy.setGeometry(g)
             if new_fid is True:
                 fid = max_fid
                 feat_copy.setId(fid)
@@ -720,7 +736,7 @@ def poly2poly_geos(base_polygons, polygons, request=None, *columns):
 
     allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
 
-    return poly2poly_geos_from_features(base_polygons, allfeatures, index, request=request, *columns)
+    return poly2poly_geos_from_features(base_polygons, allfeatures, index, request, *columns)
 
 
 
@@ -732,31 +748,32 @@ def poly2poly_geos_from_features(base_polygons, polygons_features, polygon_spati
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
         base_geom = feat.geometry()
-        fids = polygon_spatial_index.intersects(base_geom.boundingBox())
-        if not fids:
-            continue
         base_fid = feat.id()
-        base_area = base_geom.area()
-        base_geom_geos = base_geom.constGet()
-        base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
-        base_geom_engine.prepareGeometry()
         base_parts = []
-        for fid in fids:
-            f, other_geom_engine = polygons_features[fid]
-            inter = other_geom_engine.intersects(base_geom_geos)
-            if inter is False:
-                continue
-            if other_geom_engine.contains(base_geom_geos):
-                subarea = 1
-            elif base_geom_engine.contains(f.geometry().constGet()):
-                subarea = other_geom_engine.area() / base_area
-            else:
-                intersection_geom = other_geom_engine.intersection(base_geom_geos)
-                if not intersection_geom:
+        fids = polygon_spatial_index.intersects(base_geom.boundingBox())
+        if fids:
+            base_area = base_geom.area()
+            base_geom_geos = base_geom.constGet()
+            base_geom_engine = QgsGeometry.createGeometryEngine(base_geom_geos)
+            base_geom_engine.prepareGeometry()
+
+            for fid in fids:
+                f, other_geom_engine = polygons_features[fid]
+                inter = other_geom_engine.intersects(base_geom_geos)
+                if inter is False:
                     continue
-                subarea = intersection_geom.area() / base_area
-            values = tuple(f[col] for col in columns) + (subarea,)
-            base_parts.append(values)
+                if other_geom_engine.contains(base_geom_geos):
+                    subarea = 1
+                elif base_geom_engine.contains(f.geometry().constGet()):
+                    subarea = other_geom_engine.area() / base_area
+                else:
+                    intersection_geom = other_geom_engine.intersection(base_geom_geos)
+                    if not intersection_geom:
+                        continue
+                    subarea = intersection_geom.area() / base_area
+                values = tuple(f[col] for col in columns) + (subarea,)
+                base_parts.append(values)
+
         yield base_fid, base_parts
 
 
@@ -1199,8 +1216,10 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
     if showProgress == True:
         progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
         progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
+        QApplication.processEvents()
 
-        progress = 0.0
     while regionCounter < regionCount:
         for row in range(rowCount):
             yMin = gridExt.yMinimum() + ySpan / rowCount * row - regionPadding / 2.0
@@ -1216,8 +1235,8 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
                 if showProgress == True:
                     if progDialog.wasCanceled() == True:
                         break
-                    progress = regionCounter/regionCount * 100.0
-                    progDialog.setValue(progress)
+                    progDialog.setValue(regionCounter/regionCount * 100.0)
+                    QApplication.processEvents()
                 print ("Processing region: %s of %s" % (regionCounter, regionCount))
                 yield request
             if showProgress == True:
