@@ -123,7 +123,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
             self.infil_lyr = self.lyrs.data["user_infiltration"]["qlyr"]
             self.eff_lyr = self.lyrs.data["user_effective_impervious_area"]["qlyr"]
-            self.schema_green = self.lyrs.data["infil_areas_green"]["qlyr"]
             self.schema_scs = self.lyrs.data["infil_areas_scs"]["qlyr"]
             self.schema_horton = self.lyrs.data["infil_areas_horton"]["qlyr"]
             self.schema_chan = self.lyrs.data["infil_areas_chan"]["qlyr"]
@@ -412,12 +411,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
             return
-        qry_green_areas = """INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
+        qry_green = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
         qry_chan_areas = """INSERT INTO infil_areas_chan (fid, geom, hydconch) VALUES (?,?,?);"""
         qry_scs_areas = """INSERT INTO infil_areas_scs (fid, geom, scsn) VALUES (?,?,?);"""
         qry_horton_areas = """INSERT INTO infil_areas_horton (fid, geom, fhorti, fhortf, deca) VALUES (?,?,?,?,?);"""
 
-        qry_green_cells = """INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);"""
         qry_chan_cells = """INSERT INTO infil_chan_elems (infil_area_fid, grid_fid) VALUES (?,?);"""
         qry_scs_cells = """INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES (?,?);"""
         qry_horton_cells = """INSERT INTO infil_cells_horton (infil_area_fid, grid_fid) VALUES (?,?);"""
@@ -432,7 +430,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             columns = self.infil_columns[sl]
             infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
             self.gutils.clear_tables(
-                "infil_areas_green",
                 "infil_areas_scs",
                 "infil_areas_horton",
                 "infil_areas_chan",
@@ -442,19 +439,17 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 "infil_chan_elems",
             )
             if imethod == 1 or imethod == 3:
-                green_area_vals, chan_area_vals, scs_area_vals = [], [], []
-                green_cells_vals, chan_cells_vals, scs_cells_vals = [], [], []
-                green_fid, chan_fid, scs_fid = 1, 1, 1
+                green_vals, chan_area_vals, scs_area_vals = [], [], []
+                chan_cells_vals, scs_cells_vals = [], [], []
+                chan_fid, scs_fid = 1, 1
                 for grid_row in infiltration_grids:
                     row = list(grid_row)
                     gid = row.pop()
                     char = row.pop(0)
                     geom = self.gutils.grid_geom(gid)
                     if char == "F":
-                        val = (green_fid, geom) + tuple(row[:6])
-                        green_area_vals.append(val)
-                        green_cells_vals.append((green_fid, gid))
-                        green_fid += 1
+                        val = (gid,) + tuple(row[:6])
+                        green_vals.append(val)
                     elif char == "C":
                         val = (chan_fid, geom, row[6])
                         chan_area_vals.append(val)
@@ -466,10 +461,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         scs_cells_vals.append((scs_fid, gid))
                         scs_fid += 1
                 cur = self.con.cursor()
-                cur.executemany(qry_green_areas, green_area_vals)
+                cur.executemany(qry_green, green_vals)
                 cur.executemany(qry_chan_areas, chan_area_vals)
                 cur.executemany(qry_scs_areas, scs_area_vals)
-                cur.executemany(qry_green_cells, green_cells_vals)
                 cur.executemany(qry_chan_cells, chan_cells_vals)
                 cur.executemany(qry_scs_cells, scs_cells_vals)
             else:
@@ -538,10 +532,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     except Exception:
                         pass
 
-                self.gutils.clear_tables("infil_areas_green", "infil_cells_green")
-                qry_areas = """INSERT INTO infil_areas_green (fid, geom, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
-                qry_cells = """INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES (?,?);"""
-                area_values = []
+                self.gutils.clear_tables("infil_cells_green")
+                qry_cells = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?);"""
                 cells_values = []
                 non_intercepted = []
                 for i, (gid, params) in enumerate(grid_params.items(), 1):
@@ -557,15 +549,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         params["rtimpf"],
                         params["soil_depth"],
                     )
-                    geom = self.gutils.grid_geom(gid)
-                    values = (i, geom) + tuple(round(p, 3) for p in par)
-                    area_values.append(values)
-                    cells_values.append((i, gid))
+                    values = (gid,) + tuple(round(p, 3) for p in par)
+                    cells_values.append(values)
                 cur = self.con.cursor()
-                cur.executemany(qry_areas, area_values)
                 cur.executemany(qry_cells, cells_values)
                 self.con.commit()
-                self.schema_green.triggerRepaint()
                 self.gutils.enable_geom_triggers()
                 QApplication.restoreOverrideCursor()
 

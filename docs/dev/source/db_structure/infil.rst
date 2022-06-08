@@ -4,8 +4,7 @@ INFIL.DAT
 INFIL.DAT information goes into the following GeoPackage tables:
 
 * infil - general infiltration data
-* infil_areas_green - polygon layer with individual FLOODPLAIN infiltration parameters for Green Ampt (INFILCHAR=F, line 6)
-* infil_cells_green - grid cells located inside infil_areas_green polygons, having individual infiltration params
+* infil_cells_green - grid cells located with having individual FLOODPLAIN infiltration parameters for Green Ampt (INFILCHAR=F, line 6)
 * infil_areas_scs - polygon layer with individual FLOODPLAIN infiltration parameters for SCS (INFILCHAR=S, line 7)
 * infil_cells_scs - grid cells located inside infil_areas_scs polygons, having individual infiltration params
 * infil_areas_horton - polygon layer with individual FLOODPLAIN infiltration parameters for Horton (INFILCHAR=H, line 10)
@@ -47,9 +46,10 @@ INFIL.DAT information goes into the following GeoPackage tables:
 * "hydcxfinal" REAL, -- HYDCXFINAL, final hydraulic conductivity for a channel segment
 * "soildepthcx" REAL -- SOILDEPTHCX, maximum soil depth for the initial channel infiltration
 
-**gpkg table: infil_areas_green** (areas of different floodplain infiltration data for Green Ampt)
+**gpkg table: infil_cells_green** (grid elements with a different floodplain infiltration data for Green Ampt)
 
 * "fid" INTEGER NOT NULL PRIMARY KEY,
+* "grid_fid" INTEGER, -- grid element number from grid table
 * "hydc" REAL, -- HYDC, grid element average hydraulic conductivity
 * "soils" REAL, -- SOILS, capillary suction head for floodplain grid elements
 * "dtheta" REAL, -- DTHETA, grid element soil moisture deficit
@@ -57,12 +57,6 @@ INFIL.DAT information goes into the following GeoPackage tables:
 * "rtimpf" REAL, -- RTIMPF, percent impervious floodplain area on a grid element
 * "soil_depth" REAL, -- SOIL_DEPTH, maximum soil depth for infiltration on a grid element
 * "geom" POLYGON
-
-**gpkg table: infil_cells_green** (grid elements with a different floodplain infiltration data for Green Ampt)
-
-* "fid" INTEGER NOT NULL PRIMARY KEY,
-* "grid_fid" INTEGER, -- grid element number from grid table
-* "infil_area_fid" INTEGER, -- polygon fid from infil_areas_green table
 
 **gpkg table: infil_areas_scs** (areas of different floodplain infiltration data for SCS)
 

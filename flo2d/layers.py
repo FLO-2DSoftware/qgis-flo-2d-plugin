@@ -657,16 +657,6 @@ class Layers(object):
                 ),                
                 # Infiltration Layers
                 (
-                    "infil_areas_green",
-                    {
-                        "name": "Areas Green Ampt",
-                        "sgroup": "Infiltration Layers",
-                        "styles": ["infil_areas.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
                     "infil_areas_scs",
                     {
                         "name": "Areas SCS",
