@@ -12,6 +12,7 @@
 BC_BORDER = None  # Static variable used to hold BC for type 5 outflow.
 MIN_ELEVS = 0
 MAX_ELEVS = 0
+old_IDEBRV = 0
 
 grid_index = {}
 

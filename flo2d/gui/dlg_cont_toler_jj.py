@@ -9,7 +9,7 @@
 
 from qgis.PyQt import QtCore
 from .ui_utils import load_ui
-from ..utils import float_or_zero
+from ..utils import float_or_zero, old_IDEBRV
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from collections import OrderedDict
@@ -103,10 +103,12 @@ class ContToler_JJ(qtBaseClass, uiDialog):
     
         self._startimtep = 1111
         self._endtimtep = 9999
+        old_IDEBRV = self.gutils.get_cont_par("IDEBRV")
         
         self.use_time_interval_grp.toggled.connect(self.use_time_interval_grp_checked)
         self.ITIMTEP.currentIndexChanged.connect(self.ITIMTEP_currentIndexChanged)
-        
+        self.ISED.currentIndexChanged.connect(self.ISED_currentIndexChanged)
+        self.IDEBRV.clicked.connect(self.IDEBRV_clicked)
         self.polulate_values_JJ()
 
     def set_spinbox_JJ(self, key, spin):
@@ -118,6 +120,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         try:
             _mud = False
             _sed = False
+            # _idebrv = self.gutils.get_cont_par("IDEBRV")
             for key, values in list(self.PARAMS.items()):
                 if key == "COURCHAR_C" or key == "COURCHAR_T":
                     continue
@@ -154,13 +157,13 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 if key == "ENDTIMTEP":
                     self._endtimtep = float_or_zero(db_val)        
 
-            widget = getattr(self, "ISED")
+            widgetISED = getattr(self, "ISED")
             if _mud and not _sed:
-                widget.setCurrentIndex(0)
+                widgetISED.setCurrentIndex(0)
             elif not _mud and _sed:
-                widget.setCurrentIndex(1)
+                widgetISED.setCurrentIndex(1)
             else:
-                widget.setCurrentIndex(2)
+                widgetISED.setCurrentIndex(2)
                 
             self.ITIMTEP_currentIndexChanged()    
                
@@ -189,7 +192,18 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         else:
             self.use_time_interval_grp.setChecked(True)
             self.use_time_interval_grp.setDisabled(False)
-                                
+ 
+    def ISED_currentIndexChanged(self):
+        # if self.ISED.currentIndex() == 0:
+        #     self.IDEBRV.setChecked(int(old_IDEBRV))
+        if  self.ISED.currentIndex() in [1,2]:
+            self.IDEBRV.setChecked(False)
+    
+    def IDEBRV_clicked(self):
+        if self.IDEBRV.isChecked() and self.ISED.currentIndex() != 0:   
+            self.uc.bar_warn("WARNING: Debris Basin is only used with Mud/Debris (in Physical Processes)")
+            self.IDEBRV.setChecked(False)
+   
     def save_parameters_JJ(self):
         try:
             if self.use_time_interval_grp.isChecked():
@@ -217,8 +231,6 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     val = _mud
                 elif key == "ISED":
                     val = _sed
-                # elif key == "IMULTC":
-                #     val = self.IMULTC_cbo.currentIndex()
                 else:
                     widget = getattr(self, key)
                     if isinstance(widget, QCheckBox):
@@ -238,7 +250,15 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 control_lyr = self.lyrs.data["cont"]["qlyr"]
                 control_lyr.startEditing()
                 control_lyr.commitChanges()
-                QCoreApplication.processEvents()
+                QCoreApplication.processEvents()          
+                
+            if _mud == 1:
+                self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
+            elif _sed == 1:
+                self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);") 
+        
+            old_IDEBRV = self.IDEBRV.isChecked() 
+                 
             return True
     
         except Exception as e:

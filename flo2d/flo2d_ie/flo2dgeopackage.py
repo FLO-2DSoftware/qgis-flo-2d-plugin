@@ -857,8 +857,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_s_sql += [(i, gid)]
             for ii, nrow in enumerate(nrows, 1):
                 sed_n_sql += [(ii,)]
-                data_n_sql += [(i,) + tuple(nrow)]
-
+                data_n_sql += [(i,) + tuple(nrow)] 
+        triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
         self.batch_execute(
             sed_m_sql,
             areas_d_sql,
@@ -870,13 +870,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_g_sql,
             sed_p_sql,
             areas_r_sql,
-            cells_r_sql,
+            # cells_r_sql,            
             areas_s_sql,
             cells_s_sql,
             sed_n_sql,
             data_n_sql,
         )
-
+        
+        if self.is_table_empty("mud_cells"):
+            self.set_cont_par("IDEBRV", 0)
+        
+        # Also triggers the creation of rigid cells (rigid_cells table):
+        # self.batch_execute(areas_r_sql)
+     
+        
     def import_levee(self):
         lgeneral_sql = ["""INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""", 4]
         ldata_sql = ["""INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""", 4]
@@ -2236,10 +2243,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_sed(self, outdir):
-        # check if there is any sedimentation data defined.
         try:
+            # check if there is any sedimentation data defined.  
             if self.is_table_empty("mud") and self.is_table_empty("sed"):
                 return False
+            
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")        
+            
+            if ISED == "0" and MUD == "0":
+                return False              
+
             sed_m_sql = """SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;"""
             sed_ce_sql = """SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
                             FROM sed ORDER BY fid;"""
@@ -2267,69 +2281,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line9 = "N  {0}  {1}\n"
             line10 = "G  {0}  {1}\n"
 
-            ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")
-
             m_data = self.execute(sed_m_sql).fetchone()
             ce_data = self.execute(sed_ce_sql).fetchone()
-            
-            if ISED == "0" and MUD == "0":
+            if m_data is None and ce_data is None:
                 return False
-            
-            # if m_data is None and ce_data is None:
-            #     return False
-            # else:
-            #     pass
+
             sed = os.path.join(outdir, "SED.DAT")
             with open(sed, "w") as s:
                 if MUD == "1" and m_data is not None:
+                    # Mud/debris transport:
                     s.write(line1.format(*m_data))
+                    
+                    if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                        for aid, debrisv in self.execute(areas_d_sql):
+                            gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
+                            s.write(line5.format(gid, debrisv))                    
                     e_data = None
-                else:
+                else: 
+                    # Sediment Transport:
                     e_data = ce_data[-1]
                     s.write(line2.format(*ce_data[:-1]))
-                for row in self.execute(sed_z_sql):
-                    dist_fid = row[0]
-                    s.write(line3.format(*row[1:]))
-                    for prow in self.execute(sed_p_sql, (dist_fid,)):
-                        s.write(line4.format(*prow))
-                if int(self.gutils.get_cont_par("IDEBRV")) == 1:
-                    for aid, debrisv in self.execute(areas_d_sql):
-                        gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
-                        s.write(line5.format(gid, debrisv))
-                if e_data is not None:
-                    s.write(line6.format(e_data))
-                else:
-                    pass
-                for row in self.execute(cells_r_sql):
-                    s.write(line7.format(*row))
-                for row in self.execute(areas_s_sql):
-                    aid = row[0]
-                    dist_fid = row[1]
-                    gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
-                    s.write(line8.format(gid, *row[2:]))
-                    for nrow in self.execute(data_n_sql, (dist_fid,)):
-                        s.write(line9.format(*nrow))
+                    
+                    for row in self.execute(sed_z_sql):
+                        dist_fid = row[0]
+                        s.write(line3.format(*row[1:]))
+                        for prow in self.execute(sed_p_sql, (dist_fid,)):
+                            s.write(line4.format(*prow))
+                            
 
-                areas_g = self.execute(areas_g_sql)
-                if areas_g:
-                    for aid, group_fid in areas_g:
-                        gids = self.execute(cells_g_sql, (aid,)).fetchall()
-                        if gids:
-                            for g in gids:
-                                s.write(line10.format(g[0], group_fid))
+                    if e_data is not None:
+                        s.write(line6.format(e_data))
 
-
-                          
-                # areas_g = self.execute(areas_g_sql)
-                # if areas_g:
-                #     for aid, group_fid in areas_g:
-                #         gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
-                #         s.write(line10.format(gid, group_fid))
+                    for row in self.execute(cells_r_sql):
+                        s.write(line7.format(*row))
                         
-                # for aid, group_fid in self.execute(areas_g_sql):
-                #     gid = self.execute(cells_g_sql, (aid,)).fetchone()[0]
-                #     s.write(line10.format(gid, group_fid))
+                    for row in self.execute(areas_s_sql):
+                        aid = row[0]
+                        dist_fid = row[1]
+                        gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
+                        s.write(line8.format(gid, *row[2:]))
+                        for nrow in self.execute(data_n_sql, (dist_fid,)):
+                            s.write(line9.format(*nrow))
+
+                    areas_g = self.execute(areas_g_sql)
+                    if areas_g:
+                        for aid, group_fid in areas_g:
+                            gids = self.execute(cells_g_sql, (aid,)).fetchall()
+                            if gids:
+                                for g in gids:
+                                    s.write(line10.format(g[0], group_fid))
+
             return True
 
         except Exception as e:

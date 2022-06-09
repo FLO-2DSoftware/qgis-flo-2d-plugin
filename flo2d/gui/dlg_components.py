@@ -246,10 +246,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             if not self.gutils.is_table_empty("fpxsec"):
                 self.floodplain_xs_chbox.setChecked(True)
                 self.floodplain_xs_chbox.setEnabled(True)
-
-            if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
-                self.mud_and_sed_chbox.setChecked(True)
-                self.mud_and_sed_chbox.setEnabled(True)
+            
+            # Mud and Sediment Transport:
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")        
+            if ISED == "1" or  MUD == "1":
+                if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
+                    self.mud_and_sed_chbox.setChecked(True)
+                    self.mud_and_sed_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("evapor"):
                 self.evaporation_chbox.setChecked(True)

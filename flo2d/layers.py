@@ -1155,17 +1155,17 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "mud_areas",
-                    {
-                        "name": "Mud Areas",
-                        "sgroup": "Sediment Transport",
-                        "styles": ["mud_areas.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": False,
-                        "readonly": False,
-                    },
-                ),
+                # (
+                #     "mud_areas",
+                #     {
+                #         "name": "Mud Areas",
+                #         "sgroup": "Sediment Transport",
+                #         "styles": ["mud_areas.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "visible": False,
+                #         "readonly": False,
+                #     },
+                # ),
                 # Other sediment transport tables:
                 (
                     "sed",
@@ -1259,7 +1259,7 @@ class Layers(object):
                 (
                     "mud_cells",
                     {
-                        "name": "Mud Cells",
+                        "name": "Mud Cell",
                         "sgroup": "Sediment Transport Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
