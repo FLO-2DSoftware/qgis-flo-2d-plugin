@@ -877,6 +877,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data_n_sql,
         )
         
+        if self.is_table_empty("mud_cells"):
+            self.set_cont_par("IDEBRV", 0)
+        
         # Also triggers the creation of rigid cells (rigid_cells table):
         # self.batch_execute(areas_r_sql)
      

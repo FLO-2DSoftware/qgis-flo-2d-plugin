@@ -83,6 +83,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         
         # Supply Rating Curve connections:
         self.sed_rating_curve_grp.toggled.connect(self.sed_rating_curve_grp_checked)
+        
         self.sed_rating_curve_tblw.cellClicked.connect(self.sed_rating_curve_tblw_clicked)
         self.sed_rating_curve_dp_tblw.cellChanged.connect(self.sed_rating_curve_dp_tblw_cellchanged) 
         
@@ -175,14 +176,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.mud_basin_vol_dbox.setValue(volume[0])                   
                    
         elif self.gutils.get_cont_par("ISED") == "1":
-            # Block signals:
-            self.sed_size_fraction_tblw.blockSignals(True);
-            self.sed_size_fraction_dp_tblw.blockSignals(True)
-            self.sed_size_grid_tblw.blockSignals(True)
-            self.sed_rigid_nodes_tblw.blockSignals(True)
-            self.sed_rating_curve_tblw.blockSignals(True);
-            self.sed_rating_curve_dp_tblw.blockSignals(True)  
-                      
+
             self.sediment_transport_radio.click()
             
             qry = "SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep  FROM sed"
@@ -202,90 +196,15 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.sed_rating_curve_grp.setChecked(isedsupply)
             self.sed_vol_conctr_dbox.setValue(cvfg)
             
-            # Load Size Fractions table:
-            size_fractions = self.gutils.execute("SELECT isedeqi, bedthick, cvfi, dist_fid FROM sed_groups ORDER BY dist_fid").fetchall()
-            if size_fractions:
-                self.sed_size_fraction_tblw.setRowCount(0)
-                for row_number, sf in enumerate(size_fractions):
-                    self.sed_size_fraction_tblw.insertRow(row_number)
+            # Load Size Fractions tables:
+            self.load_size_fraction_tables()
 
-                    combo = QComboBox()
-                    combo.setStyleSheet("QComboBox { border: 1px gray; } QFrame { border: 3px solid blue; }")
-                    for e in self.equations:
-                        combo.addItem(e)       
-                    self.sed_size_fraction_tblw.setCellWidget(row_number,0,combo)                          
-                    combo.setCurrentIndex(sf[0]-1)
-                                          
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, sf[1])                           
-                    self.sed_size_fraction_tblw.setItem(row_number, 1, item)
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, sf[2])                              
-                    self.sed_size_fraction_tblw.setItem(row_number, 2, item) 
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, sf[3])                         
-                    self.sed_size_fraction_tblw.setItem(row_number, 3, item) 
+            # Load Supply Rating Curve tables:
+            self.load_supply_rating_curve_tables()
 
-                    if row_number == 0:                       
-                        first_dist = sf[3]         
-
-                # Load Routimg Fractions for first row of Size Fractions table:
-                self.load_size_routing_fractions_table(first_dist)                   
-
-                # Load Grid Elements for first row of Size Fractions table:
-                self.load_size_fraction_cells_table(0)
-                
-                self.sed_size_fraction_tblw.selectRow(0)
-                
-            # Load Supply Rating Curve table:
-            rating_curve = self.gutils.execute("SELECT fid, isedcfp, ased, bsed, dist_fid FROM sed_supply_areas ORDER BY dist_fid").fetchall()
-            if rating_curve:
-                self.sed_rating_curve_tblw.setRowCount(0)
-                rc_grid = "SELECT grid_fid FROM sed_supply_cells WHERE fid = ?;"
-                for row_number, rc in enumerate(rating_curve):
-                    grid = self.gutils.execute(rc_grid, (rc[0],)).fetchone()
-                    self.sed_rating_curve_tblw.insertRow(row_number)
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, grid[0])    
-                    # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                        
-                    self.sed_rating_curve_tblw.setItem(row_number, 0, item)
-                    
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, rc[1])                         
-                    self.sed_rating_curve_tblw.setItem(row_number, 1, item)
-                    
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, rc[2])                         
-                    self.sed_rating_curve_tblw.setItem(row_number, 2, item) 
-                    
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, rc[3])                         
-                    self.sed_rating_curve_tblw.setItem(row_number, 3, item) 
-                    
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, rc[4])                         
-                    self.sed_rating_curve_tblw.setItem(row_number, 4, item)  
-                     
-                    if row_number == 0:                       
-                        first_dist = rc[4]
-
-                # Load Routimg Fractions for first row of Suply Rating Curve table:
-                self.load_rc_routing_fractions(first_dist) 
-                
-                self.sed_rating_curve_tblw.selectRow(0)                 
-                
             # Load Rigid cells:
             self.load_rigid_nodes_table()
-        
-            # Unblock signals:
-            self.sed_size_fraction_tblw.blockSignals(False);
-            self.sed_size_fraction_dp_tblw.blockSignals(False)
-            self.sed_size_grid_tblw.blockSignals(False)
-            self.sed_rigid_nodes_tblw.blockSignals(False)
 
-            self.sed_rating_curve_tblw.blockSignals(False);
-            self.sed_rating_curve_dp_tblw.blockSignals(False)     
-                     
         else:
             self.none_transport_radio.click()
  
@@ -314,10 +233,12 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.mud_sediment_tabWidget.setTabEnabled(1, True) 
         self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")       
         self.mud_sediment_tabWidget.setCurrentIndex(1) 
+  
+        # Load Size Fractions tables:
+        self.load_size_fraction_tables()
         
-        
-        # Load Rigid cells:
-        self.load_rigid_nodes_table()  
+        # # Load Rigid cells:
+        # self.load_rigid_nodes_table()  
               
     def show_none(self):
         self.gutils.set_cont_par("MUD", 0)
@@ -495,7 +416,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 areas_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
                 cells_sql = ["""INSERT INTO sed_group_cells (grid_fid, area_fid) VALUES""", 2]
                 
-                areas = self.gutils.execute("SELECT * FROM sed_group_areas_tmp").fetchall()
                 cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()
                 self.gutils.clear_tables("sed_group_areas", "sed_group_cells")
                 if cells:
@@ -505,16 +425,15 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                             centroid = self.gutils.single_centroid(grid_number)
                             geom = self.gutils.build_square(centroid, cell_size * 0.95)
                             group_fid = self.gutils.execute("SELECT group_fid FROM sed_group_areas_tmp WHERE fid = ?;", (area_fid,)).fetchone()
-                            # group_fid = areas[area_fid - 1][1]
                             areas_sql += [(geom, group_fid[0] )]
                             cells_sql += [(cells[i][1], i + 1)]
                             
                         self.gutils.batch_execute(areas_sql,cells_sql) 
-                areas = self.gutils.execute("SELECT * FROM sed_group_areas").fetchall()
                 cells = self.gutils.execute("SELECT * FROM sed_group_cells").fetchall()                  
 
                 # Save Supply Rating Curve table:
                 sr_curve_sql  = ["""INSERT INTO sed_supply_areas (isedcfp, ased, bsed, dist_fid) VALUES""", 4]
+                self.gutils.clear_tables("sed_supply_cells") 
                 for row in range(0, self.sed_rating_curve_tblw.rowCount()):
                     node = self.sed_rating_curve_tblw.item(row, 0).text()
                     self.gutils.execute("INSERT INTO sed_supply_cells (grid_fid, area_fid) VALUES (?, ?);", (node, str(row + 1)))
@@ -633,8 +552,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.gutils.batch_execute(rigid_insert_sql)
          
     def sed_rating_curve_tblw_clicked(self, row):
+        # Find rating curve distribution (diameter, %):
         self.load_rating_curve_routing_fractions_table(row)     
-
 
     def sed_add_size_fraction_btn_clicked(self):
         max_dist_fid = self.gutils.execute("""SELECT MAX(dist_fid) FROM sed_groups;""").fetchone()[0]
@@ -651,12 +570,10 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, 10)                         
-        self.sed_size_fraction_tblw.setItem(row_number, 1, item)
-        
+        self.sed_size_fraction_tblw.setItem(row_number, 1, item)    
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, 0.025)                         
         self.sed_size_fraction_tblw.setItem(row_number, 2, item) 
-
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, str(max_dist_fid + 1))                         
         self.sed_size_fraction_tblw.setItem(row_number, 3, item) 
@@ -684,15 +601,16 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, 0)                         
         self.sed_rating_curve_tblw.setItem(row_number, 3, item) 
-        
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, str(max_dist_fid + 1))                         
         self.sed_rating_curve_tblw.setItem(row_number, 4, item)          
                
         self.sed_rating_curve_tblw.selectRow(row_number)
         self.sed_rating_curve_tblw.setFocus()
-               
-        self.load_rating_curve_routing_fractions_table(row_number)       
+
+        self.sed_rating_curve_dp_tblw.setRowCount(0) 
+             
+        # self.load_rating_curve_routing_fractions_table(row_number)       
         
     def load_size_fraction_routing_fractions_table(self, row):
         self.sed_size_fraction_dp_tblw.blockSignals(True)          
@@ -757,6 +675,105 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.sed_size_grid_tblw.setItem(row_number, 0, item)        
         self.sed_size_grid_tblw.blockSignals(False)  
 
+    def load_size_fraction_tables(self):
+        # Block signals:
+        self.sed_size_fraction_grp.blockSignals(True)
+        self.sed_size_fraction_tblw.blockSignals(True);
+        self.sed_size_fraction_dp_tblw.blockSignals(True)
+        self.sed_size_grid_tblw.blockSignals(True)   
+             
+        size_fractions = self.gutils.execute("SELECT isedeqi, bedthick, cvfi, dist_fid FROM sed_groups ORDER BY dist_fid").fetchall()
+        if size_fractions:        
+
+            self.sed_size_fraction_tblw.setRowCount(0)
+            for row_number, sf in enumerate(size_fractions):
+                self.sed_size_fraction_tblw.insertRow(row_number)
+    
+                combo = QComboBox()
+                combo.setStyleSheet("QComboBox { border: 1px gray; } QFrame { border: 3px solid blue; }")
+                for e in self.equations:
+                    combo.addItem(e)       
+                self.sed_size_fraction_tblw.setCellWidget(row_number,0,combo)                          
+                combo.setCurrentIndex(sf[0]-1)
+                                      
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, sf[1])                           
+                self.sed_size_fraction_tblw.setItem(row_number, 1, item)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, sf[2])                              
+                self.sed_size_fraction_tblw.setItem(row_number, 2, item) 
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, sf[3])                         
+                self.sed_size_fraction_tblw.setItem(row_number, 3, item) 
+    
+                if row_number == 0:                       
+                    first_dist = sf[3]         
+    
+            # Load Routimg Fractions for first row of Size Fractions table:
+            self.load_size_routing_fractions_table(first_dist)                   
+    
+            # Load Grid Elements for first row of Size Fractions table:
+            self.load_size_fraction_cells_table(0)
+            
+            self.sed_size_fraction_tblw.selectRow(0)
+            
+            self.sed_size_fraction_grp.blockSignals(True)
+            self.sed_size_fraction_grp.setChecked(True)
+            self.sed_size_fraction_grp.blockSignals(False)
+            
+        # Unblock signals:
+        self.sed_size_fraction_grp.blockSignals(False)
+        self.sed_size_fraction_tblw.blockSignals(False);
+        self.sed_size_fraction_dp_tblw.blockSignals(False)
+        self.sed_size_grid_tblw.blockSignals(False)         
+        
+    def load_supply_rating_curve_tables(self):
+        # Block signals:
+        self.sed_rating_curve_tblw.blockSignals(True);
+        self.sed_rating_curve_dp_tblw.blockSignals(True)         
+        
+        rating_curve = self.gutils.execute("SELECT fid, isedcfp, ased, bsed, dist_fid FROM sed_supply_areas ORDER BY dist_fid").fetchall()
+        if rating_curve:
+                
+
+            self.sed_rating_curve_tblw.setRowCount(0)
+            rc_grid = "SELECT grid_fid FROM sed_supply_cells WHERE fid = ?;"
+            for row_number, rc in enumerate(rating_curve):
+                grid = self.gutils.execute(rc_grid, (rc[0],)).fetchone()
+                self.sed_rating_curve_tblw.insertRow(row_number)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, grid[0])    
+                # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                        
+                self.sed_rating_curve_tblw.setItem(row_number, 0, item)
+                
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, rc[1])                         
+                self.sed_rating_curve_tblw.setItem(row_number, 1, item)
+                
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, rc[2])                         
+                self.sed_rating_curve_tblw.setItem(row_number, 2, item) 
+                
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, rc[3])                         
+                self.sed_rating_curve_tblw.setItem(row_number, 3, item) 
+                
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, rc[4])                         
+                self.sed_rating_curve_tblw.setItem(row_number, 4, item)  
+                 
+                if row_number == 0:                       
+                    first_dist = rc[4]
+
+            # Load Routing Fractions for first row of Suply Rating Curve table:
+            self.load_rc_routing_fractions(first_dist) 
+            
+            self.sed_rating_curve_tblw.selectRow(0)  
+            
+        # Unblock signals:
+        self.sed_rating_curve_tblw.blockSignals(False);
+        self.sed_rating_curve_dp_tblw.blockSignals(False) 
+         
     def load_rigid_nodes_table(self):
         self.sed_rigid_nodes_tblw.blockSignals(True) 
         self.sed_rigid_nodes_tblw.setRowCount(0)  
