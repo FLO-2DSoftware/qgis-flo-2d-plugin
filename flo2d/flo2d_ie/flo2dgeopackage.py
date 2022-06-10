@@ -364,7 +364,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         data = self.parser.parse_infil()
 
         infil_sql += [tuple([data[k.upper()] if k.upper() in data else None for k in infil_params])]
-        gids = (x[0] for x in chain(data["F"], data["S"], data["C"], data["H"]))
 
         for i, row in enumerate(data["R"], 1):
             infil_seg_sql += [(i,) + tuple(row)]
