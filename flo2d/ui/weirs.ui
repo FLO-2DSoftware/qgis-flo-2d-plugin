@@ -525,7 +525,7 @@
               <item>
                <widget class="QLabel" name="label_4">
                 <property name="text">
-                 <string>Crest height</string>
+                 <string>Crest height (Inlet Offset)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -656,7 +656,7 @@
               <item>
                <widget class="QLabel" name="label_6">
                 <property name="text">
-                 <string>End contraction</string>
+                 <string>End contractions</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -846,7 +846,7 @@
               <item>
                <widget class="QLabel" name="label_10">
                 <property name="text">
-                 <string>Height</string>
+                 <string>Height (Geom1)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -885,7 +885,7 @@
               <item>
                <widget class="QLabel" name="label_9">
                 <property name="text">
-                 <string>Length</string>
+                 <string>Length (Geom2)</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1035,12 +1035,12 @@
      </column>
      <column>
       <property name="text">
-       <string>Height</string>
+       <string>Height (Geom1)</string>
       </property>
      </column>
      <column>
       <property name="text">
-       <string>Length</string>
+       <string>Length (Geom2)</string>
       </property>
      </column>
      <item row="0" column="4">

@@ -41,7 +41,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -5131,7 +5131,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Crest Height</string>
+               <string>Crest Height (Inlet Offset)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -5482,7 +5482,7 @@
             <item>
              <widget class="QLabel" name="label_73">
               <property name="text">
-               <string>End Contraction</string>
+               <string>End Contractions</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -5537,7 +5537,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Height</string>
+               <string>Height (Geom1)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -5552,7 +5552,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Length</string>
+               <string>Length (Geom2)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
