@@ -595,21 +595,12 @@ class Flo2D(object):
             self.uc.bar_warn("Could not run simulation under current operation system!")
             return
         try: 
-            return_code = -9999
             if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
                 debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
                 if os.path.exists(debugDAT):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                return_code = simulation.run()
-                # if return_code != 0:
-                #     self.uc.show_warn(
-                #         "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
-                #         + "Program finished with return code " + str(return_code)
-                #     )
-                # else:
-                #     self.uc.show_info( "Model finished with return code "  + str(return_code))       
-                
+                return_code = simulation.run()               
                             
             else:
                 self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
@@ -634,19 +625,22 @@ class Flo2D(object):
             if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
                 tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
                 return_code = tailings.run()
-                if return_code != 0:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_warn(
-                        "ERROR 240719.1601: Tailings Dam Breach failed!\n\n"
-                        + "Program finished with return code "
-                        + str(return_code)
-                    )
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "Tailings Dam Tool has been closed.\n\n"
-                        + "If a new INFLOW.DAT was created, import the data file into FLO-2D QGIS."
-                    )
+                
+                # if return_code != 0:
+                #     QApplication.restoreOverrideCursor()
+                #     self.uc.show_warn(
+                #         "ERROR 240719.1601: Tailings Dam Breach failed!\n\n"
+                #         + "Program finished with return code "
+                #         + str(return_code)
+                #     )
+                # else:
+                #     QApplication.restoreOverrideCursor()
+                #     self.uc.show_info(
+                #         "Tailings Dam Tool has been closed.\n\n"
+                #         + "If a new INFLOW.DAT was created, import the data file into FLO-2D QGIS."
+                #     )
+                
+                QApplication.restoreOverrideCursor()
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
