@@ -2648,7 +2648,7 @@ CREATE TABLE "user_infiltration" (
     "rtimpf" REAL DEFAULT 0,
     "soil_depth" REAL DEFAULT 0,
     "hydconch" REAL DEFAULT 0,
-    "scsn" REAL DEFAULT 0,
+    "scsn" INTEGER DEFAULT 0,
     "fhorti" REAL DEFAULT 0,
     "fhortf" REAL DEFAULT 0,
     "deca" REAL DEFAULT 0,
