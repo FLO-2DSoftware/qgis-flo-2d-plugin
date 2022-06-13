@@ -338,33 +338,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 16]
         infil_seg_sql = ["""INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""", 4]
         infil_green_sql = [
-            """INSERT INTO infil_areas_green (geom, hydc, soils, dtheta,
+            """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
                                                              abstrinf, rtimpf, soil_depth) VALUES""",
             7,
         ]
-        infil_scs_sql = ["""INSERT INTO infil_areas_scs (geom, scsn) VALUES""", 2]
-        infil_horton_sql = ["""INSERT INTO infil_areas_horton (geom, fhorti, fhortf, deca) VALUES""", 4]
-        infil_chan_sql = ["""INSERT INTO infil_areas_chan (geom, hydconch) VALUES""", 2]
-
-        cells_green_sql = ["""INSERT INTO infil_cells_green (infil_area_fid, grid_fid) VALUES""", 2]
-        cells_scs_sql = ["""INSERT INTO infil_cells_scs (infil_area_fid, grid_fid) VALUES""", 2]
-        cells_horton_sql = ["""INSERT INTO infil_cells_horton (infil_area_fid, grid_fid) VALUES""", 2]
-        chan_sql = ["""INSERT INTO infil_chan_elems (infil_area_fid, grid_fid) VALUES""", 2]
+        infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+        infil_horton_sql = ["""INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""", 4]
+        infil_chan_sql = ["""INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""", 2]
 
         sqls = {
-            "F": [infil_green_sql, cells_green_sql],
-            "S": [infil_scs_sql, cells_scs_sql],
-            "H": [infil_horton_sql, cells_horton_sql],
-            "C": [infil_chan_sql, chan_sql],
+            "F": infil_green_sql,
+            "S": infil_scs_sql,
+            "H": infil_horton_sql,
+            "C": infil_chan_sql,
         }
 
         self.clear_tables(
             "infil",
             "infil_chan_seg",
-            "infil_areas_green",
-            "infil_areas_scs",
-            "infil_areas_horton ",
-            "infil_areas_chan",
             "infil_cells_green",
             "infil_cells_scs",
             "infil_cells_horton",
@@ -373,8 +364,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         data = self.parser.parse_infil()
 
         infil_sql += [tuple([data[k.upper()] if k.upper() in data else None for k in infil_params])]
-        gids = (x[0] for x in chain(data["F"], data["S"], data["C"], data["H"]))
-        cells = self.grid_centroids(gids)
 
         for i, row in enumerate(data["R"], 1):
             infil_seg_sql += [(i,) + tuple(row)]
@@ -383,9 +372,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if len(data[k]) > 0:
                 for i, row in enumerate(data[k], 1):
                     gid = row[0]
-                    geom = self.build_square(cells[gid], self.cell_size)
-                    sqls[k][0] += [(geom,) + tuple(row[1:])]
-                    sqls[k][-1] += [(i, gid)]
+                    sqls[k] += [(gid,) + tuple(row[1:])]
             else:
                 pass
 
@@ -395,11 +382,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_green_sql,
             infil_scs_sql,
             infil_horton_sql,
-            infil_chan_sql,
-            cells_green_sql,
-            cells_scs_sql,
-            cells_horton_sql,
-            chan_sql,
+            infil_chan_sql
         )
 
     def import_evapor(self):
@@ -1617,16 +1600,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             infil_sql = """SELECT * FROM infil;"""
             infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
-            iarea_green_sql = (
-                """SELECT hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_areas_green WHERE fid = ?;"""
+            green_sql = (
+                """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
             )
-            icell_green_sql = """SELECT grid_fid, infil_area_fid FROM infil_cells_green ORDER BY grid_fid;"""
-            iarea_scs_sql = """SELECT scsn FROM infil_areas_scs WHERE fid = ?;"""
-            icell_scs_sql = """SELECT grid_fid, infil_area_fid FROM infil_cells_scs ORDER BY grid_fid;"""
-            iarea_horton_sql = """SELECT fhorti, fhortf, deca FROM infil_areas_horton WHERE fid = ?;"""
-            icell_horton_sql = """SELECT grid_fid, infil_area_fid FROM infil_cells_horton ORDER BY grid_fid;"""
-            iarea_chan_sql = """SELECT hydconch FROM infil_areas_chan WHERE fid = ?;"""
-            ielem_chan_sql = """SELECT grid_fid, infil_area_fid FROM infil_chan_elems ORDER BY grid_fid;"""
+            scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
+            horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
+            chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
@@ -1670,22 +1649,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         i.write(line5.format(*v5))
                     else:
                         pass
-                for gid, iid in self.execute(icell_green_sql):
-                    for row in self.execute(iarea_green_sql, (iid,)):
-                        i.write(line6.format(gid, *row))
-                for gid, iid in self.execute(icell_scs_sql):
-                    for row in self.execute(iarea_scs_sql, (iid,)):
-                        i.write(line7.format(gid, *row))
-                for gid, iid in self.execute(ielem_chan_sql):
-                    for row in self.execute(iarea_chan_sql, (iid,)):
-                        i.write(line8.format(gid, *row))
+                for row in self.execute(green_sql):
+                    i.write(line6.format(*row))
+                for row in self.execute(scs_sql):
+                    i.write(line7.format(*row))
+                for row in self.execute(chan_sql):
+                    i.write(line8.format(*row))
                 if any(v9) is True:
                     i.write(line9.format(*v9))
                 else:
                     pass
-                for gid, iid in self.execute(icell_horton_sql):
-                    for row in self.execute(iarea_horton_sql, (iid,)):
-                        i.write(line10.format(gid, *row))
+                for row in self.execute(horton_sql):
+                    i.write(line10.format(*row))
 
             return True
 

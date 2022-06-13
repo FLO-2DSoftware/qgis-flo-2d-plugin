@@ -792,8 +792,11 @@ CREATE TABLE "infil_chan_seg" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_seg', 'aspatial');
 
-CREATE TABLE "infil_areas_green" (
+-- Green Ampt
+
+CREATE TABLE "infil_cells_green" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid element number from grid table
     "hydc" REAL, -- HYDC, grid element average hydraulic conductivity
     "soils" REAL, -- SOILS, capillary suction head for floodplain grid elements
     "dtheta" REAL, -- DTHETA, grid element soil moisture deficit
@@ -801,195 +804,36 @@ CREATE TABLE "infil_areas_green" (
     "rtimpf" REAL, -- RTIMPF, percent impervious floodplain area on a grid element
     "soil_depth" REAL -- SOIL_DEPTH, maximum soil depth for infiltration on a grid element
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_green', 'features', 4326);
-SELECT gpkgAddGeometryColumn('infil_areas_green', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('infil_areas_green', 'geom');
--- SELECT gpkgAddSpatialIndex('infil_areas_green', 'geom');
-
-    -- Green Ampt
-
-CREATE TABLE "infil_cells_green" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "grid_fid" INTEGER, -- grid element number from grid table
-    "infil_area_fid" INTEGER -- polygon fid from infil_areas_green table
-);
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_green', 'aspatial');
 
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_green_insert', 1);
-CREATE TRIGGER "find_infil_cells_green_insert"
-   AFTER INSERT ON "infil_areas_green"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_green_insert') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
-           SELECT NEW.fid, g.fid FROM grid as g
-           WHERE ST_Intersects(CastAutomagic(g.geom), ST_Centroid(CastAutomagic(NEW.geom)));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_green_update', 1);
-CREATE TRIGGER "find_infil_cells_green_update"
-   AFTER UPDATE ON "infil_areas_green"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_green_update') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_green" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_green" (infil_area_fid, grid_fid)
-       SELECT NEW.fid, g.fid FROM grid as g
-       WHERE ST_Intersects(CastAutomagic(g.geom), ST_Centroid(CastAutomagic(NEW.geom)));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_green_delete', 1);
-CREATE TRIGGER "find_infil_cells_green_delete"
-   AFTER DELETE ON "infil_areas_green"
-   WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_green_delete')
-   BEGIN
-       DELETE FROM "infil_cells_green" WHERE infil_area_fid = OLD."fid";
-   END;
-
 -- SCS
-
-CREATE TABLE "infil_areas_scs" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "scsn" REAL -- SCSN, SCS curve numbers of the floodplain grid elements
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_scs', 'features', 4326);
-SELECT gpkgAddGeometryColumn('infil_areas_scs', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('infil_areas_scs', 'geom');
--- SELECT gpkgAddSpatialIndex('infil_areas_scs', 'geom');
 
 CREATE TABLE "infil_cells_scs" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- grid element number from grid table
-    "infil_area_fid" INTEGER -- polygon fid from infil_areas_scs table
+    "scsn" REAL -- SCSN, SCS curve numbers of the floodplain grid elements
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_scs', 'aspatial');
 
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_scs_insert', 1);
-CREATE TRIGGER "find_infil_cells_scs_insert"
-   AFTER INSERT ON "infil_areas_scs"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_scs_insert') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_scs" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid)
-           SELECT NEW.fid, g.fid FROM grid as g
-           WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_scs_update', 1);
-CREATE TRIGGER "find_infil_cells_scs_update"
-   AFTER UPDATE ON "infil_areas_scs"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_scs_update') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_scs" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_scs" (infil_area_fid, grid_fid)
-       SELECT NEW.fid, g.fid FROM grid as g
-       WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_scs_delete', 1);
-CREATE TRIGGER "find_infil_cells_scs_delete"
-   AFTER DELETE ON "infil_areas_scs"
-   WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_scs_delete')
-   BEGIN
-       DELETE FROM "infil_cells_scs" WHERE infil_area_fid = OLD."fid";
-   END;
-
 -- HORTON
-
-CREATE TABLE "infil_areas_horton" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "fhorti" REAL, -- FHORTI, Horton’s equation floodplain initial infiltration rate
-    "fhortf" REAL, -- FHORTF, Horton’s equation floodplain final infiltration rate
-    "deca" REAL --DECA, Horton’s equation decay coefficient
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_horton', 'features', 4326);
-SELECT gpkgAddGeometryColumn('infil_areas_horton', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('infil_areas_horton', 'geom');
--- SELECT gpkgAddSpatialIndex('infil_areas_horton', 'geom');
 
 CREATE TABLE "infil_cells_horton" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- grid element number from grid table
-    "infil_area_fid" INTEGER -- polygon fid from infil_areas_horton table
+    "fhorti" REAL, -- FHORTI, Horton’s equation floodplain initial infiltration rate
+    "fhortf" REAL, -- FHORTF, Horton’s equation floodplain final infiltration rate
+    "deca" REAL --DECA, Horton’s equation decay coefficient
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_cells_horton', 'aspatial');
 
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_horton_insert', 1);
-CREATE TRIGGER "find_infil_cells_horton_insert"
-   AFTER INSERT ON "infil_areas_horton"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_horton_insert') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_horton" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid)
-           SELECT NEW.fid, g.fid FROM grid as g
-           WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_horton_update', 1);
-CREATE TRIGGER "find_infil_cells_horton_update"
-   AFTER UPDATE ON "infil_areas_horton"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_horton_update') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_cells_horton" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_cells_horton" (infil_area_fid, grid_fid)
-       SELECT NEW.fid, g.fid FROM grid as g
-       WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_cells_horton_delete', 1);
-CREATE TRIGGER "find_infil_cells_horton_delete"
-   AFTER DELETE ON "infil_areas_horton"
-   WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_infil_cells_horton_delete')
-   BEGIN
-       DELETE FROM "infil_cells_horton" WHERE infil_area_fid = OLD."fid";
-   END;
-
 -- CHANNELS
-
-CREATE TABLE "infil_areas_chan" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "hydconch" REAL -- HYDCONCH, hydraulic conductivity for a channel element
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('infil_areas_chan', 'features', 4326);
-SELECT gpkgAddGeometryColumn('infil_areas_chan', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('infil_areas_chan', 'geom');
--- SELECT gpkgAddSpatialIndex('infil_areas_chan', 'geom');
 
 CREATE TABLE "infil_chan_elems" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER, -- grid element number from grid table
-    "infil_area_fid" INTEGER -- polygon fid from infil_areas_chan table
+    "hydconch" REAL -- HYDCONCH, hydraulic conductivity for a channel element
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil_chan_elems', 'aspatial');
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_chan_elems_insert', 1);
-CREATE TRIGGER "find_infil_chan_elems_insert"
-   AFTER INSERT ON "infil_areas_chan"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_chan_elems_insert') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_chan_elems" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid)
-           SELECT NEW.fid, g.fid FROM grid as g
-           WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_chan_elems_update', 1);
-CREATE TRIGGER "find_infil_chan_elems_update"
-   AFTER UPDATE ON "infil_areas_chan"
-   WHEN ((SELECT enabled FROM trigger_control WHERE name = 'find_infil_chan_elems_update') AND NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-   BEGIN
-       DELETE FROM "infil_chan_elems" WHERE infil_area_fid = NEW."fid";
-       INSERT INTO "infil_chan_elems" (infil_area_fid, grid_fid)
-       SELECT NEW.fid, g.fid FROM grid as g
-       WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-   END;
-
-INSERT INTO trigger_control (name, enabled) VALUES ('find_infil_chan_elems_delete', 1);
-CREATE TRIGGER "find_infil_chan_elems_delete"
-   AFTER DELETE ON "infil_areas_chan"
-   WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_infil_chan_elems_delete')
-   BEGIN
-       DELETE FROM "infil_chan_elems" WHERE infil_area_fid = OLD."fid";
-   END;
 
 -- HYSTRUC.DAT
 

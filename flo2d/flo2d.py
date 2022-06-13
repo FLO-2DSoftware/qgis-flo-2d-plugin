@@ -993,10 +993,6 @@ class Flo2D(object):
                         "gutter_cells",
                         "gutter_globals",
                         "infil",
-                        "infil_areas_chan",
-                        "infil_areas_green",
-                        "infil_areas_horton",
-                        "infil_areas_scs",
                         "infil_cells_green",
                         "infil_cells_horton",
                         "infil_cells_scs",
@@ -1179,308 +1175,101 @@ class Flo2D(object):
         """
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
-        import_calls = [
-            "import_cont_toler",
-            "import_tolspatial",
-            "import_inflow",
-            "import_outflow",
-            "import_rain",
-            "import_raincell",
-            "import_evapor",
-            "import_infil",
-            "import_chan",
-            "import_xsec",
-            "import_hystruc",
-            "import_street",
-            "import_arf",
-            "import_mult",
-            "import_sed",
-            "import_levee",
-            "import_fpxsec",
-            "import_breach",
-            "import_gutter",
-            "import_fpfroude",
-            "import_swmmflo",
-            "import_swmmflort",
-            "import_swmmoutf",
-            "import_wsurf",
-            "import_wstime",
-        ]      
+        file_to_import_calls = {
+            "CONT.DAT":"import_cont_toler",
+            "TOLER.DAT": "import_cont_toler",
+            "TOLSPATIAL.DAT": "import_tolspatial",
+            "INFLOW.DAT": "import_inflow",
+            "OUTFLOW.DAT": "import_outflow",
+            "RAIN.DAT": "import_rain",
+            "RAINCELL.DAT": "import_raincell",
+            "EVAPOR.DAT": "import_evapor",
+            "INFIL.DAT": "import_infil",
+            "CHAN.DAT": "import_chan",
+            "XSEC.DAT": "import_xsec",
+            "HYSTRUC.DAT": "import_hystruc",
+            "STREET.DAT": "import_street",
+            "ARF.DAT": "import_arf",
+            "MULT.DAT": "import_mult",
+            "SED.DAT": "import_sed",
+            "LEVEE.DAT": "import_levee",
+            "FPXSEC.DAT": "import_fpxsec",
+            "BREACH.DAT": "import_breach",
+            "GUTTER.DAT": "import_gutter",
+            "FPFROUDE.DAT": "import_fpfroude",
+            "SWMMFLO.DAT": "import_swmmflo",
+            "SWMMFLORT.DAT": "import_swmmflort",
+            "SWMMOUTETF.DAT": "import_swmmoutf",
+            "WSURF.DAT": "import_wsurf",
+            "WSTIME.DAT": "import_wstime"
+        }
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         fname, __ = QFileDialog.getOpenFileName(
-            None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
+            None, "Select FLO-2D file to import", directory=last_dir, filter="(*.DAT)"
         )
         if not fname:
             return
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
         bname = os.path.basename(fname)
+
+        if bname not in file_to_import_calls:
+            QMessageBox.critical(self.iface.mainWindow(),
+                                 "Import selected GDS file",
+                                 "Import from {0} file is not supported.".format(bname))
+
         if self.f2g.set_parser(fname):
-            if bname not in self.f2g.parser.dat_files:
-                return
-
-            empty = self.f2g.is_table_empty("grid")
-            # check if a grid exists in the grid table
-            if empty:
-                self.uc.show_info("There is no grid defined!")
-                return
+            call_string = file_to_import_calls[bname]
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
-            QApplication.restoreOverrideCursor()
-            ok = dlg_components.exec_()
-            if ok:
-                try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+            try:
+                method = getattr(self.f2g, call_string)
+                method()
+                QApplication.restoreOverrideCursor()
+                QMessageBox.information(self.iface.mainWindow(),
+                                        "Import selected GDS file",
+                                        "Import from {0} is successful".format(bname))
+                if call_string == "import_chan":
+                    self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
-                    if "Channels" not in dlg_components.components:
-                        import_calls.remove("import_chan")
-                        import_calls.remove("import_xsec")
+                self.setup_dock_widgets()
+                self.lyrs.refresh_layers()
 
-                    if "Reduction Factors" not in dlg_components.components:
-                        import_calls.remove("import_arf")
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                QMessageBox.critical(self.iface.mainWindow(),
+                                     "Import selected GDS file",
+                                     "Import from {0} fails".format(bname))
 
-                    if "Streets" not in dlg_components.components:
-                        import_calls.remove("import_street")
+            finally:
+                msg = ""
+                if call_string == "import_swmmflo":
+                    self.clean_rating_tables()
 
-                    if "Outflow Elements" not in dlg_components.components:
-                        import_calls.remove("import_outflow")
-
-                    if "Inflow Elements" not in dlg_components.components:
-                        import_calls.remove("import_inflow")
-
-                    if "Levees" not in dlg_components.components:
-                        import_calls.remove("import_levee")
-
-                    if "Multiple Channels" not in dlg_components.components:
-                        import_calls.remove("import_mult")
-
-                    if "Breach" not in dlg_components.components:
-                        import_calls.remove("import_breach")
-
-                    if "Gutters" not in dlg_components.components:
-                        import_calls.remove("import_gutter")
-
-                    if "Infiltration" not in dlg_components.components:
-                        import_calls.remove("import_infil")
-
-                    if "Floodplain Cross Sections" not in dlg_components.components:
-                        import_calls.remove("import_fpxsec")
-
-                    if "Mudflow and Sediment Transport" not in dlg_components.components:
-                        import_calls.remove("import_sed")
-
-                    if "Evaporation" not in dlg_components.components:
-                        import_calls.remove("import_evapor")
-
-                    if "Hydraulic  Structures" not in dlg_components.components:
-                        import_calls.remove("import_hystruc")
-
-                    # if 'MODFLO-2D' not in dlg_components.components:
-                    #     import_calls.remove('')
-
-                    if "Rain" not in dlg_components.components:
-                        import_calls.remove("import_rain")
-                        import_calls.remove("import_raincell")
-
-                    if "Storm Drain" not in dlg_components.components:
-                        import_calls.remove("import_swmmflo")
-                        import_calls.remove("import_swmmflort")
-                        import_calls.remove("import_swmmoutf")
-
-                    if "Spatial Tolerance" not in dlg_components.components:
-                        import_calls.remove("import_tolspatial")
-
-                    if "Spatial Froude" not in dlg_components.components:
-                        import_calls.remove("import_fpfroude")
-
-                    tables = [
-                        "all_schem_bc",
-                        "blocked_cells",
-                        "breach",
-                        "breach_cells",
-                        "breach_fragility_curves",
-                        "breach_global",
-                        "buildings_areas",
-                        "buildings_stats",
-                        "chan",
-                        "chan_confluences",
-                        "chan_elems",
-                        "chan_elems_interp",
-                        "chan_n",
-                        "chan_r",
-                        "chan_t",
-                        "chan_v",
-                        "chan_wsel",
-                        "chan_elems",
-                        "cont",
-                        "culvert_equations",
-                        "evapor",
-                        "evapor_hourly",
-                        "evapor_monthly",
-                        "fpfroude",
-                        "fpfroude_cells",
-                        "fpxsec",
-                        "fpxsec_cells",
-                        "grid",
-                        "gutter_areas",
-                        "gutter_cells",
-                        "gutter_globals",
-                        "infil",
-                        "infil_areas_chan",
-                        "infil_areas_green",
-                        "infil_areas_horton",
-                        "infil_areas_scs",
-                        "infil_cells_green",
-                        "infil_cells_horton",
-                        "infil_cells_scs",
-                        "infil_chan_elems",
-                        "infil_chan_seg",
-                        "inflow",
-                        "inflow_cells",
-                        "inflow_time_series",
-                        "inflow_time_series_data",
-                        "levee_data",
-                        "levee_failure",
-                        "levee_fragility",
-                        "levee_general",
-                        "mud_areas",
-                        "mud_cells",
-                        "mult",
-                        "mult_areas",
-                        "mult_cells",
-                        "noexchange_chan_cells",
-                        "outflow",
-                        "outflow_cells",
-                        "outflow_time_series",
-                        "outflow_time_series_data",
-                        "qh_params",
-                        "qh_params_data",
-                        "qh_table",
-                        "qh_table_data",
-                        "rain",
-                        "rain_arf_areas",
-                        "rain_arf_cells",
-                        "rain_time_series",
-                        "rain_time_series_data",
-                        "raincell",
-                        "raincell_data",
-                        "rat_curves",
-                        "rat_table",
-                        "rbank",
-                        "reservoirs",
-                        "repl_rat_curves",
-                        "reservoirs",
-                        "sed_group_areas",
-                        "sed_group_cells",
-                        "sed_groups",
-                        "sed_rigid_areas",
-                        "sed_rigid_cells",
-                        "sed_supply_areas",
-                        "sed_supply_cells",
-                        "spatialshallow",
-                        "spatialshallow_cells",
-                        "storm_drains",
-                        "street_elems",
-                        "street_general",
-                        "street_seg",
-                        "streets",
-                        "struct",
-                        "swmmflo",
-                        "swmmflort",
-                        "swmmflort_data",
-                        "swmmoutf",
-                        "tolspatial",
-                        "tolspatial_cells",
-                        "user_bc_lines",
-                        "user_bc_points",
-                        "user_bc_polygons",
-                        "user_blocked_areas",
-                        "user_chan_n",
-                        "user_chan_r",
-                        "user_chan_t",
-                        "user_chan_v",
-                        "user_elevation_points",
-                        "user_elevation_polygons",
-                        "user_fpxsec",
-                        "user_infiltration",
-                        "user_left_bank",
-                        "user_levee_lines",
-                        "user_model_boundary",
-                        "user_noexchange_chan_areas",
-                        "user_reservoirs",
-                        "user_right_bank",
-                        "user_roughness",
-                        "user_streets",
-                        "user_struct",
-                        "user_swmm_conduits",
-                        "user_swmm_nodes",
-                        "user_xsec_n_data",
-                        "user_xsections",
-                        "wstime",
-                        "wsurf",
-                        "xsec_n_data",
-                    ]
-
-                    #                     for table in tables:
-                    #                         self.gutils.clear_tables(table)
-
-                    self.call_IO_methods(import_calls, True)  # The strings list 'import_calls', contains the names of
-                    # the methods in the class Flo2dGeoPackage to import (read) the
-                    # FLO-2D .DAT files
-
-                    # save CRS to table cont
-                    self.gutils.set_cont_par("PROJ", self.crs.toProj4())
-
-                    # load layers and tables
-                    self.load_layers()
-                    self.uc.bar_info("Flo2D model imported", dur=3)
-                    self.gutils.enable_geom_triggers()
-
-                    if "import_chan" in import_calls:
-                        self.gutils.create_schematized_rbank_lines_from_xs_tips()
-
-                    self.setup_dock_widgets()
-                    self.lyrs.refresh_layers()
-                    self.lyrs.zoom_to_all()
-
-                finally:
-                    QApplication.restoreOverrideCursor()
-                    if self.files_used != "" or self.files_not_used != "":
-                        self.uc.show_info(
-                            "Files read by this project:\n\n"
-                            + self.files_used
-                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
-                        )
-
-                    msg = ""
-                    if "import_swmmflo" in import_calls:
-                        self.clean_rating_tables()
-
-                        if self.gutils.is_table_empty("user_model_boundary"):
-                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                            msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
-                        else:
-                            msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                            msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
-                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
-                        if msg:
-                            msg += "<br><br>"
-                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                        msg +="must be done using the "
+                    if self.gutils.is_table_empty("user_model_boundary"):
+                        msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                        msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
+                    else:
+                        msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
+                        msg += "must be done using the "
+                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+
+                if call_string == "import_inflow" or call_string == "import_outflow":
                     if msg:
-                        self.uc.show_info(msg)
+                        msg += "<br><br>"
+                    msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                    msg += "must be done using the "
+                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+
+                if msg:
+                    self.uc.show_info(msg)
 
     def clean_rating_tables(self):
         remove_grid = []

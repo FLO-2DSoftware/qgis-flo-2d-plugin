@@ -102,9 +102,12 @@ class InfiltrationCalculator(object):
             green_ampt = GreenAmpt()
 
             grid_element_count = self.grid_lyr.featureCount()
-            gris_span = int(max(sqrt(grid_element_count) /10,10))
+            if grid_element_count < 0:
+                grid_span = 100
+            else:
+                grid_span = int(max(sqrt(grid_element_count) /10,10))
 
-            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=gris_span, regionPadding=5, showProgress=True):
+            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=grid_span, regionPadding=5, showProgress=True):
 
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
