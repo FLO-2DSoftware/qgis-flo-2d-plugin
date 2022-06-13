@@ -519,16 +519,6 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="spin_scsn">
-        <property name="decimals">
-         <number>0</number>
-        </property>
-        <property name="maximum">
-         <double>100000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="0">
        <spacer name="horizontalSpacer_5">
         <property name="orientation">
@@ -560,6 +550,9 @@
          <string>Calculate SCS CN</string>
         </property>
        </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QSpinBox" name="spin_scsn"/>
       </item>
      </layout>
     </widget>

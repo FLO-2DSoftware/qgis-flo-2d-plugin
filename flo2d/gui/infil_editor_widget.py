@@ -127,16 +127,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         switch_to_selected(self.infil_lyr, self.infil_name_cbo)
         self.infiltration_changed()
 
-    def repaint_schema(self):
-        for lyr in self.all_schema:
-            lyr.triggerRepaint()
-
     def fill_green_char(self):
         qry = """UPDATE user_infiltration SET green_char = 'F' WHERE green_char NOT IN ('C', 'F');"""
         cur = self.con.cursor()
         cur.execute(qry)
         self.con.commit()
-        self.infil_lyr.triggerRepaint()
 
     def show_global_params(self):
 
@@ -292,7 +287,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             return
         infil_fid = self.infil_name_cbo.itemData(self.infil_idx)["fid"]
         self.gutils.execute("DELETE FROM user_infiltration WHERE fid = ?;", (infil_fid,))
-        self.infil_lyr.triggerRepaint()
         self.populate_infiltration()
 
     def save_infil_edits(self):
@@ -459,7 +453,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 cur = self.con.cursor()
                 cur.executemany(qry_cells, cells_vals)
             self.con.commit()
-            self.repaint_schema()
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             self.uc.bar_info("Schematizing of infiltration finished!")
@@ -583,7 +576,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             qry = """INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES (?,?);"""
             values = []
             for i, (gid, params) in enumerate(grid_params.items(), 1):
-                val = (gid, round(params["scsn"], 3))
+                val = (gid, params["scsn"])
                 values.append(val)
             cur = self.con.cursor()
             cur.executemany(qry, values)
@@ -646,7 +639,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
                 self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.0)
                 self.spin_hydcxx.setValue(infil_glob[10] if infil_glob[10] is not None else 0.1)
-                self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99.0)
+                self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99)
                 self.spin_abstr1.setValue(infil_glob[12] if infil_glob[12] is not None else 0.0)
                 self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
                 self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)
@@ -662,7 +655,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_soilall.setValue(4.3)
                 self.spin_hydcadj.setValue(0.0)
                 self.spin_hydcxx.setValue(0.1)
-                self.spin_scsnall.setValue(99.0)
+                self.spin_scsnall.setValue(99)
                 self.spin_abstr1.setValue(0.0)
                 self.spin_fhortoni.setValue(0.0)
                 self.spin_fhortonf.setValue(0.0)
