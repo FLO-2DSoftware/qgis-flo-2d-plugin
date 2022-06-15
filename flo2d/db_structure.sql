@@ -1945,7 +1945,7 @@ CREATE TABLE "sed_supply_frac_data" (
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_supply_frac_data', 'aspatial');
 
 ---SED TRIGGERS
-
+------------- TRIGGERS for sed_group_areas:
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_insert', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_insert"
     AFTER INSERT ON "sed_group_areas"
@@ -1956,7 +1956,6 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_insert"
             SELECT NEW.fid, g.fid FROM grid as g
             WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
     END;
-    
     
 INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_areas_update', 1);
 CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_update"
@@ -1977,6 +1976,7 @@ CREATE TRIGGER IF NOT EXISTS "find_cells_sed_areas_delete"
         DELETE FROM "sed_group_cells" WHERE area_fid = OLD."fid";
     END;    
 
+------------- TRIGGERS for sed_rigid_areas:
 INSERT INTO trigger_control (name, enabled) VALUES ('find_sed_rigid_cells_insert', 1);
 CREATE TRIGGER IF NOT EXISTS "find_sed_rigid_cells_insert"
     AFTER INSERT ON "sed_rigid_areas"
@@ -1994,6 +1994,38 @@ CREATE TRIGGER IF NOT EXISTS "find_sed_rigid_cell_delete"
     BEGIN
         DELETE FROM "sed_rigid_cells" WHERE area_fid = OLD."fid";
     END;
+
+------------- TRIGGERS for sed_supply_areas:
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_supply_areas_insert', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_supply_areas_insert"
+    AFTER INSERT ON "sed_supply_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_supply_areas_insert') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "sed_supply_cells" WHERE area_fid = NEW."fid";
+        INSERT INTO "sed_supply_cells" (area_fid, grid_fid)
+            SELECT NEW.fid, g.fid FROM grid as g
+            WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_supply_areas_update', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_supply_areas_update"
+    AFTER UPDATE ON "sed_supply_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_supply_areas_update') AND (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
+    BEGIN
+        DELETE FROM "sed_supply_cells" WHERE area_fid = OLD."fid";
+        INSERT INTO "sed_supply_cells" (area_fid, grid_fid)
+        SELECT NEW.fid, g.fid FROM grid as g
+        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
+    END;
+
+INSERT INTO trigger_control (name, enabled) VALUES ('find_cells_sed_supply_areas_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "find_cells_sed_supply_areas_delete"
+    AFTER DELETE ON "sed_supply_areas"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'find_cells_sed_supply_areas_delete')
+    BEGIN
+        DELETE FROM "sed_supply_cells" WHERE area_fid = OLD."fid";
+    END;    
+
 
 -- USERS Layers
 

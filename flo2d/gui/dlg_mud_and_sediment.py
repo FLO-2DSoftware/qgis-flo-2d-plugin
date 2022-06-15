@@ -733,34 +733,34 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rating_curve_dp_tblw.blockSignals(True)         
         
         rating_curve = self.gutils.execute("SELECT fid, isedcfp, ased, bsed, dist_fid FROM sed_supply_areas ORDER BY dist_fid").fetchall()
-        if rating_curve:
-                
-
+        if rating_curve:     
             self.sed_rating_curve_tblw.setRowCount(0)
-            rc_grid = "SELECT grid_fid FROM sed_supply_cells WHERE fid = ?;"
+            rc_grid = "SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"
             for row_number, rc in enumerate(rating_curve):
-                grid = self.gutils.execute(rc_grid, (rc[0],)).fetchone()
-                self.sed_rating_curve_tblw.insertRow(row_number)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, grid[0])    
-                # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                        
-                self.sed_rating_curve_tblw.setItem(row_number, 0, item)
-                
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, rc[1])                         
-                self.sed_rating_curve_tblw.setItem(row_number, 1, item)
-                
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, rc[2])                         
-                self.sed_rating_curve_tblw.setItem(row_number, 2, item) 
-                
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, rc[3])                         
-                self.sed_rating_curve_tblw.setItem(row_number, 3, item) 
-                
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, rc[4])                         
-                self.sed_rating_curve_tblw.setItem(row_number, 4, item)  
+                grids = self.gutils.execute(rc_grid, (rc[0],)).fetchall()
+                if grids:
+                    for grid in grids:
+                        self.sed_rating_curve_tblw.insertRow(row_number)
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, grid[0])    
+                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)                        
+                        self.sed_rating_curve_tblw.setItem(row_number, 0, item)
+                        
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, rc[1])                         
+                        self.sed_rating_curve_tblw.setItem(row_number, 1, item)
+                        
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, rc[2])                         
+                        self.sed_rating_curve_tblw.setItem(row_number, 2, item) 
+                        
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, rc[3])                         
+                        self.sed_rating_curve_tblw.setItem(row_number, 3, item) 
+                        
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, rc[4])                         
+                        self.sed_rating_curve_tblw.setItem(row_number, 4, item)  
                  
                 if row_number == 0:                       
                     first_dist = rc[4]
