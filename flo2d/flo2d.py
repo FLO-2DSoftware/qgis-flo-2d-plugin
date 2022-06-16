@@ -253,10 +253,17 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, "img/import_components.svg"),
             text=self.tr("Import selected components files"),
-            callback=lambda: self.import_selected_components(),
+            callback=lambda: self.import_components(),
             parent=self.iface.mainWindow(),
         )
 
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/import_components2.svg"),
+        #     text=self.tr("Import one component"),
+        #     callback=lambda: self.import_selected_components2(),
+        #     parent=self.iface.mainWindow(),
+        # )
+        
         self.add_action(
             os.path.join(self.plugin_dir, "img/export_gds.svg"),
             text=self.tr("Export GDS files"),
@@ -758,13 +765,13 @@ class Flo2D(object):
     def call_IO_methods(self, calls, debug, *args):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        self.files_used = "CONT.DAT\n"
+        
+        self.files_used = ""
         self.files_not_used = ""
-        n_found = 0
-        n_not_found = 0
+        if calls[0] == 'export_cont_toler"':
+            self.files_used = "CONT.DAT\n" 
 
         for call in calls:
-            
             dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
                 if self.f2g.parser.dat_files[dat] is None:
@@ -1169,7 +1176,217 @@ class Flo2D(object):
                         self.uc.show_info(msg)
 
     @connection_required
+    def import_components(self):
+        """
+        Import selected traditional GDS files into FLO-2D database (GeoPackage).
+        """
+        imprt = self.uc.dialog_with_2_customized_buttons("Select import method", "", 
+                                                          " Several Components", " One Single Component ")
+                
+        if (imprt == QMessageBox.Yes):
+            self.import_selected_components()
+        elif (imprt == QMessageBox.No):         
+            self.import_selected_components2()
+            
+    @connection_required
     def import_selected_components(self):
+        
+        self.gutils.disable_geom_triggers()
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        import_calls = [
+            # "import_cont_toler",
+            "import_tolspatial",
+            "import_inflow",
+            "import_outflow",
+            "import_rain",
+            "import_raincell",
+            "import_evapor",
+            "import_infil",
+            "import_chan",
+            "import_xsec",
+            "import_hystruc",
+            "import_street",
+            "import_arf",
+            "import_mult",
+            "import_sed",
+            "import_levee",
+            "import_fpxsec",
+            "import_breach",
+            "import_gutter",
+            "import_fpfroude",
+            "import_swmmflo",
+            "import_swmmflort",
+            "import_swmmoutf"
+        ]  
+            
+        # s = QSettings()
+        # last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # fname, __ = QFileDialog.getOpenFileName(
+        #     None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
+        # )
+        # if not fname:
+        #     return
+        # dir_name = os.path.dirname(fname)
+        # s.setValue("FLO-2D/lastGdsDir", dir_name)
+        # bname = os.path.basename(fname)
+        #
+        # if self.f2g.set_parser(fname):
+        #     if bname not in self.f2g.parser.dat_files:
+        #         return
+
+        project_dir = QgsProject.instance().absolutePath()
+        outdir = QFileDialog.getExistingDirectory(
+            None, "Select directory of files to be imported", directory=project_dir
+        )
+        if outdir:  
+            bname = "CONT.DAT"
+            fname = outdir + "/CONT.DAT"
+            if self.f2g.set_parser(fname):
+                if bname not in self.f2g.parser.dat_files:
+                    return
+                
+            empty = self.f2g.is_table_empty("grid")
+            # check if a grid exists in the grid table
+            if empty:
+                self.uc.show_info("There is no grid defined!")
+                return
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            QApplication.restoreOverrideCursor()
+            ok = dlg_components.exec_()
+            if ok:
+                try:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                    if "Channels" not in dlg_components.components:
+                        import_calls.remove("import_chan")
+                        import_calls.remove("import_xsec")
+
+                    if "Reduction Factors" not in dlg_components.components:
+                        import_calls.remove("import_arf")
+
+                    if "Streets" not in dlg_components.components:
+                        import_calls.remove("import_street")
+
+                    if "Outflow Elements" not in dlg_components.components:
+                        import_calls.remove("import_outflow")
+
+                    if "Inflow Elements" not in dlg_components.components:
+                        import_calls.remove("import_inflow")
+
+                    if "Levees" not in dlg_components.components:
+                        import_calls.remove("import_levee")
+
+                    if "Multiple Channels" not in dlg_components.components:
+                        import_calls.remove("import_mult")
+
+                    if "Breach" not in dlg_components.components:
+                        import_calls.remove("import_breach")
+
+                    if "Gutters" not in dlg_components.components:
+                        import_calls.remove("import_gutter")
+
+                    if "Infiltration" not in dlg_components.components:
+                        import_calls.remove("import_infil")
+
+                    if "Floodplain Cross Sections" not in dlg_components.components:
+                        import_calls.remove("import_fpxsec")
+
+                    if "Mudflow and Sediment Transport" not in dlg_components.components:
+                        import_calls.remove("import_sed")
+
+                    if "Evaporation" not in dlg_components.components:
+                        import_calls.remove("import_evapor")
+
+                    if "Hydraulic  Structures" not in dlg_components.components:
+                        import_calls.remove("import_hystruc")
+
+                    # if 'MODFLO-2D' not in dlg_components.components:
+                    #     import_calls.remove('')
+
+                    if "Rain" not in dlg_components.components:
+                        import_calls.remove("import_rain")
+                        import_calls.remove("import_raincell")
+
+                    if "Storm Drain" not in dlg_components.components:
+                        import_calls.remove("import_swmmflo")
+                        import_calls.remove("import_swmmflort")
+                        import_calls.remove("import_swmmoutf")
+
+                    if "Spatial Tolerance" not in dlg_components.components:
+                        import_calls.remove("import_tolspatial")
+
+                    if "Spatial Froude" not in dlg_components.components:
+                        import_calls.remove("import_fpfroude")
+                        
+                    if import_calls:    
+                        self.call_IO_methods(import_calls, True)  # The strings list 'import_calls', contains the names of
+                        # the methods in the class Flo2dGeoPackage to import (read) the
+                        # FLO-2D .DAT files
+    
+                        # save CRS to table cont
+                        self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+    
+                        # load layers and tables
+                        self.load_layers()
+                        self.uc.bar_info("Flo2D model imported", dur=3)
+                        self.gutils.enable_geom_triggers()
+    
+                        if "import_chan" in import_calls:
+                            self.gutils.create_schematized_rbank_lines_from_xs_tips()
+    
+                        self.setup_dock_widgets()
+                        self.lyrs.refresh_layers()
+                        self.lyrs.zoom_to_all()
+                    else:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_info("No component was selected!")                
+
+                finally:
+                    QApplication.restoreOverrideCursor()
+                    if self.files_used != "" or self.files_not_used != "":
+                        self.uc.show_info(
+                            "Files read by this project:\n\n"
+                            + self.files_used
+                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
+                        )
+
+                    msg = ""
+                    if "import_swmmflo" in import_calls:
+                        self.clean_rating_tables()
+
+                        if self.gutils.is_table_empty("user_model_boundary"):
+                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                            msg += "must be done using the "
+                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+
+                        else:
+                            msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
+                            msg += "must be done using the "
+                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
+                        if msg:
+                            msg += "<br><br>"
+                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                        msg +="must be done using the "
+                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+
+                    if msg:
+                        self.uc.show_info(msg)
+
+
+
+
+
+                        
+    @connection_required
+    def import_selected_components2(self):
         """
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
@@ -1213,12 +1430,12 @@ class Flo2D(object):
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
         bname = os.path.basename(fname)
-
+    
         if bname not in file_to_import_calls:
             QMessageBox.critical(self.iface.mainWindow(),
                                  "Import selected GDS file",
                                  "Import from {0} file is not supported.".format(bname))
-
+    
         if self.f2g.set_parser(fname):
             call_string = file_to_import_calls[bname]
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1231,35 +1448,35 @@ class Flo2D(object):
                                         "Import from {0} is successful".format(bname))
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
-
+    
                 self.setup_dock_widgets()
                 self.lyrs.refresh_layers()
-
+    
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 QMessageBox.critical(self.iface.mainWindow(),
                                      "Import selected GDS file",
                                      "Import from {0} fails".format(bname))
-
+    
             finally:
                 msg = ""
                 if call_string == "import_swmmflo":
                     self.clean_rating_tables()
-
+    
                     if self.gutils.is_table_empty("user_model_boundary"):
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
+    
                     else:
                         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
+    
                 if call_string == "import_inflow" or call_string == "import_outflow":
                     if msg:
                         msg += "<br><br>"
@@ -1267,10 +1484,11 @@ class Flo2D(object):
                     msg += "must be done using the "
                     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
-
+    
                 if msg:
                     self.uc.show_info(msg)
-
+                    
+                    
     def clean_rating_tables(self):
         remove_grid = []
         grids = self.gutils.execute("SELECT DISTINCT grid_fid, name FROM swmmflort").fetchall()
