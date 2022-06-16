@@ -153,7 +153,8 @@ div.section p {
 }
 
 /* This sets requirements for your images, for example you can bound it to limits or minimums. */
-div.section img {
+div.section img,
+section img{
   margin: 2px 2px 2px;
   vertical-align: left;
   padding: 0.5em 0.5em 0.5em;
