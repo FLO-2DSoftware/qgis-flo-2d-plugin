@@ -126,11 +126,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         qry = """SELECT value FROM cont WHERE name = 'IRAIN';"""
         row = self.gutils.execute(qry).fetchone()
-        if is_number(row[0]):
-            if row[0] == "0":
-                self.simulate_rain_grp.setChecked(False)
-            else:
-                self.simulate_rain_grp.setChecked(True)
+        if row:
+            if is_number(row[0]):
+                if row[0] == "0":
+                    self.simulate_rain_grp.setChecked(False)
+                else:
+                    self.simulate_rain_grp.setChecked(True)
 
         self.rain = Rain(self.con, self.iface)
 

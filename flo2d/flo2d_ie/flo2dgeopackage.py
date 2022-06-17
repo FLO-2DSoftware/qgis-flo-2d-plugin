@@ -681,11 +681,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.clear_tables("blocked_cells")
             head, data = self.parser.parse_arf()
             cont_sql += [("IARFBLOCKMOD",) + tuple(head)]
-            gids = (x[0] for x in chain(data["T"], data["PB"]))
+            gids = (str(abs(int(x[0]))) for x in chain(data["T"], data["PB"]))
             cells = self.grid_centroids(gids, buffers=True)
 
             for i, row in enumerate(chain(data["T"], data["PB"]), 1):
-                gid = row[0]
+                gid = str(abs(int(row[0])))
                 centroid = cells[gid]
                 cells_sql += [(centroid, i) + tuple(row)]
 
