@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
+from ..layers import Layers
 from math import isclose
 from itertools import chain, groupby
 from operator import itemgetter
@@ -32,6 +33,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = None
         self.chunksize = float("inf")
         self.gutils = GeoPackageUtils(con, iface)
+        self.lyrs = Layers(iface)
         self.export_messages = ""
         
     def set_parser(self, fpath):
@@ -1208,6 +1210,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     lst += "\n"
                     if lst.isspace() is False:
                         if row[0] == "ITIMTEP":
+                            
+                            # See if CONT table has ENDTIMTEP and STARTIMTEP: 
+                            endtimtep = self.get_cont_par("ENDTIMTEP")
+                            if not endtimtep:
+                                self.set_cont_par("ENDTIMTEP", 0.0) 
+                               
+                            starttimtep = self.get_cont_par("STARTIMTEP")
+                            if not starttimtep:
+                                self.set_cont_par("STARTIMTEP", 0.0) 
+                                
+                            options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
                                 _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"])-1]
                                 if float_or_zero(options["STARTIMTEP"]) == 0.0 and float_or_zero(options["ENDTIMTEP"]) == 0.0:
