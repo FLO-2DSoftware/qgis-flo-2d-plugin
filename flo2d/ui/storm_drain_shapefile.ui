@@ -41,7 +41,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -1275,9 +1275,9 @@
       <widget class="QGroupBox" name="outfalls_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>144</x>
+         <x>84</x>
          <y>79</y>
-         <width>471</width>
+         <width>581</width>
          <height>301</height>
         </rect>
        </property>
@@ -1379,7 +1379,7 @@
              <string>Allow Discharge (SWMMOUTF.DAT)</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -4218,7 +4218,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Height</string>
+               <string>Height (Geom1)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -4233,7 +4233,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Width</string>
+               <string>Width (Geom2)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -4559,7 +4559,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Crest Height</string>
+               <string>Inlets Offset (Crest Height)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -5065,7 +5065,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Crest Height (Inlet Offset)</string>
+               <string>Inlet Offset (Crest Height)</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

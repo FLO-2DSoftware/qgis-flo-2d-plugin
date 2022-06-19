@@ -82,7 +82,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_inlets_max_depth_btn.clicked.connect(self.clear_inlets_max_depth)
         self.clear_inlets_init_depth_btn.clicked.connect(self.clear_inlets_init_depth)
         self.clear_inlets_surcharge_depth_btn.clicked.connect(self.clear_inlets_surcharge_dept)
-        self.clear_inlets_ponded_area_btn.clicked.connect(self.clear_inlets_ponded_area)
         self.clear_inlets_length_perimeter_btn.clicked.connect(self.clear_inlets_length_perimeter)
         self.clear_inlets_width_area_btn.clicked.connect(self.clear_inlets_width_area)
         self.clear_inlets_height_sag_surch_btn.clicked.connect(self.clear_inlets_height_sag_surch)
@@ -460,9 +459,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_inlets_time_for_clogging(self):
         self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(-1)
 
-    def clear_inlets_ponded_area(self):
-        self.inlets_ponded_area_FieldCbo.setCurrentIndex(-1)
-
     def clear_inlets_length_perimeter(self):
         self.inlets_length_perimeter_FieldCbo.setCurrentIndex(-1)
 
@@ -675,7 +671,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.inlets_curb_height_FieldCbo.setCurrentIndex(-1)
         self.inlets_clogging_factor_FieldCbo.setCurrentIndex(-1)
         self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(-1)
-        self.inlets_ponded_area_FieldCbo.setCurrentIndex(-1)
         self.inlets_length_perimeter_FieldCbo.setCurrentIndex(-1)
         self.inlets_width_area_FieldCbo.setCurrentIndex(-1)
         self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(-1)
@@ -822,7 +817,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if (not self.load_inlets and not self.load_outfalls and not self.load_conduits and 
             not self.load_pumps and not self.load_orifices and not self.load_weirs):
             self.uc.bar_warn("No data was selected!")
-            self.save_storm_drain_shapefile_fields()
+            self.save_storm_drain_shapefile_field_names()
+            # self.save_storm_drain_shapefile_fields()
 
         else:
 
@@ -922,11 +918,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.inlets_surcharge_depth_FieldCbo.currentText() != ""
                         else 0
                     )
-                    ponded_area = (
-                        f[self.inlets_ponded_area_FieldCbo.currentText()]
-                        if self.inlets_ponded_area_FieldCbo.currentText() != ""
-                        else 0
-                    )
                     swmm_length = (
                         f[self.inlets_length_perimeter_FieldCbo.currentText()]
                         if self.inlets_length_perimeter_FieldCbo.currentText() != ""
@@ -1005,7 +996,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("max_depth", max_depth)
                     feat.setAttribute("init_depth", init_depth)
                     feat.setAttribute("surcharge_depth", surcharge_depth)
-                    feat.setAttribute("ponded_area", ponded_area)
                     feat.setAttribute("outfall_invert_elev", 0)
                     feat.setAttribute("outfall_type", "NORMAL")
                     feat.setAttribute("tidal_curve", "...")
@@ -1803,7 +1793,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
-                    weir_type = (f[self.weir_type_FieldCbo.currentText()])
+                    weir_type = (
+                        f[self.weir_type_FieldCbo.currentText()]
+                        if self.weir_type_FieldCbo.currentText() != ""
+                        else "TRANSVERSE"     
+                    )               
                     if not weir_type in ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"]:
                         weir_type =  "TRANSVERSE"
                         wrong_types += 1
@@ -1838,7 +1832,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_side_slope_FieldCbo.currentText() != ""
                         else 0.0
                     )
-                    weir_shape = (f[self.weir_shape_FieldCbo.currentText()])
+                    weir_shape = (
+                        f[self.weir_shape_FieldCbo.currentText()]
+                        if self.weir_shape_FieldCbo.currentText() != ""
+                        else "RECT_CLOSED"     
+                    )                                              
                     if not weir_shape in  ["TRIANGULAR", "TRAPEZOIDAL", "RECT_CLOSED"]:
                         weir_shape = "RECT_CLOSED"
                         wrong_shapes += 1
@@ -1961,7 +1959,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_inlets_max_depth", self.inlets_max_depth_FieldCbo.currentIndex())
         s.setValue("sf_inlets_init_depth", self.inlets_init_depth_FieldCbo.currentIndex())
         s.setValue("sf_inlets_surcharge_depth", self.inlets_surcharge_depth_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_ponded_area", self.inlets_ponded_area_FieldCbo.currentIndex())
         s.setValue("sf_inlets_length_perimeter", self.inlets_length_perimeter_FieldCbo.currentIndex())
         s.setValue("sf_inlets_width_area", self.inlets_width_area_FieldCbo.currentIndex())
         s.setValue("sf_inlets_height_sag_surch", self.inlets_height_sag_surch_FieldCbo.currentIndex())
@@ -2086,9 +2083,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_inlets_surcharge_depth") is None else s.value("sf_inlets_surcharge_depth"))
             self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(val)
-
-            val = int(-1 if s.value("sf_inlets_ponded_area") is None else s.value("sf_inlets_ponded_area"))
-            self.inlets_ponded_area_FieldCbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("sf_inlets_length_perimeter") is None else s.value("sf_inlets_length_perimeter"))
             self.inlets_length_perimeter_FieldCbo.setCurrentIndex(val)
