@@ -41,7 +41,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>5</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -164,16 +164,6 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Init. Depth</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label_8">
             <property name="text">
@@ -184,17 +174,17 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_9">
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_5">
             <property name="text">
-             <string>Ponded Area</string>
+             <string>Init. Depth</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
+          <item row="6" column="0">
            <widget class="QLabel" name="label_11">
             <property name="font">
              <font>
@@ -594,8 +584,8 @@
          <layout class="QGridLayout" name="gridLayout_27">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_6">
-            <item row="0" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_name_FieldCbo">
+            <item row="2" column="0">
+             <widget class="QgsFieldComboBox" name="inlets_invert_elevation_FieldCbo">
               <property name="sizePolicy">
                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -656,8 +646,8 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_invert_elevation_FieldCbo">
+            <item row="0" column="0">
+             <widget class="QgsFieldComboBox" name="inlets_name_FieldCbo">
               <property name="sizePolicy">
                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -687,8 +677,8 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_max_depth_FieldCbo">
+            <item row="4" column="0">
+             <widget class="QgsFieldComboBox" name="inlets_init_depth_FieldCbo">
               <property name="sizePolicy">
                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -712,8 +702,33 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_init_depth_FieldCbo">
+            <item row="6" column="0">
+             <widget class="QgsFieldComboBox" name="inlets_length_perimeter_FieldCbo">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>22</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>22</height>
+               </size>
+              </property>
+              <property name="maxVisibleItems">
+               <number>20</number>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QgsFieldComboBox" name="inlets_max_depth_FieldCbo">
               <property name="sizePolicy">
                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -762,65 +777,12 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_ponded_area_FieldCbo">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="maxVisibleItems">
-               <number>20</number>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
-             <widget class="QgsFieldComboBox" name="inlets_length_perimeter_FieldCbo">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="maxVisibleItems">
-               <number>20</number>
-              </property>
-             </widget>
-            </item>
            </layout>
           </item>
           <item row="0" column="1">
            <layout class="QGridLayout" name="gridLayout_11">
-            <item row="0" column="0">
-             <widget class="QPushButton" name="clear_inlets_name_btn">
+            <item row="1" column="0">
+             <widget class="QPushButton" name="clear_inlets_type_btn">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -844,8 +806,8 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QPushButton" name="clear_inlets_type_btn">
+            <item row="0" column="0">
+             <widget class="QPushButton" name="clear_inlets_name_btn">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -970,34 +932,6 @@
              </widget>
             </item>
             <item row="6" column="0">
-             <widget class="QPushButton" name="clear_inlets_ponded_area_btn">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>22</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>22</width>
-                <height>22</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>x</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
              <widget class="QPushButton" name="clear_inlets_length_perimeter_btn">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
