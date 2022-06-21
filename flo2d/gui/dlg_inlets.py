@@ -71,7 +71,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.max_depth_dbox.valueChanged.connect(self.max_depth_dbox_valueChanged)
         self.initial_depth_dbox.valueChanged.connect(self.initial_depth_dbox_valueChanged)
         self.surcharge_depth_dbox.valueChanged.connect(self.surcharge_depth_dbox_valueChanged)
-        self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
+        # self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
         self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
         self.external_inflow_btn.clicked.connect(self.show_external_inflow_dlg)
         self.inlet_drain_type_cbo.currentIndexChanged.connect(self.inlet_drain_type_cbo_currentIndexChanged)
@@ -158,8 +158,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         self.initial_depth_dbox.setValue(data if data is not None else 0)
                     elif cell == 5:
                         self.surcharge_depth_dbox.setValue(data if data is not None else 0)
-                    elif cell == 6:
-                        self.ponded_area_dbox.setValue(data if data is not None else 0)
+                    # elif cell == 6:
+                    #     self.ponded_area_dbox.setValue(data if data is not None else 0)
                     elif cell == 7:
                         self.inlet_drain_type_cbo.setCurrentIndex(data - 1)
                         self.previous_type = data - 1
@@ -183,7 +183,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                         self.inlet_rating_table_cbo.setCurrentIndex(idx)
 
-                if cell == 0 or cell == 1:
+                if cell == 0 or cell == 1 or cell == 6:
                     item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
                 # See if rating tables exist:
@@ -245,7 +245,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Max. Depth",  # INP
                 "Init. Depth",  # INP
                 "Surcharge Depth",  # INP
-                "Ponded Area",  # INP
+                "(Disabled)",  # INP
                 "Inlet Drain Type",  # FLO-2D. SWMMFLO.DAT: INTYPE
                 "Length/Perimeter *",  # FLO-2D. SWMMFLO.DAT: SWMMlenght
                 "Width/Area *",  # FLO-2D. SWMMFLO.DAT: SWMMwidth
@@ -274,8 +274,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def surcharge_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.surcharge_depth_dbox, 5)
 
-    def ponded_area_dbox_valueChanged(self):
-        self.box_valueChanged(self.ponded_area_dbox, 6)
+    # def ponded_area_dbox_valueChanged(self):
+    #     self.box_valueChanged(self.ponded_area_dbox, 6)
 
     def external_inflow_checked(self):
         if not self.block:
@@ -438,7 +438,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
         self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
         self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-        self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+        # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
 
         val = self.inlets_tblw.item(row, 7).text()
         index = int(val if val != "" else 1) - 1
@@ -505,7 +505,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
             self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
             self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-            self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+            # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
             item = self.inlets_tblw.item(row, 7)  # Inlet type
             if item is not None:
                 inlet_type_index = int(item.text() if item.text() != "" else 1)
@@ -652,7 +652,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
                 item = self.inlets_tblw.item(row, 6)
                 if item is not None:
-                    ponded_area = str(item.text()) if str(item.text()) != "" else "0"
+                    # ponded_area = str(item.text()) if str(item.text()) != "" else "0"
+                    ponded_area = "0"
 
                 item = self.inlets_tblw.item(row, 7)
                 if item is not None:

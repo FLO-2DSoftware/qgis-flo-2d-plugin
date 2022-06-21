@@ -625,38 +625,6 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="5" colspan="2">
-       <widget class="QDoubleSpinBox" name="ponded_area_dbox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>22</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3" colspan="2">
-       <widget class="QLabel" name="label_9">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Ponded Area</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="7" colspan="2">
        <widget class="QLabel" name="label_13">
         <property name="font">
@@ -1136,7 +1104,6 @@
   <tabstop>max_depth_dbox</tabstop>
   <tabstop>initial_depth_dbox</tabstop>
   <tabstop>surcharge_depth_dbox</tabstop>
-  <tabstop>ponded_area_dbox</tabstop>
   <tabstop>external_inflow_chbox</tabstop>
   <tabstop>external_inflow_btn</tabstop>
   <tabstop>length_dbox</tabstop>
