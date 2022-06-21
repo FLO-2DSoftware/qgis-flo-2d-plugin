@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.63
+version=0.10.64
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,11 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.64
+  - Write D lines at end of HYSTRUC.DAT.
+  - SD: Delete ponded areas from dialogs. Keep them in tables.
+  - Create STARTIMTEP and ENDTIPTEP in CONT table when exporting GDS if not existing.
+  - ARF: change negative cells to positive when calculating grid centroids.
  <p>0.10.63
   - Some texts in SD weirs dialogs (from shapefile, export .INP) changed.
  <p>0.10.62

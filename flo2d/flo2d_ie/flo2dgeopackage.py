@@ -1898,6 +1898,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
             hystruc = os.path.join(outdir, "HYSTRUC.DAT")
+            d_lines = []
             with open(hystruc, "w") as h:
                 for stru in hystruc_rows:
                     fid = stru[0]
@@ -1927,8 +1928,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         t = subvals[0]
                                         t = 1 if t == 1 else 2 if (t == 2 or t == 3) else 3 if (t == 4 or t == 5) else 4
                                         subvals[0] = t
-                                    h.write(line.format(*subvals))
-
+                                    if i == 6:
+                                        d_lines.append(line.format(*subvals))
+                                    else:    
+                                        h.write(line.format(*subvals))
+                if d_lines:
+                    for dl in d_lines:
+                        h.write(dl) 
+                            
             return True
 
         except Exception as e:
