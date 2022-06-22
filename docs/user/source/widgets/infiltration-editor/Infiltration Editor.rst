@@ -202,7 +202,8 @@ SCS
 Global Uniform Infiltration
 ----------------------------
 
-The SCS infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for infiltration curve numbers.
+The SCS infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for
+infiltration curve numbers.
 
 1. Set up the Global Infiltration first.
    Click Global Infiltration.
@@ -230,6 +231,9 @@ The SCS infiltration editor can add global or spatially variable infiltration da
 
 Spatial Infiltration from User Layer
 ------------------------------------
+
+.. note:: This method is the most effective way to sample SCS data.  If using the other calculators, review SCS column
+          for errors.
 
 Spatially variable floodplain infiltration is set by digitizing infiltration polygons or importing infiltration polygons.
 Use the polygon editor to digitize spatially variable infiltration.
@@ -299,6 +303,10 @@ Curve Number Generator
 SCS Calculator Single Shapefile
 -------------------------------
 
+.. warning:: If applying this method, review min and max of the SCS field.  This method only works on polygon shapefiles
+             that have no geometric deficiencies.  If this method results in errors, copy the polygons to the User layer
+             field and use the User Layer Method.
+
 This option will add spatially variable infiltration data to the grid from a shapefile with one CN attribute field.
 
 1. Click the Calculate  
@@ -360,7 +368,7 @@ Horton
 Global Uniform Infiltration
 ---------------------------
 
-The Horton infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for infiltration curve numbers.
+The Horton infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for.
 
 1. Set up the Global Infiltration first.
    Click Global Infiltration.

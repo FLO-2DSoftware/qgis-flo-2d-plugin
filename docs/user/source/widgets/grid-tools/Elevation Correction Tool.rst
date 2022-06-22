@@ -96,18 +96,24 @@ There are several grid element correction options available in this tool.
 
 -  Select any polygon layer.
 
+-  Select any polyline layer.
+
 -  Define the geometric predicate.
-   Grid centroid or grid element.
+   Grid centroid or grid element within the polygon.
 
--  Take the elevation from an attribute table.
+-  Take the elevation and correction from an attribute table.
 
--  Take the mean statistics from the elements within the polygons.
+-  Take the zonal statistics from the grid elements within the polygons.
+
+-  Take the zonal statistics from raster pixels within a polygon.
+
+-  Take the zonal statistics from raster pixels within a grid element selected by a polygon.
 
 -  Use only selected features or all features.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat012.png
 
-Method 1 Elevation Correction Polygon Attribute
+Method 1 Polygon Attribute
 -----------------------------------------------
 
 This method will apply a elevation to each grid element within the polygon from the elevation field of the polygon.
@@ -131,7 +137,7 @@ This method will apply a elevation to each grid element within the polygon from 
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat015.png
 
-Method 2 Elevation Correction Raster within a Polygon
+Method 2 Raster within a Polygon
 -----------------------------------------------------
 
 This method will apply zonal statistics to a raster within a polygon to calculate the min, max or mean of an area.
@@ -156,16 +162,17 @@ This method will apply zonal statistics to a raster within a polygon to calculat
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat017.png
 
-Method 3 Elevation Correction Raster within a Selection of Grid Elements
-------------------------------------------------------------------------
+Method 3 Polyline
+------------------------
 
-This method will apply zonal statistics to a raster within individual grid elements to calculate the min, max or mean elevation.
+This method will apply zonal statistics to a raster within individual grid elements that are intersected by a polyline
+with a buffer of width provided by an attribute field
 
-1. Import an elevation raster.
-
-2. Copy a group of grid elements to the Elevation Polygon Layer.
+1. Set up a polyline with a buffer that is approximately the width of a grid element or the width of a physical feature
+   that is covered by the polyline.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat018.png
+
 
 3. Click the Elevation Correction Tool and click Correct Grid Elevation
 
@@ -173,7 +180,7 @@ This method will apply zonal statistics to a raster within individual grid eleme
 
 4. Set up the Correct Grid Dialog as shown below and click OK.
 
-.. image:: ../../img/Elevation-Correction-from-Polygons/Elevat016.png
+.. image:: ../../img/Elevation-Correction-from-Polygons/Elevat019.png
 
 5. Click ok to complete the process.
 
@@ -183,4 +190,4 @@ This method will apply zonal statistics to a raster within individual grid eleme
 
 7. The figure below shows the change in elevation.
 
-.. image:: ../../img/Elevation-Correction-from-Polygons/Elevat017.png
+.. image:: ../../img/Elevation-Correction-from-Polygons/Elevat020.png
