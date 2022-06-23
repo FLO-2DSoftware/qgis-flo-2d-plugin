@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>442</width>
+    <width>462</width>
     <height>393</height>
    </rect>
   </property>
@@ -185,15 +185,21 @@
    <item row="1" column="0">
     <widget class="QFrame" name="struct_frame">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>400</width>
+       <width>440</width>
        <height>300</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>440</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="frameShape">
@@ -499,7 +505,7 @@
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_7">
           <property name="sizeConstraint">
-           <enum>QLayout::SetFixedSize</enum>
+           <enum>QLayout::SetMaximumSize</enum>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label_5">
@@ -511,13 +517,13 @@
             </property>
             <property name="minimumSize">
              <size>
-              <width>45</width>
+              <width>60</width>
               <height>20</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>45</width>
+              <width>60</width>
               <height>16777215</height>
              </size>
             </property>
