@@ -458,7 +458,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         rt_name = rt_name if rt_name is not None else ""
         idx = self.inlet_rating_table_cbo.findText(rt_name)
         self.inlet_rating_table_cbo.setCurrentIndex(idx)
-
+        
         # Is there an external inflow for this node?
         inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
