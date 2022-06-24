@@ -199,11 +199,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
 
-        set_icon(self.show_rating_table_btn, "show_cont_table.svg")
-        set_icon(self.add_one_rtable_btn, "add_table_data.svg")
-        set_icon(self.add_predefined_rtable_btn, "mActionOpenFile.svg")
-        set_icon(self.remove_rtable_btn, "mActionDeleteSelected.svg")
-        set_icon(self.rename_rtable_btn, "change_name.svg")
+        set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
+        set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
+        set_icon(self.SD_add_predefined_type4_btn, "mActionOpenFile.svg")
+        set_icon(self.SD_remove_type4_btn, "mActionDeleteSelected.svg")
+        set_icon(self.SD_rename_type4_btn, "change_name.svg")
 
         set_icon(self.show_pump_table_btn, "show_cont_table.svg")
         set_icon(self.add_pump_curve_btn, "add_table_data.svg")
@@ -237,11 +237,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
 
-        self.show_rating_table_btn.clicked.connect(self.show_rating_table_and_plot)
-        self.add_one_rtable_btn.clicked.connect(self.add_one_rt)
-        self.add_predefined_rtable_btn.clicked.connect(self.SD_import_rating_table)
-        self.remove_rtable_btn.clicked.connect(self.delete_rtables)
-        self.rename_rtable_btn.clicked.connect(self.rename_rtables)
+        self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
+        self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
+        self.SD_add_predefined_type4_btn.clicked.connect(self.SD_import_type4)
+        self.SD_remove_type4_btn.clicked.connect(self.SD_delete_type4)
+        self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
     
         self.show_pump_table_btn.clicked.connect(self.show_pump_curve_table_and_plot)
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
@@ -271,10 +271,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
         
-        # self.import_rating_table_btn.clicked.connect(self.SD_import_rating_table)
+        # self.import_rating_table_btn.clicked.connect(self.SD_import_type4)
         
-        self.SD_rating_table_cbo.activated.connect(self.show_rating_table_and_plot)
-        # self.SD_rating_table_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)
+        self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
+        # self.SD_type4_cbo.currentIndexChanged.connect(self.refresh_SD_PlotAndTable)
                  
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
@@ -450,7 +450,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
             swmm_dict["rt_fid"] = None
         elif sd_type == "I" and intype == 4:
-            swmm_dict["rt_fid"] = self.SD_rating_table_cbo.itemData(self.SD_rating_table_cbo.currentIndex())
+            swmm_dict["rt_fid"] = self.SD_type4_cbo.itemData(self.SD_type4_cbo.currentIndex())
         else:
             pass
 
@@ -2893,7 +2893,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
 
-    def SD_import_rating_table(self):
+    def SD_import_type4(self):
         """
         Reads one or more rating table files.
         Name of file is the same as a type 4 inlet. Uses file names to associate file with inlet names.
@@ -3180,28 +3180,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
     def populate_rtables_and_data(self):
         self.populate_rtables_combo()
-        self.show_rating_table_and_plot()
+        self.SD_show_type4_table_and_plot()
 
     def populate_rtables_combo(self):
         
-        self.SD_rating_table_cbo.clear()
+        self.SD_type4_cbo.clear()
         duplicates = ""
         for row in self.inletRT.get_rating_tables():
             rt_fid, name = [x if x is not None else "" for x in row]
             if name != "":
-                if self.SD_rating_table_cbo.findText(name) == -1:
-                    self.SD_rating_table_cbo.addItem(name, rt_fid)
+                if self.SD_type4_cbo.findText(name) == -1:
+                    self.SD_type4_cbo.addItem(name, rt_fid)
                 else:
                     duplicates += name + "\n"
 
-    def show_rating_table_and_plot(self):
+    def SD_show_type4_table_and_plot(self):
 
         self.SD_table.after_delete.disconnect() 
         self.SD_table.after_delete.connect(self.save_SD_table_data)        
            
-        idx = self.SD_rating_table_cbo.currentIndex()
-        rt_fid = self.SD_rating_table_cbo.itemData(idx)
-        rt_name = self.SD_rating_table_cbo.currentText()
+        idx = self.SD_type4_cbo.currentIndex()
+        rt_fid = self.SD_type4_cbo.itemData(idx)
+        rt_name = self.SD_type4_cbo.currentText()
         if rt_fid is None:
             #             self.uc.bar_warn("No rating table defined!")
             return
@@ -3318,7 +3318,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                    
         self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0) 
         
-    def add_one_rt(self):
+    def SD_add_one_type4(self):
         self.add_single_rtable()
 
     def add_single_rtable(self, name=None):
@@ -3326,31 +3326,31 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         newRT = self.inletRT.add_rating_table(name)
         self.populate_rtables_combo()
-        newIdx = self.SD_rating_table_cbo.findText(newRT)
+        newIdx = self.SD_type4_cbo.findText(newRT)
         if newIdx == -1:
-            self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count() - 1)
+            self.SD_type4_cbo.setCurrentIndex(self.SD_type4_cbo.count() - 1)
         else:
-            self.SD_rating_table_cbo.setCurrentIndex(newIdx)
-            self.show_rating_table_and_plot()
+            self.SD_type4_cbo.setCurrentIndex(newIdx)
+            self.SD_show_type4_table_and_plot()
 
     def add_rtable(self, name=None):
         if not self.inletRT:
             return
         newRT = self.inletRT.add_rating_table(name)
         self.populate_rtables_combo()
-        newIdx = self.SD_rating_table_cbo.findText(newRT)
+        newIdx = self.SD_type4_cbo.findText(newRT)
         if newIdx == -1:
-            self.SD_rating_table_cbo.setCurrentIndex(self.SD_rating_table_cbo.count() - 1)
+            self.SD_type4_cbo.setCurrentIndex(self.SD_type4_cbo.count() - 1)
         else:
-            self.SD_rating_table_cbo.setCurrentIndex(newIdx)
+            self.SD_type4_cbo.setCurrentIndex(newIdx)
 
     # def refresh_SD_PlotAndTable(self):
-    #     idx = self.SD_rating_table_cbo.currentIndex()
+    #     idx = self.SD_type4_cbo.currentIndex()
 
-    def delete_rtables(self):
+    def SD_delete_type4(self):
         if not self.inletRT:
             return
-        rt_name = self.SD_rating_table_cbo.currentText()
+        rt_name = self.SD_type4_cbo.currentText()
         qry = """SELECT grid_fid, name FROM swmmflort WHERE name = ?"""
         rts = self.gutils.execute(qry, (rt_name,))
         for rt in rts:
@@ -3363,8 +3363,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 if not self.uc.question(q):
                     return
-                idx = self.SD_rating_table_cbo.currentIndex()
-                rt_fid = self.SD_rating_table_cbo.itemData(idx)
+                idx = self.SD_type4_cbo.currentIndex()
+                rt_fid = self.SD_type4_cbo.itemData(idx)
                 self.inletRT.del_rating_table(rt_fid)
                 # self.populate_rtables_combo()
             else:
@@ -3382,13 +3382,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         + str(grid_fid)
                         + " ?"
                     ):
-                        idx = self.SD_rating_table_cbo.currentIndex()
-                        rt_fid = self.SD_rating_table_cbo.itemData(idx)
+                        idx = self.SD_type4_cbo.currentIndex()
+                        rt_fid = self.SD_type4_cbo.itemData(idx)
                         self.inletRT.del_rating_table(rt_fid)
                         # self.populate_rtables_combo()
         self.populate_rtables_and_data()
         
-        if self.SD_rating_table_cbo.currentIndex() == -1:
+        if self.SD_type4_cbo.currentIndex() == -1:
             self.plot.clear()
             if self.plot.plot.legend is not None:
                 plot_scene = self.plot.plot.legend.scene()
@@ -3400,26 +3400,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.setModel(self.inlet_data_model)
             self.inlet_data_model.clear() 
   
-    def rename_rtables(self):
+    def SD_rename_type4(self):
         if not self.inletRT:
             return
         new_name, ok = QInputDialog.getText(None, "Change rating table name", "New name:")
         if not ok or not new_name:
             return
-        if not self.SD_rating_table_cbo.findText(new_name) == -1:
+        if not self.SD_type4_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1735: Rating table with name {} already exists in the database. Please, choose another name.".format(
                 new_name
             )
             self.uc.show_warn(msg)
             return
-        idx = self.SD_rating_table_cbo.currentIndex()
-        rt_fid = self.SD_rating_table_cbo.itemData(idx)
+        idx = self.SD_type4_cbo.currentIndex()
+        rt_fid = self.SD_type4_cbo.itemData(idx)
         self.inletRT.set_rating_table_data_name(rt_fid, new_name)
         
         self.populate_rtables_combo()
-        idx = self.SD_rating_table_cbo.findText(new_name)
-        self.SD_rating_table_cbo.setCurrentIndex(idx)
-        self.show_rating_table_and_plot()        
+        idx = self.SD_type4_cbo.findText(new_name)
+        self.SD_type4_cbo.setCurrentIndex(idx)
+        self.SD_show_type4_table_and_plot()        
         
     def save_SD_table_data(self):
         model = self.tview.model()
@@ -3429,8 +3429,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.save_pump_curve_data()
         
     def save_rtables_data(self):
-        idx = self.SD_rating_table_cbo.currentIndex()
-        rt_fid = self.SD_rating_table_cbo.itemData(idx)
+        idx = self.SD_type4_cbo.currentIndex()
+        rt_fid = self.SD_type4_cbo.itemData(idx)
         self.update_rt_plot()
         rt_data = []
         for i in range(self.inlet_data_model.rowCount()):
@@ -3439,7 +3439,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 rt_data.append((rt_fid, m_fdata(self.inlet_data_model, i, 0), m_fdata(self.inlet_data_model, i, 1)))
             else:
                 pass
-        data_name = self.SD_rating_table_cbo.currentText()
+        data_name = self.SD_type4_cbo.currentText()
         self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
         self.update_rt_plot()
 

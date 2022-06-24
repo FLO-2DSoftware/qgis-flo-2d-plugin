@@ -530,7 +530,7 @@
     </widget>
    </item>
    <item row="4" column="0">
-    <widget class="QGroupBox" name="rating_tables_group">
+    <widget class="QGroupBox" name="Type_4_condition_group">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -538,7 +538,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Rating Tables</string>
+      <string>Inlet Type 4 Conditions: Rating Tables and Culvert Equations</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
       <item row="0" column="0">
@@ -547,7 +547,7 @@
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <item>
-         <widget class="QComboBox" name="SD_rating_table_cbo">
+         <widget class="QComboBox" name="SD_type4_cbo">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -575,7 +575,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="show_rating_table_btn">
+         <widget class="QToolButton" name="SD_show_type4_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -592,7 +592,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Show inlet rating table</string>
+           <string>Show inlet type 4 data</string>
           </property>
           <property name="text">
            <string/>
@@ -604,7 +604,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="add_one_rtable_btn">
+         <widget class="QToolButton" name="SD_add_one_type4_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -621,7 +621,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add inlet rating table</string>
+           <string>Add inlet type 4 data</string>
           </property>
           <property name="text">
            <string/>
@@ -633,7 +633,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="add_predefined_rtable_btn">
+         <widget class="QToolButton" name="SD_add_predefined_type4_btn">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -653,7 +653,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rain time series.&lt;/p&gt;&lt;p&gt;Select one or more files. Each file must be a list of pairs (time, distribution).&lt;/p&gt;&lt;p&gt;The distribution is a % of the total storm.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>Add predefined time series/culvert eq.</string>
           </property>
           <property name="text">
            <string>Add</string>
@@ -671,7 +671,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="remove_rtable_btn">
+         <widget class="QToolButton" name="SD_remove_type4_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -688,7 +688,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Remove inlet rating table</string>
+           <string>Remove inlet type 4 condition</string>
           </property>
           <property name="text">
            <string/>
@@ -700,7 +700,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="rename_rtable_btn">
+         <widget class="QToolButton" name="SD_rename_type4_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -717,7 +717,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename inlet rating table</string>
+           <string>Rename inlet type 4 condition</string>
           </property>
           <property name="text">
            <string/>
@@ -1086,12 +1086,12 @@
   <tabstop>export_inp_btn</tabstop>
   <tabstop>SD_nodes_components_cbo</tabstop>
   <tabstop>SD_links_components_cbo</tabstop>
-  <tabstop>SD_rating_table_cbo</tabstop>
-  <tabstop>show_rating_table_btn</tabstop>
-  <tabstop>add_one_rtable_btn</tabstop>
-  <tabstop>add_predefined_rtable_btn</tabstop>
-  <tabstop>remove_rtable_btn</tabstop>
-  <tabstop>rename_rtable_btn</tabstop>
+  <tabstop>SD_type4_cbo</tabstop>
+  <tabstop>SD_show_type4_btn</tabstop>
+  <tabstop>SD_add_one_type4_btn</tabstop>
+  <tabstop>SD_add_predefined_type4_btn</tabstop>
+  <tabstop>SD_remove_type4_btn</tabstop>
+  <tabstop>SD_rename_type4_btn</tabstop>
   <tabstop>pump_curve_cbo</tabstop>
   <tabstop>show_pump_table_btn</tabstop>
   <tabstop>add_pump_curve_btn</tabstop>
