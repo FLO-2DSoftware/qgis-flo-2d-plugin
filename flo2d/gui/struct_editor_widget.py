@@ -308,7 +308,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
             rating_files, __ = QFileDialog.getOpenFileNames(
                 None,
-                "Select rating table files input file to import data",
+                "Select rating table files",
                 directory=last_dir,
                 filter="(*.TXT *.DAT);;(*.TXT);;(*.DAT);;(*.*)",
             )

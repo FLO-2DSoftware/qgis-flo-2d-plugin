@@ -11,7 +11,7 @@ import os
 from qgis.PyQt.QtCore import Qt, QSettings, NULL
 from qgis.core import QgsFeatureRequest
 from ..flo2dobjects import InletRatingTable
-from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication, QFileDialog
+from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication, QFileDialog, QHeaderView
 from qgis.PyQt.QtGui import QColor
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
@@ -19,6 +19,7 @@ from ..user_communication import UserCommunication
 from ..utils import m_fdata, float_or_zero, int_or_zero, is_number
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 from math import isnan
+from _ast import Or
 
 uiDialog, qtBaseClass = load_ui("inlets")
 class InletNodesDialog(qtBaseClass, uiDialog):
@@ -28,7 +29,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.uc = UserCommunication(iface, "FLO-2D")
+        self.uc = UserCommunication(iface, "")
         self.con = None
         self.gutils = None
         
@@ -49,7 +50,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlet_series_data = None
         self.plot_item_name = None
         self.d1, self.d2 = [[], []]
-        self.previous_type = -1
         self.block = False
         self.rt_previous_index = -999
 
@@ -137,11 +137,32 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         no_rt = ""
         existing_rts = []
         duplicates = []
+        wrong_type = ""
+        
         for row_number, row_data in enumerate(rows):
+            name = row_data[0].strip()
+            typ = str(row_data[7]).strip()
+            
+            if (name[0:2] in  ["I1", "I2",  "I3", "I4", "I5"]):
+                if name[1] != typ:
+                    wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1]  + ".\n"      
+            if name[0:2] == "IM":
+                if name[2] != typ:
+                    wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2]  + ".\n"                  
+                    
+            
+            #
+            # if not () or 
+            #         (name()[1] == "M" and name()[2] == "5"):
             self.inlets_tblw.insertRow(row_number)
             for cell, data in enumerate(row_data):
+
                 item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, data)
+                if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
+                    # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setFlags(item.flags() &  ~Qt.ItemIsEditable)                   
+                
+                # item.setData(Qt.DisplayRole, data)
                 # Fill the list of inlet names:
                 if cell == 0:
                     self.inlet_cbo.addItem(data)
@@ -162,7 +183,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     #     self.ponded_area_dbox.setValue(data if data is not None else 0)
                     elif cell == 7:
                         self.inlet_drain_type_cbo.setCurrentIndex(data - 1)
-                        self.previous_type = data - 1
                     elif cell == 8:
                         self.length_dbox.setValue(data if data is not None else 0)
                     elif cell == 9:
@@ -179,12 +199,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         self.clogging_factor_dbox.setValue(data if data is not None else 0)
                     elif cell == 15:
                         self.time_for_clogging_dbox.setValue(data if data is not None else 0)
-                    elif cell == 16:  # Rating table name.
+                    elif cell == 16:  # Rating table name/Culvert Eq.
                         idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                         self.inlet_rating_table_cbo.setCurrentIndex(idx)
-
-                if cell == 0 or cell == 1 or cell == 6:
-                    item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
                 # See if rating tables exist:
                 if cell == 0:
@@ -203,9 +220,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             else:
                                 existing_rts.append(data)
 
-                item.setData(Qt.DisplayRole, data)
+                item.setData(Qt.EditRole, data)
                 self.inlets_tblw.setItem(row_number, cell, item)
 
+        QApplication.restoreOverrideCursor()
         if no_rt != "":
             self.uc.show_info(
                 "WARNING 070120.1048:\nThe following rating tables were not found in table 'swmmflort' (Rating Tables):\n\n"
@@ -220,6 +238,12 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "WARNING 080120.0814:\nThe following rating tables are assigned to more than one inlet:\n" + txt
             )
 
+        if wrong_type:
+            self.uc.show_info(
+                "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
+            )
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)    
         self.inlet_cbo.model().sort(0)
         self.inlet_cbo.setCurrentIndex(0)
 
@@ -237,6 +261,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlets_tblw_cell_clicked(logicalIndex, 0)
 
     def set_header(self):
+        # self.inlets_tblw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)     
         self.inlets_tblw.setHorizontalHeaderLabels(
             [
                 "Name",  # INP  and FLO-2D. SWMMFLO.DAT: SWMM_JT
@@ -247,17 +272,17 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Surcharge Depth",  # INP
                 "(Disabled)",  # INP
                 "Inlet Drain Type",  # FLO-2D. SWMMFLO.DAT: INTYPE
-                "Length/Perimeter *",  # FLO-2D. SWMMFLO.DAT: SWMMlenght
-                "Width/Area *",  # FLO-2D. SWMMFLO.DAT: SWMMwidth
-                "Height/Sag/Surch *",  # FLO-2D. SWMMFLO.DAT: SWMMheight
-                "Weir Coeff *",  # FLO-2D. SWMMFLO.DAT: SWMMcoeff
-                "Feature *",  # FLO-2D. SWMMFLO.DAT: FLAPGATE
-                "Curb Height *",  # FLO-2D. SWMMFLO.DAT: CURBHEIGHT
-                "Clogging Factor #",  # FLO-2D. SDCLOGGING.DAT
-                "Time for Clogging #",  # FLO-2D. SDCLOGGING.DAT
-                "Rating Table",
+                "Length/Perimeter",  # FLO-2D. SWMMFLO.DAT: SWMMlenght
+                "Width/Area",  # FLO-2D. SWMMFLO.DAT: SWMMwidth
+                "Height/Sag/Surch",  # FLO-2D. SWMMFLO.DAT: SWMMheight
+                "Weir Coeff",  # FLO-2D. SWMMFLO.DAT: SWMMcoeff
+                "Feature",  # FLO-2D. SWMMFLO.DAT: FLAPGATE
+                "Curb Height",  # FLO-2D. SWMMFLO.DAT: CURBHEIGHT
+                "Clogging Factor",  # FLO-2D. SDCLOGGING.DAT
+                "Time for Clogging",  # FLO-2D. SDCLOGGING.DAT
+                "Rat.Table/Culvert Eq.",
             ]
-        )
+        )        
 
     def invert_connect(self):
         self.uc.show_info("Connection!")
@@ -309,9 +334,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex() + 1)
         self.inlets_tblw.setItem(row, 7, item)
 
-        if self.inlet_drain_type_cbo.currentIndex() + 1 == 4:
+        if self.inlet_drain_type_cbo.currentIndex() + 1 in [4,5]:
             self.label_17.setEnabled(True)
-            self.inlet_rating_table_cbo.setEnabled(True)
+            # self.inlet_rating_table_cbo.setEnabled(True)
             # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
             self.length_dbox.setEnabled(False)
             self.width_dbox.setEnabled(False)
@@ -324,7 +349,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
         else:
             self.label_17.setEnabled(False)
-            self.inlet_rating_table_cbo.setEnabled(False)
+            # self.inlet_rating_table_cbo.setEnabled(False)
             self.inlet_rating_table_cbo.setCurrentIndex(-1)
             # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
             self.length_dbox.setEnabled(True)
@@ -426,7 +451,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def inlets_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.inlet_cbo.blockSignals(True)
-        name = self.inlets_tblw.item(row, 0).text()
+        name = self.inlets_tblw.item(row, 0).text().strip()
         idx = self.inlet_cbo.findText(name)
         self.inlet_cbo.setCurrentIndex(idx)
         self.inlet_cbo.blockSignals(False)
@@ -440,9 +465,18 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
         # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
 
-        val = self.inlets_tblw.item(row, 7).text()
-        index = int(val if val != "" else 1) - 1
-        index = 4 if index > 4 else 0 if index < 0 else index
+        val = self.inlets_tblw.item(row, 7).text().strip()
+        # Check that type and name are consistent:
+        if ( (name[0:2] in ["I1","I2","I3","I4","I5"] and name[1] != val) or
+             (name[0:3] == "IM5"  and name[2] != val) 
+            ):
+            self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!") 
+        index = int(val) - 1 if val != "" else 0
+        index = 5 if index == 4 else index
+        if index > 5:
+            self.uc.bar_warn("Inlet " + name + " has incorrect drain type!") 
+        # index = 5 if index > 5 else 0 if index < 0 else index
+        
         self.inlet_drain_type_cbo.setCurrentIndex(index)
 
         self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
@@ -509,7 +543,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             item = self.inlets_tblw.item(row, 7)  # Inlet type
             if item is not None:
                 inlet_type_index = int(item.text() if item.text() != "" else 1)
-                inlet_type_index = 4 if inlet_type_index > 4 else 0 if inlet_type_index < 0 else inlet_type_index - 1
+                inlet_type_index = 5 if inlet_type_index > 5 else 0 if inlet_type_index < 0 else inlet_type_index - 1
                 self.inlet_drain_type_cbo.setCurrentIndex(inlet_type_index)
             self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
             self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
@@ -819,7 +853,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 self.uc.show_info(
                     "WARNING 020219.1836:\n\nThe following "
                     + str(len(t4_but_rt_name))
-                    + " inlet(s) are of type 4 (stage discharge with rating table) but don't have rating table assigned:\n"
+                    + " inlet(s) are of type 4 (stage discharge with rating table or Culvert equation) but don't have data assigned:\n"
                     + no_rt_names
                 )
 

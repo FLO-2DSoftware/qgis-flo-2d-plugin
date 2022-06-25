@@ -1564,6 +1564,17 @@ CREATE TABLE "swmmflort_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort_data', 'aspatial');
 
+CREATE TABLE "swmmflo_culvert" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER UNIQUE ON CONFLICT REPLACE, 
+    "name" TEXT,
+    "cdiameter" REAL,
+    "typec" INTEGER,
+    "typeen" INTEGER,
+    "cubase" REAL,  
+    "multbarrels" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflo_culvert', 'aspatial');
 
 -- SWMMOUTF.DAT
 

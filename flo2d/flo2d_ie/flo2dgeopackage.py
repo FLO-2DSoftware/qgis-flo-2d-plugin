@@ -1077,34 +1077,92 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         """
         try: 
-            swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
-            data_sql = ["""INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""", 3]
-    
+            # swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]  
+            
+            swmmflort_rows = []
+            rt_data_rows = []
+            culvert_rows = []
+
             data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
             for i, row in enumerate(data, 1):
-    
-                if len(row) == 2:
-                    gid, params = row
+
+                if row[0] == "D" and len(row) == 3:  # old D line: D  7545
+                    gid, params = row[1:]
                     name = "Rating Table {}".format(i)
-                elif len(row) == 3:
-                    gid, inlet_name, params = row
+                elif row[0] == "D" and len(row) == 4: # D line: D  7545  I4-38
+                    gid, inlet_name, params = row[1:]
                     name = inlet_name
-                elif len(row) == 4:
-                    gid, inlet_name, RT_name, params = row
-                    name = RT_name
-    
-                swmmflort_sql += [(gid, name)]
-                for n in params:
-                    data_sql += [(i,) + tuple(n)]
-    
-            if data_sql:
-                self.clear_tables("swmmflort", "swmmflort_data")
-                self.batch_execute(swmmflort_sql, data_sql)
+                elif  row[0] == "S":
+                    gid, inlet_name, cdiameter, params = row[1:] 
+
+                if row[0] == "D":
+                    swmmflort_rows.append((gid, name))
+                    
+                    # swmmflort_sql += [(gid, name)]
+                    
+                    for j in range(1,len(params)):
+                        rt_data_rows.append( ((i,) + tuple( params[j] ) ))
+
+                elif row[0] == "S":
+                    culvert_rows.append((gid, inlet_name, cdiameter, row[4][0][0], row[4][0][1], row[4][0][2], row[4][0][3]))        
+
+            if swmmflort_rows:
+                self.clear_tables("swmmflort")
+                self.con.executemany("INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);", swmmflort_rows)
+                # self.batch_execute(swmmflort_sql)
+
+            if rt_data_rows:
+                self.clear_tables("swmmflort_data")
+                self.con.executemany("INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);", rt_data_rows) 
+
+            if culvert_rows:
+                self.clear_tables("swmmflo_culvert")
+                qry= """INSERT INTO swmmflo_culvert 
+                        (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?);"""
+                self.con.executemany(qry, culvert_rows)             
                 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
+
+
+
+        # try: 
+        #     swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
+        #     rt_data_sql = ["""INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""", 3]
+        #     culvert_data_sql = ["""INSERT INTO swmmflo_culvert" 
+        #             ("grid_fid", "name", "cdiameter", "typec", "typeen", "cubase","multbarrels") VALUES""", 7]
+        #
+        #     data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
+        #     for i, row in enumerate(data, 1):
+        #
+        #         if len(row) == 2:  # old D line: D  7545
+        #             gid, params = row
+        #             name = "Rating Table {}".format(i)
+        #         elif len(row) == 3: # D line: D  7545  I4-38
+        #             gid, inlet_name, params = row
+        #             name = inlet_name
+        #         elif len(row) == 4: # not used
+        #             gid, inlet_name, RT_name, params = row
+        #             name = RT_name
+        #
+        #         swmmflort_sql += [(gid, name)]
+        #         for n in params:
+        #             rt_data_sql += [(i,) + tuple(n)]
+        #
+        #     if rt_data_sql:
+        #         self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
+        #         self.batch_execute(swmmflort_sql, rt_data_sql, )
+        #
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
         
+
+
+
+
     def import_swmmoutf(self):
         swmmoutf_sql = ["""INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""", 4]
 

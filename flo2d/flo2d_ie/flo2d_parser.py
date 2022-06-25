@@ -636,6 +636,18 @@ class ParseDAT(object):
         return data
 
     def parse_swmmflort(self):
+        # swmmflort = self.dat_files["SWMMFLORT.DAT"]
+        # par = self.single_parser(swmmflort)
+        # data = []
+        # for row in par:
+        #     char = row[0]
+        #     if char == "D":
+        #         row.append([])
+        #         data.append(row[1:])
+        #     else:
+        #         data[-1][-1].append(row[1:])
+        # return data
+            
         swmmflort = self.dat_files["SWMMFLORT.DAT"]
         par = self.single_parser(swmmflort)
         data = []
@@ -643,7 +655,10 @@ class ParseDAT(object):
             char = row[0]
             if char == "D":
                 row.append([])
-                data.append(row[1:])
+                data.append(row[0:])
+            if char == "S":
+                row.append([])
+                data.append(row[0:])                
             else:
                 data[-1][-1].append(row[1:])
         return data

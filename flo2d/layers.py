@@ -616,6 +616,16 @@ class Layers(object):
                     },
                 ),
                 (
+                    "swmmflo_culvert",
+                    {
+                        "name": "Culvert Equations",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
                     "swmm_inflows",
                     {
                         "name": "Storm Drain Inflows",

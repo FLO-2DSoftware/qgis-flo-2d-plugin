@@ -2918,7 +2918,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         last_dir = s.value("FLO-2D/lastSWMMDir", "")
         rating_files, __ = QFileDialog.getOpenFileNames(
             None,
-            "Select rating table files input file to import data",
+            "Select files with rating table or Culvert equations data",
             directory=last_dir,
             filter="(*.TXT *.DAT);;(*.TXT);;(*.DAT);;(*.*)",
         )
