@@ -2753,7 +2753,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
         self.lyrs.clear_rubber() 
 
-    def show_orificies(self):
+    def show_orifices(self):
         """
         Shows orifices dialog.
 
@@ -2824,16 +2824,32 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
         
     def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
-        """Auto assign Conduits, Pumps, Orificies, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
-        proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
-        if not proceed:
-            return
+        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
         try:
+            
+            
+            layer_name = ("user_swmm_conduits" if link_name == "Conduits"  else
+            "user_swmm_pumps"  if link_name == "Pumps" else  
+            "user_swmm_orifices" if link_name == "Orifices" else  
+            "user_swmm_weirs" if link_name == "Weirs" else  
+            "")
+            
+            if self.gutils.is_table_empty(layer_name):
+                self.uc.show_warn("User Layer " + link_name + " is empty!\n\n"
+                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+                )   
+                return             
+
+            proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
+            if not proceed:
+                return    
+                    
             QApplication.setOverrideCursor(Qt.WaitCursor)
             layer = (self.user_swmm_conduits_lyr if link_name == "Conduits"  else
             self.user_swmm_pumps_lyr if link_name == "Pumps" else  
-            self.user_swmm_orificies_lyr if link_name == "Orificies" else  
-            self.user_swmm_weirs_lyr if link_name == "Weirs" else  self.user_swmm_conduits_lyr)                                                    
+            self.user_swmm_orifices_lyr if link_name == "Orifices" else  
+            self.user_swmm_weirs_lyr if link_name == "Weirs" else  
+            self.user_swmm_conduits_lyr)                                                    
               
             link_fields = layer.fields()
         
@@ -3297,7 +3313,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         elif idx == 2:
             self.show_pumps()
         elif idx == 3:
-            self.show_orificies()  
+            self.show_orifices()  
         elif idx == 4:
             self.show_weirs()                       
             

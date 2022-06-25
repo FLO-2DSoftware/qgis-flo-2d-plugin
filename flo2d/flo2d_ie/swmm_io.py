@@ -440,7 +440,7 @@ class StormDrainProject(object):
 
     def create_INP_orifices_dictionary_with_orifices(self):
         try:
-            orificies_cols = [
+            orifices_cols = [
                 "ori_name",
                 "ori_inlet",
                 "ori_outlet",
@@ -451,12 +451,12 @@ class StormDrainProject(object):
                 "ori_open_close_time", 
             ]
             
-            orificies = self.select_this_INP_group("orifices")
-            if orificies:
-                for ori in orificies:
+            orifices = self.select_this_INP_group("orifices")
+            if orifices:
+                for ori in orifices:
                     if not ori or ori[0] in self.ignore:
                         continue
-                    ori_dict = dict(zip_longest(orificies_cols, ori.split()))
+                    ori_dict = dict(zip_longest(orifices_cols, ori.split()))
                     orifice = ori_dict.pop("ori_name")
                     self.INP_orifices[orifice] = ori_dict
         except Exception as e:
