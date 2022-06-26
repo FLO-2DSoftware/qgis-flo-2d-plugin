@@ -2673,7 +2673,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmmflort_sql = """SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"""
             data_sql = """SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"""
-
+            
             #             line1 = 'D {0}\n'
             line1 = "D {0}  {1}\n"
             line2 = "N {0}  {1}\n"
@@ -2748,17 +2748,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 if not error_mentioned:
                                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
                                                     error_mentioned = True
-
-            #                         else:
-            #                             if rtname is None or rtname  == "":
-            #                                 errors += "There is a rating table item with no grid and name assigned.\n"
-            #                             else:
-            #                                 errors += "A rating table item named '" + rtname + "' has no grid element assigned.\n"
-            #                     else:
-            #                         if rtname is None or rtname == "":
-            #                              errors += "There is a rating table item with no grid and no name assigned.\n"
-            #                         else:
-            #                             errors += "A rating table item named '" + rtname + "' has no grid element assigned.\n"
+                                                    
+                culverts = self.gutils.execute("SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;").fetchall() 
+                if culverts:
+                    for culv in culverts:
+                        grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
+                        s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
+                        s.write("F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n")
             if errors:
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
 

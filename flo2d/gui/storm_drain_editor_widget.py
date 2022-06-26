@@ -3202,6 +3202,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
         self.SD_type4_cbo.clear()
         duplicates = ""
+        # Load rating tables:
         for row in self.inletRT.get_rating_tables():
             rt_fid, name = [x if x is not None else "" for x in row]
             if name != "":
@@ -3209,6 +3210,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.SD_type4_cbo.addItem(name, rt_fid)
                 else:
                     duplicates += name + "\n"
+                    
+        # Load Culvert equations:    
+    
+        culverts = self.gutils.execute("SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;").fetchall() 
+        if culverts:
+            for culv in culverts:
+                grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
+                if name != "":
+                    if self.SD_type4_cbo.findText(name) == -1:
+                        self.SD_type4_cbo.addItem(name, 0)
+                    else:
+                        duplicates += name + "\n"            
 
     def SD_show_type4_table_and_plot(self):
 
