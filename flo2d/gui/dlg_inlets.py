@@ -203,22 +203,30 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                         self.inlet_rating_table_cbo.setCurrentIndex(idx)
 
-                # See if rating tables exist:
+                # See if rating tables or Culvert eq. exist:
                 if cell == 0:
                     inlet = data
                 if cell == 16:
-                    if data:  # data is the rating table name for cell 16.
+                    if data:  # data is the rating table or Culvert eq. name for cell 16.
                         data = data.strip()
                         if data != "":
                             fid = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
                             if not fid:
-                                no_rt += "'" + data + "'\t   for inlet   '" + inlet + "'\n"
-                                data = ""
-                            if data in existing_rts:
-                                if data not in duplicates:
-                                    duplicates.append(data)
-                            else:
-                                existing_rts.append(data)
+                                fid = self.gutils.execute("SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)).fetchone()
+                                if not fid:                                
+                                    no_rt +=  data + "\t   for inlet   " + inlet + "\n"
+                                    data = ""
+                                if data in existing_rts:
+                                    if data not in duplicates:
+                                        duplicates.append(data)
+                                else:
+                                    existing_rts.append(data)                                    
+                                    
+                            # if data in existing_rts:
+                            #     if data not in duplicates:
+                            #         duplicates.append(data)
+                            # else:
+                            #     existing_rts.append(data)
 
                 item.setData(Qt.EditRole, data)
                 self.inlets_tblw.setItem(row_number, cell, item)
@@ -226,16 +234,16 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         if no_rt != "":
             self.uc.show_info(
-                "WARNING 070120.1048:\nThe following rating tables were not found in table 'swmmflort' (Rating Tables):\n\n"
+                "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n"
                 + no_rt
             )
 
         if duplicates:
             txt = ""
             for d in duplicates:
-                txt += "\n'" + d + "'"
+                txt += "\n" + d + ""
             self.uc.show_info(
-                "WARNING 080120.0814:\nThe following rating tables are assigned to more than one inlet:\n" + txt
+                "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n" + txt
             )
 
         if wrong_type:

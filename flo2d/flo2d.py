@@ -1553,7 +1553,6 @@ class Flo2D(object):
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()
             if ok:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
     
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
@@ -1620,14 +1619,23 @@ class Flo2D(object):
     
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
-    
+
+                if 'export_swmmflort' in export_calls:
+                    if not self.uc.question("Did you schematize Storm Drains? Do you want to export Storm Drain files?"):       
+                        export_calls.remove("export_swmmflo")
+                        export_calls.remove("export_swmmflort")
+                        export_calls.remove("export_swmmoutf")                
+                
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
                 try:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
     
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
-    
-                    self.call_IO_methods(export_calls, True, outdir)  
+
+                    QApplication.setOverrideCursor(Qt.WaitCursor)      
+                    self.call_IO_methods(export_calls, True, outdir)                             
+                            
                     # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to export (write) the
                     # FLO-2D .DAT files
@@ -1638,7 +1646,7 @@ class Flo2D(object):
                 finally:
                     QApplication.restoreOverrideCursor()
 
-                    if "Storm Drain" in dlg_components.components:
+                    if 'export_swmmflo' in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
                     # Delete .DAT files the model will try to use if existing:
