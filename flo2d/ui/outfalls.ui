@@ -767,7 +767,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Water Depth</string>
+       <string>Fixed Stage</string>
       </property>
      </column>
      <column>
