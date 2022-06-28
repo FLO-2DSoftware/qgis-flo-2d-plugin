@@ -366,7 +366,7 @@
             </property>
             <item>
              <property name="text">
-              <string> *Select Component* </string>
+              <string>Select Component</string>
              </property>
             </item>
             <item>
@@ -413,11 +413,11 @@
              </size>
             </property>
             <property name="currentText">
-             <string>*Select Link*</string>
+             <string>Select Link</string>
             </property>
             <item>
              <property name="text">
-              <string>*Select Link*</string>
+              <string>Select Link</string>
              </property>
             </item>
             <item>
@@ -482,11 +482,11 @@
            </size>
           </property>
           <property name="currentText">
-           <string>* Auto-assign link nodes *</string>
+           <string>Auto-assign link nodes</string>
           </property>
           <item>
            <property name="text">
-            <string>* Auto-assign link nodes *</string>
+            <string>Auto-assign link nodes</string>
            </property>
           </item>
           <item>

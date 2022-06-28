@@ -515,7 +515,7 @@
               <item>
                <widget class="QLabel" name="label_4">
                 <property name="text">
-                 <string>Crest height</string>
+                 <string>Inlet Offset</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -905,7 +905,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Crest Height</string>
+       <string>Inlet Offset</string>
       </property>
      </column>
      <column>
