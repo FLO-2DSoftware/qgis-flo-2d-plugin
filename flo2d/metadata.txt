@@ -11,6 +11,8 @@ about=QGIS tools for FLO-2D
 changelog=
  <p>0.10.65
   - SD: import Culvert eq. from widget. Export/Import SD .DAT files
+  - SD: update labels water depth = fixed stage.
+  - SD: update labels crest height = inlet offset.
  <p>0.10.64
   - Write D lines at end of HYSTRUC.DAT.
   - SD: Delete ponded areas from dialogs. Keep them in tables.
