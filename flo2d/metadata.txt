@@ -13,6 +13,7 @@ changelog=
   - SD: import Culvert eq. from widget. Export/Import SD .DAT files
   - SD: update labels water depth = fixed stage.
   - SD: update labels crest height = inlet offset.
+  - Quick fix for cont.dat line 8.  Final fix = #issue860
  <p>0.10.64
   - Write D lines at end of HYSTRUC.DAT.
   - SD: Delete ponded areas from dialogs. Keep them in tables.

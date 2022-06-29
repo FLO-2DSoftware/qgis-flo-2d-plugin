@@ -1279,6 +1279,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 self.set_cont_par("STARTIMTEP", 0.0) 
                                 
                             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+                            if options["LGPLOT"] == "0":
+                                del options["GRAPTIM"]
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
                                 _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"])-1]
                                 if float_or_zero(options["STARTIMTEP"]) == 0.0 and float_or_zero(options["ENDTIMTEP"]) == 0.0:
