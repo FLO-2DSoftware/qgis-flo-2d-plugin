@@ -86,7 +86,7 @@ Table of Contents
    /widgets/street-editor/Street Editor
    /widgets/floodplain-cross-section-editor/Floodplain Cross Section Editor
    /widgets/infiltration-editor/Infiltration Editor
-   /widgets/storm-drainer-editor/Storm Drain
+   /widgets/storm-drain-editor/Storm Drain
    /widgets/levees-breach-editor/Levees Breach Editor
    /widgets/multiple-channels-editor/Multiple Channel Editor
 
