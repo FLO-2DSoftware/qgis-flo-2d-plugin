@@ -159,7 +159,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         mon = self.f2g.execute("""SELECT month FROM evapor_monthly WHERE monthly_evap = 5.57;""").fetchone()[0]
         self.assertEqual(mon, "september")
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_chan(self):
         self.f2g.import_chan()
         nelem = self.f2g.execute("""SELECT fcn FROM chan_elems WHERE fid = 7667;""").fetchone()[0]
@@ -167,7 +166,18 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         nxsec = self.f2g.execute("""SELECT nxsecnum FROM chan_n WHERE elem_fid = 7667;""").fetchone()[0]
         self.assertEqual(nxsec, 107)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
+        noex_count = self.f2g.execute("""SELECT COUNT(fid) FROM user_noexchange_chan_areas""").fetchone()[0]
+        self.assertEqual(noex_count, 3)
+        noex_count = self.f2g.execute("""SELECT COUNT(fid) FROM noexchange_chan_cells""").fetchone()[0]
+        self.assertEqual(noex_count, 3)
+        result_query = self.f2g.execute("""SELECT grid_fid FROM noexchange_chan_cells;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1285)
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1284)
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1283)
+
     def test_import_xsec(self):
         self.f2g.import_chan()
         self.f2g.import_xsec()
