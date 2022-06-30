@@ -69,7 +69,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertFalse(self.f2g.is_table_empty("cont"))
         controls = self.f2g.execute("""SELECT name, value FROM cont;""").fetchall()
         self.assertIn(("build", "Pro Model - Build No. 15.07.12"), controls)
-        self.assertEqual(len(controls), 45)
+        self.assertEqual(len(controls), 47)
 
     def test_import_mannings_n_topo(self):
         cellsize = self.f2g.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
