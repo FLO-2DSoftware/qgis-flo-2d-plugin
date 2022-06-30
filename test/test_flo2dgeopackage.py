@@ -72,11 +72,19 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertIsNotNone(self.f2g.parser.dat_files["CONT.DAT"])
         self.assertIsNotNone(self.f2g.parser.dat_files["TOLER.DAT"])
 
+        self.assertIsNotNone(self.f2g_2.parser.dat_files["CONT.DAT"])
+        self.assertIsNotNone(self.f2g_2.parser.dat_files["TOLER.DAT"])
+
     def test_import_cont_toler(self):
         self.f2g.import_cont_toler()
         self.assertFalse(self.f2g.is_table_empty("cont"))
         controls = self.f2g.execute("""SELECT name, value FROM cont;""").fetchall()
         self.assertIn(("build", "Pro Model - Build No. 15.07.12"), controls)
+        self.assertEqual(len(controls), 47)
+
+        self.f2g_2.import_cont_toler()
+        self.assertFalse(self.f2g_2.is_table_empty("cont"))
+        controls = self.f2g_2.execute("""SELECT name, value FROM cont;""").fetchall()
         self.assertEqual(len(controls), 47)
 
     def test_import_mannings_n_topo(self):
@@ -88,6 +96,11 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertIsNone(n_value)
         elevation = self.f2g.execute("""SELECT fid FROM grid WHERE elevation IS NULL;""").fetchone()
         self.assertIsNone(elevation)
+
+        cellsize = self.f2g_2.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
+        self.assertEqual(float(cellsize), 100)
+        rows = self.f2g_2.execute("""SELECT COUNT(fid) FROM grid;""").fetchone()[0]
+        self.assertEqual(float(rows), 9205)
 
     def test_import_inflow(self):
         self.f2g.clear_tables("inflow")
@@ -210,6 +223,16 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(areas, 17)
         cells = self.f2g.execute("""SELECT COUNT(fid) FROM mult_cells;""").fetchone()[0]
         self.assertEqual(areas, cells)
+
+        self.f2g_2.import_mult()
+        areas = self.f2g_2.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
+        self.assertEqual(areas, 235)
+        cells = self.f2g_2.execute("""SELECT COUNT(fid) FROM mult_cells;""").fetchone()[0]
+        self.assertEqual(areas, cells)
+        mult_count = self.f2g_2.execute("""SELECT COUNT(fid) FROM simple_mult_cells;""").fetchone()[0]
+        self.assertEqual(mult_count, 1288)
+        mult_value = self.f2g_2.execute("""SELECT grid_fid FROM simple_mult_cells;""").fetchone()[0]
+        self.assertEqual(mult_value, 207)
 
     @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_sed(self):
