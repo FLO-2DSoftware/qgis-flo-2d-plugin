@@ -1231,7 +1231,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if options["ICHANNEL"] == "0":
                 del options["NOPRTC"]
                 del options["COURANTC"]
-            if options["LGPLOT"] == "0":
+            if options["LGPLOT"] != "2":
                 del options["GRAPTIM"]
             if options["MSTREET"] == "0":
                 del options["COURANTST"]
@@ -1267,8 +1267,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         lst += rline.format(val)
                     lst += "\n"
                     if lst.isspace() is False:
+                        
+                        
+                        
                         if row[0] == "ITIMTEP":
-                            
                             # See if CONT table has ENDTIMTEP and STARTIMTEP: 
                             endtimtep = self.get_cont_par("ENDTIMTEP")
                             if not endtimtep:
@@ -1278,9 +1280,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if not starttimtep:
                                 self.set_cont_par("STARTIMTEP", 0.0) 
                                 
+<<<<<<< HEAD
                             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
                             if options["LGPLOT"] == "0":
                                 del options["GRAPTIM"]
+=======
+                            # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+                            
+>>>>>>> refs/heads/correct_error_when_writing_CONT_file_with_new_STARTIMTEP_and_ENDTIMTEP_parameters
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
                                 _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"])-1]
                                 if float_or_zero(options["STARTIMTEP"]) == 0.0 and float_or_zero(options["ENDTIMTEP"]) == 0.0:
@@ -1289,6 +1296,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     lst = " " + _itimtep + " " + options["TIMTEP"] + " " + options["STARTIMTEP"] + " " + options["ENDTIMTEP"]
                             else:
                                 lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
+                            lst += "\n"    
+                                
+                                
+                                
                         c.write(lst)
                     else:
                         pass
