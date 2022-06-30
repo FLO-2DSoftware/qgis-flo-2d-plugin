@@ -234,7 +234,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         mult_value = self.f2g_2.execute("""SELECT grid_fid FROM simple_mult_cells;""").fetchone()[0]
         self.assertEqual(mult_value, 207)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_sed(self):
         self.f2g.import_sed()
         ndata = self.f2g.execute("""SELECT COUNT(fid) FROM sed_supply_frac_data;""").fetchone()[0]
