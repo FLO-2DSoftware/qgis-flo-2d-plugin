@@ -32,7 +32,6 @@ def file_len(fname):
             pass
     return i
 
-
 def export_paths(*inpaths):
     paths = [os.path.join(EXPORT_DATA_DIR, os.path.basename(inpath)) for inpath in inpaths]
     if len(paths) == 1:
@@ -40,7 +39,6 @@ def export_paths(*inpaths):
     else:
         pass
     return paths
-
 
 class TestFlo2dGeoPackage(unittest.TestCase):
     con = database_create(":memory:")
@@ -215,7 +213,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.f2g.import_arf()
         c = self.f2g.execute("""SELECT COUNT(fid) FROM blocked_cells;""").fetchone()[0]
         self.assertEqual(c, 15)
-
 
     def test_import_mult(self):
         self.f2g.import_mult()
