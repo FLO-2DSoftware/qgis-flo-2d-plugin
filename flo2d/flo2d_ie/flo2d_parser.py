@@ -502,8 +502,8 @@ class ParseDAT(object):
     def parse_mult(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")  
-        if os.path.isfile(last_dir + r"\MULT.DAT"):
-            if os.path.getsize(last_dir + r"\MULT.DAT") > 0:          
+        if len(last_dir) == 0 or os.path.isfile(last_dir + r"\MULT.DAT"):
+            if len(last_dir) == 0 or os.path.getsize(last_dir + r"\MULT.DAT") > 0:
                 mult = self.dat_files["MULT.DAT"]
                 par = self.single_parser(mult)
                 head = next(par)
@@ -521,8 +521,8 @@ class ParseDAT(object):
     def parse_simple_mult(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")  
-        if os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-            if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:          
+        if len(last_dir) == 0 or os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
+            if len(last_dir) == 0 or os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
                 simple_mult = self.dat_files["SIMPLE_MULT.DAT"]
                 par = self.single_parser(simple_mult)
                 head = next(par)
