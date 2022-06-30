@@ -37,7 +37,9 @@ class BuildChanRightBankDialog(qtBaseClass, uiDialog):
     def get_chanrightbank_dir(self):
         s = QSettings()
         chanrightbank_dir = QFileDialog.getExistingDirectory(
-            None, "Select CHANRIGHTBANK.EXE program folder", directory=self.chanrightbank_le.text()
+            None,
+            "Select CHANRIGHTBANK.EXE program folder",
+            directory=self.chanrightbank_le.text(),
         )
         if not chanrightbank_dir:
             return

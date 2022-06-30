@@ -140,9 +140,10 @@ Multiple Domain System
 
 Use this option with any floodplain boundary that will transfer flow between two domains.
 
-See the |location_link| for further instructions:
+See the |Training_Package| for further instructions:
 
-.. |location_link| raw:: html
+.. |Training_Package| raw:: html
+
    <a href="https://flo-2d.sharefile.com/d-s25731a178264675b" target="_blank">Multiple Domain Flow Exchange Training Package</a>
 
 1. Click the Add Polygon BC
