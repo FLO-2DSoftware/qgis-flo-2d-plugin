@@ -14,10 +14,12 @@ from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR = os.path.join(THIS_DIR, "data", "import")
+IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
+IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")
 VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
-CONT = os.path.join(IMPORT_DATA_DIR, "CONT.DAT")
+CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
+CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
 
 from flo2d.geopackage_utils import database_create
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -42,13 +44,19 @@ def export_paths(*inpaths):
 
 class TestFlo2dGeoPackage(unittest.TestCase):
     con = database_create(":memory:")
+    con_2 = database_create(":memory:")
 
     @classmethod
     def setUpClass(cls):
         cls.f2g = Flo2dGeoPackage(cls.con, None)
         cls.f2g.disable_geom_triggers()
-        cls.f2g.set_parser(CONT)
+        cls.f2g.set_parser(CONT_1)
         cls.f2g.import_mannings_n_topo()
+
+        cls.f2g_2 = Flo2dGeoPackage(cls.con_2, None)
+        cls.f2g_2.disable_geom_triggers()
+        cls.f2g_2.set_parser(CONT_2)
+        cls.f2g_2.import_mannings_n_topo()
 
     @classmethod
     def tearDownClass(cls):
@@ -100,14 +108,49 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         tot = self.f2g.execute("""SELECT tot_rainfall FROM rain;""").fetchone()[0]
         self.assertEqual(float(tot), 3.10)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_infil(self):
         self.f2g.import_infil()
         scsnall = self.f2g.execute("""SELECT scsnall FROM infil;""").fetchone()[0]
         self.assertEqual(float(scsnall), 99)
-        areas = self.f2g.execute("""SELECT COUNT(fid) FROM infil_areas_green;""").fetchone()[0]
-        cells = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
-        self.assertEqual(int(areas), int(cells))
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 3)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1730)
+        self.assertEqual(cell_values[1], 1.01)
+        self.assertEqual(cell_values[2], 4.3)
+        self.assertEqual(cell_values[3], 0.3)
+        self.assertEqual(cell_values[4], 0.0)
+        self.assertEqual(cell_values[5], 0.0)
+        self.assertEqual(cell_values[6], 8.5)
+
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_scs;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 3)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, scsn FROM infil_cells_scs;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 320)
+        self.assertEqual(cell_values[1], 82)
+
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_chan_elems;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 2)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, hydconch FROM infil_chan_elems;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 2)
+        self.assertEqual(cell_values[1], 0.04)
+
+        self.f2g_2.import_infil()
+        cells_count = self.f2g_2.execute("""SELECT COUNT(fid) FROM infil_cells_horton;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 20)
+        result_query = self.f2g_2.execute(
+            """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1)
+        self.assertEqual(cell_values[1], 2.9528)
+        self.assertEqual(cell_values[2], 0.1181)
+        self.assertEqual(cell_values[3], 0.0300)
 
     def test_import_evapor(self):
         self.f2g.import_evapor()
