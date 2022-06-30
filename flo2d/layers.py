@@ -38,7 +38,10 @@ class Layers(object):
 
     def __init__(self, iface):
         self.iface = iface
-        self.canvas = iface.mapCanvas()
+        if iface is not None:
+            self.canvas = iface.mapCanvas()
+        else:
+            self.canvas = None
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
         self.uc = UserCommunication(iface, "FLO-2D")
