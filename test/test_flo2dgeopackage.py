@@ -308,7 +308,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
             head = w.readline()
             self.assertEqual(int(head), count)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_cont(self):
         self.f2g.import_cont_toler()
         self.f2g.export_cont_toler(EXPORT_DATA_DIR)
@@ -373,7 +372,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_chan(self):
         self.f2g.import_chan()
         self.f2g.export_chan(EXPORT_DATA_DIR)
@@ -387,7 +385,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(in1, out1)
         self.assertEqual(in2, out2)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_xsec(self):
         self.f2g.import_xsec()
         self.f2g.export_xsec(EXPORT_DATA_DIR)
@@ -420,7 +417,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_mult(self):
         self.f2g.import_mult()
         self.f2g.export_mult(EXPORT_DATA_DIR)
@@ -429,8 +425,9 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
+    @unittest.skip("MUD or SED not activated in data file.")
     def test_export_sed(self):
+        self.f2g.import_cont_toler()
         self.f2g.import_sed()
         self.f2g.export_sed(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["SED.DAT"]
@@ -456,6 +453,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     @unittest.skip("Test needs to be updated.")
     def test_export_breach(self):
+        self.f2g.import_levee()
         self.f2g.import_breach()
         self.f2g.export_breach(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["BREACH.DAT"]
