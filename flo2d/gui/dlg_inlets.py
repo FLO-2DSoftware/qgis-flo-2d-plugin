@@ -256,11 +256,11 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlet_cbo.setCurrentIndex(0)
 
         self.inlets_tblw.sortItems(0, Qt.AscendingOrder)
-
         self.inlets_tblw.selectRow(0)
-
         self.rt_previous_index = self.inlet_rating_table_cbo.currentIndex()
 
+        self.enable_external_inflow()
+        
         self.block = False
         
         self.highlight_inlet_cell(self.grid_element_le.text())
@@ -335,6 +335,17 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 if inflow:
                     delete_sql = "DELETE FROM swmm_inflows WHERE node_name = ?"
                     self.gutils.execute(delete_sql, (node,))
+
+    def enable_external_inflow(self):
+        # Is there an external inflow for this node?
+        inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
+        inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+        if inflow:
+            self.external_inflow_chbox.setChecked(True)
+            self.external_inflow_btn.setEnabled(True)
+        else:
+            self.external_inflow_chbox.setChecked(False)
+            self.external_inflow_btn.setEnabled(False)
 
     def inlet_drain_type_cbo_currentIndexChanged(self):
         row = self.inlet_cbo.currentIndex()
@@ -501,15 +512,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         idx = self.inlet_rating_table_cbo.findText(rt_name)
         self.inlet_rating_table_cbo.setCurrentIndex(idx)
         
-        # Is there an external inflow for this node?
-        inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
-        inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
-        if inflow:
-            self.external_inflow_chbox.setChecked(True)
-            self.external_inflow_btn.setEnabled(True)
-        else:
-            self.external_inflow_chbox.setChecked(False)
-            self.external_inflow_btn.setEnabled(False)
+        self.enable_external_inflow()
 
         self.block = False
         
@@ -570,20 +573,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             else:
                 self.inlet_rating_table_cbo.setCurrentIndex(-1)
 
-            # Is there an external inflow for this node?
-            inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
-            inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
-            if inflow:
-                self.external_inflow_chbox.setChecked(True)
-                self.external_inflow_btn.setEnabled(True)
-            else:
-                self.external_inflow_chbox.setChecked(False)
-                self.external_inflow_btn.setEnabled(False)
-                
+            self.enable_external_inflow() 
+
             self.highlight_inlet_cell(self.grid_element_le.text())
             QApplication.restoreOverrideCursor()
-            
-
         else:
             self.uc.bar_warn("Inlet/Junction not found!")
 
@@ -1002,7 +995,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
             self.swmm_inflow_baseline_dbox.setValue(inflow[1])
-            if inflow[2] != "":
+            if inflow[2] != "" and inflow[2] is not None:
                 idx = self.swmm_inflow_pattern_cbo.findText(inflow[2].strip())
                 if idx == -1:
                     self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!", 5)
