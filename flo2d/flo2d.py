@@ -54,9 +54,12 @@ from .flo2d_tools.grid_tools import dirID, cellIDNumpyArray
 from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
 from urllib3.contrib import _securetransport
 
+from qgis.PyQt import QtCore
+from PyQt5.QtWidgets import QApplication
 
 class Flo2D(object):
     def __init__(self, iface):
+        
         self.iface = iface
         self.iface.f2d = {}
         self.plugin_dir = os.path.dirname(__file__)
@@ -99,6 +102,17 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
+          
+
+        # if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+        #     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+        #
+        # if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+        # else: 
+        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, False) 
+
+
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)

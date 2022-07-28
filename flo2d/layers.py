@@ -656,6 +656,16 @@ class Layers(object):
                     },
                 ),
                 (
+                    "swmm_inflow_time_series_data",
+                    {
+                        "name": "Storm Drain Time Series Data",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
                     "swmm_pumps_curve_data",
                     {
                         "name": "Storm Drain Pumps Curve Data",

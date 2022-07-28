@@ -8,16 +8,28 @@
 # of the License, or (at your option) any later version
 
 import os
-from qgis.PyQt.QtCore import Qt, QSettings, NULL
+from datetime import datetime
+from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
 from qgis.core import QgsFeatureRequest
 from ..flo2dobjects import InletRatingTable
-from qgis.PyQt.QtWidgets import QInputDialog, QTableWidgetItem, QDialogButtonBox, QApplication, QFileDialog, QHeaderView
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import (
+    QInputDialog, 
+     QTableWidgetItem, 
+     QDialogButtonBox, 
+     QApplication, 
+     QFileDialog, 
+     QHeaderView,
+     QStyledItemDelegate,
+     QLineEdit
+    )
+from qgis.PyQt.QtGui import QColor, QRegExpValidator
+
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, float_or_zero, int_or_zero, is_number
+from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+
 from math import isnan
 from _ast import Or
 
@@ -948,8 +960,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")
-
-
 class ExternalInflowsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, node):
         qtBaseClass.__init__(self)
@@ -1032,26 +1042,35 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
 
     def select_time_series(self):
         time_series_name = self.swmm_inflow_time_series_cbo.currentText()
-        dlg_inflow_time_series = InflowTimeSeriesDialog(self.iface, time_series_name)
-        save = dlg_inflow_time_series.exec_()
+        dlg = InflowTimeSeriesDialog(self.iface, time_series_name)
+        while True:
+            save = dlg.exec_()
+            if save:
+                if dlg.values_ok:
+                    dlg.save_time_series()
+                    time_series_name = dlg.get_name()
+                    if time_series_name != "":
+                        # Reload time series list and select the one saved:
+                        time_series_names_sql = (
+                            "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+                        )
+                        names = self.gutils.execute(time_series_names_sql).fetchall()
+                        if names:
+                            self.swmm_inflow_time_series_cbo.clear()
+                            for name in names:
+                                self.swmm_inflow_time_series_cbo.addItem(name[0])
+                            self.swmm_inflow_time_series_cbo.addItem("")
+            
+                            idx = self.swmm_inflow_time_series_cbo.findText(time_series_name)
+                            self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)                    
 
-        time_series_name = dlg_inflow_time_series.get_name()
-        if time_series_name != "":
-            # Reload time series list and select the one saved:
-
-            time_series_names_sql = (
-                "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
-            )
-            names = self.gutils.execute(time_series_names_sql).fetchall()
-            if names:
-                self.swmm_inflow_time_series_cbo.clear()
-                for name in names:
-                    self.swmm_inflow_time_series_cbo.addItem(name[0])
-                self.swmm_inflow_time_series_cbo.addItem("")
-
-                idx = self.swmm_inflow_time_series_cbo.findText(time_series_name)
-                self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)
-
+                        self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
+                        break
+                    else:
+                       break 
+            else:
+                break
+            
     def save_external_inflow_variables(self):
         """
         Save changes to external inflows variables.
@@ -1090,8 +1109,6 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_pattern")
-
-
 class InflowPatternDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, pattern_name):
         qtBaseClass.__init__(self)
@@ -1176,8 +1193,6 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_time_series")
-
-
 class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, time_series_name):
         qtBaseClass.__init__(self)
@@ -1189,11 +1204,36 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
-
+        
+        self.values_ok = False
+        set_icon(self.add_time_data_btn, "add.svg")
+        set_icon(self.delete_time_data_btn, "remove.svg") 
+               
         self.setup_connection()
 
-        self.time_series_buttonBox.accepted.connect(self.save_time_series)
+        delegate = NumericDelegate(self.inflow_time_series_tblw)
+        self.inflow_time_series_tblw.setItemDelegate(delegate)
+        
+        self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
         self.select_time_series_btn.clicked.connect(self.select_time_series_file)
+        self.inflow_time_series_tblw.doubleClicked.connect(self.inflow_time_series_tblw_clicked)     
+        self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
+        self.add_time_data_btn.clicked.connect(self.add_time) 
+        self.delete_time_data_btn.clicked.connect(self.delete_time) 
+        
+        # self.inflow_time_series_tblw.currentChanged(1,1)
+        
+        # self.inflow_time_series_tblw.cellClicked.connect(self.inflow_time_series_tblw_clicked())
+        # self.inflow_time_series_tblw.cellChanged.connect(self.inflow_time_series_tblw_clicked())
+        # self.inflow_time_series_tblw.dataChanged(self.inflow_time_series_tblw_clicked())
+
+
+# self.inflow_time_series_tblw.valueChanged.connect(self.inflow_time_series_tblw_clicked())
+# self.inflow_time_series_tblw.textChanged.connect(self.inflow_time_series_tblw_clicked())
+# self.inflow_time_series_tblw.editingFinished.connect(self.inflow_time_series_tblw_clicked())
+# self.inflow_time_series_tblw.selectedClicked.connect(self.inflow_time_series_tblw_clicked)
+# self.inflow_time_series_tblw.anyKeyPressed.connect(self.inflow_time_series_tblw_clicked)
+
 
         self.populate_time_series_dialog()
 
@@ -1207,18 +1247,61 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
     def populate_time_series_dialog(self):
         if self.time_series_name == "":
+            self.use_table_radio.setChecked(True)
             pass
         else:
-            select_sql = "SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?"
-            rows = self.gutils.execute(select_sql, (self.time_series_name,)).fetchall()
-            if rows:
-                for row in rows:
-                    self.name_le.setText(row[1])
-                    self.description_le.setText(row[2])
-                    self.file_le.setText(row[3])
+            series_sql = "SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?"
+            row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[2])
+                self.file_le.setText(row[3])
+                external = True if is_true(row[4]) else False
+                
+                if external:    
+                    self.use_table_radio.setChecked(True)
+                    self.external_radio.setChecked(False)                          
+                else:
+                    self.external_radio.setChecked(True)
+                    self.use_table_radio.setChecked(False)
+                    
+                data_qry = """SELECT
+                                date, 
+                                time, 
+                                value
+                        FROM swmm_inflow_time_series_data WHERE time_series_name = ?;"""
+                rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
+                if rows:
+                    self.inflow_time_series_tblw.setRowCount(0)
+            
+                    for row_number, row_data in enumerate(rows):
+                        self.inflow_time_series_tblw.insertRow(row_number)
+                        for cell, data in enumerate(row_data):
+            
+                            item = QTableWidgetItem()
+                            if cell == 0:
+                                if data != "":
+                                    data = QDate( int(data[5:7]) , int(data[8:10]) , int(data[0:4]))
+                            item.setData(Qt.EditRole, data)
+                            self.inflow_time_series_tblw.setItem(row_number, cell, item)
+
+        #
+        # item = QTableWidgetItem()
+        # d= QDate.currentDate()
+        # item.setData(Qt.DisplayRole, d)                         
+        # self.inflow_time_series_tblw.setItem(row_number, 0, item) 
+
+
+
+        
+                    self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
             else:
                 self.name_le.setText(self.time_series_name)
-
+                self.external_radio.setChecked(True)
+                self.use_table_radio.setChecked(False)
+        
+        QApplication.restoreOverrideCursor()  
+             
     def select_time_series_file(self):
         self.uc.clear_bar_messages()
 
@@ -1238,32 +1321,112 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
             return
 
-    def save_time_series(self):
+    def is_ok_to_save(self):
         if self.name_le.text() == "":
             self.uc.bar_warn("Time Series name required!", 2)
             self.time_series_name = ""
+            self.values_ok = False
+            
         elif self.description_le.text() == "":
             self.uc.bar_warn("Time Series description required!", 2)
-            self.time_series_name = ""
-        elif self.file_le.text() == "":
+            self.values_ok = False
+            
+        elif self.external_radio.isChecked() and  self.file_le.text() == "":
             self.uc.bar_warn("Data file name required!", 2)
-            return False
+            self.values_ok = False
         else:
-            delete_sql = "DELETE FROM swmm_inflow_time_series WHERE time_series_name = ?"
-            self.gutils.execute(delete_sql, (self.name_le.text(),))
-            insert_sql = "INSERT INTO swmm_inflow_time_series (time_series_name, time_series_description, time_series_file) VALUES (?, ?, ?);"
-            self.gutils.execute(
-                insert_sql,
-                (
-                    self.name_le.text(),
-                    self.description_le.text(),
-                    self.file_le.text(),
-                ),
-            )
+            self.values_ok = True
+    
+    def save_time_series(self):      
+        delete_sql = "DELETE FROM swmm_inflow_time_series WHERE time_series_name = ?"
+        self.gutils.execute(delete_sql, (self.name_le.text(),))
+        insert_sql = "INSERT INTO swmm_inflow_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
+        self.gutils.execute(
+            insert_sql,
+            (
+                self.name_le.text(),
+                self.description_le.text(),
+                self.file_le.text(),
+                "True" if self.use_table_radio.isChecked()else "False"
+            ),
+        )
 
-            self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
-            self.time_series_name = self.name_le.text()
-            self.close()
+        delete_data_sql = "DELETE FROM swmm_inflow_time_series_data WHERE time_series_name = ?"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+        
+        insert_data_sql = ["""INSERT INTO swmm_inflow_time_series_data (time_series_name, date, time, value) VALUES""", 4]
+        for row in range(0, self.inflow_time_series_tblw.rowCount()):
+            date = self.inflow_time_series_tblw.item(row, 0)
+            if date:
+                date = date.text()
+                                         
+            time = self.inflow_time_series_tblw.item(row, 1)
+            if time:
+                time = time.text()
+                
+            value = self.inflow_time_series_tblw.item(row, 2)
+            if value:
+                value = value.text()
+                
+            insert_data_sql += [(self.name_le.text(), date, time, value)]
+        self.gutils.batch_execute(insert_data_sql)   
+            
+        self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
+        self.time_series_name = self.name_le.text()
+        self.close()
 
     def get_name(self):
         return self.time_series_name
+
+    def inflow_time_series_tblw_clicked(self):
+        self.uc.show_info("Clicked")
+        
+    def time_series_model_changed(self, i,j):
+        self.uc.show_info("Changed") 
+        
+        
+    def ts_tblw_changed(self, Qitem):  
+        # # if item.row() == 1 and item.column() == 1:  
+        # self.uc.show_info("Item " + str(item.row()) + "  " + str(item.column()) ) 
+        return
+        try:
+            test = float(Qitem.text())
+        except ValueError:
+            self.uc.show_info("Float error") 
+            Qitem.setText("")     
+
+    def add_time(self):
+        self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())  
+        row_number = self.inflow_time_series_tblw.rowCount() - 1
+        
+        item = QTableWidgetItem()
+        d= QDate.currentDate()
+        item.setData(Qt.DisplayRole, d)                         
+        self.inflow_time_series_tblw.setItem(row_number, 0, item)   
+         
+        item = QTableWidgetItem()
+        t = QTime.currentTime()
+        item.setData(Qt.DisplayRole, t)                         
+        self.inflow_time_series_tblw.setItem(row_number, 1, item) 
+        
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")                         
+        self.inflow_time_series_tblw.setItem(row_number, 2, item) 
+       
+        self.inflow_time_series_tblw.selectRow(row_number)
+        self.inflow_time_series_tblw.setFocus()                   
+
+    def delete_time(self):
+        self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())      
+        self.inflow_time_series_tblw.selectRow(0)
+        self.inflow_time_series_tblw.setFocus()
+                                          
+class NumericDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(NumericDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
+            validator = QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor                                           
+                                           
