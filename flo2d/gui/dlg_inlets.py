@@ -157,12 +157,13 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             
             if (name[0:2] in  ["I1", "I2",  "I3", "I4", "I5"]):
                 if name[1] != typ:
-                    wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1]  + ".\n"      
+                    if len(wrong_type) < 1500:
+                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1]  + ".\n"      
             if name[0:2] == "IM":
                 if name[2] != typ:
-                    wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2]  + ".\n"                  
+                    if len(wrong_type) < 1500:
+                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2]  + ".\n"                  
                     
-            
             #
             # if not () or 
             #         (name()[1] == "M" and name()[2] == "5"):
@@ -280,8 +281,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def onVerticalSectionClicked(self, logicalIndex):
         self.inlets_tblw_cell_clicked(logicalIndex, 0)
 
-    def set_header(self):
-        # self.inlets_tblw.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)     
+    def set_header(self):     
         self.inlets_tblw.setHorizontalHeaderLabels(
             [
                 "Name",  # INP  and FLO-2D. SWMMFLO.DAT: SWMM_JT
@@ -318,9 +318,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
     def surcharge_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.surcharge_depth_dbox, 5)
-
-    # def ponded_area_dbox_valueChanged(self):
-    #     self.box_valueChanged(self.ponded_area_dbox, 6)
 
     def external_inflow_checked(self):
         if not self.block:
@@ -992,15 +989,15 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         if names:
             for name in names:
                 self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
-            self.swmm_inflow_pattern_cbo.addItem("")
 
         time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
         names = self.gutils.execute(time_names_sql).fetchall()
         if names:
             for name in names:
                 self.swmm_inflow_time_series_cbo.addItem(name[0].strip())
-            self.swmm_inflow_time_series_cbo.addItem("")
-
+        
+        self.swmm_inflow_time_series_cbo.addItem("")
+        
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
@@ -1064,7 +1061,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                             idx = self.swmm_inflow_time_series_cbo.findText(time_series_name)
                             self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)                    
 
-                        self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
+                        # self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
                         break
                     else:
                        break 
@@ -1215,25 +1212,10 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.setItemDelegate(delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
-        self.select_time_series_btn.clicked.connect(self.select_time_series_file)
-        self.inflow_time_series_tblw.doubleClicked.connect(self.inflow_time_series_tblw_clicked)     
+        self.select_time_series_btn.clicked.connect(self.select_time_series_file)   
         self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
         self.add_time_data_btn.clicked.connect(self.add_time) 
         self.delete_time_data_btn.clicked.connect(self.delete_time) 
-        
-        # self.inflow_time_series_tblw.currentChanged(1,1)
-        
-        # self.inflow_time_series_tblw.cellClicked.connect(self.inflow_time_series_tblw_clicked())
-        # self.inflow_time_series_tblw.cellChanged.connect(self.inflow_time_series_tblw_clicked())
-        # self.inflow_time_series_tblw.dataChanged(self.inflow_time_series_tblw_clicked())
-
-
-# self.inflow_time_series_tblw.valueChanged.connect(self.inflow_time_series_tblw_clicked())
-# self.inflow_time_series_tblw.textChanged.connect(self.inflow_time_series_tblw_clicked())
-# self.inflow_time_series_tblw.editingFinished.connect(self.inflow_time_series_tblw_clicked())
-# self.inflow_time_series_tblw.selectedClicked.connect(self.inflow_time_series_tblw_clicked)
-# self.inflow_time_series_tblw.anyKeyPressed.connect(self.inflow_time_series_tblw_clicked)
-
 
         self.populate_time_series_dialog()
 
@@ -1278,21 +1260,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                         self.inflow_time_series_tblw.insertRow(row_number)
                         for cell, data in enumerate(row_data):
             
-                            item = QTableWidgetItem()
-                            if cell == 0:
-                                if data != "":
-                                    data = QDate( int(data[5:7]) , int(data[8:10]) , int(data[0:4]))
-                            item.setData(Qt.EditRole, data)
+                            item = QTableWidgetItem()     
+                            item.setData(Qt.DisplayRole, data)
                             self.inflow_time_series_tblw.setItem(row_number, cell, item)
-
-        #
-        # item = QTableWidgetItem()
-        # d= QDate.currentDate()
-        # item.setData(Qt.DisplayRole, d)                         
-        # self.inflow_time_series_tblw.setItem(row_number, 0, item) 
-
-
-
         
                     self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
             else:
@@ -1386,8 +1356,6 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         
         
     def ts_tblw_changed(self, Qitem):  
-        # # if item.row() == 1 and item.column() == 1:  
-        # self.uc.show_info("Item " + str(item.row()) + "  " + str(item.column()) ) 
         return
         try:
             test = float(Qitem.text())
@@ -1401,11 +1369,13 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         
         item = QTableWidgetItem()
         d= QDate.currentDate()
+        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year()) 
         item.setData(Qt.DisplayRole, d)                         
         self.inflow_time_series_tblw.setItem(row_number, 0, item)   
-         
+        
         item = QTableWidgetItem()
         t = QTime.currentTime()
+        t = str(t.hour()) + ":" + str(t.minute())
         item.setData(Qt.DisplayRole, t)                         
         self.inflow_time_series_tblw.setItem(row_number, 1, item) 
         

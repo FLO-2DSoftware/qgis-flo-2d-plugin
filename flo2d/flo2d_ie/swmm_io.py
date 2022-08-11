@@ -770,7 +770,8 @@ class StormDrainProject(object):
 
     def create_INP_time_series_list_with_time_series(self):
         try:
-            time_cols = ["time_series_name", "file", "file_name"]
+            time_cols_file = ["time_series_name", "file", "file_name"]
+            time_cols_date = ["name", "date", "time", "value"]
             times = self.select_this_INP_group("timeseries")
             if times:
                 for time in times:
@@ -784,9 +785,15 @@ class StormDrainProject(object):
                     if type == "FILE":
                         timeSplit2 = time.split('"')
                         timeSplit = [timeSplit[0], timeSplit[1], timeSplit2[1]]
-                        time_list = list(zip_longest(time_cols, timeSplit))
+                        time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
-                        continue
+                        name = timeSplit[0]
+                        date = timeSplit[1]
+                        time  = timeSplit[2]
+                        value = timeSplit[3]
+                        timeSplit = [name, date, time, value]
+                        time_list = list(zip_longest(time_cols_date, timeSplit))
+
                     time_list.insert(0, ["description", descr])
                     self.INP_timeseries.append(time_list)
         except Exception as e:

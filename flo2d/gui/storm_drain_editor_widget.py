@@ -152,6 +152,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_inflows_time_series_lyr = None
+        self.swmm_inflows_time_series_data_lyr = None
         self.control_lyr = None
         self.schema_inlets = None
         self.schema_outlets = None
@@ -221,6 +222,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
         self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
         self.swmm_inflows_time_series_lyr = self.lyrs.data["swmm_inflow_time_series"]["qlyr"]
+        self.swmm_inflows_time_series_data_lyr = self.lyrs.data["swmm_inflow_time_series_data"]["qlyr"]
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
         self.schema_inlets = self.lyrs.data["swmmflo"]["qlyr"]
         self.schema_outlets = self.lyrs.data["swmmoutf"]["qlyr"]
@@ -936,24 +938,50 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 storm_drain.create_INP_time_series_list_with_time_series()
                 
                 if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflows_time_series_lyr)  
+                    remove_features(self.swmm_inflows_time_series_lyr)
+                    remove_features(self.swmm_inflows_time_series_data_lyr)    
                                   
                 try:
 
-                    insert_times_sql = """INSERT INTO swmm_inflow_time_series 
+                    insert_times_from_file_sql = """INSERT INTO swmm_inflow_time_series 
                                             (   time_series_name, 
                                                 time_series_description, 
-                                                time_series_file
+                                                time_series_file,
+                                                time_series_data
                                             ) 
-                                            VALUES (?, ?, ?);"""
+                                            VALUES (?, ?, ?, ?);"""
+                                            
+                    insert_times_from_data_sql = """INSERT INTO swmm_inflow_time_series_data
+                                            (   time_series_name, 
+                                                date, 
+                                                time,
+                                                value
+                                            ) 
+                                            VALUES (?, ?, ?, ?);"""                                            
                     for time in storm_drain.INP_timeseries:
-                        name = time[1][1]
-                        description = time[0][1]
-                        description2 = description.replace('"', "")
-                        file = time[3][1]
-                        file2 = file.replace('"', "")
-                        self.gutils.execute(insert_times_sql, (name, description, file2.strip()))
-
+                        if time[2][1] == "FILE":
+                            name = time[1][1]
+                            description = time[0][1]
+                            file = time[3][1]
+                            file2 = file.replace('"', "")
+                            self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
+                        else: 
+                            # See if time series data reference is already in table:
+                            row = self.gutils.execute("SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?;", (time[1][1],)).fetchone()
+                            if not row:
+                                name = time[1][1]
+                                description = time[0][1]
+                                file = ""
+                                file2 = file.replace('"', "")
+                                self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+                            
+                            description = time[0][1]  
+                            name = time[1][1]
+                            date = time[2][1]
+                            tme = time[3][1]
+                            value = float_or_zero(time[4][1])
+                            self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+                            
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error(
@@ -2395,23 +2423,48 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n;;Name           Date       Time       Value     ")
                         swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
 
-                        SD_inflow_time_series_sql = """SELECT time_series_name, time_series_description, time_series_file
+                        SD_inflow_time_series_sql = """SELECT time_series_name, 
+                                                            time_series_description, 
+                                                            time_series_file,
+                                                            time_series_data
                                           FROM swmm_inflow_time_series ORDER BY fid;"""
+                                          
+                        SD_inflow_time_series_data_sql = """SELECT                                 
+                                                            date, 
+                                                            time,
+                                                            value
+                                          FROM swmm_inflow_time_series_data WHERE time_series_name = ? ORDER BY fid;"""                                          
 
                         line1 = "\n;{0:16}"
                         line2 = "\n{0:16} {1:<10} {2:<50}"
+                        line3 = "\n{0:16} {1:<10} {2:<10} {3:<7.4f}"
+
                         time_series_rows = self.gutils.execute(SD_inflow_time_series_sql).fetchall()
                         if not time_series_rows:
                             pass
                         else:
                             for row in time_series_rows:
-                                lrow1 = [row[1]]
-                                swmm_inp_file.write(line1.format(*lrow1))
-                                fileName = os.path.basename(row[2].strip())
-                                file = '"' + last_dir + "/" + fileName + '"'
-                                lrow2 = [row[0], "FILE", file]
-                                swmm_inp_file.write(line2.format(*lrow2))
-                                swmm_inp_file.write("\n")
+                                if row[3] == "False": # Inflow data comes from file:
+                                    description = [row[1]]
+                                    swmm_inp_file.write(line1.format(*description))
+                                    fileName = os.path.basename(row[2].strip())
+                                    file = '"' + last_dir + "/" + fileName + '"'
+                                    lrow2 = [row[0], "FILE", file]
+                                    swmm_inp_file.write(line2.format(*lrow2))
+                                    swmm_inp_file.write("\n;")
+                                else:
+                                    # Inflow data given in table 'swmm_inflow_time_series_data':
+                                    name = row[0]
+                                    time_series_data = self.gutils.execute(SD_inflow_time_series_data_sql, (name,)).fetchall()
+                                    if not time_series_data:
+                                        pass  
+                                    else:
+                                        description = [row[1]]
+                                        swmm_inp_file.write(line1.format(*description))                                        
+                                        for data in time_series_data:
+                                            swmm_inp_file.write(line3.format(name, data[0], data[1], data[2]))
+                                        swmm_inp_file.write("\n;")                                       
+                                        
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)

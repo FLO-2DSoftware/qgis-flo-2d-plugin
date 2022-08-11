@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>682</width>
-    <height>380</height>
+    <height>495</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -320,7 +320,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+         <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -352,7 +352,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+         <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
        </property>
        <property name="iconSize">
         <size>

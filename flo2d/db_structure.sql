@@ -1436,7 +1436,7 @@ CREATE TABLE "swmm_inflow_time_series_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
 	"time_series_name" TEXT,
     "date" TEXT, -- 
-    "time" REAL, -- 
+    "time" TEXT, -- 
     "value" REAL DEFAULT 0 -- 
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_inflow_time_series_data', 'aspatial');
