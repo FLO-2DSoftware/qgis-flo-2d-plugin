@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>343</width>
-    <height>445</height>
+    <height>441</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -154,13 +154,13 @@
          <property name="minimumSize">
           <size>
            <width>209</width>
-           <height>0</height>
+           <height>22</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
            <width>209</width>
-           <height>16777215</height>
+           <height>22</height>
           </size>
          </property>
          <property name="clearButtonEnabled">
@@ -182,13 +182,13 @@
          <property name="minimumSize">
           <size>
            <width>209</width>
-           <height>0</height>
+           <height>22</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
            <width>209</width>
-           <height>16777215</height>
+           <height>22</height>
           </size>
          </property>
          <property name="clearButtonEnabled">
