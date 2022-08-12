@@ -2542,13 +2542,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     # Write G1,G2,G3,G4 lines if 'Use Global Data' checkbox is selected in Global Breach Data dialog:
 
-                    if row[5] == 1:  # useglobaldata
-                        for gslice, dslice, line in parts:
-                            row_slice = [str(x) if x is not None else "" for x in row[gslice]]
-                            if any(row_slice) is True:
-                                b.write(line.format("G", "  ".join(row_slice)))
-                            else:
-                                pass
+                    if not local_rows:
+                        if row[5] == 1:  # useglobaldata
+                            for gslice, dslice, line in parts:
+                                row_slice = [str(x) if x is not None else "" for x in row[gslice]]
+                                if any(row_slice) is True:
+                                    b.write(line.format("G", "  ".join(row_slice)))
+                                else:
+                                    pass
+
                 c += 1
 
                 for row in local_rows:

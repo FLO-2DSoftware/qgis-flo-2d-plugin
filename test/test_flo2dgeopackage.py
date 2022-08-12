@@ -14,10 +14,12 @@ from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR = os.path.join(THIS_DIR, "data", "import")
+IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
+IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")
 VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
-CONT = os.path.join(IMPORT_DATA_DIR, "CONT.DAT")
+CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
+CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
 
 from flo2d.geopackage_utils import database_create
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
@@ -30,7 +32,6 @@ def file_len(fname):
             pass
     return i
 
-
 def export_paths(*inpaths):
     paths = [os.path.join(EXPORT_DATA_DIR, os.path.basename(inpath)) for inpath in inpaths]
     if len(paths) == 1:
@@ -39,16 +40,21 @@ def export_paths(*inpaths):
         pass
     return paths
 
-
 class TestFlo2dGeoPackage(unittest.TestCase):
     con = database_create(":memory:")
+    con_2 = database_create(":memory:")
 
     @classmethod
     def setUpClass(cls):
         cls.f2g = Flo2dGeoPackage(cls.con, None)
         cls.f2g.disable_geom_triggers()
-        cls.f2g.set_parser(CONT)
+        cls.f2g.set_parser(CONT_1)
         cls.f2g.import_mannings_n_topo()
+
+        cls.f2g_2 = Flo2dGeoPackage(cls.con_2, None)
+        cls.f2g_2.disable_geom_triggers()
+        cls.f2g_2.set_parser(CONT_2)
+        cls.f2g_2.import_mannings_n_topo()
 
     @classmethod
     def tearDownClass(cls):
@@ -64,12 +70,20 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertIsNotNone(self.f2g.parser.dat_files["CONT.DAT"])
         self.assertIsNotNone(self.f2g.parser.dat_files["TOLER.DAT"])
 
+        self.assertIsNotNone(self.f2g_2.parser.dat_files["CONT.DAT"])
+        self.assertIsNotNone(self.f2g_2.parser.dat_files["TOLER.DAT"])
+
     def test_import_cont_toler(self):
         self.f2g.import_cont_toler()
         self.assertFalse(self.f2g.is_table_empty("cont"))
         controls = self.f2g.execute("""SELECT name, value FROM cont;""").fetchall()
         self.assertIn(("build", "Pro Model - Build No. 15.07.12"), controls)
-        self.assertEqual(len(controls), 45)
+        self.assertEqual(len(controls), 47)
+
+        self.f2g_2.import_cont_toler()
+        self.assertFalse(self.f2g_2.is_table_empty("cont"))
+        controls = self.f2g_2.execute("""SELECT name, value FROM cont;""").fetchall()
+        self.assertEqual(len(controls), 47)
 
     def test_import_mannings_n_topo(self):
         cellsize = self.f2g.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
@@ -80,6 +94,11 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertIsNone(n_value)
         elevation = self.f2g.execute("""SELECT fid FROM grid WHERE elevation IS NULL;""").fetchone()
         self.assertIsNone(elevation)
+
+        cellsize = self.f2g_2.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
+        self.assertEqual(float(cellsize), 100)
+        rows = self.f2g_2.execute("""SELECT COUNT(fid) FROM grid;""").fetchone()[0]
+        self.assertEqual(float(rows), 9205)
 
     def test_import_inflow(self):
         self.f2g.clear_tables("inflow")
@@ -100,14 +119,49 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         tot = self.f2g.execute("""SELECT tot_rainfall FROM rain;""").fetchone()[0]
         self.assertEqual(float(tot), 3.10)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_infil(self):
         self.f2g.import_infil()
         scsnall = self.f2g.execute("""SELECT scsnall FROM infil;""").fetchone()[0]
         self.assertEqual(float(scsnall), 99)
-        areas = self.f2g.execute("""SELECT COUNT(fid) FROM infil_areas_green;""").fetchone()[0]
-        cells = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
-        self.assertEqual(int(areas), int(cells))
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 3)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1730)
+        self.assertEqual(cell_values[1], 1.01)
+        self.assertEqual(cell_values[2], 4.3)
+        self.assertEqual(cell_values[3], 0.3)
+        self.assertEqual(cell_values[4], 0.0)
+        self.assertEqual(cell_values[5], 0.0)
+        self.assertEqual(cell_values[6], 8.5)
+
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_scs;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 3)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, scsn FROM infil_cells_scs;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 320)
+        self.assertEqual(cell_values[1], 82)
+
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_chan_elems;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 2)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, hydconch FROM infil_chan_elems;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 2)
+        self.assertEqual(cell_values[1], 0.04)
+
+        self.f2g_2.import_infil()
+        cells_count = self.f2g_2.execute("""SELECT COUNT(fid) FROM infil_cells_horton;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 20)
+        result_query = self.f2g_2.execute(
+            """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1)
+        self.assertEqual(cell_values[1], 2.9528)
+        self.assertEqual(cell_values[2], 0.1181)
+        self.assertEqual(cell_values[3], 0.0300)
 
     def test_import_evapor(self):
         self.f2g.import_evapor()
@@ -116,7 +170,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         mon = self.f2g.execute("""SELECT month FROM evapor_monthly WHERE monthly_evap = 5.57;""").fetchone()[0]
         self.assertEqual(mon, "september")
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_chan(self):
         self.f2g.import_chan()
         nelem = self.f2g.execute("""SELECT fcn FROM chan_elems WHERE fid = 7667;""").fetchone()[0]
@@ -124,7 +177,18 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         nxsec = self.f2g.execute("""SELECT nxsecnum FROM chan_n WHERE elem_fid = 7667;""").fetchone()[0]
         self.assertEqual(nxsec, 107)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
+        noex_count = self.f2g.execute("""SELECT COUNT(fid) FROM user_noexchange_chan_areas""").fetchone()[0]
+        self.assertEqual(noex_count, 3)
+        noex_count = self.f2g.execute("""SELECT COUNT(fid) FROM noexchange_chan_cells""").fetchone()[0]
+        self.assertEqual(noex_count, 3)
+        result_query = self.f2g.execute("""SELECT grid_fid FROM noexchange_chan_cells;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1285)
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1284)
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1283)
+
     def test_import_xsec(self):
         self.f2g.import_chan()
         self.f2g.import_xsec()
@@ -150,7 +214,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         c = self.f2g.execute("""SELECT COUNT(fid) FROM blocked_cells;""").fetchone()[0]
         self.assertEqual(c, 15)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_import_mult(self):
         self.f2g.import_mult()
         areas = self.f2g.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
@@ -158,7 +221,16 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         cells = self.f2g.execute("""SELECT COUNT(fid) FROM mult_cells;""").fetchone()[0]
         self.assertEqual(areas, cells)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
+        self.f2g_2.import_mult()
+        areas = self.f2g_2.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
+        self.assertEqual(areas, 235)
+        cells = self.f2g_2.execute("""SELECT COUNT(fid) FROM mult_cells;""").fetchone()[0]
+        self.assertEqual(areas, cells)
+        mult_count = self.f2g_2.execute("""SELECT COUNT(fid) FROM simple_mult_cells;""").fetchone()[0]
+        self.assertEqual(mult_count, 1288)
+        mult_value = self.f2g_2.execute("""SELECT grid_fid FROM simple_mult_cells;""").fetchone()[0]
+        self.assertEqual(mult_value, 207)
+
     def test_import_sed(self):
         self.f2g.import_sed()
         ndata = self.f2g.execute("""SELECT COUNT(fid) FROM sed_supply_frac_data;""").fetchone()[0]
@@ -236,7 +308,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
             head = w.readline()
             self.assertEqual(int(head), count)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_cont(self):
         self.f2g.import_cont_toler()
         self.f2g.export_cont_toler(EXPORT_DATA_DIR)
@@ -301,7 +372,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_chan(self):
         self.f2g.import_chan()
         self.f2g.export_chan(EXPORT_DATA_DIR)
@@ -315,7 +385,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         self.assertEqual(in1, out1)
         self.assertEqual(in2, out2)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_xsec(self):
         self.f2g.import_xsec()
         self.f2g.export_xsec(EXPORT_DATA_DIR)
@@ -348,7 +417,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
     def test_export_mult(self):
         self.f2g.import_mult()
         self.f2g.export_mult(EXPORT_DATA_DIR)
@@ -357,8 +425,9 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Test need to be updated due to logic changes.")
+    @unittest.skip("MUD or SED not activated in data file.")
     def test_export_sed(self):
+        self.f2g.import_cont_toler()
         self.f2g.import_sed()
         self.f2g.export_sed(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["SED.DAT"]
@@ -384,6 +453,7 @@ class TestFlo2dGeoPackage(unittest.TestCase):
 
     @unittest.skip("Test needs to be updated.")
     def test_export_breach(self):
+        self.f2g.import_levee()
         self.f2g.import_breach()
         self.f2g.export_breach(EXPORT_DATA_DIR)
         infile = self.f2g.parser.dat_files["BREACH.DAT"]
