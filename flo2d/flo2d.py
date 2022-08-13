@@ -782,7 +782,7 @@ class Flo2D(object):
         
         self.files_used = ""
         self.files_not_used = ""
-        if calls[0] == 'export_cont_toler"':
+        if calls[0] == 'export_cont_toler':
             self.files_used = "CONT.DAT\n" 
 
         for call in calls:
