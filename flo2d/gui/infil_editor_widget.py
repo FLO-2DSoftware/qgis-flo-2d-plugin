@@ -396,7 +396,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
             return
-        qry_green = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?,?);"""
+        qry_green = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?);"""
         qry_chan = """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES (?,?);"""
         qry_scs = """INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES (?,?);"""
         qry_horton = """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES (?,?,?,?);"""
@@ -417,7 +417,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 "infil_chan_elems",
             )
             if imethod == 1 or imethod == 3:
-                green_vals, chan_area_vals, scs_vals, chan_vals = [], [], []
+                green_vals, chan_area_vals, scs_vals, chan_vals = [], [], [], []
                 chan_fid, scs_fid = 1, 1
                 for grid_row in infiltration_grids:
                     row = list(grid_row)
