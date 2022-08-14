@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.65
+version=0.10.66
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.66
+  - Infiltration Green-Ampt Schematic tool with two simple bugs. Fix Issue #865.  No impact on Green-Ampt Calculator (maricopa County version)
  <p>0.10.65
   - SD: import Culvert eq. from widget. Export/Import SD .DAT files
   - SD: update labels water depth = fixed stage.
