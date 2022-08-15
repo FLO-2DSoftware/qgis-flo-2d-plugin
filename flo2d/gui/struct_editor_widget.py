@@ -569,7 +569,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     def create_struct(self):
         if not self.lyrs.enter_edit_mode("user_struct"):
             return
-        self.struct_frame.setDisabled(True)
+        # self.struct_frame.setDisabled(True)
 
     def cancel_struct_lyrs_edits(self):
         user_lyr_edited = self.lyrs.rollback_lyrs_edits("user_struct")
@@ -578,7 +578,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.populate_structs(self.struct.fid)
             except AttributeError:
                 self.populate_structs()
-        self.struct_frame.setEnabled(True)
+        # self.struct_frame.setEnabled(True)
 
     def save_struct_lyrs_edits(self):
         """
@@ -594,7 +594,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         user_lyr_edited = self.lyrs.save_lyrs_edits("user_struct")
         # if user layer was edited
         if user_lyr_edited:
-            self.struct_frame.setEnabled(True)
+            # self.struct_frame.setEnabled(True)
             # populate widgets and show last edited struct
             self.gutils.copy_new_struct_from_user_lyr()
             self.gutils.fill_empty_struct_names()
