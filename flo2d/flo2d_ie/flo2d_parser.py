@@ -653,10 +653,10 @@ class ParseDAT(object):
         data = []
         for row in par:
             char = row[0]
-            if char == "D":
+            if char == "D":   # Rating Table.
                 row.append([])
                 data.append(row[0:])
-            if char == "S":
+            if char == "S":   # Culvert Eq.
                 row.append([])
                 data.append(row[0:])                
             else:
