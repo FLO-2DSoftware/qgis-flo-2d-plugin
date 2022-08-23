@@ -1086,24 +1086,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
             for i, row in enumerate(data, 1):
 
-                if row[0] == "D" and len(row) == 3:  # old D line: D  7545
+                if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
                     gid, params = row[1:]
                     name = "Rating Table {}".format(i)
-                elif row[0] == "D" and len(row) == 4: # D line: D  7545  I4-38
+                elif row[0] == "D" and len(row) == 4: # D line for Rating Table: D  7545  I4-38
                     gid, inlet_name, params = row[1:]
                     name = inlet_name
                 elif  row[0] == "S":
                     gid, inlet_name, cdiameter, params = row[1:] 
 
-                if row[0] == "D":
+                if row[0] == "D":  # Rating Table
                     swmmflort_rows.append((gid, name))
-                    
-                    # swmmflort_sql += [(gid, name)]
                     
                     for j in range(1,len(params)):
                         rt_data_rows.append( ((i,) + tuple( params[j] ) ))
 
-                elif row[0] == "S":
+                elif row[0] == "S":  # Culvert Eq.
                     culvert_rows.append((gid, inlet_name, cdiameter, row[4][0][0], row[4][0][1], row[4][0][2], row[4][0][3]))        
 
             if swmmflort_rows:
@@ -2702,11 +2700,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if rtname is None or rtname == "":
                                 errors += "Grid element " + str(gid) + " has an empty rating table name.\n"
                             else:
-                                inlet_type = self.execute(
-                                    "SELECT intype FROM swmmflo WHERE swmm_jt = ?;", (gid,)
-                                ).fetchone()
+                                inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
+                                inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()    
                                 if inlet_type is not None:
-                                    if inlet_type[0] == 4:
+                                    # TODO: there may be more than one record. Why? Some may have intype = 4.
+                                    if len(inlet_type) > 1:
+                                        errors += "Grid element " + str(gid) + " has has more than one inlet.\n"
+                                    # See if there is a type 4:
+                                    inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
+                                    inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone() 
+                                    if inlet_type is not None:
                                         rows = self.execute(data_sql, (fid,)).fetchone()
                                         if not rows:
                                             inlet_name = self.execute(
@@ -2765,7 +2768,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
                         s.write("F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n")
             if errors:
+                QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
 
             return True
 

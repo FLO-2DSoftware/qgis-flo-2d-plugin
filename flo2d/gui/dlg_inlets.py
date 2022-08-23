@@ -223,12 +223,12 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if data:  # data is the rating table or Culvert eq. name for cell 16.
                         data = data.strip()
                         if data != "":
-                            fid = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
-                            if not fid:
-                                fid = self.gutils.execute("SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)).fetchone()
-                                if not fid:                                
+                            fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
+                            if not fid_rt:
+                                fid_c = self.gutils.execute("SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)).fetchone()
+                                if not fid_c:                                
                                     no_rt +=  data + "\t   for inlet   " + inlet + "\n"
-                                    data = ""
+                                    # data = ""
                                 if data in existing_rts:
                                     if data not in duplicates:
                                         duplicates.append(data)

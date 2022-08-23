@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>696</width>
+    <width>688</width>
     <height>567</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+   <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -91,7 +91,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tab_widget">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -131,7 +131,7 @@
        <item row="0" column="0">
         <widget class="QGroupBox" name="timeAndPlotGroupBox">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -546,7 +546,7 @@
           <item row="0" column="0">
            <widget class="QGroupBox" name="systemComponentsSwitchesGroup">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -673,7 +673,7 @@
           <item row="1" column="0">
            <widget class="QGroupBox" name="conveyanceSrtructureSwitchesGroup">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -752,7 +752,7 @@
           <item row="0" column="1" rowspan="2">
            <widget class="QGroupBox" name="physicalProcessesSwitchesGroup">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -765,7 +765,7 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>302</width>
+              <width>16777215</width>
               <height>16777215</height>
              </size>
             </property>
@@ -899,7 +899,7 @@
                  <item row="3" column="0">
                   <widget class="QComboBox" name="ISED">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -912,7 +912,7 @@
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>145</width>
+                     <width>16777215</width>
                      <height>22</height>
                     </size>
                    </property>
@@ -962,7 +962,7 @@
        <item row="0" column="1">
         <widget class="QGroupBox" name="globalDataGroup">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -1306,7 +1306,7 @@
          <item>
           <widget class="QGroupBox" name="floodplainChannelDisplayOptionsGroup">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -1504,7 +1504,7 @@
          <item>
           <widget class="QGroupBox" name="timeLapseOutputGroup">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
