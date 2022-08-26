@@ -109,6 +109,35 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         self.ITIMTEP.currentIndexChanged.connect(self.ITIMTEP_currentIndexChanged)
         self.ISED.currentIndexChanged.connect(self.ISED_currentIndexChanged)
         self.IDEBRV.clicked.connect(self.IDEBRV_clicked)
+        
+        self.timeAndPlotGroupBox.setObjectName("ColoredGroupBox")
+        self.timeAndPlotGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")         
+
+        self.globalDataGroup.setObjectName("ColoredGroupBox")
+        self.globalDataGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.systemComponentsSwitchesGroup.setObjectName("ColoredGroupBox")
+        self.systemComponentsSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.physicalProcessesSwitchesGroup.setObjectName("ColoredGroupBox")
+        self.physicalProcessesSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.conveyanceSrtructureSwitchesGroup.setObjectName("ColoredGroupBox")
+        self.conveyanceSrtructureSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.floodplainChannelDisplayOptionsGroup.setObjectName("ColoredGroupBox")
+        self.floodplainChannelDisplayOptionsGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.timeLapseOutputGroup.setObjectName("ColoredGroupBox")
+        self.timeLapseOutputGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+
+        self.numericalStabilityParametersGroupBox.setObjectName("ColoredGroupBox")
+        self.numericalStabilityParametersGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        
+        self.courantNumbersGroup.setObjectName("ColoredGroupBox")
+        self.courantNumbersGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+                       
+                               
         self.polulate_values_JJ()
 
     def set_spinbox_JJ(self, key, spin):
