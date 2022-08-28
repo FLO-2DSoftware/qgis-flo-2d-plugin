@@ -2334,6 +2334,11 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="two_phase_tab">
+      <attribute name="title">
+       <string>Two Phase</string>
+      </attribute>
+     </widget>
      <widget class="QWidget" name="none_tab">
       <attribute name="title">
        <string>None</string>
@@ -2386,6 +2391,13 @@
         <widget class="QRadioButton" name="sediment_transport_radio">
          <property name="text">
           <string>Sediment Transport</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="two_phase_radio">
+         <property name="text">
+          <string>Two Phase</string>
          </property>
         </widget>
        </item>

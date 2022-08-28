@@ -63,6 +63,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         # Radio buttons connections:
         self.mud_debris_transport_radio.clicked.connect(self.show_mud)
         self.sediment_transport_radio.clicked.connect(self.show_sediment)
+        self.two_phase_radio.clicked.connect(self.show_two_phase)
         self.none_transport_radio.clicked.connect(self.show_none)
         self.sed_transp_restore_defaults_btn.clicked.connect(self.sed_transp_restore_defaults)
         
@@ -153,61 +154,84 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             
     def populate_mud_and_sediment(self):
-        if self.gutils.get_cont_par("MUD") == "1":
-            self.mud_debris_transport_radio.click() 
-            self.mud_basin_grp.setChecked(int(self.gutils.get_cont_par("IDEBRV")))
-            qry = "SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud"
-            mud = self.gutils.execute(qry).fetchone() 
-            if not mud: 
-                self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
-                mud = self.gutils.execute(qry).fetchone() 
-            va, vb, ysa, ysb, sgsm, xkx =  mud
-            self.mud_vis_vs_sed_coeff_dbox.setValue(va)
-            self.mud_vis_vs_sed_exp_dbox.setValue(vb)
-            self.mud_ys_vs_sed_coeff_dbox.setValue(ysa)
-            self.mud_ys_vs_sed_exp_dbox.setValue(ysb)
-            self.mud_specific_gravity_dbox.setValue(sgsm)
-            self.mud_laminar_fr_dbox.setValue(xkx) 
-            basin = self.gutils.execute("SELECT grid_fid, area_fid FROM mud_cells").fetchone()
-            if basin:
-                volume = self.gutils.execute("SELECT debrisv FROM mud_areas").fetchone()
-                if volume: 
-                    self.mud_basin_grid_sbox.setValue(basin[0])
-                    self.mud_basin_vol_dbox.setValue(volume[0])                   
-                   
-        elif self.gutils.get_cont_par("ISED") == "1":
-
-            self.sediment_transport_radio.click()
+        _mud = self.gutils.get_cont_par("MUD")
+        _sed = self.gutils.get_cont_par("ISED") 
+        
+        if  _mud == "0" and _sed == "0":
             
-            qry = "SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep  FROM sed"
-            sed = self.gutils.execute(qry).fetchone()
-            if not sed:
-                self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);")
-                sed = self.gutils.execute(qry).fetchone()                  
-            isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = sed
-            self.sed_transp_eq_cbo.setCurrentIndex(isedeqg-1)
-            self.sed_specific_gravity_dbox.setValue(sgst)
-            self.sed_dry_specific_weight_dbox.setValue(dryspwt) 
-            self.sed_D50_dbox.setValue(dfifty)
-            self.sed_grad_coeff_dbox.setValue(sgrad)
-            self.sed_report_node_dbox.setValue(isedisplay if isedisplay is not None else 0)
-            self.sed_max_scour_depth_dbox.setValue(scourdep)  
-            self.sed_size_fraction_grp.setChecked(isedsizefrac)
-            self.sed_rating_curve_grp.setChecked(isedsupply)
-            self.sed_vol_conctr_dbox.setValue(cvfg)
-            
-            # Load Size Fractions tables:
-            self.load_size_fraction_tables()
-
-            # Load Supply Rating Curve tables:
-            self.load_supply_rating_curve_tables()
-
-            # Load Rigid cells:
-            self.load_rigid_nodes_table()
-
-        else:
             self.none_transport_radio.click()
- 
+            
+        elif  _mud == "0" and _sed == "1": 
+             
+            self.sediment_transport_radio.click()
+            self.populate_sediment_transport()
+                  
+        
+        elif  _mud == "1" and _sed == "0": 
+            
+            self.mud_debris_transport_radio.click() 
+            self.populate_mud()            
+            
+        elif  _mud == "1" and _sed == "1":                
+
+            self.two_phase_radio.click() 
+            self.populate_mud() 
+            self.populate_sediment_transport()
+            
+        else:
+            self.uc.show_warn("WARNING 280822.1005: error while loading mud/sediment transport dialog!") 
+                       
+            
+    def populate_mud(self):
+        self.mud_basin_grp.setChecked(int(self.gutils.get_cont_par("IDEBRV")))
+        qry = "SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud"
+        mud = self.gutils.execute(qry).fetchone() 
+        if not mud: 
+            self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
+            mud = self.gutils.execute(qry).fetchone() 
+        va, vb, ysa, ysb, sgsm, xkx =  mud
+        self.mud_vis_vs_sed_coeff_dbox.setValue(va)
+        self.mud_vis_vs_sed_exp_dbox.setValue(vb)
+        self.mud_ys_vs_sed_coeff_dbox.setValue(ysa)
+        self.mud_ys_vs_sed_exp_dbox.setValue(ysb)
+        self.mud_specific_gravity_dbox.setValue(sgsm)
+        self.mud_laminar_fr_dbox.setValue(xkx) 
+        basin = self.gutils.execute("SELECT grid_fid, area_fid FROM mud_cells").fetchone()
+        if basin:
+            volume = self.gutils.execute("SELECT debrisv FROM mud_areas").fetchone()
+            if volume: 
+                self.mud_basin_grid_sbox.setValue(basin[0])
+                self.mud_basin_vol_dbox.setValue(volume[0])         
+        
+        
+    def populate_sediment_transport(self):   
+        qry = "SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep  FROM sed"
+        sed = self.gutils.execute(qry).fetchone()
+        if not sed:
+            self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);")
+            sed = self.gutils.execute(qry).fetchone()                  
+        isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = sed
+        self.sed_transp_eq_cbo.setCurrentIndex(isedeqg-1)
+        self.sed_specific_gravity_dbox.setValue(sgst)
+        self.sed_dry_specific_weight_dbox.setValue(dryspwt) 
+        self.sed_D50_dbox.setValue(dfifty)
+        self.sed_grad_coeff_dbox.setValue(sgrad)
+        self.sed_report_node_dbox.setValue(isedisplay if isedisplay is not None else 0)
+        self.sed_max_scour_depth_dbox.setValue(scourdep)  
+        self.sed_size_fraction_grp.setChecked(isedsizefrac)
+        self.sed_rating_curve_grp.setChecked(isedsupply)
+        self.sed_vol_conctr_dbox.setValue(cvfg)
+        
+        # Load Size Fractions tables:
+        self.load_size_fraction_tables()
+
+        # Load Supply Rating Curve tables:
+        self.load_supply_rating_curve_tables()
+
+        # Load Rigid cells:
+        self.load_rigid_nodes_table()
+        
+         
     def sed_size_fraction_grp_checked(self):
         self.sed_size_fraction_grp.setChecked(self.sed_size_fraction_grp.isChecked())
 
@@ -215,37 +239,45 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rating_curve_grp.setChecked(self.sed_rating_curve_grp.isChecked())
                             
     def show_mud(self):
-        self.gutils.set_cont_par("MUD", 1)
-        self.gutils.set_cont_par("ISED", 0)     
+        # self.gutils.set_cont_par("MUD", 1)
+        # self.gutils.set_cont_par("ISED", 0) 
+        self.mud_sediment_tabWidget.setTabEnabled(0, True)  
         self.mud_sediment_tabWidget.setTabEnabled(1, False) 
         self.mud_sediment_tabWidget.setTabEnabled(2, False) 
-        self.mud_sediment_tabWidget.setTabEnabled(0, True)  
+        self.mud_sediment_tabWidget.setTabEnabled(3, False) 
         self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")        
         self.mud_sediment_tabWidget.setCurrentIndex(0)
-        
-        
+
     def show_sediment(self):
-        self.gutils.set_cont_par("MUD", 0)
-        self.gutils.set_cont_par("ISED", 1)
-        
+        # self.gutils.set_cont_par("MUD", 0)
+        # self.gutils.set_cont_par("ISED", 1)
         self.mud_sediment_tabWidget.setTabEnabled(0, False) 
-        self.mud_sediment_tabWidget.setTabEnabled(2, False)
         self.mud_sediment_tabWidget.setTabEnabled(1, True) 
+        self.mud_sediment_tabWidget.setTabEnabled(2, False)
+        self.mud_sediment_tabWidget.setTabEnabled(3, False) 
         self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")       
         self.mud_sediment_tabWidget.setCurrentIndex(1) 
   
         # Load Size Fractions tables:
         self.load_size_fraction_tables()
-        
-        # # Load Rigid cells:
-        # self.load_rigid_nodes_table()  
-              
+                            
+    def show_two_phase(self):
+        # self.gutils.set_cont_par("MUD", 1)
+        # self.gutils.set_cont_par("ISED", 1) 
+        self.mud_sediment_tabWidget.setTabEnabled(0, True)  
+        self.mud_sediment_tabWidget.setTabEnabled(1, True) 
+        self.mud_sediment_tabWidget.setTabEnabled(2, False) 
+        self.mud_sediment_tabWidget.setTabEnabled(3, False) 
+        self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")        
+        self.mud_sediment_tabWidget.setCurrentIndex(0)
+                      
     def show_none(self):
-        self.gutils.set_cont_par("MUD", 0)
-        self.gutils.set_cont_par("ISED", 0)        
+        # self.gutils.set_cont_par("MUD", 0)
+        # self.gutils.set_cont_par("ISED", 0)        
         self.mud_sediment_tabWidget.setTabEnabled(0, False) 
         self.mud_sediment_tabWidget.setTabEnabled(1, False) 
-        self.mud_sediment_tabWidget.setTabEnabled(2, True) 
+        self.mud_sediment_tabWidget.setTabEnabled(2, False) 
+        self.mud_sediment_tabWidget.setTabEnabled(3, False) 
         self.mud_sediment_tabWidget.setStyleSheet("QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} ")     
         self.mud_sediment_tabWidget.setCurrentIndex(2) 
 
@@ -284,180 +316,95 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         
     def ok_to_save(self): 
         if self.mud_debris_transport_radio.isChecked():
-            if self.mud_basin_grp.isChecked():
-                if self.mud_basin_grid_sbox.value() <= 0:
-                    self.uc.show_warn("WARNING 040622.0404: debris basin cell is invalid!") 
-                    return False                
-                else:    
-                    return True
-            else:
-                return True
-            
+            return self.is_mud_ok()
             
         elif self.sediment_transport_radio.isChecked():
+            return self.is_sediment_transport_ok()         
             
-            first = "WARNING 281021.0528: Sediment transport data not saved!\n\n" 
-            wrng = first
-            if self.sed_size_fraction_grp.isChecked() and self.sed_size_fraction_tblw.rowCount() == 0:
-                    self.uc.show_warn("WARNING 060522.0957: checkbox of Size Fractions is selected but\n" +
-                        "no size fraction parameters (Equation, Bed Thick, and Concentration) are given !") 
-                    return False
-                
-            if self.sed_rating_curve_grp.isChecked() and self.sed_rating_curve_tblw.rowCount() == 0:
-                    self.uc.show_warn("WARNING 170522.0805: checkbox of Supply Rating Curves is selected but\n" +
-                        "no Rating Curve parameters (Node, Chan/FP, Coeff., and Exp.) are given !")     
-                    return False
-            else:    
-                # Check cell numbers in size fractions nodes table:
-                for row in range(0, self.sed_size_grid_tblw.rowCount()):
-                    item_cell = self.sed_size_grid_tblw.item(row, 0)
-                    if not item_cell:
-                        wrng += "* Assign cell number to all size fraction grid elements.\n\n"
-                        break
-                    elif item_cell.text() == "":
-                        wrng += "* Assign cell number to all size fraction grid elements.\n\n" 
-                        break                
-                
-                # Check cell numbers in supply rating curve table:
-                for row in range(0, self.sed_rating_curve_tblw.rowCount()):
-                    item_cell = self.sed_rating_curve_tblw.item(row, 0)
-                    if not item_cell:
-                        wrng += "* Assign cell number to all supply rating curves.\n\n"
-                        break
-                    elif item_cell.text() == "":
-                        wrng += "* Assign cell number to all supply rating curves.\n\n"
-                        break
-    
-                # Check cell numbers in bed rigid nodes:
-                for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
-                    item_cell = self.sed_rigid_nodes_tblw.item(row, 0)
-                    if not item_cell: 
-                        wrng +=  "* Assign a valid cell number to all rigid bed cells.\n\n" 
-                        break             
-                    elif item_cell.text() == "":
-                        wrng += "* Assign a valid cell number to all rigid bed cells.\n\n"
-                        break
-                
-                if wrng == first:  
-                    return True   
-                else:
-                    self.uc.show_warn(wrng) 
-                    return False    
-            
-        elif self.none_transport_radio.isChecked():
+        elif self.two_phase_radio.isChecked():
+            return self.is_mud_ok() and self.is_sediment_transport_ok()          
+   
+        elif self.none_transport_radio.isChecked():           
             return True                 
-                
+    
+    def is_mud_ok(self):  
+        if self.mud_basin_grp.isChecked():
+            if self.mud_basin_grid_sbox.value() <= 0:
+                self.uc.show_warn("WARNING 040622.0404: debris basin cell is invalid!") 
+                return False                
+            else:    
+                return True
+        else:
+            return True        
+        
+    def is_sediment_transport_ok(self):  
+        first = "WARNING 281021.0528: Sediment transport data not saved!\n\n" 
+        wrng = first
+        if self.sed_size_fraction_grp.isChecked() and self.sed_size_fraction_tblw.rowCount() == 0:
+                self.uc.show_warn("WARNING 060522.0957: checkbox of Size Fractions is selected but\n" +
+                    "no size fraction parameters (Equation, Bed Thick, and Concentration) are given !") 
+                return False
+            
+        if self.sed_rating_curve_grp.isChecked() and self.sed_rating_curve_tblw.rowCount() == 0:
+                self.uc.show_warn("WARNING 170522.0805: checkbox of Supply Rating Curves is selected but\n" +
+                    "no Rating Curve parameters (Node, Chan/FP, Coeff., and Exp.) are given !")     
+                return False
+        else:    
+            # Check cell numbers in size fractions nodes table:
+            for row in range(0, self.sed_size_grid_tblw.rowCount()):
+                item_cell = self.sed_size_grid_tblw.item(row, 0)
+                if not item_cell:
+                    wrng += "* Assign cell number to all size fraction grid elements.\n\n"
+                    break
+                elif item_cell.text() == "":
+                    wrng += "* Assign cell number to all size fraction grid elements.\n\n" 
+                    break                
+            
+            # Check cell numbers in supply rating curve table:
+            for row in range(0, self.sed_rating_curve_tblw.rowCount()):
+                item_cell = self.sed_rating_curve_tblw.item(row, 0)
+                if not item_cell:
+                    wrng += "* Assign cell number to all supply rating curves.\n\n"
+                    break
+                elif item_cell.text() == "":
+                    wrng += "* Assign cell number to all supply rating curves.\n\n"
+                    break
+
+            # Check cell numbers in bed rigid nodes:
+            for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
+                item_cell = self.sed_rigid_nodes_tblw.item(row, 0)
+                if not item_cell: 
+                    wrng +=  "* Assign a valid cell number to all rigid bed cells.\n\n" 
+                    break             
+                elif item_cell.text() == "":
+                    wrng += "* Assign a valid cell number to all rigid bed cells.\n\n"
+                    break
+            
+            if wrng == first:  
+                return True   
+            else:
+                self.uc.show_warn(wrng) 
+                return False          
+        
+                    
     def save_mud_sediment(self): 
         try:
             if self.mud_debris_transport_radio.isChecked():
+                self.set_mud_debris()
                 self.gutils.set_cont_par("MUD", 1) 
-                self.gutils.set_cont_par("ISED", 0)
-                self.gutils.set_cont_par("IDEBRV", self.mud_basin_grp.isChecked()) 
+                self.gutils.set_cont_par("ISED", 0)                 
                 
-                mud_sql  = "INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (?,?,?,?,?,?);" 
-                va = self.mud_vis_vs_sed_coeff_dbox.value()
-                vb = self.mud_vis_vs_sed_exp_dbox.value()
-                ysa = self.mud_ys_vs_sed_coeff_dbox.value()
-                ysb = self.mud_ys_vs_sed_exp_dbox.value()
-                sgsm = self.mud_specific_gravity_dbox.value()
-                xhx =  self.mud_laminar_fr_dbox.value()
-                self.gutils.clear_tables("mud")
-                self.gutils.execute(mud_sql, (va, vb, ysa, ysb, sgsm, xhx))     
-                
-                debrisv = self.mud_basin_vol_dbox.value()
-                self.gutils.clear_tables("mud_areas", "mud_cells")
-                if self.mud_basin_grp.isChecked():
-                    self.gutils.execute("INSERT INTO mud_areas (debrisv) VALUES (?);", (debrisv,))
-                    grid = self.mud_basin_grid_sbox.value()
-                    self.gutils.execute("INSERT INTO mud_cells (grid_fid, area_fid) VALUES (?, ?);", (grid, 1,))            
-                
-            elif self.sediment_transport_radio.isChecked():              
-                self.gutils.disable_geom_triggers()
- 
+            elif self.sediment_transport_radio.isChecked():           
+                self.set_sediment_transport() 
                 self.gutils.set_cont_par("MUD", 0) 
                 self.gutils.set_cont_par("ISED", 1) 
-                cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-                
-                # Save global sediment transport parameters:
-                isedeqg = self.sed_transp_eq_cbo.currentIndex() + 1
-                isedsizefrac = self.sed_size_fraction_grp.isChecked()
-                dfifty = self.sed_D50_dbox.value()
-                sgrad = self.sed_grad_coeff_dbox.value()
-                sgst = self.sed_specific_gravity_dbox.value()
-                dryspwt =  self.sed_dry_specific_weight_dbox.value()
-                cvfg = self.sed_vol_conctr_dbox.value()
-                isedsupply = self.sed_rating_curve_grp.isChecked()
-                isedisplay = self.sed_report_node_dbox.value()
-                scourdep =  self.sed_max_scour_depth_dbox.value() 
-               
-                self.gutils.clear_tables("sed")
-                sed_sql  = """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, 
-                                                dryspwt, cvfg, isedsupply, isedisplay, scourdep) VALUES (?,?,?,?,?,?,?,?,?,?);"""            
-                self.gutils.execute(sed_sql, (isedeqg, isedsizefrac, dfifty, sgrad, sgst, 
-                                                dryspwt, cvfg, isedsupply, isedisplay, scourdep))              
-                
-                # Save Size Fractions table:
-                sed_sql  = ["""INSERT INTO sed_groups (isedeqi, bedthick, cvfi, dist_fid) VALUES""", 4]
-                for row in range(0, self.sed_size_fraction_tblw.rowCount()):
-                    combo = self.sed_size_fraction_tblw.cellWidget(row,0)                          
-                    isedeqi = combo.currentIndex() + 1
-                    bed_thick = self.sed_size_fraction_tblw.item(row, 1).text()
-                    conc = self.sed_size_fraction_tblw.item(row, 2).text()
-                    dist_fid  = self.sed_size_fraction_tblw.item(row, 3).text()
-                    sed_sql += [(isedeqi, bed_thick , conc, row + 1)]
-                self.gutils.clear_tables("sed_groups")
-                self.gutils.batch_execute(sed_sql)  
-                
-                # Size Fractions data::
-                self.gutils.clear_tables("sed_group_frac_data") 
-                self.gutils.execute("INSERT INTO sed_group_frac_data SELECT fid, dist_fid, sediam, sedpercent FROM sed_group_frac_data_tmp") 
-            
-                # Size Fraction Cells (2 tables involved):  
-                areas_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
-                cells_sql = ["""INSERT INTO sed_group_cells (grid_fid, area_fid) VALUES""", 2]
-                
-                cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()
-                self.gutils.clear_tables("sed_group_areas", "sed_group_cells")
-                if cells:
-                    if len(cells) > 0:
-                        for i in range(0, len(cells)):
-                            grid_number, area_fid = cells[i][1], cells[i][2]
-                            centroid = self.gutils.single_centroid(grid_number)
-                            geom = self.gutils.build_square(centroid, cell_size * 0.95)
-                            group_fid = self.gutils.execute("SELECT group_fid FROM sed_group_areas_tmp WHERE fid = ?;", (area_fid,)).fetchone()
-                            areas_sql += [(geom, group_fid[0] )]
-                            cells_sql += [(cells[i][1], i + 1)]
-                            
-                        self.gutils.batch_execute(areas_sql,cells_sql) 
-                cells = self.gutils.execute("SELECT * FROM sed_group_cells").fetchall()                  
-
-                # Save Supply Rating Curve table:
-                sr_curve_sql  = ["""INSERT INTO sed_supply_areas (isedcfp, ased, bsed, dist_fid) VALUES""", 4]
-                self.gutils.clear_tables("sed_supply_cells") 
-                for row in range(0, self.sed_rating_curve_tblw.rowCount()):
-                    node = self.sed_rating_curve_tblw.item(row, 0).text()
-                    self.gutils.execute("INSERT INTO sed_supply_cells (grid_fid, area_fid) VALUES (?, ?);", (node, str(row + 1)))
-                    isedcfp = self.sed_rating_curve_tblw.item(row, 1).text()
-                    ased = self.sed_rating_curve_tblw.item(row, 2).text()
-                    bsed = self.sed_rating_curve_tblw.item(row, 3).text()
-                    dist_fid  = self.sed_rating_curve_tblw.item(row, 4).text()
-                    sr_curve_sql += [(isedcfp , ased, bsed, dist_fid)]
-                self.gutils.clear_tables("sed_supply_areas")
-                self.gutils.batch_execute(sr_curve_sql) 
-                
-                # Supply Rating Curve data:
-                self.gutils.clear_tables("sed_supply_frac_data") 
-                self.gutils.execute("INSERT INTO sed_supply_frac_data SELECT fid, dist_fid, ssediam, ssedpercent FROM sed_supply_frac_data_tmp") 
-
-                # Rigid Bed Nodes:
-                rigid_insert_sql  = ["""INSERT INTO sed_rigid_cells (grid_fid, area_fid) VALUES""", 2]
-                for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
-                    node = self.sed_rigid_nodes_tblw.item(row, 0).text()
-                    rigid_insert_sql += [(node, str(row))]
-                self.gutils.clear_tables("sed_rigid_cells")
-                self.gutils.batch_execute(rigid_insert_sql)
-       
-                self.gutils.enable_geom_triggers()   
+                                 
+            elif self.two_phase_radio.isChecked():
+                self.set_mud_debris() 
+                self.set_sediment_transport() 
+                self.gutils.set_cont_par("MUD", 1) 
+                self.gutils.set_cont_par("ISED", 1)  
+                              
             else:
                 self.gutils.set_cont_par("MUD", 0) 
                 self.gutils.set_cont_par("ISED", 0)              
@@ -466,7 +413,114 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 251021.0916: unable to save mud/sediment data!.\n", e)
 
-                       
+    def set_sediment_transport(self):
+         self.gutils.disable_geom_triggers()
+
+         cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+         
+         # Save global sediment transport parameters:
+         isedeqg = self.sed_transp_eq_cbo.currentIndex() + 1
+         isedsizefrac = self.sed_size_fraction_grp.isChecked()
+         dfifty = self.sed_D50_dbox.value()
+         sgrad = self.sed_grad_coeff_dbox.value()
+         sgst = self.sed_specific_gravity_dbox.value()
+         dryspwt =  self.sed_dry_specific_weight_dbox.value()
+         cvfg = self.sed_vol_conctr_dbox.value()
+         isedsupply = self.sed_rating_curve_grp.isChecked()
+         isedisplay = self.sed_report_node_dbox.value()
+         scourdep =  self.sed_max_scour_depth_dbox.value() 
+        
+         self.gutils.clear_tables("sed")
+         sed_sql  = """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, 
+                                         dryspwt, cvfg, isedsupply, isedisplay, scourdep) VALUES (?,?,?,?,?,?,?,?,?,?);"""            
+         self.gutils.execute(sed_sql, (isedeqg, isedsizefrac, dfifty, sgrad, sgst, 
+                                         dryspwt, cvfg, isedsupply, isedisplay, scourdep))              
+         
+         # Save Size Fractions table:
+         sed_sql  = ["""INSERT INTO sed_groups (isedeqi, bedthick, cvfi, dist_fid) VALUES""", 4]
+         for row in range(0, self.sed_size_fraction_tblw.rowCount()):
+             combo = self.sed_size_fraction_tblw.cellWidget(row,0)                          
+             isedeqi = combo.currentIndex() + 1
+             bed_thick = self.sed_size_fraction_tblw.item(row, 1).text()
+             conc = self.sed_size_fraction_tblw.item(row, 2).text()
+             dist_fid  = self.sed_size_fraction_tblw.item(row, 3).text()
+             sed_sql += [(isedeqi, bed_thick , conc, row + 1)]
+         self.gutils.clear_tables("sed_groups")
+         self.gutils.batch_execute(sed_sql)  
+         
+         # Size Fractions data::
+         self.gutils.clear_tables("sed_group_frac_data") 
+         self.gutils.execute("INSERT INTO sed_group_frac_data SELECT fid, dist_fid, sediam, sedpercent FROM sed_group_frac_data_tmp") 
+     
+         # Size Fraction Cells (2 tables involved):  
+         areas_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
+         cells_sql = ["""INSERT INTO sed_group_cells (grid_fid, area_fid) VALUES""", 2]
+         
+         cells = self.gutils.execute("SELECT * FROM sed_group_cells_tmp").fetchall()
+         self.gutils.clear_tables("sed_group_areas", "sed_group_cells")
+         if cells:
+             if len(cells) > 0:
+                 for i in range(0, len(cells)):
+                     grid_number, area_fid = cells[i][1], cells[i][2]
+                     centroid = self.gutils.single_centroid(grid_number)
+                     geom = self.gutils.build_square(centroid, cell_size * 0.95)
+                     group_fid = self.gutils.execute("SELECT group_fid FROM sed_group_areas_tmp WHERE fid = ?;", (area_fid,)).fetchone()
+                     areas_sql += [(geom, group_fid[0] )]
+                     cells_sql += [(cells[i][1], i + 1)]
+                     
+                 self.gutils.batch_execute(areas_sql,cells_sql) 
+         cells = self.gutils.execute("SELECT * FROM sed_group_cells").fetchall()                  
+
+         # Save Supply Rating Curve table:
+         sr_curve_sql  = ["""INSERT INTO sed_supply_areas (isedcfp, ased, bsed, dist_fid) VALUES""", 4]
+         self.gutils.clear_tables("sed_supply_cells") 
+         for row in range(0, self.sed_rating_curve_tblw.rowCount()):
+             node = self.sed_rating_curve_tblw.item(row, 0).text()
+             self.gutils.execute("INSERT INTO sed_supply_cells (grid_fid, area_fid) VALUES (?, ?);", (node, str(row + 1)))
+             isedcfp = self.sed_rating_curve_tblw.item(row, 1).text()
+             ased = self.sed_rating_curve_tblw.item(row, 2).text()
+             bsed = self.sed_rating_curve_tblw.item(row, 3).text()
+             dist_fid  = self.sed_rating_curve_tblw.item(row, 4).text()
+             sr_curve_sql += [(isedcfp , ased, bsed, dist_fid)]
+         self.gutils.clear_tables("sed_supply_areas")
+         self.gutils.batch_execute(sr_curve_sql) 
+         
+         # Supply Rating Curve data:
+         self.gutils.clear_tables("sed_supply_frac_data") 
+         self.gutils.execute("INSERT INTO sed_supply_frac_data SELECT fid, dist_fid, ssediam, ssedpercent FROM sed_supply_frac_data_tmp") 
+
+         # Rigid Bed Nodes:
+         rigid_insert_sql  = ["""INSERT INTO sed_rigid_cells (grid_fid, area_fid) VALUES""", 2]
+         for row in range(0, self.sed_rigid_nodes_tblw.rowCount()):
+             node = self.sed_rigid_nodes_tblw.item(row, 0).text()
+             rigid_insert_sql += [(node, str(row))]
+         self.gutils.clear_tables("sed_rigid_cells")
+         self.gutils.batch_execute(rigid_insert_sql)
+
+         self.gutils.enable_geom_triggers()         
+
+    def set_mud_debris(self):
+        self.gutils.set_cont_par("IDEBRV", self.mud_basin_grp.isChecked()) 
+        
+        mud_sql  = "INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (?,?,?,?,?,?);" 
+        va = self.mud_vis_vs_sed_coeff_dbox.value()
+        vb = self.mud_vis_vs_sed_exp_dbox.value()
+        ysa = self.mud_ys_vs_sed_coeff_dbox.value()
+        ysb = self.mud_ys_vs_sed_exp_dbox.value()
+        sgsm = self.mud_specific_gravity_dbox.value()
+        xhx =  self.mud_laminar_fr_dbox.value()
+        self.gutils.clear_tables("mud")
+        self.gutils.execute(mud_sql, (va, vb, ysa, ysb, sgsm, xhx))     
+        
+        debrisv = self.mud_basin_vol_dbox.value()
+        self.gutils.clear_tables("mud_areas", "mud_cells")
+        if self.mud_basin_grp.isChecked():
+            self.gutils.execute("INSERT INTO mud_areas (debrisv) VALUES (?);", (debrisv,))
+            grid = self.mud_basin_grid_sbox.value()
+            self.gutils.execute("INSERT INTO mud_cells (grid_fid, area_fid) VALUES (?, ?);", (grid, 1,))            
+                
+
+                      
     def create_polygon_sed(self):
         self.lyrs.enter_edit_mode("sed_rigid_areas")
 
