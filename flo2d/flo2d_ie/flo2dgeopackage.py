@@ -2355,7 +2355,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
                             s.write(line5.format(gid, debrisv))                    
                     e_data = None
-                else: 
+                
+                if ISED == "1" and ce_data is not None:  
                     # Sediment Transport:
                     e_data = ce_data[-1]
                     s.write(line2.format(*ce_data[:-1]))

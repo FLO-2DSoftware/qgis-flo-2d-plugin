@@ -934,6 +934,11 @@
                      <string>None</string>
                     </property>
                    </item>
+                   <item>
+                    <property name="text">
+                     <string>Two Phase</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
                 </layout>

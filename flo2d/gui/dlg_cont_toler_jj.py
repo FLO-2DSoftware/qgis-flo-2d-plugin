@@ -187,12 +187,21 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     self._endtimtep = float_or_zero(db_val)        
 
             widgetISED = getattr(self, "ISED")
-            if _mud and not _sed:
-                widgetISED.setCurrentIndex(0)
+            if not _mud and not _sed:
+                widgetISED.setCurrentIndex(2)  # None
             elif not _mud and _sed:
-                widgetISED.setCurrentIndex(1)
-            else:
-                widgetISED.setCurrentIndex(2)
+                widgetISED.setCurrentIndex(1)  # Sediment Transport
+            elif _mud and not _sed:
+                widgetISED.setCurrentIndex(0)  # Mud/Debris
+            elif _mud and _sed:
+                widgetISED.setCurrentIndex(3)  # Two Phase    
+            
+            # if _mud and not _sed:
+            #     widgetISED.setCurrentIndex(0)
+            # elif not _mud and _sed:
+            #     widgetISED.setCurrentIndex(1)
+            # else:
+            #     widgetISED.setCurrentIndex(2)
                 
             self.ITIMTEP_currentIndexChanged()    
                
@@ -223,8 +232,6 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.use_time_interval_grp.setDisabled(False)
  
     def ISED_currentIndexChanged(self):
-        # if self.ISED.currentIndex() == 0:
-        #     self.IDEBRV.setChecked(int(old_IDEBRV))
         if  self.ISED.currentIndex() in [1,2]:
             self.IDEBRV.setChecked(False)
     
@@ -248,8 +255,17 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             val = widget.currentIndex()
             if val == 0:
                 _mud = 1
+                _sed = 0
             elif val == 1:
+                _mud = 0
                 _sed = 1
+            elif val == 2:
+                _mud = 0 
+                _sed = 0
+            elif val == 3:
+                _mud = 1 
+                _sed = 1 
+                  
 
             for key in list(self.PARAMS.keys()):
                 if key == "COURCHAR_C":
@@ -283,7 +299,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 
             if _mud == 1:
                 self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
-            elif _sed == 1:
+            if _sed == 1:
                 self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);") 
         
             old_IDEBRV = self.IDEBRV.isChecked() 
