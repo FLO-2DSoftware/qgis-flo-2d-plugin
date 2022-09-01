@@ -11,6 +11,7 @@ import os
 import traceback
 from ..layers import Layers
 from math import isclose
+from qgis.core import NULL
 from itertools import chain, groupby
 from operator import itemgetter
 from .flo2d_parser import ParseDAT
@@ -863,7 +864,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         )
         
         if self.is_table_empty("mud_cells"):
-            self.set_cont_par("IDEBRV", 0)
+            self.set_cont_par("IDEBRV", 0)  
+                  
+        self.set_cont_par("MUD", data["M"] != []);
+        self.set_cont_par("ISED", data["C"] != []);
+            
+
         
         # Also triggers the creation of rigid cells (rigid_cells table):
         # self.batch_execute(areas_r_sql)
