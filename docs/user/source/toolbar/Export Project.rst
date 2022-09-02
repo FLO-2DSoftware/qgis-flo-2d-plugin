@@ -33,3 +33,11 @@ Export large files like INFIL.DAT or TOPO.DAT only when needed.**
 
 5. Check or uncheck the
    files to be exported and click OK.
+
+Troubleshooting
+---------------
+
+1. If data is missing from the grid table, this message will appear.  This happens when the elevation raster, roughness
+   polygon, or roughness raster do not cover the whole grid.
+
+.. image:: ../img/Export-Project/exportproject4.png

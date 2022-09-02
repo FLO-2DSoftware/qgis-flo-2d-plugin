@@ -16,7 +16,7 @@ https://en.wikipedia.org/wiki/Scrum\_(software\_development)
 Roles
 -----
 
--  **Stakeholders:** Flo2d team
+-  **Stakeholders:** FLO-2D team
 -  **Product Owner:** Saber
 -  **Scrum Master:** Peter
 -  **Dev Team:** Radek and Lukasz
