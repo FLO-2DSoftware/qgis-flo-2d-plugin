@@ -167,6 +167,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("ERROR 070719.1051: Import inflow failed!.")
 
+    def import_tailings(self):
+        tailingsf_sql = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
+        self.clear_tables("tailing_cells")
+        data = self.parser.parse_tailings()
+        for row in data:
+            grid_fid, thinkness = row
+            tailingsf_sql += [(grid_fid, thinkness)]
+        self.batch_execute(tailingsf_sql)
+
     def import_outflow(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
@@ -1130,43 +1139,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
-
-
-        # try: 
-        #     swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
-        #     rt_data_sql = ["""INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""", 3]
-        #     culvert_data_sql = ["""INSERT INTO swmmflo_culvert" 
-        #             ("grid_fid", "name", "cdiameter", "typec", "typeen", "cubase","multbarrels") VALUES""", 7]
-        #
-        #     data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
-        #     for i, row in enumerate(data, 1):
-        #
-        #         if len(row) == 2:  # old D line: D  7545
-        #             gid, params = row
-        #             name = "Rating Table {}".format(i)
-        #         elif len(row) == 3: # D line: D  7545  I4-38
-        #             gid, inlet_name, params = row
-        #             name = inlet_name
-        #         elif len(row) == 4: # not used
-        #             gid, inlet_name, RT_name, params = row
-        #             name = RT_name
-        #
-        #         swmmflort_sql += [(gid, name)]
-        #         for n in params:
-        #             rt_data_sql += [(i,) + tuple(n)]
-        #
-        #     if rt_data_sql:
-        #         self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
-        #         self.batch_execute(swmmflort_sql, rt_data_sql, )
-        #
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
-        
-
-
-
-
     def import_swmmoutf(self):
         swmmoutf_sql = ["""INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""", 4]
 
@@ -1468,6 +1440,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
+            return False
+
+    def export_tailings(self, outdir):
+        try:
+            if self.is_table_empty("tailing_cells"):
+                return False
+            
+            tailings_sql = """SELECT grid_fid, thickness FROM tailing_cells ORDER BY grid_fid;"""
+            line1 = "{0}  {1}\n"
+
+            rows = self.execute(tailings_sql).fetchall()
+            if not rows:
+                return False
+            else:
+                pass
+            tailingsf = os.path.join(outdir, "TAILINGS.DAT")
+            with open(tailingsf, "w") as t:
+                for row in rows:
+                    t.write(line1.format(*row))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040822.0442: exporting TAILINGS.DAT failed!.\n", e)
             return False
 
     def export_outflow(self, outdir):

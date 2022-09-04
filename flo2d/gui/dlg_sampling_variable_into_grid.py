@@ -16,8 +16,6 @@ from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtWidgets import QDialogButtonBox
 
 uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
-
-
 class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)

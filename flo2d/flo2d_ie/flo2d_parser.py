@@ -31,6 +31,7 @@ class ParseDAT(object):
             "MANNINGS_N.DAT": None,
             "TOPO.DAT": None,
             "INFLOW.DAT": None,
+            "TAILINGS.DAT": None,
             "OUTFLOW.DAT": None,
             "RAIN.DAT": None,
             "RAINCELL.DAT": None,
@@ -226,6 +227,12 @@ class ParseDAT(object):
                 gid = row[1]
                 res[gid] = OrderedDict([("row", row)])
         return head, inf, res
+
+    def parse_tailings(self):
+        tailings = self.dat_files["TAILINGS.DAT"]
+        par = self.single_parser(tailings)
+        data = [row for row in par]
+        return data
 
     def parse_outflow(self):
         outflow = self.dat_files["OUTFLOW.DAT"]

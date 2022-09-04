@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.67
+version=0.10.68
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.68
+  - Add Two Phase Flow functionality: Mixed Mud and Sediment Transport dialog. Import/Export TAILINGS.DAT file
  <p>0.10.67
   - Export SWMMFLORT.DAT: give warning when one grid has more inlet.
  <p>0.10.66

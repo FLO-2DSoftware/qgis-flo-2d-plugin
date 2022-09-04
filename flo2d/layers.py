@@ -792,6 +792,16 @@ class Layers(object):
                     },
                 ),
                 (
+                    "tailing_cells",
+                    {
+                        "name": "Tailing Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                    },
+                ),                
+                (
                     "inflow",
                     {
                         "name": "Inflow",

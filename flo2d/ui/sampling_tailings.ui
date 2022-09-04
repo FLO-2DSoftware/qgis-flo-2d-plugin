@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Roughness Coefficient Sampling</string>
+   <string>Tailings Sampling</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_4">
    <item row="0" column="0">
@@ -99,7 +99,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Update only user roughness polygons</string>
+        <string>Update only user tailings polygons</string>
        </property>
       </widget>
      </item>
@@ -153,7 +153,7 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>Roughness coefficient field</string>
+           <string>Tailings elev. or depth field</string>
           </property>
          </widget>
         </item>
@@ -198,7 +198,7 @@
         </size>
        </property>
        <property name="title">
-        <string>Roughness polygons intersections with cell</string>
+        <string>Tailings polygons intersections with cell</string>
        </property>
        <layout class="QGridLayout" name="gridLayout_9">
         <item row="0" column="0">

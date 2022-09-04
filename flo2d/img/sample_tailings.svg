@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="24"
+   height="24"
+   id="svg5692"
+   version="1.1"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   sodipodi:docname="sample_tailings.svg"
+   inkscape:export-filename="/media/home1/robert/svn/graphics/trunk/toolbar-icons/32x32/layer-vector.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title2829">GIS icon theme 0.2</title>
+  <defs
+     id="defs5694">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 16 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="32 : 16 : 1"
+       inkscape:persp3d-origin="16 : 10.666667 : 1"
+       id="perspective3486" />
+    <inkscape:perspective
+       id="perspective3496"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3600"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective7871"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective8710"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective9811"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective4762"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       id="linearGradient2831">
+      <stop
+         id="stop2833"
+         offset="0"
+         style="stop-color:#264976;stop-opacity:1;" />
+      <stop
+         style="stop-color:#3f689d;stop-opacity:1;"
+         offset="0.33333334"
+         id="stop2855" />
+      <stop
+         id="stop2835"
+         offset="1"
+         style="stop-color:#5689ca;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2380">
+      <stop
+         id="stop2382"
+         offset="0"
+         style="stop-color:#8cb0d8;stop-opacity:1;" />
+      <stop
+         id="stop2384"
+         offset="1"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2682">
+      <stop
+         id="stop2684"
+         offset="0"
+         style="stop-color:#2b5b95;stop-opacity:1;" />
+      <stop
+         id="stop2686"
+         offset="1"
+         style="stop-color:#5c8fce;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2402">
+      <stop
+         id="stop2404"
+         offset="0"
+         style="stop-color:#4580bf;stop-opacity:1;" />
+      <stop
+         id="stop2406"
+         offset="1"
+         style="stop-color:#376da5;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="50.833333"
+     inkscape:cx="11.990164"
+     inkscape:cy="10.229508"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     inkscape:grid-bbox="true"
+     inkscape:document-units="px"
+     borderlayer="false"
+     inkscape:window-width="2560"
+     inkscape:window-height="1494"
+     inkscape:window-x="2149"
+     inkscape:window-y="2749"
+     inkscape:window-maximized="1"
+     inkscape:snap-global="false"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-grids="false"
+     inkscape:snap-others="false"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid5700"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       dotted="true"
+       originx="2.5"
+       originy="2.5"
+       spacingx="1"
+       spacingy="1" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5697">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>GIS icon theme 0.2</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Arnaud Morvan</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>GIS icons</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+        <dc:coverage>GIS icons</dc:coverage>
+        <dc:description />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/3.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer"
+     style="display:inline"
+     transform="translate(0,-8)">
+    <path
+       style="opacity:1;fill:#c87137;fill-opacity:1;stroke:#000800;stroke-width:0.6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0.5;stroke-opacity:1"
+       d="m 8.2506721,12.937656 c -2.502596,-0.17526 -3.641494,-0.296187 -4.679884,-0.496903 -0.850463,-0.164391 -1.031417,-0.218539 -1.031417,-0.308636 0,-0.109815 -0.193496,-0.549597 -0.392276,-0.891574 -0.09365,-0.16111 -0.409457,-0.591344 -0.701797,-0.956077 C 0.83415514,9.5219838 0.59511714,9.1662955 0.46665214,8.8282385 0.32395114,8.4527175 0.31695314,8.4598971 0.89139614,8.3924497 2.7996391,8.168396 7.1707651,8.3627117 9.3302138,8.7675918 c 0.208853,0.039159 0.9005442,0.1398891 1.5370902,0.2238459 1.292553,0.1704805 1.830147,0.2486691 1.927348,0.2803166 0.04133,0.013456 -0.0796,0.1933695 -0.32759,0.4873655 -0.216207,0.2563192 -0.531608,0.7037962 -0.700891,0.9943932 -0.169283,0.290597 -0.432708,0.743475 -0.585387,1.006396 -0.324746,0.559228 -0.626009,0.917154 -0.939059,1.115685 -0.2636682,0.167213 -0.4199882,0.172085 -1.9910529,0.06206 z"
+       id="path4214"
+       inkscape:connector-curvature="0" />
+    <path
+       style="opacity:1;fill:#c87137;fill-opacity:1;stroke:#080005;stroke-width:0.552835;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0.5;stroke-opacity:1"
+       d="m 14.741093,12.973608 c 0.11276,-1.178056 0.0714,-1.581201 -0.234548,-2.286289 -0.09436,-0.217464 -0.195314,-0.45333 -0.224244,-0.524189 l -0.05268,-0.128799 0.582063,-0.374461 c 1.57276,-1.011807 2.351271,-1.319823 3.348443,-1.324809 0.758199,-0.0038 1.413928,0.208061 1.908761,0.616669 0.142895,0.117995 0.375635,0.298913 0.517202,0.402039 0.250675,0.182609 0.454358,0.390783 0.550939,0.563089 0.04089,0.07295 0.02676,0.09827 -0.100143,0.179055 -0.08127,0.05174 -0.30271,0.256699 -0.492077,0.455455 -0.342803,0.3598 -0.424818,0.469899 -1.216779,1.633463 -0.751379,1.10394 -1.050048,1.313659 -1.94033,1.362454 -0.591916,0.03244 -0.919846,0.123387 -1.273029,0.353046 -0.228111,0.148335 -0.302223,0.176879 -0.520877,0.200657 -0.406864,0.04425 -0.839776,-0.179314 -0.888301,-0.458731 -0.01006,-0.05798 0.006,-0.35887 0.03561,-0.668661 z"
+       id="path4216"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#c87137;fill-opacity:1;stroke:#0e0e0e;stroke-width:0.0569304;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0.995763"
+       d="m 14.463878,22.045887 c 0.08806,-0.01696 0.232169,-0.01696 0.320233,0 0.08807,0.01696 0.01601,0.03084 -0.160116,0.03084 -0.176129,0 -0.248181,-0.01388 -0.160117,-0.03084 z"
+       id="path945"
+       transform="translate(0,8)" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.6949px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1c1f24;fill-opacity:1;stroke:#0e0e0e;stroke-width:1.14123;stroke-linecap:square;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0.995763;opacity:0.98"
+       x="0.39664441"
+       y="22.966684"
+       id="text1084"
+       transform="scale(0.81912035,1.2208218)"><tspan
+         sodipodi:role="line"
+         id="tspan1082"
+         x="0.39664441"
+         y="22.966684"
+         style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.6949px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1c1f24;stroke-width:1.14123;stroke-linecap:square;stroke-dasharray:none">2ph</tspan></text>
+  </g>
+</svg>

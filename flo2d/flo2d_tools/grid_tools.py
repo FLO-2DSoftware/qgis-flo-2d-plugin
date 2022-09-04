@@ -1143,6 +1143,7 @@ def add_col_and_row_fields(grid):
             "_____________________________________________________________________"
         )
         return False  
+    
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
