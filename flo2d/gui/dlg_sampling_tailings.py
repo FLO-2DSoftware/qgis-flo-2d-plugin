@@ -13,8 +13,8 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-uiDialog, qtBaseClass = load_ui("sampling_tolerance")
-class SamplingToleranceDialog(qtBaseClass, uiDialog):
+uiDialog, qtBaseClass = load_ui("sampling_tailings")
+class SamplingTailingsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -61,3 +61,38 @@ class SamplingToleranceDialog(qtBaseClass, uiDialog):
             self.srcFieldCbo.clear()
             self.srcLayerCbo.clear()
             self.allGridElemsFrame.setEnabled(False)
+  
+  
+from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
+
+uiDialog, qtBaseClass = load_ui("sampling_tailings2")
+class SamplingTailingsDialog2(qtBaseClass, uiDialog):
+    def __init__(self):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.setupUi(self)
+        self.external_lyr_cbo.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.tailings_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
+        self.external_layer_changed()
+        # connections
+        self.external_lyr_cbo.currentIndexChanged.connect(self.external_layer_changed)
+        self.use_external_lyr_rb.toggled.connect(self.method_changed)
+        self.use_user_layer_rb.setChecked(True)
+
+    def external_layer_changed(self):
+        current_layer = self.external_lyr_cbo.currentLayer()
+        self.tailings_cbo.setLayer(current_layer)
+
+    def method_changed(self):
+        if self.use_external_lyr_rb.isChecked():
+            self.external_grp.setEnabled(True)
+        else:
+            self.external_grp.setDisabled(True)
+
+    def use_external_layer(self):
+        return self.use_external_lyr_rb.isChecked()
+
+    def external_layer_parameters(self):
+        current_layer = self.external_lyr_cbo.currentLayer()
+        tailing_field = self.tailings_cbo.currentField()
+        return current_layer, tailing_field      

@@ -1668,6 +1668,15 @@ CREATE TABLE "gutter_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_cells', 'aspatial');
 
+-- TAILINGS.DAT
+
+CREATE TABLE "tailing_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY, 
+    "grid_fid" INTEGER, -- equal to fid from grid table
+	"thickness" REAL DEFAULT 0.00
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tailing_cells', 'aspatial');
+
 -- TOLSPATIAL.DAT
 
 CREATE TABLE "tolspatial" (

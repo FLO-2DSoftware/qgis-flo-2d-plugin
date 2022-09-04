@@ -853,6 +853,7 @@ class Flo2D(object):
             "import_cont_toler",
             "import_mannings_n_topo",
             "import_inflow",
+            "import_tailings",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -935,6 +936,7 @@ class Flo2D(object):
 
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
+                        import_calls.remove("import_tailings")
 
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
@@ -1211,6 +1213,7 @@ class Flo2D(object):
             # "import_cont_toler",
             "import_tolspatial",
             "import_inflow",
+            "import_tailings",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -1287,7 +1290,8 @@ class Flo2D(object):
 
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
-
+                        import_calls.remove("import_tailings")
+                        
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
 
@@ -1411,6 +1415,7 @@ class Flo2D(object):
             "TOLER.DAT": "import_cont_toler",
             "TOLSPATIAL.DAT": "import_tolspatial",
             "INFLOW.DAT": "import_inflow",
+            "TAILINGS.DAT": "import_tailings",
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",
@@ -1539,6 +1544,7 @@ class Flo2D(object):
                 "export_cont_toler",
                 "export_tolspatial",
                 "export_inflow",
+                "export_tailings",
                 "export_outflow",
                 "export_rain",
                 "export_evapor",
@@ -1583,10 +1589,11 @@ class Flo2D(object):
     
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
-    
+                    export_calls.remove("export_tailings")
+                    
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
-    
+                    
                 if "Multiple Channels" not in dlg_components.components:
                     export_calls.remove("export_mult")
     

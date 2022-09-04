@@ -16,6 +16,7 @@ from .ui_utils import load_ui, set_icon
 from ..utils import time_taken
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 
 from qgis.PyQt.QtCore import Qt, QThread, QSettings
 from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL, Qgis, QgsMessageLog
@@ -45,6 +46,7 @@ from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  #update this after elevation test is ok
 from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
+from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
@@ -78,6 +80,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         set_icon(self.gutter_btn, "sample_gutter.svg")
         set_icon(self.noexchange_btn, "sample_noexchange.svg")
         set_icon(self.other_variable_btn, "sample_grid_variable.svg")
+        set_icon(self.tailings_btn, "sample_tailings.svg")
 
         self.create_grid_btn.clicked.connect(self.create_grid)
         self.raster_elevation_btn.clicked.connect(self.raster_elevation)
@@ -93,6 +96,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.gutter_btn.clicked.connect(self.eval_gutter)
         self.noexchange_btn.clicked.connect(self.eval_noexchange)
         self.other_variable_btn.clicked.connect(self.other_variable)
+        self.tailings_btn.clicked.connect(self.get_tailings)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -496,17 +500,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.statBar.removeWidget(self.advanceBar)
         self.statBar.removeWidget(self.cancelButton)
 
-#         self.iface.mainWindow().statusBar().removeWidget(self.statBar)
-#         self.statBar.hide()
-#         if ret is not None:
-#             # report the result
-#             layer, total_area = ret
-#             self.iface.messageBar().pushMessage('The total area of {name} is {area}.'.format(name=layer.name(), area=total_area))
-#         else:
-#             # notify the user that something went wrong
-#             self.iface.messageBar().pushMessage('Something went wrong! See the message log for more information.',
-#                                                 level=Qgis.Critical, duration=3)
-
     def workerError(self, e, exception_string):
         QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), level=Qgis.Critical)
 
@@ -679,6 +672,69 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 e,
             )
 
+    def get_tailings(self):
+        tailings_dlg = SamplingTailingsDialog2()
+        ok = tailings_dlg.exec_()
+        if not ok:
+            return
+        try:
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid. Please, create it before sampling tailings.")
+                return
+            
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            qry = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]        
+
+            if tailings_dlg.use_external_layer():
+                external_layer, tailing_field = tailings_dlg.external_layer_parameters()
+                
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+
+                writeVals = []
+                
+                use_centroid = True # Hardwired to use/not use centroid.
+                
+                if use_centroid: 
+                    values2 = poly2grid(grid_lyr, external_layer, None, True, False, False, 1, tailing_field)
+                    for value, gid in values2:
+                        if value:
+                            value = "%.2f" % value
+                            writeVals.append([gid, value])               
+                                                   
+                else:
+                    values = poly2poly_geos(grid_lyr, external_layer, None, tailing_field) # this returns 2 values
+                    for gid, values in values:
+                        if values:
+                            thickness = sum(ma * float(subarea) for ma, subarea in values)
+                            # thickness = thickness + (1.0 - sum(float(subarea) for ma, subarea in values)) * float(globalnValue)
+                            # thickness = '{:10.3f}'.format(thickness)
+                            thickness = "%.2f" % thickness
+                            writeVals.append([gid, thickness])
+                            # qry += [(gid, thickness)]
+                        
+
+                if len(writeVals) > 0:
+                    self.gutils.clear_tables("tailing_cells")
+                    qry += writeVals
+                    self.gutils.batch_execute(qry)
+                    # self.con.executemany(qry, writeVals)
+                    # self.con.commit()
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("Assigning tailing cells finished!")               
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("There are no intersections between the grid and layer '" + external_layer.name() + "' !")  
+                                           
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error(
+                "ERROR 030922.1128: Evaluation of tailings failed!\n"
+                "________________________________________________________________",
+                e,
+            )
+            QApplication.restoreOverrideCursor()        
+        
     def eval_arfwrf(self):
         eval_dlg = EvaluateReductionFactorsDialog()
         ok = eval_dlg.exec_()
