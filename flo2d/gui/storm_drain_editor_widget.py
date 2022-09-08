@@ -441,13 +441,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         sd_type = swmm_dict["sd_type"]
         intype = swmm_dict["intype"]
-        if sd_type == "I" and intype != 4:
+        if sd_type in ["I", "i"] and intype != 4:
             if swmm_dict["flapgate"] == 1:
                 inlet_type = self.cbo_intype.currentText()
                 self.uc.bar_warn("Vertical inlet opening is not allowed for {}!".format(inlet_type))
                 return
             swmm_dict["rt_fid"] = None
-        elif sd_type == "I" and intype == 4:
+        elif sd_type in ["I", "i"] and intype == 4:
             swmm_dict["rt_fid"] = self.SD_type4_cbo.itemData(self.SD_type4_cbo.currentIndex())
         else:
             pass
@@ -526,7 +526,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 name = this_user_node["name"]
                 rt_fid = this_user_node["rt_fid"]
                 rt_name = this_user_node["rt_name"]
-                if sd_type == "I" or sd_type == "J":
+                if sd_type in ["I", "i", "J"]:
                     # Insert inlet:
                     row = [grid_fid, "D", grid_fid, name] + [this_user_node[col] for col in self.inlet_columns]
                     row[10] = int("1" if is_true(row[9]) else "0")
@@ -1065,13 +1065,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         sd_type = "I"
                     elif "out_type" in values:
                         sd_type = "O"
-                    elif name[0] == "I":
+                    elif name[0] in ["I", "i"]:
                         continue  # Only consider inlets in [SUBCATCHMENTS]
                     else:
                         sd_type = "J"
 
                 else:
-                    if name[0] == "I":
+                    if name[0] in ["I", "i"]:
                         if (
                             "junction_invert_elev" in values
                         ):  # if 'junction_invert_elev' is there => it was read from [JUNCTIONS]
@@ -1898,7 +1898,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     # JUNCTIONS ##################################################
                     try:
                         SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
-                                          FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "J" ORDER BY fid;"""
+                                          FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
 
                         junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
                         if not junctions_rows:

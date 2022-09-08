@@ -2660,7 +2660,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(swmmflo, "w") as s:
                 for row in swmmflo_rows:
                     new_row = []
-                    if row[2][0] == "I":
+                    if row[2][0] in ["I", "i"]:
                         for i, item in enumerate(row, 1):
                             new_row.append(item if item is not None else 0)
                         s.write(line1.format(*new_row))
