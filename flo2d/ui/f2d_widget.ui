@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>452</width>
-    <height>625</height>
+    <width>400</width>
+    <height>596</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <widget class="QScrollArea" name="scrollArea">
      <property name="minimumSize">
       <size>
-       <width>430</width>
+       <width>0</width>
        <height>0</height>
       </size>
      </property>
@@ -30,8 +30,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>428</width>
-        <height>601</height>
+        <width>400</width>
+        <height>576</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -52,7 +52,7 @@
          <property name="title">
           <string>Rain Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
@@ -79,7 +79,7 @@
          <property name="title">
           <string>Initial Condition Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
@@ -110,7 +110,7 @@
          <property name="title">
           <string>Structures Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_8">
@@ -161,7 +161,7 @@
          <property name="title">
           <string>Grid Tools</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_6">
@@ -206,7 +206,7 @@
          <property name="checkable">
           <bool>false</bool>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout">
@@ -233,7 +233,7 @@
          <property name="title">
           <string>Schematized Channels Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_11">
@@ -260,7 +260,7 @@
          <property name="title">
           <string>Floodplain Cross Sections Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_9">
@@ -287,7 +287,7 @@
          <property name="title">
           <string>Cross Sections Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_13">
@@ -318,7 +318,7 @@
          <property name="title">
           <string>Profile Tool</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_7">
@@ -345,7 +345,7 @@
          <property name="title">
           <string>Infiltration Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_10">
@@ -372,7 +372,7 @@
          <property name="title">
           <string>Storm Drain Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_14">
@@ -399,7 +399,7 @@
          <property name="title">
           <string>Multiple Channels Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_15">
@@ -426,7 +426,7 @@
          <property name="title">
           <string>Levees and Breach Editor</string>
          </property>
-         <property name="collapsed" stdset="0">
+         <property name="collapsed">
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_12">
@@ -519,7 +519,7 @@
   <customwidget>
    <class>QgsCollapsibleGroupBox</class>
    <extends>QGroupBox</extends>
-   <header>qgis.gui</header>
+   <header>qgscollapsiblegroupbox.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -2391,7 +2391,40 @@
  </widget>
  <layoutdefault spacing="6" margin="9"/>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>btnSave</sender>
+   <signal>clicked()</signal>
+   <receiver>CONTOLERdlg</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>868</x>
+     <y>922</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1006</x>
+     <y>-26</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>CONTOLERdlg</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1058</x>
+     <y>915</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1048</x>
+     <y>968</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
  <designerdata>
   <property name="gridDeltaX">
    <number>10</number>
