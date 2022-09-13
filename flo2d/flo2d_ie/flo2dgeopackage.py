@@ -874,9 +874,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
         
         if self.is_table_empty("mud_cells"):
             self.set_cont_par("IDEBRV", 0)  
-                  
-        self.set_cont_par("MUD", data["M"] != []);
-        self.set_cont_par("ISED", data["C"] != []);
+    
+        
+        if data["M"] == [] and data["C"] == []:  
+            self.set_cont_par("MUD", 0);
+            self.set_cont_par("ISED", 0)   
+                     
+        elif data["M"] == [] and data["C"] != []:   
+            self.set_cont_par("MUD", 0);
+            self.set_cont_par("ISED", 1)  
+             
+        elif data["M"] != [] and data["C"] == []:  
+            self.set_cont_par("MUD", 1);
+            self.set_cont_par("ISED", 0)  
+             
+        elif data["M"] != [] and data["C"] != []:  
+            self.set_cont_par("MUD", 2);
+            self.set_cont_par("ISED", 0)               
+            
+                   
             
 
         
@@ -1243,9 +1259,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         lst += rline.format(val)
                     lst += "\n"
                     if lst.isspace() is False:
-                        
-                        
-                        
                         if row[0] == "ITIMTEP":
                             # See if CONT table has ENDTIMTEP and STARTIMTEP: 
                             endtimtep = self.get_cont_par("ENDTIMTEP")
@@ -1266,10 +1279,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     lst = " " + _itimtep + " " + options["TIMTEP"] + " " + options["STARTIMTEP"] + " " + options["ENDTIMTEP"]
                             else:
                                 lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
-                            lst += "\n"    
-                                
-                                
-                                
+                            lst += "\n"       
                         c.write(lst)
                     else:
                         pass
@@ -2349,8 +2359,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             sed = os.path.join(outdir, "SED.DAT")
             with open(sed, "w") as s:
-                if MUD == "1" and m_data is not None:
-                    # Mud/debris transport:
+                if MUD in ["1", "2"] and m_data is not None:
+                    # Mud/debris transport or 2 phase flow:
                     s.write(line1.format(*m_data))
                     
                     if int(self.gutils.get_cont_par("IDEBRV")) == 1:
@@ -2359,8 +2369,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             s.write(line5.format(gid, debrisv))                    
                     e_data = None
                 
-                if ISED == "1" and ce_data is not None:  
-                    # Sediment Transport:
+                if (ISED == "1" or MUD == "2") and ce_data is not None:  
+                    # Sediment Transport or 2 phase flow:
                     e_data = ce_data[-1]
                     s.write(line2.format(*ce_data[:-1]))
                     

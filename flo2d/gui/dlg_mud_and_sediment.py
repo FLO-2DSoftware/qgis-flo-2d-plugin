@@ -166,13 +166,12 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.sediment_transport_radio.click()
             self.populate_sediment_transport()
                   
-        
         elif  _mud == "1" and _sed == "0": 
             
             self.mud_debris_transport_radio.click() 
             self.populate_mud()            
             
-        elif  _mud == "1" and _sed == "1":                
+        elif  _mud == "2":              
 
             self.two_phase_radio.click() 
             self.populate_mud() 
@@ -402,8 +401,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             elif self.two_phase_radio.isChecked():
                 self.set_mud_debris() 
                 self.set_sediment_transport() 
-                self.gutils.set_cont_par("MUD", 1) 
-                self.gutils.set_cont_par("ISED", 1)  
+                self.gutils.set_cont_par("MUD", 2) 
+                self.gutils.set_cont_par("ISED", 0)  
                               
             else:
                 self.gutils.set_cont_par("MUD", 0) 

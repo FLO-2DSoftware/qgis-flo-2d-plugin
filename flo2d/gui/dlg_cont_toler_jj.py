@@ -163,10 +163,12 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     db_val = float(db_val)
 
                 if key == "MUD":
-                    _mud = True if db_val == 1 else False
+                    _mud = db_val
+                    # _mud = True if db_val in [1, 2] else False
                     continue
                 if key == "ISED":
-                    _sed = True if db_val == 1 else False
+                    _sed = db_val
+                    # _sed = True if db_val == 1 else False
                     continue
 
                 widget = getattr(self, key)
@@ -187,21 +189,14 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     self._endtimtep = float_or_zero(db_val)        
 
             widgetISED = getattr(self, "ISED")
-            if not _mud and not _sed:
+            if _mud == 0 and _sed == 0:
                 widgetISED.setCurrentIndex(2)  # None
-            elif not _mud and _sed:
+            elif _mud == 0 and _sed == 1:
                 widgetISED.setCurrentIndex(1)  # Sediment Transport
-            elif _mud and not _sed:
+            elif _mud == 1 and _sed == 0:
                 widgetISED.setCurrentIndex(0)  # Mud/Debris
-            elif _mud and _sed:
+            elif _mud == 2:
                 widgetISED.setCurrentIndex(3)  # Two Phase    
-            
-            # if _mud and not _sed:
-            #     widgetISED.setCurrentIndex(0)
-            # elif not _mud and _sed:
-            #     widgetISED.setCurrentIndex(1)
-            # else:
-            #     widgetISED.setCurrentIndex(2)
                 
             self.ITIMTEP_currentIndexChanged()    
                
@@ -263,8 +258,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 _mud = 0 
                 _sed = 0
             elif val == 3:
-                _mud = 1 
-                _sed = 1 
+                _mud = 2 
+                _sed = 0 
                   
 
             for key in list(self.PARAMS.keys()):
