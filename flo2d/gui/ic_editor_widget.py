@@ -166,9 +166,9 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_res(self):
         del_qry = "DELETE FROM reservoirs;"
-        ins_qry = """INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel, n_value, use_n_value, geom)
+        ins_qry = """INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel, n_value, use_n_value, tailings, geom)
                     SELECT
-                        ur.fid, ur.name, g.fid, ur.wsel, ur.n_value, ur.use_n_value, g.geom
+                        ur.fid, ur.name, g.fid, ur.wsel, ur.n_value, ur.use_n_value, ur.tailings, g.geom
                     FROM
                         grid AS g, user_reservoirs AS ur
                     WHERE

@@ -1055,7 +1055,6 @@ class Flo2D(object):
                         "rbank",
                         "reservoirs",
                         "repl_rat_curves",
-                        "reservoirs",
                         "sed_group_areas",
                         "sed_group_cells",
                         "sed_groups",

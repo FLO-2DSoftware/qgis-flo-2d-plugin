@@ -1398,44 +1398,82 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                         # Yes, n_value exists.
                         n_value_exists = True
-                        reservoirs_sql = """SELECT grid_fid, wsel, n_value, use_n_value FROM reservoirs ORDER BY fid;"""
-                        res_line1a = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
-                        res_line1b = "\nR   {0: <15} {1:<10.2f}"
-                        res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f} \n"
-                        res_line2b = "R     {0: <15} {1:<10.2f} \n"
-
-                        #                         res_line1a = '\nR   {0: <15} {1: <15} {2:}'
-                        #                         res_line1b = '\nR   {0: <15} {1: <15}'
-                        #                         res_line2a = 'R     {0: <15} {1: <15} {2} \n'
-                        #                         res_line2b = 'R     {0: <15} {1: <15} \n'
+                        reservoirs_sql = """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
+                        
+                        res_line1a  = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
+                        res_line1at = "\nR   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+                        
+                        res_line1b  = "\nR   {0: <15} {1:<10.2f}"
+                        res_line1bt = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
+                        
+                        res_line2a  = "R     {0: <15} {1:<10.2f} {2:<10.2f} \n"
+                        res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f} \n"
+                        
+                        res_line2b  = "R     {0: <15} {1:<10.2f} \n"
+                        res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f} \n"
 
                         for res in self.execute(reservoirs_sql):
                             res = [x if x is not None else "" for x in res]
 
                             if self.is_table_empty("inflow"):
                                 if res[3] == 1:  # write n value
-                                    i.write(res_line2a.format(*res))
+                                    if res[4] == -1.0:
+                                        # Do not write tailings
+                                        i.write(res_line2a.format(*res))
+                                    else:
+                                        # Write tailings:
+                                        i.write(res_line2at.format(*res))    
                                 else:  # do not write n value
-                                    i.write(res_line2b.format(*res))
+                                    if res[4] == -1.0:
+                                        # Do not write tailings:
+                                        i.write(res_line2b.format(*res))
+                                    else:
+                                        # Write tailings:
+                                        i.write(res_line2bt.format(*res))                                        
                             else:
                                 if res[3] == 1:  # write n value
-                                    i.write(res_line1a.format(*res))
+                                    if res[4] == -1.0:
+                                        # Do not write tailings                                    
+                                        i.write(res_line1a.format(*res))
+                                    else:
+                                        # Write tailings:
+                                        i.write(res_line1at.format(*res))                                        
                                 else:
-                                    i.write(res_line1b.format(*res))
+                                    if res[4] == -1.0:
+                                        # Do not write tailings                                       
+                                        i.write(res_line1b.format(*res))
+                                    else:
+                                        # Write tailings:
+                                        i.write(res_line1bt.format(*res))                                                                                
 
                     except:  # n_value doesn't exist.
                         n_value_exists = False
-                        reservoirs_sql = """SELECT grid_fid, wsel FROM reservoirs ORDER BY fid;"""
-                        res_line1 = "\nR    {0: <15} {1}"
-                        res_line2 = "R      {0: <15} {1} \n"
+                        reservoirs_sql = """SELECT grid_fid, wsel, tailings FROM reservoirs ORDER BY fid;"""
+                        
+                        res_line1  = "\nR    {0: <15} {1}"
+                        res_line1t = "\nR    {0: <15} {1} {2:<10.2f}"
+                         
+                        res_line2  = "R      {0: <15} {1} \n"
+                        res_line2t = "R      {0: <15} {1} {2:<10.2f}\n"
 
                         for res in self.execute(reservoirs_sql):
                             res = [x if x is not None else "" for x in res]
 
                             if self.is_table_empty("inflow"):
-                                i.write(res_line2.format(*res))
+                                if res[4] == -1.0:
+                                    # Do not write tailings                                
+                                    i.write(res_line2.format(*res))
+                                else:
+                                    # Write tailings: 
+                                    i.write(res_line2t.format(*res))                                     
+                                                                      
                             else:
-                                i.write(res_line1.format(*res))
+                                if res[4] == -1.0:
+                                    # Do not write tailings                                
+                                    i.write(res_line1.format(*res))
+                                else:
+                                    # Write tailings: 
+                                    i.write(res_line1t.format(*res))                                  
 
             QApplication.restoreOverrideCursor()
             if warning != "":

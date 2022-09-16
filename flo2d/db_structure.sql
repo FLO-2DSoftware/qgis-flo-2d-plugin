@@ -149,6 +149,7 @@ CREATE TABLE "reservoirs" (
     "wsel" REAL DEFAULT 0.0,
     "n_value" REAL DEFAULT 0.25,  
     "use_n_value" INTEGER, 
+	"tailings" REAL DEFAULT -1.0,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
@@ -2695,6 +2696,7 @@ CREATE TABLE "user_reservoirs" (
     "wsel" REAL DEFAULT 0.0,
     "n_value" REAL DEFAULT 0.25, 
     "use_n_value" INTEGER, 
+	"tailings" REAL DEFAULT -1.0,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
