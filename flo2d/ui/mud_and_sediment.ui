@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1235</width>
-    <height>990</height>
+    <width>1195</width>
+    <height>1043</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,6 +31,9 @@
   <property name="windowTitle">
    <string>Mud and Sediment Transport</string>
   </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
@@ -45,8 +48,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1207</width>
-        <height>962</height>
+        <width>1167</width>
+        <height>1015</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -2425,16 +2428,6 @@
                 </item>
                </layout>
               </item>
-              <item row="1" column="0">
-               <widget class="QDialogButtonBox" name="buttonBox">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="standardButtons">
-                 <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
@@ -2450,6 +2443,16 @@
            <string>None</string>
           </attribute>
          </widget>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QDialogButtonBox" name="buttonBox">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="standardButtons">
+          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+         </property>
         </widget>
        </item>
       </layout>

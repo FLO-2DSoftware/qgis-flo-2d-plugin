@@ -2172,6 +2172,8 @@ class Flo2D(object):
             return
        
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
+        dlg_ms.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_ms.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
         repeat = True
         while repeat:            
             dlg_ms.show()
