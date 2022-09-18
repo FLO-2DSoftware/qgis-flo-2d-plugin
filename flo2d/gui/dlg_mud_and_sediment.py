@@ -30,8 +30,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                           "Tofaletti", "MPM-Woo", "MPM-Smart", "Karim-Kennedy", "Parker-Klingeman-McLean", "Van-Rijn" ]
         
         # Icons:
-        set_icon(self.revert_changes_sed_btn, "mActionUndo.svg")
-        set_icon(self.delete_sed_btn, "mActionDeleteSelected.svg")
         set_icon(self.sed_add_size_fraction_btn, "add.svg")
         set_icon(self.sed_delete_size_fraction_btn, "remove.svg")
         set_icon(self.sed_add_size_fraction_dp_btn, "add.svg")
@@ -45,8 +43,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         set_icon(self.add_rigid_bed_btn, "add.svg")
         set_icon(self.delete_rigid_bed_btn, "remove.svg")    
               
-        self.revert_changes_sed_btn.setVisible(False)
-        self.delete_sed_btn.setVisible(False)
         self.rigid_bed_area_lbl.setVisible(False)
         self.sed_rigid_bed_area_cbo.setVisible(False)
         
