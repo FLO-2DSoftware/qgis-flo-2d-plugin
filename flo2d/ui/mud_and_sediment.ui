@@ -47,9 +47,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-311</y>
         <width>1161</width>
-        <height>1000</height>
+        <height>957</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -1546,7 +1546,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1578,7 +1578,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1663,7 +1663,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1695,7 +1695,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1796,7 +1796,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1828,7 +1828,7 @@
                            </property>
                            <property name="icon">
                             <iconset>
-                             <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                             <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                            </property>
                            <property name="iconSize">
                             <size>
@@ -1981,7 +1981,7 @@
                              </property>
                              <property name="icon">
                               <iconset>
-                               <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                               <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                              </property>
                              <property name="iconSize">
                               <size>
@@ -2013,7 +2013,7 @@
                              </property>
                              <property name="icon">
                               <iconset>
-                               <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                               <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                              </property>
                              <property name="iconSize">
                               <size>
@@ -2095,7 +2095,7 @@
                              </property>
                              <property name="icon">
                               <iconset>
-                               <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                               <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                              </property>
                              <property name="iconSize">
                               <size>
@@ -2127,7 +2127,7 @@
                              </property>
                              <property name="icon">
                               <iconset>
-                               <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                               <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                              </property>
                              <property name="iconSize">
                               <size>
@@ -2272,7 +2272,7 @@
                             </property>
                             <property name="icon">
                              <iconset>
-                              <normaloff>../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../.designer/img/mActionCapturePolygon.svg</iconset>
+                              <normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</normaloff>../../../../../../.designer/img/mActionCapturePolygon.svg</iconset>
                             </property>
                             <property name="iconSize">
                              <size>
@@ -2304,7 +2304,7 @@
                             </property>
                             <property name="icon">
                              <iconset>
-                              <normaloff>../../../../.designer/img/mActionSaveAllEdits.svg</normaloff>../../../../.designer/img/mActionSaveAllEdits.svg</iconset>
+                              <normaloff>../../../../../../.designer/img/mActionSaveAllEdits.svg</normaloff>../../../../../../.designer/img/mActionSaveAllEdits.svg</iconset>
                             </property>
                             <property name="iconSize">
                              <size>
@@ -2336,7 +2336,7 @@
                             </property>
                             <property name="icon">
                              <iconset>
-                              <normaloff>../../../../.designer/img/mActionUndo.svg</normaloff>../../../../.designer/img/mActionUndo.svg</iconset>
+                              <normaloff>../../../../../../.designer/img/mActionUndo.svg</normaloff>../../../../../../.designer/img/mActionUndo.svg</iconset>
                             </property>
                             <property name="iconSize">
                              <size>
@@ -2368,7 +2368,7 @@
                             </property>
                             <property name="icon">
                              <iconset>
-                              <normaloff>../../../../.designer/img/mActionDeleteSelected.svg</normaloff>../../../../.designer/img/mActionDeleteSelected.svg</iconset>
+                              <normaloff>../../../../../../.designer/img/mActionDeleteSelected.svg</normaloff>../../../../../../.designer/img/mActionDeleteSelected.svg</iconset>
                             </property>
                             <property name="iconSize">
                              <size>
@@ -2473,5 +2473,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1003</x>
+     <y>620</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1043</x>
+     <y>-25</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1129</x>
+     <y>627</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1077</x>
+     <y>-3</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
