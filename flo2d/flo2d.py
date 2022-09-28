@@ -606,6 +606,41 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
     def run_flopro(self):
+        # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
+        # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
+        # ok = dlg.exec_()
+        # if not ok:
+        #     return
+        # flo2d_dir, project_dir = dlg.get_parameters()
+        # if sys.platform != "win32":
+        #     self.uc.bar_warn("Could not run simulation under current operation system!")
+        #     return
+        # try: 
+        #     return_code = -9999
+        #     if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
+        #         debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
+        #         if os.path.exists(debugDAT):
+        #             os.remove(debugDAT)
+        #         simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
+        #         return_code = simulation.run()
+        #         # if return_code != 0:
+        #         #     self.uc.show_warn(
+        #         #         "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
+        #         #         + "Program finished with return code " + str(return_code)
+        #         #     )
+        #         # else:
+        #         #     self.uc.show_info( "Model finished with return code "  + str(return_code))       
+        #
+        #
+        #     else:
+        #         self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
+        # except Exception as e:
+        #     self.uc.log_info(repr(e))
+        #     self.uc.bar_warn("Running simulation failed!")
+        
+        
+        
+        
         dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
         ok = dlg.exec_()
@@ -622,7 +657,7 @@ class Flo2D(object):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
                 return_code = simulation.run()               
-                            
+        
             else:
                 self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
         except Exception as e:
