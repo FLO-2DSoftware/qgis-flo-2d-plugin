@@ -656,8 +656,16 @@ class Flo2D(object):
                 if os.path.exists(debugDAT):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                return_code = simulation.run()               
-        
+                proc = simulation.run() 
+                self.uc.show_info( "Model started asynchronously.\nYou can move on to another task before it finishes.")    
+                time.sleep(1)  
+                return_code = proc.poll()
+                if return_code is None:
+                    self.uc.show_info( "Model started") 
+                else:   
+                    self.uc.show_info( "It seems that the model couldn't run or stopped!")       
+
+   
             else:
                 self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
         except Exception as e:

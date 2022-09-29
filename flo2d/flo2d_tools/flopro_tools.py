@@ -57,14 +57,16 @@ class FLOPROExecutor(object):
                 #  pass_fds=(), *, encoding=None, errors=None, text=None):
                 
                        
-                self.uc.bar_info("Model started. " ) 
+                # self.uc.bar_info("Model started. " ) 
                 # proc.wait()
-                return proc.returncode     
+                return proc     
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!/n", e)
 
     def run(self):
         return self.execute_flopro()
+    
+    
 
 
 class XSECInterpolatorExecutor(object):

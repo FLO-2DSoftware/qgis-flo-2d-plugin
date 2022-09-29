@@ -108,15 +108,49 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
         tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4]
 
-        try:  # See if n_value exists in table
+
+
+
+
+
+        try:  # See if n_value exists in table:
             self.execute("SELECT n_value FROM reservoirs")
             # Yes, n_value exists.
-            reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
-            with_n_value = True
+            try: # See if tailings exists in table:
+                self.execute("SELECT tailings FROM reservoirs")
+                # Yes, tailings exists
+                reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, tailings, geom) VALUES""", 6]
+                with_n_value = True
+                with_tailings = True                
+            except:
+                # tailings doesn't exist.
+                reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
+                with_n_value = True
+                with_tailings = False
         except:
             # n_value doesn't exist.
             reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
             with_n_value = False
+            with_tailings = False
+
+
+
+
+
+
+        # try:  # See if n_value exists in table
+        #     self.execute("SELECT n_value FROM reservoirs")
+        #     # Yes, n_value exists.
+        #     reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
+        #     with_n_value = True
+        # except:
+        #     # n_value doesn't exist.
+        #     reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
+        #     with_n_value = False
+
+
+
+
 
         try:
             self.clear_tables(
