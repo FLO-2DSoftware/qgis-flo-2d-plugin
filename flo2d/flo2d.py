@@ -657,13 +657,13 @@ class Flo2D(object):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
                 proc = simulation.run() 
-                self.uc.show_info( "Model started asynchronously.\nYou can move on to another task before it finishes.")    
+                self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.")    
                 time.sleep(1)  
                 return_code = proc.poll()
                 if return_code is None:
-                    self.uc.show_info( "Model started") 
+                    self.uc.show_info( "FLO-2D simulation is running") 
                 else:   
-                    self.uc.show_info( "It seems that the model couldn't run or stopped!")       
+                    self.uc.show_info( "FLO-2D simulation stopped!")       
 
    
             else:

@@ -108,10 +108,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
         tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4]
 
-
-
-
-
+        errors = ""
 
         try:  # See if n_value exists in table:
             self.execute("SELECT n_value FROM reservoirs")
@@ -120,37 +117,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.execute("SELECT tailings FROM reservoirs")
                 # Yes, tailings exists
                 reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, tailings, geom) VALUES""", 6]
-                with_n_value = True
+                with_n_values = True
                 with_tailings = True                
             except:
                 # tailings doesn't exist.
                 reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
-                with_n_value = True
+                with_n_values = Tru
                 with_tailings = False
         except:
             # n_value doesn't exist.
             reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
-            with_n_value = False
-            with_tailings = False
-
-
-
-
-
-
-        # try:  # See if n_value exists in table
-        #     self.execute("SELECT n_value FROM reservoirs")
-        #     # Yes, n_value exists.
-        #     reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
-        #     with_n_value = True
-        # except:
-        #     # n_value doesn't exist.
-        #     reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
-        #     with_n_value = False
-
-
-
-
+            with_n_values = False
+            with_tailingss = False
 
         try:
             self.clear_tables(
@@ -159,7 +137,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "reservoirs", 
                 "inflow_time_series", 
                 "inflow_time_series_data"
-                
             )
             head, inf, res = self.parser.parse_inflow()
             if not head == None:
@@ -167,7 +144,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ("IDEPLT", head["IDEPLT"], self.PARAMETER_DESCRIPTION["IDEPLT"]),
                     ("IHOURDAILY", head["IHOURDAILY"], self.PARAMETER_DESCRIPTION["IHOURDAILY"]),
                 ]
-
+        
                 for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
                     inflow_sql += [(i, row[0], row[1], i)]
@@ -176,27 +153,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         ts_sql += [(i, "Time series " + str(i))]
                         for n in inf[gid]["time_series"]:
                             tsd_sql += [(i,) + tuple(n[1:])]
-
+        
                 self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql)
                 qry = """UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);"""
                 self.execute(qry)
-
+        
             gids = list(res.keys())
             cells = self.grid_centroids(gids, buffers=True)
             for gid in res:
                 row = res[gid]["row"]
-                wsel = row[-1] if len(row) == 3 else row[-2] if len(row) == 4 else 0.0
-                n_value = row[-1] if len(row) == 4 else 0.25
-                use_n_value = True if len(row) == 4 else False
-                if with_n_value:
-                    reservoirs_sql += [(row[1], wsel, n_value, use_n_value, cells[gid])]
-                else:
-                    reservoirs_sql += [(row[1], wsel, cells[gid])]
-
+                grid = row[1]
+                wsel = row[2]
+                if with_n_values and with_tailings:
+                    if len(row) == 3:
+                        # R  grid  wsel:
+                        reservoirs_sql += [(grid, wsel, "0.25", False, "-1.0", cells[gid])]
+                    elif len(row) == 4:    
+                        # R  grid  wsel  n_value_or_tailing:
+                        if float_or_zero(row[3]) > 1.0:
+                            # 3rd. value is a tailing depth:
+                            reservoirs_sql += [(grid, wsel, "0.25", False, row[3], cells[gid])]
+                        else:  
+                            # 3rd. value is n_value:
+                            reservoirs_sql += [(grid, wsel, row[3], True, "-1.0", cells[gid])]                              
+        
+                    elif len(row) == 5:    
+                        # R  grid  wsel  tailing  n_value:
+                        reservoirs_sql += [(grid, wsel, row[4], True, row[3], cells[gid])]   
+                    else:
+                        errors += "R line with more than 5 values"      
+        
+                elif with_n_values and not with_tailings:
+                    if len(row) == 3:
+                        # R  grid  wsel:
+                        reservoirs_sql += [(grid, wsel, "0.25", False, cells[gid])]
+                    elif len(row) == 4:    
+                        # R  grid  wsel  n_value:
+                        reservoirs_sql += [(grid, wsel, row[3], True, cells[gid])]    
+                    else:
+                        errors += "Inflow table without tailings. R line with more than 4 values"       
+        
+                elif not with_n_values and not with_tailings:
+                    if len(row) == 3:
+                        # R  grid  wsel:
+                        reservoirs_sql += [(grid, wsel, cells[gid])]
+                    else:
+                        errors += "Inflow table without n_values and tailings. R line with more than 3 values"                   
+        
             self.batch_execute(reservoirs_sql)
             qry = """UPDATE reservoirs SET name = 'Reservoir ' ||  cast(fid as text);"""
             self.execute(qry)
-
+        
         except Exception:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("ERROR 070719.1051: Import inflow failed!.")
@@ -1427,88 +1434,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             i.write(tsd_line.format(*tsd_row).rstrip())
 
                 if not self.is_table_empty("reservoirs"):
-                    try:  # See if n_value exists in table
-                        self.execute("SELECT n_value FROM reservoirs")
+                    reservoirs_sql = """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
+                    
+                    res_line1a  = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
+                    res_line1at = "\nR   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+                    
+                    res_line1b  = "\nR   {0: <15} {1:<10.2f}"
+                    res_line1bt = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
+                    
+                    res_line2a  = "\nR     {0: <15} {1:<10.2f} {2:<10.2f}"
+                    res_line2at = "\nR     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+                    
+                    res_line2b  = "\nR     {0: <15} {1:<10.2f}"
+                    res_line2bt = "\nR     {0: <15} {1:<10.2f} {4:<10.2f}"
 
-                        # Yes, n_value exists.
-                        n_value_exists = True
-                        reservoirs_sql = """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
-                        
-                        res_line1a  = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
-                        res_line1at = "\nR   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-                        
-                        res_line1b  = "\nR   {0: <15} {1:<10.2f}"
-                        res_line1bt = "\nR   {0: <15} {1:<10.2f} {2:<10.2f}"
-                        
-                        res_line2a  = "R     {0: <15} {1:<10.2f} {2:<10.2f} \n"
-                        res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f} \n"
-                        
-                        res_line2b  = "R     {0: <15} {1:<10.2f} \n"
-                        res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f} \n"
+                    for res in self.execute(reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
 
-                        for res in self.execute(reservoirs_sql):
-                            res = [x if x is not None else "" for x in res]
-
-                            if self.is_table_empty("inflow"):
-                                if res[3] == 1:  # write n value
-                                    if res[4] == -1.0:
-                                        # Do not write tailings
-                                        i.write(res_line2a.format(*res))
-                                    else:
-                                        # Write tailings:
-                                        i.write(res_line2at.format(*res))    
-                                else:  # do not write n value
-                                    if res[4] == -1.0:
-                                        # Do not write tailings:
-                                        i.write(res_line2b.format(*res))
-                                    else:
-                                        # Write tailings:
-                                        i.write(res_line2bt.format(*res))                                        
+                        if res[3] == 1:  # write n value
+                            if res[4] == -1.0:
+                                # Do not write tailings
+                                i.write(res_line2a.format(*res))
                             else:
-                                if res[3] == 1:  # write n value
-                                    if res[4] == -1.0:
-                                        # Do not write tailings                                    
-                                        i.write(res_line1a.format(*res))
-                                    else:
-                                        # Write tailings:
-                                        i.write(res_line1at.format(*res))                                        
-                                else:
-                                    if res[4] == -1.0:
-                                        # Do not write tailings                                       
-                                        i.write(res_line1b.format(*res))
-                                    else:
-                                        # Write tailings:
-                                        i.write(res_line1bt.format(*res))                                                                                
-
-                    except:  # n_value doesn't exist.
-                        n_value_exists = False
-                        reservoirs_sql = """SELECT grid_fid, wsel, tailings FROM reservoirs ORDER BY fid;"""
-                        
-                        res_line1  = "\nR    {0: <15} {1}"
-                        res_line1t = "\nR    {0: <15} {1} {2:<10.2f}"
-                         
-                        res_line2  = "R      {0: <15} {1} \n"
-                        res_line2t = "R      {0: <15} {1} {2:<10.2f}\n"
-
-                        for res in self.execute(reservoirs_sql):
-                            res = [x if x is not None else "" for x in res]
-
-                            if self.is_table_empty("inflow"):
-                                if res[4] == -1.0:
-                                    # Do not write tailings                                
-                                    i.write(res_line2.format(*res))
-                                else:
-                                    # Write tailings: 
-                                    i.write(res_line2t.format(*res))                                     
-                                                                      
+                                # Write tailings:
+                                i.write(res_line2at.format(*res))    
+                        else:  # do not write n value
+                            if res[4] == -1.0:
+                                # Do not write tailings:
+                                i.write(res_line2b.format(*res))
                             else:
-                                if res[4] == -1.0:
-                                    # Do not write tailings                                
-                                    i.write(res_line1.format(*res))
-                                else:
-                                    # Write tailings: 
-                                    i.write(res_line1t.format(*res))                                  
-
+                                # Write tailings:
+                                i.write(res_line2bt.format(*res)) 
+                                  
+                        # if self.is_table_empty("inflow"):
+                        #     if res[3] == 1:  # write n value
+                        #         if res[4] == -1.0:
+                        #             # Do not write tailings
+                        #             i.write(res_line2a.format(*res))
+                        #         else:
+                        #             # Write tailings:
+                        #             i.write(res_line2at.format(*res))    
+                        #     else:  # do not write n value
+                        #         if res[4] == -1.0:
+                        #             # Do not write tailings:
+                        #             i.write(res_line2b.format(*res))
+                        #         else:
+                        #             # Write tailings:
+                        #             i.write(res_line2bt.format(*res))                                        
+                        # else:
+                        #     if res[3] == 1:  # write n value
+                        #         if res[4] == -1.0:
+                        #             # Do not write tailings                                    
+                        #             i.write(res_line1a.format(*res))
+                        #         else:
+                        #             # Write tailings:
+                        #             i.write(res_line1at.format(*res))                                        
+                        #     else:
+                        #         if res[4] == -1.0:
+                        #             # Do not write tailings                                       
+                        #             i.write(res_line1b.format(*res))
+                        #         else:
+                        #             # Write tailings:
+                        #             i.write(res_line1bt.format(*res)) 
+                                                                                                                       
             QApplication.restoreOverrideCursor()
             if warning != "":
                 self.uc.show_warn(
