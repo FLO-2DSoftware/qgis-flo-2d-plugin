@@ -1019,101 +1019,101 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 # self.mud_ys_vs_sed_exp_dbox.setValue(0.0)
                         
             elif idx == 1:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.181)
-                self.mud_vis_vs_sed_exp_dbox.setValue(25.7)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0360)
-                self.mud_ys_vs_sed_exp_dbox.setValue(22.1)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.181)
+                self.mud_ys_vs_sed_exp_dbox.setValue(25.7)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0360)
+                self.mud_vis_vs_sed_exp_dbox.setValue(22.1)
+                                                    
             elif idx == 2:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(2.72)
-                self.mud_vis_vs_sed_exp_dbox.setValue(10.4)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0538)
-                self.mud_ys_vs_sed_exp_dbox.setValue(14.5)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(2.72)
+                self.mud_ys_vs_sed_exp_dbox.setValue(10.4)                 
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0538)
+                self.mud_vis_vs_sed_exp_dbox.setValue(14.5)                                 
                                 
             elif idx == 3:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.152)
-                self.mud_vis_vs_sed_exp_dbox.setValue(18.7)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00136)
-                self.mud_ys_vs_sed_exp_dbox.setValue(28.4)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.152)
+                self.mud_ys_vs_sed_exp_dbox.setValue(18.7)                  
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00136)
+                self.mud_vis_vs_sed_exp_dbox.setValue(28.4)                               
                                 
             elif idx == 4:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0473)
-                self.mud_vis_vs_sed_exp_dbox.setValue(21.1)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.128)
-                self.mud_ys_vs_sed_exp_dbox.setValue(12.0)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0473)
+                self.mud_ys_vs_sed_exp_dbox.setValue(21.1)                  
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.128)
+                self.mud_vis_vs_sed_exp_dbox.setValue(12.0)                             
                                 
             elif idx == 5:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0383)
-                self.mud_vis_vs_sed_exp_dbox.setValue(19.6)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.000495)
-                self.mud_ys_vs_sed_exp_dbox.setValue(27.1)
-                               
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0383)
+                self.mud_ys_vs_sed_exp_dbox.setValue(19.6)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.000495)
+                self.mud_vis_vs_sed_exp_dbox.setValue(27.1)
+              
             elif idx == 6:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.291)
-                self.mud_vis_vs_sed_exp_dbox.setValue(14.3)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.000201)
-                self.mud_ys_vs_sed_exp_dbox.setValue(33.1)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.291)
+                self.mud_ys_vs_sed_exp_dbox.setValue(14.3)                 
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.000201)
+                self.mud_vis_vs_sed_exp_dbox.setValue(33.1)                                  
                                 
             elif idx == 7:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0345)
-                self.mud_vis_vs_sed_exp_dbox.setValue(20.1)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00283)
-                self.mud_ys_vs_sed_exp_dbox.setValue(23.0)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0345)
+                self.mud_ys_vs_sed_exp_dbox.setValue(20.1)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00283)
+                self.mud_vis_vs_sed_exp_dbox.setValue(23.0)                                     
                                 
             elif idx == 8:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0765)
-                self.mud_vis_vs_sed_exp_dbox.setValue(16.9)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0648)
-                self.mud_ys_vs_sed_exp_dbox.setValue(6.20)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0765)
+                self.mud_ys_vs_sed_exp_dbox.setValue(16.9)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0648)
+                self.mud_vis_vs_sed_exp_dbox.setValue(6.20)                                    
                                 
             elif idx == 9:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.000707)
-                self.mud_vis_vs_sed_exp_dbox.setValue(29.8)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00632)
-                self.mud_ys_vs_sed_exp_dbox.setValue(19.9)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.000707)
+                self.mud_ys_vs_sed_exp_dbox.setValue(29.8)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00632)
+                self.mud_vis_vs_sed_exp_dbox.setValue(19.9)
+                                                     
             elif idx == 10:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00172)
-                self.mud_vis_vs_sed_exp_dbox.setValue(29.5)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.000602)
-                self.mud_ys_vs_sed_exp_dbox.setValue(33.1)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00172)
+                self.mud_ys_vs_sed_exp_dbox.setValue(29.5)               
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.000602)
+                self.mud_vis_vs_sed_exp_dbox.setValue(33.1)
+                                                              
             elif idx == 11:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0)
-                self.mud_vis_vs_sed_exp_dbox.setValue(0.0)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0000373)
-                self.mud_ys_vs_sed_exp_dbox.setValue(36.6)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0)
+                self.mud_ys_vs_sed_exp_dbox.setValue(0.0)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0000373)
+                self.mud_vis_vs_sed_exp_dbox.setValue(36.6)
+                                                             
             elif idx == 12:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(2.60)
-                self.mud_vis_vs_sed_exp_dbox.setValue(17.48)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00750)
-                self.mud_ys_vs_sed_exp_dbox.setValue(14.39)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(2.60)
+                self.mud_ys_vs_sed_exp_dbox.setValue(17.48)               
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00750)
+                self.mud_vis_vs_sed_exp_dbox.setValue(14.39)
+                                                              
             elif idx == 13:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(1.75)
-                self.mud_vis_vs_sed_exp_dbox.setValue(7.82)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0405)
-                self.mud_ys_vs_sed_exp_dbox.setValue(8.29)
+                self.mud_ys_vs_sed_coeff_dbox.setValue(1.75)
+                self.mud_ys_vs_sed_exp_dbox.setValue(7.82)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0405)
+                self.mud_vis_vs_sed_exp_dbox.setValue(8.29)                            
                                 
             elif idx == 14:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.00136)
-                self.mud_vis_vs_sed_exp_dbox.setValue(21.2)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0)
-                self.mud_ys_vs_sed_exp_dbox.setValue(0.0)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.00136)
+                self.mud_ys_vs_sed_exp_dbox.setValue(21.2)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0)
+                self.mud_vis_vs_sed_exp_dbox.setValue(0.0)
+                                                                  
             elif idx == 15:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0588)
-                self.mud_vis_vs_sed_exp_dbox.setValue(19.1)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0)
-                self.mud_ys_vs_sed_exp_dbox.setValue(0.0)
-                                
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0588)
+                self.mud_ys_vs_sed_exp_dbox.setValue(19.1)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0)
+                self.mud_vis_vs_sed_exp_dbox.setValue(0.0)
+                             
             elif idx == 16:
-                self.mud_vis_vs_sed_coeff_dbox.setValue(0.166)
-                self.mud_vis_vs_sed_exp_dbox.setValue(25.6)
-                self.mud_ys_vs_sed_coeff_dbox.setValue(0.0)
-                self.mud_ys_vs_sed_exp_dbox.setValue(0.0)
-                                 
+                self.mud_ys_vs_sed_coeff_dbox.setValue(0.166)
+                self.mud_ys_vs_sed_exp_dbox.setValue(25.6)                
+                self.mud_vis_vs_sed_coeff_dbox.setValue(0.0)
+                self.mud_vis_vs_sed_exp_dbox.setValue(0.0)
+                 
             else:
                 self.uc.show_warn("WARNING 040922.0627: not such a function!")            
         except ValueError:        
