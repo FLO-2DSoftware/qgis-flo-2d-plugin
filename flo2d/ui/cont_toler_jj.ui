@@ -160,14 +160,14 @@
                  </property>
                  <property name="minimumSize">
                   <size>
-                   <width>0</width>
-                   <height>0</height>
+                   <width>500</width>
+                   <height>210</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>16777215</width>
-                   <height>16777215</height>
+                   <width>500</width>
+                   <height>210</height>
                   </size>
                  </property>
                  <property name="title">
@@ -177,7 +177,7 @@
                   <set>Qt::AlignHCenter|Qt::AlignTop</set>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_26">
-                  <item row="1" column="0">
+                  <item row="0" column="1">
                    <layout class="QGridLayout" name="gridLayout_16">
                     <item row="0" column="0">
                      <layout class="QGridLayout" name="gridLayout_12">
@@ -241,6 +241,18 @@
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>100</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
                         <property name="toolTip">
                          <string>NOPRTFP</string>
                         </property>
@@ -279,8 +291,14 @@
                         </property>
                         <property name="minimumSize">
                          <size>
-                          <width>60</width>
+                          <width>100</width>
                           <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>100</width>
+                          <height>16777215</height>
                          </size>
                         </property>
                         <property name="toolTip">
@@ -304,6 +322,18 @@
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>100</width>
+                          <height>16777215</height>
+                         </size>
                         </property>
                         <property name="toolTip">
                          <string>NOPRTC</string>
@@ -345,6 +375,19 @@
                     </property>
                    </spacer>
                   </item>
+                  <item row="0" column="2">
+                   <spacer name="horizontalSpacer_13">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
                  </layout>
                 </widget>
                </item>
@@ -359,13 +402,13 @@
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
-                   <height>0</height>
+                   <height>210</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
                    <width>16777215</width>
-                   <height>16777215</height>
+                   <height>210</height>
                   </size>
                  </property>
                  <property name="title">
@@ -735,7 +778,13 @@
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>0</height>
+                 <height>273</height>
+                </size>
+               </property>
+               <property name="sizeIncrement">
+                <size>
+                 <width>0</width>
+                 <height>273</height>
                 </size>
                </property>
                <property name="baseSize">
@@ -1132,6 +1181,18 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>273</height>
+                </size>
+               </property>
+               <property name="sizeIncrement">
+                <size>
+                 <width>0</width>
+                 <height>273</height>
+                </size>
+               </property>
                <property name="title">
                 <string>Global Data Modification</string>
                </property>
@@ -1466,7 +1527,7 @@
              <item row="1" column="0" colspan="2">
               <widget class="QGroupBox" name="switchesGroup">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -1616,13 +1677,13 @@
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
-                    <height>0</height>
+                    <height>220</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
                     <width>16777215</width>
-                    <height>16777215</height>
+                    <height>220</height>
                    </size>
                   </property>
                   <property name="title">

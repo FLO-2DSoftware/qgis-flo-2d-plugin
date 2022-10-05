@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.75
+version=0.10.76
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.76
+  - Arrange groups in Control variables dialog. Remove blue frames.
  <p>0.10.75
   - Mud: add list of functions from literature for viscosity and yield stress.
  <p>0.10.74
