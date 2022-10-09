@@ -224,7 +224,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 qApp.processEvents()
                 features = []
                 grid = self.lyrs.data["grid"]["qlyr"]
-                s.setValue("FLO-2D/lastDEBUGDir", debug_file)
+                s.setValue("FLO-2D/lastDEBUGDir", os.path.dirname(debug_file))
                 self.debug_directory = os.path.dirname(debug_file)
 
                 self.elements_cbo.clear()
@@ -699,7 +699,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def description_tblw_cell_clicked(self, row, column):
-        cell = self.sed_size_fraction_tblw.item(row, 0).text()
+        cell = self.description_tblw.item(row, 0).text()
         self.find_cell(cell)
 
     def zoom_in(self):
@@ -807,7 +807,7 @@ class IssuesFiles(qtBaseClass, uiDialog):
 
     def populate_complementary_files_dialog(self):
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        last_dir = s.value("FLO-2D/lastDEBUGDir", "")
 
         if os.path.isfile(last_dir + r"\DEPRESSED_ELEMENTS.OUT"):
             self.depressed_elements_chbox.setChecked(True)
