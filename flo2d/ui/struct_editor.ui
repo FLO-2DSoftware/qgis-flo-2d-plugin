@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>487</width>
-    <height>401</height>
+    <height>430</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -417,7 +417,7 @@
          <item>
           <widget class="QDoubleSpinBox" name="storm_drain_cap_sbox">
            <property name="enabled">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">

@@ -226,6 +226,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.stormdrain_chbox.isChecked():
             self.storm_drain_cap_sbox.clear()
             self.struct.clear_stormdrain_data()
+            self.storm_drain_cap_sbox.setEnabled(False)   
+        else:
+            self.storm_drain_cap_sbox.setEnabled(True)   
 
     def schematize_struct(self):
         if not self.gutils.execute("SELECT * FROM user_struct;").fetchone():

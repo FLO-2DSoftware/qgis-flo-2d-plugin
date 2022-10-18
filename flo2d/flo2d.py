@@ -15,6 +15,9 @@ import sys
 import time
 import traceback
 
+import cProfile, pstats, io
+from pstats import SortKey
+
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
 from qgis.PyQt.QtGui import QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
@@ -59,6 +62,11 @@ from PyQt5.QtWidgets import QApplication
 
 class Flo2D(object):
     def __init__(self, iface):
+        
+        
+        self.pr = cProfile.Profile()
+        self.pr.enable()
+        
         
         self.iface = iface
         self.iface.f2d = {}
@@ -478,6 +486,19 @@ class Flo2D(object):
         """
         Removes the plugin menu item and icon from QGIS GUI.
         """
+        
+        try:
+            stts = "C:/TRACKS/PROJECTS/FLO2D/QGIS/2022/SD Pumps/STATS.TXT"
+            with open(stts, "w") as f:
+               self.pr.disable()
+               sortby = SortKey.TIME
+               ps = pstats.Stats(self.pr, stream=f).sort_stats(sortby)
+               ps.print_stats() 
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR", e)
+            time.sleep(3)        
+        
         self.lyrs.clear_rubber()
         # remove maptools
         del self.info_tool, self.grid_info_tool, self.channel_profile_tool
@@ -565,6 +586,7 @@ class Flo2D(object):
         except KeyError as e:
             pass
         del self.con
+       
 
     @staticmethod
     def save_dock_geom(dock):
