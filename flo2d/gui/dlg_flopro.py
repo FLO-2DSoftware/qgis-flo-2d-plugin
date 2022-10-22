@@ -16,8 +16,6 @@ from qgis.PyQt.QtWidgets import QFileDialog, QApplication
 from ..flo2d_tools.flopro_tools import FLOPROExecutor
 
 uiDialog, qtBaseClass = load_ui("flopro")
-
-
 class ExternalProgramFLO2D(qtBaseClass, uiDialog):
     def __init__(self, iface, title):
         qtBaseClass.__init__(self)
@@ -66,26 +64,33 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
 
     def debug_run(self):      
         try:
-            self.uc.show_info("Run 0.4 min debug")
             flo2d_dir = self.flo2d_le.text()
-            project_dir = self.project_le.text()
-            debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
-            with open(debugDAT, "w") as f:
-                f.write("")
-            debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-            return_code = debug_simulation.run()
-            if return_code != 0:
-                self.uc.show_warn(
-                   "FLOPRO.EXE debug executed.\n\n"
-                    + "Program finished with return code " + str(return_code)
-                )                
-                # self.uc.show_warn(
-                #     "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
-                #     + "Program finished with return code " + str(return_code)
-                # )
+            if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
+                self.uc.show_info("Run 0.4 min debug")
+                project_dir = self.project_le.text()
+                debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
+                with open(debugDAT, "w") as f:
+                    f.write("")
+                debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
+                return_code = debug_simulation.run()
+                self.uc.show_info( "Debug simulation started asynchronously.\nYou can close QGIS or continue working with QGIS.")
+                # if return_code != 0:
+                #     self.uc.show_warn(
+                #        "FLOPRO.EXE debug executed.\n\n"
+                #         + "Program finished with return code " + str(return_code)
+                #     )                
+                #     # self.uc.show_warn(
+                #     #     "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
+                #     #     + "Program finished with return code " + str(return_code)
+                #     # )
+                # else:
+                #     self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))     
             else:
-                self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))     
+                self.uc.show_warn("WARNING 221022.0911: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                 
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 250419.1729: can't run debug model!.\n", e)
+            
+        finally:
+            self.close()    
