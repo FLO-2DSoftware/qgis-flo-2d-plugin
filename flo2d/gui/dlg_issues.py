@@ -1588,15 +1588,16 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 pt = QgsGeometry().fromWkt(pnt).asPoint()
                 features.append([pt.x(), pt.y(), e[0], e[3]])
 
-        shapefile = lastDir + "/Current Conflicts.shp"
+        shpefile = os.path.join(lastDir, "Current Conflicts.shp")
         name = "Current Conflicts"
         fields = [["X", "I"], ["Y", "I"], ["cell", "I"], ["description", "S"]]
-        if self.create_current_conflicts_points_shapefile(shapefile, name, fields, features):
-            vlayer = self.iface.addVectorLayer(shapefile, "", "ogr")
+        if self.create_current_conflicts_points_shapefile(shpefile, name, fields, features):
+            vlayer = self.iface.addVectorLayer(shpefile, "", "ogr")
         QApplication.restoreOverrideCursor()
 
     def create_current_conflicts_points_shapefile(self, shapefile, name, fields, features):
         try:
+            self.uc.clear_bar_messages()
             lyr = QgsProject.instance().mapLayersByName(name)
 
             if lyr:
@@ -1612,7 +1613,8 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             if writer.hasError() != QgsVectorFileWriter.NoError:
-                self.uc.bar_error("ERROR 201919.0451: Error when creating shapefile: " + shapefile)
+                QApplication.restoreOverrideCursor()
+                self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
 
             # add features:
             for feat in features:
