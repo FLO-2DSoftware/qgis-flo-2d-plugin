@@ -745,7 +745,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             if writer.hasError() != QgsVectorFileWriter.NoError:
-                self.uc.bar_error("ERROR 201919.0451: Error when creating shapefile: " + shapefile)
+                self.uc.bar_error("ERROR 221022.0703: Error when creating shapefile: " + shapefile)
 
             # add features:
             for feat in features:
@@ -1533,15 +1533,17 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
         # Storm Drain inlets conflicts:
 
-        self.conflict4(
-            "Storm Drain Inlets",
-            "swmmflo",
-            "swmm_jt",
-            "Storm Drain Inlets",
-            "swmmflo",
-            "swmm_jt",
-            "2 or more Storm Drain Inlets in same cell",
-        )
+        self.InletsConflicts()
+
+        # self.conflict4(
+        #     "Storm Drain Inlets",
+        #     "swmmflo",
+        #     "swmm_jt",
+        #     "Storm Drain Inlets",
+        #     "swmmflo",
+        #     "swmm_jt",
+        #     "2 or more Storm Drain Inlets in same cell",
+        # )
 
         self.conflict4(
             "Storm Drain Inlets",
@@ -1602,7 +1604,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
-
+                
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
             f.append(QgsField(fields[2][0], QVariant.Int))
@@ -1613,23 +1615,27 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             if writer.hasError() != QgsVectorFileWriter.NoError:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
 
             # add features:
-            for feat in features:
-                attr = []
-                fet = QgsFeature()
-                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
-                non_coord_feats = []
-                non_coord_feats.append(feat[2])
-                non_coord_feats.append(feat[3])
-                fet.setAttributes(non_coord_feats)
-                writer.addFeature(fet)
-
-            # delete the writer to flush features to disk
-            del writer
-            return True
+                for feat in features:
+                    attr = []
+                    fet = QgsFeature()
+                    fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
+                    non_coord_feats = []
+                    non_coord_feats.append(feat[2])
+                    non_coord_feats.append(feat[3])
+                    fet.setAttributes(non_coord_feats)
+                    writer.addFeature(fet)
+                
+                # delete the writer to flush features to disk    
+                del writer
+                return True
+            else:
+                # delete the writer to flush features to disk
+                del writer
+                return False
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -1989,6 +1995,43 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             if repeated:
                 for r in repeated:
                     self.errors.append([str(r), comp1, comp2, description])
+
+    def InletsConflicts(self):
+
+        cond1 = self.issue1 == "All" and self.issue2 == "All"
+        cond2 = self.issue1 == "All" and self.issue2 == ""
+        cond3 = self.issue1 == "" and self.issue2 == "All"
+        cond4 = self.issue1 == "All" and ("Storm Drain Inlets" == self.issue2 or "Storm Drain Inlets" == self.issue2)
+        cond5 = self.issue2 == "All" and ("Storm Drain Inlets" == self.issue1 or "Storm Drain Inlets" == self.issue1)
+        cond6 = ("Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2) or ("Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2)
+
+        if cond1 or cond2 or cond3 or cond4 or cond5 or cond6:
+            repeated = []
+            
+            sql = """SELECT swmm_jt, COUNT(*) 
+                    FROM  swmmflo WHERE SUBSTRING(swmm_iden, 1, 1) LIKE "I%"
+                    GROUP BY swmm_jt
+                    HAVING COUNT(*) > 1 ORDER BY swmm_jt
+                """
+                
+            # sql = """SELECT {0}, COUNT(*) 
+            #         FROM {1} 
+            #         GROUP BY {0}
+            #         HAVING COUNT(*) > 1 ORDER BY {0}
+            #     """.format("swmm_jt", "swmmflo")
+
+            rows = self.gutils.execute(sql).fetchall()
+
+            if not rows:
+                pass
+            else:
+                size = len(rows)
+                for i in range(size):
+                    if rows[i][0] not in repeated:
+                        repeated.append(rows[i][0])
+            if repeated:
+                for r in repeated:
+                    self.errors.append([str(r), "Storm Drain Inlets", "Storm Drain Inlets", "2 or more Storm Drain Inlets in same cell"])
 
     def conflict_inflow_partialARF(self):
         in_cells = []
