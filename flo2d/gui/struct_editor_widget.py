@@ -145,6 +145,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             fid = sdata
         else:
             return
+        
         self.clear_data_widgets()
         self.data_model.clear()
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
@@ -167,7 +168,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.culvert_width_sbox.setValue(self.struct.cdiameter)
 
         self.show_table_data()
-
 
     def type_changed(self, idx):
         if not self.struct:
@@ -462,7 +462,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle("")
 
         if self.rating_cbo.currentIndex() == 3:  # Bridge routine
-
+            self.tview.undoStack.clear()
+            self.tview.setModel(self.data_model)
+            self.data_model.clear()
+            # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+            self.d1, self.d2 = [[], []]            
             return
 
         if not self.struct:
@@ -486,12 +490,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.data_model.clear()
         self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
         self.d1, self.d2 = [[], []]
-
-        #             self.plot.clear()
-        #             if self.plot.plot.legend is not None:
-        #                 self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
-        #             self.plot.plot.addLegend()
-        #             self.plot.plot.setTitle('')
 
         if self.struct.icurvtable == "":
             self.struct.icurvtable = 0
