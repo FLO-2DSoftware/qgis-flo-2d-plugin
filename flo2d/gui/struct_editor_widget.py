@@ -64,8 +64,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.table = table
         self.tview = table.tview
         self.data_model = StandardItemModel()
+        self.tview.setModel(self.data_model)       
         self.struct_data = None
-
         self.d1, self.d2 = [[], []]
 
         # set button icons
@@ -104,7 +104,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.iface.f2d["con"]:
             return
         self.struct_cbo.clear()
-        self.tview.setModel(self.data_model)
         self.lyrs.clear_rubber()
         self.struct_lyr = self.lyrs.data["struct"]["qlyr"]
         self.user_struct_lyr = self.lyrs.data["user_struct"]["qlyr"]
@@ -132,7 +131,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def unblock_saving(self):
         self.data_model.dataChanged.connect(self.save_data)
-
 
     def struct_changed(self):
 
@@ -420,6 +418,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             0: ["HDEPEXC", "COEFQ", "EXPQ", "COEFA", "EXPA", "REPDEP", "RQCOEF", "RQEXP", "RACOEF", "RAEXP"],
             1: ["HDEPTH", "QTABLE", "ATABLE"],
             2: ["TYPEC", "TYPEEN", "CULVERTN", "KE", "CUBASE", "MULTBARRELS"],
+            3: ["XUP", "YUP", "YB"],
         }
         self.tab_tips = {
             0: [
@@ -461,13 +460,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.addLegend()
         self.plot.plot.setTitle("")
 
-        if self.rating_cbo.currentIndex() == 3:  # Bridge routine
-            self.tview.undoStack.clear()
-            self.tview.setModel(self.data_model)
-            self.data_model.clear()
-            # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-            self.d1, self.d2 = [[], []]            
-            return
+        # if self.rating_cbo.currentIndex() == 3:  # Bridge routine
+        #     # self.tview.undoStack.clear()
+        #     # self.tview.setModel(self.data_model)
+        #     # self.data_model.clear()
+        #     # # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+        #     # self.d1, self.d2 = [[], []]            
+        #     # return
+        #     pass
 
         if not self.struct:
             return
@@ -476,13 +476,13 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if not self.struct_data:
                 return
 
-        aRT = self.rating_cbo.currentIndex() == 1  # Rating Table
-        rt_name = ""
-        if aRT:
+        rating = self.rating_cbo.currentIndex()
+        struct_name = ""
+        if rating in [1, 3]:  # Rating Table  or Bridge XS
             idx = self.struct_cbo.currentIndex()
-            rt_fid = self.struct_cbo.itemData(idx)
-            rt_name = self.struct_cbo.currentText()
-            if rt_fid is None:
+            struct_fid = self.struct_cbo.itemData(idx)
+            struct_name = self.struct_cbo.currentText()
+            if struct_fid is None:
                 return
 
         self.tview.undoStack.clear()
@@ -497,7 +497,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         for row in self.struct_data:
             items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
             self.data_model.appendRow(items)
-            if aRT:
+            if rating in [1, 3]:  # Rating Table or Bridge XS
                 if row:
                     self.d1.append(row[0] if not row[0] is None else float("NaN"))
                     self.d2.append(row[1] if not row[1] is None else float("NaN"))
@@ -515,20 +515,99 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
 
-        if aRT:
-            self.create_plot(rt_name)
+        if rating in [1, 3]:  # Rating Table or Bridge XS
+            self.create_plot(rating, struct_name)
             self.update_plot()
 
-    def create_plot(self, name):
+
+
+
+
+
+
+
+
+
+
+
+        # self.bc_table.after_delete.disconnect() 
+        # self.bc_table.after_delete.connect(self.save_bc_data)         
+        #
+        # cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
+        # cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
+        # self.create_inflow_plot()
+        #
+        # self.bc_tview.undoStack.clear()
+        # self.bc_tview.setModel(self.bc_data_model)
+        # self.inflow.time_series_fid = cur_ts_fid
+        #
+        # self.infow_tseries_data = self.inflow.get_time_series_data()
+        # self.bc_data_model.clear()
+        # self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
+        # self.ot, self.od, self.om = [[], [], []]
+        # if not self.infow_tseries_data:
+        #     self.uc.bar_warn("No time series data defined for that inflow.")
+        #     return
+        # for row in self.infow_tseries_data:
+        #     items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
+        #     self.bc_data_model.appendRow(items)
+        #     self.ot.append(row[0] if not row[0] is None else float("NaN"))
+        #     self.od.append(row[1] if not row[1] is None else float("NaN"))
+        #     self.om.append(row[2] if not row[2] is None else float("NaN"))
+        # rc = self.bc_data_model.rowCount()
+        #
+        # if rc < 500:
+        #     for row in range(rc, 500 + 1):
+        #         items = [StandardItem(x) for x in ("",) * 3]
+        #         self.bc_data_model.appendRow(items)
+        #
+        # self.bc_tview.resizeColumnsToContents()
+        #
+        # for i in range(self.bc_data_model.rowCount()):
+        #     self.bc_tview.setRowHeight(i, 20)
+        #
+        # self.bc_tview.horizontalHeader().setStretchLastSection(True)
+        #
+        # for i in range(3):
+        #     self.bc_tview.setColumnWidth(i, 90)
+        #
+        # self.save_inflow()
+        # self.create_inflow_plot()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def create_plot(self, rating, name):
         self.plot.clear()
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
-        self.plot_item_name = "Rating Table:   " + name
+        prefix = "Rating Table:   " if rating == 1 else "Bridge XS Table:   " 
+        self.plot_item_name = prefix + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
-        self.plot.plot.setTitle("Rating Table:   " + name)
+        self.plot.plot.setTitle(prefix + name)
 
     def update_plot(self):
         if not self.plot_item_name:
@@ -547,6 +626,18 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 data.append([m_fdata(self.data_model, i, j) for j in range(self.data_model.columnCount())])
         self.struct.set_table_data(data)
         # self.update_plot()
+
+    def save_bc_data(self):
+        self.update_plot()
+        if self.bc_type_inflow_radio.isChecked():
+            self.save_inflow_data()
+        else:
+            self.save_outflow_data()
+
+
+
+
+
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)

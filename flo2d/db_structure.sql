@@ -907,6 +907,15 @@ CREATE TABLE "culvert_equations" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('culvert_equations', 'aspatial');
 
+CREATE TABLE "bridge_xs" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "struct_fid" INTEGER, -- structure fid, for which the data are defined
+    "xup" REAL, -- XUP, Station left bank to right bank in ft or m
+    "yup" REAL, -- YUP, Upstream cross section elevation ft or m
+    "yb" REAL -- YB, Downstream cross section elevation ft or m
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('bridge_xs', 'aspatial');
+
 CREATE TABLE "storm_drains" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "struct_fid" INTEGER, -- structure fid, for which the data are defined

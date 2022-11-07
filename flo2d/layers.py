@@ -1435,7 +1435,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),                
-                # Multiple Structures Tables:
+                # Hydraulic Structures Tables:
                 (
                     "struct",
                     {
@@ -1480,6 +1480,16 @@ class Layers(object):
                     "culvert_equations",
                     {
                         "name": "Culvert Equations",
+                        "sgroup": "Hydraulic Structures",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),
+                (
+                    "bridge_xs",
+                    {
+                        "name": "Bridge Cross Sections",
                         "sgroup": "Hydraulic Structures",
                         "styles": None,
                         "attrs_edit_widgets": {},

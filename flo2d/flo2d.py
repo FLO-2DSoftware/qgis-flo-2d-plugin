@@ -492,7 +492,6 @@ class Flo2D(object):
             s = QSettings()
             lastDir = s.value("FLO-2D/lastGdsDir", "")
             stts = os.path.join(lastDir, "STATS.TXT")            
-            # stts = "C:/TRACKS/PROJECTS/FLO2D/QGIS/2022/SD Pumps/"
             with open(stts, "w") as f:
                self.pr.disable()
                sortby = SortKey.TIME

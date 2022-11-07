@@ -1628,6 +1628,12 @@ class Structure(GeoPackageUtils):
             res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
                 res = [""] * 6
+        elif self.icurvtable == 3:
+            # bridge xs
+            qry_tab = "SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY xup;"
+            res = self.execute(qry_tab, (self.fid,)).fetchall()
+            if not res:
+                res = [""] * 3                
         else:
             if not res:
                 res = [""] * 3
@@ -1667,6 +1673,12 @@ class Structure(GeoPackageUtils):
             self.execute(qry, (self.fid,))
             qry = "INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES ({}, ?, ?, ?, ?, ?, ?);"
             self.execute_many(qry.format(self.fid), [row[:6] for row in data])
+        elif self.icurvtable == 3:
+            # bridge xs
+            qry = "DELETE FROM bridge_xs WHERE struct_fid = ?;"
+            self.execute(qry, (self.fid,))
+            qry = "INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES ({}, ?, ?, ?);"
+            self.execute_many(qry.format(self.fid), [row[:3] for row in data])    
         else:
             pass
 
