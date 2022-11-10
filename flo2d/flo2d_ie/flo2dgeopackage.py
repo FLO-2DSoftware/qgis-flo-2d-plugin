@@ -2079,6 +2079,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
             return False
 
+    def export_bridge_xsec(self, outdir):
+        try:
+            # check if there is any hydraulic structure and bridge cross sections defined.
+            if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
+                if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                    os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                return False            
+
+            hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+            bridge_xs_sql = """SELECT * FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
+
+            hystruc_rows = self.execute(hystruct_sql).fetchall()
+            if not hystruc_rows:
+                return False
+            else:
+                pass
+            bridge = os.path.join(outdir, "BRIDGE_XSEC.DAT")
+            with open(bridge, "w") as b:
+                for stru in hystruc_rows:
+                    struct_fid = stru[0]
+                    in_node = stru[5]
+                    bridge_rows = self.execute(bridge_xs_sql, (struct_fid,)).fetchall()
+                    if not bridge_rows:
+                        continue
+                    else:
+                        b.write("X  " + str(in_node) + "\n")
+                        for row in bridge_rows:
+                            b.write(str(row[2]) + "  " + str(row[3]) + "  " + str(row[4]) + "\n")                       
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
+            return False
+
+
     def export_street(self, outdir):
         # check if there is any street defined.
         try:

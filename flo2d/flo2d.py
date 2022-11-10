@@ -854,7 +854,10 @@ class Flo2D(object):
             self.files_used = "CONT.DAT\n" 
 
         for call in calls:
-            dat = call.split("_")[-1].upper() + ".DAT"
+            if call == "export_bridge_xsec":
+                dat = "BRIDGE_XSEC.DAT"
+            else:    
+                dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
                 if self.f2g.parser.dat_files[dat] is None:
                     if dat == "MULT.DAT":
@@ -898,7 +901,7 @@ class Flo2D(object):
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
                         if dat == "MULT.DAT":
-                            self.files_used += "SIMPLE_MULT.DAT" + "\n"                        
+                            self.files_used += "SIMPLE_MULT.DAT" + "\n"  
                         pass
 
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
@@ -1619,6 +1622,7 @@ class Flo2D(object):
                 "export_chan",
                 "export_xsec",
                 "export_hystruc",
+                "export_bridge_xsec",
                 "export_street",
                 "export_arf",
                 "export_mult",
@@ -1684,6 +1688,7 @@ class Flo2D(object):
     
                 if "Hydraulic  Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
     
                 # if 'MODFLO-2D' not in dlg_components.components:
                 #     export_calls.remove('')

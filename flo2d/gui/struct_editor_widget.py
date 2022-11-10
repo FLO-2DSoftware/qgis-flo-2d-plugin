@@ -304,6 +304,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def import_struct_table(self):
         try:
+            self.uc.show_info("Only files with the same name of the existing structures will be loaded.") 
+            tables_in = ""
+            tables_out = ""
             s = QSettings()
             last_dir = s.value("FLO-2D/ImportStructTable", "")
 
@@ -329,6 +332,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                     ).fetchone()
 
                     if row:
+                        tables_in += file_name + "\n"
                         # There is an structure with name 'file_name':
                         struct_fid, icurvtable = row[0], row[1]
                         # If there is a rating table for this structure delete it:
@@ -361,9 +365,17 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                             QApplication.setOverrideCursor(Qt.WaitCursor)
                     else:
                         # There is no structure with name 'file_name'.
+                        tables_out += file_name + "\n"
                         pass
 
                 QApplication.restoreOverrideCursor()
+                txt = ""
+                if tables_in != "":
+                    txt  = "The following files were loaded:\n" + tables_in
+                if tables_out != "":
+                    txt  += "The following files were not loaded:\n" + tables_out
+                if txt != "":
+                    self.uc.show_info(txt) 
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()

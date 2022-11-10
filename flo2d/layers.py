@@ -19,6 +19,7 @@ from qgis.core import (
     QgsFeatureRequest,
     QgsVectorLayer,
     QgsRectangle,
+    QgsLayerTree,
     QgsLayerTreeGroup,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -1486,16 +1487,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "bridge_xs",
-                    {
-                        "name": "Bridge Cross Sections",
-                        "sgroup": "Hydraulic Structures",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
+
                 (
                     "storm_drains",
                     {
@@ -1516,6 +1508,16 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "bridge_xs",
+                    {
+                        "name": "Bridge Cross Sections",
+                        "sgroup": "Hydraulic Structures",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
             ]
         )
         # set QGIS layer (qlyr) to None for each table
@@ -1983,6 +1985,71 @@ class Layers(object):
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, "User Layers")
+
+#>>>>>>>>>>>>>>>>>111111111111
+        # v = self.iface.layerTreeView()
+        # # v.collapseAllNodes()
+        # nodes = v.selectedNodes()
+        # parent = nodes[0].parent()
+        #
+        # groups = {}
+        # for n in nodes: 
+        #     key = n.name()[:1]
+        #     if not key in groups:
+        #         groups[key]=[]
+        #     groups[key].append(n)
+        #
+        # new_groups = {}
+        # for key in groups:
+        #     grp_name = key+'00'
+        #     grp = parent.addGroup(grp_name)
+        #     new_groups[key] = grp
+        #
+        # for key in groups:
+        #     new_group = new_groups[key]
+        #     for n in groups[key]:
+        #         clone = n.clone()
+        #         new_group.addChildNode(clone)
+        #
+        # for key in groups:
+        #     for n in groups[key]:
+        #         parent.removeChildNode(n)
+
+
+
+#<<<<<<<<<<<<<<<<<111111111111
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+        # # 1. Get group names and list of layer ids
+        # root = QgsProject.instance().layerTreeRoot()
+        # dictGroups={}
+        # prefix="Boundary Condition"
+        # for layer in root.findLayers():
+        #   if QgsLayerTree.isLayer(layer):
+        #     if prefix in layer.name():
+        #         if not prefix in dictGroups:
+        #           dictGroups[prefix]=[]                
+        #         dictGroups[prefix].append(layer.layerId())
+        #
+        # # 2. Create groups
+        # # for key in dictGroups:
+        # #   root.addGroup(key)
+        #
+        # # 3. Move layers
+        # for key in dictGroups:
+        #   parent = root.findGroup("User Layers")
+        #   for id in dictGroups[key]:
+        #     layer = root.findLayer(id)
+        #     clone = layer.clone()
+        #     parent.insertChildNode(0, clone)
+        #     root.removeChildNode(layer)
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par("CELLSIZE")
