@@ -856,6 +856,8 @@ class Flo2D(object):
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
+            elif call == "import_hystruc_bridge_xs":
+                dat = "BRIDGE_XSEC.DAT"
             else:    
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -933,6 +935,7 @@ class Flo2D(object):
             "import_chan",
             "import_xsec",
             "import_hystruc",
+            "import_hystruc_bridge_xs",
             "import_street",
             "import_arf",
             "import_mult",
@@ -1035,6 +1038,7 @@ class Flo2D(object):
 
                     if "Hydraulic  Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
+                        import_calls.remove("import_hystruc_bridge_xs")
 
                     # if 'MODFLO-2D' not in dlg_components.components:
                     #     import_calls.remove('')
@@ -1292,6 +1296,7 @@ class Flo2D(object):
             "import_chan",
             "import_xsec",
             "import_hystruc",
+            "import_hystruc_bridge_xs",
             "import_street",
             "import_arf",
             "import_mult",
@@ -1388,6 +1393,7 @@ class Flo2D(object):
 
                     if "Hydraulic  Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
+                        import_calls.remove("import_hystruc_bridge_xs")
 
                     # if 'MODFLO-2D' not in dlg_components.components:
                     #     import_calls.remove('')
@@ -1494,6 +1500,7 @@ class Flo2D(object):
             "CHAN.DAT": "import_chan",
             "XSEC.DAT": "import_xsec",
             "HYSTRUC.DAT": "import_hystruc",
+            "BRIDGE_XSEC.DAT": "import_hystruc_bridge_xs",
             "STREET.DAT": "import_street",
             "ARF.DAT": "import_arf",
             "MULT.DAT": "import_mult",

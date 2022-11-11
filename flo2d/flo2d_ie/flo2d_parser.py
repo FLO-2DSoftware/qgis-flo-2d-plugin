@@ -41,6 +41,7 @@ class ParseDAT(object):
             "CHANBANK.DAT": None,
             "XSEC.DAT": None,
             "HYSTRUC.DAT": None,
+            "BRIDGE_XSEC.DAT": None,
             "STREET.DAT": None,
             "ARF.DAT": None,
             "MULT.DAT": None,
@@ -466,6 +467,18 @@ class ParseDAT(object):
                 data[-1][-1][char].append(row[1:])
             else:
                 data[-1][-1][char].append(row[1:])
+        return data
+
+    def parse_hystruct_bridge_xs(self):
+        bridge_xs = self.dat_files["BRIDGE_XSEC.DAT"]
+        par = self.single_parser(bridge_xs)
+        data = OrderedDict()
+        for row in par:
+            if row[0] == "X":
+                key = row[1]
+                data[key] = []
+            else:
+                data[key].append(row)
         return data
 
     def parse_street(self):

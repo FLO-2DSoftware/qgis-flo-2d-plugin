@@ -688,6 +688,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
             )
 
+    def import_hystruc_bridge_xs(self):
+        try:
+            bridge_xs_sql = ["""INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""", 4]
+            no_struct = ""
+            value_missing = False
+            data = self.parser.parse_hystruct_bridge_xs()
+            for key, values in data.items():
+                fid = self.gutils.execute("SELECT fid FROM struct WHERE inflonod = ?;", (key,)).fetchone()
+                if fid:
+                    for val in values:
+                        if len(val) != 3:
+                            value_missing = True
+                        bridge_xs_sql += [(fid[0],) + tuple(val)]
+                else:
+                    if key:
+                        no_struct += key + "\n"
+                    else:
+                        no_struct += "Null\n"    
+            self.clear_tables("bridge_xs")
+            self.batch_execute(bridge_xs_sql)
+            
+            warnng = ""
+            if no_struct != "":
+                warnng += "WARNING 111122.0446:\nThese cells in BRIDGE_XSEC.DAT have no hydraulic structure defined in HYSTRUC.DAT:\n\n" + no_struct
+            if value_missing:
+                warnng += "\n\nThere are values missing in BRIDGE_XSEC.DAT"
+            if warnng != "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(warnng)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn(
+                "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
+            )
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+
+
     def import_street(self):
         general_sql = ["""INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""", 5]
         streets_sql = ["""INSERT INTO streets (stname) VALUES""", 1]
