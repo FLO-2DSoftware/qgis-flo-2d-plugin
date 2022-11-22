@@ -1399,13 +1399,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             tline = "{0: >15} {1: >15} {2: >10}\n"
 
             with open(mannings, "w") as m, open(topo, "w") as t:
+                n_nulls = 0
                 for row in records:
                     fid, man, elev, geom = row
                     x, y = geom.strip("POINT()").split()
+                    if (man == None):
+                        n_nulls += 1
                     m.write(mline.format(fid, "{0:.3f}".format(man)))
                     t.write(
                         tline.format("{0:.4f}".format(float(x)), "{0:.4f}".format(float(y)), "{0:.4f}".format(elev))
                     )
+                    
             return True
 
         except Exception as e:

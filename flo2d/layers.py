@@ -55,7 +55,7 @@ class Layers(object):
                     "user_bc_points",
                     {
                         "name": "Boundary Condition Points",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Boundaries",
                         "styles": ["user_bc_points.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -66,7 +66,7 @@ class Layers(object):
                     "user_bc_lines",
                     {
                         "name": "Boundary Condition Lines",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Boundaries",
                         "styles": ["user_bc_lines.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -77,29 +77,19 @@ class Layers(object):
                     "user_bc_polygons",
                     {
                         "name": "Boundary Condition Polygons",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Boundaries",
                         "styles": ["user_bc_polygons.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
                     },
                 ),
-                (
-                    "user_fpxsec",
-                    {
-                        "name": "Floodplain Cross Sections",
-                        "sgroup": "User Layers",
-                        "styles": ["user_fpxsec.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["chan"],
-                        "readonly": False,
-                    },
-                ),
+
                 (
                     "user_left_bank",
                     {
                         "name": "Left Bank Lines",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Channels",
                         "styles": ["user_lbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -110,7 +100,7 @@ class Layers(object):
                     "user_right_bank",
                     {
                         "name": "Right Bank Lines",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Channels",
                         "styles": ["user_rbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -121,25 +111,225 @@ class Layers(object):
                     "user_xsections",
                     {
                         "name": "Cross Sections",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Channels",
                         "styles": ["user_xs.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
                         "readonly": True,
                         "attrs_defaults": {"type": "'R'"},
                     },
-                ),
+                ),            
                 (
                     "user_noexchange_chan_areas",
                     {
                         "name": "No-Exchange Channel Areas",
-                        "sgroup": "User Layers",
+                        "sgroup": "User Layers. Channels",
                         "styles": ["user_noexchange_chan_areas.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
                     },
                 ),
+                (
+                    "user_swmm_conduits",
+                    {
+                        "name": "Storm Drain Conduits",
+                        "sgroup": "User Layers. Storm Drains",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),
+                (
+                    "user_swmm_pumps",
+                    {
+                        "name": "Storm Drain Pumps",
+                        "sgroup": "User Layers. Storm Drains",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),  
+                (
+                    "user_swmm_orifices",
+                    {
+                        "name": "Storm Drain Orifices",
+                        "sgroup": "User Layers. Storm Drains",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),  
+                (
+                    "user_swmm_weirs",
+                    {
+                        "name": "Storm Drain Weirs",
+                        "sgroup": "User Layers. Storm Drains",
+                        "styles": ["user_swmm_conduits.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),                  
+                (
+                    "user_swmm_nodes",
+                    {
+                        "name": "Storm Drain Nodes",
+                        "sgroup": "User Layers. Storm Drains",
+                        "styles": ["user_swmm_nodes.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ), 
+                
+                
+
+                (
+                    "buildings_areas",
+                    {
+                        "name": "Building Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["user_spatial_gutter.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ), 
+                (
+                    "gutter_areas",
+                    {
+                        "name": "Gutter Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["user_spatial_gutter.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
+                    "spatialshallow",
+                    {
+                        "name": "Shallow-n Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["user_spatial_shallow_n.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
+                    "fpfroude",
+                    {
+                        "name": "Froude Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["user_spatial_froude.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
+                    "tolspatial",
+                    {
+                        "name": "Tolerance Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["tolspatial.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
+                    "rain_arf_areas",
+                    {
+                        "name": "Rain ARF Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["rain_arf_areas.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
+                    "user_blocked_areas",
+                    {
+                        "name": "Blocked Areas",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["blocked_areas.qml"],
+                        "attrs_edit_widgets": {
+                            "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                            "calc_arf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                            "calc_wrf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                        },
+                        "module": ["redfac"],
+                        "readonly": False,
+                        "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
+                    },
+                ),                
+                (
+                    "user_roughness",
+                    {
+                        "name": "Roughness",
+                        "sgroup": "User Layers. Grid Attributes",
+                        "styles": ["user_roughness.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),                 
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                 
+                (
+                    "mult_areas",
+                    {
+                        "name": "Multiple Channel Areas",
+                        "sgroup": "User Layers. Multiple Channels",
+                        "styles": ["mult_areas.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
+                    },
+                ),
+                (
+                    "mult_lines",
+                    {
+                        "name": "Multiple Channel Lines",
+                        "sgroup": "User Layers. Multiple Channels",
+                        "styles": ["mult_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
+                    },
+                ),
+                (
+                    "simple_mult_lines",
+                    {
+                        "name": "Simple Mult. Channel Lines",
+                        "sgroup": "User Layers. Multiple Channels",
+                        "styles": ["mult_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
+                    },
+                ), 
+                (
+                    "user_fpxsec",
+                    {
+                        "name": "Floodplain Cross Sections",
+                        "sgroup": "User Layers",
+                        "styles": ["user_fpxsec.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["chan"],
+                        "readonly": False,
+                    },
+                ),                                                                          
                 (
                     "user_struct",
                     {
@@ -184,17 +374,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "user_roughness",
-                    {
-                        "name": "Roughness",
-                        "sgroup": "User Layers",
-                        "styles": ["user_roughness.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),
+
                 (
                     "user_elevation_points",
                     {
@@ -230,22 +410,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "user_blocked_areas",
-                    {
-                        "name": "Blocked Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["blocked_areas.qml"],
-                        "attrs_edit_widgets": {
-                            "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                            "calc_arf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                            "calc_wrf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                        },
-                        "module": ["redfac"],
-                        "readonly": False,
-                        "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
-                    },
-                ),
+
                 (
                     "user_infiltration",
                     {
@@ -268,101 +433,7 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "user_swmm_conduits",
-                    {
-                        "name": "Storm Drain Conduits",
-                        "sgroup": "User Layers",
-                        "styles": ["user_swmm_conduits.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "user_swmm_pumps",
-                    {
-                        "name": "Storm Drain Pumps",
-                        "sgroup": "User Layers",
-                        "styles": ["user_swmm_conduits.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),  
-                (
-                    "user_swmm_orifices",
-                    {
-                        "name": "Storm Drain Orifices",
-                        "sgroup": "User Layers",
-                        "styles": ["user_swmm_conduits.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),  
-                (
-                    "user_swmm_weirs",
-                    {
-                        "name": "Storm Drain Weirs",
-                        "sgroup": "User Layers",
-                        "styles": ["user_swmm_conduits.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),                  
-                (
-                    "user_swmm_nodes",
-                    {
-                        "name": "Storm Drain Nodes",
-                        "sgroup": "User Layers",
-                        "styles": ["user_swmm_nodes.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "rain_arf_areas",
-                    {
-                        "name": "Rain ARF Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["rain_arf_areas.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "tolspatial",
-                    {
-                        "name": "Tolerance Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["tolspatial.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "fpfroude",
-                    {
-                        "name": "Froude Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["user_spatial_froude.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "spatialshallow",
-                    {
-                        "name": "Shallow-n Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["user_spatial_shallow_n.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
+
                 (
                     "gutter_lines",
                     {
@@ -373,59 +444,8 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-                (
-                    "gutter_areas",
-                    {
-                        "name": "Gutter Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["user_spatial_gutter.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "buildings_areas",
-                    {
-                        "name": "Building Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["user_spatial_gutter.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "mult_areas",
-                    {
-                        "name": "Multiple Channel Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["mult_areas.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": True,
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "mult_lines",
-                    {
-                        "name": "Multiple Channel Lines",
-                        "sgroup": "User Layers",
-                        "styles": ["mult_lines.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": True,
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "simple_mult_lines",
-                    {
-                        "name": "Simple Mult. Channel Lines",
-                        "sgroup": "User Layers",
-                        "styles": ["mult_lines.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": True,
-                        "readonly": False,
-                    },
-                ),                
+               
+         
                 # Schematic layers:
                 (
                     "chan",
@@ -1982,74 +2002,97 @@ class Layers(object):
                 msg = "Unable to load  layer {}.".format(lyr)
                 self.uc.bar_warn(msg)
 
+
+#>>>>>>>>>>>>>>>>>111111111
+
+                        
+
+#<<<<<<<<<<<<<<<<111111111
+
+
+
+
+
+
+
+
+
+
+
+# #>>>>>>>>>>>>>>>>>2222222222222222222
+#
+#         # 0. Remove Boundary group if exists from previous project.
+#         root = QgsProject.instance().layerTreeRoot()
+#         for grp in root.findGroups():
+#             for subgroup in grp.findGroups():
+#                 for subsubgroup in subgroup.findGroups():
+#                     if subsubgroup.name() == "XXXX":
+#                         subsubgroup.removeAllChildren() 
+#                         subgroup.removeChildNode(subsubgroup)  
+#
+#
+#         # 1. Get group names and list of layer ids
+#         root = QgsProject.instance().layerTreeRoot()
+#         dictGroups={}
+#         prefix="Boundary Condition"
+#         for layer in self.root.findLayers():
+#           if QgsLayerTree.isLayer(layer):
+#             if prefix in layer.name():
+#                 if not prefix in dictGroups:
+#                   dictGroups[prefix]=[] 
+#                 if layer.layerId() not in dictGroups[prefix]:               
+#                     dictGroups[prefix].append(layer.layerId())
+#
+#
+#         # # 1.1 Rename layers
+#         # root = QgsProject.instance().layerTreeRoot()
+#         # prefix="Boundary Condition"
+#         # to_be_deleted = []
+#         # for layer in self.root.findLayers():
+#         #   if QgsLayerTree.isLayer(layer):
+#         #     if prefix in layer.name():
+#         #         # layer.setName("Delete") 
+#         #         to_be_deleted.append(layer)
+#
+#
+#
+#
+#         # # 2.1 Move "Boundaries" group to top of "User Layers"      
+#         # cloned_group1 = myNewGroup.clone()
+#         # myOriginalGroup.insertChildNode(0, cloned_group1)
+#         # myOriginalGroup.removeChildNode(myNewGroup)
+#
+#
+#
+#         # 2. Create Boundaries group
+#         myOriginalGroup = self.root.findGroup("User Layers")
+#         myNewGroup = myOriginalGroup.addGroup("XXXX")
+#         for key in reversed(dictGroups):
+#             for id in dictGroups[key]:
+#                 layer = self.root.findLayer(id)
+#                 clone = layer.clone()
+#                 myNewGroup.insertChildNode(0, clone)        
+#
+#         # # 3. Remove "Boundary Condition..." layers 
+#         # if to_be_deleted:
+#         #     for tbd in to_be_deleted:
+#         #         qinst = QgsProject.instance()
+#         #         qinst.removeMapLayer(qinst.mapLayersByName(tbd.name())[0].id())   
+#
+#         # grp = self.root.findGroup("User Layers")
+#         # for lyr in grp.findLayers():
+#         #     if "Boundary Condition" in lyr.name():
+#         #         self.remove_layer(id)
+#
+#
+# #<<<<<<<<<<<<<<<<2222222222222222222222222
+
+
+
+
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, "User Layers")
-
-#>>>>>>>>>>>>>>>>>111111111111
-        # v = self.iface.layerTreeView()
-        # # v.collapseAllNodes()
-        # nodes = v.selectedNodes()
-        # parent = nodes[0].parent()
-        #
-        # groups = {}
-        # for n in nodes: 
-        #     key = n.name()[:1]
-        #     if not key in groups:
-        #         groups[key]=[]
-        #     groups[key].append(n)
-        #
-        # new_groups = {}
-        # for key in groups:
-        #     grp_name = key+'00'
-        #     grp = parent.addGroup(grp_name)
-        #     new_groups[key] = grp
-        #
-        # for key in groups:
-        #     new_group = new_groups[key]
-        #     for n in groups[key]:
-        #         clone = n.clone()
-        #         new_group.addChildNode(clone)
-        #
-        # for key in groups:
-        #     for n in groups[key]:
-        #         parent.removeChildNode(n)
-
-
-
-#<<<<<<<<<<<<<<<<<111111111111
-
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-        # # 1. Get group names and list of layer ids
-        # root = QgsProject.instance().layerTreeRoot()
-        # dictGroups={}
-        # prefix="Boundary Condition"
-        # for layer in root.findLayers():
-        #   if QgsLayerTree.isLayer(layer):
-        #     if prefix in layer.name():
-        #         if not prefix in dictGroups:
-        #           dictGroups[prefix]=[]                
-        #         dictGroups[prefix].append(layer.layerId())
-        #
-        # # 2. Create groups
-        # # for key in dictGroups:
-        # #   root.addGroup(key)
-        #
-        # # 3. Move layers
-        # for key in dictGroups:
-        #   parent = root.findGroup("User Layers")
-        #   for id in dictGroups[key]:
-        #     layer = root.findLayer(id)
-        #     clone = layer.clone()
-        #     parent.insertChildNode(0, clone)
-        #     root.removeChildNode(layer)
-
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par("CELLSIZE")
