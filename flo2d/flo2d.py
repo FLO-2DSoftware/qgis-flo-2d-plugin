@@ -92,9 +92,9 @@ class Flo2D(object):
         self.files_used = ""
         self.files_not_used = ""
 
-        self.menu = self.tr("&Flo2D")
-        self.toolbar = self.iface.addToolBar("Flo2D")
-        self.toolbar.setObjectName("Flo2D")
+        self.menu = self.tr("&FLO-2D")
+        self.toolbar = self.iface.addToolBar("FLO-2D")
+        self.toolbar.setObjectName("FLO-2D")
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
@@ -133,7 +133,7 @@ class Flo2D(object):
         Get the translation for a string using Qt translation API.
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate("Flo2D", message)
+        return QCoreApplication.translate("FLO-2D", message)
 
     def setup_dock_widgets(self):
         self.create_f2d_plot_dock()
@@ -509,7 +509,7 @@ class Flo2D(object):
         del self.uc
         database_disconnect(self.con)
         for action in self.actions:
-            self.iface.removePluginMenu(self.tr("&Flo2D"), action)
+            self.iface.removePluginMenu(self.tr("&FLO-2D"), action)
             self.iface.removeToolBarIcon(action)
         # remove dialogs
         if self.f2d_table_dock is not None:

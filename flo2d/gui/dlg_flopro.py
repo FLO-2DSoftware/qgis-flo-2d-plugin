@@ -86,7 +86,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
                 # else:
                 #     self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))     
             else:
-                self.uc.show_warn("WARNING 221022.0911: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                 
+                self.uc.show_warn("WARNING 221022.0911: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)                 
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
