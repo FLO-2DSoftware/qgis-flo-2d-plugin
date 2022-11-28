@@ -1397,24 +1397,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             mline = "{0: >10} {1: >10}\n"
             tline = "{0: >15} {1: >15} {2: >10}\n"
-
+            nulls = 0
             with open(mannings, "w") as m, open(topo, "w") as t:
-                n_nulls = 0
                 for row in records:
                     fid, man, elev, geom = row
+                    if (man == None or elev == None):
+                        nulls += 1 
+                        if (man == None):
+                            man = 0.04
+                        if elev == None:
+                            elev = -9999
                     x, y = geom.strip("POINT()").split()
-                    if (man == None):
-                        n_nulls += 1
                     m.write(mline.format(fid, "{0:.3f}".format(man)))
                     t.write(
                         tline.format("{0:.4f}".format(float(x)), "{0:.4f}".format(float(y)), "{0:.4f}".format(elev))
                     )
-                    
+            
+            if nulls > 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn("WARNING 281122.0541: there are " + str(nulls) + " NULL values in the Grid layer's elevation or n_value fields.\n\n" +
+                                   "Default values where written to the exported files.\n\n" + 
+                                   "Please check the source layer coverage or use Fill Nodata." ) 
+                QApplication.setOverrideCursor(Qt.WaitCursor)                       
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)    
             return False
 
     def export_inflow(self, outdir):
