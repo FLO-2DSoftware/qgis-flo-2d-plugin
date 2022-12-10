@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>797</width>
+    <width>1109</width>
     <height>372</height>
    </rect>
   </property>
@@ -287,6 +287,26 @@
              <item>
               <property name="text">
                <string>Floodplain &lt;&gt; Storm Drain Rim (FPRIMELEV.OUT)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>ARF Adjustments (ARF_ADJUSTMENT.CHK)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Underground Outfalls (UndergOUTFALLS.OUT)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Channel interior nodes (CHAN_INTERIOR_NODES.OUT)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Manhole cover pop off (ManholePop.OUT)</string>
               </property>
              </item>
             </widget>
