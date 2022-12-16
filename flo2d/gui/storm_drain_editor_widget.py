@@ -1660,8 +1660,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             #     "WARNING 040322.1213: The following pumps have no outlet defined!\n\n" + pump_outlets_not_found
             # )
 
-        if error_msg !=  "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
-            self.uc.show_critical(error_msg)
+        if errors_msg !=  "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
+            self.uc.show_critical(errors_msg)
             
         if complete_or_create == "Create New":
             self.uc.show_info(

@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.82
+version=0.10.83
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.83
+  - Warnings and Errors tool (DEBUG): read these files: 
+      ARF_ADJUSTMENT.CHK
+      UndergroundOUTFALLS.CHK
+      CHAN_INTERIOR_NODES.OUT
+      ManholePop.OUT
  <p>0.10.82
   - Add warning message when exporting grid layer with some null elevations or n_values.
  <p>0.10.81
