@@ -105,9 +105,16 @@ class ErrorsDialog(qtBaseClass, uiDialog):
             
         elif self.debug_file_radio.isChecked():
             try:
-                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)             
+                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)   
+                          
+                if dlg_issues.cells_out > 0:
+                    self.uc.show_warn(
+                        "The complementary files you selected have " + str(dlg_issues.cells_out) + 
+                        " cells references that are outside the grid !"
+                    )                  
                 ok = dlg_issues.exec_() 
                 if ok:    
+                    pass
                     
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                     # try:
@@ -161,11 +168,7 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                    
                     
                                
-                    if dlg_issues.cells_out > 0:
-                        self.uc.show_warn(
-                            "The complementary files you selected have " + str(dlg_issues.cells_out) + 
-                            " cells references that are outside the grid !"
-                        )                    
+                  
                     
 
                 self.lyrs.clear_rubber()
@@ -278,7 +281,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             #         self.import_manhole_pop_issues()                 
             
             if self.errors_msg != "":
-                self.errors_msg += "\nPlease run the Warnings and Errors  tool again."
+                self.errors_msg += "\nPlease run the 'Warnings and Errors' tool again."
                 self.uc.show_critical(self.errors_msg)
                 
             self.loadIssues()
@@ -1016,8 +1019,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             codes = "9007"                     
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        # qApp.processEvents()
-
+        
         first, second = "", ""
         codes = codes.split(" ")
         for item in codes:
