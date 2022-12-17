@@ -8,10 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import shutil
 import traceback
 from ..layers import Layers
 from math import isclose
-from qgis.core import NULL
+from qgis.core import NULL, QgsApplication
 from itertools import chain, groupby
 from operator import itemgetter
 from .flo2d_parser import ParseDAT
@@ -20,6 +21,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..utils import float_or_zero
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
+
 from ..utils import get_BC_Border, BC_BORDER
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -2168,6 +2170,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
+
+    def export_bridge_coeff_data(self, outdir):
+        try:
+            # check if there is any hydraulic structure defined.
+            if self.is_table_empty("struct"):
+                return False  
+            src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"           
+            dst = os.path.join(outdir, "BRIDGE_COEFF_DATA.DAT")
+            shutil.copy(src, dst)                           
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
+            return False
 
     def export_street(self, outdir):
         # check if there is any street defined.

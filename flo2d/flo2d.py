@@ -856,6 +856,8 @@ class Flo2D(object):
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
+            elif call == "export_bridge_coeff_data":
+                dat = "BRIDGE_COEFF_DATA.DAT"                
             elif call == "import_hystruc_bridge_xs":
                 dat = "BRIDGE_XSEC.DAT"
             else:    
@@ -1630,6 +1632,7 @@ class Flo2D(object):
                 "export_xsec",
                 "export_hystruc",
                 "export_bridge_xsec",
+                "export_bridge_coeff_data",
                 "export_street",
                 "export_arf",
                 "export_mult",
@@ -1696,6 +1699,7 @@ class Flo2D(object):
                 if "Hydraulic  Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
     
                 # if 'MODFLO-2D' not in dlg_components.components:
                 #     export_calls.remove('')
