@@ -51,11 +51,243 @@ class Layers(object):
         self.data = OrderedDict(
             [
                 # User layers:
+                
+                
+                
+                
+                # (
+                #     "user_bc_points",
+                #     {
+                #         "name": "Boundary Condition Points",
+                #         "sgroup": "User Layers. Boundaries",
+                #         "styles": ["user_bc_points.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_bc_lines",
+                #     {
+                #         "name": "Boundary Condition Lines",
+                #         "sgroup": "User Layers. Boundaries",
+                #         "styles": ["user_bc_lines.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_bc_polygons",
+                #     {
+                #         "name": "Boundary Condition Polygons",
+                #         "sgroup": "User Layers. Boundaries",
+                #         "styles": ["user_bc_polygons.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),
+                #
+                # (
+                #     "user_left_bank",
+                #     {
+                #         "name": "Left Bank Lines",
+                #         "sgroup": "User Layers. Channels",
+                #         "styles": ["user_lbank.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["chan"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_right_bank",
+                #     {
+                #         "name": "Right Bank Lines",
+                #         "sgroup": "User Layers. Channels",
+                #         "styles": ["user_rbank.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["chan"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_xsections",
+                #     {
+                #         "name": "Cross Sections",
+                #         "sgroup": "User Layers. Channels",
+                #         "styles": ["user_xs.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["chan"],
+                #         "readonly": True,
+                #         "attrs_defaults": {"type": "'R'"},
+                #     },
+                # ),            
+                # (
+                #     "user_noexchange_chan_areas",
+                #     {
+                #         "name": "No-Exchange Channel Areas",
+                #         "sgroup": "User Layers. Channels",
+                #         "styles": ["user_noexchange_chan_areas.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_swmm_conduits",
+                #     {
+                #         "name": "Storm Drain Conduits",
+                #         "sgroup": "User Layers. Storm Drains",
+                #         "styles": ["user_swmm_conduits.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),
+                # (
+                #     "user_swmm_pumps",
+                #     {
+                #         "name": "Storm Drain Pumps",
+                #         "sgroup": "User Layers. Storm Drains",
+                #         "styles": ["user_swmm_conduits.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),  
+                # (
+                #     "user_swmm_orifices",
+                #     {
+                #         "name": "Storm Drain Orifices",
+                #         "sgroup": "User Layers. Storm Drains",
+                #         "styles": ["user_swmm_conduits.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),  
+                # (
+                #     "user_swmm_weirs",
+                #     {
+                #         "name": "Storm Drain Weirs",
+                #         "sgroup": "User Layers. Storm Drains",
+                #         "styles": ["user_swmm_conduits.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),                  
+                # (
+                #     "user_swmm_nodes",
+                #     {
+                #         "name": "Storm Drain Nodes",
+                #         "sgroup": "User Layers. Storm Drains",
+                #         "styles": ["user_swmm_nodes.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ), 
+                #
+                #
+                #
+                # (
+                #     "buildings_areas",
+                #     {
+                #         "name": "Building Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["user_spatial_gutter.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ), 
+                # (
+                #     "gutter_areas",
+                #     {
+                #         "name": "Gutter Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["user_spatial_gutter.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ),                
+                # (
+                #     "spatialshallow",
+                #     {
+                #         "name": "Shallow-n Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["user_spatial_shallow_n.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ),                
+                # (
+                #     "fpfroude",
+                #     {
+                #         "name": "Froude Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["user_spatial_froude.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ),                
+                # (
+                #     "tolspatial",
+                #     {
+                #         "name": "Tolerance Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["tolspatial.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ),                
+                # (
+                #     "rain_arf_areas",
+                #     {
+                #         "name": "Rain ARF Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["rain_arf_areas.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "readonly": False,
+                #     },
+                # ),                
+                # (
+                #     "user_blocked_areas",
+                #     {
+                #         "name": "Blocked Areas",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["blocked_areas.qml"],
+                #         "attrs_edit_widgets": {
+                #             "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                #             "calc_arf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                #             "calc_wrf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                #         },
+                #         "module": ["redfac"],
+                #         "readonly": False,
+                #         "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
+                #     },
+                # ),                
+                # (
+                #     "user_roughness",
+                #     {
+                #         "name": "Roughness",
+                #         "sgroup": "User Layers. Grid Attributes",
+                #         "styles": ["user_roughness.qml"],
+                #         "attrs_edit_widgets": {},
+                #         "module": ["all"],
+                #         "readonly": False,
+                #     },
+                # ),                 
+     
+     
+                
+                
                 (
                     "user_bc_points",
                     {
                         "name": "Boundary Condition Points",
-                        "sgroup": "User Layers. Boundaries",
+                        "sgroup": "User Layers",
                         "styles": ["user_bc_points.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -66,7 +298,7 @@ class Layers(object):
                     "user_bc_lines",
                     {
                         "name": "Boundary Condition Lines",
-                        "sgroup": "User Layers. Boundaries",
+                        "sgroup": "User Layers",
                         "styles": ["user_bc_lines.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -77,7 +309,7 @@ class Layers(object):
                     "user_bc_polygons",
                     {
                         "name": "Boundary Condition Polygons",
-                        "sgroup": "User Layers. Boundaries",
+                        "sgroup": "User Layers",
                         "styles": ["user_bc_polygons.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -89,7 +321,7 @@ class Layers(object):
                     "user_left_bank",
                     {
                         "name": "Left Bank Lines",
-                        "sgroup": "User Layers. Channels",
+                        "sgroup": "User Layers",
                         "styles": ["user_lbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -100,7 +332,7 @@ class Layers(object):
                     "user_right_bank",
                     {
                         "name": "Right Bank Lines",
-                        "sgroup": "User Layers. Channels",
+                        "sgroup": "User Layers",
                         "styles": ["user_rbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -111,7 +343,7 @@ class Layers(object):
                     "user_xsections",
                     {
                         "name": "Cross Sections",
-                        "sgroup": "User Layers. Channels",
+                        "sgroup": "User Layers",
                         "styles": ["user_xs.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -123,7 +355,7 @@ class Layers(object):
                     "user_noexchange_chan_areas",
                     {
                         "name": "No-Exchange Channel Areas",
-                        "sgroup": "User Layers. Channels",
+                        "sgroup": "User Layers",
                         "styles": ["user_noexchange_chan_areas.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -134,7 +366,7 @@ class Layers(object):
                     "user_swmm_conduits",
                     {
                         "name": "Storm Drain Conduits",
-                        "sgroup": "User Layers. Storm Drains",
+                        "sgroup": "User Layers",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -145,7 +377,7 @@ class Layers(object):
                     "user_swmm_pumps",
                     {
                         "name": "Storm Drain Pumps",
-                        "sgroup": "User Layers. Storm Drains",
+                        "sgroup": "User Layers",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -156,7 +388,7 @@ class Layers(object):
                     "user_swmm_orifices",
                     {
                         "name": "Storm Drain Orifices",
-                        "sgroup": "User Layers. Storm Drains",
+                        "sgroup": "User Layers",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -167,7 +399,7 @@ class Layers(object):
                     "user_swmm_weirs",
                     {
                         "name": "Storm Drain Weirs",
-                        "sgroup": "User Layers. Storm Drains",
+                        "sgroup": "User Layers",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -178,7 +410,7 @@ class Layers(object):
                     "user_swmm_nodes",
                     {
                         "name": "Storm Drain Nodes",
-                        "sgroup": "User Layers. Storm Drains",
+                        "sgroup": "User Layers",
                         "styles": ["user_swmm_nodes.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -192,7 +424,7 @@ class Layers(object):
                     "buildings_areas",
                     {
                         "name": "Building Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["user_spatial_gutter.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -202,7 +434,7 @@ class Layers(object):
                     "gutter_areas",
                     {
                         "name": "Gutter Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["user_spatial_gutter.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -212,7 +444,7 @@ class Layers(object):
                     "spatialshallow",
                     {
                         "name": "Shallow-n Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["user_spatial_shallow_n.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -222,7 +454,7 @@ class Layers(object):
                     "fpfroude",
                     {
                         "name": "Froude Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["user_spatial_froude.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -232,7 +464,7 @@ class Layers(object):
                     "tolspatial",
                     {
                         "name": "Tolerance Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["tolspatial.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -242,7 +474,7 @@ class Layers(object):
                     "rain_arf_areas",
                     {
                         "name": "Rain ARF Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["rain_arf_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -252,7 +484,7 @@ class Layers(object):
                     "user_blocked_areas",
                     {
                         "name": "Blocked Areas",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["blocked_areas.qml"],
                         "attrs_edit_widgets": {
                             "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
@@ -268,29 +500,18 @@ class Layers(object):
                     "user_roughness",
                     {
                         "name": "Roughness",
-                        "sgroup": "User Layers. Grid Attributes",
+                        "sgroup": "User Layers",
                         "styles": ["user_roughness.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),                 
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                 
+                ),                
                 (
                     "mult_areas",
                     {
                         "name": "Multiple Channel Areas",
-                        "sgroup": "User Layers. Multiple Channels",
+                        "sgroup": "User Layers",
                         "styles": ["mult_areas.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -301,7 +522,7 @@ class Layers(object):
                     "mult_lines",
                     {
                         "name": "Multiple Channel Lines",
-                        "sgroup": "User Layers. Multiple Channels",
+                        "sgroup": "User Layers",
                         "styles": ["mult_lines.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -312,7 +533,7 @@ class Layers(object):
                     "simple_mult_lines",
                     {
                         "name": "Simple Mult. Channel Lines",
-                        "sgroup": "User Layers. Multiple Channels",
+                        "sgroup": "User Layers",
                         "styles": ["mult_lines.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,

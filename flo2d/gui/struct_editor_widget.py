@@ -460,154 +460,125 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         }
 
     def show_table_data(self):
-
-        self.table.after_delete.disconnect() 
-        self.table.after_delete.connect(self.save_data)  
-        
-        self.plot.clear()
-        if self.plot.plot.legend is not None:
-            plot_scene = self.plot.plot.legend.scene()
-            if plot_scene is not None:
-                plot_scene.removeItem(self.plot.plot.legend)
-        self.plot.plot.addLegend()
-        self.plot.plot.setTitle("")
-
-        # if self.rating_cbo.currentIndex() == 3:  # Bridge routine
-        #     # self.tview.undoStack.clear()
-        #     # self.tview.setModel(self.data_model)
-        #     # self.data_model.clear()
-        #     # # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-        #     # self.d1, self.d2 = [[], []]            
-        #     # return
-        #     pass
-
-        if not self.struct:
-            return
-        else:
-            self.struct_data = self.struct.get_table_data()
-            if not self.struct_data:
+        try:
+            self.table.after_delete.disconnect() 
+            self.table.after_delete.connect(self.save_data)  
+            
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+            self.plot.plot.addLegend()
+            self.plot.plot.setTitle("")
+    
+            # if self.rating_cbo.currentIndex() == 3:  # Bridge routine
+            #     # self.tview.undoStack.clear()
+            #     # self.tview.setModel(self.data_model)
+            #     # self.data_model.clear()
+            #     # # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+            #     # self.d1, self.d2 = [[], []]            
+            #     # return
+            #     pass
+    
+            if not self.struct:
                 return
-
-        rating = self.rating_cbo.currentIndex()
-        struct_name = ""
-        if rating in [1, 3]:  # Rating Table  or Bridge XS
-            idx = self.struct_cbo.currentIndex()
-            struct_fid = self.struct_cbo.itemData(idx)
-            struct_name = self.struct_cbo.currentText()
-            if struct_fid is None:
-                return
-
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.data_model)
-        self.data_model.clear()
-        self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-        self.d1, self.d2 = [[], []]
-
-        if self.struct.icurvtable == "":
-            self.struct.icurvtable = 0
-        tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
-        for row in self.struct_data:
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-            self.data_model.appendRow(items)
-            if rating in [1, 3]:  # Rating Table or Bridge XS
-                if row:
-                    self.d1.append(row[0] if not row[0] is None else float("NaN"))
-                    self.d2.append(row[1] if not row[1] is None else float("NaN"))
-                else:
-                    self.d1.append(float("NaN"))
-                    self.d2.append(float("NaN"))
-        rc = self.data_model.rowCount()
-        if rc < 10:
-            for row in range(rc, 10 + 1):
-                items = [StandardItem(x) for x in ("",) * tab_col_nr]
+            else:
+                self.struct_data = self.struct.get_table_data()
+                if not self.struct_data:
+                    return
+    
+            rating = self.rating_cbo.currentIndex()
+            struct_name = ""
+            if rating in [1, 3]:  # Rating Table  or Bridge XS
+                idx = self.struct_cbo.currentIndex()
+                struct_fid = self.struct_cbo.itemData(idx)
+                struct_name = self.struct_cbo.currentText()
+                if struct_fid is None:
+                    return
+    
+            self.tview.undoStack.clear()
+            self.tview.setModel(self.data_model)
+            self.data_model.clear()
+            self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
+            self.d1, self.d2 = [[], []]
+    
+            if self.struct.icurvtable == "":
+                self.struct.icurvtable = 0
+            tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
+            for row in self.struct_data:
+                items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                 self.data_model.appendRow(items)
+                if rating in [1, 3]:  # Rating Table or Bridge XS
+                    if row:
+                        self.d1.append(row[0] if not row[0] is None else float("NaN"))
+                        self.d2.append(row[1] if not row[1] is None else float("NaN"))
+                    else:
+                        self.d1.append(float("NaN"))
+                        self.d2.append(float("NaN"))
+            rc = self.data_model.rowCount()
+            if rc < 10:
+                for row in range(rc, 10 + 1):
+                    items = [StandardItem(x) for x in ("",) * tab_col_nr]
+                    self.data_model.appendRow(items)
+    
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            self.tview.resizeColumnsToContents()
+            for i in range(self.data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+    
+            if rating in [1, 3]:  # Rating Table or Bridge XS
+                self.create_plot(rating, struct_name)
+                self.update_plot()
+    
+    
+            # self.bc_table.after_delete.disconnect() 
+            # self.bc_table.after_delete.connect(self.save_bc_data)         
+            #
+            # cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
+            # cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
+            # self.create_inflow_plot()
+            #
+            # self.bc_tview.undoStack.clear()
+            # self.bc_tview.setModel(self.bc_data_model)
+            # self.inflow.time_series_fid = cur_ts_fid
+            #
+            # self.infow_tseries_data = self.inflow.get_time_series_data()
+            # self.bc_data_model.clear()
+            # self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
+            # self.ot, self.od, self.om = [[], [], []]
+            # if not self.infow_tseries_data:
+            #     self.uc.bar_warn("No time series data defined for that inflow.")
+            #     return
+            # for row in self.infow_tseries_data:
+            #     items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
+            #     self.bc_data_model.appendRow(items)
+            #     self.ot.append(row[0] if not row[0] is None else float("NaN"))
+            #     self.od.append(row[1] if not row[1] is None else float("NaN"))
+            #     self.om.append(row[2] if not row[2] is None else float("NaN"))
+            # rc = self.bc_data_model.rowCount()
+            #
+            # if rc < 500:
+            #     for row in range(rc, 500 + 1):
+            #         items = [StandardItem(x) for x in ("",) * 3]
+            #         self.bc_data_model.appendRow(items)
+            #
+            # self.bc_tview.resizeColumnsToContents()
+            #
+            # for i in range(self.bc_data_model.rowCount()):
+            #     self.bc_tview.setRowHeight(i, 20)
+            #
+            # self.bc_tview.horizontalHeader().setStretchLastSection(True)
+            #
+            # for i in range(3):
+            #     self.bc_tview.setColumnWidth(i, 90)
+            #
+            # self.save_inflow()
+            # self.create_inflow_plot()
 
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        self.tview.resizeColumnsToContents()
-        for i in range(self.data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-
-        if rating in [1, 3]:  # Rating Table or Bridge XS
-            self.create_plot(rating, struct_name)
-            self.update_plot()
-
-
-
-
-
-
-
-
-
-
-
-
-        # self.bc_table.after_delete.disconnect() 
-        # self.bc_table.after_delete.connect(self.save_bc_data)         
-        #
-        # cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
-        # cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
-        # self.create_inflow_plot()
-        #
-        # self.bc_tview.undoStack.clear()
-        # self.bc_tview.setModel(self.bc_data_model)
-        # self.inflow.time_series_fid = cur_ts_fid
-        #
-        # self.infow_tseries_data = self.inflow.get_time_series_data()
-        # self.bc_data_model.clear()
-        # self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
-        # self.ot, self.od, self.om = [[], [], []]
-        # if not self.infow_tseries_data:
-        #     self.uc.bar_warn("No time series data defined for that inflow.")
-        #     return
-        # for row in self.infow_tseries_data:
-        #     items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
-        #     self.bc_data_model.appendRow(items)
-        #     self.ot.append(row[0] if not row[0] is None else float("NaN"))
-        #     self.od.append(row[1] if not row[1] is None else float("NaN"))
-        #     self.om.append(row[2] if not row[2] is None else float("NaN"))
-        # rc = self.bc_data_model.rowCount()
-        #
-        # if rc < 500:
-        #     for row in range(rc, 500 + 1):
-        #         items = [StandardItem(x) for x in ("",) * 3]
-        #         self.bc_data_model.appendRow(items)
-        #
-        # self.bc_tview.resizeColumnsToContents()
-        #
-        # for i in range(self.bc_data_model.rowCount()):
-        #     self.bc_tview.setRowHeight(i, 20)
-        #
-        # self.bc_tview.horizontalHeader().setStretchLastSection(True)
-        #
-        # for i in range(3):
-        #     self.bc_tview.setColumnWidth(i, 90)
-        #
-        # self.save_inflow()
-        # self.create_inflow_plot()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 211222.1017: something went wrong when plotting table!\n", e)
 
     def create_plot(self, rating, name):
         self.plot.clear()
