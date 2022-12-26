@@ -682,10 +682,14 @@ class StormDrainProject(object):
                         i2 = "TIME SERIES"
                     else:
                         i2 = items[2]
+                        
                     if items[2] == "FIXED":
                         i3 = items[3]
-                    else:    
-                        i3 = "..."
+                    elif items[2] == "TIDAL" or items[2] == "TIME":    
+                        i3 = items[4] 
+                    else:
+                        i3 = ""  
+                        
                     if "YES" in items:
                         i4 = "True"
                     else:

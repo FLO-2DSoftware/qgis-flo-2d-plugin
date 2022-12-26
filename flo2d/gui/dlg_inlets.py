@@ -990,13 +990,13 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
             for name in names:
                 self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
 
-        time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+        time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
         names = self.gutils.execute(time_names_sql).fetchall()
         if names:
             for name in names:
-                self.swmm_inflow_time_series_cbo.addItem(name[0].strip())
+                self.swmm_time_series_cbo.addItem(name[0].strip())
         
-        self.swmm_inflow_time_series_cbo.addItem("")
+        self.swmm_time_series_cbo.addItem("")
         
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
@@ -1012,9 +1012,9 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
             else:
                 self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
 
-            idx = self.swmm_inflow_time_series_cbo.findText(inflow[3])
+            idx = self.swmm_time_series_cbo.findText(inflow[3])
             if idx > 0:
-                self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)
+                self.swmm_time_series_cbo.setCurrentIndex(idx)
             self.swmm_inflow_scale_factor_dbox.setValue(inflow[4])
 
     def select_inflow_pattern(self):
@@ -1038,7 +1038,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                 self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
 
     def select_time_series(self):
-        time_series_name = self.swmm_inflow_time_series_cbo.currentText()
+        time_series_name = self.swmm_time_series_cbo.currentText()
         dlg = InflowTimeSeriesDialog(self.iface, time_series_name)
         while True:
             save = dlg.exec_()
@@ -1049,17 +1049,17 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                     if time_series_name != "":
                         # Reload time series list and select the one saved:
                         time_series_names_sql = (
-                            "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+                            "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
                         )
                         names = self.gutils.execute(time_series_names_sql).fetchall()
                         if names:
-                            self.swmm_inflow_time_series_cbo.clear()
+                            self.swmm_time_series_cbo.clear()
                             for name in names:
-                                self.swmm_inflow_time_series_cbo.addItem(name[0])
-                            self.swmm_inflow_time_series_cbo.addItem("")
+                                self.swmm_time_series_cbo.addItem(name[0])
+                            self.swmm_time_series_cbo.addItem("")
             
-                            idx = self.swmm_inflow_time_series_cbo.findText(time_series_name)
-                            self.swmm_inflow_time_series_cbo.setCurrentIndex(idx)                    
+                            idx = self.swmm_time_series_cbo.findText(time_series_name)
+                            self.swmm_time_series_cbo.setCurrentIndex(idx)                    
 
                         # self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
                         break
@@ -1075,7 +1075,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
 
         baseline = self.swmm_inflow_baseline_dbox.value()
         pattern = self.swmm_inflow_pattern_cbo.currentText()
-        file = self.swmm_inflow_time_series_cbo.currentText()
+        file = self.swmm_time_series_cbo.currentText()
         scale = self.swmm_inflow_scale_factor_dbox.value()
 
         exists_sql = "SELECT fid FROM swmm_inflows WHERE node_name = ?;"
@@ -1232,7 +1232,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.use_table_radio.setChecked(True)
             pass
         else:
-            series_sql = "SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?"
+            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?"
             row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
             if row:
                 self.name_le.setText(row[1])
@@ -1251,7 +1251,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                                 date, 
                                 time, 
                                 value
-                        FROM swmm_inflow_time_series_data WHERE time_series_name = ?;"""
+                        FROM swmm_time_series_data WHERE time_series_name = ?;"""
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
                     self.inflow_time_series_tblw.setRowCount(0)
@@ -1308,9 +1308,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.values_ok = True
     
     def save_time_series(self):      
-        delete_sql = "DELETE FROM swmm_inflow_time_series WHERE time_series_name = ?"
+        delete_sql = "DELETE FROM swmm_time_series WHERE time_series_name = ?"
         self.gutils.execute(delete_sql, (self.name_le.text(),))
-        insert_sql = "INSERT INTO swmm_inflow_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
+        insert_sql = "INSERT INTO swmm_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
         self.gutils.execute(
             insert_sql,
             (
@@ -1321,10 +1321,10 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             ),
         )
 
-        delete_data_sql = "DELETE FROM swmm_inflow_time_series_data WHERE time_series_name = ?"
+        delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
         
-        insert_data_sql = ["""INSERT INTO swmm_inflow_time_series_data (time_series_name, date, time, value) VALUES""", 4]
+        insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
         for row in range(0, self.inflow_time_series_tblw.rowCount()):
             date = self.inflow_time_series_tblw.item(row, 0)
             if date:

@@ -151,8 +151,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_pumps_curve_data_lyr = None
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
-        self.swmm_inflows_time_series_lyr = None
-        self.swmm_inflows_time_series_data_lyr = None
+        self.swmm_time_series_lyr = None
+        self.swmm_time_series_data_lyr = None
         self.control_lyr = None
         self.schema_inlets = None
         self.schema_outlets = None
@@ -221,8 +221,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_pumps_curve_data_lyr= self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
         self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
         self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
-        self.swmm_inflows_time_series_lyr = self.lyrs.data["swmm_inflow_time_series"]["qlyr"]
-        self.swmm_inflows_time_series_data_lyr = self.lyrs.data["swmm_inflow_time_series_data"]["qlyr"]
+        self.swmm_time_series_lyr = self.lyrs.data["swmm_time_series"]["qlyr"]
+        self.swmm_time_series_data_lyr = self.lyrs.data["swmm_time_series_data"]["qlyr"]
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
         self.schema_inlets = self.lyrs.data["swmmflo"]["qlyr"]
         self.schema_outlets = self.lyrs.data["swmmoutf"]["qlyr"]
@@ -938,12 +938,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 storm_drain.create_INP_time_series_list_with_time_series()
                 
                 if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflows_time_series_lyr)
-                    remove_features(self.swmm_inflows_time_series_data_lyr)    
+                    remove_features(self.swmm_time_series_lyr)
+                    remove_features(self.swmm_time_series_data_lyr)    
                                   
                 try:
 
-                    insert_times_from_file_sql = """INSERT INTO swmm_inflow_time_series 
+                    insert_times_from_file_sql = """INSERT INTO swmm_time_series 
                                             (   time_series_name, 
                                                 time_series_description, 
                                                 time_series_file,
@@ -951,7 +951,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             ) 
                                             VALUES (?, ?, ?, ?);"""
                                             
-                    insert_times_from_data_sql = """INSERT INTO swmm_inflow_time_series_data
+                    insert_times_from_data_sql = """INSERT INTO swmm_time_series_data
                                             (   time_series_name, 
                                                 date, 
                                                 time,
@@ -967,7 +967,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
                         else: 
                             # See if time series data reference is already in table:
-                            row = self.gutils.execute("SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?;", (time[1][1],)).fetchone()
+                            row = self.gutils.execute("SELECT * FROM swmm_time_series WHERE time_series_name = ?;", (time[1][1],)).fetchone()
                             if not row:
                                 name = time[1][1]
                                 description = time[0][1]
@@ -1960,10 +1960,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 lrow[2] = lrow[2].upper()
                                 if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
                                     lrow[2] = "NORMAL"
-                                if lrow[2] == "TIME SERIES":
+                                 
+                                # Set 3rt. value:    
+                                if lrow[2] == "FREE" or lrow[2] == "NORMAL":
+                                    lrow[3] = "    "
+                                elif lrow[2] == "TIDAL CURVE":
                                     lrow[3] = lrow[4]
-                                if lrow[2] == "FIXED":
-                                    lrow[3] = lrow[6]                                    
+                                elif lrow[2] == "FIXED":
+                                    lrow[3] = lrow[6]   
+                                                                     
                                 lrow[5] = "YES" if lrow[5] in ("True", "true", "Yes", "yes", "1") else "NO"
                                 swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[5]))
 
@@ -2427,13 +2432,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                             time_series_description, 
                                                             time_series_file,
                                                             time_series_data
-                                          FROM swmm_inflow_time_series ORDER BY fid;"""
+                                          FROM swmm_time_series ORDER BY fid;"""
                                           
                         SD_inflow_time_series_data_sql = """SELECT                                 
                                                             date, 
                                                             time,
                                                             value
-                                          FROM swmm_inflow_time_series_data WHERE time_series_name = ? ORDER BY fid;"""                                          
+                                          FROM swmm_time_series_data WHERE time_series_name = ? ORDER BY fid;"""                                          
 
                         line1 = "\n;{0:16}"
                         line2 = "\n{0:16} {1:<10} {2:<50}"
@@ -2453,7 +2458,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     swmm_inp_file.write(line2.format(*lrow2))
                                     swmm_inp_file.write("\n;")
                                 else:
-                                    # Inflow data given in table 'swmm_inflow_time_series_data':
+                                    # Inflow data given in table 'swmm_time_series_data':
                                     name = row[0]
                                     time_series_data = self.gutils.execute(SD_inflow_time_series_data_sql, (name,)).fetchall()
                                     if not time_series_data:

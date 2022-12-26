@@ -7,9 +7,10 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import os
 from ..utils import is_true, float_or_zero, int_or_zero, is_number
 from qgis.core import QgsFeatureRequest
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
 from qgis.PyQt.QtWidgets import (
     QInputDialog, 
      QTableWidgetItem, 
@@ -20,8 +21,7 @@ from qgis.PyQt.QtWidgets import (
      QStyledItemDelegate,
      QLineEdit
     )
-
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import QColor, QRegExpValidator
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -71,7 +71,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.time_series_cbo.currentIndexChanged.connect(self.time_series_cbo_currentIndexChanged)
 
         # self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
-        # self.open_time_series_btn.clicked.connect(self.open_time_series)
+        self.open_time_series_btn.clicked.connect(self.open_time_series)
         #
         # self.set_header()
         
@@ -189,8 +189,18 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             
             self.outfalls_tblw.sortItems(0, Qt.AscendingOrder)
             self.outfalls_tblw.selectRow(0)                     
-                        
-            self.block = False   
+
+            # Fill list of time series names:
+            time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
+            names = self.gutils.execute(time_names_sql).fetchall()
+            if names:
+                for name in names:
+                    self.time_series_cbo.addItem(name[0].strip())
+        
+            self.time_series_cbo.addItem("")
+
+            self.block = False  
+            self.out_fall_type_cbo_currentIndexChanged()
             self.outfall_cbo.setCurrentIndex(0)         
             self.highlight_outfall_cell(self.grid_element_txt.text())   
                      
@@ -211,24 +221,40 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.checkbox_valueChanged(self.allow_discharge_chbox, 4)
 
     def out_fall_type_cbo_currentIndexChanged(self):
-        self.combo_valueChanged(self.outfall_type_cbo, 5)
-
-        self.disableTypes()
-
-        idx = self.outfall_type_cbo.currentIndex()
-        
-        if idx == 0:
-            self.water_depth_dbox.setEnabled(True)
-            self.label_5.setEnabled(True)
-        elif idx == 3:
-            self.tidal_curve_cbo.setEnabled(True)
-            self.label_7.setEnabled(True)
-            self.open_tidal_curve_btn.setEnabled(True)
-        elif idx == 4:
-            self.time_series_cbo.setEnabled(True)
-            self.label_8.setEnabled(True)
-            self.open_time_series_btn.setEnabled(True)
-
+        try:
+            self.combo_valueChanged(self.outfall_type_cbo, 5)
+    
+            self.disableTypes()
+    
+            idx = self.outfall_type_cbo.currentIndex()
+            
+            if idx == 0:
+                self.water_depth_dbox.setEnabled(True)
+                self.label_5.setEnabled(True)
+            elif idx == 3:
+                self.tidal_curve_cbo.setEnabled(True)
+                self.label_7.setEnabled(True)
+                self.open_tidal_curve_btn.setEnabled(True)
+            elif idx == 4:
+                self.time_series_cbo.setEnabled(True)
+                self.label_8.setEnabled(True)
+                self.open_time_series_btn.setEnabled(True)
+                
+                row = self.outfalls_tblw.currentRow()
+                # row = row if row != -1 else 0
+                item = self.outfalls_tblw.item(row, 8)
+                # if item is not None:
+                time_series = str(item.text()) if item is not None else ""
+                idx = self.time_series_cbo.findText(time_series)
+                if idx != -1:
+                    self.time_series_cbo.setCurrentIndex(idx)
+                else:
+                    pass
+                    # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
+        except:  
+            QApplication.restoreOverrideCursor()           
+            self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")        
+                    
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
         self.label_5.setEnabled(False)
@@ -240,7 +266,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.label_8.setEnabled(False)
         
         self.open_tidal_curve_btn.setEnabled(False)
-        self.open_time_series_btn.setEnabled(False)   
+        self.open_time_series_btn.setEnabled(False) 
+          
     def water_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.water_depth_dbox, 6)
 
@@ -265,7 +292,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     if time_series_name != "":
                         # Reload time series list and select the one saved:
                         time_series_names_sql = (
-                            "SELECT DISTINCT time_series_name FROM swmm_inflow_time_series GROUP BY time_series_name"
+                            "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
                         )
                         names = self.gutils.execute(time_series_names_sql).fetchall()
                         if names:
@@ -613,7 +640,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.use_table_radio.setChecked(True)
             pass
         else:
-            series_sql = "SELECT * FROM swmm_inflow_time_series WHERE time_series_name = ?"
+            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?"
             row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
             if row:
                 self.name_le.setText(row[1])
@@ -632,7 +659,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                 date, 
                                 time, 
                                 value
-                        FROM swmm_inflow_time_series_data WHERE time_series_name = ?;"""
+                        FROM swmm_time_series_data WHERE time_series_name = ?;"""
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
                     self.inflow_time_series_tblw.setRowCount(0)
@@ -689,9 +716,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.values_ok = True
     
     def save_time_series(self):      
-        delete_sql = "DELETE FROM swmm_inflow_time_series WHERE time_series_name = ?"
+        delete_sql = "DELETE FROM swmm_time_series WHERE time_series_name = ?"
         self.gutils.execute(delete_sql, (self.name_le.text(),))
-        insert_sql = "INSERT INTO swmm_inflow_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
+        insert_sql = "INSERT INTO swmm_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
         self.gutils.execute(
             insert_sql,
             (
@@ -702,10 +729,10 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             ),
         )
 
-        delete_data_sql = "DELETE FROM swmm_inflow_time_series_data WHERE time_series_name = ?"
+        delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
         
-        insert_data_sql = ["""INSERT INTO swmm_inflow_time_series_data (time_series_name, date, time, value) VALUES""", 4]
+        insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
         for row in range(0, self.inflow_time_series_tblw.rowCount()):
             date = self.inflow_time_series_tblw.item(row, 0)
             if date:

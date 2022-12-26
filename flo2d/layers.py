@@ -891,7 +891,7 @@ class Layers(object):
                     },
                 ),
                 (
-                    "swmm_inflow_time_series",
+                    "swmm_time_series",
                     {
                         "name": "Storm Drain Time Series",
                         "sgroup": "Storm Drain",
@@ -901,7 +901,7 @@ class Layers(object):
                     },
                 ),
                 (
-                    "swmm_inflow_time_series_data",
+                    "swmm_time_series_data",
                     {
                         "name": "Storm Drain Time Series Data",
                         "sgroup": "Storm Drain",
