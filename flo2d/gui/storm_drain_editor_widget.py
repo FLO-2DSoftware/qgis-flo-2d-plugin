@@ -1957,14 +1957,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 ]
                                 lrow[3] = "   " if lrow[3] == "..." else lrow[3]
                                 lrow[4] = "   " if lrow[4] == "..." else lrow[4]
-                                lrow[2] = lrow[2].upper()
+                                lrow[2] = lrow[2].upper().strip()
                                 if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
                                     lrow[2] = "NORMAL"
+                                lrow[2] = "TIDALCURVE" if lrow[2] == "TIDAL CURVE" else "TIMESERIES" if lrow[2] == "TIME SERIES" else lrow[2]
                                  
                                 # Set 3rt. value:    
                                 if lrow[2] == "FREE" or lrow[2] == "NORMAL":
                                     lrow[3] = "    "
-                                elif lrow[2] == "TIDAL CURVE":
+                                elif lrow[2] == "TIDALCURVE" or lrow[2] == "TIMESERIES":
                                     lrow[3] = lrow[4]
                                 elif lrow[2] == "FIXED":
                                     lrow[3] = lrow[6]   
@@ -2387,10 +2388,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[INFLOWS]")
                         swmm_inp_file.write(
-                            "\n;;                                                 Param    Units    Scale    Baseline Baseline"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern "
+                            "\n;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern"
                         )
                         swmm_inp_file.write(
                             "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
@@ -2408,12 +2406,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 lrow = [
                                     row[0],
                                     row[1],
-                                    row[4] if row[3] is not None else "?",
+                                    row[4] if row[4] != "" else '""',
                                     row[1],
                                     "1.0",
                                     row[5],
                                     row[2],
-                                    row[3] if row[3] is not None else "?",
+                                    row[3] if row[3] is not None else "",
                                 ]
                                 swmm_inp_file.write(line.format(*lrow))
                     except Exception as e:

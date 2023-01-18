@@ -177,16 +177,10 @@
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="swmm_inflow_baseline_dbox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
+        <widget class="QLineEdit" name="swmm_inflow_baseline_le">
          <property name="minimumSize">
           <size>
-           <width>100</width>
+           <width>0</width>
            <height>23</height>
           </size>
          </property>
@@ -196,8 +190,17 @@
            <height>23</height>
           </size>
          </property>
-         <property name="maximum">
-          <double>9999.000000000000000</double>
+         <property name="sizeIncrement">
+          <size>
+           <width>0</width>
+           <height>23</height>
+          </size>
+         </property>
+         <property name="inputMethodHints">
+          <set>Qt::ImhDigitsOnly|Qt::ImhPreferNumbers</set>
+         </property>
+         <property name="clearButtonEnabled">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

@@ -22,7 +22,7 @@ from qgis.PyQt.QtWidgets import (
      QStyledItemDelegate,
      QLineEdit
     )
-from qgis.PyQt.QtGui import QColor, QRegExpValidator
+from qgis.PyQt.QtGui import QColor, QRegExpValidator, QDoubleValidator
 
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
@@ -259,10 +259,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n" + txt
             )
 
-        if wrong_type:
-            self.uc.show_info(
-                "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
-            )
+        # if wrong_type:
+        #     self.uc.show_info(
+        #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
+        #     )
         
         QApplication.setOverrideCursor(Qt.WaitCursor)    
         self.inlet_cbo.model().sort(0)
@@ -953,8 +953,18 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         dlg_external_inflow.setWindowTitle("Inlet/Junction " + self.inlet_cbo.currentText())
         save = dlg_external_inflow.exec_()
         if save:
+            inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
+            inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+            if inflow:
+                baseline = inflow[0]
+                pattern_name = inflow[1]
+                time_series_name = inflow[2]         
+                if baseline == 0.0 and time_series_name == "":
+                   self.external_inflow_chbox.setChecked(False) 
+                else:
+                   self.external_inflow_chbox.setChecked(True)     
+            
             self.uc.bar_info("Storm Drain external inflow saved for inlet " + self.inlet_cbo.currentText())
-
 
 uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")
 class ExternalInflowsDialog(qtBaseClass, uiDialog):
@@ -971,6 +981,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         self.swmm_select_pattern_btn.clicked.connect(self.select_inflow_pattern)
         self.swmm_select_time_series_btn.clicked.connect(self.select_time_series)
         self.external_inflows_buttonBox.accepted.connect(self.save_external_inflow_variables)
+        self.swmm_inflow_baseline_le.setValidator(QDoubleValidator(0, 100, 2) );
 
         self.setup_connection()
         self.populate_external_inflows()
@@ -989,33 +1000,43 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         if names:
             for name in names:
                 self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
+        self.swmm_inflow_pattern_cbo.addItem("")                
 
         time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
         names = self.gutils.execute(time_names_sql).fetchall()
         if names:
             for name in names:
                 self.swmm_time_series_cbo.addItem(name[0].strip())
-        
         self.swmm_time_series_cbo.addItem("")
         
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
-            self.swmm_inflow_baseline_dbox.setValue(inflow[1])
-            if inflow[2] != "" and inflow[2] is not None:
-                idx = self.swmm_inflow_pattern_cbo.findText(inflow[2].strip())
+            baseline = inflow[1]
+            pattern_name = inflow[2]
+            time_series_name = inflow[3]
+            scale_factor = inflow[4]
+            self.swmm_inflow_baseline_le.setText(str(baseline))
+            if pattern_name != "" and pattern_name is not None:
+                idx = self.swmm_inflow_pattern_cbo.findText(pattern_name.strip())
                 if idx == -1:
-                    self.uc.bar_warn('"' + inflow[2] + '"' + " baseline pattern is not of HOURLY type!", 5)
+                    self.uc.bar_warn('"' + pattern_name + '"' + " baseline pattern is not of HOURLY type!", 5)
                     self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
                 else:
                     self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
             else:
                 self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
 
-            idx = self.swmm_time_series_cbo.findText(inflow[3])
-            if idx > 0:
-                self.swmm_time_series_cbo.setCurrentIndex(idx)
-            self.swmm_inflow_scale_factor_dbox.setValue(inflow[4])
+            if time_series_name == '""':
+                time_series_name =""
+                
+            idx = self.swmm_time_series_cbo.findText(time_series_name)
+            if idx == - 1:
+                time_series_name ="" 
+                idx = self.swmm_time_series_cbo.findText(time_series_name)                 
+            self.swmm_time_series_cbo.setCurrentIndex(idx)
+                
+            self.swmm_inflow_scale_factor_dbox.setValue(scale_factor)
 
     def select_inflow_pattern(self):
         pattern_name = self.swmm_inflow_pattern_cbo.currentText()
@@ -1073,7 +1094,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         Save changes to external inflows variables.
         """
 
-        baseline = self.swmm_inflow_baseline_dbox.value()
+        baseline = float(self.swmm_inflow_baseline_le.text()) if self.swmm_inflow_baseline_le.text() != '' else 0.0
         pattern = self.swmm_inflow_pattern_cbo.currentText()
         file = self.swmm_time_series_cbo.currentText()
         scale = self.swmm_inflow_scale_factor_dbox.value()

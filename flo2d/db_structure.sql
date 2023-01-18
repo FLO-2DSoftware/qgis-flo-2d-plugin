@@ -1431,7 +1431,6 @@ CREATE TABLE "swmm_inflow_patterns" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_inflow_patterns', 'aspatial');
 
-
 CREATE TABLE "swmm_time_series" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "time_series_name" TEXT, -- 
@@ -1440,7 +1439,6 @@ CREATE TABLE "swmm_time_series" (
 	"time_series_data" TEXT DEFAULT "False"-- 
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series', 'aspatial');
-    
 
 CREATE TABLE "swmm_time_series_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1449,8 +1447,22 @@ CREATE TABLE "swmm_time_series_data" (
     "time" TEXT, -- 
     "value" REAL DEFAULT 0 -- 
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series_data', 'aspatial');
-   
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series_data', 'aspatial');  
+
+CREATE TABLE "swmm_tidal_curve" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "tidal_curve_name" TEXT, -- 
+    "tidal_curve_description" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve', 'aspatial');
+
+CREATE TABLE "swmm_tidal_curve_data" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+	"tidal_curve_name" TEXT,
+    "hour" TEXT, -- 
+    "stage" REAL DEFAULT 0
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve_data', 'aspatial');  
 
 CREATE TABLE "user_swmm_conduits" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

@@ -26,12 +26,7 @@ from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
-
-
-
 uiDialog, qtBaseClass = load_ui("outfalls")
-
-
 class OutfallNodesDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -70,7 +65,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.tidal_curve_cbo.currentIndexChanged.connect(self.tidal_curve_cbo_currentIndexChanged)
         self.time_series_cbo.currentIndexChanged.connect(self.time_series_cbo_currentIndexChanged)
 
-        # self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
+        self.open_tidal_curve_btn.clicked.connect(self.open_tidal_curve)
         self.open_time_series_btn.clicked.connect(self.open_time_series)
         #
         # self.set_header()
@@ -136,7 +131,24 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 return
     
             self.block = True            
-       
+
+            # Fill list of time series names:
+            time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
+            names = self.gutils.execute(time_names_sql).fetchall()
+            if names:
+                for name in names:
+                    self.time_series_cbo.addItem(name[0].strip())
+            self.time_series_cbo.addItem("")
+
+            # Fill list of tidal curves names:
+            tidal_names_sql = "SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve GROUP BY tidal_curve_name"
+            names = self.gutils.execute(tidal_names_sql).fetchall()
+            if names:
+                for name in names:
+                    self.tidal_curve_cbo.addItem(name[0].strip())
+            self.tidal_curve_cbo.addItem("") 
+            
+            # Fill table:    
             self.outfalls_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
                 self.outfalls_tblw.insertRow(row_number)
@@ -190,14 +202,6 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.outfalls_tblw.sortItems(0, Qt.AscendingOrder)
             self.outfalls_tblw.selectRow(0)                     
 
-            # Fill list of time series names:
-            time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
-            names = self.gutils.execute(time_names_sql).fetchall()
-            if names:
-                for name in names:
-                    self.time_series_cbo.addItem(name[0].strip())
-        
-            self.time_series_cbo.addItem("")
 
             self.block = False  
             self.out_fall_type_cbo_currentIndexChanged()
@@ -231,14 +235,36 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             if idx == 0:
                 self.water_depth_dbox.setEnabled(True)
                 self.label_5.setEnabled(True)
+                self.water_depth_dbox.setVisible(True)
+                self.label_5.setVisible(True)  
+                                 
             elif idx == 3:
                 self.tidal_curve_cbo.setEnabled(True)
                 self.label_7.setEnabled(True)
                 self.open_tidal_curve_btn.setEnabled(True)
+                self.tidal_curve_cbo.setVisible(True)
+                self.label_7.setVisible(True) 
+                self.open_tidal_curve_btn.setVisible(True)               
+                
+                row = self.outfalls_tblw.currentRow()
+                # row = row if row != -1 else 0
+                item = self.outfalls_tblw.item(row, 7)
+                # if item is not None:
+                tidal_curve = str(item.text()) if item is not None else ""
+                idx = self.tidal_curve_cbo.findText(tidal_curve)
+                if idx != -1:
+                    self.tidal_curve_cbo.setCurrentIndex(idx)
+                else:
+                    pass
+                    # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")    
+                                
             elif idx == 4:
                 self.time_series_cbo.setEnabled(True)
                 self.label_8.setEnabled(True)
                 self.open_time_series_btn.setEnabled(True)
+                self.time_series_cbo.setVisible(True)
+                self.label_8.setVisible(True)
+                self.open_time_series_btn.setVisible(True)                
                 
                 row = self.outfalls_tblw.currentRow()
                 # row = row if row != -1 else 0
@@ -258,16 +284,23 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
         self.label_5.setEnabled(False)
+        self.water_depth_dbox.setVisible(False)
+        self.label_5.setVisible(False)        
         
         self.tidal_curve_cbo.setEnabled(False)
         self.label_7.setEnabled(False)
-        
+        self.tidal_curve_cbo.setVisible(False)
+        self.label_7.setVisible(False)
+        self.open_tidal_curve_btn.setEnabled(False)
+        self.open_tidal_curve_btn.setVisible(False)
+   
         self.time_series_cbo.setEnabled(False)
         self.label_8.setEnabled(False)
-        
-        self.open_tidal_curve_btn.setEnabled(False)
-        self.open_time_series_btn.setEnabled(False) 
-          
+        self.time_series_cbo.setVisible(False)
+        self.label_8.setVisible(False)
+        self.open_time_series_btn.setEnabled(False)  
+        self.open_time_series_btn.setVisible(False) 
+                  
     def water_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.water_depth_dbox, 6)
 
@@ -278,7 +311,37 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.combo_valueChanged(self.time_series_cbo, 8)
 
     def open_tidal_curve(self):
-        pass
+        tidal_curve_name = self.tidal_curve_cbo.currentText()
+        dlg = OutfallTidalCurveDialog(self.iface, tidal_curve_name)
+        while True:
+            save = dlg.exec_()
+            if save:
+                if dlg.values_ok:
+                    dlg.save_tidal_curve()
+                    tidal_curve_name = dlg.get_name()
+                    if tidal_curve_name != "":
+                        # Reload tidal curve list and select the one saved:
+                        time_curve_names_sql = (
+                            "SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve GROUP BY tidal_curve_name"
+                        )
+                        names = self.gutils.execute(time_curve_names_sql).fetchall()
+                        if names:
+                            self.tidal_curve_cbo.clear()
+                            for name in names:
+                                self.tidal_curve_cbo.addItem(name[0])
+                            self.tidal_curve_cbo.addItem("")
+            
+                            idx = self.tidal_curve_cbo.findText(tidal_curve_name)
+                            self.tidal_curve_cbo.setCurrentIndex(idx)                    
+
+                        # self.uc.bar_info("Storm Drain external tidal curve saved for inlet " + "?????")
+                        break
+                    else:
+                       break 
+            else:
+                break
+             
+
 
     def open_time_series(self):
         time_series_name = self.time_series_cbo.currentText()
@@ -373,17 +436,17 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             if item is not None:
                 itemTxt = item.text().upper().strip()
                 itemTxt = "TIDAL CURVE" if itemTxt == "TIDAL" else "TIME SERIES" if itemTxt == "TIME" else itemTxt
-                if itemTxt in self.outfalls_tuple:
-                    index = self.outfall_type_cbo.findText(itemTxt)
-                else:
+                if itemTxt not in self.outfalls_tuple:
                     itemTxt = "NORMAL"
-                    index = self.outfall_type_cbo.findText(itemTxt)
+                index = self.outfall_type_cbo.findText(itemTxt)
                 index = 4 if index > 4 else 0 if index < 0 else index
                 self.outfall_type_cbo.setCurrentIndex(index)
                 item = QTableWidgetItem()
                 item.setData(Qt.EditRole, self.outfall_type_cbo.currentText())
                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)   
                 self.outfalls_tblw.setItem(row, 5, item)
+                
+                self.out_fall_type_cbo_currentIndexChanged()
 
             self.water_depth_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 6)))
             
@@ -807,5 +870,172 @@ class NumericDelegate(QStyledItemDelegate):
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor                                           
-                           
+
+uiDialog, qtBaseClass = load_ui("storm_drain_outfall_tidal_curve")
+class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
+    def __init__(self, iface, tidal_curve_name):
+        qtBaseClass.__init__(self)
+
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.tidal_curve_name = tidal_curve_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+        
+        self.values_ok = False
+        set_icon(self.add_tidal_data_btn, "add.svg")
+        set_icon(self.delete_tidal_data_btn, "remove.svg") 
+               
+        self.setup_connection()
+
+        delegate = NumericDelegate(self.outflow_tidal_curve_tblw)
+        self.outflow_tidal_curve_tblw.setItemDelegate(delegate)
+        
+        self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save)   
+        self.outflow_tidal_curve_tblw.itemChanged.connect(self.ts_tblw_changed)
+        self.add_tidal_data_btn.clicked.connect(self.add_time) 
+        self.delete_tidal_data_btn.clicked.connect(self.delete_time) 
+
+        self.populate_tidal_curve_dialog()
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_tidal_curve_dialog(self):
+        if self.tidal_curve_name == "":
+            pass
+        else:
+            tidal_sql = "SELECT * FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
+            row = self.gutils.execute(tidal_sql, (self.tidal_curve_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[2])
+                    
+                data_qry = """SELECT
+                                hour, 
+                                stage
+                        FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?;"""
+                rows = self.gutils.execute(data_qry, (self.tidal_curve_name,)).fetchall()
+                if rows:
+                    self.outflow_tidal_curve_tblw.setRowCount(0)
+            
+                    for row_number, row_data in enumerate(rows):
+                        self.outflow_tidal_curve_tblw.insertRow(row_number)
+                        for cell, data in enumerate(row_data):
+            
+                            item = QTableWidgetItem()     
+                            item.setData(Qt.DisplayRole, data)
+                            self.outflow_tidal_curve_tblw.setItem(row_number, cell, item)
+        
+                    self.outflow_tidal_curve_tblw.sortItems(0, Qt.AscendingOrder)                    
+            else:
+                self.name_le.setText(self.tidal_curve_name)
+        
+        QApplication.restoreOverrideCursor()  
+             
+    def is_ok_to_save(self):
+        if self.name_le.text() == "" or self.name_le.text() == "...":
+            self.uc.bar_warn("Tidal Name name required!", 2)
+            self.tidal_curve_name = ""
+            self.values_ok = False
+            
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Tidal Curve description required!", 2)
+            self.values_ok = False
+
+        else:
+            self.values_ok = True
+    
+    def save_tidal_curve(self):      
+        delete_sql = "DELETE FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
+        self.gutils.execute(delete_sql, (self.name_le.text(),))
+        insert_sql = "INSERT INTO swmm_tidal_curve (tidal_curve_name, tidal_curve_description) VALUES (?, ?);"
+        self.gutils.execute(
+            insert_sql,
+            (
+                self.name_le.text(),
+                self.description_le.text()
+            ),
+        )
+
+        delete_data_sql = "DELETE FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+        
+        insert_data_sql = ["""INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""", 3]
+        for row in range(0, self.outflow_tidal_curve_tblw.rowCount()):
+            hour = self.outflow_tidal_curve_tblw.item(row, 0)
+            if hour:
+                hour = hour.text()
+                
+            stage = self.outflow_tidal_curve_tblw.item(row, 1)
+            if stage:
+                stage = stage.text()
+                
+            insert_data_sql += [(self.name_le.text(), hour, stage)]
+        self.gutils.batch_execute(insert_data_sql)   
+            
+        self.uc.bar_info("Outflow tidal curve " + self.name_le.text() + " saved.", 2)
+        self.tidal_curve_name = self.name_le.text()
+        self.close()
+
+    def get_name(self):
+        return self.tidal_curve_name
+
+    def inflow_time_series_tblw_clicked(self):
+        self.uc.show_info("Clicked")
+        
+    def time_series_model_changed(self, i,j):
+        self.uc.show_info("Changed") 
+        
+    def ts_tblw_changed(self, Qitem):  
+        return
+        try:
+            test = float(Qitem.text())
+        except ValueError:
+            self.uc.show_info("Float error") 
+            Qitem.setText("")     
+
+    def add_time(self):
+        self.outflow_tidal_curve_tblw.insertRow(self.outflow_tidal_curve_tblw.rowCount())  
+        row_number = self.outflow_tidal_curve_tblw.rowCount() - 1
+        
+        item = QTableWidgetItem()
+        d= QDate.currentDate()
+        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year()) 
+        item.setData(Qt.DisplayRole, d)                         
+        self.outflow_tidal_curve_tblw.setItem(row_number, 0, item)   
+        
+        item = QTableWidgetItem()
+        t = QTime.currentTime()
+        t = str(t.hour()) + ":" + str(t.minute())
+        item.setData(Qt.DisplayRole, t)                         
+        self.outflow_tidal_curve_tblw.setItem(row_number, 1, item) 
+        
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")                         
+        self.outflow_tidal_curve_tblw.setItem(row_number, 2, item) 
+       
+        self.outflow_tidal_curve_tblw.selectRow(row_number)
+        self.outflow_tidal_curve_tblw.setFocus()                   
+
+    def delete_time(self):
+        self.outflow_tidal_curve_tblw.removeRow(self.outflow_tidal_curve_tblw.currentRow())      
+        self.outflow_tidal_curve_tblw.selectRow(0)
+        self.outflow_tidal_curve_tblw.setFocus()
+                                          
+class NumericDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(NumericDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
+            validator = QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor                                     
 

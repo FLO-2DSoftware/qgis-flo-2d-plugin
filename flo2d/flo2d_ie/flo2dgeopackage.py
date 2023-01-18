@@ -2183,7 +2183,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
             return False
 
     def export_street(self, outdir):

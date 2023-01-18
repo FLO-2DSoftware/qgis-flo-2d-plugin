@@ -909,7 +909,27 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),  
+                (
+                    "swmm_tidal_curve",
+                    {
+                        "name": "Storm Drain Tidal Curve",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),
+                (
+                    "swmm_tidal_curve_data",
+                    {
+                        "name": "Storm Drain Tidal Curve Data",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                              
                 (
                     "swmm_pumps_curve_data",
                     {
@@ -919,7 +939,8 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ), 
+                               
                 # Infiltration Layers
                 (
                     "infil",

@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.84
+version=0.10.85
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.85
+  -  Add new tidal curves tables and layers for outfalls (and functionality).
  <p>0.10.84
   -  Hydraulic Structures: export BRIDGE_COEFF_DATA.DAT to project floder.
  <p>0.10.83
