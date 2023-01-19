@@ -2385,23 +2385,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # INFLOWS ###################################################
                     try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[INFLOWS]")
-                        swmm_inp_file.write(
-                            "\n;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern"
-                        )
-                        swmm_inp_file.write(
-                            "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
-                        )
-
                         SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
-                                          FROM swmm_inflows ORDER BY fid;"""
-
-                        line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}"
+                                          FROM swmm_inflows ORDER BY fid;"""                        
                         inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
                         if not inflows_rows:
                             pass
-                        else:
+                        else:                        
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[INFLOWS]")
+                            swmm_inp_file.write(
+                                "\n;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern"
+                            )
+                            swmm_inp_file.write(
+                                "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
+                            )
+                            line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}"
                             for row in inflows_rows:
                                 lrow = [
                                     row[0],
