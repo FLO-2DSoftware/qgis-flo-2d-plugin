@@ -72,7 +72,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
                 with open(debugDAT, "w") as f:
                     f.write("")
                 debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                return_code = debug_simulation.run()
+                return_code = debug_simulation.perform()
                 self.uc.show_info( "Debug simulation started asynchronously.\nYou can close QGIS or continue working with QGIS.")
                 # if return_code != 0:
                 #     self.uc.show_warn(

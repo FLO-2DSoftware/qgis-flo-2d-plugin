@@ -253,7 +253,8 @@ class Flo2D(object):
                 (os.path.join(self.plugin_dir, "img/profile_run2.svg"), "Run Profiles", self.run_profiles),
                 (os.path.join(self.plugin_dir, "img/hydrog.svg"), "Run Hydrog", self.run_hydrog),
                 (os.path.join(self.plugin_dir, "img/maxplot.svg"), "Run MaxPlot", self.run_maxplot),
-                (os.path.join(self.plugin_dir, "img/mapper2.svg"), "Run Mapper", self.run_mapper2)
+                (os.path.join(self.plugin_dir, "img/mapper2.svg"), "Run Mapper", self.run_mapper2),
+                (os.path.join(self.plugin_dir, "img/tailings dam breach.svg"), "Run Tailings Dam Tool ", self.run_tailingsdambreach)
                 #                     (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_program('Mapper PRO.Exe', 'Run Mapper', 'FLO-2D Folder (Mapper PRO.exe)'))
             ),
         )
@@ -631,6 +632,9 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
     def run_flopro(self):
+        self.run_program("FLOPRO.exe")
+        return
+
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
         # ok = dlg.exec_()
@@ -647,7 +651,7 @@ class Flo2D(object):
         #         if os.path.exists(debugDAT):
         #             os.remove(debugDAT)
         #         simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-        #         return_code = simulation.run()
+        #         return_code = simulation.perform()
         #         # if return_code != 0:
         #         #     self.uc.show_warn(
         #         #         "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
@@ -681,8 +685,22 @@ class Flo2D(object):
                 if os.path.exists(debugDAT):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                proc = simulation.run() 
-                self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.")    
+                result = simulation.perform()                
+                
+                # if result != 0:
+                #     self.uc.show_warn(
+                #     "error 190821.1120: flo2d.exe model run failed!\n\n"
+                #     + "program finished with return code " + str(result))
+                # else:
+                #     self.uc.show_info( "model finished with return code "  + str(result))                 
+                
+
+                
+                # self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.") 
+
+
+
+  
                 # time.sleep(1)  
                 # return_code = proc.poll()
                 # if return_code is None:
@@ -713,7 +731,7 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
                 tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
-                return_code = tailings.run()
+                return_code = tailings.perform()
                 
                 # if return_code != 0:
                 #     QApplication.restoreOverrideCursor()
@@ -759,7 +777,7 @@ class Flo2D(object):
         try:
             if os.path.isfile(flo2d_dir + r"\Mapper PRO.exe"):
                 mapper = MapperExecutor(flo2d_dir, project_dir)
-                mapper.run()
+                mapper.perform()
                 self.uc.bar_info("Mapper started!", dur=3)
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program Mapper PRO.exe is not in directory\n\n" + flo2d_dir)
@@ -794,7 +812,7 @@ class Flo2D(object):
         try:
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
                 program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
-                program.run()
+                program.perform()
                 self.uc.bar_info(exe_name + " started!", dur=3)
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)

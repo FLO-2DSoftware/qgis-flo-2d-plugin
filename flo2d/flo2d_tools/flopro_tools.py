@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import time
 from subprocess import Popen, PIPE, STDOUT, CREATE_NO_WINDOW, check_call, CalledProcessError, run, call
 from contextlib import contextmanager
 from ..user_communication import UserCommunication
@@ -33,7 +34,10 @@ class FLOPROExecutor(object):
         self.uc = self.uc = UserCommunication(iface, "FLO-2D")
 
     def execute_flopro(self):
-        with cd(self.project_dir):  
+        with cd(self.project_dir):
+            #             proc = subprocess.call(self.tailings_exe, shell=True)
+            #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+
             try:
                 # check_call(self.flo2d_exe)
                 # run(self.flo2d_exe)
@@ -44,10 +48,27 @@ class FLOPROExecutor(object):
                 # for line in out:
                 #     self.uc.log_info(line)               
                 # proc = Popen(self.flo2d_exe, )    
+
+
+                # proc = Popen(
+                #     self.flo2d_exe,
+                #     shell=True,
+                #     stdin=open(os.devnull),
+                #     stdout=PIPE,
+                #     stderr=STDOUT,
+                #     universal_newlines=True,
+                # )
+
+
                 
-                proc = Popen([self.flo2d_exe]) 
+                
+                
+                result = run([self.flo2d_exe]) 
  
-    
+ 
+ 
+ 
+ 
                 # (self, args, bufsize=-1, executable=None,
                 #  stdin=None, stdout=None, stderr=None,
                 #  preexec_fn=None, close_fds=True,
@@ -59,11 +80,12 @@ class FLOPROExecutor(object):
                        
                 # self.uc.bar_info("Model started. " ) 
                 # proc.wait()
-                return proc     
+                
+                return result     
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!/n", e)
 
-    def run(self):
+    def perform(self):
         return self.execute_flopro()
     
     
@@ -140,8 +162,6 @@ class TailingsDamBreachExecutor(object):
 
     def execute_tailings(self):
         with cd(self.project_dir):
-            #             proc = subprocess.call(self.tailings_exe, shell=True)
-            #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
             proc = Popen(
                 self.tailings_exe,
                 shell=True,
@@ -150,10 +170,9 @@ class TailingsDamBreachExecutor(object):
                 stderr=STDOUT,
                 universal_newlines=True,
             )
-            # proc.wait()
             return proc.returncode
 
-    def run(self):
+    def perform(self):
         return self.execute_tailings()
 
 
@@ -170,7 +189,7 @@ class MapperExecutor(object):
         with cd(self.project_dir):
             Popen(self.mapper_exe)
 
-    def run(self):
+    def perform(self):
         return self.execute_mapper()
 
 
@@ -183,5 +202,5 @@ class ProgramExecutor(object):
         with cd(self.project_dir):
             Popen(self.exe)
 
-    def run(self):
+    def perform(self):
         return self.execute_exe()
