@@ -148,7 +148,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_nodes_lyr = None
         self.user_swmm_conduits_lyr = None
         self.user_swmm_pumps_lyr = None
-        self.user_swmm_pumps_curve_data_lyr = None
+        self.swmm_pumps_curve_data_lyr = None
+        self.swmm_tidal_curve_lyr = None
+        self.swmm_tidal_curve_data_lyr = None
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_time_series_lyr = None
@@ -218,7 +220,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
         self.user_swmm_weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
-        self.user_swmm_pumps_curve_data_lyr= self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
+        self.swmm_pumps_curve_data_lyr= self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
+        self.swmm_tidal_curve_lyr = self.lyrs.data["swmm_tidal_curve"]["qlyr"]
+        self.swmm_tidal_curve_data_lyr = self.lyrs.data["swmm_tidal_curve_data"]["qlyr"]
         self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
         self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
         self.swmm_time_series_lyr = self.lyrs.data["swmm_time_series"]["qlyr"]
@@ -993,20 +997,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Pump curves into table swmm_pumps_curve_data:
                 storm_drain.create_INP_curves_list_with_curves()      
                 try:
-                    insert_curves_sql = """INSERT INTO swmm_pumps_curve_data
+                    insert_pump_curves_sql = """INSERT INTO swmm_pumps_curve_data
                                             (   pump_curve_name, 
                                                 pump_curve_type, 
                                                 x_value,
                                                 y_value
                                             ) 
                                             VALUES (?, ?, ?, ?);"""   
-                                                             
-                    # if complete_or_create == "Create New":
-                    #     remove_features(self.user_swmm_pumps_curve_data_lyr)
+
+                    insert_tidal_curves_sql = """INSERT OR REPLACE INTO swmm_tidal_curve
+                                            (   tidal_curve_name, 
+                                                tidal_curve_description
+                                            ) 
+                                            VALUES (?, ?);"""  
+                                            
+                    insert_tidal_curves_data_sql = """INSERT INTO swmm_tidal_curve_data
+                                            (   tidal_curve_name, 
+                                                hour, 
+                                                stage
+                                            ) 
+                                            VALUES (?, ?, ?);"""   
                     
-                    remove_features(self.user_swmm_pumps_curve_data_lyr)                       
+                    remove_features(self.swmm_pumps_curve_data_lyr)
+                    remove_features(self.swmm_tidal_curve_lyr) 
+                    remove_features(self.swmm_tidal_curve_data_lyr) 
+                                          
                     for curve in storm_drain.INP_curves:
-                        self.gutils.execute(insert_curves_sql, (curve[0], curve[1], curve[2], curve[3])) 
+                        if curve[1][0:4] == "Pump":
+                            self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3])) 
+                        elif curve[1][0:5] == "Tidal":
+                            self.gutils.execute(insert_tidal_curves_sql, (curve[0], curve[1]))
+                            self.gutils.execute(insert_tidal_curves_data_sql, (curve[0], curve[2], curve[3]))                            
                 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
@@ -1032,7 +1053,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             """
 
-            # Transfer data from "storm_drain.INP_dict" to "user_swmm_user" layer:
+            # Transfer data from "storm_drain.INP_dict" to "user_swmm_nodes" layer:
 
             replace_user_swmm_nodes_sql = """UPDATE user_swmm_nodes 
                              SET    junction_invert_elev = ?,
@@ -1089,11 +1110,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 init_depth = float_or_zero(values["init_depth"]) if "init_depth" in values else 0
                 surcharge_depth = float_or_zero(values["surcharge_depth"]) if "surcharge_depth" in values else 0
                 ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
+                
                 # Outfalls:
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
+                if outfall_type in ["TIDAL", "TIMESERIES"]:
+                    JJXX = 0
                 outfall_invert_elev = float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
-                tidal_curve = values["tidal_curve"] if "tidal_curve" in values else "..."
-                time_series = values["time_series"] if "time_series" in values else "..."
+                time_series = "*"
+                tidal_curve = "*" 
+                if outfall_type == "TIDAL":
+                    tidal_curve = values["series"]
+                if outfall_type == "TIMESERIES":
+                    time_series = values["series"]                   
                 water_depth = values["water_depth"] if "water_depth" in values else 0
                 if outfall_type == "FIXED":
                     water_depth = values["series"]
@@ -1833,7 +1861,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     no_in_out_orifices = 0
                     no_in_out_weirs = 0 
                                        
-                    # TITLE ##################################################
+                    #INP TITLE ##################################################
                     items = self.select_this_INP_group(INP_groups, "title")
                     swmm_inp_file.write("[TITLE]")
                     #                     if items is not None:
@@ -1842,7 +1870,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     #                     else:
                     swmm_inp_file.write("\n" + dlg_INP_groups.titleTextEdit.toPlainText() + "\n")
 
-                    # OPTIONS ##################################################
+                    #INP OPTIONS ##################################################
                     items = self.select_this_INP_group(INP_groups, "options")
                     swmm_inp_file.write("\n[OPTIONS]")
                     #                     if items is not None:
@@ -1895,7 +1923,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\nLINK_OFFSETS         " + dlg_INP_groups.link_offsets_cbo.currentText())
                     swmm_inp_file.write("\nMIN_SLOPE            " + str(dlg_INP_groups.min_slop_dbox.value()))
 
-                    # JUNCTIONS ##################################################
+                    #INP JUNCTIONS ##################################################
                     try:
                         SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
                                           FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
@@ -1927,7 +1955,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 070618.0851: error while exporting [JUNCTIONS] to .INP file!", e)
                         return
 
-                    # OUTFALLS ###################################################
+                    #INP OUTFALLS ###################################################
                     try:
                         SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
                                           FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
@@ -1955,17 +1983,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if lrow[5] is None else lrow[5],
                                     0 if lrow[6] is None else lrow[6],
                                 ]
-                                lrow[3] = "   " if lrow[3] == "..." else lrow[3]
-                                lrow[4] = "   " if lrow[4] == "..." else lrow[4]
+                                lrow[3] = "*" if lrow[3] == "..." else "*" if lrow[3] == "" else lrow[3]
+                                lrow[4] = "*" if lrow[4] == "..." else "*" if lrow[4] == "" else lrow[4]
                                 lrow[2] = lrow[2].upper().strip()
-                                if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
+                                if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
                                     lrow[2] = "NORMAL"
-                                lrow[2] = "TIDALCURVE" if lrow[2] == "TIDAL CURVE" else "TIMESERIES" if lrow[2] == "TIME SERIES" else lrow[2]
+                                lrow[2] = "TIDAL" if lrow[2] == "TIDAL CURVE" else "TIMESERIES" if lrow[2] == "TIME SERIES" else lrow[2]
                                  
                                 # Set 3rt. value:    
                                 if lrow[2] == "FREE" or lrow[2] == "NORMAL":
                                     lrow[3] = "    "
-                                elif lrow[2] == "TIDALCURVE" or lrow[2] == "TIMESERIES":
+                                elif lrow[2] == "TIMESERIES":
+                                    lrow[3] = lrow[3]
+                                elif lrow[2] == "TIDAL":
                                     lrow[3] = lrow[4]
                                 elif lrow[2] == "FIXED":
                                     lrow[3] = lrow[6]   
@@ -1978,7 +2008,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
                         return
 
-                    # CONDUITS ###################################################
+                    #INP CONDUITS ###################################################
 
                     try:
                         SD_conduits_sql = """SELECT conduit_name, conduit_inlet, conduit_outlet, conduit_length, conduit_manning, conduit_inlet_offset, 
@@ -2024,7 +2054,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         return
 
 
-                    # PUMPS ###################################################
+                    #INP PUMPS ###################################################
                     try:
                         SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
                                             pump_startup_depth, pump_shutoff_depth 
@@ -2067,7 +2097,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         return
 
 
-                    # ORIFICES ###################################################
+                    #INP ORIFICES ###################################################
                     try:
                         SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
                                             orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
@@ -2110,7 +2140,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 310322.1548: error while exporting [ORIFICES] to .INP file!", e)
                         return
 
-                    # WEIRS ###################################################
+                    #INP WEIRS ###################################################
                     try:
                         SD_weirs_sql = """SELECT weir_name, weir_inlet, weir_outlet, weir_type, weir_crest_height, 
                                             weir_disch_coeff, weir_flap_gate, weir_end_contrac, weir_end_coeff 
@@ -2154,7 +2184,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 090422.0557: error while exporting [WEIRS] to .INP file!", e)
                         return
                     
-                    # XSECTIONS ###################################################
+                    #INP XSECTIONS ###################################################
                     try:
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[XSECTIONS]")
@@ -2279,7 +2309,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 090422.0601: error while exporting [XSECTIONS] to .INP file!", e)
                         return
 
-                    # LOSSES ###################################################
+                    #INP LOSSES ###################################################
                     try:
                         SD_losses_sql = """SELECT conduit_name, losses_inlet, losses_outlet, losses_average, losses_flapgate
                                           FROM user_swmm_conduits ORDER BY fid;"""
@@ -2305,85 +2335,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 070618.1622: error while exporting [LOSSES] to .INP file!", e)
                         return
 
-                    # CURVES ###################################################
-                    try:
-
-                        SD_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
-                                          FROM swmm_pumps_curve_data ORDER BY fid;"""
-
-                        curves_rows = self.gutils.execute(SD_curves_sql).fetchall()
-                        if not curves_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[CURVES]")
-                            swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
-                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")                            
-                            
-                            line = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
-                            
-                            name = ""
-                            for row in curves_rows:
-                                lrow = list(row)
-                                if lrow[0] == name:
-                                    lrow[1]= "     "  
-                                else:
-                                    name = lrow[0]
-                                swmm_inp_file.write(line.format(*lrow))
-                                                            
-                            # typ = ""
-                            # for row in curves_rows:
-                            #     lrow = list(row)
-                            #     if lrow[1] == typ:
-                            #         lrow[1]= "     "  
-                            #     else:
-                            #         typ = lrow[1]
-                            #     swmm_inp_file.write(line.format(*lrow))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n" + 
-                                           "Is the name or type of the curve missing in 'Storm Drain Pumps Curve Data' table?", e)
-                        return
-
-                    # REPORT ##################################################
-                    items = self.select_this_INP_group(INP_groups, "report")
-                    swmm_inp_file.write("\n\n[REPORT]")
-                    #                     if items is not None:
-                    #                         for line in items[1:]:
-                    #                             swmm_inp_file.write("\n" + line)
-                    #                     else:
-                    #                         swmm_inp_file.write('\n')
-                    swmm_inp_file.write("\nINPUT           " + dlg_INP_groups.input_cbo.currentText())
-                    swmm_inp_file.write("\nCONTROLS        " + dlg_INP_groups.controls_cbo.currentText())
-                    swmm_inp_file.write("\nSUBCATCHMENTS   NONE")
-                    swmm_inp_file.write("\nNODES           " + dlg_INP_groups.nodes_cbo.currentText())
-                    swmm_inp_file.write("\nLINKS           " + dlg_INP_groups.links_cbo.currentText())
-
-                    # COORDINATES ###################################################
-                    try:
+                    #INP CONTROLS ##################################################
+                    items = self.select_this_INP_group(INP_groups, "controls")
+                    swmm_inp_file.write("\n\n[CONTROLS]")
+                    if items is not None:
+                        for line in items[1:]:
+                            if line != "":
+                                swmm_inp_file.write("\n" + line)
+                    else:
                         swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[COORDINATES]")
-                        swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
-                        swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
 
-                        SD_coordinates_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                          FROM user_swmm_nodes ORDER BY fid;"""
 
-                        line = "\n{0:16} {1:<18} {2:<18}"
-                        coordinates_rows = self.gutils.execute(SD_coordinates_sql).fetchall()
-                        if not coordinates_rows:
-                            pass
-                        else:
-                            for row in coordinates_rows:
-                                x = row[:2][1].strip("POINT()").split()[0]
-                                y = row[:2][1].strip("POINT()").split()[1]
-                                swmm_inp_file.write(line.format(row[0], x, y))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
-                        return
-
-                    # INFLOWS ###################################################
+                    #INP INFLOWS ###################################################
                     try:
                         SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
                                           FROM swmm_inflows ORDER BY fid;"""                        
@@ -2417,7 +2380,56 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
                         return
 
-                    # TIMESERIES ###################################################
+                    #INP CURVES ###################################################
+                    try:
+
+                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
+                                          FROM swmm_pumps_curve_data ORDER BY fid;"""
+                        pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
+                        
+                        SD_tidal_curves_sql = """SELECT tidal_curve_name, hour, stage
+                                          FROM swmm_tidal_curve_data ORDER BY fid;"""
+                        tidal_curves_rows = self.gutils.execute(SD_tidal_curves_sql).fetchall()                        
+                        
+                        if not pump_curves_rows and not tidal_curves_rows:
+                            pass
+                        else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[CURVES]")
+                            swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
+                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")                            
+                            
+                            line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
+                            name = ""
+                            for row in pump_curves_rows:
+                                lrow = list(row)
+                                if lrow[0] == name:
+                                    lrow[1]= "     "  
+                                else:                               
+                                    swmm_inp_file.write("\n")
+                                    swmm_inp_file.write("\n;Description")  
+                                    name = lrow[0]
+                                swmm_inp_file.write(line1.format(*lrow))
+                            
+                            line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"                                
+                            name = ""
+                            for row in tidal_curves_rows:
+                                lrow = [row[0], "Tidal", row[1], row[2]]
+                                if lrow[0] == name:
+                                    lrow[1]= "     "  
+                                else:
+                                    swmm_inp_file.write("\n")
+                                    swmm_inp_file.write("\n;Description")                                      
+                                    name = lrow[0]                                    
+                                swmm_inp_file.write(line2.format(*lrow))
+                       
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n" + 
+                                           "Is the name or type of the curve missing in 'Storm Drain Pumps Curve Data' table?", e)
+                        return
+
+                    #INP TIMESERIES ###################################################
                     try:
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[TIMESERIES]")
@@ -2471,7 +2483,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)
                         return
 
-                    # PATTERNS ###################################################
+                    #INP PATTERNS ###################################################
                     try:
                         swmm_inp_file.write("\n")
                         swmm_inp_file.write("\n[PATTERNS]")
@@ -2537,15 +2549,43 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.show_error("ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!", e)
                         return
 
-                    # CONTROLS ##################################################
-                    items = self.select_this_INP_group(INP_groups, "controls")
-                    swmm_inp_file.write("\n\n[CONTROLS]")
-                    if items is not None:
-                        for line in items[1:]:
-                            if line != "":
-                                swmm_inp_file.write("\n" + line)
-                    else:
+                    #INP REPORT ##################################################
+                    items = self.select_this_INP_group(INP_groups, "report")
+                    swmm_inp_file.write("\n\n[REPORT]")
+                    #                     if items is not None:
+                    #                         for line in items[1:]:
+                    #                             swmm_inp_file.write("\n" + line)
+                    #                     else:
+                    #                         swmm_inp_file.write('\n')
+                    swmm_inp_file.write("\nINPUT           " + dlg_INP_groups.input_cbo.currentText())
+                    swmm_inp_file.write("\nCONTROLS        " + dlg_INP_groups.controls_cbo.currentText())
+                    swmm_inp_file.write("\nSUBCATCHMENTS   NONE")
+                    swmm_inp_file.write("\nNODES           " + dlg_INP_groups.nodes_cbo.currentText())
+                    swmm_inp_file.write("\nLINKS           " + dlg_INP_groups.links_cbo.currentText())
+
+                    #INP COORDINATES ###################################################
+                    try:
                         swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[COORDINATES]")
+                        swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
+                        swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
+
+                        SD_coordinates_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                                          FROM user_swmm_nodes ORDER BY fid;"""
+
+                        line = "\n{0:16} {1:<18} {2:<18}"
+                        coordinates_rows = self.gutils.execute(SD_coordinates_sql).fetchall()
+                        if not coordinates_rows:
+                            pass
+                        else:
+                            for row in coordinates_rows:
+                                x = row[:2][1].strip("POINT()").split()[0]
+                                y = row[:2][1].strip("POINT()").split()[1]
+                                swmm_inp_file.write(line.format(row[0], x, y))
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
+                        return
 
                     # FUTURE GROUPS ##################################################
                     future_groups = [
@@ -2563,9 +2603,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "SNOWPACKS",
                         "DIVIDERS",
                         "STORAGE",
-                        # "PUMPS",
-                        # "ORIFICES",
-                        # "WEIRS",
                         "OUTLETS",
                         "TRANSECTS",
                         "POLLUTANTS",
@@ -2577,7 +2614,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "DWF",
                         "RDII",
                         "LOADINGS",
-                        # "CURVES",
+                        "TAGS",
+                        "MAP"
                     ]
 
                     for group in future_groups:

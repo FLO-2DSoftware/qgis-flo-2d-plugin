@@ -178,7 +178,7 @@ class StormDrainProject(object):
         The parameter outfalls_dict is a dictionary of dictionaries, keyed by the outfall name (e.g. 'OUT1', 'OUT2',..),
         containing for each junction name, its variables values.
         E.g. {'OUT3':   {'outfall_invert_elev': 3456.9, 'outfall_type': ´FREE', 'tidal_curve': ´'name_st1', etc}
-              'OUT4':   {'outfall_invert_elev': 4344.9, 'outfall_type': ´TIDAL CURVE', 'tidal_curve': ´'name_st2', etc}
+              'OUT4':   {'outfall_invert_elev': 4344.9, 'outfall_type': ´TIDAL', 'tidal_curve': ´'name_st2', etc}
 
         """
 
@@ -677,16 +677,16 @@ class StormDrainProject(object):
                     i0 = items[0]
                     i1 = items[1]
                     if items[2] == "TIDAL":
-                        i2 = "TIDAL CURVE"
+                        i2 = "TIDAL"
                     elif items[2] == "TIME":
-                        i2 = "TIME SERIES"
+                        i2 = "TIMESERIES"
                     else:
                         i2 = items[2]
                         
                     if items[2] == "FIXED":
                         i3 = items[3]
-                    elif items[2] == "TIDAL" or items[2] == "TIME":    
-                        i3 = items[4] 
+                    elif items[2] == "TIDAL" or items[2] == "TIMESERIES":    
+                        i3 = items[3] 
                     else:
                         i3 = ""  
                         

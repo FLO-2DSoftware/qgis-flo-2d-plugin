@@ -10,6 +10,7 @@
 import os
 from ..utils import is_true, float_or_zero, int_or_zero, is_number
 from qgis.core import QgsFeatureRequest
+from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
 from qgis.PyQt.QtWidgets import (
     QInputDialog, 
@@ -43,7 +44,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         set_icon(self.zoom_in_outfall_btn, "zoom_in.svg")
         set_icon(self.zoom_out_outfall_btn, "zoom_out.svg")  
         
-        self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES")
+        self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES")
         
         self.setup_connection()
         
@@ -75,7 +76,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.grid_count = self.gutils.count('grid', field="fid")        
         
         self.outfalls_tblw.cellClicked.connect(self.outfalls_tblw_cell_clicked)
-        self.outfalls_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
+        self.outfalls_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)      
         
         self.populate_outfalls()
 
@@ -182,15 +183,19 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                                 index = 0
                             self.outfall_type_cbo.setCurrentIndex(index)
                             data = self.outfall_type_cbo.currentText()
-                            if not data in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
+                            if not data in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
                                 data = "NORMAL"
                             item.setData(Qt.DisplayRole, data)
                         elif col_number == 7:
                             self.water_depth_dbox.setValue(data if data is not None else 0)
                         elif col_number == 8:
-                            self.tidal_curve_cbo.setCurrentIndex(0)
+                            txt = "*" if data == "..." else data
+                            idx = self.tidal_curve_cbo.findText(txt)
+                            self.tidal_curve_cbo.setCurrentIndex(idx)                            
                         elif col_number == 9:
-                            self.time_series_cbo.setCurrentIndex(0)
+                            txt = "*" if data == "..." else data
+                            idx = self.time_series_cbo.findText(txt)
+                            self.time_series_cbo.setCurrentIndex(idx)
 
                     if col_number > 0:  # For this row disable some elements and omit fid number
                         if (col_number in  (1, 2, 4, 5, 6, 8, 9)):
@@ -435,7 +440,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 itemTxt = item.text().upper().strip()
-                itemTxt = "TIDAL CURVE" if itemTxt == "TIDAL" else "TIME SERIES" if itemTxt == "TIME" else itemTxt
+                # itemTxt = "TIDAL CURVE" if itemTxt == "TIDAL" else "TIME SERIES" if itemTxt == "TIME" else itemTxt
                 if itemTxt not in self.outfalls_tuple:
                     itemTxt = "NORMAL"
                 index = self.outfall_type_cbo.findText(itemTxt)
@@ -629,7 +634,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 outfall_type = str(item.text())
-                if not outfall_type in ("FIXED", "FREE", "NORMAL", "TIDAL CURVE", "TIME SERIES"):
+                if not outfall_type in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
                     outfall_type = "NORMAL"
 
             item = self.outfalls_tblw.item(row, 6)
@@ -767,6 +772,11 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Time Series name required!", 2)
             self.time_series_name = ""
             self.values_ok = False
+
+        elif ' ' in self.name_le.text():
+            self.uc.bar_warn("Time Series name with spaces not allowed!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
             
         elif self.description_le.text() == "":
             self.uc.bar_warn("Time Series description required!", 2)
@@ -895,7 +905,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         
         self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save)   
         self.outflow_tidal_curve_tblw.itemChanged.connect(self.ts_tblw_changed)
-        self.add_tidal_data_btn.clicked.connect(self.add_time) 
+        self.add_tidal_data_btn.clicked.connect(self.add_tidal) 
         self.delete_tidal_data_btn.clicked.connect(self.delete_time) 
 
         self.populate_tidal_curve_dialog()
@@ -945,7 +955,12 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Tidal Name name required!", 2)
             self.tidal_curve_name = ""
             self.values_ok = False
-            
+ 
+        elif ' ' in self.name_le.text():
+            self.uc.bar_warn("Tidal Name with spaces not allowed!", 2)
+            self.tidal_curve_name = ""
+            self.values_ok = False  
+                     
         elif self.description_le.text() == "":
             self.uc.bar_warn("Tidal Curve description required!", 2)
             self.values_ok = False
@@ -1002,20 +1017,18 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
             self.uc.show_info("Float error") 
             Qitem.setText("")     
 
-    def add_time(self):
+    def add_tidal(self):
         self.outflow_tidal_curve_tblw.insertRow(self.outflow_tidal_curve_tblw.rowCount())  
         row_number = self.outflow_tidal_curve_tblw.rowCount() - 1
         
         item = QTableWidgetItem()
-        d= QDate.currentDate()
-        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year()) 
+        d= QTime.currentTime()
+        d = str(d.hour()) + ":" + str(d.minute())
         item.setData(Qt.DisplayRole, d)                         
         self.outflow_tidal_curve_tblw.setItem(row_number, 0, item)   
         
         item = QTableWidgetItem()
-        t = QTime.currentTime()
-        t = str(t.hour()) + ":" + str(t.minute())
-        item.setData(Qt.DisplayRole, t)                         
+        item.setData(Qt.DisplayRole, "0.0")                         
         self.outflow_tidal_curve_tblw.setItem(row_number, 1, item) 
         
         item = QTableWidgetItem()

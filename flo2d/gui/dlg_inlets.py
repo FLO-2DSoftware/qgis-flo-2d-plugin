@@ -1317,7 +1317,12 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Time Series name required!", 2)
             self.time_series_name = ""
             self.values_ok = False
-            
+
+        elif ' ' in self.name_le.text():
+            self.uc.bar_warn("Spaces not allowed in Time Series name!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
+
         elif self.description_le.text() == "":
             self.uc.bar_warn("Time Series description required!", 2)
             self.values_ok = False

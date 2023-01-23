@@ -1367,8 +1367,8 @@ CREATE TABLE "user_swmm_nodes" (
     --VARIABLES FROM .INP [OUTFALLS]:
     	"outfall_invert_elev" REAL DEFAULT 0,
 		"outfall_type" TEXT DEFAULT 'NORMAL',	 
-		"tidal_curve" TEXT DEFAULT '...',
-		"time_series" TEXT DEFAULT '...',
+		"tidal_curve" TEXT DEFAULT '*',
+		"time_series" TEXT DEFAULT '*',
 	    "flapgate" TEXT DEFAULT 'False', 
     -------------------------------------    
 
@@ -1451,7 +1451,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series_data
 
 CREATE TABLE "swmm_tidal_curve" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "tidal_curve_name" TEXT, -- 
+    "tidal_curve_name" TEXT UNIQUE ON CONFLICT REPLACE, -- 
     "tidal_curve_description" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve', 'aspatial');
