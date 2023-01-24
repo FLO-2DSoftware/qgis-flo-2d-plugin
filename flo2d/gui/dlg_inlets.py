@@ -1327,6 +1327,10 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Time Series description required!", 2)
             self.values_ok = False
             
+        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0: 
+                self.uc.bar_warn("Time Series table can't be empty!", 2)
+                self.values_ok = False          
+            
         elif self.external_radio.isChecked() and  self.file_le.text() == "":
             self.uc.bar_warn("Data file name required!", 2)
             self.values_ok = False

@@ -777,11 +777,16 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Time Series name with spaces not allowed!", 2)
             self.time_series_name = ""
             self.values_ok = False
-            
+        
+  
         elif self.description_le.text() == "":
             self.uc.bar_warn("Time Series description required!", 2)
             self.values_ok = False
             
+        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0: 
+                self.uc.bar_warn("Time Series table can't be empty!", 2)
+                self.values_ok = False
+
         elif self.external_radio.isChecked() and  self.file_le.text() == "":
             self.uc.bar_warn("Data file name required!", 2)
             self.values_ok = False
@@ -963,6 +968,10 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
                      
         elif self.description_le.text() == "":
             self.uc.bar_warn("Tidal Curve description required!", 2)
+            self.values_ok = False
+            
+        elif self.outflow_tidal_curve_tblw.rowCount() == 0: 
+            self.uc.bar_warn("Tidal Curve table can't be empty!", 2)
             self.values_ok = False
 
         else:
