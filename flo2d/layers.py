@@ -1880,8 +1880,8 @@ class Layers(object):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            msg = "Unable to load  layer {}.".format(table)
-            self.uc.bar_warn(msg)
+            msg = "ERROR 270123.1142 Unable to load  layer {}.".format(table)
+            self.uc.bar_error(msg)
 
     def warn_readonly(self):
         self.uc.bar_warn("All changes to this layer can be overwritten by changes in the User Layer.")
@@ -2241,8 +2241,8 @@ class Layers(object):
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                msg = "Unable to load  layer {}.".format(lyr)
-                self.uc.bar_warn(msg)
+                msg = "ERROR 270123.1137: Unable to load  layer {}.".format(lyr)
+                self.uc.bar_error(msg)
 
 
 #>>>>>>>>>>>>>>>>>111111111
@@ -2329,12 +2329,73 @@ class Layers(object):
 #
 # #<<<<<<<<<<<<<<<<2222222222222222222222222
 
+        # lyr = QgsProject.instance().mapLayersByName("Boundary Condition Polygons")[0]
+        # root = QgsProject.instance().layerTreeRoot()
+        # mylayer = root.findLayer(lyr.id())
+        # myClone = mylayer.clone()
+        # parent = mylayer.parent()
+        # grp = root.findGroup("User Layers")
+        # grp.insertChildNode(0, myClone)
+        # parent.removeChildNode(mylayer)
 
 
+
+
+        # root = QgsProject.instance().layerTreeRoot()
+        # lyr = QgsProject.instance().mapLayersByName("Boundary Condition Polygons")[0]
+        # myClone= lyr.clone()
+        # grp = root.children()[index] # index: group layer index
+        # grp.insertChildNode(0, QgsLayerTreeLayer(myClone))
+        # root.removeLayer(lyr)
+        
+        
 
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, "User Layers")
+
+
+
+
+
+
+
+        # root = QgsProject.instance().layerTreeRoot()
+        # grp = root.findGroup("User Layers")
+        # sub_group = grp.addGroup("Boundary Conditions")  
+        #
+        # sgrp = self.get_subgroup(self.group, "Boundary Condition Points")
+        # # sgrp = self.get_group("Boundary Condition Points", create=False)
+        # # ly = self.get_layer_by_name("Boundary Condition Points", group=self.group).layer()
+        # if sgrp:      
+        #     mylayer = root.findLayer(sgrp.id())
+        #     myClone = mylayer.clone()
+        #
+        #     sub_group.insertChildNode(0, myClone)
+        #     QgsProject.instance().removeMapLayers( [ly.id()] )
+        #
+        # ly = self.get_layer_by_name("Boundary Condition Lines", group=self.group).layer()
+        # if ly:
+        #     mylayer = root.findLayer(ly.id())
+        #     myClone = mylayer.clone()
+        #     sub_group.insertChildNode(0, myClone)
+        #     QgsProject.instance().removeMapLayers( [ly.id()] )
+        #
+        # ly = self.get_layer_by_name("Boundary Condition Polygons", group=self.group).layer()
+        # if ly:  
+        #     mylayer = root.findLayer(ly.id())
+        #     myClone = mylayer.clone()
+        #     sub_group.insertChildNode(0, myClone)
+        #     QgsProject.instance().removeMapLayers( [ly.id()] )
+
+
+
+
+
+
+
+
+
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par("CELLSIZE")
