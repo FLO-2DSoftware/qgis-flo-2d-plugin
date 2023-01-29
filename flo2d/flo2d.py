@@ -1718,13 +1718,17 @@ class Flo2D(object):
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
                     export_calls.remove("export_bridge_coeff_data")
- 
-                if "Hydraulic  Structures" in dlg_components.components:
-                    if self.gutils.is_table_empty("bridge_xs"):
+                else:    
+                    if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):       
+                        export_calls.remove("export_hystruc")
                         export_calls.remove("export_bridge_xsec")
-                           
-                # if 'MODFLO-2D' not in dlg_components.components:
-                #     export_calls.remove('')
+                        export_calls.remove("export_bridge_coeff_data")
+                    else:
+                        xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                        if not xsecs:
+                            if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                                os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                            export_calls.remove("export_bridge_xsec")     
     
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")

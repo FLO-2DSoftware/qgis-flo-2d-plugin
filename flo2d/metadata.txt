@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.85
+version=0.10.86
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,11 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.86
+  - Hydraulic Structures: 
+  		- Export BRIDGE_XSEC.DAT if struct with bridge.
+ 		- Delete BRIDGE_XSEC.DAT if not struct with bridge.
+ 		- Warning if Structure has not been schematized.
  <p>0.10.85
   -  Add new tidal curves tables and layers for outfalls (and functionality).
  <p>0.10.84

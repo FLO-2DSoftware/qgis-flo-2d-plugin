@@ -2052,6 +2052,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
                 return False
+            else:
+                nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall() 
+                for nod in nodes:
+                    if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("WARNING: some structures have no cells assigned.\nDid you schematize the structures?")                  
+                        break 
+                                          
             hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
             ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
             repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
@@ -2143,11 +2151,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                 return False            
 
-            hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+            hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
             bridge_xs_sql = """SELECT * FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
             if not hystruc_rows:
+                if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                    os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                 return False
             else:
                 pass
