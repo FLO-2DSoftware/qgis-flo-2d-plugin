@@ -472,15 +472,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.plot.plot.addLegend()
             self.plot.plot.setTitle("")
     
-            # if self.rating_cbo.currentIndex() == 3:  # Bridge routine
-            #     # self.tview.undoStack.clear()
-            #     # self.tview.setModel(self.data_model)
-            #     # self.data_model.clear()
-            #     # # self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
-            #     # self.d1, self.d2 = [[], []]            
-            #     # return
-            #     pass
-    
             if not self.struct:
                 return
             else:
@@ -531,50 +522,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.create_plot(rating, struct_name)
                 self.update_plot()
     
-    
-            # self.bc_table.after_delete.disconnect() 
-            # self.bc_table.after_delete.connect(self.save_bc_data)         
-            #
-            # cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
-            # cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
-            # self.create_inflow_plot()
-            #
-            # self.bc_tview.undoStack.clear()
-            # self.bc_tview.setModel(self.bc_data_model)
-            # self.inflow.time_series_fid = cur_ts_fid
-            #
-            # self.infow_tseries_data = self.inflow.get_time_series_data()
-            # self.bc_data_model.clear()
-            # self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
-            # self.ot, self.od, self.om = [[], [], []]
-            # if not self.infow_tseries_data:
-            #     self.uc.bar_warn("No time series data defined for that inflow.")
-            #     return
-            # for row in self.infow_tseries_data:
-            #     items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
-            #     self.bc_data_model.appendRow(items)
-            #     self.ot.append(row[0] if not row[0] is None else float("NaN"))
-            #     self.od.append(row[1] if not row[1] is None else float("NaN"))
-            #     self.om.append(row[2] if not row[2] is None else float("NaN"))
-            # rc = self.bc_data_model.rowCount()
-            #
-            # if rc < 500:
-            #     for row in range(rc, 500 + 1):
-            #         items = [StandardItem(x) for x in ("",) * 3]
-            #         self.bc_data_model.appendRow(items)
-            #
-            # self.bc_tview.resizeColumnsToContents()
-            #
-            # for i in range(self.bc_data_model.rowCount()):
-            #     self.bc_tview.setRowHeight(i, 20)
-            #
-            # self.bc_tview.horizontalHeader().setStretchLastSection(True)
-            #
-            # for i in range(3):
-            #     self.bc_tview.setColumnWidth(i, 90)
-            #
-            # self.save_inflow()
-            # self.create_inflow_plot()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -608,7 +555,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if is_number(m_fdata(self.data_model, i, 0)) and not isnan(m_fdata(self.data_model, i, 0)):
                 data.append([m_fdata(self.data_model, i, j) for j in range(self.data_model.columnCount())])
         self.struct.set_table_data(data)
-        # self.update_plot()
+        rating = self.rating_cbo.currentIndex()
+        if rating in [1, 3]:  # Rating Table or Bridge XS
+                self.update_plot()
 
     def save_bc_data(self):
         self.update_plot()
@@ -616,11 +565,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.save_inflow_data()
         else:
             self.save_outflow_data()
-
-
-
-
-
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)
@@ -685,7 +629,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         Shows bridge dialog.
 
         """
-
+        if not self.struct_cbo.count():
+           self.uc.bar_warn("There are no structures defined!") 
+           return
         dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
         dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
         save = dlg_bridge.exec_()

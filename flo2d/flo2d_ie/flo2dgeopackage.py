@@ -2152,7 +2152,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False            
 
             hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
-            bridge_xs_sql = """SELECT * FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
+            bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
             if not hystruc_rows:
@@ -2172,7 +2172,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         b.write("X  " + str(in_node) + "\n")
                         for row in bridge_rows:
-                            b.write(str(row[2]) + "  " + str(row[3]) + "  " + str(row[4]) + "\n")                       
+                            row = [x if x not in [NULL, None, 'None', 'none'] else 0 for x in row]
+                            b.write(str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n")                       
             return True
 
         except Exception as e:
