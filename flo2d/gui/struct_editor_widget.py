@@ -68,6 +68,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_data = None
         self.d1, self.d2 = [[], []]
 
+        self.rating = ["Rating curve", "Rating table", "Culvert equation", "Bridge routine"]
         # set button icons
         set_icon(self.create_struct_btn, "mActionCaptureLine.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -164,7 +165,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.culvert_len_sbox.setValue(self.struct.clength)
         if is_number(self.struct.cdiameter):
             self.culvert_width_sbox.setValue(self.struct.cdiameter)
-
+        
+        # self.struct_cbo.setCurrentIndex(fid) 
         self.show_table_data()
 
     def type_changed(self, idx):
@@ -481,12 +483,25 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     
             rating = self.rating_cbo.currentIndex()
             struct_name = ""
-            if rating in [1, 3]:  # Rating Table  or Bridge XS
-                idx = self.struct_cbo.currentIndex()
-                struct_fid = self.struct_cbo.itemData(idx)
-                struct_name = self.struct_cbo.currentText()
-                if struct_fid is None:
-                    return
+
+
+
+
+            
+            idx = self.struct_cbo.currentIndex()
+            struct_fid = self.struct_cbo.itemData(idx)
+            struct_name = self.struct_cbo.currentText()
+            if struct_fid is None:
+                return           
+            # if rating in [1, 3]:  # Rating Table  or Bridge XS
+            #     idx = self.struct_cbo.currentIndex()
+            #     struct_fid = self.struct_cbo.itemData(idx)
+            #     struct_name = self.struct_cbo.currentText()
+            #     if struct_fid is None:
+            #         return
+
+
+
     
             self.tview.undoStack.clear()
             self.tview.setModel(self.data_model)
@@ -500,13 +515,32 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             for row in self.struct_data:
                 items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                 self.data_model.appendRow(items)
-                if rating in [1, 3]:  # Rating Table or Bridge XS
-                    if row:
-                        self.d1.append(row[0] if not row[0] is None else float("NaN"))
-                        self.d2.append(row[1] if not row[1] is None else float("NaN"))
-                    else:
-                        self.d1.append(float("NaN"))
-                        self.d2.append(float("NaN"))
+                
+                
+                
+                
+                
+                
+                
+                if row:
+                    self.d1.append(row[0] if not row[0] is None else float("NaN"))
+                    self.d2.append(row[1] if not row[1] is None else float("NaN"))
+                else:
+                    self.d1.append(float("NaN"))
+                    self.d2.append(float("NaN"))                
+                # if rating in [1, 3]:  # Rating Table or Bridge XS
+                #     if row:
+                #         self.d1.append(row[0] if not row[0] is None else float("NaN"))
+                #         self.d2.append(row[1] if not row[1] is None else float("NaN"))
+                #     else:
+                #         self.d1.append(float("NaN"))
+                #         self.d2.append(float("NaN"))
+                
+                
+                
+                
+                
+                
             rc = self.data_model.rowCount()
             if rc < 10:
                 for row in range(rc, 10 + 1):
@@ -521,7 +555,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if rating in [1, 3]:  # Rating Table or Bridge XS
                 self.create_plot(rating, struct_name)
                 self.update_plot()
-    
+            else:
+                self.plot.clear()    
+  
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -529,15 +565,18 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def create_plot(self, rating, name):
         self.plot.clear()
-        if self.plot.plot.legend is not None:
-            plot_scene = self.plot.plot.legend.scene()
-            if plot_scene is not None:
-                plot_scene.removeItem(self.plot.plot.legend)
-        self.plot.plot.addLegend()
-        prefix = "Rating Table:   " if rating == 1 else "Bridge XS Table:   " 
-        self.plot_item_name = prefix + name
-        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
-        self.plot.plot.setTitle(prefix + name)
+        if rating in [1, 3]:
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+            self.plot.plot.addLegend()
+            prefix = "Rating Table:   " if rating == 1 \
+                     else "Bridge XS Table:   " if rating == 3 \
+                     else ""
+            self.plot_item_name = prefix + name
+            self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+            self.plot.plot.setTitle(prefix + name)
 
     def update_plot(self):
         if not self.plot_item_name:
