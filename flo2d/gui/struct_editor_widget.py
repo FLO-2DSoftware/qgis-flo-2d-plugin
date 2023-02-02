@@ -145,7 +145,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         else:
             return
         
-        self.clear_data_widgets()
+        self.clear_structs_data_widgets()
         self.data_model.clear()
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
         self.struct.get_row()
@@ -180,7 +180,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.type_cbo.setCurrentIndex(0)
         else:
             self.struct.ifporchan = idx
-            self.struct.set_row()
+            self.gutils.execute("UPDATE struct SET ifporchan = ? WHERE structname =?;", (idx, self.struct.name))   
+            # self.struct.set_row()
 
     def rating_changed(self, idx):
         if not self.struct:
@@ -192,8 +193,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             else:
                 self.rating_cbo.setCurrentIndex(0)
         else:
-            self.struct.icurvtable = idx
-            self.struct.set_row()
+            self.struct.icurvtable = idx  
+            self.gutils.execute("UPDATE struct SET icurvtable = ? WHERE structname =?;", (idx, self.struct.name))       
+            # self.struct.set_row()
         self.show_table_data()
         self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3)  # Bridge routine
 
@@ -210,7 +212,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.twater_effect_cbo.setCurrentIndex(0)
         else:
             self.struct.inoutcont = idx
-            self.struct.set_row()
+            self.gutils.execute("UPDATE struct SET inoutcont = ? WHERE structname =?;", (idx, self.struct.name))       
+            # self.struct.set_row()
 
     def set_stormdrain(self):
         sd = self.struct.get_stormdrain()
@@ -289,7 +292,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
         self.lyrs.repaint_layers()
 
-    def clear_data_widgets(self):
+    def clear_structs_data_widgets(self):
         self.storm_drain_cap_sbox.clear()
         self.ref_head_elev_sbox.clear()
         self.culvert_len_sbox.clear()
@@ -413,19 +416,22 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.struct_cbo.count():
             return
         self.struct.headrefel = self.ref_head_elev_sbox.value()
-        self.struct.set_row()
+        self.gutils.execute("UPDATE struct SET headrefel = ? WHERE structname =?;", (self.struct.headrefel, self.struct.name))       
+        # self.struct.set_row()
 
     def save_culvert_len(self):
         if not self.struct_cbo.count():
             return
         self.struct.clength = self.culvert_len_sbox.value()
-        self.struct.set_row()
+        self.gutils.execute("UPDATE struct SET clength = ? WHERE structname =?;", (self.struct.clength, self.struct.name)) 
+        # self.struct.set_row()
 
     def save_culvert_width(self):
         if not self.struct_cbo.count():
             return
         self.struct.cdiameter = self.culvert_width_sbox.value()
-        self.struct.set_row()
+        self.gutils.execute("UPDATE struct SET cdiameter = ? WHERE structname =?;", (self.struct.cdiameter, self.struct.name)) 
+        # self.struct.set_row()
 
     def define_data_table_head(self):
         self.tab_heads = {
@@ -616,7 +622,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         old_fid = self.struct.fid
         self.struct.del_row()
-        self.clear_data_widgets()
+        self.clear_structs_data_widgets()
         self.repaint_structs()
         # try to set current struct to the last before the deleted one
         try:
