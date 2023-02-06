@@ -490,10 +490,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             rating = self.rating_cbo.currentIndex()
             struct_name = ""
 
-
-
-
-            
             idx = self.struct_cbo.currentIndex()
             struct_fid = self.struct_cbo.itemData(idx)
             struct_name = self.struct_cbo.currentText()
@@ -506,9 +502,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             #     if struct_fid is None:
             #         return
 
-
-
-    
             self.tview.undoStack.clear()
             self.tview.setModel(self.data_model)
             self.data_model.clear()
@@ -521,12 +514,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             for row in self.struct_data:
                 items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                 self.data_model.appendRow(items)
-                
-                
-                
-                
-                
-                
                 
                 if row:
                     self.d1.append(row[0] if not row[0] is None else float("NaN"))
@@ -541,11 +528,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 #     else:
                 #         self.d1.append(float("NaN"))
                 #         self.d2.append(float("NaN"))
-                
-                
-                
-                
-                
                 
             rc = self.data_model.rowCount()
             if rc < 10:
@@ -563,7 +545,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.update_plot()
             else:
                 self.plot.clear()    
-  
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -603,13 +584,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         rating = self.rating_cbo.currentIndex()
         if rating in [1, 3]:  # Rating Table or Bridge XS
                 self.update_plot()
-
-    def save_bc_data(self):
-        self.update_plot()
-        if self.bc_type_inflow_radio.isChecked():
-            self.save_inflow_data()
-        else:
-            self.save_outflow_data()
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)

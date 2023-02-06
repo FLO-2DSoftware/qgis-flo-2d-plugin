@@ -1556,14 +1556,14 @@ class Structure(GeoPackageUtils):
 
     def del_row(self):
         # first try to delete the struct from user layer
-        qry = "DELETE FROM user_struct WHERE fid=?;"
-        self.execute(qry, (self.fid,))
-        qry = "DELETE FROM struct WHERE fid=?"
-        self.execute(qry, (self.fid,))
-        qry = "DELETE FROM bridge_variables WHERE struct_fid=?"
-        self.execute(qry, (self.fid,))
-        qry = "DELETE FROM bridge_xs WHERE struct_fid=?"
-        self.execute(qry, (self.fid,))        
+        self.execute("DELETE FROM user_struct WHERE fid=?;", (self.fid,))
+        self.execute("DELETE FROM rat_curves WHERE fid=?;", (self.fid,))
+        self.execute("DELETE FROM repl_rat_curves WHERE fid=?;", (self.fid,))
+        self.execute("DELETE FROM struct WHERE fid=?", (self.fid,))
+        self.execute("DELETE FROM bridge_variables WHERE struct_fid=?", (self.fid,))
+        self.execute("DELETE FROM bridge_xs WHERE struct_fid=?", (self.fid,))     
+        self.execute("DELETE FROM culvert_equations WHERE struct_fid=?", (self.fid,))   
+        self.execute("DELETE FROM storm_drains WHERE struct_fid=?", (self.fid,))         
 
     def get_stormdrain(self):
         qry = "SELECT stormdmax FROM storm_drains WHERE struct_fid = ?;"
@@ -1630,6 +1630,10 @@ class Structure(GeoPackageUtils):
             res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
                 res = [""] * 6
+            else:
+                lst = list(res[0])
+                lst[5] = 1 if lst[5] in [None, "0", "0.0"] else lst[5]
+                res[0] = tuple(lst)
         elif self.icurvtable == 3:
             # bridge xs
             qry_tab = "SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY xup;"
@@ -1674,7 +1678,9 @@ class Structure(GeoPackageUtils):
             qry = "DELETE FROM culvert_equations WHERE struct_fid = ?;"
             self.execute(qry, (self.fid,))
             qry = "INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES ({}, ?, ?, ?, ?, ?, ?);"
-            self.execute_many(qry.format(self.fid), [row[:6] for row in data])
+            for row in data:
+                row[-1] = row[-1] if row[-1] not in [None, 0] else 1
+                self.execute_many(qry.format(self.fid), [row[:6]])
         elif self.icurvtable == 3:
             # bridge xs
             qry = "DELETE FROM bridge_xs WHERE struct_fid = ?;"

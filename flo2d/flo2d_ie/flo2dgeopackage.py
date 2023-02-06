@@ -2102,7 +2102,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(hystruc, "w") as h:
                 for stru in hystruc_rows:
                     fid = stru[0]
-                    #                     vals = [x if x is not None else 0.0 for x in stru[2:-2]]
                     vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
                     vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
                     vals = vals1 + vals2
@@ -2124,6 +2123,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             for row in self.execute(qry, (fid,)):
                                 if row:
                                     subvals = [x if x is not None else "0.0" for x in row[2:]]
+                                    if i == 3: # Culvert equation.
+                                        subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
                                     if i == 4:  # bridge routine lines a. Assign correct bridge type configuration.
                                         t = subvals[0]
                                         t = 1 if t == 1 else 2 if (t == 2 or t == 3) else 3 if (t == 4 or t == 5) else 4
