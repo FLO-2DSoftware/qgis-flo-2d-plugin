@@ -100,87 +100,90 @@ class WeirsDialog(qtBaseClass, uiDialog):
             for row_number, row_data in enumerate(rows): 
                 self.weirs_tblw.insertRow(row_number)
                 for column, data in enumerate(row_data):
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, data)  # item gets value of data (as QTableWidgetItem Class)
-
-                    if column == 1:  
-                        # Fill the list of weirs names:
-                        self.weir_name_cbo.addItem(data, row_data[0])
-                    if row_number == 0:
-                        if column == 2:
-                            self.weir_from_node_txt.setText(str(data))
-
-                        elif column == 3:
-                            self.weir_to_node_txt.setText(str(data))
-
-                        elif column == 4: 
-                            if data.upper() not in ("TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"):  
-                                wrong_status += 1   
-                                data = "TRANSVERSE" 
-                                item.setData(Qt.DisplayRole, data)       
-                            index = self.weir_type_cbo.findText(data)
-                            if index == -1:
-                                index = 0
-                            self.weir_type_cbo.setCurrentIndex(index)
+                    if data:
+                        item = QTableWidgetItem()
+                        item.setData(Qt.DisplayRole, data)  # item gets value of data (as QTableWidgetItem Class)
+    
+                        if column == 1:  
+                            # Fill the list of weirs names:
+                            self.weir_name_cbo.addItem(data, row_data[0])
+                        if row_number == 0:
+                            if column == 2:
+                                self.weir_from_node_txt.setText(str(data))
+    
+                            elif column == 3:
+                                self.weir_to_node_txt.setText(str(data))
+    
+                            elif column == 4: 
+                                if data.upper() not in ("TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"):  
+                                    wrong_status += 1   
+                                    data = "TRANSVERSE" 
+                                    item.setData(Qt.DisplayRole, data)       
+                                index = self.weir_type_cbo.findText(data)
+                                if index == -1:
+                                    index = 0
+                                self.weir_type_cbo.setCurrentIndex(index)
+                                
+                            elif column == 5:
+                                self.weir_crest_height_dbox.setValue(data)  
+     
+                            elif column == 6:
+                                self.weir_discharge_coeff_dbox.setValue(data)  
                             
-                        elif column == 5:
-                            self.weir_crest_height_dbox.setValue(data)  
- 
-                        elif column == 6:
-                            self.weir_discharge_coeff_dbox.setValue(data)  
-                        
-                        elif column == 7:
-                            if data.upper() not in ("YES", "NO"):  
-                                wrong_status += 1 
-                                data = 1  
-                                item.setData(Qt.DisplayRole, data) 
-                            index = self.weir_flap_gate_cbo.findText(str(data))
-                            if index == -1:
-                                index = 0
-                            self.weir_flap_gate_cbo.setCurrentIndex(index)                        
-                                                                        
-                        elif column == 8:
-                            if data not in ("0", "1", "2"):  
-                                wrong_status += 1 
-                                data = 1  
-                                item.setData(Qt.DisplayRole, data) 
-                            index = self.weir_end_contrac_cbo.findText(str(data))
-                            if index == -1:
-                                index = 0
-                            self.weir_end_contrac_cbo.setCurrentIndex(index)
-                               
-                        elif column == 9:
-                            self.weir_end_coeff_dbox.setValue(data)     
-                                                         
-                        elif column == 10:
-                            self.weir_side_slope_dbox.setValue(data)
-                                                                       
-                        elif column == 11:
-                            if data.upper() not in self.shape:  
-                                wrong_status += 1 
-                                data = "RECT_CLOSE"  
-                                item.setData(Qt.DisplayRole, data) 
-                            index = self.weir_shape_cbo.findText(data)
-                            if index == -1:
-                                index = 0
-                            self.weir_shape_cbo.setCurrentIndex(index)
-
-                        elif column == 12:
-                            self.weir_height_dbox.setValue(data)  
-                                       
-                        elif column == 13:
-                            self.weir_length_dbox.setValue(data)
-
-                    if column > 0:  # Omit fid number (in column = 0)
-                        if column in (1, 2, 3, 4, 7, 9):
-                            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
- 
-                        self.weirs_tblw.setItem(row_number, column - 1, item)
+                            elif column == 7:
+                                if data.upper() not in ("YES", "NO"):  
+                                    wrong_status += 1 
+                                    data = 1  
+                                    item.setData(Qt.DisplayRole, data) 
+                                index = self.weir_flap_gate_cbo.findText(str(data))
+                                if index == -1:
+                                    index = 0
+                                self.weir_flap_gate_cbo.setCurrentIndex(index)                        
+                                                                            
+                            elif column == 8:
+                                if data not in ("0", "1", "2"):  
+                                    wrong_status += 1 
+                                    data = 1  
+                                    item.setData(Qt.DisplayRole, data) 
+                                index = self.weir_end_contrac_cbo.findText(str(data))
+                                if index == -1:
+                                    index = 0
+                                self.weir_end_contrac_cbo.setCurrentIndex(index)
+                                   
+                            elif column == 9:
+                                self.weir_end_coeff_dbox.setValue(data)     
+                                                             
+                            elif column == 10:
+                                self.weir_side_slope_dbox.setValue(data)
+                                                                           
+                            elif column == 11:
+                                if data.upper() not in self.shape:  
+                                    wrong_status += 1 
+                                    data = "RECT_CLOSE"  
+                                    item.setData(Qt.DisplayRole, data) 
+                                index = self.weir_shape_cbo.findText(data)
+                                if index == -1:
+                                    index = 0
+                                self.weir_shape_cbo.setCurrentIndex(index)
+    
+                            elif column == 12:
+                                self.weir_height_dbox.setValue(data)  
+                                           
+                            elif column == 13:
+                                self.weir_length_dbox.setValue(data)
+    
+                        if column > 0:  # Omit fid number (in column = 0)
+                            if column in (1, 2, 3, 4, 7, 9):
+                                item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+     
+                            self.weirs_tblw.setItem(row_number, column - 1, item)
+                    else:
+                        wrong_status += 1           
                         
             self.highlight_weir(self.weir_name_cbo.currentText())                        
             QApplication.restoreOverrideCursor()
             if wrong_status > 0:
-                self.uc.show_info("WARNING 070422.0530: there were " + str(wrong_status) + " weirs with wrong type, shape, or flap gate!\n\n" +
+                self.uc.show_info("WARNING 070422.0531: there are some weirs with wrong type, shape, or flap gate!\n\n" +
                                   "All wrong values were changed to their defaults.\n\n" + 
                                   "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain weirs' User layers.")
         except Exception as e:
@@ -398,13 +401,13 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     center_canvas(self.iface, x, y)
                     zoom(self.iface, 0.45)
                 else:
-                    self.uc.bar_warn("WARNING 070422.0758: weir '" + str(weir) + "' not found.")
+                    self.uc.bar_warn("WARNING 070422.0760: weir '" + str(weir) + "' not found.")
                     self.lyrs.clear_rubber()
             QApplication.restoreOverrideCursor()
                     
         except ValueError:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("WARNING 070422.0759: weir '" + str(weir) + "' is not valid.")
+            self.uc.bar_warn("WARNING 070422.0761: weir '" + str(weir) + "' is not valid.")
             self.lyrs.clear_rubber()
             pass
 

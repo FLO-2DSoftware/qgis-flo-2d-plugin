@@ -1485,7 +1485,7 @@ CREATE TABLE "user_swmm_conduits" (
 	"xsections_geom2"REAL DEFAULT 0,
     "xsections_geom3"REAL DEFAULT 0,
     "xsections_geom4"REAL DEFAULT 0,
-	"xsections_barrels" INTEGER DEFAULT 0,
+	"xsections_barrels" INTEGER DEFAULT 1,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_conduits', 'features', 4326);

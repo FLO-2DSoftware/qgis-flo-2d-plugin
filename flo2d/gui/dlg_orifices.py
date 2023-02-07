@@ -156,7 +156,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.highlight_orifice(self.orifice_name_cbo.currentText())                        
             QApplication.restoreOverrideCursor()
             if wrong_status > 0:
-                self.uc.show_info("WARNING 070422.0530: there were " + str(wrong_status) + " orifices with wrong type, shape, or flap gate!\n\n" +
+                self.uc.show_info("WARNING 070422.0530: there are some orifices with wrong type, shape, or flap gate!\n\n" +
                                   "All wrong values were changed to their defaults.\n\n" + 
                                   "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Orifices' User layers.")
         except Exception as e:
