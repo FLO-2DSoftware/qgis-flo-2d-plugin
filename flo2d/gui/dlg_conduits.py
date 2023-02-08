@@ -47,6 +47,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
         self.conduit_shape_cbo.currentIndexChanged.connect(self.conduit_shape_cbo_currentIndexChanged)
         self.barrels_sbox.valueChanged.connect(self.barrels_sbox_valueChanged)
+        self.barrels_sbox.editingFinished.connect(self.barrels_sbox_editingFinished)
         self.max_depth_dbox.valueChanged.connect(self.max_depth_dbox_valueChanged)
         self.geom2_dbox.valueChanged.connect(self.geom2_dbox_valueChanged)
         self.geom3_dbox.valueChanged.connect(self.geom3_dbox_valueChanged)
@@ -123,6 +124,12 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
     def barrels_sbox_valueChanged(self):
         self.box_valueChanged(self.barrels_sbox, 6)
+
+    def barrels_sbox_editingFinished(self):
+        if self.barrels_sbox.value() == 0:
+            self.uc.bar_warn("Number of barrels can't be zero. Default is 1")
+            self.barrels_sbox.setValue(1)       
+
 
     def max_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.max_depth_dbox, 7)
@@ -304,7 +311,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                                 self.conduit_shape_cbo.setCurrentIndex(index)
 
                         elif element == 7:
-                            self.barrels_sbox.setValue(data if data is not None else 0)
+                            self.barrels_sbox.setValue(data if data is not None else 1)
 
                         elif element == 8:
                             self.max_depth_dbox.setValue(data if data is not None else 0)
@@ -583,7 +590,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
             item = self.conduits_tblw.item(row, 6)
             if item is not None:
-                xsections_barrels = str(item.text())
+                xsections_barrels = str(item.text()) if int(item.text()) != 0 else "1"
 
             item = self.conduits_tblw.item(row, 7)
             if item is not None:

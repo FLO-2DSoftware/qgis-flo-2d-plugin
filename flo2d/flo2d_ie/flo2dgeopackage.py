@@ -2866,8 +2866,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("swmmflort"):
                 if os.path.isfile(outdir + r"\SWMMFLORT.DAT"):
-                    m = "* There are no Rating Tables defined in the project, but there is\n"
-                    m += "  an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
+                    m = "* There are no SWMM Rating Tables defined in the project, but there is\n"
+                    m += "an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
                     self.export_messages += m
                     return False
 
