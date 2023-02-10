@@ -315,12 +315,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/user_to_schematic.svg"),
-            text=self.tr("Convert User Layers to Schematic Layers"),
-            callback=lambda: self.user2schematic(),
-            parent=self.iface.mainWindow(),
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/user_to_schematic.svg"),
+        #     text=self.tr("Convert User Layers to Schematic Layers"),
+        #     callback=lambda: self.user2schematic(),
+        #     parent=self.iface.mainWindow(),
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/profile_tool.svg"),
