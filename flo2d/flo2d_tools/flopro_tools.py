@@ -39,36 +39,38 @@ class FLOPROExecutor(object):
             #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
             try:
+                   
+                #11111:
                 # check_call(self.flo2d_exe)
-                # run(self.flo2d_exe)
+                # result = run(self.flo2d_exe)
                 # call(self.flo2d_exe)
                 # result = run([self.flo2d_exe],input="",capture_output=True)
-                # Popen([self.flo2d_exe], shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE, universal_newlines=False)
+                # result = Popen([self.flo2d_exe], shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE, universal_newlines=False)
+                # result = Popen(self.flo2d_exe)    
                 # out = result.communicate() 
                 # for line in out:
-                #     self.uc.log_info(line)               
-                # proc = Popen(self.flo2d_exe, )    
-
-
-                # proc = Popen(
-                #     self.flo2d_exe,
-                #     shell=True,
-                #     stdin=open(os.devnull),
-                #     stdout=PIPE,
-                #     stderr=STDOUT,
-                #     universal_newlines=True,
-                # )
-
-
+                #     self.uc.bar_info(line)  
+                
+                #22222
+                result = Popen(
+                    self.flo2d_exe,
+                    shell=True,
+                    stdin=open(os.devnull),
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
                 
                 
                 
-                result = run([self.flo2d_exe]) 
- 
- 
- 
- 
- 
+                #33333:
+                # result = run([self.flo2d_exe])                  
+                
+                #44444:
+                # result = os.system('"C:\Program Files (x86)\FLO-2D PRO\FLOPRO.EXE"')
+                
+                
+                #55555:
                 # (self, args, bufsize=-1, executable=None,
                 #  stdin=None, stdout=None, stderr=None,
                 #  preexec_fn=None, close_fds=True,
@@ -77,11 +79,12 @@ class FLOPROExecutor(object):
                 #  restore_signals=True, start_new_session=False,
                 #  pass_fds=(), *, encoding=None, errors=None, text=None):
                 
-                       
-                # self.uc.bar_info("Model started. " ) 
-                # proc.wait()
                 
-                return result     
+                self.uc.bar_info("Model started. " ) 
+                # result.wait()
+                
+                return result.returncode 
+               
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!/n", e)
 

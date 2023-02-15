@@ -632,8 +632,8 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
     def run_flopro(self):
-        self.run_program("FLOPRO.exe")
-        return
+        # self.run_program("FLOPRO.exe")
+        # return
 
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
@@ -710,7 +710,7 @@ class Flo2D(object):
 
    
             else:
-                self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
+                self.uc.show_warn("WARNING 180821.0841: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)                
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running simulation failed!")
