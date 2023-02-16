@@ -1833,7 +1833,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             swmm_file, __ = QFileDialog.getSaveFileName(
-                None, "Select SWMM output file to update", directory=last_dir, filter="(*.inp *.INP*)"
+                None, "Select SWMM output file to update", directory=last_dir, filter="SWMM.INP file (SWMM.INP)"
             )
 
             if not swmm_file:
