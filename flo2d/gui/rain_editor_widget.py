@@ -55,6 +55,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.add_predefined_tseries_btn, "mActionOpenFile.svg")
         set_icon(self.rename_tseries_btn, "change_name.svg")
         
+        self.control_lyr = self.lyrs.data["cont"]["qlyr"]
+        
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
         self.table.after_delete.connect(self.populate_tseries_data) 
@@ -134,9 +136,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     self.simulate_rain_grp.setChecked(True)
 
         self.rain = Rain(self.con, self.iface)
-
-    #         self.create_plot()
-
+        self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)   
+         
     def import_rainfall(self):
         try:
             s = QSettings()
@@ -258,6 +259,15 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Rain timeseries"
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
+    def check_simulate_rainfall(self):       
+        qry = """SELECT value FROM cont WHERE name = 'IRAIN';"""
+        row = self.gutils.execute(qry).fetchone()
+        if is_number(row[0]):
+            if row[0] == "0":
+                self.simulate_rain_grp.setChecked(False)
+            else:
+                self.simulate_rain_grp.setChecked(True)
+                
     def rain_properties(self):
         if not self.rain:
             return
