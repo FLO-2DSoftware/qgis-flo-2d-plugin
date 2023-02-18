@@ -1196,6 +1196,16 @@ class Layers(object):
                 ),
                 # Rain Tables:
                 (
+                    "rain",
+                    {
+                        "name": "Rain",
+                        "sgroup": "Rain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
+                (
                     "rain_time_series",
                     {
                         "name": "Rain Time Series",
@@ -1209,16 +1219,6 @@ class Layers(object):
                     "rain_time_series_data",
                     {
                         "name": "Rain Time Series Data",
-                        "sgroup": "Rain Tables",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "rain",
-                    {
-                        "name": "Rain",
                         "sgroup": "Rain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
