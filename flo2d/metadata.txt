@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.89
+version=0.10.90
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,10 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.90
+  - Gutters:
+      - Add cell geometry to Gutters cells table and move it to Schematic Layers.
+      - Set gutter global value defaults to "width" 0.99, "height"  0.88, "n_value" 0.77.
  <p>0.10.89
   -  When exporting .INP file suggest SWMM.INP name (that's the name used by the FLOPRO.EXE model).
  <p>0.10.88
