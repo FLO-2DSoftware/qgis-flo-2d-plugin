@@ -25,11 +25,12 @@ def cd(newdir):
 
 class FLOPROExecutor(object):
 
-    FLOPRO_EXE = "FLOPROIntel.exe"
+    FLOPRO_EXE = "FLOPRO.exe"
 
     def __init__(self, iface, flo2d_dir, project_dir):
         self.flo2d_dir = flo2d_dir
-        self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
+        self.flo2d_exe = flo2d_dir + "/" + self.FLOPRO_EXE
+        # self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
         self.project_dir = project_dir
         self.uc = self.uc = UserCommunication(iface, "FLO-2D")
 
@@ -39,6 +40,8 @@ class FLOPROExecutor(object):
             #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
             try:
+                
+                self.uc.clear_bar_messages()
                    
                 #11111:
                 # check_call(self.flo2d_exe)
@@ -46,6 +49,9 @@ class FLOPROExecutor(object):
                 # call(self.flo2d_exe)
                 # result = run([self.flo2d_exe],input="",capture_output=True)
                 # result = Popen([self.flo2d_exe], shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE, universal_newlines=False)
+                
+                
+                #00000
                 # result = Popen(self.flo2d_exe)    
                 # out = result.communicate() 
                 # for line in out:
@@ -57,16 +63,39 @@ class FLOPROExecutor(object):
                 
                 #22222
                 result = Popen(
-                    self.flo2d_exe,
-                    shell=True,
-                    stdin=open(os.devnull),
-                    stdout=PIPE,
-                    stderr=STDOUT,
-                    universal_newlines=True,
-                )
-                # #
-                #
-                #
+                    args=self.flo2d_exe, 
+                    bufsize=-1, 
+                    executable=None, 
+                    stdin=None, 
+                    stdout=None, 
+                    stderr=None, 
+                    preexec_fn=None, 
+                    close_fds=True, 
+                    shell=False, 
+                    cwd=None, 
+                    env=None, 
+                    universal_newlines=None, 
+                    startupinfo=None, 
+                    creationflags=0, 
+                    restore_signals=True, 
+                    start_new_session=False, 
+                    pass_fds=(), 
+                    group=None, 
+                    extra_groups=None, 
+                    user=None, 
+                    umask=-1, 
+                    encoding=None, 
+                    errors=None, 
+                    text=None                  
+                ).wait()
+                # out = result.communicate() 
+                # for line in out:
+                #     self.uc.bar_info(line)                 
+                
+                
+                
+                
+
                 # check_output(self.flo2d_exe, shell=True)
                 
                 
@@ -74,13 +103,14 @@ class FLOPROExecutor(object):
                 # result = run([self.flo2d_exe])                  
                 
                 #44444:
-                # result = os.system('"C:\Program Files (x86)\FLO-2D PRO\FLOPRO.EXE"')
+                # result = os.system(self.flo2d_exe)
             
+                #555555
+                # result = call(self.flo2d_exe)
                 
+                self.uc.bar_info("Result code: " +  str(result) if result is not None else "", 100) 
                 
-                # self.uc.bar_info("Model started. " ) 
-                
-                return result.returncode 
+                return result 
                
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!\n", e)
