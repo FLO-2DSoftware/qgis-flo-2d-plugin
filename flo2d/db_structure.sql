@@ -1646,9 +1646,9 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells'
 
 CREATE TABLE "gutter_globals" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "width" REAL DEFAULT 0.0, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
-    "height" REAL DEFAULT 0.0, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
-    "n_value" REAL DEFAULT 0.04 -- STREET_n-VALUE, global assignment of the street gutter n-value
+    "width" REAL DEFAULT 0.99, -- CURBHEIGHT, global assignment of the curb height that supersedes CURBHEIGHT (ft or m)
+    "height" REAL DEFAULT 0.88, -- STRWIDTH, global assignment of the sttret width to all gutter elements (ft or m)
+    "n_value" REAL DEFAULT 0.77 -- STREET_n-VALUE, global assignment of the street gutter n-value
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_globals', 'aspatial');
 
@@ -1688,7 +1688,9 @@ CREATE TABLE "gutter_cells" (
     "line_fid" INTEGER, -- fid of line from gutter_lines layer  
     "grid_fid" INTEGER -- equal to fid from grid table
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('gutter_cells', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('gutter_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('gutter_cells', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('gutter_cells', 'geom');
 
 -- TAILINGS.DAT
 

@@ -425,7 +425,7 @@ class Layers(object):
                     {
                         "name": "Building Areas",
                         "sgroup": "User Layers",
-                        "styles": ["user_spatial_gutter.qml"],
+                        "styles": ["user_buildings.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
@@ -817,6 +817,16 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "gutter_cells",
+                    {
+                        "name": "Gutter Cells",
+                        "sgroup": "Schematic Layers",
+                        "styles": ["gutter_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                    },
+                ),                
                 # Storm Drain layers:
                 (
                     "swmmflo",
@@ -1027,16 +1037,6 @@ class Layers(object):
                     "spatialshallow_cells",
                     {
                         "name": "Shallow-n Cells",
-                        "sgroup": "Tables",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": True,
-                    },
-                ),
-                (
-                    "gutter_cells",
-                    {
-                        "name": "Gutter Cells",
                         "sgroup": "Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},

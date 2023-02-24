@@ -45,6 +45,7 @@ from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_gr
 from ..errors import GeometryValidityErrors, Flo2dError
 
 import numpy as np
+from scipy.stats._discrete_distns import geom
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None
@@ -1553,21 +1554,32 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
     """
     Calculating and inserting gutter values into 'gutter_cells' table.
     """
+    cell_size = float(gutils.get_cont_par("CELLSIZE"))
     del_cells = "DELETE FROM gutter_cells;"
-    insert_cells_from_polygons = ["""INSERT INTO gutter_cells (area_fid, grid_fid) VALUES""", 2]
-    insert_cells_from_lines = ["""INSERT INTO gutter_cells (line_fid, grid_fid) VALUES""", 2]
+    insert_cells_from_polygons = ["""INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""", 3]
+    insert_cells_from_lines = ["""INSERT INTO gutter_cells (geom, line_fid, grid_fid) VALUES""",3]
 
-    gutils.execute(del_cells)
-    if areas:
-        for row in calculate_spatial_variable_from_polygons(grid, areas):
-            insert_cells_from_polygons.append(row)
-        gutils.batch_execute(insert_cells_from_polygons)
+    try:
+        gutils.execute(del_cells)
+        if areas:
+            for row in calculate_spatial_variable_from_polygons(grid, areas):
+                centroid = gutils.single_centroid(row[1])
+                geom = gutils.build_square(centroid, cell_size * 0.95)
+                val = (geom,) + row
+                insert_cells_from_polygons.append(val)
+            gutils.batch_execute(insert_cells_from_polygons)
+    
+        if lines:
+            for row in calculate_gutter_variable_from_lines(grid, lines):
+                centroid = gutils.single_centroid(row[1])
+                geom = gutils.build_square(centroid, cell_size * 0.95)
+                val = (geom,) + row
+                insert_cells_from_lines.append(val)
+            gutils.batch_execute(insert_cells_from_lines)
 
-    if lines:
-        for row in calculate_gutter_variable_from_lines(grid, lines):
-            insert_cells_from_lines.append(row)
-        gutils.batch_execute(insert_cells_from_lines)
-
+    except Exception as e:
+        QApplication.restoreOverrideCursor()
+        show_error("ERROR 230223.0557: building gutter cells failed!\n", e)
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
     """

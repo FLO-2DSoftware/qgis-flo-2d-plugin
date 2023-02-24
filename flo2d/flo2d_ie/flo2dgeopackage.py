@@ -1149,7 +1149,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_gutter(self):
         gutter_globals_sql = ["""INSERT INTO gutter_globals (width, height, n_value) VALUES""", 3]
         gutter_areas_sql = ["""INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""", 5]
-        cells_sql = ["""INSERT INTO gutter_cells (area_fid, grid_fid) VALUES""", 2]
+        cells_sql = ["""INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""", 3]
 
         self.clear_tables("gutter_globals", "gutter_areas", "gutter_lines", "gutter_cells")
         head, data = self.parser.parse_gutter()
@@ -1161,7 +1161,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gid = row[1]
             geom = self.build_square(cells[gid], self.shrink)
             gutter_areas_sql += [(geom,) + tuple(row[2:])]
-            cells_sql += [(i, gid)]
+            cells_sql += [(geom, i, gid)]
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 

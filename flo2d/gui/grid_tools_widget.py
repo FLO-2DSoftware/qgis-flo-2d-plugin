@@ -1156,7 +1156,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 gutter_lyr = self.lyrs.data["gutter_areas"]["qlyr"]
                 gutter_lyr.reload()
                 self.lyrs.update_layer_extents(gutter_lyr)
-
+                self.lyrs.data["gutter_cells"]["qlyr"].triggerRepaint()
+                
                 self.assign_gutter_globals()
                 self.iface.actionPan().trigger()
 
@@ -1172,13 +1173,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
     def assign_gutter_globals(self):
-        self.globlyr = self.lyrs.data["gutter_globals"]["qlyr"]
-        self.iface.setActiveLayer(self.globlyr)
-        self.globlyr.featureAdded.connect(self.feature_added)
-
-        self.globlyr.startEditing()
-        self.iface.actionAddFeature().trigger()
-        self.globlyr.removeSelection()
+        if self.gutils.is_table_empty("gutter_globals"):
+            self.globlyr = self.lyrs.data["gutter_globals"]["qlyr"]
+            self.iface.setActiveLayer(self.globlyr)
+            self.globlyr.featureAdded.connect(self.feature_added)
+    
+            self.globlyr.startEditing()
+            self.iface.actionAddFeature().trigger()
+            self.globlyr.removeSelection()
 
     # Define a function called when a feature is added to the layer
     def feature_added(self):
