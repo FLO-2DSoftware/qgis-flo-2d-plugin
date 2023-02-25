@@ -87,7 +87,7 @@ class FLOPROExecutor(object):
                     encoding=None, 
                     errors=None, 
                     text=None                  
-                ).wait()
+                )
                 # out = result.communicate() 
                 # for line in out:
                 #     self.uc.bar_info(line)                 
@@ -108,7 +108,7 @@ class FLOPROExecutor(object):
                 #555555
                 # result = call(self.flo2d_exe)
                 
-                self.uc.bar_info("Result code: " +  str(result) if result is not None else "", 100) 
+                self.uc.bar_info("Model FLOPRO.exe started "  + str(result) if result is not None else "", 10) 
                 
                 return result 
                

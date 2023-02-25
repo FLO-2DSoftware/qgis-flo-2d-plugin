@@ -1,14 +1,16 @@
 [general]
 name=FLO-2D
-version=0.10.90
+version=0.10.91
 qgisMinimumVersion=3.0
-qgisMaximumVersion=3.99
+qgisMaximumVersion=3.91
 description=FLO-2D tools for QGIS
 author=FLO-2D
 email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.91
+  -  New call to FLOPRO.exe model after recent changes to its FORTRAN compilation.
  <p>0.10.90
   - Gutters:
       - Add cell geometry to Gutters cells table and move it to Schematic Layers.
