@@ -161,44 +161,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.execute(qry)
         
             gids = list(res.keys())
-            cells = self.grid_centroids(gids, buffers=True)
+            cells = self.grid_centroids(gids)
             for gid in res:
                 row = res[gid]["row"]
                 grid = row[1]
                 wsel = row[2]
+                geom = self.build_square(cells[gid], self.shrink)
                 if with_n_values and with_tailings:
                     if len(row) == 3:
                         # R  grid  wsel:
-                        reservoirs_sql += [(grid, wsel, "0.25", False, "-1.0", cells[gid])]
+                        reservoirs_sql += [(grid, wsel, "0.25", False, "-1.0", geom)]
                     elif len(row) == 4:    
                         # R  grid  wsel  n_value_or_tailing:
                         if float_or_zero(row[3]) > 1.0:
                             # 3rd. value is a tailing depth:
-                            reservoirs_sql += [(grid, wsel, "0.25", False, row[3], cells[gid])]
+                            reservoirs_sql += [(grid, wsel, "0.25", False, row[3], geom)]
                         else:  
                             # 3rd. value is n_value:
-                            reservoirs_sql += [(grid, wsel, row[3], True, "-1.0", cells[gid])]                              
+                            reservoirs_sql += [(grid, wsel, row[3], True, "-1.0", geom)]                              
         
                     elif len(row) == 5:    
                         # R  grid  wsel  tailing  n_value:
-                        reservoirs_sql += [(grid, wsel, row[4], True, row[3], cells[gid])]   
+                        reservoirs_sql += [(grid, wsel, row[4], True, row[3], geom)]   
                     else:
                         errors += "R line with more than 5 values"      
         
                 elif with_n_values and not with_tailings:
                     if len(row) == 3:
                         # R  grid  wsel:
-                        reservoirs_sql += [(grid, wsel, "0.25", False, cells[gid])]
+                        reservoirs_sql += [(grid, wsel, "0.25", False, geom)]
                     elif len(row) == 4:    
                         # R  grid  wsel  n_value:
-                        reservoirs_sql += [(grid, wsel, row[3], True, cells[gid])]    
+                        reservoirs_sql += [(grid, wsel, row[3], True, geom)]    
                     else:
                         errors += "Inflow table without tailings. R line with more than 4 values"       
         
                 elif not with_n_values and not with_tailings:
                     if len(row) == 3:
                         # R  grid  wsel:
-                        reservoirs_sql += [(grid, wsel, cells[gid])]
+                        reservoirs_sql += [(grid, wsel, geom)]
                     else:
                         errors += "Inflow table without n_values and tailings. R line with more than 3 values"                   
         

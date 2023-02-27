@@ -2,7 +2,7 @@
 name=FLO-2D
 version=0.10.91
 qgisMinimumVersion=3.0
-qgisMaximumVersion=3.91
+qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
 author=FLO-2D
 email=jj@flo-2d.com
