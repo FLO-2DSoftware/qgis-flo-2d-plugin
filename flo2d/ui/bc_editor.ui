@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
-    <height>330</height>
+    <width>555</width>
+    <height>331</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -219,7 +219,7 @@
      <item>
       <widget class="QCheckBox" name="interval_ckbx">
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IHOURDAILY:Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>

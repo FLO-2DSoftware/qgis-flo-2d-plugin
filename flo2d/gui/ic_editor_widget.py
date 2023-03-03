@@ -146,7 +146,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.save_res()
 
     def repaint_reservoirs(self):
-        self.lyrs.lyrs_to_repaint = [self.lyrs.data["reservoirs"]["qlyr"]]
+        self.lyrs.lyrs_to_repaint = [self.lyrs.data["reservoirs"]["qlyr"], self.lyrs.data["user_reservoirs"]["qlyr"]]
         self.lyrs.repaint_layers()
 
     def revert_res_lyr_edits(self):
@@ -157,33 +157,40 @@ class ICEditorWidget(qtBaseClass, uiDialog):
     def delete_cur_res(self):
         if not self.res_cbo.count():
             return
-        q = "Are you sure, you want delete the current reservoir?"
+        q = "Are you sure you want delete the current reservoir?"
         if not self.uc.question(q):
             return
         self.reservoir.del_row()
         self.repaint_reservoirs()
+        self.lyrs.clear_rubber()
         self.populate_cbos()
 
     def schematize_res(self):
-        del_qry = "DELETE FROM reservoirs;"
-        ins_qry = """INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel, n_value, use_n_value, tailings, geom)
-                    SELECT
-                        ur.fid, ur.name, g.fid, ur.wsel, ur.n_value, ur.use_n_value, ur.tailings, g.geom
-                    FROM
-                        grid AS g, user_reservoirs AS ur
-                    WHERE
-                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));"""
-        #         ins_qry = '''INSERT INTO reservoirs (user_res_fid, grid_fid, geom)
-        #                     SELECT
-        #                         ur.fid, g.fid, g.geom
-        #                     FROM
-        #                         grid AS g, user_reservoirs AS ur
-        #                     WHERE
-        #                         ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));'''
-        self.gutils.execute(del_qry)
-        self.gutils.execute(ins_qry)
-        self.repaint_reservoirs()
-
+        user_rsvs = self.gutils.execute("SELECT Count(*) FROM user_reservoirs").fetchone()[0]
+        if user_rsvs > 0:
+            ins_qry = """INSERT INTO reservoirs (user_res_fid, name, grid_fid, wsel, n_value, use_n_value, tailings, geom)
+                        SELECT
+                            ur.fid, ur.name, g.fid, ur.wsel, ur.n_value, ur.use_n_value, ur.tailings, g.geom
+                        FROM
+                            grid AS g, user_reservoirs AS ur
+                        WHERE
+                            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));"""
+    
+            self.gutils.execute("DELETE FROM reservoirs;")
+            self.gutils.execute(ins_qry)
+            self.repaint_reservoirs()
+            self.uc.show_info(str(user_rsvs) + " user reservoirs schematized!")
+        else:
+            sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0] 
+            if sch_rsvs > 0:
+                if self.uc.question("There aren't any user reservoirs." +
+                                 "\nBut there are " + str(sch_rsvs) + " schematic reservoirs." +
+                                 "\n\nDo you want to delete them?"):
+                    self.gutils.execute("DELETE FROM reservoirs;")
+                    self.repaint_reservoirs()
+            else:           
+                self.uc.show_info("There aren't any user reservoirs!")  
+                                                 
     def save_res(self):
         self.reservoir.wsel = self.res_ini_sbox.value()
         self.reservoir.set_row()
@@ -193,14 +200,15 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         fid = self.chan_seg_cbo.itemData(self.chan_seg_cbo.currentIndex())
         dini = self.seg_ini_sbox.value()
         qry = "UPDATE chan SET depinitial = ? WHERE fid = ?;"
-        if fid > 0:
-            self.gutils.execute(
-                qry,
-                (
-                    dini,
-                    fid,
-                ),
-            )
+        if fid:
+            if fid > 0:
+                self.gutils.execute(
+                    qry,
+                    (
+                        dini,
+                        fid,
+                    ),
+                )
 
     def save_seg_init_depth(self):
         pass

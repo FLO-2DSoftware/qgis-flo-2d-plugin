@@ -1493,12 +1493,7 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
-
-
-
-
-
-                        
+ 
     @connection_required
     def import_selected_components2(self):
         """
