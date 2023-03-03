@@ -1338,14 +1338,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             elif first_gid > 0:
                 options["IDEPLT"] = first_gid
                 self.set_cont_par("IDEPLT", first_gid)
-            elif options["IRAIN"] != "0":
-                # Levee LGPLOT and IDEPLT
-                pass
-            else:
-                options["LGPLOT"] = 0
-                options["IDEPLT"] = 0
-                self.set_cont_par("LGPLOT", 0)
-                self.set_cont_par("IDEPLT", 0)
+            # elif options["IRAIN"] != "0":
+            #     # Levee LGPLOT and IDEPLT
+            #     pass
+            # else:
+            #     options["LGPLOT"] = 0
+            #     options["IDEPLT"] = 0
+            #     self.set_cont_par("LGPLOT", 0)
+            #     self.set_cont_par("IDEPLT", 0)
 
             cont = os.path.join(outdir, "CONT.DAT")
             toler = os.path.join(outdir, "TOLER.DAT")
