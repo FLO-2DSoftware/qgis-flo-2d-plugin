@@ -27,7 +27,7 @@ from qgis.PyQt.QtGui import QColor, QRegExpValidator, QDoubleValidator
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true
+from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true, NumericDelegate
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 
 from math import isnan
@@ -1419,14 +1419,5 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
     def delete_time(self):
         self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())      
         self.inflow_time_series_tblw.selectRow(0)
-        self.inflow_time_series_tblw.setFocus()
-                                          
-class NumericDelegate(QStyledItemDelegate):
-    def createEditor(self, parent, option, index):
-        editor = super(NumericDelegate, self).createEditor(parent, option, index)
-        if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
-            validator = QRegExpValidator(reg_ex, editor)
-            editor.setValidator(validator)
-        return editor                                           
+        self.inflow_time_series_tblw.setFocus()                                         
                                            

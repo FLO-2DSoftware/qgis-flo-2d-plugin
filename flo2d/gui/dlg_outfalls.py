@@ -8,7 +8,7 @@
 # of the License, or (at your option) any later version
 
 import os
-from ..utils import is_true, float_or_zero, int_or_zero, is_number
+from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate
 from qgis.core import QgsFeatureRequest
 from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
@@ -684,12 +684,12 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                
         self.setup_connection()
 
-        delegate = NumericDelegate(self.inflow_time_series_tblw)
-        self.inflow_time_series_tblw.setItemDelegate(delegate)
+        delegate = NumericDelegate(self.outfall_time_series_tblw)
+        self.outfall_time_series_tblw.setItemDelegate(delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
         self.select_time_series_btn.clicked.connect(self.select_time_series_file)   
-        self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
+        self.outfall_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
         self.add_time_data_btn.clicked.connect(self.add_time) 
         self.delete_time_data_btn.clicked.connect(self.delete_time) 
 
@@ -730,17 +730,17 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                         FROM swmm_time_series_data WHERE time_series_name = ?;"""
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
-                    self.inflow_time_series_tblw.setRowCount(0)
+                    self.outfall_time_series_tblw.setRowCount(0)
             
                     for row_number, row_data in enumerate(rows):
-                        self.inflow_time_series_tblw.insertRow(row_number)
+                        self.outfall_time_series_tblw.insertRow(row_number)
                         for cell, data in enumerate(row_data):
             
                             item = QTableWidgetItem()     
                             item.setData(Qt.DisplayRole, data)
-                            self.inflow_time_series_tblw.setItem(row_number, cell, item)
+                            self.outfall_time_series_tblw.setItem(row_number, cell, item)
         
-                    self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
+                    self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
             else:
                 self.name_le.setText(self.time_series_name)
                 self.external_radio.setChecked(True)
@@ -783,7 +783,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("Time Series description required!", 2)
             self.values_ok = False
             
-        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0: 
+        elif self.use_table_radio.isChecked() and self.outfall_time_series_tblw.rowCount() == 0: 
                 self.uc.bar_warn("Time Series table can't be empty!", 2)
                 self.values_ok = False
 
@@ -811,16 +811,16 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
         
         insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
-        for row in range(0, self.inflow_time_series_tblw.rowCount()):
-            date = self.inflow_time_series_tblw.item(row, 0)
+        for row in range(0, self.outfall_time_series_tblw.rowCount()):
+            date = self.outfall_time_series_tblw.item(row, 0)
             if date:
                 date = date.text()
                                          
-            time = self.inflow_time_series_tblw.item(row, 1)
+            time = self.outfall_time_series_tblw.item(row, 1)
             if time:
                 time = time.text()
                 
-            value = self.inflow_time_series_tblw.item(row, 2)
+            value = self.outfall_time_series_tblw.item(row, 2)
             if value:
                 value = value.text()
                 
@@ -834,7 +834,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
     def get_name(self):
         return self.time_series_name
 
-    def inflow_time_series_tblw_clicked(self):
+    def outfall_time_series_tblw(self):
         self.uc.show_info("Clicked")
         
     def time_series_model_changed(self, i,j):
@@ -850,41 +850,32 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             Qitem.setText("")     
 
     def add_time(self):
-        self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())  
-        row_number = self.inflow_time_series_tblw.rowCount() - 1
+        self.outfall_time_series_tblw.insertRow(self.outfall_time_series_tblw.rowCount())  
+        row_number = self.outfall_time_series_tblw.rowCount() - 1
         
         item = QTableWidgetItem()
         d= QDate.currentDate()
         d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year()) 
         item.setData(Qt.DisplayRole, d)                         
-        self.inflow_time_series_tblw.setItem(row_number, 0, item)   
+        self.outfall_time_series_tblw.setItem(row_number, 0, item)   
         
         item = QTableWidgetItem()
         t = QTime.currentTime()
         t = str(t.hour()) + ":" + str(t.minute())
         item.setData(Qt.DisplayRole, t)                         
-        self.inflow_time_series_tblw.setItem(row_number, 1, item) 
+        self.outfall_time_series_tblw.setItem(row_number, 1, item) 
         
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, "0.0")                         
-        self.inflow_time_series_tblw.setItem(row_number, 2, item) 
+        self.outfall_time_series_tblw.setItem(row_number, 2, item) 
        
-        self.inflow_time_series_tblw.selectRow(row_number)
-        self.inflow_time_series_tblw.setFocus()                   
+        self.outfall_time_series_tblw.selectRow(row_number)
+        self.outfall_time_series_tblw.setFocus()                   
 
     def delete_time(self):
-        self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())      
-        self.inflow_time_series_tblw.selectRow(0)
-        self.inflow_time_series_tblw.setFocus()
-                                          
-class NumericDelegate(QStyledItemDelegate):
-    def createEditor(self, parent, option, index):
-        editor = super(NumericDelegate, self).createEditor(parent, option, index)
-        if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
-            validator = QRegExpValidator(reg_ex, editor)
-            editor.setValidator(validator)
-        return editor                                           
+        self.outfall_time_series_tblw.removeRow(self.outfall_time_series_tblw.currentRow())      
+        self.outfall_time_series_tblw.selectRow(0)
+        self.outfall_time_series_tblw.setFocus()                                                                 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_outfall_tidal_curve")
 class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
@@ -1012,7 +1003,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
     def get_name(self):
         return self.tidal_curve_name
 
-    def inflow_time_series_tblw_clicked(self):
+    def outfall_time_series_tblw_clicked(self):
         self.uc.show_info("Clicked")
         
     def time_series_model_changed(self, i,j):
@@ -1052,12 +1043,5 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.outflow_tidal_curve_tblw.selectRow(0)
         self.outflow_tidal_curve_tblw.setFocus()
                                           
-class NumericDelegate(QStyledItemDelegate):
-    def createEditor(self, parent, option, index):
-        editor = super(NumericDelegate, self).createEditor(parent, option, index)
-        if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
-            validator = QRegExpValidator(reg_ex, editor)
-            editor.setValidator(validator)
-        return editor                                     
+                                  
 

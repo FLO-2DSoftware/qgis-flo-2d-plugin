@@ -254,7 +254,7 @@
     </widget>
    </item>
    <item row="3" column="1">
-    <widget class="QTableWidget" name="inflow_time_series_tblw">
+    <widget class="QTableWidget" name="outfall_time_series_tblw">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -396,7 +396,7 @@
   <tabstop>file_le</tabstop>
   <tabstop>select_time_series_btn</tabstop>
   <tabstop>use_table_radio</tabstop>
-  <tabstop>inflow_time_series_tblw</tabstop>
+  <tabstop>outfall_time_series_tblw</tabstop>
  </tabstops>
  <resources/>
  <connections>
@@ -435,7 +435,7 @@
   <connection>
    <sender>external_radio</sender>
    <signal>toggled(bool)</signal>
-   <receiver>inflow_time_series_tblw</receiver>
+   <receiver>outfall_time_series_tblw</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -451,7 +451,7 @@
   <connection>
    <sender>use_table_radio</sender>
    <signal>toggled(bool)</signal>
-   <receiver>inflow_time_series_tblw</receiver>
+   <receiver>outfall_time_series_tblw</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

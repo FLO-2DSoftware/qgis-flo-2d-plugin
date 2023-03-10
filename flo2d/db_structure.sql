@@ -1912,6 +1912,15 @@ CREATE TABLE "sed" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed', 'aspatial');
 
+CREATE TABLE "sed_group_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "group_fid" INTEGER DEFAULT 1 -- sediment group fid for area (from sed_groups table)
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
+-- SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
+
 CREATE TABLE "sed_groups" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "isedeqi" INTEGER, -- ISEDEQI, sediment transport equation used for sediment routing by size fraction
@@ -1921,15 +1930,6 @@ CREATE TABLE "sed_groups" (
     "dist_fid" INTEGER -- fraction distribution number (from sed_group_frac table) for that group
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sed_groups', 'aspatial');
-
-CREATE TABLE "sed_group_areas" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "group_fid" INTEGER DEFAULT 1 -- sediment group fid for area (from sed_groups table)
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('sed_group_areas', 'features', 4326);
-SELECT gpkgAddGeometryColumn('sed_group_areas', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('sed_group_areas', 'geom');
--- SELECT gpkgAddSpatialIndex('sed_group_areas', 'geom');
 
 CREATE TABLE "sed_group_frac" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

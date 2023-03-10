@@ -22,8 +22,18 @@ import os.path
 import io
 import csv
 from math import ceil
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication
+from qgis.PyQt.QtCore import Qt, QRegExp
+from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QStyledItemDelegate, QLineEdit, QDoubleSpinBox
+from qgis.PyQt.QtGui import QRegExpValidator, QDoubleValidator
+
+class NumericDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(NumericDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[0-9]+.?[0-9]{,4}")
+            validator = QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor 
 
 def get_BC_Border():
     global BC_BORDER
@@ -215,4 +225,4 @@ def copy_tablewidget_selection(tablewidget):
         csv.writer(stream, delimiter="\t").writerows(table)
         QApplication.clipboard().setText(stream.getvalue())
 
- 
+  
