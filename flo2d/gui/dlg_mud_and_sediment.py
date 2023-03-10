@@ -9,7 +9,10 @@
 
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QApplication, QInputDialog
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QApplication, QInputDialog, QStyledItemDelegate, QLineEdit
+from qgis.PyQt.QtGui import QColor, QRegExpValidator
+from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate 
+
 from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -103,9 +106,15 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rigid_nodes_tblw.cellChanged.connect(self.sed_rigid_nodes_tblw_cellchanged)
  
         self.setup_connection()
+
+        delegate1 = NumericDelegate(self.sed_size_fraction_dp_tblw)
+        self.sed_size_fraction_dp_tblw.setItemDelegate(delegate1)       
         
-         
+        delegate2 = NumericDelegate(self.sed_rating_curve_dp_tblw)
+        self.sed_rating_curve_dp_tblw.setItemDelegate(delegate2) 
+        
         # Create temporary tables:
+        
         # Fractions:
         self.gutils.execute("DROP TABLE IF EXISTS sed_group_frac_data_tmp")        
         self.gutils.execute('''CREATE TABLE sed_group_frac_data_tmp 
@@ -209,8 +218,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             if volume: 
                 self.mud_basin_grid_sbox.setValue(basin[0])
                 self.mud_basin_vol_dbox.setValue(volume[0])         
-        
-        
+          
     def populate_sediment_transport(self):   
         qry = "SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep  FROM sed"
         sed = self.gutils.execute(qry).fetchone()
@@ -230,15 +238,14 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_vol_conctr_dbox.setValue(cvfg)
         
         # Load Size Fractions tables:
-        self.load_size_fraction_tables()
+        self.load_size_fraction_main_table()
 
         # Load Supply Rating Curve tables:
-        self.load_supply_rating_curve_tables()
+        self.load_rating_curve_main_table()
 
         # Load Rigid cells:
         self.load_rigid_nodes_table()
         
-         
     def sed_size_fraction_grp_checked(self):
         self.sed_size_fraction_grp.setChecked(self.sed_size_fraction_grp.isChecked())
 
@@ -266,7 +273,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.mud_sediment_tabWidget.setCurrentIndex(1) 
   
         # Load Size Fractions tables:
-        self.load_size_fraction_tables()
+        self.load_size_fraction_main_table()
                             
     def show_two_phase(self):
         # self.gutils.set_cont_par("MUD", 1)
@@ -392,8 +399,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             else:
                 self.uc.show_warn(wrng) 
                 return False          
-        
-                    
+               
     def save_mud_sediment(self): 
         try:
             if self.mud_debris_transport_radio.isChecked():
@@ -525,9 +531,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.gutils.execute("INSERT INTO mud_areas (debrisv) VALUES (?);", (debrisv,))
             grid = self.mud_basin_grid_sbox.value()
             self.gutils.execute("INSERT INTO mud_cells (grid_fid, area_fid) VALUES (?, ?);", (grid, 1,))            
-                
-
-                      
+                                
     def create_polygon_sed(self):
         self.lyrs.enter_edit_mode("sed_rigid_areas")
 
@@ -679,7 +683,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         any_dist = self.sed_size_fraction_tblw.item(row, 3)
         if any_dist:
             dist_fid = self.sed_size_fraction_tblw.item(row, 3).text()
-            self.load_size_routing_fractions_table(dist_fid)
+            self.load_size_fractions_secundary_table(dist_fid)
         self.sed_size_fraction_dp_tblw.blockSignals(False)        
 
     def load_rating_curve_routing_fractions_table(self, row): 
@@ -688,14 +692,14 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         any_dist = self.sed_rating_curve_tblw.item(row, 4)
         if any_dist:
             dist_fid = self.sed_rating_curve_tblw.item(row, 4).text()
-            self.load_rc_routing_fractions(dist_fid)
+            self.load_rating_curve_secundary_table(dist_fid)
         self.sed_rating_curve_dp_tblw.blockSignals(False)       
 
-
-    def load_rc_routing_fractions(self, dist_fid):
+    def load_rating_curve_secundary_table(self, dist_fid):
         routing_data_qry = "SELECT ssediam, ssedpercent FROM sed_supply_frac_data_tmp WHERE dist_fid =? ORDER BY ssediam;"
         routing_fractions = self.gutils.execute(routing_data_qry, (dist_fid,)).fetchall()
         if routing_fractions:
+            self.sed_rating_curve_dp_tblw.setRowCount(0)
             for row_number, ss_dp in enumerate(routing_fractions):
                 self.sed_rating_curve_dp_tblw.insertRow(row_number)
                 item = QTableWidgetItem()
@@ -705,7 +709,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 item.setData(Qt.DisplayRole, ss_dp[1])                         
                 self.sed_rating_curve_dp_tblw.setItem(row_number, 1, item)        
     
-    def load_size_routing_fractions_table(self, dist_fid):
+    def load_size_fractions_secundary_table(self, dist_fid):
         routing_data_qry = "SELECT sediam, sedpercent FROM sed_group_frac_data_tmp WHERE dist_fid =?  ORDER BY sediam;"
         routing_fractions = self.gutils.execute(routing_data_qry, (dist_fid,)).fetchall()
         if routing_fractions:
@@ -736,7 +740,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.sed_size_grid_tblw.setItem(row_number, 0, item)        
         self.sed_size_grid_tblw.blockSignals(False)  
 
-    def load_size_fraction_tables(self):
+    def load_size_fraction_main_table(self):
         # Block signals:
         self.sed_size_fraction_grp.blockSignals(True)
         self.sed_size_fraction_tblw.blockSignals(True);
@@ -771,7 +775,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     first_dist = sf[3]         
     
             # Load Routimg Fractions for first row of Size Fractions table:
-            self.load_size_routing_fractions_table(first_dist)                   
+            self.load_size_fractions_secundary_table(first_dist)                   
     
             # Load Grid Elements for first row of Size Fractions table:
             self.load_size_fraction_cells_table(0)
@@ -788,7 +792,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_size_fraction_dp_tblw.blockSignals(False)
         self.sed_size_grid_tblw.blockSignals(False)         
         
-    def load_supply_rating_curve_tables(self):
+    def load_rating_curve_main_table(self):
         # Block signals:
         self.sed_rating_curve_tblw.blockSignals(True);
         self.sed_rating_curve_dp_tblw.blockSignals(True)         
@@ -827,7 +831,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     first_dist = rc[4]
 
             # Load Routing Fractions for first row of Suply Rating Curve table:
-            self.load_rc_routing_fractions(first_dist) 
+            self.load_rating_curve_secundary_table(first_dist) 
             
             self.sed_rating_curve_tblw.selectRow(0)  
             
@@ -849,7 +853,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 self.sed_rigid_nodes_tblw.setItem(row_number, 0, item)        
         self.sed_rigid_nodes_tblw.blockSignals(False) 
 
-        
     def sed_add_size_fraction_cell_btn_clicked(self):
         while True:
             grid, ok = QInputDialog.getInt(None, "Add Grid Number", "Grid element number:", min = 1, step = 0)
@@ -1005,7 +1008,6 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["sed_rigid_areas"]["qlyr"]]
         self.lyrs.repaint_layers()  
         
-        
     def function_changed(self):
         try:
             item = self.functions_cbo.currentText()
@@ -1117,16 +1119,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             else:
                 self.uc.show_warn("WARNING 040922.0627: not such a function!")            
         except ValueError:        
-            self.uc.show_warn("ERROR 030922.0644: not such an item in functions list!")   
-        
-
-        
-        
-        
-        
-        
-        
-        
+            self.uc.show_warn("ERROR 030922.0644: not such an item in functions list!")           
         
         
         
