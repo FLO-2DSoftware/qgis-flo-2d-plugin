@@ -21,9 +21,10 @@ from itertools import filterfalse
 import os.path
 import io
 import csv
-from math import ceil
+from math import ceil, log10
 from qgis.PyQt.QtCore import Qt, QRegExp
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QStyledItemDelegate, QLineEdit, QDoubleSpinBox
+from qgis.PyQt.QtWidgets import (QMessageBox, QApplication, QStyledItemDelegate, 
+            QItemDelegate, QLineEdit, QDoubleSpinBox)
 from qgis.PyQt.QtGui import QRegExpValidator, QDoubleValidator
 
 class NumericDelegate(QStyledItemDelegate):
@@ -33,7 +34,24 @@ class NumericDelegate(QStyledItemDelegate):
             reg_ex = QRegExp("[0-9]+.?[0-9]{,4}")
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
-        return editor 
+        return editor
+    
+    def paint(self, painter, option, index):
+        value = index.model().data(index, Qt.EditRole)
+        try:
+            number = float(value)
+            painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 5))
+        except :
+            QStyledItemDelegate.paint(self, painter, option, index)
+            
+    # def displayText(self, value, locale):
+    #     try:
+    #         number = float(value)
+    #     except ValueError:
+    #         return super(NumericDelegate, self).displayText(value, locale)
+    #     else:
+    #         precision = log10(number) + 1 + 5
+    #         return locale.toString(number, f='f', prec=precision)        
 
 def get_BC_Border():
     global BC_BORDER

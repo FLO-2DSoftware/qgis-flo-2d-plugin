@@ -685,7 +685,8 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.setup_connection()
 
         delegate = NumericDelegate(self.outfall_time_series_tblw)
-        self.outfall_time_series_tblw.setItemDelegate(delegate)
+        # self.outfall_time_series_tblw.setItemDelegate(delegate)
+        self.outfall_time_series_tblw.setItemDelegateForColumn(2, delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
         self.select_time_series_btn.clicked.connect(self.select_time_series_file)   
