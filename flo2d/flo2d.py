@@ -217,6 +217,9 @@ class Flo2D(object):
 
             action.setMenu(popup)
 
+        if text == "Grid Info Tool":
+            action.setCheckable(True)
+            
         if status_tip is not None:
             action.setStatusTip(status_tip)
 

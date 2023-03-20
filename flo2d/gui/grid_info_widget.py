@@ -99,18 +99,22 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
                     if self.plot_ckbox.isChecked():
                         self.plot_grid_rainfall(feat)
+                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))                        
                 else:
                     self.idEdit.setText("")
                     self.elevEdit.setText("")
                     self.mannEdit.setText("")
                     self.cellEdit.setText("")
-                    self.n_cells_lbl.setText("Number of cells:       ")                    
+                    self.n_cells_lbl.setText("Number of cells:       ")  
+                    self.lyrs.clear_rubber()                  
             else:
                 self.idEdit.setText("")
                 self.elevEdit.setText("")
                 self.mannEdit.setText("")
                 self.cellEdit.setText("")
                 self.n_cells_lbl.setText("Number of cells:       ")
+                self.lyrs.clear_rubber()
+    
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(

@@ -40,7 +40,7 @@
      <property name="frameShadow">
       <enum>QFrame::Plain</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>6</x>
@@ -211,6 +211,9 @@
              <property name="icon">
               <iconset>
                <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
