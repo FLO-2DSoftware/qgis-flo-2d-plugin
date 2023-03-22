@@ -12,7 +12,7 @@
 # pylint: disable=no-self-use
 
 import os
-from qgis.PyQt.QtCore import pyqtSignal
+from qgis.PyQt.QtCore import pyqtSignal, Qt
 from qgis.PyQt.QtGui import QCursor, QPixmap
 from qgis.gui import QgsMapToolIdentify
 
@@ -24,6 +24,7 @@ class GridInfoTool(QgsMapToolIdentify):
     def __init__(self, uc, canvas, lyrs):
         self.uc = uc
         self.canvas = canvas
+        self.canvas.setCursor(Qt.CrossCursor)
         self.lyrs = lyrs
         self.grid = None
 
@@ -43,10 +44,11 @@ class GridInfoTool(QgsMapToolIdentify):
             self.uc.bar_error("ERROR 100721.1942: is the grid defined?") 
 
     def activate(self):
-        self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))
+        self.canvas.setCursor(Qt.CrossCursor)
 
     def deactivate(self):
-        pass
+        self.canvas.setCursor(Qt.ArrowCursor)
+        self.lyrs.clear_rubber()
 
     def isZoomTool(self):
         return False

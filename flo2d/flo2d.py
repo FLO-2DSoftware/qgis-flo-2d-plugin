@@ -19,11 +19,10 @@ import cProfile, pstats, io
 from pstats import SortKey
 
 from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
-from qgis.PyQt.QtGui import QIcon, QDesktopServices
+from qgis.PyQt.QtGui import QIcon, QDesktopServices, QCursor, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
 from qgis.core import QgsProject, QgsWkbTypes, NULL
 from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
-
 from datetime import datetime
 
 from .layers import Layers
@@ -217,6 +216,12 @@ class Flo2D(object):
 
             action.setMenu(popup)
 
+        if text == "Grid Info Tool":
+
+            # action.setCheckable(True)
+            # action.setChecked(False)
+            pass
+            
         if status_tip is not None:
             action.setStatusTip(status_tip)
 
@@ -332,7 +337,7 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
             text=self.tr("Info Tool"),
-            callback=self.identify,
+            callback=self.activate_general_info_tool,
             parent=self.iface.mainWindow(),
         )
 
@@ -1880,18 +1885,29 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
+
+    def activate_general_info_tool(self):
+        self.canvas.setMapTool(self.info_tool)
+        self.info_tool.update_lyrs_list()       
+
     @connection_required
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.grid_info_tool.grid = grid
-            self.f2d_grid_info.set_info_layer(grid)
-            self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
-            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
-            self.f2d_grid_info.gutils = self.gutils
-            self.canvas.setMapTool(self.grid_info_tool)
+            tool = self.canvas.mapTool()
+            if tool == self.grid_info_tool:
+                self.canvas.unsetMapTool(self.grid_info_tool)
+            else:
+                if tool is not None:
+                    self.canvas.unsetMapTool(tool)
+                self.grid_info_tool.grid = grid
+                self.f2d_grid_info.set_info_layer(grid)
+                self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+                self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+                self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+                self.f2d_grid_info.gutils = self.gutils
+                self.canvas.setMapTool(self.grid_info_tool)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
 
@@ -2365,10 +2381,6 @@ class Flo2D(object):
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
         self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
-
-    def identify(self):
-        self.canvas.setMapTool(self.info_tool)
-        self.info_tool.update_lyrs_list()
 
     def get_feature_info(self, table, fid):
         try:
