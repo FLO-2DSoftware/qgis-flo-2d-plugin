@@ -13,7 +13,7 @@
 from collections import OrderedDict
 import functools
 import os
-from qgis.PyQt.QtCore import pyqtSignal, QPoint
+from qgis.PyQt.QtCore import pyqtSignal, QPoint, Qt
 from qgis.PyQt.QtWidgets import QMenu, QAction
 from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
 from qgis.core import QgsFeatureRequest
@@ -26,6 +26,7 @@ class InfoTool(QgsMapToolIdentify):
 
     def __init__(self, canvas, lyrs):
         self.canvas = canvas
+        self.canvas.setCursor(Qt.CrossCursor)
         self.lyrs = lyrs
         self.rb = None
         QgsMapToolIdentify.__init__(self, self.canvas)
@@ -95,11 +96,13 @@ class InfoTool(QgsMapToolIdentify):
                 self.rb.reset(i)
 
     def activate(self):
-        self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))
+        self.canvas.setCursor(Qt.CrossCursor)
+        # self.canvas.setCursor(QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/info_tool_icon.svg"))))
         self.update_lyrs_list()
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 
     def deactivate(self):
+        self.canvas.setCursor(Qt.ArrowCursor)
         self.clear_rubber()
         self.lyrs.root.visibilityChanged.disconnect(self.update_lyrs_list)
 
