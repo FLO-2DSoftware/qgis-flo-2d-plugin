@@ -758,8 +758,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         if not time_series_file:
             return
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(time_series_file))
-        self.file_le.setText(time_series_file)
-
+        self.file_le.setText(os.path.normpath(time_series_file))
         # For future use
         try:
             pass
