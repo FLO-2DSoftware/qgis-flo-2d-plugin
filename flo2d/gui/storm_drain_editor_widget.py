@@ -1831,16 +1831,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             INP_groups = OrderedDict()
 
             s = QSettings()
-            last_dir = s.value("FLO-2D/lastGdsDir", "")
-            swmm_file, __ = QFileDialog.getSaveFileName(
-                None, "Select SWMM output file to update", directory=last_dir, filter="SWMM.INP file (SWMM.INP)"
-            )
+            last_dir = s.value("FLO-2D/lastSWMMDir", "")
+            swmm_dir = QFileDialog.getExistingDirectory(
+                None, 
+                "Select directory where SWMM.INP file will be exported", 
+                directory=last_dir, 
+                options=QFileDialog.ShowDirsOnly)
 
-            if not swmm_file:
+            if not swmm_dir:
                 return
-
-            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
-            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            
+            swmm_file = swmm_dir + r"\SWMM.INP"
+            if os.path.isfile(swmm_file):
+                if not self.uc.question(
+                    "SWMM.INP already exits.\n\n"
+                    + "Would you like to replace it?"
+                ):
+                    return
+                else:
+                    pass
+                
+            s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
+            last_dir = s.value("FLO-2D/lastSWMMDir", "")
 
             if os.path.isfile(swmm_file):
                 # File exist, therefore import groups:
