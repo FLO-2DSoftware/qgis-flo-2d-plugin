@@ -2474,6 +2474,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     swmm_inp_file.write(line1.format(*description))
                                     fileName = os.path.basename(row[2].strip())
                                     file = '"' + last_dir + "/" + fileName + '"'
+                                    file = os.path.normpath(file)
                                     lrow2 = [row[0], "FILE", file]
                                     swmm_inp_file.write(line2.format(*lrow2))
                                     swmm_inp_file.write("\n;")
