@@ -21,6 +21,7 @@ from itertools import filterfalse
 import os.path
 import io
 import csv
+from datetime import datetime
 from math import ceil, log10
 from qgis.PyQt.QtCore import Qt, QRegExp
 from qgis.PyQt.QtWidgets import (QMessageBox, QApplication, QStyledItemDelegate, 
@@ -43,16 +44,38 @@ class NumericDelegate(QStyledItemDelegate):
             painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 5))
         except :
             QStyledItemDelegate.paint(self, painter, option, index)
-            
-    # def displayText(self, value, locale):
+             
+class HourDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(HourDelegate, self).createEditor(parent, option, index)
+        if index.column() == 0:
+            if isinstance(editor, QLineEdit):
+                reg_ex = QRegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+                validator = QRegExpValidator(reg_ex, editor)
+                editor.setValidator(validator)
+        return editor
+    
+    # def paint(self, painter, option, index):
+    #     value = index.model().data(index, Qt.EditRole)
     #     try:
-    #         number = float(value)
-    #     except ValueError:
-    #         return super(NumericDelegate, self).displayText(value, locale)
-    #     else:
-    #         precision = log10(number) + 1 + 5
-    #         return locale.toString(number, f='f', prec=precision)        
+    #         hour = datetime.datetime.strptime(value, '%H:%M')
+    #         painter.drawText(option.rect, Qt.AlignLeft, "%H:%M".format(hour))
+    #     except :
+    #         QStyledItemDelegate.paint(self, painter, option, index)    
 
+
+# class NumericDelegate(QStyledItemDelegate):
+#     def createEditor(self, parent, option, index):
+#         editor = super(NumericDelegate, self).createEditor(parent, option, index)
+#         if isinstance(editor, QLineEdit):
+#             reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
+#             validator = QRegExpValidator(reg_ex, editor)
+#             editor.setValidator(validator)
+#         return editor
+
+
+
+    
 def get_BC_Border():
     global BC_BORDER
     return BC_BORDER

@@ -196,6 +196,9 @@
        <height>0</height>
       </size>
      </property>
+     <property name="inputMethodHints">
+      <set>Qt::ImhTime</set>
+     </property>
      <property name="editTriggers">
       <set>QAbstractItemView::AllEditTriggers</set>
      </property>
@@ -210,7 +213,7 @@
      </property>
      <column>
       <property name="text">
-       <string>Time (H:M)</string>
+       <string>Hour of Day</string>
       </property>
      </column>
      <column>

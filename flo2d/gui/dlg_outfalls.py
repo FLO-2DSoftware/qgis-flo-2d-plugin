@@ -8,7 +8,8 @@
 # of the License, or (at your option) any later version
 
 import os
-from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate
+import datetime
+from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate, HourDelegate
 from qgis.core import QgsFeatureRequest
 from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
@@ -22,7 +23,7 @@ from qgis.PyQt.QtWidgets import (
      QStyledItemDelegate,
      QLineEdit
     )
-from qgis.PyQt.QtGui import QColor, QRegExpValidator
+from qgis.PyQt.QtGui import QColor, QRegExpValidator, QStandardItemModel, QStandardItem
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -323,7 +324,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             if save:
                 if dlg.values_ok:
                     dlg.save_tidal_curve()
-                    tidal_curve_name = dlg.get_name()
+                    tidal_curve_name = dlg.get_tidal_name()
                     if tidal_curve_name != "":
                         # Reload tidal curve list and select the one saved:
                         time_curve_names_sql = (
@@ -685,7 +686,6 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.setup_connection()
 
         delegate = NumericDelegate(self.outfall_time_series_tblw)
-        # self.outfall_time_series_tblw.setItemDelegate(delegate)
         self.outfall_time_series_tblw.setItemDelegateForColumn(2, delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
@@ -840,7 +840,6 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
     def time_series_model_changed(self, i,j):
         self.uc.show_info("Changed") 
         
-        
     def ts_tblw_changed(self, Qitem):  
         return
         try:
@@ -896,13 +895,16 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
                
         self.setup_connection()
 
-        delegate = NumericDelegate(self.outflow_tidal_curve_tblw)
+        delegate = HourDelegate(self.outflow_tidal_curve_tblw)
         self.outflow_tidal_curve_tblw.setItemDelegate(delegate)
         
-        self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save)   
-        self.outflow_tidal_curve_tblw.itemChanged.connect(self.ts_tblw_changed)
+        # delegate = NumericDelegate(self.outflow_tidal_curve_tblw)
+        # self.outflow_tidal_curve_tblw.setItemDelegate(delegate)
+        
+        self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save_tidal)   
+        self.outflow_tidal_curve_tblw.itemChanged.connect(self.otc_tblw_changed)
         self.add_tidal_data_btn.clicked.connect(self.add_tidal) 
-        self.delete_tidal_data_btn.clicked.connect(self.delete_time) 
+        self.delete_tidal_data_btn.clicked.connect(self.delete_tidal) 
 
         self.populate_tidal_curve_dialog()
 
@@ -936,8 +938,15 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
                         self.outflow_tidal_curve_tblw.insertRow(row_number)
                         for cell, data in enumerate(row_data):
             
-                            item = QTableWidgetItem()     
-                            item.setData(Qt.DisplayRole, data)
+                            item = QTableWidgetItem()
+                            if cell == 0:  
+                                try:   
+                                    time = datetime.datetime.strptime(data, '%H:%M').time()
+                                    item.setData(Qt.DisplayRole, str(time.hour) + ":" + str(time.minute))
+                                except ValueError:
+                                    item.setData(Qt.DisplayRole, "hour error")
+                            else:
+                                item.setData(Qt.DisplayRole, data)    
                             self.outflow_tidal_curve_tblw.setItem(row_number, cell, item)
         
                     self.outflow_tidal_curve_tblw.sortItems(0, Qt.AscendingOrder)                    
@@ -946,7 +955,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         
         QApplication.restoreOverrideCursor()  
              
-    def is_ok_to_save(self):
+    def is_ok_to_save_tidal(self):
         if self.name_le.text() == "" or self.name_le.text() == "...":
             self.uc.bar_warn("Tidal Name name required!", 2)
             self.tidal_curve_name = ""
@@ -1000,17 +1009,11 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.tidal_curve_name = self.name_le.text()
         self.close()
 
-    def get_name(self):
+    def get_tidal_name(self):
         return self.tidal_curve_name
-
-    def outfall_time_series_tblw_clicked(self):
-        self.uc.show_info("Clicked")
         
-    def time_series_model_changed(self, i,j):
-        self.uc.show_info("Changed") 
-        
-    def ts_tblw_changed(self, Qitem):  
-        return
+    def otc_tblw_changed(self, Qitem): 
+        return 
         try:
             test = float(Qitem.text())
         except ValueError:
@@ -1038,7 +1041,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.outflow_tidal_curve_tblw.selectRow(row_number)
         self.outflow_tidal_curve_tblw.setFocus()                   
 
-    def delete_time(self):
+    def delete_tidal(self):
         self.outflow_tidal_curve_tblw.removeRow(self.outflow_tidal_curve_tblw.currentRow())      
         self.outflow_tidal_curve_tblw.selectRow(0)
         self.outflow_tidal_curve_tblw.setFocus()
