@@ -8,12 +8,164 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import numpy as np
+from functools import cached_property
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest, chain, repeat
 from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 from ..utils import Msge
+
+try:
+    import h5py
+except ImportError:
+    pass
+
+
+class ParseHDF5:
+    """
+    Parser object for handling FLO-2D "HDF5" files.
+    """
+
+    def __init__(self):
+        self.project_dir = None
+        self.hdf5_filepath = None
+
+    def scan_project_dir(self, path):
+        self.project_dir = os.path.dirname(path)
+        for f in os.listdir(self.project_dir):
+            fname = f.lower()
+            if fname.endswith(".hdf5"):
+                self.hdf5_filepath = os.path.join(self.project_dir, f)
+                break
+
+    @cached_property
+    def control_group_datasets(self):
+        group_name = "Control"
+        group_datasets = (
+            "SIMUL",
+            "TOUT",
+            "LGPLOT",
+            "METRIC",
+            "IBACKUP",
+            "build",
+            "ICHANNEL",
+            "MSTREET",
+            "LEVEE",
+            "IWRFS",
+            "IMULTC",
+            "IRAIN",
+            "INFIL",
+            "IEVAP",
+            "MUD",
+            "ISED",
+            "IMODFLOW",
+            "SWMM",
+            "IHYDRSTRUCT",
+            "IFLOODWAY",
+            "IDEBRV",
+            "AMANN",
+            "DEPTHDUR",
+            "XCONC",
+            "XARF",
+            "FROUDL",
+            "SHALLOWN",
+            "ENCROACH",
+            "NOPRTFP",
+            "DEPRESSDEPTH",
+            "NOPRTC",
+            "ITIMTEP",
+            "TIMTEP",
+            "STARTIMTEP",
+            "ENDTIMTEP",
+            "GRAPTIM",
+            "TOLGLOBAL",
+            "DEPTOL",
+            "WAVEMAX",
+            "COURCHAR_C",
+            "COURANTFP",
+            "COURANTC",
+            "COURANTST",
+            "COURCHAR_T",
+            "TIME_ACCEL",
+            "TOLGLOBAL",
+        )
+        return group_name, group_datasets
+
+    @cached_property
+    def grid_group_datasets(self):
+        group_name = "Grid"
+        group_datasets = ("GRIDCODE", "MANNING", "X", "Y", "Z")
+        return group_name, group_datasets
+
+    @cached_property
+    def neighbors_group_datasets(self):
+        group_name = "Neighbors"
+        group_datasets = tuple()
+        return group_name, group_datasets
+
+    @cached_property
+    def grouped_datasets(self):
+        grouped_datasets_list = [self.control_group_datasets, self.grid_group_datasets, self.neighbors_group_datasets]
+        return grouped_datasets_list
+
+    @staticmethod
+    def write_group_datasets(hdf5_file, group_name, group_datasets, **group_data):
+        group = hdf5_file.create_group(group_name)
+        for dataset_name in group_datasets:
+            dataset_data = group_data[dataset_name]
+            if dataset_data:
+                group.create_dataset(dataset_name, data=dataset_data, maxshape=(None,))
+
+    def batch_write(self, **data):
+        with h5py.File(self.hdf5_filepath, "w") as f:
+            for group_name, group_datasets in self.grouped_datasets:
+                group_data = data[group_name]
+                if group_data:
+                    self.write_group_datasets(f, group_name, group_datasets, **group_data)
+
+    def write(self, dataset_data, dataset_name, group_name=None, write_mode="a"):
+        with h5py.File(self.hdf5_filepath, write_mode) as f:
+            if group_name:
+                try:
+                    group = f[group_name]
+                except KeyError:
+                    group = f.create_group(group_name)
+                root = group
+            else:
+                root = f
+            root.create_dataset(dataset_name, data=dataset_data)
+
+    def read(self, dataset_name, group_name=None, dataset_slice=()):
+        with h5py.File(self.hdf5_filepath, "r") as f:
+            if group_name:
+                dataset = f[group_name][dataset_name]
+            else:
+                dataset = f[dataset_name]
+            data = dataset[dataset_slice]
+            return data
+
+    def calculate_cellsize(self):
+        cell_size = 0
+        if self.hdf5_filepath is None:
+            return 0
+        if not os.path.isfile(self.hdf5_filepath):
+            return 0
+        if not os.path.getsize(self.hdf5_filepath) > 0:
+            return 0
+        x_data = self.read("X", "Grid")
+        first_x = x_data[0]
+        dx_coords = (abs(first_x - x) for x in x_data)
+        try:
+            size = min(dx for dx in dx_coords if dx > 0)
+        except ValueError:
+            y_data = self.read("Y", "Grid")
+            first_y = y_data[0]
+            dy_coords = (abs(first_y - y) for y in y_data)
+            size = min(dy for dy in dy_coords if dy > 0)
+        cell_size += size
+        return cell_size
 
 
 class ParseDAT(object):
@@ -138,7 +290,6 @@ class ParseDAT(object):
 
     @staticmethod
     def single_parser(file1):
-
         with open(file1, "r") as f1:
             for line in f1:
                 row = line.split()
@@ -393,10 +544,10 @@ class ParseDAT(object):
                     lbank = nxt[0]
                     if row[1] != lbank:
                         # Msge(
-                            # "ERROR 010219.2020: Element "
-                            # + row[1]
-                            # + " in CHAN.DAT has no right bank element in CHANBANK.DAT !",
-                            # "Error",
+                        # "ERROR 010219.2020: Element "
+                        # + row[1]
+                        # + " in CHAN.DAT has no right bank element in CHANBANK.DAT !",
+                        # "Error",
                         # )
                         no_rb += "\n" + row[1]
                 except StopIteration:
@@ -424,12 +575,11 @@ class ParseDAT(object):
                 else:
                     wsel[-1].extend(row)
                     start = True
-        if no_rb != "": 
+        if no_rb != "":
             Msge(
-                "ERROR 010219.2020: These elements in CHAN.DAT have no right bank element in CHANBANK.DAT !\n" 
-                + no_rb, 
+                "ERROR 010219.2020: These elements in CHAN.DAT have no right bank element in CHANBANK.DAT !\n" + no_rb,
                 "Error",
-                )                       
+            )
         return segments, wsel, confluence, noexchange
 
     def parse_xsec(self):
@@ -521,7 +671,7 @@ class ParseDAT(object):
 
     def parse_mult(self):
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")  
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
         if len(last_dir) == 0 or os.path.isfile(last_dir + r"\MULT.DAT"):
             if len(last_dir) == 0 or os.path.getsize(last_dir + r"\MULT.DAT") > 0:
                 mult = self.dat_files["MULT.DAT"]
@@ -537,10 +687,10 @@ class ParseDAT(object):
                 return NULL, NULL
         else:
             return NULL, NULL
-            
+
     def parse_simple_mult(self):
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")  
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
         if len(last_dir) == 0 or os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
             if len(last_dir) == 0 or os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
                 simple_mult = self.dat_files["SIMPLE_MULT.DAT"]
@@ -556,7 +706,7 @@ class ParseDAT(object):
                 return NULL, NULL
         else:
             return NULL, NULL
-            
+
     def parse_sed(self):
         sed = self.dat_files["SED.DAT"]
         par = self.single_parser(sed)
@@ -667,18 +817,18 @@ class ParseDAT(object):
         #     else:
         #         data[-1][-1].append(row[1:])
         # return data
-            
+
         swmmflort = self.dat_files["SWMMFLORT.DAT"]
         par = self.single_parser(swmmflort)
         data = []
         for row in par:
             char = row[0]
-            if char == "D":   # Rating Table.
+            if char == "D":  # Rating Table.
                 row.append([])
                 data.append(row[0:])
-            if char == "S":   # Culvert Eq.
+            if char == "S":  # Culvert Eq.
                 row.append([])
-                data.append(row[0:])                
+                data.append(row[0:])
             else:
                 data[-1][-1].append(row[1:])
         return data

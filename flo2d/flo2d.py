@@ -298,6 +298,12 @@ class Flo2D(object):
             callback=lambda: self.export_gds(),
             parent=self.iface.mainWindow(),
         )
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/export_gds.svg"),
+            text=self.tr("Export to HDF5"),
+            callback=lambda: self.export_hdf5(),
+            parent=self.iface.mainWindow(),
+        )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/import_ras.svg"),
@@ -595,7 +601,6 @@ class Flo2D(object):
         except KeyError as e:
             pass
         del self.con
-       
 
     @staticmethod
     def save_dock_geom(dock):
@@ -868,6 +873,23 @@ class Flo2D(object):
                 QApplication.restoreOverrideCursor()
 
     def call_IO_methods(self, calls, debug, *args):
+        if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
+            self.call_IO_methods_dat(calls, debug, *args)
+        elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
+            self.call_IO_methods_hdf5(calls, debug, *args)
+
+    def call_IO_methods_hdf5(self, calls, debug, *args):
+        for call in calls:
+            method = getattr(self.f2g, call)
+            try:
+                method(*args)
+            except Exception as e:
+                if debug is True:
+                    self.uc.log_info(traceback.format_exc())
+                else:
+                    raise
+
+    def call_IO_methods_dat(self, calls, debug, *args):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         
@@ -1603,8 +1625,7 @@ class Flo2D(object):
     
                 if msg:
                     self.uc.show_info(msg)
-                    
-                    
+
     def clean_rating_tables(self):
         remove_grid = []
         grids = self.gutils.execute("SELECT DISTINCT grid_fid, name FROM swmmflort").fetchall()
@@ -1810,6 +1831,41 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
         QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def export_hdf5(self):
+        """
+        Export FLO-2D database (GeoPackage) data into HDF5 format.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        output_hdf5, _ = QFileDialog.getSaveFileName(None, "Save FLO-2D model data into HDF5 format", directory=last_dir, filter="HDF5 file (*.hdf5; *.HDF5)")
+        if output_hdf5:
+            outdir = os.path.dirname(output_hdf5)
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+            self.f2g.set_parser(output_hdf5, get_cell_size=False)
+            export_calls = [
+                "export_cont_toler",
+                #"export_mannings_n_topo",
+            ]
+            try:
+
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", outdir)
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                self.call_IO_methods(export_calls, True)
+                self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor()
+                if self.f2g.export_messages != "":
+                    info = "WARNINGS:\n\n" + self.f2g.export_messages
+                    self.uc.show_info(info)
 
     @connection_required
     def import_from_gpkg(self):

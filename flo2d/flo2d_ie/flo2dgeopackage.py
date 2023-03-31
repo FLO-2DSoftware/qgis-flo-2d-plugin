@@ -10,12 +10,13 @@
 import os
 import shutil
 import traceback
+import numpy as np
 from ..layers import Layers
 from math import isclose
 from qgis.core import NULL, QgsApplication
 from itertools import chain, groupby
 from operator import itemgetter
-from .flo2d_parser import ParseDAT
+from .flo2d_parser import ParseDAT, ParseHDF5
 from ..gui.bc_editor_widget import BCEditorWidget
 from ..geopackage_utils import GeoPackageUtils
 from ..utils import float_or_zero
@@ -24,12 +25,18 @@ from qgis.PyQt.QtWidgets import QApplication
 
 from ..utils import get_BC_Border, BC_BORDER
 
+
 class Flo2dGeoPackage(GeoPackageUtils):
     """
     Class for proper import and export FLO-2D data.
     """
-    def __init__(self, con, iface):
+
+    FORMAT_DAT = "DAT"
+    FORMAT_HDF5 = "HDF5"
+
+    def __init__(self, con, iface, parsed_format=FORMAT_DAT):
         super(Flo2dGeoPackage, self).__init__(con, iface)
+        self.parsed_format = parsed_format
         self.parser = None
         self.cell_size = None
         self.buffer = None
@@ -38,10 +45,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.gutils = GeoPackageUtils(con, iface)
         self.lyrs = Layers(iface)
         self.export_messages = ""
-        
-    def set_parser(self, fpath):
-        self.parser = ParseDAT()
-        self.parser.scan_project_dir(fpath)
+
+    def set_parser(self, fpath, get_cell_size=True):
+        if self.parsed_format == self.FORMAT_DAT:
+            self.parser = ParseDAT()
+            self.parser.scan_project_dir(fpath)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            self.parser = ParseHDF5()
+            self.parser.hdf5_filepath = fpath
+        else:
+            raise NotImplementedError("Unsupported extension type.")
+        if not get_cell_size:
+            return True
         self.cell_size = self.parser.calculate_cellsize()
         if self.cell_size == 0:
             self.uc.show_info(
@@ -74,13 +89,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
-        
         try:
             sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-            
+
             self.clear_tables("grid")
             data = self.parser.parse_mannings_n_topo()
-            
+
             c = 0
             man = slice(0, 2)
             coords = slice(2, 4)
@@ -98,11 +112,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.batch_execute(sql)
             else:
                 pass
-        
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040521.1154: importing TOP.DAT!.\n", e)
-            
+
     def import_inflow(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""", 4]
@@ -115,35 +129,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:  # See if n_value exists in table:
             self.execute("SELECT n_value FROM reservoirs")
             # Yes, n_value exists.
-            try: # See if tailings exists in table:
+            try:  # See if tailings exists in table:
                 self.execute("SELECT tailings FROM reservoirs")
                 # Yes, tailings exists
-                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, tailings, geom) VALUES""", 6]
-                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, use_n_value, tailings, geom) VALUES""", 5]
+                schematic_reservoirs_sql = [
+                    """INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, tailings, geom) VALUES""",
+                    6,
+                ]
+                user_reservoirs_sql = [
+                    """INSERT INTO user_reservoirs (wsel, n_value, use_n_value, tailings, geom) VALUES""",
+                    5,
+                ]
 
                 with_n_values = True
-                with_tailings = True                
+                with_tailings = True
             except:
                 # tailings doesn't exist.
-                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""", 5]
+                schematic_reservoirs_sql = [
+                    """INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""",
+                    5,
+                ]
                 user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, use_n_value, geom) VALUES""", 4]
-                with_n_values = Tru
+                with_n_values = True
                 with_tailings = False
         except:
             # n_value doesn't exist.
             schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
-            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, geom) VALUES""", 2]                        
+            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, geom) VALUES""", 2]
             with_n_values = False
             with_tailingss = False
 
         try:
             self.clear_tables(
-                "inflow", 
-                "inflow_cells", 
-                "reservoirs", 
+                "inflow",
+                "inflow_cells",
+                "reservoirs",
                 "user_reservoirs",
-                "inflow_time_series", 
-                "inflow_time_series_data"
+                "inflow_time_series",
+                "inflow_time_series_data",
             )
             head, inf, res = self.parser.parse_inflow()
             if not head == None:
@@ -151,7 +174,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ("IDEPLT", head["IDEPLT"], self.PARAMETER_DESCRIPTION["IDEPLT"]),
                     ("IHOURDAILY", head["IHOURDAILY"], self.PARAMETER_DESCRIPTION["IHOURDAILY"]),
                 ]
-        
+
                 for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
                     inflow_sql += [(i, row[0], row[1], i)]
@@ -160,15 +183,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         ts_sql += [(i, "Time series " + str(i))]
                         for n in inf[gid]["time_series"]:
                             tsd_sql += [(i,) + tuple(n[1:])]
-        
+
                 self.batch_execute(cont_sql, ts_sql, inflow_sql, cells_sql, tsd_sql)
                 qry = """UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text);"""
                 self.execute(qry)
-        
+
             gids = list(res.keys())
             cells = self.grid_centroids(gids)
             for gid in res:
-                value =()
+                value = ()
                 row = res[gid]["row"]
                 grid = row[1]
                 wsel = row[2]
@@ -178,46 +201,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if len(row) == 3:
                         # R  grid  wsel:
                         value = (wsel, "0.25", False, "-1.0")
-                    elif len(row) == 4:    
+                    elif len(row) == 4:
                         # R  grid  wsel  n_value_or_tailing:
                         if float_or_zero(row[3]) > 1.0:
                             # 3rd. value is a tailing depth:
                             value = (wsel, "0.25", False, row[3])
-                        else:  
+                        else:
                             # 3rd. value is n_value:
-                            value = (wsel, row[3], True, "-1.0")                             
-        
-                    elif len(row) == 5:    
+                            value = (wsel, row[3], True, "-1.0")
+
+                    elif len(row) == 5:
                         # R  grid  wsel  tailing  n_value:
-                        value = (wsel, row[4], True, row[3])  
+                        value = (wsel, row[4], True, row[3])
                     else:
-                        errors += "R line with more than 5 values"      
-        
+                        errors += "R line with more than 5 values"
+
                 elif with_n_values and not with_tailings:
                     if len(row) == 3:
                         # R  grid  wsel:
                         value = (wsel, "0.25", False)
-                    elif len(row) == 4:    
+                    elif len(row) == 4:
                         # R  grid  wsel  n_value:
-                        value = (wsel, row[3], True)    
+                        value = (wsel, row[3], True)
                     else:
-                        errors += "Inflow table without tailings. R line with more than 4 values"       
-        
+                        errors += "Inflow table without tailings. R line with more than 4 values"
+
                 elif not with_n_values and not with_tailings:
                     if len(row) == 3:
                         # R  grid  wsel:
-                        value = (wsel)
+                        value = wsel
                     else:
-                        errors += "Inflow table without n_values and tailings. R line with more than 3 values"                   
-        
+                        errors += "Inflow table without n_values and tailings. R line with more than 3 values"
+
                 if value:
                     user_reservoirs_sql += [(*value, centroid)]
                     value2 = (grid, *value, square)
                     schematic_reservoirs_sql += [value2]
-                    
-            self.batch_execute(user_reservoirs_sql)   
+
+            self.batch_execute(user_reservoirs_sql)
             self.batch_execute(schematic_reservoirs_sql)
-            
+
             qry = """UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text);"""
             self.execute(qry)
             qry = """UPDATE reservoirs SET user_res_fid = fid, name = 'Reservoir ' ||  cast(fid as text);"""
@@ -226,7 +249,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
-
 
     def import_tailings(self):
         tailingsf_sql = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
@@ -240,7 +262,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_outflow(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
-                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""", 8]
+                                            chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
+            8,
+        ]
         cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES""", 2]
         qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
         qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
@@ -449,14 +473,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-        self.batch_execute(
-            infil_sql,
-            infil_seg_sql,
-            infil_green_sql,
-            infil_scs_sql,
-            infil_horton_sql,
-            infil_chan_sql
-        )
+        self.batch_execute(infil_sql, infil_seg_sql, infil_green_sql, infil_scs_sql, infil_horton_sql, infil_chan_sql)
 
     def import_evapor(self):
         evapor_sql = ["""INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES""", 3]
@@ -725,28 +742,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if key:
                         no_struct += key + "\n"
                     else:
-                        no_struct += "Null\n"    
+                        no_struct += "Null\n"
             self.clear_tables("bridge_xs")
             self.batch_execute(bridge_xs_sql)
-            
+
             warnng = ""
             if no_struct != "":
-                warnng += "WARNING 111122.0446:\nThese cells in BRIDGE_XSEC.DAT have no hydraulic structure defined in HYSTRUC.DAT:\n\n" + no_struct
+                warnng += (
+                    "WARNING 111122.0446:\nThese cells in BRIDGE_XSEC.DAT have no hydraulic structure defined in HYSTRUC.DAT:\n\n"
+                    + no_struct
+                )
             if value_missing:
                 warnng += "\n\nThere are values missing in BRIDGE_XSEC.DAT"
             if warnng != "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info(warnng)
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                
+
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
                 "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
-
-
 
     def import_street(self):
         general_sql = ["""INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""", 5]
@@ -812,13 +830,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_mult(self):
-        try:   
+        try:
             self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
             head, data = self.parser.parse_mult()
             if head:
                 mult_sql = [
                     """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""",
+                    9,
+                ]
                 mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
                 mult_cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
                 head.append("0.04")
@@ -839,7 +859,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.gutils.disable_geom_triggers()
                 self.batch_execute(mult_sql, mult_area_sql, mult_cells_sql)
                 self.gutils.enable_geom_triggers()
-            
+
         except Exception as e:
             self.uc.show_error(
                 "ERROR 280122.1920.: couldn't import MULT.DAT file!"
@@ -848,12 +868,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
         # Import Simplified Multiple Channels:
-        try: 
+        try:
             self.clear_tables("simple_mult_lines", "simple_mult_cells")
             head, data = self.parser.parse_simple_mult()
             if head:
                 if self.is_table_empty("mult"):
-                    self.gutils.fill_empty_mult_globals()             
+                    self.gutils.fill_empty_mult_globals()
                 simple_mult_sql = """UPDATE mult SET simple_n = ?; """
                 simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
                 gids = (x[0] for x in data)
@@ -861,22 +881,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in data:
                     gid = row[0]
                     geom = self.build_square(cells[gid], self.shrink)
-                    simple_mult_cells_sql += [ (gid,) + tuple(row[1:]) ]
+                    simple_mult_cells_sql += [(gid,) + tuple(row[1:])]
                 self.gutils.disable_geom_triggers()
                 self.gutils.execute(simple_mult_sql, (head))
                 self.batch_execute(simple_mult_cells_sql)
                 self.gutils.enable_geom_triggers()
-            
+
         except Exception as e:
             self.uc.show_error(
                 "ERROR 280122.1938.: couldn't import SIMPLE_MULT.DAT file!"
                 + "\n__________________________________________________",
                 e,
-            )            
-            
-            
-    def import_sed(self):
+            )
 
+    def import_sed(self):
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
         sed_c_sql = [
             """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
@@ -953,7 +971,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_s_sql += [(i, gid)]
             for ii, nrow in enumerate(nrows, 1):
                 sed_n_sql += [(ii,)]
-                data_n_sql += [(i,) + tuple(nrow)] 
+                data_n_sql += [(i,) + tuple(nrow)]
         triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
         self.batch_execute(
             sed_m_sql,
@@ -966,41 +984,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_g_sql,
             sed_p_sql,
             areas_r_sql,
-            # cells_r_sql,            
+            # cells_r_sql,
             areas_s_sql,
             cells_s_sql,
             sed_n_sql,
             data_n_sql,
         )
-        
-        if self.is_table_empty("mud_cells"):
-            self.set_cont_par("IDEBRV", 0)  
-    
-        
-        if data["M"] == [] and data["C"] == []:  
-            self.set_cont_par("MUD", 0);
-            self.set_cont_par("ISED", 0)   
-                     
-        elif data["M"] == [] and data["C"] != []:   
-            self.set_cont_par("MUD", 0);
-            self.set_cont_par("ISED", 1)  
-             
-        elif data["M"] != [] and data["C"] == []:  
-            self.set_cont_par("MUD", 1);
-            self.set_cont_par("ISED", 0)  
-             
-        elif data["M"] != [] and data["C"] != []:  
-            self.set_cont_par("MUD", 2);
-            self.set_cont_par("ISED", 0)               
-            
-                   
-            
 
-        
+        if self.is_table_empty("mud_cells"):
+            self.set_cont_par("IDEBRV", 0)
+
+        if data["M"] == [] and data["C"] == []:
+            self.set_cont_par("MUD", 0)
+            self.set_cont_par("ISED", 0)
+
+        elif data["M"] == [] and data["C"] != []:
+            self.set_cont_par("MUD", 0)
+            self.set_cont_par("ISED", 1)
+
+        elif data["M"] != [] and data["C"] == []:
+            self.set_cont_par("MUD", 1)
+            self.set_cont_par("ISED", 0)
+
+        elif data["M"] != [] and data["C"] != []:
+            self.set_cont_par("MUD", 2)
+            self.set_cont_par("ISED", 0)
+
         # Also triggers the creation of rigid cells (rigid_cells table):
         # self.batch_execute(areas_r_sql)
-     
-        
+
     def import_levee(self):
         lgeneral_sql = ["""INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""", 4]
         ldata_sql = ["""INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""", 4]
@@ -1208,33 +1220,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
 
         """
-        try: 
-            # swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]  
-            
+        try:
+            # swmmflort_sql = ["""INSERT INTO swmmflort (grid_fid, name) VALUES""", 2]
+
             swmmflort_rows = []
             rt_data_rows = []
             culvert_rows = []
 
             data = self.parser.parse_swmmflort()  # Reads SWMMFLORT.DAT.
             for i, row in enumerate(data, 1):
-
                 if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
                     gid, params = row[1:]
                     name = "Rating Table {}".format(i)
-                elif row[0] == "D" and len(row) == 4: # D line for Rating Table: D  7545  I4-38
+                elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
                     gid, inlet_name, params = row[1:]
                     name = inlet_name
-                elif  row[0] == "S":
-                    gid, inlet_name, cdiameter, params = row[1:] 
+                elif row[0] == "S":
+                    gid, inlet_name, cdiameter, params = row[1:]
 
                 if row[0] == "D":  # Rating Table
                     swmmflort_rows.append((gid, name))
-                    
-                    for j in range(1,len(params)):
-                        rt_data_rows.append( ((i,) + tuple( params[j] ) ))
+
+                    for j in range(1, len(params)):
+                        rt_data_rows.append(((i,) + tuple(params[j])))
 
                 elif row[0] == "S":  # Culvert Eq.
-                    culvert_rows.append((gid, inlet_name, cdiameter, row[4][0][0], row[4][0][1], row[4][0][2], row[4][0][3]))        
+                    culvert_rows.append(
+                        (gid, inlet_name, cdiameter, row[4][0][0], row[4][0][1], row[4][0][2], row[4][0][3])
+                    )
 
             if swmmflort_rows:
                 self.clear_tables("swmmflort")
@@ -1243,15 +1256,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if rt_data_rows:
                 self.clear_tables("swmmflort_data")
-                self.con.executemany("INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);", rt_data_rows) 
+                self.con.executemany(
+                    "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);", rt_data_rows
+                )
 
             if culvert_rows:
                 self.clear_tables("swmmflo_culvert")
-                qry= """INSERT INTO swmmflo_culvert 
+                qry = """INSERT INTO swmmflo_culvert 
                         (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
                         VALUES (?, ?, ?, ?, ?, ?, ?);"""
-                self.con.executemany(qry, culvert_rows)             
-                
+                self.con.executemany(qry, culvert_rows)
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
@@ -1314,9 +1329,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(wstime_sql)
 
-    def export_cont_toler(self, outdir):
+    def export_cont_toler(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_cont_toler_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_cont_toler_hdf5()
+
+    def export_cont_toler_hdf5(self):
         try:
-            parser = ParseDAT()
+            sql = """SELECT name, value FROM cont;"""
+
+            options = {o: np.string_([v]) if v is not None else np.string_([""]) for o, v in self.execute(sql).fetchall()}
+            write_mode = "w"
+            for dataset_name, dataset_data in options.items():
+                self.parser.write(dataset_data, dataset_name, group_name="Control", write_mode=write_mode)
+                write_mode = "a"
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1535: exporting Control data failed!.\n", e)
+            return False
+
+    def export_cont_toler_dat(self, outdir):
+        try:
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
             if options["IFLOODWAY"] == "0":
@@ -1351,7 +1386,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             toler = os.path.join(outdir, "TOLER.DAT")
             rline = " {0}"
             with open(cont, "w") as c:
-                for row in parser.cont_rows:
+                for row in self.parser.cont_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -1361,32 +1396,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     lst += "\n"
                     if lst.isspace() is False:
                         if row[0] == "ITIMTEP":
-                            # See if CONT table has ENDTIMTEP and STARTIMTEP: 
+                            # See if CONT table has ENDTIMTEP and STARTIMTEP:
                             endtimtep = self.get_cont_par("ENDTIMTEP")
                             if not endtimtep:
-                                self.set_cont_par("ENDTIMTEP", 0.0) 
-                               
+                                self.set_cont_par("ENDTIMTEP", 0.0)
+
                             starttimtep = self.get_cont_par("STARTIMTEP")
                             if not starttimtep:
-                                self.set_cont_par("STARTIMTEP", 0.0) 
-                                
+                                self.set_cont_par("STARTIMTEP", 0.0)
+
                             # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-                         
+
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
-                                _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"])-1]
-                                if float_or_zero(options["STARTIMTEP"]) == 0.0 and float_or_zero(options["ENDTIMTEP"]) == 0.0:
-                                    lst = " " + _itimtep + " " + options["TIMTEP"] 
-                                else:    
-                                    lst = " " + _itimtep + " " + options["TIMTEP"] + " " + options["STARTIMTEP"] + " " + options["ENDTIMTEP"]
+                                _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"]) - 1]
+                                if (
+                                    float_or_zero(options["STARTIMTEP"]) == 0.0
+                                    and float_or_zero(options["ENDTIMTEP"]) == 0.0
+                                ):
+                                    lst = " " + _itimtep + " " + options["TIMTEP"]
+                                else:
+                                    lst = (
+                                        " "
+                                        + _itimtep
+                                        + " "
+                                        + options["TIMTEP"]
+                                        + " "
+                                        + options["STARTIMTEP"]
+                                        + " "
+                                        + options["ENDTIMTEP"]
+                                    )
                             else:
                                 lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
-                            lst += "\n"       
+                            lst += "\n"
                         c.write(lst)
                     else:
                         pass
 
             with open(toler, "w") as t:
-                for row in parser.toler_rows:
+                for row in self.parser.toler_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -1421,9 +1468,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(mannings, "w") as m, open(topo, "w") as t:
                 for row in records:
                     fid, man, elev, geom = row
-                    if (man == None or elev == None):
-                        nulls += 1 
-                        if (man == None):
+                    if man == None or elev == None:
+                        nulls += 1
+                        if man == None:
                             man = 0.04
                         if elev == None:
                             elev = -9999
@@ -1432,19 +1479,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     t.write(
                         tline.format("{0:.4f}".format(float(x)), "{0:.4f}".format(float(y)), "{0:.4f}".format(elev))
                     )
-            
+
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("WARNING 281122.0541: there are " + str(nulls) + " NULL values in the Grid layer's elevation or n_value fields.\n\n" +
-                                   "Default values where written to the exported files.\n\n" + 
-                                   "Please check the source layer coverage or use Fill Nodata." ) 
-                QApplication.setOverrideCursor(Qt.WaitCursor)                       
+                self.uc.show_warn(
+                    "WARNING 281122.0541: there are "
+                    + str(nulls)
+                    + " NULL values in the Grid layer's elevation or n_value fields.\n\n"
+                    + "Default values where written to the exported files.\n\n"
+                    + "Please check the source layer coverage or use Fill Nodata."
+                )
+                QApplication.setOverrideCursor(Qt.WaitCursor)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)    
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
     def export_inflow(self, outdir):
@@ -1481,14 +1532,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflow_lines = []
 
             if not self.is_table_empty("inflow"):
-                
                 for iid, gid in self.execute(inflow_cells_sql):
-
                     if previous_iid != iid:
                         row = self.execute(inflow_sql, (iid,)).fetchone()
                         if row:
                             row = [x if x is not None and x != "" else 0 for x in row]
-                            if previous_iid == -1: 
+                            if previous_iid == -1:
                                 inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
                             previous_iid = iid
                         else:
@@ -1511,18 +1560,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
 
             if not self.is_table_empty("reservoirs"):
-                schematic_reservoirs_sql = """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
-                
-                res_line1a  = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+                schematic_reservoirs_sql = (
+                    """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
+                )
+
+                res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
                 res_line1at = "R   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-                
-                res_line1b  = "R   {0: <15} {1:<10.2f}"
+
+                res_line1b = "R   {0: <15} {1:<10.2f}"
                 res_line1bt = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-                
-                res_line2a  = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
+
+                res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
                 res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-                
-                res_line2b  = "R     {0: <15} {1:<10.2f}"
+
+                res_line2b = "R     {0: <15} {1:<10.2f}"
                 res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f}"
 
                 for res in self.execute(schematic_reservoirs_sql):
@@ -1534,7 +1585,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             inflow_lines.append(res_line2a.format(*res))
                         else:
                             # Write tailings:
-                            inflow_lines.append(res_line2at.format(*res))    
+                            inflow_lines.append(res_line2at.format(*res))
                     else:  # do not write n value
                         if res[4] == -1.0:
                             # Do not write tailings:
@@ -1547,8 +1598,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 with open(inflow, "w") as inf:
                     for line in inflow_lines:
                         if line:
-                            inf.write(line + "\n")   
-                                                                                                                          
+                            inf.write(line + "\n")
+
             QApplication.restoreOverrideCursor()
             if warning != "":
                 self.uc.show_warn(
@@ -1568,7 +1619,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("tailing_cells"):
                 return False
-            
+
             tailings_sql = """SELECT grid_fid, thickness FROM tailing_cells ORDER BY grid_fid;"""
             line1 = "{0}  {1}\n"
 
@@ -1592,25 +1643,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_outflow(self, outdir):
         # check if there are any outflows defined.
         try:
-
             if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
                 return False
-            
+
             outflow_sql = """
             SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
-            FROM outflow WHERE fid = ?;"""   
-            outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""          
+            FROM outflow WHERE fid = ?;"""
+            outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
             qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
             qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
             ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
- 
+
             k_line = "K  {0}\n"
             qh_params_line = "H  {0}  {1}  {2}\n"
             qh_table_line = "T  {0}  {1}\n"
             n_line = "N     {0}  {1}\n"
             ts_line = "S  {0}  {1}\n"
             o_line = "{0}  {1}\n"
- 
+
             out_cells = self.execute(outflow_cells_sql).fetchall()
             if not out_cells:
                 return False
@@ -1621,7 +1671,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             previous_oid = -1
             row = None
             border = get_BC_Border()
-            
+
             warning = ""
             with open(outflow, "w") as o:
                 for oid, gid in out_cells:
@@ -1631,14 +1681,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             row = [x if x is not None and x != "" else 0 for x in row]
                             previous_oid = oid
                         else:
-                            warning += "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                            warning += (
+                                "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                            )
                             warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
-                            continue   
+                            continue
                     else:
                         pass
-                    
+
                     if row is not None:
-                        fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = row
+                        (
+                            fid,
+                            fp_out,
+                            chan_out,
+                            hydro_out,
+                            chan_tser_fid,
+                            chan_qhpar_fid,
+                            chan_qhtab_fid,
+                            fp_tser_fid,
+                        ) = row
                         if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
                             floodplains[gid] = hydro_out
                         if chan_out == 1:
@@ -1649,11 +1710,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 o.write(qh_table_line.format(*values))
                         else:
                             pass
-                        
+
                         if chan_tser_fid > 0 or fp_tser_fid > 0:
                             if border is not None:
                                 if gid in border:
-                                    continue                         
+                                    continue
                             nostacfp = 1 if chan_tser_fid == 1 else 0
                             o.write(n_line.format(gid, nostacfp))
                             series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
@@ -1661,30 +1722,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 o.write(ts_line.format(*values))
                         else:
                             pass
-                        
+
                 # Write O1, O2, ... lines:
                 for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-#                     if border is not None:
-#                         if gid in border:
-#                             continue
+                    #                     if border is not None:
+                    #                         if gid in border:
+                    #                             continue
                     ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
                     o.write(o_line.format(ident, gid))
                     if border is not None:
                         if gid in border:
                             border.remove(gid)
-                
-                # Write lines 'O cell_id":            
+
+                # Write lines 'O cell_id":
                 if border is not None:
                     for b in border:
-                        o.write(o_line.format("O", b)) 
-                
+                        o.write(o_line.format("O", b))
+
             QApplication.restoreOverrideCursor()
             if warning != "":
-                msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" +  warning
+                msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
                 msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
                 self.uc.show_warn(msg)
             return True
- 
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
@@ -1721,7 +1782,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             rain = os.path.join(outdir, "RAIN.DAT")
             with open(rain, "w") as r:
-
                 r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
                 r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
 
@@ -1801,9 +1861,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             infil_sql = """SELECT * FROM infil;"""
             infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
-            green_sql = (
-                """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
-            )
+            green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
             scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
             horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
@@ -1832,7 +1890,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
                 i.write(line1.format(v1))
                 if v1 == 1 or v1 == 3:
-
                     i.write(line2.format(*v2))
                     i.write(line3.format(*v3))
                     if v2[5] == 1:
@@ -1951,7 +2008,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         bank = os.path.join(outdir, "CHANBANK.DAT")
 
         with open(chan, "w") as c, open(bank, "w") as b:
-
             ISED = self.gutils.get_cont_par("ISED")
 
             for row in chan_rows:
@@ -2049,13 +2105,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("struct"):
                 return False
             else:
-                nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall() 
+                nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall()
                 for nod in nodes:
                     if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
                         QApplication.restoreOverrideCursor()
-                        self.uc.bar_warn("WARNING: some structures have no cells assigned.\nDid you schematize the structures?")                  
-                        break 
-                                          
+                        self.uc.bar_warn(
+                            "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
+                        )
+                        break
+
             hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
             ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
             repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
@@ -2119,7 +2177,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             for row in self.execute(qry, (fid,)):
                                 if row:
                                     subvals = [x if x is not None else "0.0" for x in row[2:]]
-                                    if i == 3: # Culvert equation.
+                                    if i == 3:  # Culvert equation.
                                         subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
                                     if i == 4:  # bridge routine lines a. Assign correct bridge type configuration.
                                         t = subvals[0]
@@ -2127,12 +2185,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         subvals[0] = t
                                     if i == 6:
                                         d_lines.append(line.format(*subvals))
-                                    else:    
+                                    else:
                                         h.write(line.format(*subvals))
                 if d_lines:
                     for dl in d_lines:
-                        h.write(dl) 
-                            
+                        h.write(dl)
+
             return True
 
         except Exception as e:
@@ -2146,7 +2204,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
                 if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
                     os.remove(outdir + r"\BRIDGE_XSEC.DAT")
-                return False            
+                return False
 
             hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
             bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
@@ -2169,8 +2227,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         b.write("X  " + str(in_node) + "\n")
                         for row in bridge_rows:
-                            row = [x if x not in [NULL, None, 'None', 'none'] else 0 for x in row]
-                            b.write(str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n")                       
+                            row = [x if x not in [NULL, None, "None", "none"] else 0 for x in row]
+                            b.write(str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n")
             return True
 
         except Exception as e:
@@ -2178,15 +2236,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-
     def export_bridge_coeff_data(self, outdir):
         try:
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
-                return False  
-            src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"           
+                return False
+            src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"
             dst = os.path.join(outdir, "BRIDGE_COEFF_DATA.DAT")
-            shutil.copy(src, dst)                           
+            shutil.copy(src, dst)
             return True
 
         except Exception as e:
@@ -2303,32 +2360,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_mult(self, outdir):
         rtrn = True
-        if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells") :
-                return False 
-            
+        if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
+            return False
+
         if self.is_table_empty("mult"):
             # Assign defaults to multiple channels globals:
             self.gutils.fill_empty_mult_globals()
- 
-        mult_sql = """SELECT * FROM mult;"""    
-        head = self.execute(mult_sql).fetchone()  
-        mults = []                    
-            
-        # Check if there is any multiple channel cells defined.     
-        if not self.is_table_empty("mult_cells"):        
-            try: 
+
+        mult_sql = """SELECT * FROM mult;"""
+        head = self.execute(mult_sql).fetchone()
+        mults = []
+
+        # Check if there is any multiple channel cells defined.
+        if not self.is_table_empty("mult_cells"):
+            try:
                 # Multiple Channels (not simplified):
                 mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
                 line1 = " {}" * 8 + "\n"
                 line2 = " {}" * 5 + "\n"
-    
 
                 mult = os.path.join(outdir, "MULT.DAT")
                 with open(mult, "w") as m:
                     m.write(line1.format(*head[1:]).replace("None", ""))
-                    
-                    mult_cells  = self.execute(mult_cell_sql).fetchall()
-                    
+
+                    mult_cells = self.execute(mult_cell_sql).fetchall()
+
                     seen = set()
                     for a, b, c, d, e in mult_cells:
                         if not a in seen:
@@ -2338,19 +2394,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in mults:
                         vals = [x if x is not None else "" for x in row]
                         m.write(line2.format(*vals))
-                
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
                 return False
-        
-        if not self.is_table_empty("simple_mult_cells") :
+
+        if not self.is_table_empty("simple_mult_cells"):
             try:
                 # Simplified Multiple Channels:
                 simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
                 line1 = "{}" + "\n"
                 line2 = "{}" + "\n"
-    
+
                 isany = self.execute(simple_mult_cell_sql).fetchone()
                 if isany:
                     simple_mult = os.path.join(outdir, "SIMPLE_MULT.DAT")
@@ -2363,18 +2419,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 repeats += str(row[0]) + "  "
                             else:
                                 vals = [x if x is not None else "" for x in row]
-                                sm.write(line2.format(*vals)) 
+                                sm.write(line2.format(*vals))
                 if repeats:
-                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)                        
+                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
                 return True
-    
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
-            
+
         return rtrn
-    
+
     def export_tolspatial(self, outdir):
         # check if there is any tolerance data defined.
         try:
@@ -2490,15 +2546,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_sed(self, outdir):
         try:
-            # check if there is any sedimentation data defined.  
+            # check if there is any sedimentation data defined.
             if self.is_table_empty("mud") and self.is_table_empty("sed"):
                 return False
-            
+
             ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")        
-            
+            MUD = self.gutils.get_cont_par("MUD")
+
             if ISED == "0" and MUD == "0":
-                return False              
+                return False
 
             sed_m_sql = """SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;"""
             sed_ce_sql = """SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
@@ -2537,31 +2593,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if MUD in ["1", "2"] and m_data is not None:
                     # Mud/debris transport or 2 phase flow:
                     s.write(line1.format(*m_data))
-                    
+
                     if int(self.gutils.get_cont_par("IDEBRV")) == 1:
                         for aid, debrisv in self.execute(areas_d_sql):
                             gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
-                            s.write(line5.format(gid, debrisv))                    
+                            s.write(line5.format(gid, debrisv))
                     e_data = None
-                
-                if (ISED == "1" or MUD == "2") and ce_data is not None:  
+
+                if (ISED == "1" or MUD == "2") and ce_data is not None:
                     # Sediment Transport or 2 phase flow:
                     e_data = ce_data[-1]
                     s.write(line2.format(*ce_data[:-1]))
-                    
+
                     for row in self.execute(sed_z_sql):
                         dist_fid = row[0]
                         s.write(line3.format(*row[1:]))
                         for prow in self.execute(sed_p_sql, (dist_fid,)):
                             s.write(line4.format(*prow))
-                            
 
                     if e_data is not None:
                         s.write(line6.format(e_data))
 
                     for row in self.execute(cells_r_sql):
                         s.write(line7.format(*row))
-                        
+
                     for row in self.execute(areas_s_sql):
                         aid = row[0]
                         dist_fid = row[1]
@@ -2869,7 +2924,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmmflort_sql = """SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"""
             data_sql = """SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"""
-            
+
             #             line1 = 'D {0}\n'
             line1 = "D {0}  {1}\n"
             line2 = "N {0}  {1}\n"
@@ -2890,14 +2945,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 errors += "Grid element " + str(gid) + " has an empty rating table name.\n"
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
-                                inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()    
+                                inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
                                 if inlet_type is not None:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
                                         errors += "Grid element " + str(gid) + " has has more than one inlet.\n"
                                     # See if there is a type 4:
                                     inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
-                                    inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone() 
+                                    inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
                                     if inlet_type is not None:
                                         rows = self.execute(data_sql, (fid,)).fetchone()
                                         if not rows:
@@ -2949,13 +3004,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 if not error_mentioned:
                                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
                                                     error_mentioned = True
-                                                    
-                culverts = self.gutils.execute("SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;").fetchall() 
+
+                culverts = self.gutils.execute(
+                    "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
+                ).fetchall()
                 if culverts:
                     for culv in culverts:
                         grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
                         s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
-                        s.write("F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n")
+                        s.write(
+                            "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+                        )
             if errors:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
@@ -2971,7 +3030,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_swmmoutf(self, outdir):
         # check if there is any SWMM data defined.
         try:
-
             if self.is_table_empty("swmmoutf"):
                 return False
             swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
