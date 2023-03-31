@@ -44,7 +44,6 @@ uiDialog, qtBaseClass = load_ui("struct_editor")
 
 
 class StructEditorWidget(qtBaseClass, uiDialog):
-
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
@@ -64,7 +63,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.table = table
         self.tview = table.tview
         self.data_model = StandardItemModel()
-        self.tview.setModel(self.data_model)       
+        self.tview.setModel(self.data_model)
         self.struct_data = None
         self.d1, self.d2 = [[], []]
 
@@ -96,10 +95,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.culvert_width_sbox.editingFinished.connect(self.save_culvert_width)
         self.bridge_variables_btn.clicked.connect(self.show_bridge)
         self.import_rating_table_btn.clicked.connect(self.import_struct_table)
-        
+
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
-        self.table.after_delete.connect(self.save_data)   
+        self.table.after_delete.connect(self.save_data)
 
     def populate_structs(self, struct_fid=None, show_last_edited=False):
         if not self.iface.f2d["con"]:
@@ -126,7 +125,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_cbo.setCurrentIndex(cur_name_idx)
         self.struct_changed()
 
-
     def block_saving(self):
         try_disconnect(self.data_model.dataChanged, self.save_data)
 
@@ -134,17 +132,16 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.data_model.dataChanged.connect(self.save_data)
 
     def struct_changed(self):
+        self.table.after_delete.disconnect()
+        self.table.after_delete.connect(self.save_data)
 
-        self.table.after_delete.disconnect() 
-        self.table.after_delete.connect(self.save_data)          
-        
         cur_struct_idx = self.struct_cbo.currentIndex()
         sdata = self.struct_cbo.itemData(cur_struct_idx)
         if sdata:
             fid = sdata
         else:
             return
-        
+
         self.clear_structs_data_widgets()
         self.data_model.clear()
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
@@ -165,8 +162,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.culvert_len_sbox.setValue(self.struct.clength)
         if is_number(self.struct.cdiameter):
             self.culvert_width_sbox.setValue(self.struct.cdiameter)
-        
-        # self.struct_cbo.setCurrentIndex(fid) 
+
+        # self.struct_cbo.setCurrentIndex(fid)
         self.show_table_data()
 
     def type_changed(self, idx):
@@ -180,7 +177,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.type_cbo.setCurrentIndex(0)
         else:
             self.struct.ifporchan = idx
-            self.gutils.execute("UPDATE struct SET ifporchan = ? WHERE structname =?;", (idx, self.struct.name))   
+            self.gutils.execute("UPDATE struct SET ifporchan = ? WHERE structname =?;", (idx, self.struct.name))
             # self.struct.set_row()
 
     def rating_changed(self, idx):
@@ -193,8 +190,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             else:
                 self.rating_cbo.setCurrentIndex(0)
         else:
-            self.struct.icurvtable = idx  
-            self.gutils.execute("UPDATE struct SET icurvtable = ? WHERE structname =?;", (idx, self.struct.name))       
+            self.struct.icurvtable = idx
+            self.gutils.execute("UPDATE struct SET icurvtable = ? WHERE structname =?;", (idx, self.struct.name))
             # self.struct.set_row()
         self.show_table_data()
         self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3)  # Bridge routine
@@ -212,7 +209,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.twater_effect_cbo.setCurrentIndex(0)
         else:
             self.struct.inoutcont = idx
-            self.gutils.execute("UPDATE struct SET inoutcont = ? WHERE structname =?;", (idx, self.struct.name))       
+            self.gutils.execute("UPDATE struct SET inoutcont = ? WHERE structname =?;", (idx, self.struct.name))
             # self.struct.set_row()
 
     def set_stormdrain(self):
@@ -229,9 +226,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.stormdrain_chbox.isChecked():
             self.storm_drain_cap_sbox.clear()
             self.struct.clear_stormdrain_data()
-            self.storm_drain_cap_sbox.setEnabled(False)   
+            self.storm_drain_cap_sbox.setEnabled(False)
         else:
-            self.storm_drain_cap_sbox.setEnabled(True)   
+            self.storm_drain_cap_sbox.setEnabled(True)
 
     def schematize_struct(self):
         if not self.gutils.execute("SELECT * FROM user_struct;").fetchone():
@@ -309,7 +306,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def import_struct_table(self):
         try:
-            self.uc.show_info("Only files with the same name of the existing structures will be loaded.") 
+            self.uc.show_info("Only files with the same name of the existing structures will be loaded.")
             tables_in = ""
             tables_out = ""
             s = QSettings()
@@ -376,11 +373,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 txt = ""
                 if tables_in != "":
-                    txt  = "The following files were loaded:\n" + tables_in
+                    txt = "The following files were loaded:\n" + tables_in
                 if tables_out != "":
-                    txt  += "The following files were not loaded:\n" + tables_out
+                    txt += "The following files were not loaded:\n" + tables_out
                 if txt != "":
-                    self.uc.show_info(txt) 
+                    self.uc.show_info(txt)
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -416,21 +413,27 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.struct_cbo.count():
             return
         self.struct.headrefel = self.ref_head_elev_sbox.value()
-        self.gutils.execute("UPDATE struct SET headrefel = ? WHERE structname =?;", (self.struct.headrefel, self.struct.name))       
+        self.gutils.execute(
+            "UPDATE struct SET headrefel = ? WHERE structname =?;", (self.struct.headrefel, self.struct.name)
+        )
         # self.struct.set_row()
 
     def save_culvert_len(self):
         if not self.struct_cbo.count():
             return
         self.struct.clength = self.culvert_len_sbox.value()
-        self.gutils.execute("UPDATE struct SET clength = ? WHERE structname =?;", (self.struct.clength, self.struct.name)) 
+        self.gutils.execute(
+            "UPDATE struct SET clength = ? WHERE structname =?;", (self.struct.clength, self.struct.name)
+        )
         # self.struct.set_row()
 
     def save_culvert_width(self):
         if not self.struct_cbo.count():
             return
         self.struct.cdiameter = self.culvert_width_sbox.value()
-        self.gutils.execute("UPDATE struct SET cdiameter = ? WHERE structname =?;", (self.struct.cdiameter, self.struct.name)) 
+        self.gutils.execute(
+            "UPDATE struct SET cdiameter = ? WHERE structname =?;", (self.struct.cdiameter, self.struct.name)
+        )
         # self.struct.set_row()
 
     def define_data_table_head(self):
@@ -469,9 +472,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
     def show_table_data(self):
         try:
-            self.table.after_delete.disconnect() 
-            self.table.after_delete.connect(self.save_data)  
-            
+            self.table.after_delete.disconnect()
+            self.table.after_delete.connect(self.save_data)
+
             self.plot.clear()
             if self.plot.plot.legend is not None:
                 plot_scene = self.plot.plot.legend.scene()
@@ -479,14 +482,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                     plot_scene.removeItem(self.plot.plot.legend)
             self.plot.plot.addLegend()
             self.plot.plot.setTitle("")
-    
+
             if not self.struct:
                 return
             else:
                 self.struct_data = self.struct.get_table_data()
                 if not self.struct_data:
                     return
-    
+
             rating = self.rating_cbo.currentIndex()
             struct_name = ""
 
@@ -494,7 +497,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             struct_fid = self.struct_cbo.itemData(idx)
             struct_name = self.struct_cbo.currentText()
             if struct_fid is None:
-                return           
+                return
             # if rating in [1, 3]:  # Rating Table  or Bridge XS
             #     idx = self.struct_cbo.currentIndex()
             #     struct_fid = self.struct_cbo.itemData(idx)
@@ -507,20 +510,20 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.data_model.clear()
             self.data_model.setHorizontalHeaderLabels(self.tab_heads[self.struct.icurvtable])
             self.d1, self.d2 = [[], []]
-    
+
             if self.struct.icurvtable == "":
                 self.struct.icurvtable = 0
             tab_col_nr = len(self.tab_heads[self.struct.icurvtable])
             for row in self.struct_data:
                 items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                 self.data_model.appendRow(items)
-                
+
                 if row:
                     self.d1.append(row[0] if not row[0] is None else float("NaN"))
                     self.d2.append(row[1] if not row[1] is None else float("NaN"))
                 else:
                     self.d1.append(float("NaN"))
-                    self.d2.append(float("NaN"))                
+                    self.d2.append(float("NaN"))
                 # if rating in [1, 3]:  # Rating Table or Bridge XS
                 #     if row:
                 #         self.d1.append(row[0] if not row[0] is None else float("NaN"))
@@ -528,23 +531,23 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 #     else:
                 #         self.d1.append(float("NaN"))
                 #         self.d2.append(float("NaN"))
-                
+
             rc = self.data_model.rowCount()
             if rc < 10:
                 for row in range(rc, 10 + 1):
                     items = [StandardItem(x) for x in ("",) * tab_col_nr]
                     self.data_model.appendRow(items)
-    
+
             self.tview.horizontalHeader().setStretchLastSection(True)
             self.tview.resizeColumnsToContents()
             for i in range(self.data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-    
+
             if rating in [1, 3]:  # Rating Table or Bridge XS
                 self.create_plot(rating, struct_name)
                 self.update_plot()
             else:
-                self.plot.clear()    
+                self.plot.clear()
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -558,9 +561,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 if plot_scene is not None:
                     plot_scene.removeItem(self.plot.plot.legend)
             self.plot.plot.addLegend()
-            prefix = "Rating Table:   " if rating == 1 \
-                     else "Bridge XS Table:   " if rating == 3 \
-                     else ""
+            prefix = "Rating Table:   " if rating == 1 else "Bridge XS Table:   " if rating == 3 else ""
             self.plot_item_name = prefix + name
             self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
             self.plot.plot.setTitle(prefix + name)
@@ -583,7 +584,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct.set_table_data(data)
         rating = self.rating_cbo.currentIndex()
         if rating in [1, 3]:  # Rating Table or Bridge XS
-                self.update_plot()
+            self.update_plot()
 
     def show_struct_rb(self):
         self.lyrs.show_feat_rubber(self.user_struct_lyr.id(), self.struct.fid)
@@ -649,8 +650,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         """
         if not self.struct_cbo.count():
-           self.uc.bar_warn("There are no structures defined!") 
-           return
+            self.uc.bar_warn("There are no structures defined!")
+            return
         dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
         dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
         save = dlg_bridge.exec_()

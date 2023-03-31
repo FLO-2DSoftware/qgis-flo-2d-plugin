@@ -23,7 +23,6 @@ uiDialog, qtBaseClass = load_ui("sampling_rain")
 
 
 class SamplingRainDialog(qtBaseClass, uiDialog):
-
     RTYPE = {1: "Byte", 2: "UInt16", 3: "Int16", 4: "UInt32", 5: "Int32", 6: "Float32", 7: "Float64"}
 
     def __init__(self, con, iface, lyrs, cell_size):

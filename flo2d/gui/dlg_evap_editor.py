@@ -88,12 +88,8 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.monthlyEvapTView.resizeColumnsToContents()
         self.monthly_evap_model = model
         index = self.monthlyEvapTView.model().index(0, 0, QModelIndex())
-        self.monthlyEvapTView.selectionModel().select(
-            index, self.monthlyEvapTView.selectionModel().Select
-        )
-        self.monthlyEvapTView.selectionModel().selectionChanged.connect(
-            self.populate_hourly
-        )
+        self.monthlyEvapTView.selectionModel().select(index, self.monthlyEvapTView.selectionModel().Select)
+        self.monthlyEvapTView.selectionModel().selectionChanged.connect(self.populate_hourly)
         self.populate_hourly()
 
     def populate_hourly(self):
@@ -104,10 +100,7 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(["Hour", "Percentage"])
         for row in hourly:
-            items = [
-                QStandardItem(str(x)) if x is not None else QStandardItem("")
-                for x in row
-            ]
+            items = [QStandardItem(str(x)) if x is not None else QStandardItem("") for x in row]
             model.appendRow(items)
         self.hourlyEvapTView.setModel(model)
         self.hourlyEvapTView.resizeColumnsToContents()

@@ -149,7 +149,6 @@ class Schema1DConverter(SchemaConverter):
         geom_fn = self.geom_functions["polyline"]
         new_features = []
         for i, feat in enumerate(self.schematized_xsections_lyr.getFeatures(), start=1):
-
             if feat.geometry() is None:
                 self.set_geomless_xs(feat)
 
@@ -182,37 +181,38 @@ class SchemaLeveesConverter(SchemaConverter):
         self.set_user_fids()
         self.schema2user(self.schema_levee_lyr, self.user_levee_lyr, "polyline", levcrest="elev")
 
+
 class SchemaBCConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaBCConverter, self).__init__(con, iface, lyrs)
- 
+
         self.schema_bc_tab = "all_schem_bc"
         self.user_bc_tab = "user_bc_points"
         self.schema_bc_lyr = lyrs.data[self.schema_bc_tab]["qlyr"]
         self.user_bc_lyr = lyrs.data[self.user_bc_tab]["qlyr"]
- 
+
         self.user_bc_lines = "user_bc_lines"
         self.user_bc_polygons = "user_bc_polygons"
-         
+
         self.user_bc_lines_lyr = lyrs.data[self.user_bc_lines]["qlyr"]
         self.user_bc_polygons_lyr = lyrs.data[self.user_bc_polygons]["qlyr"]
-         
+
     def update_bc_fids(self, bc_updates):
         cur = self.con.cursor()
         for table, fid, tab_bc_fid in bc_updates:
             qry = """UPDATE {0} SET bc_fid = ?, geom_type = ? WHERE fid = ?;""".format(table)
-            cur.execute(qry, (fid, 'point', tab_bc_fid))
-#             cur.execute(qry, (tab_bc_fid, "point", tab_bc_fid))
+            cur.execute(qry, (fid, "point", tab_bc_fid))
+        #             cur.execute(qry, (tab_bc_fid, "point", tab_bc_fid))
         self.con.commit()
- 
+
     def create_user_bc(self):
         try:
             self.disable_geom_triggers()
             remove_features(self.user_bc_lyr)
-     
+
             remove_features(self.user_bc_lines_lyr)
             remove_features(self.user_bc_polygons_lyr)
-             
+
             fields = self.user_bc_lyr.fields()
             common_fnames = {"fid": "fid", "type": "type"}
             geom_fn = self.geom_functions["centroid"]
@@ -222,11 +222,11 @@ class SchemaBCConverter(SchemaConverter):
                 if feat is None:
                     continue
                 if feat.geometry().isNull():
-                    continue       
+                    continue
                 new_feat = self.set_feature(feat, fields, common_fnames, geom_fn)
                 new_features.append(new_feat)
                 bc_updates.append((feat["type"], feat["fid"], feat["tab_bc_fid"]))
-    #             bc_updates.append((new_feat['type'], new_feat['fid'], new_feat['tab_bc_fid']))
+            #             bc_updates.append((new_feat['type'], new_feat['fid'], new_feat['tab_bc_fid']))
             self.user_bc_lyr.startEditing()
             self.user_bc_lyr.addFeatures(new_features)
             self.user_bc_lyr.commitChanges()
@@ -241,7 +241,8 @@ class SchemaBCConverter(SchemaConverter):
                 "ERROR 100321.1010:\n\Conversion of Boundary Conditions to User Layer failed!"
                 + "\n_______________________________________________________________",
                 e,
-            )        
+            )
+
 
 class SchemaFPXSECConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):

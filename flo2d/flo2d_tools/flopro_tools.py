@@ -13,6 +13,7 @@ from subprocess import Popen, PIPE, STDOUT, CREATE_NO_WINDOW, check_call, Called
 from contextlib import contextmanager
 from ..user_communication import UserCommunication
 
+
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -24,7 +25,6 @@ def cd(newdir):
 
 
 class FLOPROExecutor(object):
-
     FLOPRO_EXE = "FLOPRO.exe"
 
     def __init__(self, iface, flo2d_dir, project_dir):
@@ -40,89 +40,77 @@ class FLOPROExecutor(object):
             #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
 
             try:
-                
                 self.uc.clear_bar_messages()
-                   
-                #11111:
+
+                # 11111:
                 # check_call(self.flo2d_exe)
                 # result = run(self.flo2d_exe)
                 # call(self.flo2d_exe)
                 # result = run([self.flo2d_exe],input="",capture_output=True)
                 # result = Popen([self.flo2d_exe], shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=PIPE, universal_newlines=False)
-                
-                
-                #00000
-                # result = Popen(self.flo2d_exe)    
-                # out = result.communicate() 
+
+                # 00000
+                # result = Popen(self.flo2d_exe)
+                # out = result.communicate()
                 # for line in out:
-                #     self.uc.bar_info(line)  
-                
-                
+                #     self.uc.bar_info(line)
+
                 # result = run(["self.flo2d_exe"], shell=True, capture_output=True, text=True)
-                
-                
-                #22222
+
+                # 22222
                 result = Popen(
-                    args=self.flo2d_exe, 
-                    bufsize=-1, 
-                    executable=None, 
-                    stdin=None, 
-                    stdout=None, 
-                    stderr=None, 
-                    preexec_fn=None, 
-                    close_fds=True, 
-                    shell=False, 
-                    cwd=None, 
-                    env=None, 
-                    universal_newlines=None, 
-                    startupinfo=None, 
-                    creationflags=0, 
-                    restore_signals=True, 
-                    start_new_session=False, 
-                    pass_fds=(), 
-                    group=None, 
-                    extra_groups=None, 
-                    user=None, 
-                    umask=-1, 
-                    encoding=None, 
-                    errors=None, 
-                    text=None                  
+                    args=self.flo2d_exe,
+                    bufsize=-1,
+                    executable=None,
+                    stdin=None,
+                    stdout=None,
+                    stderr=None,
+                    preexec_fn=None,
+                    close_fds=True,
+                    shell=False,
+                    cwd=None,
+                    env=None,
+                    universal_newlines=None,
+                    startupinfo=None,
+                    creationflags=0,
+                    restore_signals=True,
+                    start_new_session=False,
+                    pass_fds=(),
+                    group=None,
+                    extra_groups=None,
+                    user=None,
+                    umask=-1,
+                    encoding=None,
+                    errors=None,
+                    text=None,
                 )
-                # out = result.communicate() 
+                # out = result.communicate()
                 # for line in out:
-                #     self.uc.bar_info(line)                 
-                
-                
-                
-                
+                #     self.uc.bar_info(line)
 
                 # check_output(self.flo2d_exe, shell=True)
-                
-                
-                #33333:
-                # result = run([self.flo2d_exe])                  
-                
-                #44444:
+
+                # 33333:
+                # result = run([self.flo2d_exe])
+
+                # 44444:
                 # result = os.system(self.flo2d_exe)
-            
-                #555555
+
+                # 555555
                 # result = call(self.flo2d_exe)
-                
-                self.uc.bar_info("Model FLOPRO.exe started "  + str(result) if result is not None else "", 10) 
-                
-                return result 
-               
+
+                self.uc.bar_info("Model FLOPRO.exe started " + str(result) if result is not None else "", 10)
+
+                return result
+
             except Exception as e:
                 self.uc.show_error("ERROR 180821.0822: can't run model!\n", e)
 
     def perform(self):
         return self.execute_flopro()
-    
-    
 
 
 class XSECInterpolatorExecutor(object):
-
     INTERPOLATOR_EXE = "INTERPOLATE.EXE"
 
     def __init__(self, interpolator_dir, project_dir):
@@ -141,7 +129,6 @@ class XSECInterpolatorExecutor(object):
 
 
 class ChanRightBankExecutor(object):
-
     CHANRIGHTBANK_EXE = "CHANRIGHTBANK.EXE"
 
     def __init__(self, chanrightbank_dir, project_dir):
@@ -160,7 +147,6 @@ class ChanRightBankExecutor(object):
 
 
 class ChannelNInterpolatorExecutor(object):
-
     N_VALUE_INTERPOLATOR = "CHAN N-VALUE INTERPOLATOR.EXE"
 
     def __init__(self, channelNinterpolator_dir, project_dir):
@@ -182,7 +168,6 @@ class ChannelNInterpolatorExecutor(object):
 
 
 class TailingsDamBreachExecutor(object):
-
     TAILINGS_EXE = "Tailings Dam Breach.exe"
 
     def __init__(self, tailings_dir, project_dir):
@@ -207,7 +192,6 @@ class TailingsDamBreachExecutor(object):
 
 
 class MapperExecutor(object):
-
     MAPPER_EXE = "Mapper PRO.exe"
 
     def __init__(self, mapper_dir, project_dir):

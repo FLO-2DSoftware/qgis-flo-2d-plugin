@@ -33,7 +33,7 @@ from qgis.core import (
     QgsWkbTypes,
     QgsPointXY,
     QgsCoordinateTransform,
-    NULL
+    NULL,
 )
 from qgis.gui import QgsMapLayerComboBox
 from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
@@ -133,7 +133,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.con = None
         self.gutils = None
-        
+
         self.user_xs_lyr = None
         self.xs = None
         self.cur_xs_fid = None
@@ -233,7 +233,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def unblock_saving(self):
         self.xs_data_model.dataChanged.connect(self.save_xs_data)
-
 
     def switch2selected(self):
         switch_to_selected(self.user_xs_lyr, self.xs_cbo, use_fid=True)
@@ -339,10 +338,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 self.xs_cbo.addItem(name, str(xs_fid))
                 row_index = self.xs_cbo.model().rowCount() - 1
                 self.xs_cbo.model().item(row_index).setData(False, ChannelRole)
-                
+
                 if fid:
                     if xs_fid == int(fid):
-                        cur_idx = row_index                
+                        cur_idx = row_index
 
         for channel, cross_sections in schematized_channel_dict.items():
             channel_name = channel_names_dict[channel]
@@ -419,9 +418,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if fid is None:
             fid = -1
 
-        self.xs_table.after_delete.disconnect() 
-        self.xs_table.after_delete.connect(self.save_xs_data)  
-        
+        self.xs_table.after_delete.disconnect()
+        self.xs_table.after_delete.connect(self.save_xs_data)
+
         self.current_xsec_changed(fid)
 
     def current_xsec_changed(self, fid=-1):
@@ -459,7 +458,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.sample_elevation_current_natural_btn.setEnabled(typ == "N" and self.raster_radio_btn.isChecked())
 
     def update_table(self):
-
         row = self.xs.get_row()
         chan_x_row = self.xs.get_chan_x_row()
         typ = row["type"]
@@ -562,28 +560,28 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.yi = [y0, y1, y2, y3]
 
     # def _create_rectangular_xy(self):
-        # data = []
-        # for i in range(self.xs_data_model.rowCount()):
-            # data.append(m_fdata(self.xs_data_model, i, 0))
-        # bankell, bankelr, fcw, fcd = data
-        # x0, y0 = [0, bankell]
-        # x1, y1 = [0, bankell - fcd]
-        # x2, y2 = [fcw, bankell - fcd]
-        # x3, y3 = [fcw, bankelr]
-        # self.xi = [x0, x1, x2, x3]
-        # self.yi = [y0, y1, y2, y3]
-        #
+    # data = []
+    # for i in range(self.xs_data_model.rowCount()):
+    # data.append(m_fdata(self.xs_data_model, i, 0))
+    # bankell, bankelr, fcw, fcd = data
+    # x0, y0 = [0, bankell]
+    # x1, y1 = [0, bankell - fcd]
+    # x2, y2 = [fcw, bankell - fcd]
+    # x3, y3 = [fcw, bankelr]
+    # self.xi = [x0, x1, x2, x3]
+    # self.yi = [y0, y1, y2, y3]
+    #
     # def _create_trapezoidal_xy(self):
-        # data = []
-        # for i in range(self.xs_data_model.rowCount()):
-            # data.append(m_fdata(self.xs_data_model, i, 0))
-        # bankell, bankelr, fcw, fcd, zl, zr = data
-        # x0, y0 = [0, bankell]
-        # x1, y1 = [x0 + zl * fcd, bankell - fcd]
-        # x2, y2 = [x1 + fcw, bankell - fcd]
-        # x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
-        # self.xi = [x0, x1, x2, x3]
-        # self.yi = [y0, y1, y2, y3]
+    # data = []
+    # for i in range(self.xs_data_model.rowCount()):
+    # data.append(m_fdata(self.xs_data_model, i, 0))
+    # bankell, bankelr, fcw, fcd, zl, zr = data
+    # x0, y0 = [0, bankell]
+    # x1, y1 = [x0 + zl * fcd, bankell - fcd]
+    # x2, y2 = [x1 + fcw, bankell - fcd]
+    # x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
+    # self.xi = [x0, x1, x2, x3]
+    # self.yi = [y0, y1, y2, y3]
 
     def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
@@ -840,9 +838,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         if rtrn == 0:
                             s = QSettings()
                             outdir = s.value("FLO-2D/lastGdsDir", "")
-        
+
                             msg = QMessageBox()
-        
+
                             q = "Cross sections interpolation performed!.\n"
                             q += "(in Directory: " + outdir + ")\n\n"
                             q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
@@ -855,7 +853,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             msg.setText(q)
                             #                     msg.setStandardButtons(
                             #                         QMessageBox().Ok | QMessageBox().Cancel)
-                            msg.addButton(QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"), QMessageBox.YesRole)
+                            msg.addButton(
+                                QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"), QMessageBox.YesRole
+                            )
                             msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
                             msg.setDefaultButton(QMessageBox().Cancel)
@@ -874,7 +874,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 if zero > 0:
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
-                                    m += "\n\nWARNING: There are " + str(few) + " cross sections with less than 6 stations."
+                                    m += (
+                                        "\n\nWARNING: There are "
+                                        + str(few)
+                                        + " cross sections with less than 6 stations."
+                                    )
                                 if zero > 0 or few > 0:
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
                                 self.uc.show_info(m)
@@ -1062,7 +1066,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         outdir = QFileDialog.getExistingDirectory(
-            None, "Select directory where CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files will be exported", directory=last_dir
+            None,
+            "Select directory where CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files will be exported",
+            directory=last_dir,
         )
         if outdir:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1073,9 +1079,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 with open(chan, "w") as c:
                     surveyed = 0
                     non_surveyed = 0
-    
+
                     ISED = self.gutils.get_cont_par("ISED")
-    
+
                     for row in chan_rows:
                         row = [x if x is not None else "0" for x in row]
                         fid = row[0]
@@ -1087,13 +1093,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         # A single line for each channel segment. The next lines will be the grid elements of
                         # this channel segment.
                         previous_xs = -999
-    
+
                         for elems in self.gutils.execute(
                             chan_elems_sql, (fid,)
                         ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                             # 'chan_elems' table (the cross sections in the schematic layer),
                             #  that has the 'fid' value indicated (the channel segment id).
-    
+
                             elems = [
                                 x if x is not None else "" for x in elems
                             ]  # If 'elems' has a None in any of above values of list, replace it by ''
@@ -1112,7 +1118,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             res = [
                                 x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
                             ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-    
+
                             if typ == "N":
                                 res.insert(
                                     1, fcn
@@ -1134,13 +1140,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 res.insert(
                                     xlen_idx, xlen
                                 )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-    
+
                             c.write(line.format(*res))
-    
+
                     for row in self.gutils.execute(chan_wsel_sql):
                         c.write(wsel.format(*row[:2]))
                         c.write(wsel.format(*row[2:]))
-    
+
                     pairs = []
                     for row in self.gutils.execute(chan_conf_sql):
                         chan_elem = row[0]
@@ -1150,14 +1156,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             pairs.append(chan_elem)
                             c.write(conf.format(*pairs))
                             del pairs[:]
-    
+
                     for row in self.gutils.execute(chan_e_sql):
                         c.write(chan_e.format(row[0]))
-    
+
                 self.uc.bar_info("CHAN.DAT file exported to " + outdir, dur=5)
                 QApplication.restoreOverrideCursor()
-                return [surveyed, non_surveyed]     
-            
+                return [surveyed, non_surveyed]
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
@@ -1215,12 +1221,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return False
         else:
             return False
-        
-        
+
     def save_CHANBANK(self):
         try:
             line = " {0: <10} {1}\n"
-            rbanks = self.gutils.execute("SELECT fid, rbankgrid FROM chan_elems;").fetchall() 
+            rbanks = self.gutils.execute("SELECT fid, rbankgrid FROM chan_elems;").fetchall()
             if rbanks:
                 s = QSettings()
                 outdir = s.value("FLO-2D/lastGdsDir", "")
@@ -1228,15 +1233,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     s.setValue("FLO-2D/lastGdsDir", outdir)
                     chanbank = os.path.join(outdir, "CHANBANK.DAT")
-                    with open(chanbank, "w") as cb:       
+                    with open(chanbank, "w") as cb:
                         for rb in rbanks:
                             cb.write(line.format(rb[0], rb[1]))
                     return True
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.show_error("ERROR 260521.1207: Couldn't export CHANBANK.DAT!", e)
-            return  False      
-    
+            return False
+
     def run_INTERPOLATE(self, xs_survey):
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run interpolation under current operation system!")
@@ -1533,7 +1538,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 240718.0359: Couldn't join left and right banks!", e)
 
     def interpolate_channel_n(self):
-
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run 'CHAN N-VALUE INTERPOLATOR.EXE' under current operation system!")
             return
@@ -1608,105 +1612,104 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1804: Schematizing aborted! Please check your 1D User Layers.")
-                    
+
     def create_confluences(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("chan_elems"):
-            self.uc.bar_warn(
-                "WARNING 160821.0931: There are no schematized channel cross sections."
-            )
+            self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)  
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-            xs_lyr = self.lyrs.data["chan_elems"]["qlyr"] 
+            xs_lyr = self.lyrs.data["chan_elems"]["qlyr"]
             xs = xs_lyr.getFeatures()
             segments = {}
-            for feat in xs: 
+            for feat in xs:
                 segments[feat["seg_fid"]] = [feat["fid"]]
             lastCellInSegments = segments.items()
             confluences = dict(segments)
             for key, last in lastCellInSegments:
                 # Find adjacent cells to 'last' cell in others segments:
                 lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
-                n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(self.gutils, lastCell, cell_size)
+                n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(
+                    self.gutils, lastCell, cell_size
+                )
                 if n_grid:
                     lst = list(segments[key])
-                    lst.append(n_grid)    
+                    lst.append(n_grid)
                     segments[key] = lst
-                    pass                    
+                    pass
                 if ne_grid:
                     lst = list(segments[key])
-                    lst.append(ne_grid)    
+                    lst.append(ne_grid)
                     segments[key] = lst
-                    pass   
+                    pass
                 if e_grid:
                     lst = list(segments[key])
-                    lst.append(e_grid)    
+                    lst.append(e_grid)
                     segments[key] = lst
-                    pass   
+                    pass
                 if se_grid:
                     lst = list(segments[key])
-                    lst.append(se_grid)    
+                    lst.append(se_grid)
                     segments[key] = lst
-                    pass   
+                    pass
                 if s_grid:
                     lst = list(segments[key])
-                    lst.append(s_grid)    
+                    lst.append(s_grid)
                     segments[key] = lst
-                    pass                          
+                    pass
                 if sw_grid:
                     lst = list(segments[key])
-                    lst.append(sw_grid)    
+                    lst.append(sw_grid)
                     segments[key] = lst
-                    pass                                     
+                    pass
                 if w_grid:
                     lst = list(segments[key])
-                    lst.append(w_grid)    
+                    lst.append(w_grid)
                     segments[key] = lst
-                    pass 
+                    pass
                 if nw_grid:
                     lst = list(segments[key])
-                    lst.append(nw_grid)    
+                    lst.append(nw_grid)
                     segments[key] = lst
-                    pass  
-            
+                    pass
+
             for key, values in segments.items():
                 xs2 = xs_lyr.getFeatures()
                 for f in xs2:
                     if f["seg_fid"] != key:
-                        if f["fid"] in values[1:]: 
+                        if f["fid"] in values[1:]:
                             lst = list(confluences[key])
                             if f["fid"] not in lst:
                                 lst.append(f["fid"])
-                                confluences[key] = lst 
-                        if f["rbankgrid"] in values[1:]: 
+                                confluences[key] = lst
+                        if f["rbankgrid"] in values[1:]:
                             lst = list(confluences[key])
                             if f["rbankgrid"] not in lst:
                                 lst.append(f["rbankgrid"])
-                                confluences[key] = lst    
+                                confluences[key] = lst
             QApplication.restoreOverrideCursor()
 
             dlg_tributaries = TributariesDialog(self.iface, self.lyrs, confluences)
             save = dlg_tributaries.exec_()
-            if save:  
+            if save:
                 dlg_tributaries.save()
 
             dlg_tributaries.clear_confluences_rubber()
-        
+
             self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
 
-            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
-            self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)            
+            self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)
 
     def effective_user_cross_section(self, fid, name):
-        """ Return the cross section split between banks """
+        """Return the cross section split between banks"""
 
         user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
         try:

@@ -10,10 +10,15 @@
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..gui.dlg_individual_multiple_channels import IndividualMultipleChannelsDialog, IndividualSimplifiedMultipleChannelsDialog
+from ..gui.dlg_individual_multiple_channels import (
+    IndividualMultipleChannelsDialog,
+    IndividualSimplifiedMultipleChannelsDialog,
+)
 from ..utils import float_or_zero, int_or_zero
 
 uiDialog, qtBaseClass = load_ui("multiple_channels_editor")
+
+
 class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -67,7 +72,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
     def update_global_multiple_channels_data(self):
         if self.gutils.is_table_empty("mult"):
             self.gutils.fill_empty_mult_globals()
-            
+
         qry = """UPDATE mult SET wmc = ?, wdrall = ?, dmall = ?, nodchansall = ?, xnmultall = ?, sslopemin = ?, sslopemax = ?, avuld50 = ?, simple_n = ?; """
 
         wmc = self.mc_incremental_dbox.value()
@@ -106,6 +111,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
+
     def show_individual_simple_multiple_channels_dialog(self):
         """
         Shows individual multiple channels dialog.

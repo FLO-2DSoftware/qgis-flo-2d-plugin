@@ -18,7 +18,6 @@ from qgis.gui import QgsMapToolIdentify
 
 
 class GridInfoTool(QgsMapToolIdentify):
-
     grid_elem_picked = pyqtSignal(int)
 
     def __init__(self, uc, canvas, lyrs):
@@ -41,7 +40,7 @@ class GridInfoTool(QgsMapToolIdentify):
             else:
                 self.grid_elem_picked.emit(-1)
         except Exception:
-            self.uc.bar_error("ERROR 100721.1942: is the grid defined?") 
+            self.uc.bar_error("ERROR 100721.1942: is the grid defined?")
 
     def activate(self):
         self.canvas.setCursor(Qt.CrossCursor)

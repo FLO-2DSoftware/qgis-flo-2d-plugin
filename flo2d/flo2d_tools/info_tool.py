@@ -21,7 +21,6 @@ from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 
 
 class InfoTool(QgsMapToolIdentify):
-
     feature_picked = pyqtSignal(str, int)
 
     def __init__(self, canvas, lyrs):

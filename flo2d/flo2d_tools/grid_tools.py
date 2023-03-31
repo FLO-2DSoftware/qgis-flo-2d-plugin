@@ -29,13 +29,12 @@ from qgis.core import (
     QgsFeedback,
     NULL,
     QgsMarkerSymbol,
-    QgsProject ,
+    QgsProject,
     QgsSymbol,
     QgsRendererCategory,
     QgsCategorizedSymbolRenderer,
     QgsRendererRange,
-    QgsGraduatedSymbolRenderer
-    
+    QgsGraduatedSymbolRenderer,
 )
 
 
@@ -52,6 +51,7 @@ xvalsNumpyArray = None
 yvalsNumpyArray = None
 
 cellElevNumpyArray = None
+
 
 # GRID classes
 class TINInterpolator(object):
@@ -411,7 +411,7 @@ def spatial_centroids_index(vlayer, request=None):
     return allfeatures, index
 
 
-def intersection_spatial_index(vlayer, request=None, clip = False):
+def intersection_spatial_index(vlayer, request=None, clip=False):
     """
     Creating optimized for intersections spatial index over collection of features.
     If clip id True and request not None, all geometry are clipped in the request rectangle filter
@@ -424,7 +424,7 @@ def intersection_spatial_index(vlayer, request=None, clip = False):
     max_fid = max(all_feature_id) + 1
 
     if request is not None:
-        extent_geom=QgsGeometry.fromRect(request.filterRect())
+        extent_geom = QgsGeometry.fromRect(request.filterRect())
 
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         geom = feat.geometry()
@@ -531,7 +531,7 @@ def build_grid(boundary, cell_size, upper_left_coords=None):
     #     ymax = math.ceil(bbox.yMaximum())
     #     ymin = math.floor(bbox.yMinimum())
     if upper_left_coords:
-        xmin,ymax = upper_left_coords                         
+        xmin, ymax = upper_left_coords
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -578,7 +578,7 @@ def build_grid_and_tableColRow(boundary, cell_size):
     #     xmin = math.floor(bbox.xMinimum())
     #     xmax = math.ceil(bbox.xMaximum())
     #     ymax = math.ceil(bbox.yMaximum())
-    #     ymin = math.floor(bbox.yMinimum())       
+    #     ymin = math.floor(bbox.yMinimum())
     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
     x = xmin + half_size
@@ -613,19 +613,19 @@ def assign_col_row_indexes_to_grid(grid, gutils):
     cell_size = float(gutils.get_cont_par("CELLSIZE"))
     ext = grid.extent()
     xmin = ext.xMinimum()
-    ymin = ext.yMinimum()                  
+    ymin = ext.yMinimum()
     qry = "UPDATE grid SET col = ?, row = ? WHERE fid = ?"
     qry_values = []
     for i, cell in enumerate(grid.getFeatures(), 1):
         geom = cell.geometry()
         xx, yy = geom.centroid().asPoint()
-        col = int((xx - xmin)/cell_size) + 2
-        row = int((yy - ymin)/cell_size) + 2 
+        col = int((xx - xmin) / cell_size) + 2
+        row = int((yy - ymin) / cell_size) + 2
         qry_values.append((col, row, i))
-        
+
     cur = gutils.con.cursor()
     cur.executemany(qry, qry_values)
-    gutils.con.commit()      
+    gutils.con.commit()
 
 
 def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
@@ -735,10 +735,11 @@ def poly2poly_geos(base_polygons, polygons, request=None, *columns):
 
     """
 
-    allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+    allfeatures, index = (
+        intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+    )
 
     return poly2poly_geos_from_features(base_polygons, allfeatures, index, request, *columns)
-
 
 
 def poly2poly_geos_from_features(base_polygons, polygons_features, polygon_spatial_index, request=None, *columns):
@@ -778,14 +779,15 @@ def poly2poly_geos_from_features(base_polygons, polygons_features, polygon_spati
         yield base_fid, base_parts
 
 
-
 def centroids2poly_geos(base_polygons, polygons, request=None, *columns):
     """
     Generator which calculates base polygons centroids intersections with another polygon layer.
 
     """
 
-    allfeatures, index = intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+    allfeatures, index = (
+        intersection_spatial_index(polygons) if request is None else intersection_spatial_index(polygons, request)
+    )
 
     base_features = base_polygons.getFeatures() if request is None else base_polygons.getFeatures(request)
     for feat in base_features:
@@ -908,7 +910,6 @@ def clustered_features(polygons, fields, *columns, **columns_map):
     clusters = cluster_polygons(polygons, *columns)
     target_columns = [columns_map[c] if c in columns_map else c for c in columns]
     for attrs, geom_list in list(clusters.items()):
-
         if len(geom_list) > 1:
             geom = QgsGeometry.unaryUnion(geom_list)
             if geom.isMultipart():
@@ -958,17 +959,17 @@ def calculate_spatial_variable_from_lines(grid, lines, request=None):
     Generator which calculates values based on lines representing values
     yields (grid id, feature id, grid elev).
     """
-    
+
     allfeatures, index = spatial_index(lines, request)
 
     if len(allfeatures) != 0:
         features = grid.getFeatures() if request is None else grid.getFeatures(request)
         for feat in features:  # for each grid feature
             geom = feat.geometry()  # cell square (a polygon)
-            cellCentroid=geom.centroid()
+            cellCentroid = geom.centroid()
             if cellCentroid is None or not request.filterRect().contains(cellCentroid.asPoint()):
                 continue
-            gelev = feat['elevation']
+            gelev = feat["elevation"]
             fids = index.intersects(geom.boundingBox())  # c
             for fid in fids:
                 f = allfeatures[fid]
@@ -978,7 +979,7 @@ def calculate_spatial_variable_from_lines(grid, lines, request=None):
                     yield f.id(), feat.id(), gelev
                 else:
                     pass
-    
+
 
 def calculate_gutter_variable_from_lines(grid, lines):
     """
@@ -998,6 +999,7 @@ def calculate_gutter_variable_from_lines(grid, lines):
                 yield (f.id(), feat.id())
             else:
                 pass
+
 
 def raster2grid(grid, out_raster, request=None):
     """
@@ -1081,8 +1083,8 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     else:
         pass
 
+
 def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None):
-    
     # """
     # Function for calculating and writing square grid into 'grid' table.
     # """
@@ -1092,17 +1094,15 @@ def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None
     # gutils.execute(update_cellsize, (cellsize,))
     # gutils.clear_tables("grid")
     #
-    # sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
+    # sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3]
     # polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
     # for g_tuple in polygonsClRw:
-        # sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+    # sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
     # if len(sql) > 2:
-        # gutils.batch_execute(sql)
+    # gutils.batch_execute(sql)
     # else:
-        # pass    
-    
-    
-    
+    # pass
+
     """
     Function for calculating and writing square grid into 'grid' table.
     """
@@ -1111,12 +1111,20 @@ def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None
         update_cellsize = "UPDATE user_model_boundary SET cell_size = ?;"
         gutils.execute(update_cellsize, (cellsize,))
         gutils.clear_tables("grid")
-        
-        sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3] 
-        polygonsClRw  = ((gutils.build_square_from_polygon2(polyColRow), ) 
-                                for polyColRow in build_grid_and_tableColRow(boundary, cellsize))
+
+        sql = ["""INSERT INTO grid (geom, col, row) VALUES""", 3]
+        polygonsClRw = (
+            (gutils.build_square_from_polygon2(polyColRow),)
+            for polyColRow in build_grid_and_tableColRow(boundary, cellsize)
+        )
         for g_tuple in polygonsClRw:
-            sql.append((g_tuple[0][0], g_tuple[0][1], g_tuple[0][2],))
+            sql.append(
+                (
+                    g_tuple[0][0],
+                    g_tuple[0][1],
+                    g_tuple[0][2],
+                )
+            )
         if len(sql) > 2:
             gutils.batch_execute(sql)
         else:
@@ -1128,13 +1136,14 @@ def square_grid_with_col_and_row_fields(gutils, boundary, upper_left_coords=None
             "ERROR 300521.0526: creating grid with 'col' and 'row' fields failed !\n"
             "_____________________________________________________________________"
         )
-        return False        
+        return False
+
 
 def add_col_and_row_fields(grid):
     try:
         caps = grid.dataProvider().capabilities()
         if caps & QgsVectorDataProvider.AddAttributes:
-            grid.dataProvider().addAttributes([QgsField('col', QVariant.Int), QgsField('row', QVariant.Int)])
+            grid.dataProvider().addAttributes([QgsField("col", QVariant.Int), QgsField("row", QVariant.Int)])
             grid.updateFields()
         return True
     except:
@@ -1143,8 +1152,9 @@ def add_col_and_row_fields(grid):
             "ERROR 300521.1111: creating grid with 'col' and 'row' fields failed !\n"
             "_____________________________________________________________________"
         )
-        return False  
-    
+        return False
+
+
 def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False):
     """
     Updating roughness values inside 'grid' table.
@@ -1189,32 +1199,33 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
         )
         return False
 
-def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showProgress = True):
+
+def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgress=True):
     # yields rectangular selection regions in the grid
     # useful for subdividing large geoprocessing tasks over smaller, discrete regions of the grid
-       
-    #gridCount = grid.featureCount()
+
+    # gridCount = grid.featureCount()
     cellsize = float(gutils.get_cont_par("CELLSIZE"))
-    
+
     # process 100x100 cell regions typically
     gridDimPerAnalysisRegion = gridSpan
-    #gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
-    
+    # gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+
     # determine extent of grid
     gridExt = grid.extent()
     ySpan = gridExt.yMaximum() - gridExt.yMinimum()
     xSpan = gridExt.xMaximum() - gridExt.xMinimum()
-    
+
     # determine # of processing rows/columns based upon analysis regions
     colCount = math.ceil(xSpan / (gridDimPerAnalysisRegion * cellsize))
     rowCount = math.ceil(ySpan / (gridDimPerAnalysisRegion * cellsize))
-    
+
     # segment the grid ext to create analysis regions
     regionCount = rowCount * colCount
-    regionCounter = 0 # exit criteria
-    
-    #regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
-    
+    regionCounter = 0  # exit criteria
+
+    # regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
+
     if showProgress == True:
         progDialog = QProgressDialog("Processing Progress (by area - timing will be uneven)", "Cancel", 0, 100)
         progDialog.setModal(True)
@@ -1233,13 +1244,13 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
                 queryRect = QgsRectangle(xMin, yMin, xMax, yMax)  # xmin, ymin, xmax, ymax
 
                 request = QgsFeatureRequest(queryRect)
-                regionCounter += 1 # increment regionCounter up
+                regionCounter += 1  # increment regionCounter up
                 if showProgress == True:
                     if progDialog.wasCanceled() == True:
                         break
-                    progDialog.setValue(regionCounter/regionCount * 100.0)
+                    progDialog.setValue(regionCounter / regionCount * 100.0)
                     QApplication.processEvents()
-                print ("Processing region: %s of %s" % (regionCounter, regionCount))
+                print("Processing region: %s of %s" % (regionCounter, regionCount))
                 yield request
             if showProgress == True:
                 if progDialog.wasCanceled() == True:
@@ -1247,32 +1258,33 @@ def gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showPr
         if showProgress == True:
             progDialog.close()
 
-def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC = None):
+
+def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC=None):
     # extraFC is a second feature class for the case in which 2 feature classes are to be intersected that are not
     # the grid; land-use intersection with soils, for instance
-    
-    #gridCount = grid.featureCount()
+
+    # gridCount = grid.featureCount()
     cellsize = float(gutils.get_cont_par("CELLSIZE"))
-    
+
     # process 100x100 cell regions
     gridDimPerAnalysisRegion = 100
-    #gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
-    
+    # gridsPerAnalysisRegion = gridDimPerAnalysisRegion ** 2
+
     # determine extent of grid
     gridExt = grid.extent()
     ySpan = gridExt.yMaximum() - gridExt.yMinimum()
     xSpan = gridExt.xMaximum() - gridExt.xMinimum()
-    
+
     # determine # of processing rows/columns based upon analysis regions
     colCount = math.ceil(xSpan / (gridDimPerAnalysisRegion * cellsize))
     rowCount = math.ceil(ySpan / (gridDimPerAnalysisRegion * cellsize))
-    
+
     # segment the grid ext to create analysis regions
     regionCount = rowCount * colCount
-    regionCounter = 0 # exit criteria
-    
-    regionPadding = 50 # amount, in ft probably, to pad region extents to prevent boundary effects
-    
+    regionCounter = 0  # exit criteria
+
+    regionPadding = 50  # amount, in ft probably, to pad region extents to prevent boundary effects
+
     while regionCounter < regionCount:
         for row in range(rowCount):
             yMin = gridExt.yMinimum() + ySpan / rowCount * row - regionPadding / 2.0
@@ -1286,11 +1298,15 @@ def geos2geosGenerator(gutils, grid, inputFC, *valueColumnNames, extraFC = None)
                 request = QgsFeatureRequest(queryRect)
                 yieldVal = None
                 if extraFC is None:
-                    yieldVal = poly2poly_geos(grid, inputFC, request, *valueColumnNames) # this returns 2 values
+                    yieldVal = poly2poly_geos(grid, inputFC, request, *valueColumnNames)  # this returns 2 values
                 else:
-                    yieldVal = poly2poly_geos(inputFC, extraFC, request, *valueColumnNames) # this returns 2 values
-                regionCounter += 1 # increment regionCounter up
-                yield (yieldVal[0], yieldVal[1], (regionCount - 1) / regionCount) # yield the intersection list and % complete
+                    yieldVal = poly2poly_geos(inputFC, extraFC, request, *valueColumnNames)  # this returns 2 values
+                regionCounter += 1  # increment regionCounter up
+                yield (
+                    yieldVal[0],
+                    yieldVal[1],
+                    (regionCount - 1) / regionCount,
+                )  # yield the intersection list and % complete
 
 
 def update_roughness(gutils, grid, roughness, column_name, reset=False):
@@ -1306,14 +1322,14 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
         else:
             pass
         qry = "UPDATE grid SET n_value=? WHERE fid=?;"
-        
+
         gridCount = 0
-        for request in gridRegionGenerator(gutils, grid, gridSpan = 100, regionPadding = 50, showProgress = True):
+        for request in gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgress=True):
             writeVals = []
-            manning_values = poly2poly_geos(grid, roughness, request, column_name) # this returns 2 values
-            #if extraFC is None:
+            manning_values = poly2poly_geos(grid, roughness, request, column_name)  # this returns 2 values
+            # if extraFC is None:
             #        yieldVal = poly2poly_geos(grid, inputFC, request, *valueColumnNames) # this returns 2 values
-            
+
             for gid, values in manning_values:
                 gridCount += 1
                 #                 if gridCount % 1000 == 0:
@@ -1323,7 +1339,7 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
                     manning = manning + (1.0 - sum(float(subarea) for ma, subarea in values)) * float(globalnValue)
                     manning = "{0:.4}".format(manning)
                     writeVals.append((manning, gid))
-                            
+
             if len(writeVals) > 0:
                 gutils.con.executemany(qry, writeVals)
                 #                 print ("committing to db")
@@ -1557,7 +1573,7 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
     cell_size = float(gutils.get_cont_par("CELLSIZE"))
     del_cells = "DELETE FROM gutter_cells;"
     insert_cells_from_polygons = ["""INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""", 3]
-    insert_cells_from_lines = ["""INSERT INTO gutter_cells (geom, line_fid, grid_fid) VALUES""",3]
+    insert_cells_from_lines = ["""INSERT INTO gutter_cells (geom, line_fid, grid_fid) VALUES""", 3]
 
     try:
         gutils.execute(del_cells)
@@ -1568,7 +1584,7 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
                 val = (geom,) + row
                 insert_cells_from_polygons.append(val)
             gutils.batch_execute(insert_cells_from_polygons)
-    
+
         if lines:
             for row in calculate_gutter_variable_from_lines(grid, lines):
                 centroid = gutils.single_centroid(row[1])
@@ -1580,6 +1596,7 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
     except Exception as e:
         QApplication.restoreOverrideCursor()
         show_error("ERROR 230223.0557: building gutter cells failed!\n", e)
+
 
 def evaluate_spatial_noexchange(gutils, grid, areas):
     """
@@ -1607,6 +1624,7 @@ def grid_has_empty_elev(gutils):
     except StopIteration:
         return None
 
+
 def grid_has_empty_n_value(gutils):
     """
     Return number of grid elements that have no n_value defined.
@@ -1619,7 +1637,8 @@ def grid_has_empty_n_value(gutils):
     except StopIteration:
         return None
 
-def fid_from_grid_np(gutils, table_name, table_fids=None, grid_center = False, switch=False, *extra_fields):
+
+def fid_from_grid_np(gutils, table_name, table_fids=None, grid_center=False, switch=False, *extra_fields):
     """
     Get a list of grid elements fids that intersect the given tables features.
     Optionally, users can specify a list of table_fids to be checked.
@@ -1629,38 +1648,41 @@ def fid_from_grid_np(gutils, table_name, table_fids=None, grid_center = False, s
         cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray = buildCellIDNPArray(gutils)
     if cellElevNumpyArray is None:
         cellElevNumpyArray = buildCellElevNPArray(gutils, cellIDNumpyArray)
-    
+
     # iterate over features
-    
 
     return grid_elems
 
+
 def divide_line_grid_np(gutils, line):
-    # return the cell ids and segment coordinates for each segment 
+    # return the cell ids and segment coordinates for each segment
     # [
     #  [15, [[15.25, 14.25], [18.25, 10.2]]],
     #  [17, [[18.25, 12.25], [25.25, 13.2]]],
     # ]
-    lineSegments = [] 
+    lineSegments = []
     if cellIDNumpyArray is None:
         cellIDNumpyArray, xvalsNumpyArray, yvalsNumpyArray = buildCellIDNPArray(gutils)
-        
+
     return lineSegments
 
-def fid_from_grid_features(gutils, grid, linefeatures) :
+
+def fid_from_grid_features(gutils, grid, linefeatures):
     """
     Get a list of grid elements fids that intersect the grid features.
     Used to calculate levee-line intersections from grid
-    
+
     gridRegionGenerator implemented to increase processing speed for
     large datasets
     """
     retVals = []
-       
-    for region in gridRegionGenerator(gutils, grid, showProgress = True):
+
+    for region in gridRegionGenerator(gutils, grid, showProgress=True):
         # process each sub-area of the grid
         retVals = []
-        for result in calculate_spatial_variable_from_lines(grid, linefeatures, region): # returns grid id, line id, grid elev
+        for result in calculate_spatial_variable_from_lines(
+            grid, linefeatures, region
+        ):  # returns grid id, line id, grid elev
             # currently, this goes one line at a time
             retVals.append(result)
 
@@ -1669,6 +1691,7 @@ def fid_from_grid_features(gutils, grid, linefeatures) :
         else:
             pass
     # return cell ids and elevations
+
 
 def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch=False, *extra_fields):
     """
@@ -1702,6 +1725,7 @@ def fid_from_grid(gutils, table_name, table_fids=None, grid_center=False, switch
     grid_elems = ((row[first], row[second]) + tuple(row[2:]) for row in gutils.execute(qry))
     return grid_elems
 
+
 def highlight_selected_segment(layer, id):
     feat_selection = []
     for feature in layer.getFeatures():
@@ -1730,105 +1754,110 @@ def highlight_selected_xsection_b(layer, xs_id):
             break
     layer.selectByIds(feat_selection)
 
+
 def buildCellIDNPArray(gutils):
     # construct numpy arrays of key grid parameters such as cellid and elevation
     starttime = datetime.datetime.now()
     incTime = datetime.datetime.now()
-    
+
     centroids = gutils.grid_centroids_all()
-    print ("Centroids pull time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    print("Centroids pull time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
     incTime = datetime.datetime.now()
     # list in format [gid, [x, y]]
     xVals = sorted(list(set([item[1][0] for item in centroids])))
     yVals = sorted(list(set([item[1][1] for item in centroids])))
-    
+
     centroids = sorted(centroids, key=lambda student: student[0])
-    
-    centroids = [(item[1][0], item[1][1], item[0]) for item in centroids] # flatten list
-    
+
+    centroids = [(item[1][0], item[1][1], item[0]) for item in centroids]  # flatten list
+
     centroids = np.array(centroids, dtype=float)
-    
-    #yVals = yVals.sort(reverse=True) # place in reverse order per raster orientation
+
+    # yVals = yVals.sort(reverse=True) # place in reverse order per raster orientation
     xVals = np.array(xVals, dtype=float)
     yVals = np.array(yVals, dtype=float)
-        
-    centroidsXInd = np.searchsorted(xVals, centroids[:,0], side='right')-1
-    centroidsYInd = np.searchsorted(yVals, centroids[:,1], side='right')
 
-    centroidsYInd = yVals.shape[0] - centroidsYInd # for reverse ordering
-    yVals = np.flip(yVals) # reverse order
-    
+    centroidsXInd = np.searchsorted(xVals, centroids[:, 0], side="right") - 1
+    centroidsYInd = np.searchsorted(yVals, centroids[:, 1], side="right")
+
+    centroidsYInd = yVals.shape[0] - centroidsYInd  # for reverse ordering
+    yVals = np.flip(yVals)  # reverse order
+
     cellIDs = np.zeros((yVals.shape[0], xVals.shape[0]), dtype=int)
     # populate cellIDs array
-    cellIDs[centroidsYInd, centroidsXInd] = centroids[:,2]
-    #for n in range(centroids.shape[0]):
+    cellIDs[centroidsYInd, centroidsXInd] = centroids[:, 2]
+    # for n in range(centroids.shape[0]):
     #    cellIDs[centroidsYInd[n], centroidsXInd[n]] = n + 1
-        
+
     del centroidsXInd, centroidsYInd, centroids
-    print ("Array creation time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
-    print ("Total CellID time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    print("Array creation time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    print("Total CellID time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
     return cellIDs, xVals, yVals
+
 
 def buildCellElevNPArray(gutils, cellIDArray):
     starttime = datetime.datetime.now()
-    qry_elevs = (
-            """SELECT elevation FROM grid ORDER BY fid"""
-        )
+    qry_elevs = """SELECT elevation FROM grid ORDER BY fid"""
     elevs = gutils.execute(qry_elevs).fetchall()
-    print ("Elevs pull time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    print("Elevs pull time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
     incTime = datetime.datetime.now()
-    
+
     elevs = np.array(elevs, dtype=float)
-    elevs = elevs[:,0]
+    elevs = elevs[:, 0]
     elevArray = np.zeros(cellIDArray.shape, dtype=float)
 
-    elevArray[cellIDArray != 0] = elevs[cellIDArray[cellIDArray != 0]-1]
-    print ("Elevs Array assignment time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
+    elevArray[cellIDArray != 0] = elevs[cellIDArray[cellIDArray != 0] - 1]
+    print("Elevs Array assignment time: %s sec" % (datetime.datetime.now() - incTime).total_seconds())
     incTime = datetime.datetime.now()
-    print ("Total Elev Array Gen time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
+    print("Total Elev Array Gen time: %s sec" % (datetime.datetime.now() - starttime).total_seconds())
     return elevArray
+
 
 def adjacent_grid_elevations_np(cell, cellNPArray, elevNPArray):
     # order is N, NE, E, SE, S, SW, W, NW
     row, col = np.nonzero(cellNPArray == cell)
     row = row[0]
     col = col[0]
-    
-    dirMatrix = np.array([
-        [-1, 0], # N
-        [-1, 1], # NE
-        [0, 1], # E
-        [1, 1], # SE
-        [1, 0], # S
-        [1, -1], # SW
-        [0, -1], # W
-        [-1, -1] # NW
-        ], dtype=int)
-    
-    rows = row + 1 * dirMatrix[:,0]
-    cols = col + 1 * dirMatrix[:,1]
-    
+
+    dirMatrix = np.array(
+        [
+            [-1, 0],  # N
+            [-1, 1],  # NE
+            [0, 1],  # E
+            [1, 1],  # SE
+            [1, 0],  # S
+            [1, -1],  # SW
+            [0, -1],  # W
+            [-1, -1],  # NW
+        ],
+        dtype=int,
+    )
+
+    rows = row + 1 * dirMatrix[:, 0]
+    cols = col + 1 * dirMatrix[:, 1]
+
     # filter out entries that are beyond the extents
     mask = rows < elevNPArray.shape[0]
     mask &= rows >= 0
     mask &= cols < elevNPArray.shape[1]
     mask &= cols >= 0
-    
+
     elevs = np.zeros(rows.shape, dtype=float)
     elevs[~mask] = -999
     elevs[mask] = elevNPArray[rows[mask], cols[mask]]
-    
+
     elevs = list(elevs)
-    
+
     return elevs
-    
+
+
 def adjacent_grid_elevations(gutils, grid_lyr, cell, cell_size):
     sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
     if grid_lyr is not None:
         if cell != "":
             cell = int(cell)
-            grid_count = gutils.count("grid", field = "fid")                                                
-            #grid_count = len(list(grid_lyr.getFeatures()))
+            grid_count = gutils.count("grid", field="fid")
+            # grid_count = len(list(grid_lyr.getFeatures()))
             if grid_count >= cell and cell > 0:
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
@@ -1921,7 +1950,7 @@ def adjacent_average_elevation(gutils, grid_lyr, xx, yy, cell_size):
     # sel_elev_qry = "SELECT elevation FROM grid WHERE fid = ?;"
     if grid_lyr is not None:
         elevs = []
-        
+
         # North cell:
         y = yy + cell_size
         x = xx
@@ -1935,7 +1964,7 @@ def adjacent_average_elevation(gutils, grid_lyr, xx, yy, cell_size):
         e = gutils.grid_elevation_on_point(x, y)
         # if e is not None and e != -9999:
         elevs.append(e)
-            
+
         # East cell:
         x = xx + cell_size
         y = yy
@@ -1949,7 +1978,7 @@ def adjacent_average_elevation(gutils, grid_lyr, xx, yy, cell_size):
         e = gutils.grid_elevation_on_point(x, y)
         # if e is not None and e != -9999:
         elevs.append(e)
-            
+
         # South cell:
         y = yy - cell_size
         x = xx
@@ -1977,24 +2006,23 @@ def adjacent_average_elevation(gutils, grid_lyr, xx, yy, cell_size):
         e = gutils.grid_elevation_on_point(x, y)
         # if e is not None and e != -9999:
         elevs.append(e)
-        
-        # Return average elevation of adjacent cells:    
-        n= 0
+
+        # Return average elevation of adjacent cells:
+        n = 0
         avrg = 0
         for elev in elevs:
             if elev is not None and elev != -9999:
                 avrg += elev
                 n += 1
         if n > 0:
-            avrg = avrg / n       
+            avrg = avrg / n
         else:
             avrg = -9999
-               
+
         return avrg
 
 
 def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size):
-
     #     if grid_lyr is not None:
     #         if cell != '':
     #             cell = int(cell)
@@ -2237,6 +2265,7 @@ def three_adjacent_grid_elevations(gutils, grid_lyr, cell, direction, cell_size)
     except:
         show_error("ERROR 040420.1715: could not evaluate adjacent cell elevation!")
 
+
 def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     try:
         sel_elev_qry = """SELECT elevation FROM grid WHERE fid = ?;"""
@@ -2315,6 +2344,7 @@ def get_adjacent_cell_elevation(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error("ERROR 160520.1644: could not evaluate adjacent cell elevation!")
 
+
 def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
     try:
         currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
@@ -2326,7 +2356,6 @@ def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
             y = yy + cell_size
             x = xx
             grid = gutils.grid_on_point(x, y)
-
 
         elif dir == "NE":
             # NorthEast cell:
@@ -2377,6 +2406,7 @@ def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
     except:
         show_error("ERROR 090321.1624: could not evaluate adjacent cell!")
 
+
 def adjacent_grids(gutils, currentCell, cell_size):
     xx, yy = currentCell.geometry().centroid().asPoint()
 
@@ -2418,9 +2448,11 @@ def adjacent_grids(gutils, currentCell, cell_size):
     # NorthWest cell:
     y = yy + cell_size
     x = xx - cell_size
-    nw_grid = gutils.grid_on_point(x, y) 
-     
-    return  n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
+    nw_grid = gutils.grid_on_point(x, y)
+
+    return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
+
+
 def dirID(dir):
     if dir == 1:  # "N"
         # North cell:
@@ -2465,7 +2497,6 @@ def is_boundary_cell(gutils, grid_lyr, cell, cell_size):
         if cell:
             n_cells = number_of_elements(gutils, grid_lyr)
             if n_cells >= cell and cell > 0:
-
                 currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
                 xx, yy = currentCell.geometry().centroid().asPoint()
 
@@ -2539,78 +2570,98 @@ def layer_geometry_is_valid(vlayer):
 
 def number_of_elements(gutils, layer):
     # if len(layer) > 0:
-        # return len(layer)
+    # return len(layer)
     # if layer.featureCount() > 0:
-        # return layer.featureCount()
+    # return layer.featureCount()
     # else:
     count_sql = """SELECT COUNT(fid) FROM grid;"""
     a = gutils.execute(count_sql).fetchone()[0]
     if a:
         return a
     else:
-        return len(list(layer.getFeatures()))         
+        return len(list(layer.getFeatures()))
 
-def cell_centroid(self, cell):        
-    col, row = self.gutils.execute("SELECT col, row FROM grid WHERE fid = ?;",(cell,)).fetchone()
-    x = self.xMinimum + (col-2)*self.cell_size + self.cell_size/2
-    y = self.yMinimum + (row-2)*self.cell_size + self.cell_size/2
+
+def cell_centroid(self, cell):
+    col, row = self.gutils.execute("SELECT col, row FROM grid WHERE fid = ?;", (cell,)).fetchone()
+    x = self.xMinimum + (col - 2) * self.cell_size + self.cell_size / 2
+    y = self.yMinimum + (row - 2) * self.cell_size + self.cell_size / 2
     return x, y
 
+
 def cell_elevation(self, x, y):
-    col = int((float(x) - self.xMinimum)/self.cell_size) + 2
-    row = int((float(y) - self.yMinimum)/self.cell_size) + 2                                    
-    elev = self.gutils.execute("SELECT elevation FROM grid WHERE col = ? AND row = ?;", (col, row,)).fetchone()
-    return elev         
-        
+    col = int((float(x) - self.xMinimum) / self.cell_size) + 2
+    row = int((float(y) - self.yMinimum) / self.cell_size) + 2
+    elev = self.gutils.execute(
+        "SELECT elevation FROM grid WHERE col = ? AND row = ?;",
+        (
+            col,
+            row,
+        ),
+    ).fetchone()
+    return elev
+
+
 def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
     if show_nodata:
-        colors = ['#0011FF', '#0061FF', '#00D4FF', '#00FF66', '#00FF00', '#E5FF32', '#FCFC0C', '#FF9F00', '#FF3F00', '#FF0000']
+        colors = [
+            "#0011FF",
+            "#0061FF",
+            "#00D4FF",
+            "#00FF66",
+            "#00FF00",
+            "#E5FF32",
+            "#FCFC0C",
+            "#FF9F00",
+            "#FF3F00",
+            "#FF0000",
+        ]
         myRangeList = []
-        if mini == -9999:  
-            symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())  
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))    
-            symbol.setColor(QColor(Qt.lightGray))    
+        if mini == -9999:
+            symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(Qt.lightGray))
             try:
-                symbol.setSize(1)   
+                symbol.setSize(1)
             except:
-                pass   
-            myRange = QgsRendererRange(-9999, -9999, symbol, '-9999')                   
-            myRangeList.append(myRange)  
-            step = (maxi - mini2) / (len(colors)-1)
+                pass
+            myRange = QgsRendererRange(-9999, -9999, symbol, "-9999")
+            myRangeList.append(myRange)
+            step = (maxi - mini2) / (len(colors) - 1)
             low = mini2
-            high = mini2 + step            
+            high = mini2 + step
         else:
-            step = (maxi - mini) / (len(colors)-1)     
+            step = (maxi - mini) / (len(colors) - 1)
             low = mini
             high = mini + step
-            
-        for i in range (0,len(colors)-2):    
-            symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())  
-            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen)) 
+
+        for i in range(0, len(colors) - 2):
+            symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
             symbol.setColor(QColor(colors[i]))
             try:
-                symbol.setSize(1)   
+                symbol.setSize(1)
             except:
-                pass                            
-            myRange = QgsRendererRange(low,high, symbol, '{0:.2f}'.format(low) + ' - ' + '{0:.2f}'.format(high))                   
+                pass
+            myRange = QgsRendererRange(low, high, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high))
             myRangeList.append(myRange)
             low = high
             high = high + step
- 
-        symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())  
-        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen)) 
-        symbol.setColor(QColor(colors[len(colors)-1]))
+
+        symbol = QgsSymbol.defaultSymbol(elevs_lyr.geometryType())
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.setColor(QColor(colors[len(colors) - 1]))
         try:
-            symbol.setSize(1)   
+            symbol.setSize(1)
         except:
-            pass           
-                                    
-        myRange = QgsRendererRange(low,maxi, symbol, '{0:.2f}'.format(low) + ' - ' + '{0:.2f}'.format(maxi))                   
+            pass
+
+        myRange = QgsRendererRange(low, maxi, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(maxi))
         myRangeList.append(myRange)
 
         myRenderer = QgsGraduatedSymbolRenderer("elevation", myRangeList)
-    
-        elevs_lyr.setRenderer(myRenderer)  
+
+        elevs_lyr.setRenderer(myRenderer)
         elevs_lyr.triggerRepaint()
 
     else:
@@ -2625,9 +2676,10 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
             QApplication.restoreOverrideCursor()
             raise Flo2dError("Unable to load style {}".format(style_path2))
     prj = QgsProject.instance()
-    prj.layerTreeRoot().findLayer(elevs_lyr.id()).setItemVisibilityCheckedParentRecursive(True)            
-        
-def find_this_cell(iface, lyrs, uc, gutils, cell, color = Qt.yellow, zoom_in = False, clear_previous = True):
+    prj.layerTreeRoot().findLayer(elevs_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
+
+
+def find_this_cell(iface, lyrs, uc, gutils, cell, color=Qt.yellow, zoom_in=False, clear_previous=True):
     try:
         QApplication.setOverrideCursor(Qt.WaitCursor)
         grid = lyrs.data["grid"]["qlyr"]
@@ -2640,16 +2692,11 @@ def find_this_cell(iface, lyrs, uc, gutils, cell, color = Qt.yellow, zoom_in = F
                         lyrs.show_feat_rubber(grid.id(), cell, QColor(color), clear_previous)
                         currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                         x, y = currentCell.geometry().centroid().asPoint()
-                        if (
-                            x < ext.xMinimum()
-                            or x > ext.xMaximum()
-                            or y < ext.yMinimum()
-                            or y > ext.yMaximum()
-                        ):
+                        if x < ext.xMinimum() or x > ext.xMaximum() or y < ext.yMinimum() or y > ext.yMaximum():
                             center_canvas(iface, x, y)
                             ext = iface.mapCanvas().extent()
                         else:
-                            if zoom_in:                            
+                            if zoom_in:
                                 center_canvas(iface, x, y)
                                 cell_size = float(gutils.get_cont_par("CELLSIZE"))
                                 zoom_show_n_cells(iface, cell_size, 30)
@@ -2672,4 +2719,3 @@ def find_this_cell(iface, lyrs, uc, gutils, cell, color = Qt.yellow, zoom_in = F
         pass
     finally:
         QApplication.restoreOverrideCursor()
-            

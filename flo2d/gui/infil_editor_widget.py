@@ -134,7 +134,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.con.commit()
 
     def show_global_params(self):
-
         self.iglobal.populate_infilglobals()
 
         ok = self.iglobal.exec_()
@@ -197,7 +196,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     if isinstance(obj, QCheckBox):
                         obj.setChecked(bool(val))
                     else:
-
                         obj.setValue(val)
             self.iglobal.save_imethod()
 
@@ -482,18 +480,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             grid_params = inf_calc.green_ampt_infiltration()
 
             if grid_params:
-
                 # apply effective impervious area layer
                 if self.eff_lyr is not None:
-                    eff_values = poly2poly_geos(
-                        self.grid_lyr,
-                        self.eff_lyr,
-                        None,
-                        "eff"
-                    )
+                    eff_values = poly2poly_geos(self.grid_lyr, self.eff_lyr, None, "eff")
                     try:
                         for gid, values in eff_values:
-                            fact = 1-sum((1-row[0]*0.01)*row[-1] for row in values)
+                            fact = 1 - sum((1 - row[0] * 0.01) * row[-1] for row in values)
                             grid_params[gid]["rtimpf"] *= fact
                     except Exception:
                         pass
@@ -597,7 +589,6 @@ uiDialog_glob, qtBaseClass_glob = load_ui("infil_global")
 
 
 class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
-
     global_changed = pyqtSignal(int)
 
     def __init__(self, iface, lyrs):
@@ -621,7 +612,6 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         self.populate_infilglobals()
 
     def populate_infilglobals(self):
-
         qry = """SELECT infmethod, abstr, sati, satf, poros, soild, infchan, hydcall, soilall,
                 hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya FROM infil"""
 
@@ -781,7 +771,10 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
             cur.executemany(qry, data_rows)
             self.con.commit()
 
+
 uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
+
+
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
         qtBaseClass_green.__init__(self)
@@ -891,7 +884,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_land_rtimpl") is None else s.value("ga_land_rtimpl"))
             self.rtimpl_cbo.setCurrentIndex(val)
 
+
 uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
+
+
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
     def __init__(self, iface, lyrs):
         qtBaseClass_scs.__init__(self)

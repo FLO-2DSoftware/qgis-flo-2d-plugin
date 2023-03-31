@@ -10,22 +10,23 @@
 import os, time, glob
 from qgis.core import *
 from qgis.PyQt.QtCore import Qt, QSettings, QVariant, QModelIndex
+
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 
 from qgis.core import (
-        QgsWkbTypes, 
-        Qgis, 
-        QgsFeatureRequest, 
-        QgsVectorLayer, 
-        QgsField, 
-        QgsFields, 
-        QgsFeature, 
-        QgsGeometry, 
-        QgsPointXY, 
-        QgsProject,
-        QgsVectorFileWriter,
-        QgsMarkerSymbol
-    )
+    QgsWkbTypes,
+    Qgis,
+    QgsFeatureRequest,
+    QgsVectorLayer,
+    QgsField,
+    QgsFields,
+    QgsFeature,
+    QgsGeometry,
+    QgsPointXY,
+    QgsProject,
+    QgsVectorFileWriter,
+    QgsMarkerSymbol,
+)
 
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -56,6 +57,8 @@ from multiprocessing.pool import ApplyResult
 # from ..flo2d_tools.conflicts import Conflicts
 
 uiDialog, qtBaseClass = load_ui("errors_2")
+
+
 class ErrorsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -102,77 +105,74 @@ class ErrorsDialog(qtBaseClass, uiDialog):
             except ValueError:
                 # Forced error during contructor to stop showing dialog.
                 pass
-            
+
         elif self.debug_file_radio.isChecked():
             try:
-                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)   
-                          
+                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)
+
                 if dlg_issues.cells_out > 0:
                     self.uc.show_warn(
-                        "The complementary files you selected have " + str(dlg_issues.cells_out) + 
-                        " cells references that are outside the grid !"
-                    )                  
-                ok = dlg_issues.exec_() 
-                if ok:    
+                        "The complementary files you selected have "
+                        + str(dlg_issues.cells_out)
+                        + " cells references that are outside the grid !"
+                    )
+                ok = dlg_issues.exec_()
+                if ok:
                     pass
-                    
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                    # try:
-                    #     for lyr in QgsProject.instance().mapLayers().values():
-                    #         if lyr.name() == "DEBUG":
-                    #             QgsProject.instance().removeMapLayers([lyr.id()])                 
-                    #
-                    #     lyr = QgsProject.instance().mapLayersByName(name)
-                    #     if lyr:
-                    #         QgsProject.instance().removeMapLayers([lyr[0].id()])               
-                    #
-                    #     QgsProject.instance().reloadAllLayers()
-                    #
-                    #
-                    #
-                    #
-                    #     for fname in glob.glob(self.debug_directory + "DEBUG.*"):
-                    #         os.remove(fname)
-                    #
-                    #     self.iface.mapCanvas().refresh()               
-                    #
-                    #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):        
-                    #         os.remove(self.debug_directory + "/DEBUG.cpg")   
-                    #
-                    #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):        
-                    #         os.remove(self.debug_directory + "/DEBUG.prj")
-                    #
-                    #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):         
-                    #         os.remove(self.debug_directory + "/DEBUG.shx")                      
-                    #
-                    #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):   
-                    #         os.remove(self.debug_directory + "/DEBUG.shp")
-                    #
-                    #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):      
-                    #         os.remove(self.debug_directory + "/DEBUG.dbf") 
-                    #
-                    #
-                    #
-                    #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                    #         QApplication.restoreOverrideCursor()
-                    #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)  
-                    #         QApplication.setOverrideCursor(Qt.WaitCursor) 
-                    #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                    #         QApplication.restoreOverrideCursor()
-                    #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)  
-                    #         QApplication.setOverrideCursor(Qt.WaitCursor)                     
-                    # except Exception as e:
-                    #     self.uc.show_error("ERROR 141222.1629: error deleting previous layers!", e)                        
-                    #     QApplication.restoreOverrideCursor()
-                    
-#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                    
-                    
-                               
-                  
-                    
+
+                # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+                # try:
+                #     for lyr in QgsProject.instance().mapLayers().values():
+                #         if lyr.name() == "DEBUG":
+                #             QgsProject.instance().removeMapLayers([lyr.id()])
+                #
+                #     lyr = QgsProject.instance().mapLayersByName(name)
+                #     if lyr:
+                #         QgsProject.instance().removeMapLayers([lyr[0].id()])
+                #
+                #     QgsProject.instance().reloadAllLayers()
+                #
+                #
+                #
+                #
+                #     for fname in glob.glob(self.debug_directory + "DEBUG.*"):
+                #         os.remove(fname)
+                #
+                #     self.iface.mapCanvas().refresh()
+                #
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):
+                #         os.remove(self.debug_directory + "/DEBUG.cpg")
+                #
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):
+                #         os.remove(self.debug_directory + "/DEBUG.prj")
+                #
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):
+                #         os.remove(self.debug_directory + "/DEBUG.shx")
+                #
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):
+                #         os.remove(self.debug_directory + "/DEBUG.shp")
+                #
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):
+                #         os.remove(self.debug_directory + "/DEBUG.dbf")
+                #
+                #
+                #
+                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
+                #         QApplication.restoreOverrideCursor()
+                #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)
+                #         QApplication.setOverrideCursor(Qt.WaitCursor)
+                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
+                #         QApplication.restoreOverrideCursor()
+                #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)
+                #         QApplication.setOverrideCursor(Qt.WaitCursor)
+                # except Exception as e:
+                #     self.uc.show_error("ERROR 141222.1629: error deleting previous layers!", e)
+                #     QApplication.restoreOverrideCursor()
+
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
                 self.lyrs.clear_rubber()
-                QApplication.restoreOverrideCursor()                
+                QApplication.restoreOverrideCursor()
 
             except ValueError:
                 # Forced error during contructor to stop showing dialog.
@@ -193,6 +193,8 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("issues")
+
+
 class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -222,7 +224,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
         self.setup_connection()
         self.grid = self.lyrs.data["grid"]["qlyr"]
-        self.n_cells = number_of_elements(self.gutils, self.grid )
+        self.n_cells = number_of_elements(self.gutils, self.grid)
         self.issues_codes_cbo.activated.connect(self.codes_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)
         self.elements_cbo.activated.connect(self.elements_cbo_activated)
@@ -248,9 +250,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             self.populate_errors_cbo()
 
             self.issues_codes_cbo.setCurrentIndex(1)
-            
+
             self.import_other_issues_files()
-            
+
             # if self.fail:
             #     if "Depressed Elements" in self.fail:
             #         # self.uc.clear_bar_messages()
@@ -266,7 +268,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             #
             #     if "ARF Adjustments" in self.fail:
             #         # self.uc.clear_bar_messages()
-            #         self.import_arf_adjustment_issues()                    
+            #         self.import_arf_adjustment_issues()
             #
             #     if "UndergOUTFALLS" in self.fail:
             #         # self.uc.clear_bar_messages()
@@ -278,12 +280,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             #
             #     if "ManholePop" in self.fail:
             #         # self.uc.clear_bar_messages()
-            #         self.import_manhole_pop_issues()                 
-            
+            #         self.import_manhole_pop_issues()
+
             if self.errors_msg != "":
                 self.errors_msg += "\nPlease run the 'Warnings and Errors' tool again."
                 self.uc.show_critical(self.errors_msg)
-                
+
             self.loadIssues()
 
             if self.currentCell:
@@ -334,22 +336,21 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
                 s.setValue("FLO-2D/lastDEBUGDir", os.path.dirname(debug_file))
-                self.debug_directory = os.path.dirname(debug_file) 
-                               
+                self.debug_directory = os.path.dirname(debug_file)
+
                 name = "DEBUG"
                 shapefile = self.debug_directory + "/DEBUG.shp"
-                
-                
-#111111111111111111                
+
+                # 111111111111111111
                 # try:
                 #
                 #     for lyr in QgsProject.instance().mapLayers().values():
                 #         if lyr.name() == "DEBUG":
-                #             QgsProject.instance().removeMapLayers([lyr.id()])                 
+                #             QgsProject.instance().removeMapLayers([lyr.id()])
                 #
                 #     lyr = QgsProject.instance().mapLayersByName(name)
                 #     if lyr:
-                #         QgsProject.instance().removeMapLayers([lyr[0].id()])               
+                #         QgsProject.instance().removeMapLayers([lyr[0].id()])
                 #
                 #     QgsProject.instance().reloadAllLayers()
                 #
@@ -359,40 +360,40 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 #     for fname in glob.glob(self.debug_directory + "DEBUG.*"):
                 #         os.remove(fname)
                 #
-                #     self.iface.mapCanvas().refresh()               
+                #     self.iface.mapCanvas().refresh()
                 #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):        
-                #         os.remove(self.debug_directory + "/DEBUG.cpg")   
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):
+                #         os.remove(self.debug_directory + "/DEBUG.cpg")
                 #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):        
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):
                 #         os.remove(self.debug_directory + "/DEBUG.prj")
                 #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):         
-                #         os.remove(self.debug_directory + "/DEBUG.shx")                      
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):
+                #         os.remove(self.debug_directory + "/DEBUG.shx")
                 #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):   
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):
                 #         os.remove(self.debug_directory + "/DEBUG.shp")
                 #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):      
-                #         os.remove(self.debug_directory + "/DEBUG.dbf") 
+                #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):
+                #         os.remove(self.debug_directory + "/DEBUG.dbf")
                 #
                 #
                 #
                 #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
                 #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)  
-                #         QApplication.setOverrideCursor(Qt.WaitCursor) 
+                #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)
+                #         QApplication.setOverrideCursor(Qt.WaitCursor)
                 #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
                 #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)  
+                #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)
                 #         QApplication.setOverrideCursor(Qt.WaitCursor)
                 #
                 # except Exception as e:
-                #     self.uc.show_error("ERROR 141222.1630: error deleting previous layers!", e)                        
+                #     self.uc.show_error("ERROR 141222.1630: error deleting previous layers!", e)
                 #     QApplication.restoreOverrideCursor()
-                
-#1111111111111111111111111111              
-                
+
+                # 1111111111111111111111111111
+
                 features = []
                 self.elements_cbo.clear()
                 self.elements_cbo.addItem(" ")
@@ -420,19 +421,18 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                     feat = next(self.grid.getFeatures(QgsFeatureRequest(iCell)))
                                     x, y = feat.geometry().centroid().asPoint()
                                     features.append([x, y, iCell, description])  # x, y, cell, description
-                    
-                                 
+
                 fields = [["cell", "I"], ["description", "S"]]
-                
+
                 if self.create_points_shapefile(shapefile, name, fields, features):
                     try:
                         vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        QgsMapLayerRegistry.instance().addMapLayer(vlayer) 
+                        QgsMapLayerRegistry.instance().addMapLayer(vlayer)
                     except:
-                        pass                  
+                        pass
                 else:
                     self.fail.append(name)
-   
+
                 self.cells.sort()
                 for cell in self.cells:
                     self.elements_cbo.addItem(str(cell))
@@ -449,14 +449,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     )
                     return True
                 else:
-                    
                     self.uc.show_warn(
                         "There are no debug errors reported in file "
                         + os.path.basename(debug_file)
                         + ".\nIs its format correct?"
                     )
                     return False
-                   
 
         except UnicodeDecodeError:
             # non-text dat:
@@ -473,30 +471,29 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         singleErrors.sort()
         for error in singleErrors:
             self.errors_cbo.addItem(str(error))
-                
+
     def import_other_issues_files(self):
         dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
         ok = dlg_issues_files.exec_()
         # QApplication.setOverrideCursor(Qt.WaitCursor)
         QApplication.restoreOverrideCursor()
         if ok:
-
             for lyr in QgsProject.instance().mapLayers().values():
                 if lyr.name() == "Depressed Elements":
-                    QgsProject.instance().removeMapLayers([lyr.id()])  
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "Channel Bank Elev Differences":
-                    QgsProject.instance().removeMapLayers([lyr.id()])                 
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "Floodplain Rim Differences":
-                    QgsProject.instance().removeMapLayers([lyr.id()])   
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "ARF_ADJUSTMENT":
-                    QgsProject.instance().removeMapLayers([lyr.id()])   
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "UndergOUTFALLS":
-                    QgsProject.instance().removeMapLayers([lyr.id()])                                             
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "CHAN_INTERIOR_NODES":
-                    QgsProject.instance().removeMapLayers([lyr.id()]) 
+                    QgsProject.instance().removeMapLayers([lyr.id()])
                 elif lyr.name() == "ManholePop":
-                    QgsProject.instance().removeMapLayers([lyr.id()]) 
-                    
+                    QgsProject.instance().removeMapLayers([lyr.id()])
+
             if dlg_issues_files.files:
                 if "Depressed" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
@@ -505,41 +502,39 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 if "Channels" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
                     self.import_channel_issues()
-                
+
                 if "Rim" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
                     self.import_rim_differences_issues()
-                
+
                 if "ARF Adjustments" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
-                    self.import_arf_adjustment_issues()                    
-                
+                    self.import_arf_adjustment_issues()
+
                 if "Underground OUTFALLS" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
                     self.import_underground_outfalls_issues()
-                
+
                 if "Channel Interior Nodes" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
                     self.import_channel_interior_nodes_issues()
-                
+
                 if "Manhole Pop" in dlg_issues_files.files:
                     # self.uc.clear_bar_messages()
-                    self.import_manhole_pop_issues()               
-                    
+                    self.import_manhole_pop_issues()
+
     def import_depressed_issues(self):
         file = self.debug_directory + "/DEPRESSED_ELEMENTS.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 090420.0807: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 090420.0807: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Depressed Elements", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("Depressed Elements")         
+                self.lyrs.remove_layer_by_name("Depressed Elements")
 
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -559,14 +554,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                 ]
                             )
 
-                            features.append(
-                                [values[1], values[2], values[0], values[3]]
-                            )  # x, y, cell, elev
-                            
+                            features.append([values[1], values[2], values[0], values[3]])  # x, y, cell, elev
+
                             cell = int(values[0])
-                            if not (self.n_cells >= cell and cell > 0): 
-                                self.cells_out += 1 
-                                                           
+                            if not (self.n_cells >= cell and cell > 0):
+                                self.cells_out += 1
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -583,24 +576,22 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         except:
                             pass
                     else:
-                        self.fail.append(name)                        
+                        self.fail.append(name)
                     QApplication.restoreOverrideCursor()
-                    
+
     def import_channel_issues(self):
         file = self.debug_directory + "/CHANBANKEL.CHK"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 090420.0808: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 090420.0808: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Channel Bank Elev Differences", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("Channel Bank Elev Differences")  
-                
+                self.lyrs.remove_layer_by_name("Channel Bank Elev Differences")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
@@ -611,9 +602,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     for row in f:
                         values = row.split()
                         if values:
-                            self.errors.append(
-                                [values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]]
-                            )
+                            self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])
 
                             features.append(
                                 [
@@ -628,9 +617,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                             )  # x, y, cell, etc
 
                             cell = int(values[0])
-                            if not (self.n_cells >= cell and cell > 0): 
-                                self.cells_out += 1 
-                                
+                            if not (self.n_cells >= cell and cell > 0):
+                                self.cells_out += 1
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -647,30 +636,28 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         ["difference", "D"],
                         ["LB_RB", "S"],
                     ]
-                    if self.create_points_shapefile(shapefile, name, fields, features):                          
+                    if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                         
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
+                        self.fail.append(name)
                     QApplication.restoreOverrideCursor()
-    
-    def import_rim_differences_issues(self):   
+
+    def import_rim_differences_issues(self):
         file = self.debug_directory + "/FPRIMELEV.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 090420.0806: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 090420.0806: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Floodplain Rim Differences", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("Floodplain Rim Differences")     
-                         
+                self.lyrs.remove_layer_by_name("Floodplain Rim Differences")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
@@ -693,7 +680,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                         [x, y, values[0], values[1], values[2], values[3], values[4]]
                                     )  # x, y, cell, etc
                                 else:
-                                    self.cells_out += 1    
+                                    self.cells_out += 1
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -711,30 +698,28 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         ["difference", "D"],
                         ["new_floodplain_elev", "D"],
                     ]
-                    if self.create_points_shapefile(shapefile, name, fields, features):                           
+                    if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                        
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
+                        self.fail.append(name)
                     QApplication.restoreOverrideCursor()
 
-    def import_arf_adjustment_issues(self):                  
+    def import_arf_adjustment_issues(self):
         file = self.debug_directory + "/ARF_ADJUSTMENT.CHK"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 301122.0408: " + os.path.basename(file) + " does not exist!"
-            )
+            self.uc.show_warn("WARNING 301122.0408: " + os.path.basename(file) + " does not exist!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("ARF_ADJUSTMENT", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("ARF_ADJUSTMENT") 
-                           
+                self.lyrs.remove_layer_by_name("ARF_ADJUSTMENT")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
@@ -749,20 +734,18 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                 [
                                     values[0],
                                     "9004",
-                                    values[1] + 
-                                    ": Grid element ARF value were adjusted to 1.0 to eliminate the potential for instability related to small surface area.",
+                                    values[1]
+                                    + ": Grid element ARF value were adjusted to 1.0 to eliminate the potential for instability related to small surface area.",
                                 ]
                             )
                             cell = int(values[0])
-                            if self.n_cells >= cell and cell > 0:                            
+                            if self.n_cells >= cell and cell > 0:
                                 feat = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
-                                features.append(
-                                    [x, y, values[0], values[1]]
-                                ) 
+                                features.append([x, y, values[0], values[1]])
                             else:
-                                self.cells_out += 1                                  
-       
+                                self.cells_out += 1
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -773,60 +756,62 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     shapefile = self.debug_directory + "/ARF_ADJUSTMENT.shp"
                     name = "ARF_ADJUSTMENT"
                     fields = [["cell", "I"], ["ARF", "D"]]
-                    if self.create_points_shapefile(shapefile, name, fields, features):                       
+                    if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                         
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
+                        self.fail.append(name)
                     QApplication.restoreOverrideCursor()
 
     def import_underground_outfalls_issues(self):
         file = self.debug_directory + "/UndergOUTFALLS.CHK"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 301122.0410: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 301122.0410: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("UndergOUTFALLS", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("UndergOUTFALLS") 
-                           
+                self.lyrs.remove_layer_by_name("UndergOUTFALLS")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
                 features = []
                 with open(file, "r") as f:
                     for _ in range(1):
-                        next(f) 
-                    for row in f:                       
+                        next(f)
+                    for row in f:
                         values = row.split()
                         if values:
                             self.errors.append(
                                 [
                                     values[0],
                                     "9005",
-                                    "FPE: " + values[1] + 
-                                    " ,Outfall: " + values[2] + 
-                                    " ,Invert Elevation: " + values[3] + 
-                                    " ,Elevation Difference: " + values[4]
+                                    "FPE: "
+                                    + values[1]
+                                    + " ,Outfall: "
+                                    + values[2]
+                                    + " ,Invert Elevation: "
+                                    + values[3]
+                                    + " ,Elevation Difference: "
+                                    + values[4],
                                 ]
                             )
                             cell = int(values[0])
-                            if self.n_cells >= cell and cell > 0:                                
+                            if self.n_cells >= cell and cell > 0:
                                 feat = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
                                 features.append(
                                     [x, y, values[0], values[1], values[2], values[3], values[4]]
                                 )  # x, y, cell, etc
                             else:
-                                self.cells_out += 1                                      
-                                
+                                self.cells_out += 1
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -846,27 +831,25 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                          
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
-                    QApplication.restoreOverrideCursor()                   
+                        self.fail.append(name)
+                    QApplication.restoreOverrideCursor()
 
     def import_channel_interior_nodes_issues(self):
         file = self.debug_directory + "/CHAN_INTERIOR_NODES.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 301122.0412: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 301122.0412: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("CHAN_INTERIOR_NODES", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("CHAN_INTERIOR_NODES") 
-                           
+                self.lyrs.remove_layer_by_name("CHAN_INTERIOR_NODES")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
@@ -886,13 +869,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                             if self.n_cells >= cell and cell > 0:
                                 feat = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
-                                features.append(
-                                    [x, y, values[0]]
-                                )  # x, y, cell, etc
+                                features.append([x, y, values[0]])  # x, y, cell, etc
                             else:
-                                self.cells_out += 1 
+                                self.cells_out += 1
 
-                               
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -906,27 +886,25 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                      
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
-                    QApplication.restoreOverrideCursor()                   
+                        self.fail.append(name)
+                    QApplication.restoreOverrideCursor()
 
     def import_manhole_pop_issues(self):
         file = self.debug_directory + "/ManholePop.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 301122.0414: " + os.path.basename(file) + " does not exist!!"
-            )
+            self.uc.show_warn("WARNING 301122.0414: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("ManholePop", self.lyrs.group)
             if lyr:
-                self.lyrs.remove_layer_by_name("ManholePop")   
-                         
+                self.lyrs.remove_layer_by_name("ManholePop")
+
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 # qApp.processEvents()
@@ -939,22 +917,27 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                 [
                                     values[2],
                                     "9007",
-                                    "Name: " + values[3] + 
-                                        " ,PopOffTime: " + values[4] + 
-                                        " ,Pop Off Pressure Head: " + values[5] + 
-                                        " ,RIM + Surch Head: " + values[6] +
-                                        " , Flo2d WSE: " + values[7],
+                                    "Name: "
+                                    + values[3]
+                                    + " ,PopOffTime: "
+                                    + values[4]
+                                    + " ,Pop Off Pressure Head: "
+                                    + values[5]
+                                    + " ,RIM + Surch Head: "
+                                    + values[6]
+                                    + " , Flo2d WSE: "
+                                    + values[7],
                                 ]
                             )
 
                             features.append(
                                 [values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]]
                             )  # x, y, cell, etc
-                            
+
                             cell = int(values[2])
-                            if not (self.n_cells >= cell and cell > 0): 
-                                self.cells_out += 1 
-                                                                          
+                            if not (self.n_cells >= cell and cell > 0):
+                                self.cells_out += 1
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.close()
@@ -975,12 +958,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     if self.create_points_shapefile(shapefile, name, fields, features):
                         try:
                             vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        except:                       
+                        except:
                             pass
                     else:
-                        self.fail.append(name)                         
-                    QApplication.restoreOverrideCursor()            
-                    
+                        self.fail.append(name)
+                    QApplication.restoreOverrideCursor()
+
     def populate_elements_cbo(self):
         self.elements_cbo.clear()
         self.elements_cbo.addItem(" ")
@@ -1016,10 +999,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             codes = "9006"
         elif codes == "Manhole cover pop off (ManholePop.OUT)":
             self.uc.bar_info("Manhole cover pop off (ManholePop.OUT)", 2)
-            codes = "9007"                     
+            codes = "9007"
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        
+
         first, second = "", ""
         codes = codes.split(" ")
         for item in codes:
@@ -1076,7 +1059,6 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     self.description_tblw.setItem(rowPosition, 2, itm)
 
             if self.description_tblw.rowCount() > 0:
-
                 self.description_tblw.selectRow(0)
                 cell = self.description_tblw.item(0, 0).text()
                 self.find_cell(cell)
@@ -1231,9 +1213,9 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             lyr = QgsProject.instance().mapLayersByName(name)
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
-            
+
             QgsVectorFileWriter.deleteShapeFile(shapefile)
-            
+
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
             for field in fields:
@@ -1246,22 +1228,21 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
-            
+
             QgsVectorFileWriter.deleteShapeFile(shapefile)
 
             try:
-               writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile") 
+                writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             except:
-                pass           
-            
-            
+                pass
+
             if not writer.hasError() == QgsVectorFileWriter.NoError:
                 if self.errors_msg == "":
-                   self.errors_msg = "The following shapefiles could not be created:" + "\n\n"
+                    self.errors_msg = "The following shapefiles could not be created:" + "\n\n"
                 self.errors_msg += name + "\n"
                 # delete the writer to flush features to disk
                 del writer
-                return False                
+                return False
 
             # add features:
             for feat in features:
@@ -1283,14 +1264,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
             # delete the writer to flush features to disk
             del writer
-            return True             
-            
+            return True
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 190519.0441: error while creating layer  " + name + "!\n", e)
             return False
-
-
 
     # def create_current_conflicts_points_shapefile(self, shapefile, name, fields, features):
     #     try:
@@ -1324,7 +1303,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
     #                 fet.setAttributes(non_coord_feats)
     #                 writer.addFeature(fet)
     #
-    #             # delete the writer to flush features to disk    
+    #             # delete the writer to flush features to disk
     #             del writer
     #             return True
     #         else:
@@ -1337,13 +1316,6 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
     #         self.uc.show_error("ERROR 190519.0442: error while creating layer  " + name + "!\n", e)
     #         return False
 
-
-
-
-
-
-
-
     def load_shapefile(self, shapefile, layerName):
         try:
             vlayer = self.iface.addVectorLayer(shapefile, layerName, "ogr")
@@ -1354,6 +1326,8 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("issues_files")
+
+
 class IssuesFiles(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -1387,26 +1361,24 @@ class IssuesFiles(qtBaseClass, uiDialog):
         exists = os.path.isfile(last_dir + r"\FPRIMELEV.OUT")
         self.fprimelev_chbox.setChecked(exists)
         self.fprimelev_chbox.setEnabled(exists)
-            
+
         exists = os.path.isfile(last_dir + r"\ARF_ADJUSTMENT.CHK")
         self.arf_adjustments_chbox.setChecked(exists)
-        self.arf_adjustments_chbox.setEnabled(exists)            
+        self.arf_adjustments_chbox.setEnabled(exists)
 
         exists = os.path.isfile(last_dir + r"\UndergOUTFALLS.CHK")
         self.underground_outfalls_chbox.setChecked(exists)
-        self.underground_outfalls_chbox.setEnabled(exists)  
+        self.underground_outfalls_chbox.setEnabled(exists)
 
         exists = os.path.isfile(last_dir + r"\CHAN_INTERIOR_NODES.OUT")
         self.chan_interior_nodes_chbox.setChecked(exists)
-        self.chan_interior_nodes_chbox.setEnabled(exists)  
+        self.chan_interior_nodes_chbox.setEnabled(exists)
 
         exists = os.path.isfile(last_dir + r"\ManholePop.OUT")
         self.man_hole_pop_chbox.setChecked(exists)
-        self.man_hole_pop_chbox.setEnabled(exists)  
-
+        self.man_hole_pop_chbox.setEnabled(exists)
 
     def load_selected_complementary_files(self):
-
         if self.depressed_elements_chbox.isChecked():
             self.files.append("Depressed")
 
@@ -1418,17 +1390,20 @@ class IssuesFiles(qtBaseClass, uiDialog):
 
         if self.arf_adjustments_chbox.isChecked():
             self.files.append("ARF Adjustments")
-            
+
         if self.underground_outfalls_chbox.isChecked():
             self.files.append("Underground OUTFALLS")
-                        
+
         if self.chan_interior_nodes_chbox.isChecked():
             self.files.append("Channel Interior Nodes")
 
         if self.man_hole_pop_chbox.isChecked():
-            self.files.append("Manhole Pop")            
+            self.files.append("Manhole Pop")
+
 
 uiDialog, qtBaseClass = load_ui("conflicts")
+
+
 class CurrentConflictsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs, numErrors=1000000, issue1="All", issue2="All"):
         qtBaseClass.__init__(self)
@@ -1491,7 +1466,6 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_issues(self):
-
         # Inflow conflicts:
 
         self.conflict4(
@@ -2189,7 +2163,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         if self.create_current_conflicts_points_shapefile(shpefile, name, fields, features):
             try:
                 vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-            except:           
+            except:
                 pass
         QApplication.restoreOverrideCursor()
 
@@ -2200,7 +2174,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
-                
+
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
             f.append(QgsField(fields[2][0], QVariant.Int))
@@ -2211,10 +2185,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             QgsVectorFileWriter.deleteShapeFile(shapefile)
             writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             if writer.hasError() != QgsVectorFileWriter.NoError:
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
+                #     QApplication.restoreOverrideCursor()
+                #     self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
 
-            # add features:
+                # add features:
                 for feat in features:
                     attr = []
                     fet = QgsFeature()
@@ -2224,8 +2198,8 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     non_coord_feats.append(feat[3])
                     fet.setAttributes(non_coord_feats)
                     writer.addFeature(fet)
-                
-                # delete the writer to flush features to disk    
+
+                # delete the writer to flush features to disk
                 del writer
                 return True
             else:
@@ -2339,7 +2313,6 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     or item[2].strip() == self.errors_cbo.currentText().strip()
                     or self.errors_cbo.currentText().strip() == "All"
                 ):
-
                     rowPosition = self.description_tblw.rowCount()
                     self.description_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()
@@ -2449,7 +2422,6 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 self.errors.append([str(r), comp1, comp2, description])
 
     def conflict2(self, comp1, table1, cell_1, comp2, table2, cell_2, description):
-
         repeated = []
         rows1 = []
         rows2 = []
@@ -2501,7 +2473,6 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 self.errors.append([str(r), comp1, comp2, description])
 
     def conflict3(self, comp1, rows1, comp2, rows2, description):
-
         repeated = []
 
         size1 = len(rows1)
@@ -2546,7 +2517,6 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         return len(repeated)
 
     def conflict4(self, comp1, table1, cell_1, comp2, table2, cell_2, description):
-
         cond1 = self.issue1 == "All" and self.issue2 == "All"
         cond2 = self.issue1 == "All" and self.issue2 == ""
         cond3 = self.issue1 == "" and self.issue2 == "All"
@@ -2593,25 +2563,26 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                     self.errors.append([str(r), comp1, comp2, description])
 
     def InletsConflicts(self):
-
         cond1 = self.issue1 == "All" and self.issue2 == "All"
         cond2 = self.issue1 == "All" and self.issue2 == ""
         cond3 = self.issue1 == "" and self.issue2 == "All"
         cond4 = self.issue1 == "All" and ("Storm Drain Inlets" == self.issue2 or "Storm Drain Inlets" == self.issue2)
         cond5 = self.issue2 == "All" and ("Storm Drain Inlets" == self.issue1 or "Storm Drain Inlets" == self.issue1)
-        cond6 = ("Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2) or ("Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2)
+        cond6 = ("Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2) or (
+            "Storm Drain Inlets" == self.issue1 and "Storm Drain Inlets" in self.issue2
+        )
 
         if cond1 or cond2 or cond3 or cond4 or cond5 or cond6:
             repeated = []
-            
+
             sql = """SELECT swmm_jt, COUNT(*) 
                     FROM  swmmflo WHERE SUBSTRING(swmm_iden, 1, 1) LIKE "I%"
                     GROUP BY swmm_jt
                     HAVING COUNT(*) > 1 ORDER BY swmm_jt
                 """
-                
-            # sql = """SELECT {0}, COUNT(*) 
-            #         FROM {1} 
+
+            # sql = """SELECT {0}, COUNT(*)
+            #         FROM {1}
             #         GROUP BY {0}
             #         HAVING COUNT(*) > 1 ORDER BY {0}
             #     """.format("swmm_jt", "swmmflo")
@@ -2627,7 +2598,14 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                         repeated.append(rows[i][0])
             if repeated:
                 for r in repeated:
-                    self.errors.append([str(r), "Storm Drain Inlets", "Storm Drain Inlets", "2 or more Storm Drain Inlets in same cell"])
+                    self.errors.append(
+                        [
+                            str(r),
+                            "Storm Drain Inlets",
+                            "Storm Drain Inlets",
+                            "2 or more Storm Drain Inlets in same cell",
+                        ]
+                    )
 
     def conflict_inflow_partialARF(self):
         in_cells = []
@@ -2876,7 +2854,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         if self.create_levee_crests_conflicts_points_shapefile(shapefile, name, fields, features):
             try:
                 vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-            except:           
+            except:
                 pass
         QApplication.restoreOverrideCursor()
 
@@ -2961,7 +2939,6 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         color1 = Qt.white
         element = -999
         for item in self.levee_crests:
-
             if item[1] != element:
                 if color1 == Qt.yellow:
                     color1 = Qt.white
@@ -3075,7 +3052,6 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                     or item[2].strip() == self.errors_cbo.currentText().strip()
                     or self.errors_cbo.currentText().strip() == "All"
                 ):
-
                     rowPosition = self.crest_tblw.rowCount()
                     self.crest_tblw.insertRow(rowPosition)
                     itm = QTableWidgetItem()

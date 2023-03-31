@@ -72,7 +72,6 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             self.populate_levee_and_breach_widget()
 
     def populate_levee_and_breach_widget(self):
-
         qry = "SELECT ibreachsedeqn, gbratio, gweircoef, gbreachtime FROM breach_global"
         row = self.gutils.execute(qry).fetchone()
         if not row:

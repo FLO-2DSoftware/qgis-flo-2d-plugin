@@ -172,9 +172,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("user_streets"):
-            self.uc.bar_warn(
-                "There are not any user streets to schematize! Please digitize them before running tool."
-            )
+            self.uc.bar_warn("There are not any user streets to schematize! Please digitize them before running tool.")
             return
         cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         try:
@@ -184,9 +182,7 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
                 streets_schem.triggerRepaint()
             self.uc.show_info("Streets schematized!")
         except Exception as e:
-            self.uc.show_warn(
-                "WARNING 060319.1736: Schematizing of streets aborted! Please check Street Lines layer."
-            )
+            self.uc.show_warn("WARNING 060319.1736: Schematizing of streets aborted! Please check Street Lines layer.")
             self.uc.log_info(traceback.format_exc())
 
     def change_street_name(self):

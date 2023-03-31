@@ -205,13 +205,13 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             # Build dictionary to indicate in which row is a cell:
             cell_pos[fid] = row  # Add pair (cell number, table row) to dictionary.
 
-        for (elem_fid, bankell, bankelr, fcw, fcd) in chan_r:
+        for elem_fid, bankell, bankelr, fcw, fcd in chan_r:
             cell_values = ((bankell, 4), (bankelr, 5), (fcw, 8), (fcd, 9))
             row = cell_pos.get(elem_fid)
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
 
-        for (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22) in chan_v:
+        for elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22 in chan_v:
             cell_values = (
                 (bankell, 4),
                 (bankelr, 5),
@@ -234,13 +234,13 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
 
-        for (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) in chan_t:
+        for elem_fid, bankell, bankelr, fcw, fcd, zl, zr in chan_t:
             cell_values = ((bankell, 4), (bankelr, 5), (fcw, 8), (fcd, 9), (zl, 6), (zr, 7))
             row = cell_pos.get(elem_fid)
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
 
-        for (elem_fid, nxsecnum) in chan_n:
+        for elem_fid, nxsecnum in chan_n:
             cell_values = (
                 (nxsecnum, 10),
             )  # NOTE: when there is  a tuple with only one tuple, a comma "," needs to be place after the tuple.
@@ -504,7 +504,6 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.cross_section_name_lbl.setEnabled(True)
 
     def segment_elements_tblw_cell_clicked(self, row, column):
-
         self.grid_element_cbo.blockSignals(True)
         self.grid_element_cbo.setCurrentIndex(row)
         self.grid_element_cbo.blockSignals(False)

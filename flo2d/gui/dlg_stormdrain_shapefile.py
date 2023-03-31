@@ -20,6 +20,8 @@ from ..user_communication import UserCommunication
 from ..flo2d_tools.schema2user_tools import remove_features
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
+
+
 class StormDrainShapefile(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
         qtBaseClass.__init__(self)
@@ -38,8 +40,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.current_lyr = None
         self.saveSelected = None
         self.TRUE = ("1", "YES", "Yes", "yes", "TRUE", "True", "true", "ON", "on")
-        self.FALSE = ("0", "NO", "No",  "FALSE", "False", "false", "OFF", "off", "Off")
-        
+        self.FALSE = ("0", "NO", "No", "FALSE", "False", "false", "OFF", "off", "Off")
+
         self.shape = (
             "CIRCULAR",
             "FORCE_MAIN",
@@ -64,17 +66,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             "BASKETHANDLE",
             "SEMICIRCULAR",
         )
-        
-        self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText(
-            "Assign Selected Fields"
-        )
+
+        self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText("Assign Selected Fields")
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlet_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
         self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduit_attributes)
         self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pump_attributes)
         self.orifices_shapefile_cbo.currentIndexChanged.connect(self.populate_orifices_attributes)
         self.weirs_shapefile_cbo.currentIndexChanged.connect(self.populate_weirs_attributes)
-        
+
         # Connections to clear inlets fields.
         self.clear_inlets_name_btn.clicked.connect(self.clear_inlets_name)
         self.clear_inlets_type_btn.clicked.connect(self.clear_inlets_type)
@@ -161,14 +161,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_weir_height_btn.clicked.connect(self.clear_weir_height)
         self.clear_weir_length_btn.clicked.connect(self.clear_weir_length)
 
-
         self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlet_attributes)
         self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfall_attributes)
         self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduit_attributes)
         self.clear_all_pumps_btn.clicked.connect(self.clear_all_pump_attributes)
         self.clear_all_orifices_btn.clicked.connect(self.clear_all_orifice_attributes)
         self.clear_all_weirs_btn.clicked.connect(self.clear_all_weir_attributes)
-        
+
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
 
@@ -180,13 +179,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.load_weirs = False
 
         self.unit = int(self.gutils.get_cont_par("METRIC"))
-        
+
         self.setup_layers_comboxes()
 
         self.restore_storm_drain_shapefile_fields()
 
     def setup_layers_comboxes(self):
-
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
@@ -234,13 +232,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if idx != -1:
                 self.orifices_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_orifices_attributes(self.orifices_shapefile_cbo.currentIndex())
- 
+
             previous_weir = "" if s.value("sf_weirs_layer_name") is None else s.value("sf_weirs_layer_name")
             idx = self.weirs_shapefile_cbo.findText(previous_weir)
             if idx != -1:
                 self.weirs_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_weirs_attributes(self.weirs_shapefile_cbo.currentIndex())
-                
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -267,9 +265,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (points))"
             )
-            
+
             self.restore_SD_shapefile_inlet_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -296,9 +294,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (points))"
             )
-            
+
             self.restore_SD_shapefile_outfall_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -325,9 +323,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
-            
+
             self.restore_SD_shapefile_conduit_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -354,9 +352,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
-            
+
             self.restore_SD_shapefile_pump_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -364,7 +362,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
- 
+
     def populate_orifices_attributes(self, idx):
         try:
             uri = self.orifices_shapefile_cbo.itemData(idx)
@@ -383,9 +381,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
-            
+
             self.restore_SD_shapefile_orifice_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -394,7 +392,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
- 
     def populate_weirs_attributes(self, idx):
         try:
             uri = self.weirs_shapefile_cbo.itemData(idx)
@@ -413,9 +410,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + str(nFeatures)
                 + " features (lines))"
             )
-            
+
             self.restore_SD_shapefile_weir_field_names()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -423,8 +420,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
-  
-            
+
     # CLEAR INLETS FIELDS:
     def clear_inlets_name(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
@@ -571,7 +567,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def clear_pump_shutoff_depth(self):
         self.pump_shutoff_depth_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_pump_curve_name(self):
         self.pump_curve_name_FieldCbo.setCurrentIndex(-1)
 
@@ -588,31 +584,31 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def clear_orifice_from_inlet(self):
         self.orifice_from_inlet_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_to_outlet(self):
         self.orifice_to_outlet_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_type(self):
         self.orifice_type_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_crest_height(self):
         self.orifice_crest_height_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_discharge_coeff(self):
         self.orifice_discharge_coeff_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_flap_gate(self):
         self.orifice_flap_gate_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_time_open_close(self):
         self.orifice_time_open_close_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_shape(self):
         self.orifice_shape_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_height(self):
         self.orifice_height_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_orifice_width(self):
         self.orifice_width_FieldCbo.setCurrentIndex(-1)
 
@@ -623,41 +619,39 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def clear_weir_from_inlet(self):
         self.weir_from_inlet_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_to_outlet(self):
         self.weir_to_outlet_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_type(self):
         self.weir_type_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_crest_height(self):
         self.weir_crest_height_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_discharge_coeff(self):
         self.weir_discharge_coeff_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_flap_gate(self):
         self.weir_flap_gate_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_end_contrac(self):
         self.weir_end_contrac_FieldCbo.setCurrentIndex(-1)
-    
+
     def clear_weir_end_coeff(self):
         self.weir_end_coeff_FieldCbo.setCurrentIndex(-1)
 
     def clear_weir_side_slope(self):
         self.weir_side_slope_FieldCbo.setCurrentIndex(-1)
-                
+
     def clear_weir_shape(self):
         self.weir_shape_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_height(self):
         self.weir_height_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_weir_length(self):
         self.weir_length_FieldCbo.setCurrentIndex(-1)
-
-
 
     def clear_all_inlet_attributes(self):
         self.inlets_name_FieldCbo.setCurrentIndex(-1)
@@ -716,7 +710,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.pump_curve_name_FieldCbo.setCurrentIndex(-1)
         self.pump_curve_type_FieldCbo.setCurrentIndex(-1)
         self.pump_curve_description_FieldCbo.setCurrentIndex(-1)
-        
+
     def clear_all_orifice_attributes(self):
         self.orifice_name_FieldCbo.setCurrentIndex(-1)
         self.orifice_from_inlet_FieldCbo.setCurrentIndex(-1)
@@ -728,7 +722,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.orifice_time_open_close_FieldCbo.setCurrentIndex(-1)
         self.orifice_shape_FieldCbo.setCurrentIndex(-1)
         self.orifice_height_FieldCbo.setCurrentIndex(-1)
-        self.orifice_width_FieldCbo.setCurrentIndex(-1)        
+        self.orifice_width_FieldCbo.setCurrentIndex(-1)
 
     def clear_all_weir_attributes(self):
         self.weir_name_FieldCbo.setCurrentIndex(-1)
@@ -740,10 +734,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.weir_flap_gate_FieldCbo.setCurrentIndex(-1)
         self.weir_end_contrac_FieldCbo.setCurrentIndex(-1)
         self.weir_end_coeff_FieldCbo.setCurrentIndex(-1)
-        self.weir_side_slope_FieldCbo.setCurrentIndex(-1)        
+        self.weir_side_slope_FieldCbo.setCurrentIndex(-1)
         self.weir_shape_FieldCbo.setCurrentIndex(-1)
         self.weir_height_FieldCbo.setCurrentIndex(-1)
-        self.weir_length_FieldCbo.setCurrentIndex(-1)        
+        self.weir_length_FieldCbo.setCurrentIndex(-1)
 
     def assign_components_from_shapefile(self):
         self.uc.clear_bar_messages()
@@ -779,8 +773,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if combo_weir.currentIndex() != -1:
                 self.load_weirs = True
                 break
-            
-            
+
         if self.load_inlets:
             if self.inlets_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
@@ -812,35 +805,46 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if self.weir_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("The 'Weir Name' field must be selected if the Weirs component is picked!")
-                return            
-            
-        if (not self.load_inlets and not self.load_outfalls and not self.load_conduits and 
-            not self.load_pumps and not self.load_orifices and not self.load_weirs):
+                return
+
+        if (
+            not self.load_inlets
+            and not self.load_outfalls
+            and not self.load_conduits
+            and not self.load_pumps
+            and not self.load_orifices
+            and not self.load_weirs
+        ):
             self.uc.bar_warn("No data was selected!")
             self.save_storm_drain_shapefile_field_names()
             # self.save_storm_drain_shapefile_fields()
 
         else:
-
-            self.load_inlets_from_shapefile()        
-            self.load_outfalls_from_shapefile()                    
+            self.load_inlets_from_shapefile()
+            self.load_outfalls_from_shapefile()
             self.load_conduits_from_shapefile()
-            self.load_pumps_from_shapefile()        
+            self.load_pumps_from_shapefile()
             self.load_orifices_from_shapefile()
             self.load_weirs_from_shapefile()
-            
+
             self.save_storm_drain_shapefile_field_names()
 
             QApplication.restoreOverrideCursor()
 
-            if (self.load_inlets or self.load_outfalls or self.load_conduits or 
-                self.load_pumps or self.load_orifices or self.load_weirs):
+            if (
+                self.load_inlets
+                or self.load_outfalls
+                or self.load_conduits
+                or self.load_pumps
+                or self.load_orifices
+                or self.load_weirs
+            ):
                 self.uc.show_info(
-                            "Importing Nodes and Links finished!\n\n" +
-                            "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n" +
-                            "Complete the storm drain by clicking the Schematize Storm Drain Components button.")
-                
-                
+                    "Importing Nodes and Links finished!\n\n"
+                    + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n"
+                    + "Complete the storm drain by clicking the Schematize Storm Drain Components button."
+                )
+
                 # self.uc.show_info(
                 #     "Importing Storm Drain nodes and/or links data finished!\n\n"
                 #     + "The 'Storm Drain Conduits', 'Storm Drain Pumps', and/or  'Storm Drain Nodes' layers were created in the 'User Layers' group.\n\n"
@@ -868,8 +872,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.uc.show_info("No Storm Drain nodes or links selected!")
 
-
-
     def load_inlets_from_shapefile(self):
         if self.load_inlets:
             mame = ""
@@ -882,7 +884,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 group = self.lyrs.group
                 #                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer()
                 lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
-        
+
                 inlets_shapefile_fts = lyr.getFeatures()
                 modified = 0
                 for f in inlets_shapefile_fts:
@@ -958,36 +960,32 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.inlets_time_for_clogging_FieldCbo.currentText() != ""
                         else 0
                     )
-        
+
                     feat = QgsFeature()
                     feat.setFields(fields)
-        
+
                     if f.geometry() is None:
-                        self.uc.show_warn(
-                            "WARNING 280920.1816: Error processing geometry of inlet/junction  " + name
-                        )
+                        self.uc.show_warn("WARNING 280920.1816: Error processing geometry of inlet/junction  " + name)
                         continue
-        
+
                     geom = f.geometry()
                     if geom is None or geom.type() != 0:
-                        self.uc.show_warn(
-                            "WARNING 060319.1822: Error processing geometry of inlet/junction  " + name
-                        )
+                        self.uc.show_warn("WARNING 060319.1822: Error processing geometry of inlet/junction  " + name)
                         continue
-        
+
                     point = geom.asPoint()
                     if point is None:
                         self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
                         continue
-        
+
                     cell = self.gutils.grid_on_point(point.x(), point.y())
                     if cell is None:
                         outside_inlets += "\n" + name
                         continue
-        
+
                     new_geom = QgsGeometry.fromPointXY(point)
                     feat.setGeometry(new_geom)
-        
+
                     feat.setAttribute("grid", cell)
                     feat.setAttribute("sd_type", "I")
                     feat.setAttribute("name", name)
@@ -1004,11 +1002,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("swmm_length", swmm_length)
                     feat.setAttribute("swmm_width", swmm_width)
                     feat.setAttribute("swmm_height", swmm_height)
-        
+
                     # Check valid ranges and maybe assign defaults inlet type:
-        
+
                     if intype in {1, 3, 5}:
-                        if self.unit  == 1:  # Metric
+                        if self.unit == 1:  # Metric
                             if 1.3 <= swmm_coeff <= 1.9:
                                 # OK
                                 pass
@@ -1023,7 +1021,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                                 swmm_coeff = 3.00
                                 modified += 1
                     elif intype == 2:
-                        if self.unit  == 1:  # Metric
+                        if self.unit == 1:  # Metric
                             if 1.0 <= swmm_coeff <= 1.6:
                                 # OK
                                 pass
@@ -1037,7 +1035,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             else:
                                 swmm_coeff = 2.30
                                 modified += 1
-        
+
                     feat.setAttribute("swmm_coeff", swmm_coeff)
                     feat.setAttribute("swmm_feature", swmm_feature)
                     feat.setAttribute("curbheight", curbheight)
@@ -1052,14 +1050,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("rim_elev_inp", 0)
                     feat.setAttribute("rim_elev", 0)
                     feat.setAttribute("ge_elev", 0)
-                    feat.setAttribute("difference", 0)               
-                
+                    feat.setAttribute("difference", 0)
+
                     new_feats.append(feat)
-        
+
                 if new_feats:
                     if not self.inlets_append_chbox.isChecked():
                         remove_features(self.user_swmm_nodes_lyr)
-        
+
                     self.user_swmm_nodes_lyr.startEditing()
                     self.user_swmm_nodes_lyr.addFeatures(new_feats)
                     self.user_swmm_nodes_lyr.commitChanges()
@@ -1068,15 +1066,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.user_swmm_nodes_lyr.removeSelection()
                 else:
                     self.load_inlets = False
-        
+
                 QApplication.restoreOverrideCursor()
-        
+
                 if outside_inlets != "":
                     self.uc.show_warn(
                         "WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n"
                         + outside_inlets
                     )
-        
+
                 if modified > 0:
                     self.uc.bar_warn(
                         "WARNING 050820.1901: "
@@ -1086,7 +1084,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + str(modified)
                         + " inlets!"
                     )
-        
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -1096,10 +1094,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_inlets = False        
-        
-        
-        
+                self.load_inlets = False
+
     def load_outfalls_from_shapefile(self):
         if self.load_outfalls:
             try:
@@ -1238,10 +1234,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_outfalls = False        
-        
-        
-        
+                self.load_outfalls = False
+
     def load_conduits_from_shapefile(self):
         if self.load_conduits:
             try:
@@ -1256,7 +1250,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 no_in_out = 0
 
                 for f in conduits_shapefile_fts:
-
                     conduit_name = (
                         f[self.conduit_name_FieldCbo.currentText()]
                         if self.conduit_name_FieldCbo.currentText() != ""
@@ -1362,9 +1355,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
                         #                             QApplication.restoreOverrideCursor()
-                        self.uc.show_warn(
-                            "WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name
-                        )
+                        self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
                         continue
 
                     points = extractPoints(geom)
@@ -1401,17 +1392,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("conduit_max_flow", conduit_max_flow if conduit_max_flow != NULL else 0.0)
                     feat.setAttribute("losses_inlet", conduit_entry_loss if conduit_entry_loss != NULL else 0.0)
                     feat.setAttribute("losses_outlet", conduit_exit_loss if conduit_exit_loss != NULL else 0.0)
-                    feat.setAttribute(
-                        "losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0
-                    )
+                    feat.setAttribute("losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0)
                     feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
-                    
+
                     feat.setAttribute("xsections_shape", conduit_shape if conduit_shape in self.shape else "CIRCULAR")
                     # feat.setAttribute("xsections_shape", "CIRCULAR")
                     feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
-                    feat.setAttribute(
-                        "xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0
-                    )
+                    feat.setAttribute("xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0)
                     feat.setAttribute("xsections_geom2", conduit_geom2 if conduit_geom2 != NULL else 0.0)
                     feat.setAttribute("xsections_geom3", conduit_geom3 if conduit_geom3 != NULL else 0.0)
                     feat.setAttribute("xsections_geom4", conduit_geom4 if conduit_geom4 != NULL else 0.0)
@@ -1457,9 +1444,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_conduits = False        
-        
-        
+                self.load_conduits = False
+
     def load_pumps_from_shapefile(self):
         if self.load_pumps:
             try:
@@ -1468,18 +1454,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 new_feats = []
                 outside_pumps = ""
                 wrong_status = 0
-    
+
                 pumps_shapefile = self.pumps_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(pumps_shapefile, self.lyrs.group).layer()
                 pumps_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
-    
+
                 for f in pumps_shapefile_fts:
-    
                     pump_name = (
-                        f[self.pump_name_FieldCbo.currentText()]
-                        if self.pump_name_FieldCbo.currentText() != ""
-                        else ""
+                        f[self.pump_name_FieldCbo.currentText()] if self.pump_name_FieldCbo.currentText() != "" else ""
                     )
                     pump_inlet = (
                         f[self.pump_from_inlet_FieldCbo.currentText()]
@@ -1491,16 +1474,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.pump_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
-                    
+
                     status = (
-                         f[self.pump_initial_status_FieldCbo.currentText()]
-                         if self.pump_initial_status_FieldCbo.currentText() != ""
-                         else "OFF"
+                        f[self.pump_initial_status_FieldCbo.currentText()]
+                        if self.pump_initial_status_FieldCbo.currentText() != ""
+                        else "OFF"
                     )
                     if status in self.TRUE:
                         status = "ON"
-                    elif  status in self.FALSE: 
-                        status = "OFF"  
+                    elif status in self.FALSE:
+                        status = "OFF"
                     else:
                         status = "OFF"
                         wrong_status += 1
@@ -1521,36 +1504,36 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.pump_curve_name_FieldCbo.currentText() != ""
                         else "*"
                     )
-    
+
                     if pump_inlet == "?" or pump_outlet == "?":
                         no_in_out += 1
-    
+
                     feat = QgsFeature()
                     feat.setFields(fields)
-    
+
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
                         self.uc.show_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
                         continue
-    
+
                     points = extractPoints(geom)
                     if points is None:
                         self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
                     if cell is None:
                         outside_pumps += "\n" + pump_name
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
                     if cell is None:
                         outside_pumps += "\n" + pump_name
                         continue
-    
+
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
-    
+
                     feat.setAttribute("pump_name", pump_name)
                     feat.setAttribute("pump_inlet", pump_inlet)
                     feat.setAttribute("pump_outlet", pump_outlet)
@@ -1558,13 +1541,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
                     feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
                     feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "*")
-                    
+
                     new_feats.append(feat)
-    
+
                 if new_feats:
                     if not self.pumps_append_chbox.isChecked():
                         remove_features(self.user_swmm_pumps_lyr)
-    
+
                     self.user_swmm_pumps_lyr.startEditing()
                     self.user_swmm_pumps_lyr.addFeatures(new_feats)
                     self.user_swmm_pumps_lyr.commitChanges()
@@ -1573,9 +1556,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.user_swmm_pumps_lyr.removeSelection()
                 else:
                     self.load_pumps = False
-    
+
                 QApplication.restoreOverrideCursor()
-    
+
                 if no_in_out != 0:
                     self.uc.show_warn(
                         "WARNING 280222.1030:\n"
@@ -1584,18 +1567,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
                         + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
                     )
-    
+
                 if outside_pumps != "":
                     self.uc.show_warn(
                         "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
                         + outside_pumps
                     )
-    
+
                 if wrong_status > 0:
-                    self.uc.show_info("WARNING 010322.1054: there were " + str(wrong_status) + " pumps with wrong initial status!\n\n" +
-                                      "All wrong initial status were changed to 'OFF'.\n\n" + 
-                                      "Edit them as wished with the 'Pumps' dialog from the Storm Drain Editor widget.")
-            
+                    self.uc.show_info(
+                        "WARNING 010322.1054: there were "
+                        + str(wrong_status)
+                        + " pumps with wrong initial status!\n\n"
+                        + "All wrong initial status were changed to 'OFF'.\n\n"
+                        + "Edit them as wished with the 'Pumps' dialog from the Storm Drain Editor widget."
+                    )
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -1605,9 +1592,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_pumps = False        
-        
-        
+                self.load_pumps = False
+
     def load_orifices_from_shapefile(self):
         if self.load_orifices:
             try:
@@ -1615,14 +1601,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 fields = self.user_swmm_orifices_lyr.fields()
                 new_feats = []
                 outside_orifices = ""
-    
+
                 orifices_shapefile = self.orifices_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(orifices_shapefile, self.lyrs.group).layer()
                 orifices_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
-    
+
                 for f in orifices_shapefile_fts:
-    
                     orifice_name = (
                         f[self.orifice_name_FieldCbo.currentText()]
                         if self.orifice_name_FieldCbo.currentText() != ""
@@ -1665,7 +1650,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
                     orifice_shape = (
                         f[self.orifice_shape_FieldCbo.currentText()]
-                        if self.orifice_shape_FieldCbo.currentText() in  ["CIRCULAR", "RECT_CLOSED"]
+                        if self.orifice_shape_FieldCbo.currentText() in ["CIRCULAR", "RECT_CLOSED"]
                         else "CIRCULAR"
                     )
                     orifice_height = (
@@ -1677,37 +1662,37 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         f[self.orifice_width_FieldCbo.currentText()]
                         if self.orifice_width_FieldCbo.currentText() != ""
                         else 0.0
-                    )                  
-    
+                    )
+
                     if orifice_inlet == "?" or orifice_outlet == "?":
                         no_in_out += 1
-    
+
                     feat = QgsFeature()
                     feat.setFields(fields)
-    
+
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
                         self.uc.show_warn("WARNING 110422.0808: Error processing geometry of orifice  " + orifice_name)
                         continue
-    
+
                     points = extractPoints(geom)
                     if points is None:
                         self.uc.show_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
                     if cell is None:
                         outside_orifices += "\n" + orifice_name
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
                     if cell is None:
                         outside_orifices += "\n" + orifice_name
                         continue
-    
+
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
-    
+
                     feat.setAttribute("orifice_name", orifice_name)
                     feat.setAttribute("orifice_inlet", orifice_inlet)
                     feat.setAttribute("orifice_outlet", orifice_outlet)
@@ -1717,14 +1702,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("orifice_flap_gate", orifice_flap_gate)
                     feat.setAttribute("orifice_open_close_time", orifice_open_close_time)
                     feat.setAttribute("orifice_shape", orifice_shape)
-                    feat.setAttribute("orifice_height", orifice_height) 
-                    feat.setAttribute("orifice_width", orifice_width)                           
+                    feat.setAttribute("orifice_height", orifice_height)
+                    feat.setAttribute("orifice_width", orifice_width)
                     new_feats.append(feat)
-    
+
                 if new_feats:
                     if not self.orifices_append_chbox.isChecked():
                         remove_features(self.user_swmm_orifices_lyr)
-    
+
                     self.user_swmm_orifices_lyr.startEditing()
                     self.user_swmm_orifices_lyr.addFeatures(new_feats)
                     self.user_swmm_orifices_lyr.commitChanges()
@@ -1733,9 +1718,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.user_swmm_orifices_lyr.removeSelection()
                 else:
                     self.load_orifices = False
-    
+
                 QApplication.restoreOverrideCursor()
-    
+
                 if no_in_out != 0:
                     self.uc.show_warn(
                         "WARNING 110422.0810:\n"
@@ -1744,13 +1729,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
                         + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
                     )
-    
+
                 if outside_orifices != "":
                     self.uc.show_warn(
                         "WARNING 110422.0811: The following orifices are outside the computational domain!\n"
                         + outside_orifices
                     )
-            
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -1760,7 +1745,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_orifices = False        
+                self.load_orifices = False
 
     def load_weirs_from_shapefile(self):
         if self.load_weirs:
@@ -1769,19 +1754,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 fields = self.user_swmm_weirs_lyr.fields()
                 new_feats = []
                 outside_weirs = ""
-    
+
                 weirs_shapefile = self.weirs_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(weirs_shapefile, self.lyrs.group).layer()
                 weirs_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
                 wrong_types = 0
                 wrong_shapes = 0
-    
+
                 for f in weirs_shapefile_fts:
                     weir_name = (
-                        f[self.weir_name_FieldCbo.currentText()]
-                        if self.weir_name_FieldCbo.currentText() != ""
-                        else ""
+                        f[self.weir_name_FieldCbo.currentText()] if self.weir_name_FieldCbo.currentText() != "" else ""
                     )
                     weir_inlet = (
                         f[self.weir_from_inlet_FieldCbo.currentText()]
@@ -1796,12 +1779,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     weir_type = (
                         f[self.weir_type_FieldCbo.currentText()]
                         if self.weir_type_FieldCbo.currentText() != ""
-                        else "TRANSVERSE"     
-                    )               
+                        else "TRANSVERSE"
+                    )
                     if not weir_type in ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"]:
-                        weir_type =  "TRANSVERSE"
+                        weir_type = "TRANSVERSE"
                         wrong_types += 1
-    
+
                     weir_crest_height = (
                         f[self.weir_crest_height_FieldCbo.currentText()]
                         if self.weir_crest_height_FieldCbo.currentText() != ""
@@ -1835,12 +1818,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     weir_shape = (
                         f[self.weir_shape_FieldCbo.currentText()]
                         if self.weir_shape_FieldCbo.currentText() != ""
-                        else "RECT_CLOSED"     
-                    )                                              
-                    if not weir_shape in  ["TRIANGULAR", "TRAPEZOIDAL", "RECT_CLOSED"]:
+                        else "RECT_CLOSED"
+                    )
+                    if not weir_shape in ["TRIANGULAR", "TRAPEZOIDAL", "RECT_CLOSED"]:
                         weir_shape = "RECT_CLOSED"
                         wrong_shapes += 1
-    
+
                     weir_height = (
                         f[self.weir_height_FieldCbo.currentText()]
                         if self.weir_height_FieldCbo.currentText() != ""
@@ -1850,37 +1833,37 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         f[self.weir_length_FieldCbo.currentText()]
                         if self.weir_length_FieldCbo.currentText() != ""
                         else 0.0
-                    )                  
-    
+                    )
+
                     if weir_inlet == "?" or weir_outlet == "?":
                         no_in_out += 1
-    
+
                     feat = QgsFeature()
                     feat.setFields(fields)
-    
+
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
                         self.uc.show_warn("WARNING 120422.0838: Error processing geometry of weir  " + weir_name)
                         continue
-    
+
                     points = extractPoints(geom)
                     if points is None:
                         self.uc.show_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
                     if cell is None:
                         outside_weirs += "\n" + weir_name
                         continue
-    
+
                     cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
                     if cell is None:
                         outside_weirs += "\n" + weir_name
                         continue
-    
+
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
-    
+
                     feat.setAttribute("weir_name", weir_name)
                     feat.setAttribute("weir_inlet", weir_inlet)
                     feat.setAttribute("weir_outlet", weir_outlet)
@@ -1892,14 +1875,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("weir_end_coeff", weir_end_coeff)
                     feat.setAttribute("weir_side_slope", weir_side_slope)
                     feat.setAttribute("weir_shape", weir_shape)
-                    feat.setAttribute("weir_height", weir_height) 
-                    feat.setAttribute("weir_length", weir_length)                           
+                    feat.setAttribute("weir_height", weir_height)
+                    feat.setAttribute("weir_length", weir_length)
                     new_feats.append(feat)
-    
+
                 if new_feats:
                     if not self.weirs_append_chbox.isChecked():
                         remove_features(self.user_swmm_weirs_lyr)
-    
+
                     self.user_swmm_weirs_lyr.startEditing()
                     self.user_swmm_weirs_lyr.addFeatures(new_feats)
                     self.user_swmm_weirs_lyr.commitChanges()
@@ -1908,9 +1891,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.user_swmm_weirs_lyr.removeSelection()
                 else:
                     self.load_weirs = False
-    
+
                 QApplication.restoreOverrideCursor()
-    
+
                 if no_in_out != 0:
                     self.uc.show_warn(
                         "WARNING 120422.0844:\n"
@@ -1919,20 +1902,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
                         + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
                     )
-    
+
                 if outside_weirs != "":
                     self.uc.show_warn(
                         "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
                         + outside_weirs
                     )
-                 
-                msg = ""   
+
+                msg = ""
                 if wrong_types > 0:
                     msg += "\nThere are " + str(wrong_types) + " weirs with wrong type!"
                 if wrong_shapes > 0:
                     msg += "\nThere are " + str(wrong_shapes) + " weirs with wrong shape!"
                 if msg != "":
-                    self.uc.show_info("WARNING 020622.0540:\n" + msg + "\n\nDefault values were assigned.")        
+                    self.uc.show_info("WARNING 020622.0540:\n" + msg + "\n\nDefault values were assigned.")
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -1943,8 +1926,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
-                self.load_weirs= False        
-
+                self.load_weirs = False
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
@@ -2043,29 +2025,26 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_weir_height", self.weir_height_FieldCbo.currentIndex())
         s.setValue("sf_weir_length", self.weir_length_FieldCbo.currentIndex())
 
-
     def restore_storm_drain_shapefile_fields(self):
-        
         self.clear_all_inlet_attributes()
         self.clear_all_outfall_attributes()
         self.clear_all_conduit_attributes()
         self.clear_all_pump_attributes()
         self.clear_all_orifice_attributes()
         self.clear_all_weir_attributes()
-        
+
         self.restore_SD_shapefile_inlet_field_names()
         self.restore_SD_shapefile_outfall_field_names()
         self.restore_SD_shapefile_conduit_field_names()
         self.restore_SD_shapefile_pump_field_names()
         self.restore_SD_shapefile_orifice_field_names()
         self.restore_SD_shapefile_weir_field_names()
-        
-    def restore_SD_shapefile_inlet_field_names(self):  
+
+    def restore_SD_shapefile_inlet_field_names(self):
         # Inlets/Junctions:
         s = QSettings()
         name = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
         if name == self.inlets_shapefile_cbo.currentText():
-            
             val = int(-1 if s.value("sf_inlets_name") is None else s.value("sf_inlets_name"))
             self.inlets_name_FieldCbo.setCurrentIndex(val)
 
@@ -2101,26 +2080,27 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_inlets_curb_height") is None else s.value("sf_inlets_curb_height"))
             self.inlets_curb_height_FieldCbo.setCurrentIndex(val)
-            
+
             val = int(-1 if s.value("sf_inlets_clogging_factor") is None else s.value("sf_inlets_clogging_factor"))
             self.inlets_clogging_factor_FieldCbo.setCurrentIndex(val)
-            
+
             val = int(-1 if s.value("sf_inlets_time_for_clogging") is None else s.value("sf_inlets_time_for_clogging"))
             self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)
-        
+
         else:
             self.clear_all_inlet_attributes()
-                
-    def restore_SD_shapefile_outfall_field_names(self):  
+
+    def restore_SD_shapefile_outfall_field_names(self):
         # Outfalls
         s = QSettings()
         name = "" if s.value("sf_outfalls_layer_name") is None else s.value("sf_outfalls_layer_name")
         if name == self.outfalls_shapefile_cbo.currentText():
-
             val = int(-1 if s.value("sf_outfalls_name") is None else s.value("sf_outfalls_name"))
             self.outfall_name_FieldCbo.setCurrentIndex(val)
 
-            val = int(-1 if s.value("sf_outfalls_invert_elevation") is None else s.value("sf_outfalls_invert_elevation"))
+            val = int(
+                -1 if s.value("sf_outfalls_invert_elevation") is None else s.value("sf_outfalls_invert_elevation")
+            )
             self.outfall_invert_elevation_FieldCbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("sf_outfalls_flap_gate") is None else s.value("sf_outfalls_flap_gate"))
@@ -2140,11 +2120,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             val = int(-1 if s.value("sf_outfalls_time_series") is None else s.value("sf_outfalls_time_series"))
             self.outfall_time_series_FieldCbo.setCurrentIndex(val)
-                    
+
         else:
             self.clear_all_outfall_attributes()
 
-    def restore_SD_shapefile_conduit_field_names(self):  
+    def restore_SD_shapefile_conduit_field_names(self):
         # Conduits:
         s = QSettings()
         name = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
@@ -2187,11 +2167,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.conduit_average_loss_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_conduits_flap_gate") is None else s.value("sf_conduits_flap_gate"))
             self.conduit_flap_gate_FieldCbo.setCurrentIndex(val)
-                    
+
         else:
-            self.clear_all_conduit_attributes()    
-                    
-    def restore_SD_shapefile_pump_field_names(self): 
+            self.clear_all_conduit_attributes()
+
+    def restore_SD_shapefile_pump_field_names(self):
         # Pumps:
         s = QSettings()
         name = "" if s.value("sf_pumps_layer_name") is None else s.value("sf_pumps_layer_name")
@@ -2214,12 +2194,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.pump_curve_type_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_pump_curve_description") is None else s.value("sf_pump_curve_description"))
             self.pump_curve_description_FieldCbo.setCurrentIndex(val)
-                    
+
         else:
             self.clear_all_pump_attributes()
 
-                    
-    def restore_SD_shapefile_orifice_field_names(self): 
+    def restore_SD_shapefile_orifice_field_names(self):
         # Orifices:
         s = QSettings()
         name = "" if s.value("sf_orifices_layer_name") is None else s.value("sf_orifices_layer_name")
@@ -2245,12 +2224,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             val = int(-1 if s.value("sf_orifice_height") is None else s.value("sf_orifice_height"))
             self.orifice_height_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_orifice_width") is None else s.value("sf_orifice_width"))
-            self.orifice_width_FieldCbo.setCurrentIndex(val)           
+            self.orifice_width_FieldCbo.setCurrentIndex(val)
         else:
-            self.clear_all_orifice_attributes()                                          
- 
-                     
-    def restore_SD_shapefile_weir_field_names(self): 
+            self.clear_all_orifice_attributes()
+
+    def restore_SD_shapefile_weir_field_names(self):
         # Weirs:
         s = QSettings()
         name = "" if s.value("sf_weirs_layer_name") is None else s.value("sf_weirs_layer_name")
@@ -2264,23 +2242,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             val = int(-1 if s.value("sf_weir_type") is None else s.value("sf_weir_type"))
             self.weir_type_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_crest_height") is None else s.value("sf_weir_crest_height"))
-            self.weir_crest_height_FieldCbo.setCurrentIndex(val)            
+            self.weir_crest_height_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_disch_coeff") is None else s.value("sf_weir_disch_coeff"))
-            self.weir_discharge_coeff_FieldCbo.setCurrentIndex(val)            
+            self.weir_discharge_coeff_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_flap_gate") is None else s.value("sf_weir_flap_gate"))
-            self.weir_flap_gate_FieldCbo.setCurrentIndex(val)            
+            self.weir_flap_gate_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_end_contrac") is None else s.value("sf_weir_end_contrac"))
-            self.weir_end_contrac_FieldCbo.setCurrentIndex(val)            
+            self.weir_end_contrac_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_end_coeff") is None else s.value("sf_weir_end_coeff"))
-            self.weir_end_coeff_FieldCbo.setCurrentIndex(val)                         
+            self.weir_end_coeff_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_side_slope") is None else s.value("sf_weir_side_slope"))
-            self.weir_side_slope_FieldCbo.setCurrentIndex(val)            
+            self.weir_side_slope_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_shape") is None else s.value("sf_weir_shape"))
-            self.weir_shape_FieldCbo.setCurrentIndex(val)            
+            self.weir_shape_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_height") is None else s.value("sf_weir_height"))
-            self.weir_height_FieldCbo.setCurrentIndex(val)            
+            self.weir_height_FieldCbo.setCurrentIndex(val)
             val = int(-1 if s.value("sf_weir_length") is None else s.value("sf_weir_length"))
-            self.weir_length_FieldCbo.setCurrentIndex(val)           
+            self.weir_length_FieldCbo.setCurrentIndex(val)
         else:
-            self.clear_all_weir_attributes()                                          
-                     
+            self.clear_all_weir_attributes()

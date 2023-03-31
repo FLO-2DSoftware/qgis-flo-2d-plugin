@@ -23,7 +23,6 @@ uiDialog, qtBaseClass = load_ui("table_editor")
 
 
 class TableEditorWidget(qtBaseClass, uiDialog):
-
     before_paste = pyqtSignal()
     after_paste = pyqtSignal()
     after_delete = pyqtSignal()
@@ -128,7 +127,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols)
             )
         QApplication.restoreOverrideCursor()
-        
+
     def delete_selection(self):
         indices = []
         for i in self.tview.selectionModel().selectedRows():
@@ -138,6 +137,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             self.tview.model().removeRow(i.row())
         if indices:
             self.after_delete.emit()
+
 
 class CommandItemEdit(QUndoCommand):
     """
@@ -151,7 +151,6 @@ class CommandItemEdit(QUndoCommand):
         self.oldText = oldText
         self.newText = newText
 
-
     def redo(self):
         self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
         self.item.setText(self.newText)
@@ -162,14 +161,15 @@ class CommandItemEdit(QUndoCommand):
         try:
             self.item.setText(self.oldText)
         except TypeError:
-            self.item.setText('')
+            self.item.setText("")
         self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
+
 
 #     def redo(self):
 #         self.widget.connect_itemDataChanged(False)
 #         self.item.setText(self.newText)
 #         self.widget.connect_itemDataChanged(True)
-# 
+#
 #     def undo(self):
 #         self.widget.connect_itemDataChanged(False)
 #         try:

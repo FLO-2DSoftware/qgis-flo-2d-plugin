@@ -32,7 +32,6 @@ try:
     def _translate(context, text, disambig):
         return QApplication.translate(context, text, disambig, _encoding)
 
-
 except AttributeError:
 
     def _translate(context, text, disambig):
@@ -40,14 +39,36 @@ except AttributeError:
 
 
 class ContToler_JJ(qtBaseClass, uiDialog):
-
     PARAMS = OrderedDict(
         [
-            ["AMANN", {"label": "Increment n Value at runtime", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2,},],
+            [
+                "AMANN",
+                {
+                    "label": "Increment n Value at runtime",
+                    "type": "r",
+                    "dat": "CONT",
+                    "min": 0.00,
+                    "max": float("inf"),
+                    "dec": 2,
+                },
+            ],
             ["DEPTHDUR", {"label": "Depth Duration", "type": "r", "dat": "CONT", "min": 0, "max": 100, "dec": 3}],
-            ["ENCROACH", {"label": "Encroachment Analysis Depth", "type": "r", "dat": "CONT", "min": 0, "max": 10, "dec": 1},],
+            [
+                "ENCROACH",
+                {"label": "Encroachment Analysis Depth", "type": "r", "dat": "CONT", "min": 0, "max": 10, "dec": 1},
+            ],
             ["FROUDL", {"label": "Global Limiting Froude", "type": "r", "dat": "CONT", "min": 0, "max": 5, "dec": 2}],
-            ["GRAPTIM", {"label": "Graphical Update Interval", "type": "r", "dat": "CONT", "min": 0.01, "max": float("inf"), "dec": 2,},],
+            [
+                "GRAPTIM",
+                {
+                    "label": "Graphical Update Interval",
+                    "type": "r",
+                    "dat": "CONT",
+                    "min": 0.01,
+                    "max": float("inf"),
+                    "dec": 2,
+                },
+            ],
             ["IBACKUP", {"label": "Backup Switch", "type": "s2", "dat": "CONT"}],
             ["ICHANNEL", {"label": "Channel Switch", "type": "s", "dat": "CONT"}],
             ["IDEBRV", {"label": "Debris Switch", "type": "s", "dat": "CONT"}],
@@ -60,8 +81,28 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             ["IRAIN", {"label": "Rain Switch", "type": "s", "dat": "CONT"}],
             ["ISED", {"label": "Sediment Transport Switch", "type": "s", "dat": "CONT"}],
             ["ITIMTEP", {"label": "Time Series Selection Switch", "type": "s5", "dat": "CONT"}],
-            ["STARTIMTEP", {"label": "Time Series Start Time", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},],
-            ["ENDTIMTEP", {"label": "Time Series End Time", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},],
+            [
+                "STARTIMTEP",
+                {
+                    "label": "Time Series Start Time",
+                    "type": "r",
+                    "dat": "CONT",
+                    "min": 0.00,
+                    "max": float("inf"),
+                    "dec": 2,
+                },
+            ],
+            [
+                "ENDTIMTEP",
+                {
+                    "label": "Time Series End Time",
+                    "type": "r",
+                    "dat": "CONT",
+                    "min": 0.00,
+                    "max": float("inf"),
+                    "dec": 2,
+                },
+            ],
             ["IWRFS", {"label": "Building Switch", "type": "s", "dat": "CONT"}],
             ["LEVEE", {"label": "Levee Switch", "type": "s", "dat": "CONT"}],
             ["LGPLOT", {"label": "Graphic Mode", "type": "s2", "dat": "CONT"}],
@@ -71,22 +112,49 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             ["NOPRTC", {"label": "Detailed Channel Output Options", "type": "s2", "dat": "CONT", "min": 2}],
             ["NOPRTFP", {"label": "Detailed Floodplain Output Options", "type": "s3", "dat": "CONT", "min": 2}],
             ["SHALLOWN", {"label": "Shallow n Value", "type": "r", "dat": "CONT", "min": 0.00, "max": 0.4, "dec": 2}],
-            ["SIMUL", {"label": "Simulation Time", "type": "r", "dat": "CONT", "min": 0.01, "max": float("inf"), "dec": 2},],
-            ["DEPRESSDEPTH", {"label": "Depress Depth", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},],
+            [
+                "SIMUL",
+                {"label": "Simulation Time", "type": "r", "dat": "CONT", "min": 0.01, "max": float("inf"), "dec": 2},
+            ],
+            [
+                "DEPRESSDEPTH",
+                {"label": "Depress Depth", "type": "r", "dat": "CONT", "min": 0.00, "max": float("inf"), "dec": 2},
+            ],
             ["SWMM", {"label": "Storm Drain Switch", "type": "s", "dat": "CONT"}],
-            ["TIMTEP", {"label": "Time Series Output Interval", "type": "r", "dat": "CONT", "min": 0, "max": 100, "dec": 2},],
-            ["TOUT", {"label": "Output Data Interval", "type": "r", "dat": "CONT", "min": 0, "max": float("inf"), "dec": 2},],
+            [
+                "TIMTEP",
+                {"label": "Time Series Output Interval", "type": "r", "dat": "CONT", "min": 0, "max": 100, "dec": 2},
+            ],
+            [
+                "TOUT",
+                {"label": "Output Data Interval", "type": "r", "dat": "CONT", "min": 0, "max": float("inf"), "dec": 2},
+            ],
             ["XARF", {"label": "Global Area Reduction", "type": "r", "dat": "CONT", "min": 0, "max": 1, "dec": 2}],
-            ["IARFBLOCKMOD", {"label": "Global ARF=1 Revision", "type": "r", "dat": "CONT", "min": 0, "max": 1, "dec": 2},],
-            ["XCONC", {"label": "Global Sediment Concentration", "type": "r", "dat": "CONT", "min": 0, "max": 0.50, "dec": 2},],
+            [
+                "IARFBLOCKMOD",
+                {"label": "Global ARF=1 Revision", "type": "r", "dat": "CONT", "min": 0, "max": 1, "dec": 2},
+            ],
+            [
+                "XCONC",
+                {"label": "Global Sediment Concentration", "type": "r", "dat": "CONT", "min": 0, "max": 0.50, "dec": 2},
+            ],
             ["COURANTC", {"label": "Courant Stability C", "type": "r", "dat": "TOLER", "min": 0, "max": 1, "dec": 1}],
             ["COURANTFP", {"label": "Courant Stability FP", "type": "r", "dat": "TOLER", "min": 0, "max": 1, "dec": 1}],
             ["COURANTST", {"label": "Courant Stability St", "type": "r", "dat": "TOLER", "min": 0, "max": 1, "dec": 1}],
             ["COURCHAR_C", {"label": "Stability Line 2 Character", "type": "c", "dat": "TOLER"}],
             ["COURCHAR_T", {"label": "Stability Line 3 Character", "type": "c", "dat": "TOLER"}],
-            ["DEPTOL", {"label": "Percent Change in Depth", "type": "r", "dat": "TOLER", "min": 0, "max": 0.5, "dec": 1},],
-            ["TIME_ACCEL", {"label": "Timestep Sensitivity", "type": "r", "dat": "TOLER", "min": 0.1, "max": 100, "dec": 2},],
-            ["TOLGLOBAL",  {"label": "Low flow exchange limit", "type": "r", "dat": "TOLER", "min": 0.000, "max": 0.5, "dec": 4},],
+            [
+                "DEPTOL",
+                {"label": "Percent Change in Depth", "type": "r", "dat": "TOLER", "min": 0, "max": 0.5, "dec": 1},
+            ],
+            [
+                "TIME_ACCEL",
+                {"label": "Timestep Sensitivity", "type": "r", "dat": "TOLER", "min": 0.1, "max": 100, "dec": 2},
+            ],
+            [
+                "TOLGLOBAL",
+                {"label": "Low flow exchange limit", "type": "r", "dat": "TOLER", "min": 0.000, "max": 0.5, "dec": 4},
+            ],
             ["WAVEMAX", {"label": "Wavemax Sensitivity", "type": "r", "dat": "TOLER", "min": 0, "max": 2, "dec": 2}],
         ]
     )
@@ -100,44 +168,43 @@ class ContToler_JJ(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
         self.uc = UserCommunication(iface, "FLO-2D")
-    
+
         self._startimtep = 1111
         self._endtimtep = 9999
         old_IDEBRV = self.gutils.get_cont_par("IDEBRV")
-        
+
         self.use_time_interval_grp.toggled.connect(self.use_time_interval_grp_checked)
         self.ITIMTEP.currentIndexChanged.connect(self.ITIMTEP_currentIndexChanged)
         self.ISED.currentIndexChanged.connect(self.ISED_currentIndexChanged)
         self.IDEBRV.clicked.connect(self.IDEBRV_clicked)
-        
+
         # self.timeAndPlotGroupBox.setObjectName("ColoredGroupBox")
-        # self.timeAndPlotGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")         
+        # self.timeAndPlotGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.globalDataGroup.setObjectName("ColoredGroupBox")
-        # self.globalDataGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.globalDataGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.systemComponentsSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.systemComponentsSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.systemComponentsSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.physicalProcessesSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.physicalProcessesSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.physicalProcessesSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.conveyanceSrtructureSwitchesGroup.setObjectName("ColoredGroupBox")
-        # self.conveyanceSrtructureSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.conveyanceSrtructureSwitchesGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.floodplainChannelDisplayOptionsGroup.setObjectName("ColoredGroupBox")
-        # self.floodplainChannelDisplayOptionsGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.floodplainChannelDisplayOptionsGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.timeLapseOutputGroup.setObjectName("ColoredGroupBox")
-        # self.timeLapseOutputGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.timeLapseOutputGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.numericalStabilityParametersGroupBox.setObjectName("ColoredGroupBox")
-        # self.numericalStabilityParametersGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
+        # self.numericalStabilityParametersGroupBox.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
         #
         # self.courantNumbersGroup.setObjectName("ColoredGroupBox")
-        # self.courantNumbersGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}") 
-                       
-                               
+        # self.courantNumbersGroup.setStyleSheet("QGroupBox#ColoredGroupBox { border: 1px solid blue;}")
+
         self.polulate_values_JJ()
 
     def set_spinbox_JJ(self, key, spin):
@@ -182,11 +249,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     widget.setValue(db_val)
                 else:
                     widget.setCurrentIndex(db_val)
-                    
-                if key == "STARTIMTEP" :
+
+                if key == "STARTIMTEP":
                     self._startimtep = float_or_zero(db_val)
                 if key == "ENDTIMTEP":
-                    self._endtimtep = float_or_zero(db_val)        
+                    self._endtimtep = float_or_zero(db_val)
 
             widgetISED = getattr(self, "ISED")
             if _mud == 0 and _sed == 0:
@@ -196,11 +263,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             elif _mud == 1 and _sed == 0:
                 widgetISED.setCurrentIndex(0)  # Mud/Debris
             elif _mud == 2:
-                widgetISED.setCurrentIndex(3)  # Two Phase    
-                
-            self.ITIMTEP_currentIndexChanged()    
-               
-            self.use_time_interval_grp.setChecked(self._startimtep != 0.0 or self._endtimtep  != 0.0)  
+                widgetISED.setCurrentIndex(3)  # Two Phase
+
+            self.ITIMTEP_currentIndexChanged()
+
+            self.use_time_interval_grp.setChecked(self._startimtep != 0.0 or self._endtimtep != 0.0)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -216,33 +283,32 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             self.ENDTIMTEP.setValue(self._endtimtep)
         else:
             self.STARTIMTEP.setValue(0.00)
-            self.ENDTIMTEP.setValue(0.00) 
+            self.ENDTIMTEP.setValue(0.00)
 
     def ITIMTEP_currentIndexChanged(self):
-        if  self.ITIMTEP.currentIndex() == 0:
+        if self.ITIMTEP.currentIndex() == 0:
             self.use_time_interval_grp.setChecked(False)
             self.use_time_interval_grp.setDisabled(True)
         else:
             self.use_time_interval_grp.setChecked(True)
             self.use_time_interval_grp.setDisabled(False)
- 
+
     def ISED_currentIndexChanged(self):
-        if  self.ISED.currentIndex() in [1,2]:
+        if self.ISED.currentIndex() in [1, 2]:
             self.IDEBRV.setChecked(False)
-    
+
     def IDEBRV_clicked(self):
-        if self.IDEBRV.isChecked() and self.ISED.currentIndex() != 0:   
+        if self.IDEBRV.isChecked() and self.ISED.currentIndex() != 0:
             self.uc.bar_warn("WARNING: Debris Basin is only used with Mud/Debris (in Physical Processes)")
             self.IDEBRV.setChecked(False)
-   
+
     def save_parameters_JJ(self):
         try:
             if self.use_time_interval_grp.isChecked():
                 if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():
-                    self.uc.show_warn(
-                        "WARNING 220522.0526: time lapse end time must be greater than start time.")
-                    return False              
-            
+                    self.uc.show_warn("WARNING 220522.0526: time lapse end time must be greater than start time.")
+                    return False
+
             # See value of combobox 'ISED' for later set parameters MUD and ISED in 'for key...' loop.
             _mud = 0
             _sed = 0
@@ -255,12 +321,11 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 _mud = 0
                 _sed = 1
             elif val == 2:
-                _mud = 0 
+                _mud = 0
                 _sed = 0
             elif val == 3:
-                _mud = 2 
-                _sed = 0 
-                  
+                _mud = 2
+                _sed = 0
 
             for key in list(self.PARAMS.keys()):
                 if key == "COURCHAR_C":
@@ -290,17 +355,21 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 control_lyr = self.lyrs.data["cont"]["qlyr"]
                 control_lyr.startEditing()
                 control_lyr.commitChanges()
-                QCoreApplication.processEvents()          
-                
+                QCoreApplication.processEvents()
+
             if _mud == 1:
-                self.gutils.execute("INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);") 
+                self.gutils.execute(
+                    "INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES (1.0, 0.0, 1.0, 0.0, 2.5, 4285);"
+                )
             if _sed == 1:
-                self.gutils.execute("INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);") 
-        
-            old_IDEBRV = self.IDEBRV.isChecked() 
-                 
+                self.gutils.execute(
+                    "INSERT INTO sed (dfifty, sgrad, sgst, dryspwt, cvfg, scourdep, isedisplay) VALUES (0.0625, 2.5, 2.5, 14700.0, 0.03000, 3.0, 0);"
+                )
+
+            old_IDEBRV = self.IDEBRV.isChecked()
+
             return True
-    
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1806: Could not save FLO-2D parameters!!", e)

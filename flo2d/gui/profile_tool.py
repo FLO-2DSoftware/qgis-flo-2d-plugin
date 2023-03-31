@@ -46,7 +46,6 @@ class ProfileTool(qtBaseClass, uiDialog):
     }
 
     def __init__(self, iface, plot, table, lyrs):
-
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -97,9 +96,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.user_tab = user_table
         self.fid = fid
         self.user_lyr = self.lyrs.data[self.user_tab]["qlyr"]
-        self.schema_lyr = self.lyrs.data[self.USER_SCHEMA[self.user_tab]["schema_tab"]][
-            "qlyr"
-        ]
+        self.schema_lyr = self.lyrs.data[self.USER_SCHEMA[self.user_tab]["schema_tab"]]["qlyr"]
         self.schema_fid = self.USER_SCHEMA[self.user_tab]["schema_fid"]
         self.user_name = self.USER_SCHEMA[self.user_tab]["user_name"]
         self.lyr_label.setText("{0} ({1})".format(self.user_name, fid))
@@ -149,37 +146,19 @@ class ProfileTool(qtBaseClass, uiDialog):
 
         if data["water"] is not None:
             self.plot.plot.addLegend()
-            self.plot.add_item(
-                "Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine
-            )
-            self.plot.add_item(
-                "Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine
-            )
-            self.plot.add_item(
-                "Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine
-            )
-            self.plot.add_item(
-                "Max. Water", [sta, water], col=QColor(Qt.blue), sty=Qt.SolidLine
-            )
-            self.plot.plot.setTitle(
-                title="Channel Profile - {}".format(self.chan_seg.name)
-            )
+            self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+            self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+            self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.blue), sty=Qt.SolidLine)
+            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
             self.plot.plot.setLabel("bottom", text="Channel length")
             self.plot.plot.setLabel("left", text="Elevation")
         else:
             self.plot.plot.addLegend()
-            self.plot.add_item(
-                "Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine
-            )
-            self.plot.add_item(
-                "Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine
-            )
-            self.plot.add_item(
-                "Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine
-            )
-            self.plot.plot.setTitle(
-                title="Channel Profile - {}".format(self.chan_seg.name)
-            )
+            self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+            self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+            self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
             self.plot.plot.setLabel("bottom", text="Channel length")
             self.plot.plot.setLabel("left", text="Elevation")
 
@@ -262,26 +241,17 @@ class ProfileTool(qtBaseClass, uiDialog):
         """
         Calculating stations based on combined user and schematic layers.
         """
-        user_request = QgsFeatureRequest().setFilterExpression(
-            '"fid" = {0}'.format(self.fid)
-        )
-        schema_request = QgsFeatureRequest().setFilterExpression(
-            '"{0}" = {1}'.format(self.schema_fid, self.fid)
-        )
+        user_request = QgsFeatureRequest().setFilterExpression('"fid" = {0}'.format(self.fid))
+        schema_request = QgsFeatureRequest().setFilterExpression('"{0}" = {1}'.format(self.schema_fid, self.fid))
         user_feats = self.user_lyr.getFeatures(user_request)
         schema_feats = self.schema_lyr.getFeatures(schema_request)
         user_feat = next(user_feats)
         geom = user_feat.geometry()
         self.user_feat = user_feat
         if self.user_tab == "user_left_bank":
-            self.feats_stations = [
-                (f, geom.lineLocatePoint(f.geometry().nearestPoint(geom)))
-                for f in schema_feats
-            ]
+            self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().nearestPoint(geom))) for f in schema_feats]
         else:
-            self.feats_stations = [
-                (f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats
-            ]
+            self.feats_stations = [(f, geom.lineLocatePoint(f.geometry().centroid())) for f in schema_feats]
         self.feats_stations.sort(key=itemgetter(1))
         if self.rprofile_radio.isChecked():
             self.plot_raster_data()
@@ -305,9 +275,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         axis_x, axis_y = [], []
         for feat, station in self.feats_stations:
             point = user_geom.interpolate(station).asPoint()
-            ident = probe_raster.dataProvider().identify(
-                point, QgsRaster.IdentifyFormatValue
-            )
+            ident = probe_raster.dataProvider().identify(point, QgsRaster.IdentifyFormatValue)
             if ident.isValid():
                 if is_number(ident.results()[1]):
                     val = round(ident.results()[1], 3)
@@ -326,9 +294,7 @@ class ProfileTool(qtBaseClass, uiDialog):
 
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
-        self.plot.plot.setLabel(
-            "bottom", text="Distance along feature ({0})".format(self.fid)
-        )
+        self.plot.plot.setLabel("bottom", text="Distance along feature ({0})".format(self.fid))
         self.plot.plot.setLabel("left", text="Raster value")
         self.insert_to_table(name_x="Distance", name_y="Raster value")
 
@@ -361,9 +327,7 @@ class ProfileTool(qtBaseClass, uiDialog):
 
         self.plot.add_item(self.user_tab, self.plot_data)
         self.plot.plot.setTitle(title='"{0}" profile'.format(self.user_name))
-        self.plot.plot.setLabel(
-            "bottom", text="Distance along feature ({0})".format(self.fid)
-        )
+        self.plot.plot.setLabel("bottom", text="Distance along feature ({0})".format(self.fid))
         self.plot.plot.setLabel("left", text=self.schema_data)
         self.insert_to_table(name_x="Distance", name_y=self.schema_data)
 

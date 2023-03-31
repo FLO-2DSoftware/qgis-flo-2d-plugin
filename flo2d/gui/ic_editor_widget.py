@@ -175,22 +175,26 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                             grid AS g, user_reservoirs AS ur
                         WHERE
                             ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));"""
-    
+
             self.gutils.execute("DELETE FROM reservoirs;")
             self.gutils.execute(ins_qry)
             self.repaint_reservoirs()
             self.uc.show_info(str(user_rsvs) + " user reservoirs schematized!")
         else:
-            sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0] 
+            sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0]
             if sch_rsvs > 0:
-                if self.uc.question("There aren't any user reservoirs." +
-                                 "\nBut there are " + str(sch_rsvs) + " schematic reservoirs." +
-                                 "\n\nDo you want to delete them?"):
+                if self.uc.question(
+                    "There aren't any user reservoirs."
+                    + "\nBut there are "
+                    + str(sch_rsvs)
+                    + " schematic reservoirs."
+                    + "\n\nDo you want to delete them?"
+                ):
                     self.gutils.execute("DELETE FROM reservoirs;")
                     self.repaint_reservoirs()
-            else:           
-                self.uc.show_info("There aren't any user reservoirs!")  
-                                                 
+            else:
+                self.uc.show_info("There aren't any user reservoirs!")
+
     def save_res(self):
         self.reservoir.wsel = self.res_ini_sbox.value()
         self.reservoir.set_row()

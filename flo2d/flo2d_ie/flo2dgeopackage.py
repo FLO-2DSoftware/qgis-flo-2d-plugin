@@ -1339,7 +1339,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             sql = """SELECT name, value FROM cont;"""
 
-            options = {o: np.string_([v]) if v is not None else np.string_([""]) for o, v in self.execute(sql).fetchall()}
+            options = {
+                o: np.string_([v]) if v is not None else np.string_([""]) for o, v in self.execute(sql).fetchall()
+            }
             write_mode = "w"
             for dataset_name, dataset_data in options.items():
                 self.parser.write(dataset_data, dataset_name, group_name="Control", write_mode=write_mode)
