@@ -9,7 +9,7 @@
 
 import os
 import datetime
-from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate, HourDelegate
+from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate, HourDelegate, TimeSeriesDelegate
 from qgis.core import QgsFeatureRequest
 from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
@@ -680,13 +680,14 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.gutils = None
         
         self.values_ok = False
+        self.loading = True
         set_icon(self.add_time_data_btn, "add.svg")
         set_icon(self.delete_time_data_btn, "remove.svg") 
                
         self.setup_connection()
 
-        delegate = NumericDelegate(self.outfall_time_series_tblw)
-        self.outfall_time_series_tblw.setItemDelegateForColumn(2, delegate)
+        delegate = TimeSeriesDelegate(self.outfall_time_series_tblw)
+        self.outfall_time_series_tblw.setItemDelegate(delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
         self.select_time_series_btn.clicked.connect(self.select_time_series_file)   
@@ -705,11 +706,12 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_time_series_dialog(self):
+        self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
             pass
         else:
-            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?"
+            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?;"
             row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
             if row:
                 self.name_le.setText(row[1])
@@ -728,26 +730,45 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                 date, 
                                 time, 
                                 value
-                        FROM swmm_time_series_data WHERE time_series_name = ?;"""
+                        FROM swmm_time_series_data WHERE time_series_name = ? ORDER BY date, time"""
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
                     self.outfall_time_series_tblw.setRowCount(0)
-            
                     for row_number, row_data in enumerate(rows):
                         self.outfall_time_series_tblw.insertRow(row_number)
-                        for cell, data in enumerate(row_data):
-            
+                        for col, data in enumerate(row_data):
+                            if col == 0:
+                                if data:
+                                    a,b,c = data.split("/")
+                                    if len(a) < 2:
+                                        a = "0"*(2-len(a)) + a
+                                    if len(b) < 2:
+                                        b = "0"*(2-len(b)) + b
+                                    if len(c) < 4:
+                                        c = "0"*(4-len(c))+ c                                    
+                                    data = a + "/" + b + "/" + c  
+                                else:
+                                    data = "00/00/0000"     
+                            if col == 1:
+                                if data:
+                                    a,b = data.split(":")
+                                    if len(a) == 1:
+                                        a = "0" + a                                
+                                    data = a + ":" + b 
+                                else:
+                                    data = "00:00"                           
                             item = QTableWidgetItem()     
                             item.setData(Qt.DisplayRole, data)
-                            self.outfall_time_series_tblw.setItem(row_number, cell, item)
+                            self.outfall_time_series_tblw.setItem(row_number, col, item)
         
-                    self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
+                    # self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
             else:
                 self.name_le.setText(self.time_series_name)
                 self.external_radio.setChecked(True)
                 self.use_table_radio.setChecked(False)
         
         QApplication.restoreOverrideCursor()  
+        self.loading = False
              
     def select_time_series_file(self):
         self.uc.clear_bar_messages()
@@ -840,13 +861,24 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
     def time_series_model_changed(self, i,j):
         self.uc.show_info("Changed") 
         
-    def ts_tblw_changed(self, Qitem):  
-        return
-        try:
-            test = float(Qitem.text())
-        except ValueError:
-            self.uc.show_info("Float error") 
-            Qitem.setText("")     
+    def ts_tblw_changed(self, Qitem):
+        if not self.loading:
+            text = Qitem.text() 
+            if "/" in text:
+                a,b,c = text.split("/")
+                if len(a) < 2:
+                    a = "0"*(2-len(a)) + a
+                if len(b) < 2:
+                    b = "0"*(2-len(b)) + b
+                if len(c) < 4:
+                    c = "0"*(4-len(c))+ c                                    
+                text = a + "/" + b + "/" + c   
+            if ":" in text:
+                a,b = text.split(":")
+                if len(a) == 1:
+                    a = "0" + a                                
+                text = a + ":" + b                   
+            Qitem.setText(text)          
 
     def add_time(self):
         self.outfall_time_series_tblw.insertRow(self.outfall_time_series_tblw.rowCount())  
@@ -895,7 +927,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
                
         self.setup_connection()
 
-        delegate = HourDelegate(self.outflow_tidal_curve_tblw)
+        delegate = TidalHourDelegate(self.outflow_tidal_curve_tblw)
         self.outflow_tidal_curve_tblw.setItemDelegate(delegate)
         
         # delegate = NumericDelegate(self.outflow_tidal_curve_tblw)
@@ -1046,5 +1078,15 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.outflow_tidal_curve_tblw.selectRow(0)
         self.outflow_tidal_curve_tblw.setFocus()
                                           
-                                  
-
+class TidalHourDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(TidalHourDelegate, self).createEditor(parent, option, index)
+        if index.column() == 0:
+            if isinstance(editor, QLineEdit):
+                reg_ex = QRegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+                validator = QRegExpValidator(reg_ex, editor)
+                editor.setValidator(validator)
+        return editor                                                                  
+             
+    
+    

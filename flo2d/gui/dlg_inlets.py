@@ -27,7 +27,7 @@ from qgis.PyQt.QtGui import QColor, QRegExpValidator, QDoubleValidator
 from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true, NumericDelegate
+from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true, NumericDelegate, TimeSeriesDelegate
 from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
 
 from math import isnan
@@ -1224,12 +1224,13 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.gutils = None
         
         self.values_ok = False
+        self.loading = True
         set_icon(self.add_time_data_btn, "add.svg")
         set_icon(self.delete_time_data_btn, "remove.svg") 
                
         self.setup_connection()
 
-        delegate = NumericDelegate(self.inflow_time_series_tblw)
+        delegate = TimeSeriesDelegate(self.inflow_time_series_tblw)
         self.inflow_time_series_tblw.setItemDelegate(delegate)
         
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
@@ -1249,6 +1250,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_time_series_dialog(self):
+        self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
             pass
@@ -1276,14 +1278,32 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
                     self.inflow_time_series_tblw.setRowCount(0)
-            
                     for row_number, row_data in enumerate(rows):
                         self.inflow_time_series_tblw.insertRow(row_number)
-                        for cell, data in enumerate(row_data):
-            
+                        for col, data in enumerate(row_data):
+                            if col == 0:
+                                if data:
+                                    a,b,c = data.split("/")
+                                    if len(a) < 2:
+                                        a = "0"*(2-len(a)) + a
+                                    if len(b) < 2:
+                                        b = "0"*(2-len(b)) + b
+                                    if len(c) < 4:
+                                        c = "0"*(4-len(c))+ c                                    
+                                    data = a + "/" + b + "/" + c  
+                                else:
+                                    data = "00/00/0000"     
+                            if col == 1:
+                                if data:
+                                    a,b = data.split(":")
+                                    if len(a) == 1:
+                                        a = "0" + a                                
+                                    data = a + ":" + b 
+                                else:
+                                    data = "00:00"                 
                             item = QTableWidgetItem()     
                             item.setData(Qt.DisplayRole, data)
-                            self.inflow_time_series_tblw.setItem(row_number, cell, item)
+                            self.inflow_time_series_tblw.setItem(row_number, col, item)
         
                     self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
             else:
@@ -1292,7 +1312,8 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                 self.use_table_radio.setChecked(False)
         
         QApplication.restoreOverrideCursor()  
-             
+        self.loading = False 
+            
     def select_time_series_file(self):
         self.uc.clear_bar_messages()
 
@@ -1384,15 +1405,25 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
     def time_series_model_changed(self, i,j):
         self.uc.show_info("Changed") 
         
-        
-    def ts_tblw_changed(self, Qitem):  
-        return
-        try:
-            test = float(Qitem.text())
-        except ValueError:
-            self.uc.show_info("Float error") 
-            Qitem.setText("")     
-
+    def ts_tblw_changed(self, Qitem):
+        if not self.loading:
+            text = Qitem.text() 
+            if "/" in text:
+                a,b,c = text.split("/")
+                if len(a) < 2:
+                    a = "0"*(2-len(a)) + a
+                if len(b) < 2:
+                    b = "0"*(2-len(b)) + b
+                if len(c) < 4:
+                    c = "0"*(4-len(c))+ c                                    
+                text = a + "/" + b + "/" + c  
+            if ":" in text:
+                a,b = text.split(":")
+                if len(a) == 1:
+                    a = "0" + a                                
+                text = a + ":" + b                   
+            Qitem.setText(text)          
+    
     def add_time(self):
         self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())  
         row_number = self.inflow_time_series_tblw.rowCount() - 1
@@ -1420,4 +1451,5 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())      
         self.inflow_time_series_tblw.selectRow(0)
         self.inflow_time_series_tblw.setFocus()                                         
-                                           
+ 
+                          

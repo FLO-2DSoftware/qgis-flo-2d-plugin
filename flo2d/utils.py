@@ -73,9 +73,26 @@ class HourDelegate(QStyledItemDelegate):
 #             editor.setValidator(validator)
 #         return editor
 
+class TimeSeriesDelegate(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(TimeSeriesDelegate, self).createEditor(parent, option, index)
+        if index.column() == 0:
+            if isinstance(editor, QLineEdit):
+                reg_ex = QRegExp("[0-9]{0,2}/[0-9]{0,2}/[0-9]{0,4}")
+                validator = QRegExpValidator(reg_ex, editor)
+                editor.setValidator(validator)        
+        if index.column() == 1:
+            if isinstance(editor, QLineEdit):
+                reg_ex = QRegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+                validator = QRegExpValidator(reg_ex, editor)
+                editor.setValidator(validator)
+        if index.column() == 2:
+            if isinstance(editor, QLineEdit):
+                reg_ex = QRegExp("[0-9]+.?[0-9]{,4}")
+                validator = QRegExpValidator(reg_ex, editor)
+                editor.setValidator(validator)            
+        return editor
 
-
-    
 def get_BC_Border():
     global BC_BORDER
     return BC_BORDER

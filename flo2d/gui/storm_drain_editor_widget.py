@@ -2488,7 +2488,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                         description = [row[1]]
                                         swmm_inp_file.write(line1.format(*description))                                        
                                         for data in time_series_data:
-                                            swmm_inp_file.write(line3.format(name, data[0], data[1], data[2]))
+                                            swmm_inp_file.write(line3.format(
+                                                                name if name is not None else " ",
+                                                                data[0] if data[0] is not None else "00/00/0000", 
+                                                                data[1] if data[1] is not None else "00:00", 
+                                                                data[2] if data[2] is not None else 0.0))
                                         swmm_inp_file.write("\n;")                                       
                                         
                     except Exception as e:

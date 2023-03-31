@@ -777,6 +777,7 @@ class StormDrainProject(object):
             time_cols_file = ["time_series_name", "file", "file_name"]
             time_cols_date = ["name", "date", "time", "value"]
             times = self.select_this_INP_group("timeseries")
+            warn = ""
             if times:
                 for time in times:
                     if not time or time[:2] in ";;\n":
@@ -791,15 +792,21 @@ class StormDrainProject(object):
                         timeSplit = [timeSplit[0], timeSplit[1], timeSplit2[1]]
                         time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
-                        name = timeSplit[0]
-                        date = timeSplit[1]
-                        time  = timeSplit[2]
-                        value = timeSplit[3]
-                        timeSplit = [name, date, time, value]
-                        time_list = list(zip_longest(time_cols_date, timeSplit))
-
+                        if len(timeSplit) < 4:
+                            if warn  == "":
+                                warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
+                                continue
+                        else:    
+                            name = timeSplit[0]
+                            date = timeSplit[1]
+                            time  = timeSplit[2]
+                            value = timeSplit[3]
+                            timeSplit = [name, date, time, value]
+                            time_list = list(zip_longest(time_cols_date, timeSplit))
                     time_list.insert(0, ["description", descr])
                     self.INP_timeseries.append(time_list)
+            if warn != "":
+               self.uc.bar_warn(warn)         
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
 
