@@ -25,9 +25,9 @@ except ImportError:
 
 
 class HDF5Group:
-    def __init__(self, name: str, **datasets):
+    def __init__(self, name: str):
         self.name = name
-        self.datasets = datasets
+        self.datasets = {}
 
     def create_dataset(self, dataset_name: str, data: Any = None, update: bool = True):
         dataset = HDF5Dataset(name=dataset_name, data=data, group=self)
@@ -35,6 +35,8 @@ class HDF5Group:
             self.update_with_dataset(dataset)
 
     def update_with_dataset(self, dataset):
+        if dataset.group != self:
+            dataset.group = self
         self.datasets[dataset.name] = dataset
 
 
