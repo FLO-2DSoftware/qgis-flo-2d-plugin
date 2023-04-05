@@ -9,14 +9,16 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
+
+from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox, QApplication
-from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QFileDialog
+
 from ..flo2d_tools.elevation_correctors import LeveesElevation
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from ..gui.dlg_walls_shapefile import WallsShapefile
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("levees_elevation")
 

@@ -7,16 +7,18 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..utils import is_true, is_number, m_fdata
-from qgis.PyQt.QtCore import Qt
+from math import isnan
+
 from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox, QInputDialog
-from .table_editor_widget import StandardItemModel, StandardItem
-from .ui_utils import load_ui, set_icon, center_canvas, zoom, try_disconnect
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QTableWidgetItem
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from math import isnan
+from ..utils import is_number, is_true, m_fdata
+from .table_editor_widget import StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
 
 uiDialog, qtBaseClass = load_ui("orifices")
 

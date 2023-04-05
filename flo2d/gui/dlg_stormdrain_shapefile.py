@@ -7,17 +7,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..utils import is_true
-from qgis.PyQt.QtWidgets import QDialogButtonBox
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL
+from qgis.core import NULL, QgsFeature, QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsFieldComboBox
-from qgis.PyQt.QtWidgets import QApplication, QComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
-from .ui_utils import load_ui
+from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..flo2d_tools.schema2user_tools import remove_features
+from ..utils import is_true
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("storm_drain_shapefile")
 

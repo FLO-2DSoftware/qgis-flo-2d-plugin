@@ -9,41 +9,40 @@
 
 import functools
 import time
+from datetime import datetime
+from math import modf
+from pickle import FALSE
 
-from qgis.PyQt.QtCore import Qt, QEvent
+import numpy as np
+from qgis.core import *
+from qgis.PyQt.QtCore import QEvent, Qt
+from qgis.PyQt.QtGui import QColor, QIntValidator, QPalette, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (
-    QTableWidgetItem,
     QApplication,
-    QInputDialog,
-    QDialogButtonBox,
-    QListView,
     QComboBox,
+    QDialogButtonBox,
     QDoubleSpinBox,
+    QInputDialog,
+    QListView,
+    QTableWidgetItem,
     QWidget,
 )
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator, QPalette
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+
+from ..flo2d_tools.grid_tools import (
+    adjacent_grid_elevations,
+    adjacent_grid_elevations_np,
+    buildCellElevNPArray,
+    buildCellIDNPArray,
+    cellElevNumpyArray,
+    cellIDNumpyArray,
+    number_of_elements,
+    xvalsNumpyArray,
+    yvalsNumpyArray,
+)
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
-from ..flo2d_tools.grid_tools import (
-    adjacent_grid_elevations,
-    number_of_elements,
-    buildCellIDNPArray,
-    buildCellElevNPArray,
-    adjacent_grid_elevations_np,
-    cellIDNumpyArray,
-    xvalsNumpyArray,
-    yvalsNumpyArray,
-    cellElevNumpyArray,
-)
-
-from pickle import FALSE
-from qgis.core import *
-from datetime import datetime
-from math import modf
-
-import numpy as np
+from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 
 def timer(func):

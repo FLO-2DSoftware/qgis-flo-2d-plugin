@@ -3,28 +3,29 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import time
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import traceback
-import time
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QComboBox, QSizePolicy, QInputDialog, QApplication
+from _ast import If, Or
+from math import isnan
+
 from qgis.core import QgsFeatureRequest
 from qgis.gui import QgsRubberBand
-from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon
-from ..geopackage_utils import GeoPackageUtils
-from ..flo2dobjects import Inflow, Outflow
-from ..flo2d_tools.grid_tools import is_boundary_cell, get_adjacent_cell
-from ..user_communication import UserCommunication
-from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
-from math import isnan
-from _ast import Or, If
-from ..utils import is_number, m_fdata
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QInputDialog, QSizePolicy
 
-from ..utils import get_BC_Border, set_BC_Border
+from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
+from ..flo2dobjects import Inflow, Outflow
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import get_BC_Border, is_number, m_fdata, set_BC_Border
+from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
 BC_BORDER = get_BC_Border()
 

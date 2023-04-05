@@ -9,11 +9,13 @@
 # of the License, or (at your option) any later version
 
 import os
-from .ui_utils import load_ui
-from ..user_communication import UserCommunication
+
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog, QApplication
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog
+
 from ..flo2d_tools.flopro_tools import FLOPROExecutor
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("flopro")
 

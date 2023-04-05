@@ -8,58 +8,57 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
 import os
 import time
+import traceback
 
-from .ui_utils import load_ui, set_icon
-from ..utils import time_taken
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
-
-from qgis.PyQt.QtCore import Qt, QThread, QSettings
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL, Qgis, QgsMessageLog
+from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
+from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import QSettings, Qt, QThread
 from qgis.PyQt.QtWidgets import (
     QApplication,
+    QFileDialog,
     QInputDialog,
+    QLabel,
+    QMessageBox,
     QProgressBar,
     QPushButton,
-    QLabel,
     QWidget,
-    QFileDialog,
-    QMessageBox,
 )
-from qgis.PyQt import QtWidgets
 
 from ..flo2d_tools.grid_tools import (
-    square_grid,
-    add_col_and_row_fields,
-    evaluate_roughness,
-    update_roughness,
-    evaluate_arfwrf,
-    evaluate_spatial_tolerance,
-    evaluate_spatial_froude,
-    evaluate_spatial_shallow,
-    evaluate_spatial_gutter,
-    evaluate_spatial_noexchange,
     ZonalStatistics,
     ZonalStatisticsOther,
+    add_col_and_row_fields,
     assign_col_row_indexes_to_grid,
+    evaluate_arfwrf,
+    evaluate_roughness,
+    evaluate_spatial_froude,
+    evaluate_spatial_gutter,
+    evaluate_spatial_noexchange,
+    evaluate_spatial_shallow,
+    evaluate_spatial_tolerance,
     number_of_elements,
+    poly2grid,
+    poly2poly_geos,
     render_grid_elevations2,
+    square_grid,
+    update_roughness,
 )
-from ..utils import second_smallest, set_min_max_elevs
-from ..gui.dlg_grid_elev import GridCorrectionDialog
-from ..gui.dlg_sampling_elev import SamplingElevDialog
-from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  # update this after elevation test is ok
-from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
-from ..gui.dlg_sampling_mann import SamplingManningDialog
-from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog
-from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
+from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
 from ..gui.dlg_create_grid import CreateGridDialog
+from ..gui.dlg_grid_elev import GridCorrectionDialog
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..gui.dlg_sampling_mann import SamplingManningDialog
+from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
+from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  # update this after elevation test is ok
+from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
+from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
+from ..gui.dlg_sampling_xyz import SamplingXYZDialog
+from ..user_communication import UserCommunication
+from ..utils import second_smallest, set_min_max_elevs, time_taken
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 

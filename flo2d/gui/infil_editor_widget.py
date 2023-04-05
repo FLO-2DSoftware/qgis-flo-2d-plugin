@@ -9,19 +9,21 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from math import isnan
-from itertools import chain
 from collections import OrderedDict
-from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt, QSettings
-from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QInputDialog, QApplication
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from itertools import chain
+from math import isnan
+
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
-from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
-from ..utils import m_fdata
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog
+
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import m_fdata
+from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 uiDialog, qtBaseClass = load_ui("infil_editor")
 

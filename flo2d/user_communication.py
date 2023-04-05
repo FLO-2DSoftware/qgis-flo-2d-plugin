@@ -12,20 +12,21 @@
 # pylint: disable=C0325
 import sys
 import traceback
+
+from qgis.core import Qgis, QgsMessageLog
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QGridLayout,
+    QLabel,
     QMessageBox,
     QProgressBar,
-    QDialog,
-    QWidget,
     QScrollArea,
-    QVBoxLayout,
-    QLabel,
-    QGridLayout,
     QSizePolicy,
-    QCheckBox,
+    QVBoxLayout,
+    QWidget,
 )
-from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsMessageLog, Qgis
 
 
 class UserCommunication(object):

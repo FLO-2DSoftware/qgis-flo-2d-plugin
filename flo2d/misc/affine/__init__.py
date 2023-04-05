@@ -34,10 +34,9 @@ copyright statement below.
 
 from __future__ import division
 
-from collections import namedtuple
 import math
 import warnings
-
+from collections import namedtuple
 
 __all__ = ["Affine"]
 __author__ = "Sean Gillies"

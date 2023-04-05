@@ -10,20 +10,22 @@
 
 import os
 import traceback
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.PyQt.QtGui import QColor
+from math import isnan
+
 from qgis.core import QgsProject
-from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QMessageBox
-from .ui_utils import load_ui, try_disconnect, set_icon
-from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
+
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from ..utils import is_number, m_fdata
-from ..geopackage_utils import GeoPackageUtils
-from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from ..flo2dobjects import Rain
+from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from math import isnan
+from ..utils import is_number, m_fdata
+from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .ui_utils import load_ui, set_icon, try_disconnect
 
 uiDialog, qtBaseClass = load_ui("rain_editor")
 

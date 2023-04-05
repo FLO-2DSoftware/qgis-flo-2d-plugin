@@ -8,16 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .ui_utils import load_ui
-from ..utils import is_number
-from ..user_communication import UserCommunication
 from operator import itemgetter
 
-from qgis.core import QgsFeatureRequest, QgsRaster, QgsProject
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor
+from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
+
 from ..flo2dobjects import ChannelSegment
-from ..utils import Msge
+from ..user_communication import UserCommunication
+from ..utils import Msge, is_number
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("profile_tool")
 

@@ -8,23 +8,23 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import multiprocessing
 import os
 import sys
-from subprocess import Popen, PIPE, STDOUT
-import traceback
 import time
-import multiprocessing
+import traceback
+from subprocess import PIPE, STDOUT, Popen
 
+from PyQt5.QtGui import QTextCursor
+from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings, pyqtSignal
 from qgis.PyQt.QtWidgets import QFileDialog
-from qgis.core import QgsRasterLayer
-from PyQt5.QtGui import QTextCursor
 
-from ..flo2d_tools.grid_tools import raster2grid, grid_has_empty_elev
-from .ui_utils import load_ui
+from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
 from ..misc import point_elev
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("sampling_point_elev")
 

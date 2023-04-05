@@ -8,50 +8,51 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
 import os
-import sys
 import subprocess
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.PyQt.QtGui import QStandardItem, QColor
+import sys
+import traceback
+from collections import OrderedDict
+from math import isnan
+
+from qgis.core import (
+    NULL,
+    QgsCoordinateTransform,
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsGeometry,
+    QgsMapLayerProxyModel,
+    QgsPointXY,
+    QgsProject,
+    QgsWkbTypes,
+)
+from qgis.gui import QgsMapLayerComboBox
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtGui import QColor, QStandardItem
 from qgis.PyQt.QtWidgets import (
-    QInputDialog,
-    QFileDialog,
     QApplication,
-    QTableWidgetItem,
+    QFileDialog,
+    QInputDialog,
     QMessageBox,
     QPushButton,
     QStyledItemDelegate,
+    QTableWidgetItem,
 )
 
-from qgis.core import (
-    QgsProject,
-    QgsFeatureRequest,
-    QgsFeature,
-    QgsGeometry,
-    QgsMapLayerProxyModel,
-    QgsWkbTypes,
-    QgsPointXY,
-    QgsCoordinateTransform,
-    NULL,
-)
-from qgis.gui import QgsMapLayerComboBox
-from .ui_utils import load_ui, center_canvas, try_disconnect, set_icon, switch_to_selected
-from ..utils import m_fdata, is_number
-from ..geopackage_utils import GeoPackageUtils
-from ..flo2dobjects import UserCrossSection, ChannelSegment
-from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
-from ..flo2d_tools.grid_tools import adjacent_grids
-from ..user_communication import UserCommunication
-from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
-from ..gui.dlg_tributaries import TributariesDialog
-from ..gui.dlg_flopro import ExternalProgramFLO2D
-from ..flo2d_tools.flopro_tools import XSECInterpolatorExecutor, ChanRightBankExecutor, ChannelNInterpolatorExecutor
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from ..flo2d_tools.flopro_tools import ChannelNInterpolatorExecutor, ChanRightBankExecutor, XSECInterpolatorExecutor
+from ..flo2d_tools.grid_tools import adjacent_grids
+from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
+from ..flo2dobjects import ChannelSegment, UserCrossSection
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_flopro import ExternalProgramFLO2D
+from ..gui.dlg_tributaries import TributariesDialog
+from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
+from ..user_communication import UserCommunication
+from ..utils import is_number, m_fdata
 from .plot_widget import PlotWidget
-from collections import OrderedDict
-from math import isnan
+from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected, try_disconnect
 
 uiDialog, qtBaseClass = load_ui("schematized_channels_info")
 

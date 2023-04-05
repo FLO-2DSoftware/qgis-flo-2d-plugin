@@ -1,11 +1,13 @@
 import logging
-import os, sys
+import os
+import sys
 import time
 import traceback
 import warnings
-import numpy as np
+
 import dask
 import dask.dataframe as dd
+import numpy as np
 from dask.distributed import Client
 
 with warnings.catch_warnings():

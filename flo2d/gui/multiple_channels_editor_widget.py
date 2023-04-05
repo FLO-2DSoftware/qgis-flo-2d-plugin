@@ -3,18 +3,19 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_individual_multiple_channels import (
+    IndividualMultipleChannelsDialog,
+    IndividualSimplifiedMultipleChannelsDialog,
+)
+from ..user_communication import UserCommunication
+from ..utils import float_or_zero, int_or_zero
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from .ui_utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..gui.dlg_individual_multiple_channels import (
-    IndividualMultipleChannelsDialog,
-    IndividualSimplifiedMultipleChannelsDialog,
-)
-from ..utils import float_or_zero, int_or_zero
 
 uiDialog, qtBaseClass = load_ui("multiple_channels_editor")
 

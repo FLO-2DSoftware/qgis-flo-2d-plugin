@@ -9,15 +9,17 @@
 # of the License, or (at your option) any later version
 
 import traceback
+
 from qgis.core import QgsWkbTypes
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog
-from .ui_utils import load_ui, set_icon
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..gui.dlg_sampling_elev import SamplingElevDialog
-from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
+
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("hazus")
 

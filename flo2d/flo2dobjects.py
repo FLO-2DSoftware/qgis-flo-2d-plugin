@@ -8,13 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from collections import OrderedDict
-from math import isnan
+from math import isnan, sqrt
+
+from qgis.core import QgsCsException, QgsFeatureRequest, QgsPointXY, QgsRaster, QgsRectangle
 
 from .errors import Flo2dError
 from .geopackage_utils import GeoPackageUtils
 from .utils import is_number
-from qgis.core import QgsCsException, QgsRaster, QgsPointXY, QgsFeatureRequest, QgsRectangle
-from math import sqrt
 
 
 class CrossSection(GeoPackageUtils):

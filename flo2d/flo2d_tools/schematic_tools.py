@@ -9,34 +9,34 @@
 # of the License, or (at your option) any later version
 import time
 import traceback
-from collections import defaultdict, OrderedDict
-
+from collections import OrderedDict, defaultdict
 from math import pi, sqrt
 from operator import itemgetter
 
+import numpy as np
 from qgis.core import (
-    QgsSpatialIndex,
     QgsFeature,
     QgsFeatureRequest,
-    QgsVector,
     QgsGeometry,
-    QgsPointXY,
     QgsPoint,
+    QgsPointXY,
+    QgsSpatialIndex,
+    QgsVector,
     QgsWkbTypes,
 )
-import numpy as np
-from .grid_tools import (
-    spatial_index,
-    fid_from_grid,
-    fid_from_grid_features,
-    adjacent_grid_elevations,
-    three_adjacent_grid_elevations,
-    get_adjacent_cell_elevation,
-    buildCellIDNPArray,
-)
+from qgis.PyQt.QtWidgets import QApplication
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtWidgets import QApplication
+from .grid_tools import (
+    adjacent_grid_elevations,
+    buildCellIDNPArray,
+    fid_from_grid,
+    fid_from_grid_features,
+    get_adjacent_cell_elevation,
+    spatial_index,
+    three_adjacent_grid_elevations,
+)
 
 
 # Levees tools

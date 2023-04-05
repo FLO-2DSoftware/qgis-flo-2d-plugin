@@ -7,20 +7,20 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import datetime
 import sys
-from qgis.PyQt.QtWidgets import QDialogButtonBox
-from qgis.core import QgsProject, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFeatureRequest, QgsRectangle
+
+from qgis.core import QgsFeature, QgsFeatureRequest, QgsGeometry, QgsProject, QgsRectangle, QgsWkbTypes
 from qgis.gui import QgsFieldComboBox
-from qgis.PyQt.QtWidgets import QApplication, QComboBox
-from qgis.PyQt.QtCore import Qt, QSettings
-from ..flo2d_tools.grid_tools import fid_from_grid, adjacent_grid_elevations, gridRegionGenerator
-from .ui_utils import load_ui
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
+
+from ..flo2d_tools.grid_tools import adjacent_grid_elevations, fid_from_grid, gridRegionGenerator
+from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..flo2d_tools.schema2user_tools import remove_features
 from ..utils import float_or_zero
-
-import datetime
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
 

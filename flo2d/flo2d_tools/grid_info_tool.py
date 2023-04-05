@@ -12,9 +12,10 @@
 # pylint: disable=no-self-use
 
 import os
-from qgis.PyQt.QtCore import pyqtSignal, Qt
-from qgis.PyQt.QtGui import QCursor, QPixmap
+
 from qgis.gui import QgsMapToolIdentify
+from qgis.PyQt.QtCore import Qt, pyqtSignal
+from qgis.PyQt.QtGui import QCursor, QPixmap
 
 
 class GridInfoTool(QgsMapToolIdentify):

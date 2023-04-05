@@ -10,20 +10,20 @@
 import os
 import shutil
 import traceback
-import numpy as np
-from ..layers import Layers
-from math import isclose
-from qgis.core import NULL, QgsApplication
 from itertools import chain, groupby
+from math import isclose
 from operator import itemgetter
-from .flo2d_parser import ParseDAT, ParseHDF5
-from ..gui.bc_editor_widget import BCEditorWidget
-from ..geopackage_utils import GeoPackageUtils
-from ..utils import float_or_zero
+
+import numpy as np
+from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
 
-from ..utils import get_BC_Border, BC_BORDER
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.bc_editor_widget import BCEditorWidget
+from ..layers import Layers
+from ..utils import BC_BORDER, float_or_zero, get_BC_Border
+from .flo2d_parser import ParseDAT, ParseHDF5
 
 
 class Flo2dGeoPackage(GeoPackageUtils):

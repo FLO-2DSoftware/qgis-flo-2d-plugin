@@ -11,14 +11,14 @@
 import os
 import traceback
 
+from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
-from qgis.core import QgsFeatureRequest
 
 from ..flo2d_tools.schematic_tools import FloodplainXS
-from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 

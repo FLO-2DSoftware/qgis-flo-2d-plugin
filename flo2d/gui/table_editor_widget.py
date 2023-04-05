@@ -8,16 +8,18 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt import QtCore
-from qgis.PyQt.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
-from qgis.PyQt.QtGui import QKeySequence, QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
-from .ui_utils import load_ui
-from ..utils import is_number
-from ..user_communication import UserCommunication
-import io
 import csv
+import io
+
 from qgis.core import QgsMessageLog
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QEvent, QObject, QSize, Qt, pyqtSignal
+from qgis.PyQt.QtGui import QKeySequence, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
+
+from ..user_communication import UserCommunication
+from ..utils import is_number
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
 

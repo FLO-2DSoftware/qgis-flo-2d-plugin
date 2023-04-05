@@ -8,12 +8,13 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import Qt
-from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
 from qgis.PyQt.QtWidgets import QTableWidgetItem
-from .ui_utils import load_ui
+
+from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("channel_geometry")
 

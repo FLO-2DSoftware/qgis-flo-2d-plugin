@@ -9,10 +9,12 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
-from functools import wraps
 from collections import defaultdict
-from .user_communication import UserCommunication
+from functools import wraps
+
 from qgis.core import QgsGeometry
+
+from .user_communication import UserCommunication
 
 
 def connection_required(fn):

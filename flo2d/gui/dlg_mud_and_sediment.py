@@ -9,13 +9,13 @@
 
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QApplication, QInputDialog, QStyledItemDelegate, QLineEdit
 from qgis.PyQt.QtGui import QColor, QRegExpValidator
-from ..utils import is_true, float_or_zero, int_or_zero, is_number, NumericDelegate
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QInputDialog, QLineEdit, QStyledItemDelegate, QTableWidgetItem
 
-from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import NumericDelegate, float_or_zero, int_or_zero, is_number, is_true
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("mud_and_sediment")
 

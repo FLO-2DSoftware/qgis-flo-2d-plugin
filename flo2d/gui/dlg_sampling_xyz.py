@@ -8,58 +8,58 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import sys
 import os
 import stat
+import sys
 import time
 import traceback
+from pickle import TRUE
 
+from plugins.processing.tools.vector import values
 from qgis.core import (
-    QgsWkbTypes,
     Qgis,
+    QgsFeature,
     QgsFeatureRequest,
-    QgsVectorLayer,
     QgsField,
     QgsFields,
-    QgsFeature,
     QgsGeometry,
+    QgsMarkerSymbol,
     QgsPointXY,
     QgsProject,
     QgsVectorFileWriter,
-    QgsMarkerSymbol,
+    QgsVectorLayer,
+    QgsWkbTypes,
 )
-from qgis.PyQt.QtCore import QSettings, Qt, QVariant, QObject, pyqtSignal
-from qgis.PyQt.QtWidgets import QFileDialog, QApplication, QProgressBar, qApp, QMessageBox, QPushButton, QLabel, QWidget
-from plugins.processing.tools.vector import values
 from qgis.PyQt import QtCore, QtGui
+from qgis.PyQt.QtCore import QObject, QSettings, Qt, QVariant, pyqtSignal
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QLabel, QMessageBox, QProgressBar, QPushButton, QWidget, qApp
 
 from ..errors import Flo2dError
-from .ui_utils import load_ui
-from ..utils import (
-    get_file_path,
-    time_taken,
-    grid_index,
-    get_grid_index,
-    set_grid_index,
-    clear_grid_index,
-    is_grid_index,
-    get_min_max_elevs,
-    set_min_max_elevs,
-    second_smallest,
+from ..flo2d_tools.grid_tools import (
+    ZonalStatistics,
+    adjacent_average_elevation,
+    adjacent_grid_elevations,
+    cell_centroid,
+    cell_elevation,
+    fid_from_grid,
+    number_of_elements,
+    render_grid_elevations2,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import (
-    number_of_elements,
-    fid_from_grid,
-    adjacent_grid_elevations,
-    render_grid_elevations2,
-    adjacent_average_elevation,
-    cell_centroid,
-    cell_elevation,
-    ZonalStatistics,
+from ..utils import (
+    clear_grid_index,
+    get_file_path,
+    get_grid_index,
+    get_min_max_elevs,
+    grid_index,
+    is_grid_index,
+    second_smallest,
+    set_grid_index,
+    set_min_max_elevs,
+    time_taken,
 )
-from pickle import TRUE
+from .ui_utils import load_ui
 
 # from flo2d.__init__ import classFactory
 # from ..flo2d import xxx

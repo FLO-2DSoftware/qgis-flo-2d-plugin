@@ -8,37 +8,39 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import sys, os
 import csv
 import io
-from math import isnan
-from qgis.PyQt.QtWidgets import QInputDialog, QApplication, QFileDialog, QTableView
-from qgis.PyQt.QtCore import (
-    Qt,
-    QSettings,
-    QMimeData,
-    QUrl,
-    QItemSelection,
-    QItemSelectionModel,
-    QPersistentModelIndex,
-    pyqtSignal,
-)
-from qgis.core import QgsFeatureRequest, QgsApplication
+import os
+import sys
+from _ast import Or
 from collections import OrderedDict
-from PyQt5.QtWidgets import QApplication
+from math import isnan
+
 from PyQt5 import QtGui
 from PyQt5.QtGui import QClipboard
+from PyQt5.QtWidgets import QApplication
+from qgis.core import QgsApplication, QgsFeatureRequest
 from qgis.PyQt import QtGui
+from qgis.PyQt.QtCore import (
+    QItemSelection,
+    QItemSelectionModel,
+    QMimeData,
+    QPersistentModelIndex,
+    QSettings,
+    Qt,
+    QUrl,
+    pyqtSignal,
+)
 from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QTableView
 
-from .ui_utils import load_ui, center_canvas, set_icon, try_disconnect
-from ..geopackage_utils import GeoPackageUtils
 from ..flo2dobjects import Structure
-from ..user_communication import UserCommunication
-from ..utils import m_fdata, is_number
-from .table_editor_widget import StandardItemModel, StandardItem
+from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
-from _ast import Or
+from ..user_communication import UserCommunication
+from ..utils import is_number, m_fdata
+from .table_editor_widget import StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect
 
 uiDialog, qtBaseClass = load_ui("struct_editor")
 

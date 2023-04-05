@@ -7,14 +7,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+from collections import OrderedDict
+
+from PyQt5.QtCore import QCoreApplication
 from qgis.PyQt import QtCore
-from .ui_utils import load_ui
-from ..utils import float_or_zero, old_IDEBRV
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, qApp
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from collections import OrderedDict
-from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QApplication, qApp
-from PyQt5.QtCore import QCoreApplication
+from ..utils import float_or_zero, old_IDEBRV
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("cont_toler_jj")
 

@@ -3,20 +3,23 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import bisect
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import re
-import bisect
 from collections import OrderedDict
-from itertools import zip_longest, chain
-from ..geopackage_utils import GeoPackageUtils
-from ..flo2d_tools.schema2user_tools import remove_features
-from flo2d.flo2d_tools.grid_tools import show_error
+from itertools import chain, zip_longest
 
 from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from qgis.PyQt.QtWidgets import QApplication
+
+from flo2d.flo2d_tools.grid_tools import show_error
+
+from ..flo2d_tools.schema2user_tools import remove_features
+from ..geopackage_utils import GeoPackageUtils
 
 
 class RASProject(GeoPackageUtils):

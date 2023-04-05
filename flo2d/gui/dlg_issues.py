@@ -7,52 +7,55 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import os, time, glob
+import glob
+import os
+import time
+from multiprocessing.pool import ApplyResult
+
 from qgis.core import *
-from qgis.PyQt.QtCore import Qt, QSettings, QVariant, QModelIndex
-
-# from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
-
 from qgis.core import (
-    QgsWkbTypes,
     Qgis,
+    QgsFeature,
     QgsFeatureRequest,
-    QgsVectorLayer,
     QgsField,
     QgsFields,
-    QgsFeature,
     QgsGeometry,
+    QgsMarkerSymbol,
     QgsPointXY,
     QgsProject,
     QgsVectorFileWriter,
-    QgsMarkerSymbol,
+    QgsVectorLayer,
+    QgsWkbTypes,
 )
-
+from qgis.PyQt.QtCore import QModelIndex, QSettings, Qt, QVariant
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
+    QComboBox,
+    QCompleter,
     QDialogButtonBox,
-    QInputDialog,
     QFileDialog,
+    QInputDialog,
+    QListView,
     QProgressDialog,
     QPushButton,
-    QTableWidgetItem,
-    QListView,
-    QComboBox,
     QTableView,
-    QCompleter,
     QTableWidget,
+    QTableWidgetItem,
     qApp,
 )
-from .ui_utils import load_ui, set_icon, center_canvas, zoom, zoom_show_n_cells
-from .table_editor_widget import StandardItemModel, StandardItem
-from ..utils import copy_tablewidget_selection
+
+from ..flo2d_tools.grid_tools import get_adjacent_cell_elevation, grid_has_empty_elev, number_of_elements
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
-from ..flo2d_tools.grid_tools import grid_has_empty_elev, get_adjacent_cell_elevation, number_of_elements
-from qgis.PyQt.QtGui import QColor
-from multiprocessing.pool import ApplyResult
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..user_communication import UserCommunication
+from ..utils import copy_tablewidget_selection
+from .table_editor_widget import StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
+
+# from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
+
 
 # from ..flo2d_tools.conflicts import Conflicts
 

@@ -1,7 +1,7 @@
-import sys
 import os
-import tempfile
 import subprocess
+import sys
+import tempfile
 
 python_dir = sys.exec_prefix
 python_or_qgis_exe = sys.executable

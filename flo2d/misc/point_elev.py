@@ -9,19 +9,20 @@
 # of the License, or (at your option) any later version
 
 import os
+import subprocess
 import sys
-import warnings
 import tempfile
 import time
 import timeit
 import traceback
-import subprocess
-from subprocess import Popen, PIPE, STDOUT
+import warnings
+from subprocess import PIPE, STDOUT, Popen
+
 import numpy as np
 
 sys.path.append(os.path.dirname(__file__))
-from pip_install import pip_install
 from affine import Affine
+from pip_install import pip_install
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)

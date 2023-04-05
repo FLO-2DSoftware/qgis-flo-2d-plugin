@@ -3,32 +3,35 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import os
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from math import log, exp, log10, sqrt
+from math import exp, log, log10, sqrt
+
 from qgis.core import (
-    QgsGeometry,
-    QgsSpatialIndex,
     QgsFeature,
+    QgsFeatureRequest,
     QgsField,
     QgsFields,
+    QgsGeometry,
     QgsProject,
     QgsRectangle,
-    QgsFeatureRequest,
+    QgsSpatialIndex,
 )
+from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QApplication
+from qgis.utils import iface
+
+from ..user_communication import UserCommunication
 from .grid_tools import (
-    poly2poly_geos_from_features,
-    intersection_spatial_index,
     centroids2poly_geos,
     gridRegionGenerator,
+    intersection_spatial_index,
+    poly2poly_geos_from_features,
 )
-from ..user_communication import UserCommunication
-from qgis.utils import iface
-from qgis.PyQt.QtCore import QSettings
-import os
 
 
 class InfiltrationCalculator(object):

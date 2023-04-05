@@ -8,43 +8,42 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import datetime
+import math
 import os
 import sys
-import math
 import uuid
-from qgis.PyQt.QtWidgets import QMessageBox, QApplication, QProgressDialog
-from qgis.PyQt.QtCore import Qt
 from collections import defaultdict
-from subprocess import Popen, PIPE, STDOUT
-from qgis.PyQt.QtGui import QColor
-from qgis.core import (
-    QgsFeature,
-    QgsGeometry,
-    QgsPointXY,
-    QgsSpatialIndex,
-    QgsRasterLayer,
-    QgsRaster,
-    QgsFeatureRequest,
-    QgsRectangle,
-    QgsFeedback,
-    NULL,
-    QgsMarkerSymbol,
-    QgsProject,
-    QgsSymbol,
-    QgsRendererCategory,
-    QgsCategorizedSymbolRenderer,
-    QgsRendererRange,
-    QgsGraduatedSymbolRenderer,
-)
-
-
-from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
-from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import is_number, get_file_path, grid_index, get_grid_index, set_grid_index
-from ..errors import GeometryValidityErrors, Flo2dError
+from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
+from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
+from qgis.core import (
+    NULL,
+    QgsCategorizedSymbolRenderer,
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsFeedback,
+    QgsGeometry,
+    QgsGraduatedSymbolRenderer,
+    QgsMarkerSymbol,
+    QgsPointXY,
+    QgsProject,
+    QgsRaster,
+    QgsRasterLayer,
+    QgsRectangle,
+    QgsRendererCategory,
+    QgsRendererRange,
+    QgsSpatialIndex,
+    QgsSymbol,
+)
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 from scipy.stats._discrete_distns import geom
+
+from ..errors import Flo2dError, GeometryValidityErrors
+from ..gui.ui_utils import center_canvas, zoom_show_n_cells
+from ..utils import get_file_path, get_grid_index, grid_index, is_number, set_grid_index
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None

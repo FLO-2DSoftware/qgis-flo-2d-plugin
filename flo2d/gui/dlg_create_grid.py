@@ -10,10 +10,12 @@
 
 
 import os
-from .ui_utils import load_ui
-from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
+
+from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
+
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("create_grid")
 

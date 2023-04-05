@@ -8,12 +8,12 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox
-from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QComboBox, QTableWidgetItem
+
+from ..flo2d_tools.grid_tools import find_this_cell
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import find_this_cell
-
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("tributaries")
 

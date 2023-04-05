@@ -8,56 +8,62 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import cProfile
+import io
+
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
+import pstats
 import sys
 import time
 import traceback
-
-import cProfile, pstats, io
+from datetime import datetime
 from pstats import SortKey
 
-from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
-from qgis.PyQt.QtGui import QIcon, QDesktopServices, QCursor, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
-from qgis.core import QgsProject, QgsWkbTypes, NULL
-from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
-from datetime import datetime
+from PyQt5.QtWidgets import QApplication
+from qgis.core import NULL, QgsProject, QgsWkbTypes
+from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QSize, Qt, QTranslator, QUrl, qVersion
+from qgis.PyQt.QtGui import QCursor, QDesktopServices, QIcon, QPixmap
+from qgis.PyQt.QtWidgets import QAction, QApplication, QFileDialog, QMenu, QMessageBox, QSizePolicy, QSpacerItem, qApp
+from urllib3.contrib import _securetransport
 
-from .layers import Layers
-from .user_communication import UserCommunication
-from .geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from .flo2d_tools.grid_info_tool import GridInfoTool
-from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
-from .flo2d_tools.grid_tools import grid_has_empty_elev
-from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_redundant_levee_directions_np
-from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor, MapperExecutor, ProgramExecutor
+from .flo2d_tools.flopro_tools import FLOPROExecutor, MapperExecutor, ProgramExecutor, TailingsDamBreachExecutor
+from .flo2d_tools.grid_info_tool import GridInfoTool
+from .flo2d_tools.grid_tools import (
+    add_col_and_row_fields,
+    assign_col_row_indexes_to_grid,
+    cellIDNumpyArray,
+    dirID,
+    grid_has_empty_elev,
+    number_of_elements,
+)
+from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.schematic_tools import delete_redundant_levee_directions_np, generate_schematic_levees
+from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
+from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
+from .gui.dlg_evap_editor import EvapEditorDialog
+from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
-from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
-from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
+from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
+from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
-from .gui.dlg_schema2user import Schema2UserDialog
-from .gui.dlg_user2schema import User2SchemaDialog
-from .gui.dlg_ras_import import RasImportDialog
-from .gui.dlg_flopro import ExternalProgramFLO2D
-from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID, cellIDNumpyArray
-from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
-from urllib3.contrib import _securetransport
-
-from qgis.PyQt import QtCore
-from PyQt5.QtWidgets import QApplication
+from .layers import Layers
+from .user_communication import UserCommunication
 
 
 class Flo2D(object):
@@ -211,11 +217,10 @@ class Flo2D(object):
             action.setMenu(popup)
 
         if text == "Grid Info Tool":
-
             # action.setCheckable(True)
             # action.setChecked(False)
             pass
-            
+
         if status_tip is not None:
             action.setStatusTip(status_tip)
 
@@ -1958,10 +1963,9 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
-
     def activate_general_info_tool(self):
         self.canvas.setMapTool(self.info_tool)
-        self.info_tool.update_lyrs_list()       
+        self.info_tool.update_lyrs_list()
 
     @connection_required
     def activate_grid_info_tool(self):

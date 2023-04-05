@@ -3,16 +3,17 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2016 Lutra Consulting for FLO-2D
 
+import collections
+import math
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
 import sys
-import collections
-import math
-import warnings
 import traceback
+import warnings
 
 sys.path.append(os.path.dirname(__file__))
 from affine import Affine

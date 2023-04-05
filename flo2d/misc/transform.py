@@ -16,7 +16,6 @@ import math
 
 from affine import Affine
 
-
 IDENTITY = Affine.identity()
 GDAL_IDENTITY = IDENTITY.to_gdal()
 

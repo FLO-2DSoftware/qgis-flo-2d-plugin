@@ -7,12 +7,13 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from qgis.PyQt.QtCore import Qt, QModelIndex
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from .ui_utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
+from qgis.PyQt.QtCore import QModelIndex, Qt
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+
 from ..flo2dobjects import Evaporation
+from ..geopackage_utils import GeoPackageUtils
 from .plot_widget import PlotWidget
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("evaporation_editor")
 

@@ -8,14 +8,16 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-import numpy as np
 from collections import OrderedDict, defaultdict
-from itertools import zip_longest, chain, repeat
+from itertools import chain, repeat, zip_longest
 from operator import attrgetter
 from typing import Any
+
+import numpy as np
 from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
+
 from ..utils import Msge
 
 try:

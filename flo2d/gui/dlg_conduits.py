@@ -7,14 +7,15 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..utils import is_true
-from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QTableWidgetItem
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import is_true
+from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 uiDialog, qtBaseClass = load_ui("conduits")
 

@@ -3,26 +3,29 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import functools
+import time
+from collections import defaultdict
+
+from qgis.analysis import QgsZonalStatistics
+from qgis.core import NULL, QgsFeature, QgsFeatureRequest, QgsField, QgsGeometry, QgsVectorLayer, QgsWkbTypes
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
-from qgis.analysis import QgsZonalStatistics
-from collections import defaultdict
+
 from .grid_tools import (
     TINInterpolator,
-    spatial_index,
-    spatial_centroids_index,
+    gridRegionGenerator,
     poly2grid,
     poly2poly,
     polygons_statistics,
-    gridRegionGenerator,
+    spatial_centroids_index,
+    spatial_index,
 )
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
-import functools
-import time
 
 
 def timer(func):

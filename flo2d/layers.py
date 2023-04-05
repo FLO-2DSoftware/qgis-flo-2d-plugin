@@ -8,28 +8,28 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-from os.path import normpath
 import time
 from collections import OrderedDict
+from os.path import normpath
 
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
 from qgis.core import (
-    QgsProject,
-    QgsFeatureRequest,
-    QgsVectorLayer,
-    QgsRectangle,
-    QgsLayerTree,
-    QgsLayerTreeGroup,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
+    QgsFeatureRequest,
+    QgsLayerTree,
+    QgsLayerTreeGroup,
+    QgsProject,
+    QgsRectangle,
+    QgsVectorLayer,
 )
-
 from qgis.gui import QgsRubberBand
-from .utils import is_number, get_file_path
-from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
-from .user_communication import UserCommunication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication
+
+from .errors import Flo2dError, Flo2dLayerInvalid, Flo2dLayerNotFound, Flo2dNotString
+from .user_communication import UserCommunication
+from .utils import get_file_path, is_number
 
 
 class Layers(object):

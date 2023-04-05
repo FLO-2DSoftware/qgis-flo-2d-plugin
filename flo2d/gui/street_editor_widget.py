@@ -9,12 +9,14 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from qgis.PyQt.QtWidgets import QInputDialog
+
 from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtWidgets import QInputDialog
+
 from ..flo2d_tools.schematic_tools import schematize_streets
-from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 uiDialog, qtBaseClass = load_ui("street_editor")
 uiDialog_pop, qtBaseClass_pop = load_ui("street_global")
