@@ -867,15 +867,18 @@ class Flo2D(object):
             self.call_IO_methods_hdf5(calls, debug, *args)
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
+        self.f2g.parser.write_mode = "w"
         for call in calls:
             method = getattr(self.f2g, call)
             try:
                 method(*args)
+                self.f2g.parser.write_mode = "a"
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())
                 else:
                     raise
+        self.f2g.parser.write_mode = "w"
 
     def call_IO_methods_dat(self, calls, debug, *args):
         s = QSettings()
@@ -1865,7 +1868,7 @@ class Flo2D(object):
             self.f2g.set_parser(output_hdf5, get_cell_size=False)
             export_calls = [
                 "export_cont_toler",
-                # "export_mannings_n_topo",
+                "export_mannings_n_topo",
             ]
             try:
                 s = QSettings()

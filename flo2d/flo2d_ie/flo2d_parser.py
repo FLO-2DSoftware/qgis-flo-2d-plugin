@@ -9,9 +9,10 @@
 # of the License, or (at your option) any later version
 import os
 import numpy as np
-from functools import cached_property
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest, chain, repeat
+from operator import attrgetter
+from typing import Any
 from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
@@ -23,6 +24,27 @@ except ImportError:
     pass
 
 
+class HDF5Group:
+    def __init__(self, name: str, **datasets):
+        self.name = name
+        self.datasets = datasets
+
+    def create_dataset(self, dataset_name: str, data: Any = None, update: bool = True):
+        dataset = HDF5Dataset(name=dataset_name, data=data, group=self)
+        if update:
+            self.update_with_dataset(dataset)
+
+    def update_with_dataset(self, dataset):
+        self.datasets[dataset.name] = dataset
+
+
+class HDF5Dataset:
+    def __init__(self, name: str, data: Any = None, group: "HDF5Group" = None):
+        self.name = name
+        self.data = data
+        self.group = group
+
+
 class ParseHDF5:
     """
     Parser object for handling FLO-2D "HDF5" files.
@@ -31,6 +53,8 @@ class ParseHDF5:
     def __init__(self):
         self.project_dir = None
         self.hdf5_filepath = None
+        self.read_mode = "r"
+        self.write_mode = "w"
 
     def scan_project_dir(self, path):
         self.project_dir = os.path.dirname(path)
@@ -40,10 +64,10 @@ class ParseHDF5:
                 self.hdf5_filepath = os.path.join(self.project_dir, f)
                 break
 
-    @cached_property
-    def control_group_datasets(self):
+    @property
+    def control_group(self):
         group_name = "Control"
-        group_datasets = (
+        group_datasets = [
             "SIMUL",
             "TOUT",
             "LGPLOT",
@@ -90,55 +114,66 @@ class ParseHDF5:
             "COURCHAR_T",
             "TIME_ACCEL",
             "TOLGLOBAL",
-        )
-        return group_name, group_datasets
+        ]
+        group = HDF5Group(group_name)
+        for dataset_name in group_datasets:
+            group.create_dataset(dataset_name)
+        return group
 
-    @cached_property
-    def grid_group_datasets(self):
+    @property
+    def grid_group(self):
         group_name = "Grid"
-        group_datasets = ("GRIDCODE", "MANNING", "X", "Y", "Z")
-        return group_name, group_datasets
+        group_datasets = ["GRIDCODE", "MANNING", "X", "Y", "Z"]
+        group = HDF5Group(group_name)
+        for dataset_name in group_datasets:
+            group.create_dataset(dataset_name, [])
+        return group
 
-    @cached_property
-    def neighbors_group_datasets(self):
+    @property
+    def neighbors_group(self):
         group_name = "Neighbors"
-        group_datasets = tuple()
-        return group_name, group_datasets
+        group_datasets = []
+        group = HDF5Group(group_name)
+        for dataset_name in group_datasets:
+            group.create_dataset(dataset_name, [])
+        return group
 
-    @cached_property
-    def grouped_datasets(self):
-        grouped_datasets_list = [self.control_group_datasets, self.grid_group_datasets, self.neighbors_group_datasets]
+    @property
+    def groups(self):
+        grouped_datasets_list = [self.control_group, self.grid_group, self.neighbors_group]
         return grouped_datasets_list
 
+    @property
+    def groups_template(self):
+        groups_template_dict = {group.name: group for group in self.groups}
+        return groups_template_dict
+
     @staticmethod
-    def write_group_datasets(hdf5_file, group_name, group_datasets, **group_data):
-        group = hdf5_file.create_group(group_name)
-        for dataset_name in group_datasets:
-            dataset_data = group_data[dataset_name]
-            if dataset_data:
-                group.create_dataset(dataset_name, data=dataset_data, maxshape=(None,))
+    def write_group_datasets(hdf5_file, group):
+        hdf5_group = hdf5_file.create_group(group.name)
+        for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
+            hdf5_group.create_dataset(dataset.name, data=dataset.data)
 
-    def batch_write(self, **data):
-        with h5py.File(self.hdf5_filepath, "w") as f:
-            for group_name, group_datasets in self.grouped_datasets:
-                group_data = data[group_name]
-                if group_data:
-                    self.write_group_datasets(f, group_name, group_datasets, **group_data)
+    def batch_write(self, *groups):
+        with h5py.File(self.hdf5_filepath, self.write_mode) as f:
+            for group in groups:
+                self.write_group_datasets(f, group)
 
-    def write(self, dataset_data, dataset_name, group_name=None, write_mode="a"):
-        with h5py.File(self.hdf5_filepath, write_mode) as f:
-            if group_name:
+    def write(self, dataset):
+        with h5py.File(self.hdf5_filepath, self.write_mode) as f:
+            group = dataset.group
+            if group:
                 try:
-                    group = f[group_name]
+                    group = f[group.name]
                 except KeyError:
-                    group = f.create_group(group_name)
+                    group = f.create_group(group.name)
                 root = group
             else:
                 root = f
-            root.create_dataset(dataset_name, data=dataset_data)
+            root.create_dataset(dataset.name, data=dataset.data)
 
     def read(self, dataset_name, group_name=None, dataset_slice=()):
-        with h5py.File(self.hdf5_filepath, "r") as f:
+        with h5py.File(self.hdf5_filepath, self.read_mode) as f:
             if group_name:
                 dataset = f[group_name][dataset_name]
             else:
