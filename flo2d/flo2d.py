@@ -303,14 +303,14 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/import_gds.svg"),
+            os.path.join(self.plugin_dir, "img/import_hdf.svg"),
             text=self.tr("Import from HDF5"),
             callback=lambda: self.import_hdf5(),
             parent=self.iface.mainWindow(),
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/export_gds.svg"),
+            os.path.join(self.plugin_dir, "img/export_hdf.svg"),
             text=self.tr("Export to HDF5"),
             callback=lambda: self.export_hdf5(),
             parent=self.iface.mainWindow(),
