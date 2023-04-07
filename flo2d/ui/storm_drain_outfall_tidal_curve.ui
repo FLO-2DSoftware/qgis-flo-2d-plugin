@@ -197,7 +197,7 @@
       </size>
      </property>
      <property name="inputMethodHints">
-      <set>Qt::ImhTime</set>
+      <set>Qt::ImhNone</set>
      </property>
      <property name="editTriggers">
       <set>QAbstractItemView::AllEditTriggers</set>
@@ -207,6 +207,9 @@
      </property>
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>false</bool>
      </property>
      <property name="rowCount">
       <number>0</number>

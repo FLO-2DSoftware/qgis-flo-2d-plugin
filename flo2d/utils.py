@@ -32,7 +32,29 @@ class NumericDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(NumericDelegate, self).createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[0-9]+.?[0-9]{,4}")
+            reg_ex = QRegExp("[0-9]+.4[0-9]")
+            validator = QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor
+    
+    # def paint(self, painter, option, index):
+    #     value = index.model().data(index, Qt.EditRole)
+    #     try:
+    #         number = float(value)
+    #         # painter.drawText(option.rect, Qt.AlignLeft, f"{value:.4f}")
+    #         painter.drawText(option.rect, Qt.AlignLeft, "{5f.{}4f}".format(number))
+    #     except :
+    #         QStyledItemDelegate.paint(self, painter, option, index)
+
+    # def displayText(self,value,locale):
+    #     return f"{value:.4f}"
+    
+    
+class NumericDelegate2(QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        editor = super(NumericDelegate2, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[0-9]?[0-9]*[.][0-5][0-9]")
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
@@ -41,10 +63,10 @@ class NumericDelegate(QStyledItemDelegate):
         value = index.model().data(index, Qt.EditRole)
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 5))
+            painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 2))
         except :
-            QStyledItemDelegate.paint(self, painter, option, index)
-             
+            QStyledItemDelegate.paint(self, painter, option, index)   
+                      
 class HourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(HourDelegate, self).createEditor(parent, option, index)
@@ -92,6 +114,27 @@ class TimeSeriesDelegate(QStyledItemDelegate):
                 validator = QRegExpValidator(reg_ex, editor)
                 editor.setValidator(validator)            
         return editor
+
+class FloatDelegate(QItemDelegate):
+    def __init__(self, decimals, parent=None):
+        QItemDelegate.__init__(self, parent=parent)
+        self.nDecimals = decimals
+
+    def createEditor(self, parent, option, index):
+        editor = super(FloatDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[^a-zA-Z!·$%&/()=?¿><;:_¡^*][0-9]*\.?[0-9]*")
+            validator = QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor
+    
+    def paint(self, painter, option, index):
+        value = index.model().data(index, Qt.EditRole)
+        try:
+            number = float(value)
+            painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals ))
+        except :
+            QItemDelegate.paint(self, painter, option, index)
 
 def get_BC_Border():
     global BC_BORDER
