@@ -60,14 +60,6 @@ class ParseHDF5:
         self.read_mode = "r"
         self.write_mode = "w"
 
-    def scan_project_dir(self, path):
-        self.project_dir = os.path.dirname(path)
-        for f in os.listdir(self.project_dir):
-            fname = f.lower()
-            if fname.endswith(".hdf5"):
-                self.hdf5_filepath = os.path.join(self.project_dir, f)
-                break
-
     @property
     def control_group(self):
         group_name = "Control"
@@ -158,7 +150,7 @@ class ParseHDF5:
         for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
             hdf5_group.create_dataset(dataset.name, data=dataset.data)
 
-    def batch_write(self, *groups):
+    def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
             for group in groups:
                 self.write_group_datasets(f, group)
@@ -176,14 +168,32 @@ class ParseHDF5:
                 root = f
             root.create_dataset(dataset.name, data=dataset.data)
 
+    def read_groups(self, *group_names):
+        groups_list = []
+        with h5py.File(self.hdf5_filepath, self.read_mode) as f:
+            for group_name in group_names:
+                try:
+                    group = f[group_name]
+                except KeyError:
+                    continue
+                group_hdf5 = HDF5Group(group_name)
+                for dataset_name, dataset in group.items():
+                    group_hdf5.create_dataset(dataset_name, dataset[()])
+                groups_list.append(group_hdf5)
+        return groups_list
+
     def read(self, dataset_name, group_name=None, dataset_slice=()):
         with h5py.File(self.hdf5_filepath, self.read_mode) as f:
-            if group_name:
-                dataset = f[group_name][dataset_name]
-            else:
-                dataset = f[dataset_name]
+            try:
+                if group_name:
+                    dataset = f[group_name][dataset_name]
+                else:
+                    dataset = f[dataset_name]
+            except KeyError:
+                return None
             data = dataset[dataset_slice]
-            return data
+            hdf5_dataset = HDF5Dataset(dataset_name, data=data)
+            return hdf5_dataset
 
     def calculate_cellsize(self):
         cell_size = 0
@@ -193,13 +203,15 @@ class ParseHDF5:
             return 0
         if not os.path.getsize(self.hdf5_filepath) > 0:
             return 0
-        x_data = self.read("X", "Grid")
+        x_dataset = self.read("X", "Grid")
+        x_data = x_dataset.data
         first_x = x_data[0]
         dx_coords = (abs(first_x - x) for x in x_data)
         try:
             size = min(dx for dx in dx_coords if dx > 0)
         except ValueError:
-            y_data = self.read("Y", "Grid")
+            y_dataset = self.read("Y", "Grid")
+            y_data = y_dataset.data
             first_y = y_data[0]
             dy_coords = (abs(first_y - y) for y in y_data)
             size = min(dy for dy in dy_coords if dy > 0)

@@ -70,6 +70,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         return True
 
     def import_cont_toler(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_cont_toler_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_cont_toler_hdf5()
+
+    def import_cont_toler_dat(self):
         sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
         mann = self.get_cont_par("MANNING")
         if not mann:
@@ -88,7 +94,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
         sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
         self.batch_execute(sql)
 
+    def import_cont_toler_hdf5(self):
+        sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
+        mann = self.get_cont_par("MANNING")
+        control_group = self.parser.read_groups("Control")[0]
+        mann_dataset = control_group.datasets["MANNING"]
+        man_from_dataset = mann_dataset.data[0]
+        if not mann and not man_from_dataset:
+            mann = "0.05"
+        else:
+            pass
+        self.clear_tables("cont")
+        for option, dataset in control_group.datasets.items():
+            option_value = dataset.data[0]
+            sql += [(option, option_value, self.PARAMETER_DESCRIPTION[option])]
+        sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
+        sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+        self.batch_execute(sql)
+
     def import_mannings_n_topo(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_mannings_n_topo_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_mannings_n_topo_hdf5()
+
+    def import_mannings_n_topo_dat(self):
         try:
             sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
 
@@ -115,7 +145,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040521.1154: importing TOP.DAT!.\n", e)
+            self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
+
+    def import_mannings_n_topo_hdf5(self):
+        try:
+            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+
+            self.clear_tables("grid")
+            grid_group = self.parser.read_groups("Grid")[0]
+
+            c = 0
+            grid_code_list = grid_group.datasets["GRIDCODE"].data
+            manning_list = grid_group.datasets["MANNING"].data
+            elevation_list = grid_group.datasets["Z"].data
+            x_list = grid_group.datasets["X"].data
+            y_list = grid_group.datasets["Y"].data
+            for grid_code, manning, z, x, y in zip(grid_code_list, manning_list, elevation_list, x_list, y_list):
+                if c < self.chunksize:
+                    g = self.build_square_xy(x, y, self.cell_size)
+                    row_value = (
+                        str(grid_code),
+                        str(manning),
+                        str(z),
+                        g,
+                    )
+                    sql.append(row_value)
+                    c += 1
+                else:
+                    self.batch_execute(sql)
+                    c = 0
+            if len(sql) > 2:
+                self.batch_execute(sql)
+            else:
+                pass
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
 
     def import_inflow(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
@@ -1342,7 +1408,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for option_name, option_value in self.execute(sql).fetchall():
                 dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
                 cont_group.create_dataset(option_name, dataset_data)
-            self.parser.batch_write(cont_group)
+            self.parser.write_groups(cont_group)
             return True
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -1480,7 +1546,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 grid_group.datasets["Z"].data.append(elev)
                 grid_group.datasets["X"].data.append(x)
                 grid_group.datasets["Y"].data.append(y)
-            self.parser.batch_write(grid_group)
+            self.parser.write_groups(grid_group)
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
