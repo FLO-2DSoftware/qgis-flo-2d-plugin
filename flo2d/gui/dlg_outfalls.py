@@ -756,7 +756,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                         a = "0" + a                                
                                     data = a + ":" + b 
                                 else:
-                                    data = "00:00"                           
+                                    data = "00:00"  
+                            if col == 2: 
+                                data = str(data) 
                             item = QTableWidgetItem()     
                             item.setData(Qt.DisplayRole, data)
                             self.outfall_time_series_tblw.setItem(row_number, col, item)
