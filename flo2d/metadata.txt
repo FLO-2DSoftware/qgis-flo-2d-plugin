@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.98
+version=0.10.99
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,8 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.99
+  - Time series for Outfalls and Inlets input validation for dates as MM/DD/YYYY and hours as HH:MM.
  <p>0.10.98
   - Outfalls tidal curve hours as float number (not HH.MM as before).
  <p>0.10.97
