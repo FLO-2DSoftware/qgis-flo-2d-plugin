@@ -323,8 +323,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         tidal_curve_name = self.tidal_curve_cbo.currentText()
         dlg = OutfallTidalCurveDialog(self.iface, tidal_curve_name)
         while True:
-            save = dlg.exec_()
-            if save:
+            ok = dlg.exec_()
+            if ok:
                 if dlg.values_ok:
                     dlg.save_tidal_curve()
                     tidal_curve_name = dlg.get_tidal_name()
@@ -943,7 +943,9 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.outflow_tidal_curve_tblw.itemChanged.connect(self.otc_tblw_changed)
         self.add_tidal_data_btn.clicked.connect(self.add_tidal) 
         self.delete_tidal_data_btn.clicked.connect(self.delete_tidal) 
-
+        self.load_tidal_btn.clicked.connect(self.load_tidal_file)
+        self.save_tidal_btn.clicked.connect(self.save_tidal_file)
+        
         self.populate_tidal_curve_dialog()
 
     def setup_connection(self):
@@ -1086,7 +1088,68 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.outflow_tidal_curve_tblw.removeRow(self.outflow_tidal_curve_tblw.currentRow())      
         self.outflow_tidal_curve_tblw.selectRow(0)
         self.outflow_tidal_curve_tblw.setFocus()
-                                          
+        
+    def load_tidal_file(self):
+        self.uc.clear_bar_messages()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        tidal_file, __ = QFileDialog.getOpenFileName(
+            None, "Select file with tidal data to load", directory=last_dir, filter="Text files (*.txt *.TXT*);;All files(*.*)"
+        )
+        if not tidal_file:
+            return
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(tidal_file))
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        # Load file into table:
+        
+        QApplication.restoreOverrideCursor()
+             
+    def save_tidal_file(self):   
+        self.uc.clear_bar_messages()
+
+        if self.outflow_tidal_curve_tblw.rowCount() == 0:
+            self.uc.bar_warn("Tidal table is empty. There is nothing to save!", 2)
+            return
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Tidal Curve description required!", 2)
+            return
+        
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        
+        tidal_file, __ = QFileDialog.getSaveFileName(
+                        None, "Save tidal table as file...", directory=last_dir, filter="Text files (*.txt *.TXT*);;All files(*.*)"
+                        )
+
+        if not tidal_file:
+            return
+
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(tidal_file))
+        
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        with open(tidal_file, "w") as tfile:
+            tfile.write("EPASWMM Curve Data\n")
+            tfile.write(self.description_le.text() + "\n")
+            
+            for row in range(0, self.outflow_tidal_curve_tblw.rowCount()):
+                hour = self.outflow_tidal_curve_tblw.item(row, 0)
+                if hour:
+                    hour = hour.text()
+                else:
+                    hour = "  "    
+                    
+                stage = self.outflow_tidal_curve_tblw.item(row, 1)
+                if stage:
+                    stage = stage.text()
+                else:               
+                    stage = "  "
+                tfile.write(hour + "     " + stage + "\n" )  
+        
+        QApplication.restoreOverrideCursor()
+        self.uc.bar_info("Tidal curve data saved as " + tidal_file, 4)
+                                  
 class TidalHourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(TidalHourDelegate, self).createEditor(parent, option, index)
