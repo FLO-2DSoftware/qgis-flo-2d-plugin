@@ -16,7 +16,7 @@ from ..utils import (is_true, float_or_zero, int_or_zero, is_number,
         copy_tablewidget_selection)
 from qgis.core import QgsFeatureRequest
 from PyQt5 import QtCore
-from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
+from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime, pyqtSignal
 from qgis.PyQt.QtWidgets import (
     QInputDialog, 
      QTableWidgetItem, 
@@ -913,6 +913,10 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
 
 uiDialog, qtBaseClass = load_ui("storm_drain_outfall_tidal_curve")
 class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
+    before_paste = pyqtSignal()
+    after_paste = pyqtSignal()
+    after_delete = pyqtSignal()    
+    
     def __init__(self, iface, tidal_curve_name):
         qtBaseClass.__init__(self)
 
@@ -1173,7 +1177,35 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         copy_tablewidget_selection(self.outfall_tidal_curve_tblw)
 
     def paste_from_clipboard(self):
-        pass 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.before_paste.emit() 
+               
+        paste_str = QApplication.clipboard().text()
+        rows = paste_str.split("\n")
+        num_rows = len(rows) - 1
+        if num_rows > 0:
+            num_cols = rows[0].count("\t") + 1
+            if num_cols > 2:
+                self.uc.bar_info("Too many columns (" + str(num_cols) + ") to paste!")
+            elif num_cols < 2:
+                self.uc.bar_info("Two columns needed. Only (" + str(num_cols) + ") given!")
+            else: 
+                for row in rows:
+                    if row:
+                        data = row.split()
+                        j = self.outfall_tidal_curve_tblw.rowCount()
+                        self.outfall_tidal_curve_tblw.insertRow(j)
+                        hour, stage = data[0], data[1]                       
+                        self.outfall_tidal_curve_tblw.setItem(j, 0, QTableWidgetItem(hour))           
+                        self.outfall_tidal_curve_tblw.setItem(j, 1, QTableWidgetItem(stage))
+                self.outfall_tidal_curve_tblw.selectRow(self.outfall_tidal_curve_tblw.rowCount()-1)
+                self.outfall_tidal_curve_tblw.setFocus()                                         
+        else:
+           self.uc.bar_info("No complete rows with two columns to paste!") 
+        
+        self.after_paste.emit()
+        QApplication.restoreOverrideCursor()        
+
                                                              
 class TidalHourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
