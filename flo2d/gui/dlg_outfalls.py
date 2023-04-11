@@ -12,7 +12,8 @@ import datetime
 from random import randrange
 from ..utils import (is_true, float_or_zero, int_or_zero, is_number, 
         NumericDelegate, NumericDelegate2, HourDelegate, 
-        TimeSeriesDelegate, FloatDelegate)
+        TimeSeriesDelegate, FloatDelegate,
+        copy_tablewidget_selection)
 from qgis.core import QgsFeatureRequest
 from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
@@ -929,14 +930,7 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         set_icon(self.delete_tidal_data_btn, "remove.svg") 
                
         self.setup_connection()
-
-        # Delegate for column 0 (Hours).
-        # delegate2 = NumericDelegate2(self.outfall_tidal_curve_tblw)
-        # self.outfall_tidal_curve_tblw.setItemDelegateForColumn(0, delegate2)
         
-        # Delegate for column 1 (Stage).
-        # delegate = NumericDelegate(self.outfall_tidal_curve_tblw)
-        # self.outfall_tidal_curve_tblw.setItemDelegateForColumn(1, delegate) 
         self.outfall_tidal_curve_tblw.setItemDelegate(FloatDelegate(3, self.outfall_tidal_curve_tblw))
    
         self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save_tidal)   
@@ -945,6 +939,8 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         self.delete_tidal_data_btn.clicked.connect(self.delete_tidal) 
         self.load_tidal_btn.clicked.connect(self.load_tidal_file)
         self.save_tidal_btn.clicked.connect(self.save_tidal_file)
+        self.copy_btn.clicked.connect(self.copy_to_clipboard)
+        self.paste_btn.clicked.connect(self.paste_from_clipboard)
         
         self.populate_tidal_curve_dialog()
 
@@ -1172,7 +1168,13 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         
         QApplication.restoreOverrideCursor()
         self.uc.bar_info("Tidal curve data saved as " + tidal_file, 4)
-                                  
+
+    def copy_to_clipboard(self):
+        copy_tablewidget_selection(self.outfall_tidal_curve_tblw)
+
+    def paste_from_clipboard(self):
+        pass 
+                                                             
 class TidalHourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(TidalHourDelegate, self).createEditor(parent, option, index)
