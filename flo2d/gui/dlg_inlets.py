@@ -8,32 +8,34 @@
 # of the License, or (at your option) any later version
 
 import os
+from _ast import Or
 from datetime import datetime
-from qgis.PyQt.QtCore import Qt, QSettings, NULL, QRegExp, QDateTime, QDate, QTime
-from qgis.core import QgsFeatureRequest
-from ..flo2dobjects import InletRatingTable
-from qgis.PyQt.QtWidgets import (
-    QInputDialog, 
-     QTableWidgetItem, 
-     QDialogButtonBox, 
-     QApplication, 
-     QFileDialog, 
-     QHeaderView,
-     QStyledItemDelegate,
-     QLineEdit
-    )
-from qgis.PyQt.QtGui import QColor, QRegExpValidator, QDoubleValidator
+from math import isnan
 
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtCore import NULL, QDate, QDateTime, QRegExp, QSettings, Qt, QTime
+from qgis.PyQt.QtGui import QColor, QDoubleValidator, QRegExpValidator
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialogButtonBox,
+    QFileDialog,
+    QHeaderView,
+    QInputDialog,
+    QLineEdit,
+    QStyledItemDelegate,
+    QTableWidgetItem,
+)
+
+from ..flo2dobjects import InletRatingTable
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import m_fdata, float_or_zero, int_or_zero, is_number, is_true, NumericDelegate, TimeSeriesDelegate
-from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
-
-from math import isnan
-from _ast import Or
+from ..utils import NumericDelegate, TimeSeriesDelegate, float_or_zero, int_or_zero, is_number, is_true, m_fdata
+from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 uiDialog, qtBaseClass = load_ui("inlets")
+
+
 class InletNodesDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -44,15 +46,15 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "")
         self.con = None
         self.gutils = None
-        
+
         self.inlets_buttonBox.button(QDialogButtonBox.Save).setText(
             "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
         )
         set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.external_inflow_btn, "external_inflow.svg")
         set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
-        set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")        
-        
+        set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
+
         self.save_this_inlet_btn.setVisible(False)
         self.inletRT = None
         self.plot = plot
@@ -66,10 +68,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.rt_previous_index = -999
 
         self.setup_connection()
-        
+
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        self.grid_count = self.gutils.count('grid', field="fid")
-        
+        self.grid_count = self.gutils.count("grid", field="fid")
+
         self.inlet_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_inlet_in_table)
         self.find_inlet_cell_btn.clicked.connect(self.find_inlet)
         self.zoom_in_inlet_btn.clicked.connect(self.zoom_in_inlet_cell)
@@ -115,7 +117,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.populate_rtables()
 
     def populate_inlets(self):
-
         qry = """SELECT
                         name, 
                         grid, 
@@ -150,31 +151,30 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         existing_rts = []
         duplicates = []
         wrong_type = ""
-        
+
         for row_number, row_data in enumerate(rows):
             name = row_data[0].strip()
             typ = str(row_data[7]).strip()
-            
-            if (name[0:2] in  ["I1", "I2",  "I3", "I4", "I5"]):
+
+            if name[0:2] in ["I1", "I2", "I3", "I4", "I5"]:
                 if name[1] != typ:
                     if len(wrong_type) < 1500:
-                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1]  + ".\n"      
+                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1] + ".\n"
             if name[0:2] == "IM":
                 if name[2] != typ:
                     if len(wrong_type) < 1500:
-                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2]  + ".\n"                  
-                    
+                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
+
             #
-            # if not () or 
+            # if not () or
             #         (name()[1] == "M" and name()[2] == "5"):
             self.inlets_tblw.insertRow(row_number)
             for cell, data in enumerate(row_data):
-
                 item = QTableWidgetItem()
                 if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
                     # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                    item.setFlags(item.flags() &  ~Qt.ItemIsEditable)                   
-                
+                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+
                 # item.setData(Qt.DisplayRole, data)
                 # Fill the list of inlet names:
                 if cell == 0:
@@ -225,16 +225,18 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         if data != "":
                             fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
                             if not fid_rt:
-                                fid_c = self.gutils.execute("SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)).fetchone()
-                                if not fid_c:                                
-                                    no_rt +=  data + "\t   for inlet   " + inlet + "\n"
+                                fid_c = self.gutils.execute(
+                                    "SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)
+                                ).fetchone()
+                                if not fid_c:
+                                    no_rt += data + "\t   for inlet   " + inlet + "\n"
                                     # data = ""
                                 if data in existing_rts:
                                     if data not in duplicates:
                                         duplicates.append(data)
                                 else:
-                                    existing_rts.append(data)                                    
-                                    
+                                    existing_rts.append(data)
+
                             # if data in existing_rts:
                             #     if data not in duplicates:
                             #         duplicates.append(data)
@@ -247,8 +249,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         if no_rt != "":
             self.uc.show_info(
-                "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n"
-                + no_rt
+                "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n" + no_rt
             )
 
         if duplicates:
@@ -256,15 +257,16 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             for d in duplicates:
                 txt += "\n" + d + ""
             self.uc.show_info(
-                "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n" + txt
+                "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
+                + txt
             )
 
         # if wrong_type:
         #     self.uc.show_info(
         #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
         #     )
-        
-        QApplication.setOverrideCursor(Qt.WaitCursor)    
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.inlet_cbo.model().sort(0)
         self.inlet_cbo.setCurrentIndex(0)
 
@@ -273,15 +275,15 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.rt_previous_index = self.inlet_rating_table_cbo.currentIndex()
 
         self.enable_external_inflow()
-        
+
         self.block = False
-        
+
         self.highlight_inlet_cell(self.grid_element_le.text())
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.inlets_tblw_cell_clicked(logicalIndex, 0)
 
-    def set_header(self):     
+    def set_header(self):
         self.inlets_tblw.setHorizontalHeaderLabels(
             [
                 "Name",  # INP  and FLO-2D. SWMMFLO.DAT: SWMM_JT
@@ -302,7 +304,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Time for Clogging",  # FLO-2D. SDCLOGGING.DAT
                 "Rat.Table/Culvert Eq.",
             ]
-        )        
+        )
 
     def invert_connect(self):
         self.uc.show_info("Connection!")
@@ -362,7 +364,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex() + 1)
         self.inlets_tblw.setItem(row, 7, item)
 
-        if self.inlet_drain_type_cbo.currentIndex() + 1 in [4,5]:
+        if self.inlet_drain_type_cbo.currentIndex() + 1 in [4, 5]:
             self.label_17.setEnabled(True)
             # self.inlet_rating_table_cbo.setEnabled(True)
             # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
@@ -430,7 +432,6 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlet_rating_table_cbo_currentIndexChanged(self.inlet_rating_table_cbo)
 
     def inlet_rating_table_cbo_currentIndexChanged(self, widget):
-
         if not self.block:
             # Check if rating table is already assigned:
             if self.inlet_rating_table_cbo.currentText() != "":
@@ -495,16 +496,14 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
         val = self.inlets_tblw.item(row, 7).text().strip()
         # Check that type and name are consistent:
-        if ( (name[0:2] in ["I1","I2","I3","I4","I5"] and name[1] != val) or
-             (name[0:3] == "IM5"  and name[2] != val) 
-            ):
-            self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!") 
+        if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
+            self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
         index = int(val) - 1 if val != "" else 0
         index = 5 if index == 4 else index
         if index > 5:
-            self.uc.bar_warn("Inlet " + name + " has incorrect drain type!") 
+            self.uc.bar_warn("Inlet " + name + " has incorrect drain type!")
         # index = 5 if index > 5 else 0 if index < 0 else index
-        
+
         self.inlet_drain_type_cbo.setCurrentIndex(index)
 
         self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
@@ -520,13 +519,13 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         rt_name = rt_name if rt_name is not None else ""
         idx = self.inlet_rating_table_cbo.findText(rt_name)
         self.inlet_rating_table_cbo.setCurrentIndex(idx)
-        
+
         self.enable_external_inflow()
 
         self.block = False
-        
+
         self.highlight_inlet_cell(self.grid_element_le.text())
-        
+
         QApplication.restoreOverrideCursor()
 
     def fill_individual_controls_with_current_inlet_in_table(self):
@@ -582,7 +581,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             else:
                 self.inlet_rating_table_cbo.setCurrentIndex(-1)
 
-            self.enable_external_inflow() 
+            self.enable_external_inflow()
 
             self.highlight_inlet_cell(self.grid_element_le.text())
             QApplication.restoreOverrideCursor()
@@ -597,7 +596,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     inlet = self.inlet_to_find_le.text()
                     if inlet != "":
                         indx = self.inlet_cbo.findText(inlet)
-                        if  indx != -1:
+                        if indx != -1:
                             self.inlet_cbo.setCurrentIndex(indx)
                         else:
                             self.uc.bar_warn("WARNING 071121.0746: inlet " + str(inlet) + " not found.")
@@ -630,9 +629,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 221219.1139: Cell " + str(cell) + " not found.")
                     self.lyrs.clear_rubber()
-                    
+
             QApplication.restoreOverrideCursor()
-            
+
         except ValueError:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 221219.1134: Cell " + str(cell) + "is not valid.")
@@ -958,15 +957,18 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             if inflow:
                 baseline = inflow[0]
                 pattern_name = inflow[1]
-                time_series_name = inflow[2]         
+                time_series_name = inflow[2]
                 if baseline == 0.0 and time_series_name == "":
-                   self.external_inflow_chbox.setChecked(False) 
+                    self.external_inflow_chbox.setChecked(False)
                 else:
-                   self.external_inflow_chbox.setChecked(True)     
-            
+                    self.external_inflow_chbox.setChecked(True)
+
             self.uc.bar_info("Storm Drain external inflow saved for inlet " + self.inlet_cbo.currentText())
 
+
 uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")
+
+
 class ExternalInflowsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, node):
         qtBaseClass.__init__(self)
@@ -981,7 +983,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         self.swmm_select_pattern_btn.clicked.connect(self.select_inflow_pattern)
         self.swmm_select_time_series_btn.clicked.connect(self.select_time_series)
         self.external_inflows_buttonBox.accepted.connect(self.save_external_inflow_variables)
-        self.swmm_inflow_baseline_le.setValidator(QDoubleValidator(0, 100, 2) );
+        self.swmm_inflow_baseline_le.setValidator(QDoubleValidator(0, 100, 2))
 
         self.setup_connection()
         self.populate_external_inflows()
@@ -1000,7 +1002,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
         if names:
             for name in names:
                 self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
-        self.swmm_inflow_pattern_cbo.addItem("")                
+        self.swmm_inflow_pattern_cbo.addItem("")
 
         time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
         names = self.gutils.execute(time_names_sql).fetchall()
@@ -1008,7 +1010,7 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
             for name in names:
                 self.swmm_time_series_cbo.addItem(name[0].strip())
         self.swmm_time_series_cbo.addItem("")
-        
+
         inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
         if inflow:
@@ -1028,14 +1030,14 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                 self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
 
             if time_series_name == '""':
-                time_series_name =""
-                
+                time_series_name = ""
+
             idx = self.swmm_time_series_cbo.findText(time_series_name)
-            if idx == - 1:
-                time_series_name ="" 
-                idx = self.swmm_time_series_cbo.findText(time_series_name)                 
+            if idx == -1:
+                time_series_name = ""
+                idx = self.swmm_time_series_cbo.findText(time_series_name)
             self.swmm_time_series_cbo.setCurrentIndex(idx)
-                
+
             self.swmm_inflow_scale_factor_dbox.setValue(scale_factor)
 
     def select_inflow_pattern(self):
@@ -1078,23 +1080,23 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
                             for name in names:
                                 self.swmm_time_series_cbo.addItem(name[0])
                             self.swmm_time_series_cbo.addItem("")
-            
+
                             idx = self.swmm_time_series_cbo.findText(time_series_name)
-                            self.swmm_time_series_cbo.setCurrentIndex(idx)                    
+                            self.swmm_time_series_cbo.setCurrentIndex(idx)
 
                         # self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
                         break
                     else:
-                       break 
+                        break
             else:
                 break
-            
+
     def save_external_inflow_variables(self):
         """
         Save changes to external inflows variables.
         """
 
-        baseline = float(self.swmm_inflow_baseline_le.text()) if self.swmm_inflow_baseline_le.text() != '' else 0.0
+        baseline = float(self.swmm_inflow_baseline_le.text()) if self.swmm_inflow_baseline_le.text() != "" else 0.0
         pattern = self.swmm_inflow_pattern_cbo.currentText()
         file = self.swmm_time_series_cbo.currentText()
         scale = self.swmm_inflow_scale_factor_dbox.value()
@@ -1127,6 +1129,8 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_pattern")
+
+
 class InflowPatternDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, pattern_name):
         qtBaseClass.__init__(self)
@@ -1211,6 +1215,8 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_time_series")
+
+
 class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, time_series_name):
         qtBaseClass.__init__(self)
@@ -1222,22 +1228,22 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = None
         self.gutils = None
-        
+
         self.values_ok = False
         self.loading = True
         set_icon(self.add_time_data_btn, "add.svg")
-        set_icon(self.delete_time_data_btn, "remove.svg") 
-               
+        set_icon(self.delete_time_data_btn, "remove.svg")
+
         self.setup_connection()
 
         delegate = TimeSeriesDelegate(self.inflow_time_series_tblw)
         self.inflow_time_series_tblw.setItemDelegate(delegate)
-        
+
         self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
-        self.select_time_series_btn.clicked.connect(self.select_time_series_file)   
+        self.select_time_series_btn.clicked.connect(self.select_time_series_file)
         self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
-        self.add_time_data_btn.clicked.connect(self.add_time) 
-        self.delete_time_data_btn.clicked.connect(self.delete_time) 
+        self.add_time_data_btn.clicked.connect(self.add_time)
+        self.delete_time_data_btn.clicked.connect(self.delete_time)
 
         self.populate_time_series_dialog()
 
@@ -1262,14 +1268,14 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                 self.description_le.setText(row[2])
                 self.file_le.setText(row[3])
                 external = True if is_true(row[4]) else False
-                
-                if external:    
+
+                if external:
                     self.use_table_radio.setChecked(True)
-                    self.external_radio.setChecked(False)                          
+                    self.external_radio.setChecked(False)
                 else:
                     self.external_radio.setChecked(True)
                     self.use_table_radio.setChecked(False)
-                    
+
                 data_qry = """SELECT
                                 date, 
                                 time, 
@@ -1283,39 +1289,39 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                         for col, data in enumerate(row_data):
                             if col == 0:
                                 if data:
-                                    a,b,c = data.split("/")
+                                    a, b, c = data.split("/")
                                     if len(a) < 2:
-                                        a = "0"*(2-len(a)) + a
+                                        a = "0" * (2 - len(a)) + a
                                     if len(b) < 2:
-                                        b = "0"*(2-len(b)) + b
+                                        b = "0" * (2 - len(b)) + b
                                     if len(c) < 4:
-                                        c = "0"*(4-len(c))+ c                                    
-                                    data = a + "/" + b + "/" + c  
+                                        c = "0" * (4 - len(c)) + c
+                                    data = a + "/" + b + "/" + c
                                 else:
-                                    data = "00/00/0000"     
+                                    data = "00/00/0000"
                             if col == 1:
                                 if data:
-                                    a,b = data.split(":")
+                                    a, b = data.split(":")
                                     if len(a) == 1:
-                                        a = "0" + a                                
-                                    data = a + ":" + b 
+                                        a = "0" + a
+                                    data = a + ":" + b
                                 else:
-                                    data = "00:00" 
-                            if col == 2: 
-                                data = str(data)                       
-                            item = QTableWidgetItem()     
+                                    data = "00:00"
+                            if col == 2:
+                                data = str(data)
+                            item = QTableWidgetItem()
                             item.setData(Qt.DisplayRole, data)
-                            self.inflow_time_series_tblw.setItem(row_number, col, item)                             
-        
-                    self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)                    
+                            self.inflow_time_series_tblw.setItem(row_number, col, item)
+
+                    self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)
             else:
                 self.name_le.setText(self.time_series_name)
                 self.external_radio.setChecked(True)
                 self.use_table_radio.setChecked(False)
-        
-        QApplication.restoreOverrideCursor()  
-        self.loading = False 
-            
+
+        QApplication.restoreOverrideCursor()
+        self.loading = False
+
     def select_time_series_file(self):
         self.uc.clear_bar_messages()
 
@@ -1341,7 +1347,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
             self.time_series_name = ""
             self.values_ok = False
 
-        elif ' ' in self.name_le.text():
+        elif " " in self.name_le.text():
             self.uc.bar_warn("Spaces not allowed in Time Series name!", 2)
             self.time_series_name = ""
             self.values_ok = False
@@ -1349,18 +1355,18 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         elif self.description_le.text() == "":
             self.uc.bar_warn("Time Series description required!", 2)
             self.values_ok = False
-            
-        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0: 
-                self.uc.bar_warn("Time Series table can't be empty!", 2)
-                self.values_ok = False          
-            
-        elif self.external_radio.isChecked() and  self.file_le.text() == "":
+
+        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0:
+            self.uc.bar_warn("Time Series table can't be empty!", 2)
+            self.values_ok = False
+
+        elif self.external_radio.isChecked() and self.file_le.text() == "":
             self.uc.bar_warn("Data file name required!", 2)
             self.values_ok = False
         else:
             self.values_ok = True
-    
-    def save_time_series(self):      
+
+    def save_time_series(self):
         delete_sql = "DELETE FROM swmm_time_series WHERE time_series_name = ?"
         self.gutils.execute(delete_sql, (self.name_le.text(),))
         insert_sql = "INSERT INTO swmm_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
@@ -1370,30 +1376,30 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                 self.name_le.text(),
                 self.description_le.text(),
                 self.file_le.text(),
-                "True" if self.use_table_radio.isChecked()else "False"
+                "True" if self.use_table_radio.isChecked() else "False",
             ),
         )
 
         delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
-        
+
         insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
         for row in range(0, self.inflow_time_series_tblw.rowCount()):
             date = self.inflow_time_series_tblw.item(row, 0)
             if date:
                 date = date.text()
-                                         
+
             time = self.inflow_time_series_tblw.item(row, 1)
             if time:
                 time = time.text()
-                
+
             value = self.inflow_time_series_tblw.item(row, 2)
             if value:
                 value = value.text()
-                
+
             insert_data_sql += [(self.name_le.text(), date, time, value)]
-        self.gutils.batch_execute(insert_data_sql)   
-            
+        self.gutils.batch_execute(insert_data_sql)
+
         self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
         self.time_series_name = self.name_le.text()
         self.close()
@@ -1403,55 +1409,53 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
     def inflow_time_series_tblw_clicked(self):
         self.uc.show_info("Clicked")
-        
-    def time_series_model_changed(self, i,j):
-        self.uc.show_info("Changed") 
-        
+
+    def time_series_model_changed(self, i, j):
+        self.uc.show_info("Changed")
+
     def ts_tblw_changed(self, Qitem):
         if not self.loading:
-            text = Qitem.text() 
+            text = Qitem.text()
             if "/" in text:
-                a,b,c = text.split("/")
+                a, b, c = text.split("/")
                 if len(a) < 2:
-                    a = "0"*(2-len(a)) + a
+                    a = "0" * (2 - len(a)) + a
                 if len(b) < 2:
-                    b = "0"*(2-len(b)) + b
+                    b = "0" * (2 - len(b)) + b
                 if len(c) < 4:
-                    c = "0"*(4-len(c))+ c                                    
-                text = a + "/" + b + "/" + c  
+                    c = "0" * (4 - len(c)) + c
+                text = a + "/" + b + "/" + c
             if ":" in text:
-                a,b = text.split(":")
+                a, b = text.split(":")
                 if len(a) == 1:
-                    a = "0" + a                                
-                text = a + ":" + b                   
-            Qitem.setText(text)          
-    
+                    a = "0" + a
+                text = a + ":" + b
+            Qitem.setText(text)
+
     def add_time(self):
-        self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())  
+        self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())
         row_number = self.inflow_time_series_tblw.rowCount() - 1
-        
+
         item = QTableWidgetItem()
-        d= QDate.currentDate()
-        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year()) 
-        item.setData(Qt.DisplayRole, d)                         
-        self.inflow_time_series_tblw.setItem(row_number, 0, item)   
-        
+        d = QDate.currentDate()
+        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
+        item.setData(Qt.DisplayRole, d)
+        self.inflow_time_series_tblw.setItem(row_number, 0, item)
+
         item = QTableWidgetItem()
         t = QTime.currentTime()
         t = str(t.hour()) + ":" + str(t.minute())
-        item.setData(Qt.DisplayRole, t)                         
-        self.inflow_time_series_tblw.setItem(row_number, 1, item) 
-        
+        item.setData(Qt.DisplayRole, t)
+        self.inflow_time_series_tblw.setItem(row_number, 1, item)
+
         item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")                         
-        self.inflow_time_series_tblw.setItem(row_number, 2, item) 
-       
+        item.setData(Qt.DisplayRole, "0.0")
+        self.inflow_time_series_tblw.setItem(row_number, 2, item)
+
         self.inflow_time_series_tblw.selectRow(row_number)
-        self.inflow_time_series_tblw.setFocus()                   
+        self.inflow_time_series_tblw.setFocus()
 
     def delete_time(self):
-        self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())      
+        self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())
         self.inflow_time_series_tblw.selectRow(0)
-        self.inflow_time_series_tblw.setFocus()                                         
- 
-                          
+        self.inflow_time_series_tblw.setFocus()
