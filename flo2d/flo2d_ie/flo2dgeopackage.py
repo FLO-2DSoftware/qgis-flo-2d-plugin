@@ -1417,6 +1417,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_cont_toler_dat(self, outdir):
         try:
+            parser = ParseDAT()
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
             if options["IFLOODWAY"] == "0":
@@ -1451,7 +1452,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             toler = os.path.join(outdir, "TOLER.DAT")
             rline = " {0}"
             with open(cont, "w") as c:
-                for row in self.parser.cont_rows:
+                for row in parser.cont_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -1498,7 +1499,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         pass
 
             with open(toler, "w") as t:
-                for row in self.parser.toler_rows:
+                for row in parser.toler_rows:
                     lst = ""
                     for o in row:
                         if o not in options:
