@@ -11,17 +11,17 @@ import os
 import time
 from itertools import chain
 
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.PyQt.QtWidgets import QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QFileDialog, QApplication
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QFileDialog, QLineEdit, QSpinBox
 
-from ..flo2d_ie.flo2d_parser import ParseDAT
-from .ui_utils import load_ui
 from ..errors import Flo2dQueryResultNull
-from ..geopackage_utils import GeoPackageUtils, database_disconnect, database_connect, database_create
+from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..geopackage_utils import GeoPackageUtils, database_connect, database_create, database_disconnect
 from ..user_communication import UserCommunication
 from ..utils import is_number
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
 
@@ -232,7 +232,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.gutils.set_cont_par("METRIC", 0)
 
         self.set_other_global_defaults(con)
-        
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
         # assign the CRS to all geometry columns
         sql = "UPDATE gpkg_geometry_columns SET srs_id = ?"
@@ -250,7 +250,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("{0:.3f} seconds => loading layers".format(time.time() - start_time))
 
         self.iface.actionPan().trigger()
-        
+
     def connect(self, gpkg_path=None):
         """
         Connect to FLO-2D model database (GeoPackage).
@@ -294,7 +294,20 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def set_other_global_defaults(self, con):
         qry = """INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES (?,?,?,?,?,?,?,?,?);"""
-        con.execute(qry, ("0", "3", "1", "1", "0.04", "1", "0", "0", "0.04",),)
+        con.execute(
+            qry,
+            (
+                "0",
+                "3",
+                "1",
+                "1",
+                "0.04",
+                "1",
+                "0",
+                "0",
+                "0.04",
+            ),
+        )
 
     def write(self):
         for name, wid in self.widget_map.items():

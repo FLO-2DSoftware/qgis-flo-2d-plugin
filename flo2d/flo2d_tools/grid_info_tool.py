@@ -12,13 +12,13 @@
 # pylint: disable=no-self-use
 
 import os
-from qgis.PyQt.QtCore import pyqtSignal, Qt
-from qgis.PyQt.QtGui import QCursor, QPixmap
+
 from qgis.gui import QgsMapToolIdentify
+from qgis.PyQt.QtCore import Qt, pyqtSignal
+from qgis.PyQt.QtGui import QCursor, QPixmap
 
 
 class GridInfoTool(QgsMapToolIdentify):
-
     grid_elem_picked = pyqtSignal(int)
 
     def __init__(self, uc, canvas, lyrs):
@@ -41,7 +41,7 @@ class GridInfoTool(QgsMapToolIdentify):
             else:
                 self.grid_elem_picked.emit(-1)
         except Exception:
-            self.uc.bar_error("ERROR 100721.1942: is the grid defined?") 
+            self.uc.bar_error("ERROR 100721.1942: is the grid defined?")
 
     def activate(self):
         self.canvas.setCursor(Qt.CrossCursor)

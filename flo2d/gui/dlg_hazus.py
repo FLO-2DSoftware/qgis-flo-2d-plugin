@@ -9,15 +9,17 @@
 # of the License, or (at your option) any later version
 
 import traceback
+
 from qgis.core import QgsWkbTypes
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog
-from .ui_utils import load_ui, set_icon
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..gui.dlg_sampling_elev import SamplingElevDialog
-from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
+
 from ..flo2d_tools.grid_tools import grid_has_empty_elev
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("hazus")
 
@@ -50,7 +52,7 @@ class HazusDialog(qtBaseClass, uiDialog):
         self.buildings_cbo.currentIndexChanged.connect(self.populate_lists_with_buildigns_attributes)
         self.buildings_layer_cbo.currentIndexChanged.connect(self.populate_statistics_fields)
         self.buildings_raster_elevation_btn.clicked.connect(self.raster_elevation)
-#         self.buildings_xyz_elevation_btn.clicked.connect(self.xyz_elevation)
+        #         self.buildings_xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.buildings_adjust_factor_from_polygons_btn.clicked.connect(self.eval_buildings_adjustment_factor)
 
         # Buildings ground elevations group:
@@ -172,17 +174,17 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1627: Probing grid elevation failed! Please check your raster layer.")
 
-#     def xyz_elevation(self):
-#         if self.gutils.is_table_empty("grid"):
-#             self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
-#             return
-#         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
-#         ok = dlg.exec_()
-#         if ok:
-#             pass
-#         else:
-#             return
-        
+    #     def xyz_elevation(self):
+    #         if self.gutils.is_table_empty("grid"):
+    #             self.uc.bar_warn("WARNING 060319.1628: There is no grid! Please create it before running tool.")
+    #             return
+    #         dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
+    #         ok = dlg.exec_()
+    #         if ok:
+    #             pass
+    #         else:
+    #             return
+
     def get_cell_size(self):
         """
         Get cell size from:
@@ -352,7 +354,6 @@ class HazusDialog(qtBaseClass, uiDialog):
             pass
 
     def average_grid_elevation_interception(self):
-
         del_statistics = "DELETE FROM buildings_stats;"
         insert_water_elev_statistics = """INSERT INTO buildings_stats 
                                     (   building_ID, 
@@ -622,7 +623,6 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 150618.0235: Error while computing buildings statistics!", e)
 
     def compute_and_show_buildings_statistics(self):
-
         del_statistics = "DELETE FROM buildings_stats;"
         insert_statistics = """INSERT INTO buildings_stats 
                                     (   building_ID, 
@@ -682,7 +682,6 @@ class HazusDialog(qtBaseClass, uiDialog):
                 flow_max = flow
 
                 while i < n_features:
-
                     building = next(building_fts)
 
                     i += 1

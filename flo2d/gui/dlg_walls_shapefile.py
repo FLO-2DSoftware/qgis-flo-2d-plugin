@@ -7,20 +7,20 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import datetime
 import sys
-from qgis.PyQt.QtWidgets import QDialogButtonBox
-from qgis.core import QgsProject, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFeatureRequest, QgsRectangle
+
+from qgis.core import QgsFeature, QgsFeatureRequest, QgsGeometry, QgsProject, QgsRectangle, QgsWkbTypes
 from qgis.gui import QgsFieldComboBox
-from qgis.PyQt.QtWidgets import QApplication, QComboBox
-from qgis.PyQt.QtCore import Qt, QSettings
-from ..flo2d_tools.grid_tools import fid_from_grid, adjacent_grid_elevations, gridRegionGenerator
-from .ui_utils import load_ui
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
+
+from ..flo2d_tools.grid_tools import adjacent_grid_elevations, fid_from_grid, gridRegionGenerator
+from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
-from ..flo2d_tools.schema2user_tools import remove_features
 from ..utils import float_or_zero
-
-import datetime
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("walls_shapefile")
 
@@ -40,7 +40,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
         self.current_user_lines = self.user_levee_lines_lyr.featureCount()
         self.current_lyr = None
         self.saveSelected = None
-        
+
         # try to get grid layer
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
@@ -72,11 +72,9 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.ask_append = True
 
     def setup_layers_comboxes(self):
-
         try:
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
-
                 if l.geometryType() == QgsWkbTypes.LineGeometry:
                     if l.featureCount() > 0:
                         self.walls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
@@ -166,9 +164,10 @@ class WallsShapefile(qtBaseClass, uiDialog):
     def accept(self):
         if (
             self.crest_elevation_FieldCbo.currentText() == ""
-            or self.name_FieldCbo.currentText() == "" # not strictly required
-            #or self.correction_FieldCbo.currentText() == "" # not strictly required
-            or (self.failure_groupBox.isChecked()
+            or self.name_FieldCbo.currentText() == ""  # not strictly required
+            # or self.correction_FieldCbo.currentText() == "" # not strictly required
+            or (
+                self.failure_groupBox.isChecked()
                 and (
                     self.failure_height_FieldCbo.currentText() == ""
                     or self.duration_FieldCbo.currentText() == ""
@@ -176,10 +175,9 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     or self.maximum_width_FieldCbo.currentText() == ""
                     or self.vertical_fail_rate_FieldCbo.currentText() == ""
                     or self.horizontal_fail_rate_FieldCbo.currentText() == ""
-                    )
                 )
+            )
         ):
-
             QApplication.restoreOverrideCursor()
             self.uc.show_info("All fields must be selected!")
             return
@@ -190,9 +188,9 @@ class WallsShapefile(qtBaseClass, uiDialog):
     def create_user_levees_from_walls_shapefile(self):
         self.uc.clear_bar_messages()
 
-#        if self.gutils.is_table_empty("user_model_boundary"):
-#            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-#            return
+        #        if self.gutils.is_table_empty("user_model_boundary"):
+        #            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+        #            return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -211,7 +209,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
         else:
             # Load walls from shapefile:
             try:
-
                 walls_sf = self.walls_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(walls_sf, self.lyrs.group).layer()
 
@@ -258,8 +255,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
                                 return
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                starttime=datetime.datetime.now()
-                
+                starttime = datetime.datetime.now()
+
                 extent_request = QgsFeatureRequest()
                 extent_request.setDestinationCrs(self.grid_lyr.crs(), QgsProject.instance().transformContext())
                 extent_request.setFilterRect(self.grid_lyr.extent())
@@ -280,7 +277,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 feat_to_add = []
 
                 for wall_feat in wall_features:
-
                     item = wall_feat[self.crest_elevation_FieldCbo.currentText()]
                     elev = float(item) if item and item != "" else None
 
@@ -387,7 +383,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 self.user_levee_lines_lyr.removeSelection()
 
                 QApplication.restoreOverrideCursor()
-                print ("User levee lines added in %s seconds" % (datetime.datetime.now() - starttime).total_seconds())
+                print("User levee lines added in %s seconds" % (datetime.datetime.now() - starttime).total_seconds())
                 if self.current_user_lines < 0:
                     info = (
                         "Creation of User Levee Lines from walls finished!\n\n"

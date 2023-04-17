@@ -8,25 +8,26 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import functools
+import os
+
 # QgsMapToolIdentify required those functions to be self
 # pylint: disable=no-self-use
 from collections import OrderedDict
-import functools
-import os
-from qgis.PyQt.QtCore import pyqtSignal, QPoint
-from qgis.PyQt.QtWidgets import QMenu, QAction
-from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
+
 from qgis.core import QgsFeatureRequest
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
+from qgis.PyQt.QtCore import QPoint, pyqtSignal
+from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
+from qgis.PyQt.QtWidgets import QAction, QMenu
 
 
 class ChannelProfile(QgsMapToolIdentify):
-
     feature_picked = pyqtSignal(str, int)  # Defines a new own signal 'feature_picked' with 2 arguments of
     # type str and int, respectively, that will be 'emmited' on the signal.
     # See self.feature_picked.emit(table, fid), where 'table' will be the table ´chan' and
     # 'fid' the id fid of the segment selected.
-    
+
     def __init__(self, canvas, lyrs):
         self.canvas = canvas
         self.lyrs = lyrs

@@ -9,19 +9,21 @@
 # of the License, or (at your option) any later version
 
 import traceback
-from math import isnan
-from itertools import chain
 from collections import OrderedDict
-from qgis.PyQt.QtCore import pyqtSignal, pyqtSlot, Qt, QSettings
-from qgis.PyQt.QtWidgets import QCheckBox, QDoubleSpinBox, QInputDialog, QApplication
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
+from itertools import chain
+from math import isnan
+
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
-from .ui_utils import load_ui, center_canvas, set_icon, switch_to_selected
-from ..utils import m_fdata
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog
+
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import m_fdata
+from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
 uiDialog, qtBaseClass = load_ui("infil_editor")
 
@@ -134,7 +136,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.con.commit()
 
     def show_global_params(self):
-
         self.iglobal.populate_infilglobals()
 
         ok = self.iglobal.exec_()
@@ -197,7 +198,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     if isinstance(obj, QCheckBox):
                         obj.setChecked(bool(val))
                     else:
-
                         obj.setValue(val)
             self.iglobal.save_imethod()
 
@@ -482,18 +482,12 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             grid_params = inf_calc.green_ampt_infiltration()
 
             if grid_params:
-
                 # apply effective impervious area layer
                 if self.eff_lyr is not None:
-                    eff_values = poly2poly_geos(
-                        self.grid_lyr,
-                        self.eff_lyr,
-                        None,
-                        "eff"
-                    )
+                    eff_values = poly2poly_geos(self.grid_lyr, self.eff_lyr, None, "eff")
                     try:
                         for gid, values in eff_values:
-                            fact = 1-sum((1-row[0]*0.01)*row[-1] for row in values)
+                            fact = 1 - sum((1 - row[0] * 0.01) * row[-1] for row in values)
                             grid_params[gid]["rtimpf"] *= fact
                     except Exception:
                         pass
@@ -597,7 +591,6 @@ uiDialog_glob, qtBaseClass_glob = load_ui("infil_global")
 
 
 class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
-
     global_changed = pyqtSignal(int)
 
     def __init__(self, iface, lyrs):
@@ -621,7 +614,6 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         self.populate_infilglobals()
 
     def populate_infilglobals(self):
-
         qry = """SELECT infmethod, abstr, sati, satf, poros, soild, infchan, hydcall, soilall,
                 hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya FROM infil"""
 
@@ -781,7 +773,10 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
             cur.executemany(qry, data_rows)
             self.con.commit()
 
+
 uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
+
+
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
         qtBaseClass_green.__init__(self)
@@ -891,7 +886,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_land_rtimpl") is None else s.value("ga_land_rtimpl"))
             self.rtimpl_cbo.setCurrentIndex(val)
 
+
 uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
+
+
 class SCSDialog(uiDialog_scs, qtBaseClass_scs):
     def __init__(self, iface, lyrs):
         qtBaseClass_scs.__init__(self)

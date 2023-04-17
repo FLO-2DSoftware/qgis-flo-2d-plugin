@@ -9,11 +9,14 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import QgsWkbTypes
-from .ui_utils import load_ui
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("sampling_manning")
+
+
 class SamplingManningDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -61,4 +64,3 @@ class SamplingManningDialog(qtBaseClass, uiDialog):
             self.srcFieldCbo.clear()
             self.srcLayerCbo.clear()
             self.allGridElemsFrame.setEnabled(False)
-            

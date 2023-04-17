@@ -3,15 +3,15 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_channel_geometry import ChannelGeometryDialog
+from ..user_communication import UserCommunication
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from .ui_utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-
-from ..gui.dlg_channel_geometry import ChannelGeometryDialog
 
 uiDialog, qtBaseClass = load_ui("channels_editor")
 
@@ -34,21 +34,13 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.initial_flow_for_all_dbox.valueChanged.connect(
-                self.update_initial_flow_for_all
-            )
+            self.initial_flow_for_all_dbox.valueChanged.connect(self.update_initial_flow_for_all)
             self.max_froude_number_dbox.valueChanged.connect(self.update_froude)
             self.roughness_adjust_coeff_dbox.valueChanged.connect(self.update_roughness)
             self.transport_eq_cbo.currentIndexChanged.connect(self.update_transport_eq)
-            self.initial_flow_elements_grp.toggled.connect(
-                self.fill_starting_and_ending_water_elevations
-            )
-            self.view_channel_geometry_btn.clicked.connect(
-                self.show_channel_segments_dialog
-            )
-            self.channel_segment_cbo.currentIndexChanged.connect(
-                self.show_channel_segment_dependencies
-            )
+            self.initial_flow_elements_grp.toggled.connect(self.fill_starting_and_ending_water_elevations)
+            self.view_channel_geometry_btn.clicked.connect(self.show_channel_segments_dialog)
+            self.channel_segment_cbo.currentIndexChanged.connect(self.show_channel_segment_dependencies)
             self.first_element_box.valueChanged.connect(self.update_first)
             self.starting_water_elev_dbox.valueChanged.connect(self.update_starting)
             self.last_element_box.valueChanged.connect(self.update_last)
@@ -70,9 +62,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
                 equation = row[5] - 1 if row[5] is not None else 0
                 self.transport_eq_cbo.setCurrentIndex(equation)
 
-        qry_chan_wsel = (
-            "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
-        )
+        qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
         if not rows_chan_wsel:
             return
@@ -89,9 +79,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
     def show_channel_segment_dependencies(self):
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn(
-                "Schematized Channel Segments (left bank) Layer is empty!."
-            )
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
@@ -123,9 +111,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         """
         # See if there are channels:
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn(
-                "Schematized Channel Segments (left bank) Layer is empty!."
-            )
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
             return
 
         dlg_channels = ChannelGeometryDialog(self.iface, self.lyrs)

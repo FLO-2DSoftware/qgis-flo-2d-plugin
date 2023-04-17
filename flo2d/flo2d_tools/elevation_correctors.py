@@ -3,35 +3,47 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import functools
+import time
+from collections import defaultdict
+
+from qgis.analysis import QgsZonalStatistics
+from qgis.core import NULL, QgsFeature, QgsFeatureRequest, QgsField, QgsGeometry, QgsVectorLayer, QgsWkbTypes
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from qgis.PyQt.QtCore import QVariant
-from qgis.core import QgsFeatureRequest, QgsField, QgsFeature, QgsGeometry, QgsVectorLayer, QgsWkbTypes, NULL
-from qgis.analysis import QgsZonalStatistics
-from collections import defaultdict
-from .grid_tools import TINInterpolator, spatial_index, spatial_centroids_index, poly2grid, poly2poly, polygons_statistics, gridRegionGenerator
+
+from .grid_tools import (
+    TINInterpolator,
+    gridRegionGenerator,
+    poly2grid,
+    poly2poly,
+    polygons_statistics,
+    spatial_centroids_index,
+    spatial_index,
+)
 from .schematic_tools import get_intervals, interpolate_along_line, polys2levees
-import functools
-import time
 
 
 def timer(func):
     """Print the runtime of the decorated function"""
+
     @functools.wraps(func)
     def wrapper_timer(*args, **kwargs):
-        start_time = time.perf_counter()    # 1
+        start_time = time.perf_counter()  # 1
         value = func(*args, **kwargs)
-        end_time = time.perf_counter()      # 2
-        run_time = end_time - start_time    # 3
+        end_time = time.perf_counter()  # 2
+        run_time = end_time - start_time  # 3
         print(f"Finished {func.__name__!r} in {run_time:.4f} secs")
         return value
+
     return wrapper_timer
 
 
 class ElevationCorrector(object):
-
     ELEVATION_FIELD = "elev"
     CORRECTION_FIELD = "correction"
     VIRTUAL_SUM = "elev_correction"
@@ -154,7 +166,7 @@ class LeveesElevation(ElevationCorrector):
     def elevation_from_points(self, search_buffer):
         cur = self.gutils.con.cursor()
         for feat in self.user_levees.getFeatures():
-            rect_bounds = feat.geometry().buffer(search_buffer,5).boundingBox()
+            rect_bounds = feat.geometry().buffer(search_buffer, 5).boundingBox()
             user_point_features = self.user_points.getFeatures(QgsFeatureRequest().setFilterRect(rect_bounds))
             try:
                 qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
@@ -172,23 +184,27 @@ class LeveesElevation(ElevationCorrector):
 
     def elevation_from_lines(self, regionReq=None):
         cur = self.gutils.con.cursor()
-        # use moving window        
+        # use moving window
         qryIndex = "CREATE INDEX if not exists leveeDataUser_Line_FID  ON levee_data (user_line_fid);"
         cur.execute(qryIndex)
         self.gutils.con.commit()
-        
+
         grid = self.lyrs.data["grid"]["qlyr"]
         qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
         qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
-        
-        for regionReqSwatch in gridRegionGenerator(self.gutils, grid, regionPadding=0, showProgress=True) if regionReq is None else [regionReq]:
+
+        for regionReqSwatch in (
+            gridRegionGenerator(self.gutils, grid, regionPadding=0, showProgress=True)
+            if regionReq is None
+            else [regionReq]
+        ):
             feats = []
             featsElevNullPlusCorrect = []
             for feat in self.user_levees.getFeatures(regionReqSwatch):
                 fid = feat["fid"]
                 elev = feat[self.ELEVATION_FIELD]
                 cor = feat[self.CORRECTION_FIELD]
-                
+
                 if elev == NULL and cor == NULL:
                     continue
                 elif elev != NULL and cor != NULL:
@@ -210,7 +226,7 @@ class LeveesElevation(ElevationCorrector):
                 cur.executemany(qryElevNullPlusCorrect, featsElevNullPlusCorrect)
             if len(feats) > 0 or len(featsElevNullPlusCorrect) > 0:
                 self.gutils.con.commit()
-                
+
     @timer
     def elevation_from_polygons(self):
         qry_values = []
@@ -264,7 +280,6 @@ class GridElevation(ElevationCorrector):
             self.ELEVATION_FIELD,
             self.CORRECTION_FIELD,
         ):
-
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:
@@ -469,7 +484,6 @@ class ExternalElevation(ElevationCorrector):
         fids = {}
         qry_values = []
         for fid, el, cor, gid in poly_list:
-
             el_null = el == NULL
             cor_null = cor == NULL
             if not el_null:

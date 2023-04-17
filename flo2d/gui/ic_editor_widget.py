@@ -8,13 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt.QtWidgets import QInputDialog
 from qgis.core import QgsFeatureRequest
-from .ui_utils import load_ui, center_canvas, set_icon
+from qgis.PyQt.QtWidgets import QInputDialog
+
 from ..flo2dobjects import Reservoir
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number
+from .ui_utils import center_canvas, load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("ic_editor")
 
@@ -175,22 +176,26 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                             grid AS g, user_reservoirs AS ur
                         WHERE
                             ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ur.geom));"""
-    
+
             self.gutils.execute("DELETE FROM reservoirs;")
             self.gutils.execute(ins_qry)
             self.repaint_reservoirs()
             self.uc.show_info(str(user_rsvs) + " user reservoirs schematized!")
         else:
-            sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0] 
+            sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0]
             if sch_rsvs > 0:
-                if self.uc.question("There aren't any user reservoirs." +
-                                 "\nBut there are " + str(sch_rsvs) + " schematic reservoirs." +
-                                 "\n\nDo you want to delete them?"):
+                if self.uc.question(
+                    "There aren't any user reservoirs."
+                    + "\nBut there are "
+                    + str(sch_rsvs)
+                    + " schematic reservoirs."
+                    + "\n\nDo you want to delete them?"
+                ):
                     self.gutils.execute("DELETE FROM reservoirs;")
                     self.repaint_reservoirs()
-            else:           
-                self.uc.show_info("There aren't any user reservoirs!")  
-                                                 
+            else:
+                self.uc.show_info("There aren't any user reservoirs!")
+
     def save_res(self):
         self.reservoir.wsel = self.res_ini_sbox.value()
         self.reservoir.set_row()

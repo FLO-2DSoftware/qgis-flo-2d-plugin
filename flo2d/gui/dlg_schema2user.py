@@ -9,17 +9,19 @@
 # of the License, or (at your option) any later version
 
 import traceback
+
+from qgis.PyQt.QtWidgets import QApplication
+
 from ..flo2d_tools.schema2user_tools import (
-    SchemaBCConverter,
     Schema1DConverter,
-    SchemaLeveesConverter,
+    SchemaBCConverter,
     SchemaFPXSECConverter,
     SchemaGridConverter,
+    SchemaLeveesConverter,
     SchemaSWMMConverter,
 )
-from .ui_utils import load_ui
-from qgis.PyQt.QtWidgets import QApplication
 from ..geopackage_utils import GeoPackageUtils
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("schema2user")
 

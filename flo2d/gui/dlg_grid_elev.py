@@ -8,10 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..flo2d_tools.elevation_correctors import GridElevation, ExternalElevation
-from .ui_utils import load_ui
-from qgis.core import QgsWkbTypes, QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsWkbTypes
+
+from ..flo2d_tools.elevation_correctors import ExternalElevation, GridElevation
 from ..geopackage_utils import GeoPackageUtils
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("grid_elevation")
 

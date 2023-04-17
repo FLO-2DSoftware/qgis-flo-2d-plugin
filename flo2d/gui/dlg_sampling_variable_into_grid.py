@@ -9,13 +9,15 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import QgsWkbTypes
-from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtWidgets import QDialogButtonBox
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("sampling_variable_into_grid")
+
+
 class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -40,7 +42,6 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
         Filter layer combo for points and connect field cbo.
         """
         try:
-
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PointGeometry:
@@ -67,7 +68,6 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
             pass
 
     def populate_fields_cbo(self, idx):
-
         uri = self.points_cbo.itemData(idx)
         lyr_id = self.lyrs.layer_exists_in_group(uri)
         self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()

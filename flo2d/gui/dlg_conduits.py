@@ -7,16 +7,19 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from ..utils import is_true
-from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem, QDialogButtonBox
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QTableWidgetItem
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import is_true
+from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 uiDialog, qtBaseClass = load_ui("conduits")
+
+
 class ConduitsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -28,15 +31,14 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
 
-
         set_icon(self.find_conduit_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_conduit_btn, "zoom_in.svg")
-        set_icon(self.zoom_out_conduit_btn, "zoom_out.svg")  
+        set_icon(self.zoom_out_conduit_btn, "zoom_out.svg")
 
         self.find_conduit_btn.clicked.connect(self.find_conduit)
         self.zoom_in_conduit_btn.clicked.connect(self.zoom_in_conduit)
         self.zoom_out_conduit_btn.clicked.connect(self.zoom_out_conduit)
-        
+
         self.conduits_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Conduits' User Layer")
         self.conduit_name_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_conduit_in_table)
         self.conduits_buttonBox.accepted.connect(self.save_conduits)
@@ -119,7 +121,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, shape)
-        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)     
+        item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.conduits_tblw.setItem(row, 5, item)
 
     def barrels_sbox_valueChanged(self):
@@ -128,8 +130,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
     def barrels_sbox_editingFinished(self):
         if self.barrels_sbox.value() == 0:
             self.uc.bar_warn("Number of barrels can't be zero. Default is 1")
-            self.barrels_sbox.setValue(1)       
-
+            self.barrels_sbox.setValue(1)
 
     def max_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.max_depth_dbox, 7)
@@ -176,15 +177,15 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, widget.value())
-        if col in (0,1,2,5):
-            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)        
+        if col in (0, 1, 2, 5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.conduits_tblw.setItem(row, col, item)
 
     def checkbox_valueChanged(self, widget, col):
         row = self.conduit_name_cbo.currentIndex()
         item = QTableWidgetItem()
-        if col in (0,1,2,5):
-            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)          
+        if col in (0, 1, 2, 5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.conduits_tblw.setItem(row, col, item)
         self.conduits_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
@@ -193,8 +194,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         item = QTableWidgetItem()
         data = widget.currentText()
         item.setData(Qt.EditRole, data)
-        if col in (0,1,2,5):
-            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)          
+        if col in (0, 1, 2, 5):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.conduits_tblw.setItem(row, col, item)
 
     def conduits_tblw_cell_clicked(self, row, column):
@@ -242,10 +243,10 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.average_losses_dbox.setValue(float(self.conduits_tblw.item(row, 17).text()))
             self.flap_gate_chbox.setChecked(True if self.conduits_tblw.item(row, 18).text() == "True" else False)
 
-            self.highlight_conduit(self.conduit_name_cbo.currentText())   
-            
+            self.highlight_conduit(self.conduit_name_cbo.currentText())
+
             QApplication.restoreOverrideCursor()
-            
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0707: assignment of value failed!.\n", e)
@@ -350,11 +351,11 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
 
                     if element > 0:  # For this row omit fid number
-                        if element in (1,2,3,6):
+                        if element in (1, 2, 3, 6):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.conduits_tblw.setItem(row_number, element - 1, item)
-                        
-            self.highlight_conduit(self.conduit_name_cbo.currentText())                        
+
+            self.highlight_conduit(self.conduit_name_cbo.currentText())
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -453,11 +454,11 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                 self.flap_gate_chbox.setChecked(
                     True if item.text() == "True" or item.text() == "True" or item.text() == "1" else False
                 )
-                
-            self.highlight_conduit(self.conduit_name_cbo.currentText()) 
-            
+
+            self.highlight_conduit(self.conduit_name_cbo.currentText())
+
             QApplication.restoreOverrideCursor()
-          
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 200618.0631: assignment of value failed!.\n", e)
@@ -470,7 +471,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                     conduit = self.conduit_to_find_le.text()
                     if conduit != "":
                         indx = self.conduit_name_cbo.findText(conduit)
-                        if  indx != -1:
+                        if indx != -1:
                             self.conduit_name_cbo.setCurrentIndex(indx)
                         else:
                             self.uc.bar_warn("WARNING 091121.0746: conduit " + str(conduit) + " not found.")
@@ -487,7 +488,9 @@ class ConduitsDialog(qtBaseClass, uiDialog):
         try:
             if self.conduits_lyr is not None:
                 if conduit != "":
-                    fid = self.gutils.execute("SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (conduit,)).fetchone()
+                    fid = self.gutils.execute(
+                        "SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (conduit,)
+                    ).fetchone()
                     self.lyrs.show_feat_rubber(self.conduits_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.conduits_lyr.getFeatures(QgsFeatureRequest(fid[0])))
                     x, y = feat.geometry().centroid().asPoint()
@@ -497,9 +500,9 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 091121.1139: conduit " + str(conduit) + " not found.")
                     self.lyrs.clear_rubber()
-                    
+
             QApplication.restoreOverrideCursor()
-                    
+
         except ValueError:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 091121.1134: conduit " + str(conduit) + " is not valid.")

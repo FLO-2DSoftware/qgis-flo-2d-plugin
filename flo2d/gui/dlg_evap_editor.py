@@ -7,12 +7,13 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from qgis.PyQt.QtCore import Qt, QModelIndex
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
-from .ui_utils import load_ui
-from ..geopackage_utils import GeoPackageUtils
+from qgis.PyQt.QtCore import QModelIndex, Qt
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
+
 from ..flo2dobjects import Evaporation
+from ..geopackage_utils import GeoPackageUtils
 from .plot_widget import PlotWidget
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("evaporation_editor")
 
@@ -88,12 +89,8 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.monthlyEvapTView.resizeColumnsToContents()
         self.monthly_evap_model = model
         index = self.monthlyEvapTView.model().index(0, 0, QModelIndex())
-        self.monthlyEvapTView.selectionModel().select(
-            index, self.monthlyEvapTView.selectionModel().Select
-        )
-        self.monthlyEvapTView.selectionModel().selectionChanged.connect(
-            self.populate_hourly
-        )
+        self.monthlyEvapTView.selectionModel().select(index, self.monthlyEvapTView.selectionModel().Select)
+        self.monthlyEvapTView.selectionModel().selectionChanged.connect(self.populate_hourly)
         self.populate_hourly()
 
     def populate_hourly(self):
@@ -104,10 +101,7 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         model = QStandardItemModel()
         model.setHorizontalHeaderLabels(["Hour", "Percentage"])
         for row in hourly:
-            items = [
-                QStandardItem(str(x)) if x is not None else QStandardItem("")
-                for x in row
-            ]
+            items = [QStandardItem(str(x)) if x is not None else QStandardItem("") for x in row]
             model.appendRow(items)
         self.hourlyEvapTView.setModel(model)
         self.hourlyEvapTView.resizeColumnsToContents()

@@ -8,65 +8,69 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
+import cProfile
+import io
+
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
+import pstats
 import sys
 import time
 import traceback
-
-import cProfile, pstats, io
+from datetime import datetime
 from pstats import SortKey
 
-from qgis.PyQt.QtCore import QSettings, QCoreApplication, QTranslator, qVersion, Qt, QUrl, QSize
-from qgis.PyQt.QtGui import QIcon, QDesktopServices, QCursor, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QFileDialog, QApplication, qApp, QMessageBox, QSpacerItem, QSizePolicy, QMenu
-from qgis.core import QgsProject, QgsWkbTypes, NULL
-from qgis.gui import QgsProjectionSelectionWidget, QgsDockWidget
-from datetime import datetime
+from PyQt5.QtWidgets import QApplication
+from qgis.core import NULL, QgsProject, QgsWkbTypes
+from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QSize, Qt, QTranslator, QUrl, qVersion
+from qgis.PyQt.QtGui import QCursor, QDesktopServices, QIcon, QPixmap
+from qgis.PyQt.QtWidgets import QAction, QApplication, QFileDialog, QMenu, QMessageBox, QSizePolicy, QSpacerItem, qApp
+from urllib3.contrib import _securetransport
 
-from .layers import Layers
-from .user_communication import UserCommunication
-from .geopackage_utils import connection_required, database_disconnect, GeoPackageUtils
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from .flo2d_tools.grid_info_tool import GridInfoTool
-from .flo2d_tools.info_tool import InfoTool
 from .flo2d_tools.channel_profile_tool import ChannelProfile
-from .flo2d_tools.grid_tools import grid_has_empty_elev
-from .flo2d_tools.schematic_tools import generate_schematic_levees, delete_redundant_levee_directions_np
-from .flo2d_tools.flopro_tools import FLOPROExecutor, TailingsDamBreachExecutor, MapperExecutor, ProgramExecutor
+from .flo2d_tools.flopro_tools import FLOPROExecutor, MapperExecutor, ProgramExecutor, TailingsDamBreachExecutor
+from .flo2d_tools.grid_info_tool import GridInfoTool
+from .flo2d_tools.grid_tools import (
+    add_col_and_row_fields,
+    assign_col_row_indexes_to_grid,
+    cellIDNumpyArray,
+    dirID,
+    grid_has_empty_elev,
+    number_of_elements,
+)
+from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.schematic_tools import delete_redundant_levee_directions_np, generate_schematic_levees
+from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
+from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
+from .gui.dlg_evap_editor import EvapEditorDialog
+from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
-from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
-from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
+from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
+from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
+from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
-from .gui.dlg_schema2user import Schema2UserDialog
-from .gui.dlg_user2schema import User2SchemaDialog
-from .gui.dlg_ras_import import RasImportDialog
-from .gui.dlg_flopro import ExternalProgramFLO2D
-from .gui.dlg_components import ComponentsDialog
-from .flo2d_tools.grid_tools import dirID, cellIDNumpyArray
-from .flo2d_tools.grid_tools import dirID, assign_col_row_indexes_to_grid, number_of_elements, add_col_and_row_fields
-from urllib3.contrib import _securetransport
+from .layers import Layers
+from .user_communication import UserCommunication
 
-from qgis.PyQt import QtCore
-from PyQt5.QtWidgets import QApplication
 
 class Flo2D(object):
     def __init__(self, iface):
-        
-        
         self.pr = cProfile.Profile()
         self.pr.enable()
-        
-        
+
         self.iface = iface
         self.iface.f2d = {}
         self.plugin_dir = os.path.dirname(__file__)
@@ -109,17 +113,14 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
-          
 
         # if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
         #     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
         #
         # if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
         #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-        # else: 
-        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, False) 
-
-
+        # else:
+        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, False)
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -148,12 +149,12 @@ class Flo2D(object):
 
         self.f2d_widget.grid_tools.setup_connection()
         self.f2d_widget.profile_tool.setup_connection()
-        
+
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
 
         self.f2d_widget.bc_editor.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs(widget_setup = True)
+        self.f2d_widget.bc_editor.populate_bcs(widget_setup=True)
 
         self.f2d_widget.ic_editor.populate_cbos()
 
@@ -192,7 +193,6 @@ class Flo2D(object):
         parent=None,
         menu=None,
     ):
-
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
 
@@ -217,11 +217,10 @@ class Flo2D(object):
             action.setMenu(popup)
 
         if text == "Grid Info Tool":
-
             # action.setCheckable(True)
             # action.setChecked(False)
             pass
-            
+
         if status_tip is not None:
             action.setStatusTip(status_tip)
 
@@ -259,7 +258,11 @@ class Flo2D(object):
                 (os.path.join(self.plugin_dir, "img/hydrog.svg"), "Run Hydrog", self.run_hydrog),
                 (os.path.join(self.plugin_dir, "img/maxplot.svg"), "Run MaxPlot", self.run_maxplot),
                 (os.path.join(self.plugin_dir, "img/mapper2.svg"), "Run Mapper", self.run_mapper2),
-                (os.path.join(self.plugin_dir, "img/tailings dam breach.svg"), "Run Tailings Dam Tool ", self.run_tailingsdambreach)
+                (
+                    os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+                    "Run Tailings Dam Tool ",
+                    self.run_tailingsdambreach,
+                )
                 #                     (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_program('Mapper PRO.Exe', 'Run Mapper', 'FLO-2D Folder (Mapper PRO.exe)'))
             ),
         )
@@ -291,11 +294,25 @@ class Flo2D(object):
         #     callback=lambda: self.import_selected_components2(),
         #     parent=self.iface.mainWindow(),
         # )
-        
+
         self.add_action(
             os.path.join(self.plugin_dir, "img/export_gds.svg"),
             text=self.tr("Export GDS files"),
             callback=lambda: self.export_gds(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/import_hdf.svg"),
+            text=self.tr("Import from HDF5"),
+            callback=lambda: self.import_hdf5(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/export_hdf.svg"),
+            text=self.tr("Export to HDF5"),
+            callback=lambda: self.export_hdf5(),
             parent=self.iface.mainWindow(),
         )
 
@@ -376,14 +393,13 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-
         self.add_action(
             os.path.join(self.plugin_dir, "img/landslide.svg"),
             text=self.tr("Mud and Sediment Transport"),
             callback=lambda: self.show_mud_and_sediment_dialog(),
             parent=self.iface.mainWindow(),
         )
-        
+
         self.add_action(
             os.path.join(self.plugin_dir, "img/issue.svg"),
             text=self.tr("Warnings and Errors"),
@@ -492,22 +508,22 @@ class Flo2D(object):
         """
         Removes the plugin menu item and icon from QGIS GUI.
         """
-        
+
         # Close and safe routines execution times statistics:
         try:
             s = QSettings()
             lastDir = s.value("FLO-2D/lastGdsDir", "")
-            stts = os.path.join(lastDir, "STATS.TXT")            
+            stts = os.path.join(lastDir, "STATS.TXT")
             with open(stts, "w") as f:
-               self.pr.disable()
-               sortby = SortKey.TIME
-               ps = pstats.Stats(self.pr, stream=f).sort_stats(sortby)
-               ps.print_stats() 
+                self.pr.disable()
+                sortby = SortKey.TIME
+                ps = pstats.Stats(self.pr, stream=f).sort_stats(sortby)
+                ps.print_stats()
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR", e)
-            time.sleep(3)        
-        
+            time.sleep(3)
+
         self.lyrs.clear_rubber()
         # remove maptools
         del self.info_tool, self.grid_info_tool, self.channel_profile_tool
@@ -595,7 +611,6 @@ class Flo2D(object):
         except KeyError as e:
             pass
         del self.con
-       
 
     @staticmethod
     def save_dock_geom(dock):
@@ -649,7 +664,7 @@ class Flo2D(object):
         # if sys.platform != "win32":
         #     self.uc.bar_warn("Could not run simulation under current operation system!")
         #     return
-        # try: 
+        # try:
         #     return_code = -9999
         #     if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
         #         debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
@@ -663,18 +678,15 @@ class Flo2D(object):
         #         #         + "Program finished with return code " + str(return_code)
         #         #     )
         #         # else:
-        #         #     self.uc.show_info( "Model finished with return code "  + str(return_code))       
+        #         #     self.uc.show_info( "Model finished with return code "  + str(return_code))
         #
         #
         #     else:
-        #         self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)                
+        #         self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)
         # except Exception as e:
         #     self.uc.log_info(repr(e))
         #     self.uc.bar_warn("Running simulation failed!")
-        
-        
-        
-        
+
         dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
         ok = dlg.exec_()
@@ -684,38 +696,32 @@ class Flo2D(object):
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run simulation under current operation system!")
             return
-        try: 
+        try:
             if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
                 debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
                 if os.path.exists(debugDAT):
                     os.remove(debugDAT)
                 simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                result = simulation.perform()                
-                
+                result = simulation.perform()
+
                 # if result != 0:
                 #     self.uc.show_warn(
                 #     "error 190821.1120: flo2d.exe model run failed!\n\n"
                 #     + "program finished with return code " + str(result))
                 # else:
-                #     self.uc.show_info( "model finished with return code "  + str(result))                 
-                
+                #     self.uc.show_info( "model finished with return code "  + str(result))
 
-                
-                # self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.") 
+                # self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.")
 
-
-
-  
-                # time.sleep(1)  
+                # time.sleep(1)
                 # return_code = proc.poll()
                 # if return_code is None:
-                #     self.uc.show_info( "FLO-2D simulation is running") 
-                # else:   
-                #     self.uc.show_info( "FLO-2D simulation stopped!")       
+                #     self.uc.show_info( "FLO-2D simulation is running")
+                # else:
+                #     self.uc.show_info( "FLO-2D simulation stopped!")
 
-   
             else:
-                self.uc.show_warn("WARNING 180821.0841: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)                
+                self.uc.show_warn("WARNING 180821.0841: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running simulation failed!")
@@ -737,7 +743,7 @@ class Flo2D(object):
             if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
                 tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
                 return_code = tailings.perform()
-                
+
                 # if return_code != 0:
                 #     QApplication.restoreOverrideCursor()
                 #     self.uc.show_warn(
@@ -751,7 +757,7 @@ class Flo2D(object):
                 #         "Tailings Dam Tool has been closed.\n\n"
                 #         + "If a new INFLOW.DAT was created, import the data file into FLO-2D QGIS."
                 #     )
-                
+
                 QApplication.restoreOverrideCursor()
             else:
                 QApplication.restoreOverrideCursor()
@@ -868,42 +874,62 @@ class Flo2D(object):
                 QApplication.restoreOverrideCursor()
 
     def call_IO_methods(self, calls, debug, *args):
+        if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
+            self.call_IO_methods_dat(calls, debug, *args)
+        elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
+            self.call_IO_methods_hdf5(calls, debug, *args)
+
+    def call_IO_methods_hdf5(self, calls, debug, *args):
+        self.f2g.parser.write_mode = "w"
+        for call in calls:
+            method = getattr(self.f2g, call)
+            try:
+                method(*args)
+                self.f2g.parser.write_mode = "a"
+            except Exception as e:
+                if debug is True:
+                    self.uc.log_info(traceback.format_exc())
+                else:
+                    raise
+        self.f2g.parser.write_mode = "w"
+
+    def call_IO_methods_dat(self, calls, debug, *args):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        
+
         self.files_used = ""
         self.files_not_used = ""
-        if calls[0] == 'export_cont_toler':
-            self.files_used = "CONT.DAT\n" 
+        if calls[0] == "export_cont_toler":
+            self.files_used = "CONT.DAT\n"
 
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
             elif call == "export_bridge_coeff_data":
-                dat = "BRIDGE_COEFF_DATA.DAT"                
+                dat = "BRIDGE_COEFF_DATA.DAT"
             elif call == "import_hystruc_bridge_xs":
                 dat = "BRIDGE_XSEC.DAT"
-            else:    
+            else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
                 if self.f2g.parser.dat_files[dat] is None:
                     if dat == "MULT.DAT":
-                        if self.f2g.parser.dat_files["SIMPLE_MULT.DAT"] is None: 
+                        if self.f2g.parser.dat_files["SIMPLE_MULT.DAT"] is None:
                             self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                             self.files_not_used += dat + "\n"
                             continue
                         else:
                             self.files_used += "SIMPLE_MULT.DAT\n"
-                            pass                                 
+                            pass
                     else:
                         self.uc.log_info('Files required for "{0}" not found. Action skipped!'.format(call))
                         if dat not in ["WSURF.DAT", "WSTIME.DAT"]:
                             self.files_not_used += dat + "\n"
-                        continue                            
+                        continue
                 else:
                     if dat == "MULT.DAT":
                         self.files_used += dat + " and/or SIMPLE_MULT.DAT" + "\n"
-                        pass                    
+                        pass
                     elif os.path.getsize(os.path.join(last_dir, dat)) > 0:
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
@@ -915,25 +941,24 @@ class Flo2D(object):
 
             try:
                 start_time = time.time()
-                               
+
                 method = getattr(self.f2g, call)
-                
+
                 if method(*args):
                     if call.startswith("export"):
                         self.files_used += dat + "\n"
                         if dat == "CHAN.DAT":
                             self.files_used += "CHANBANK.DAT" + "\n"
                         if dat == "SWMMFLO.DAT":
-                            self.files_used += "SWMM.INP" + "\n"                            
+                            self.files_used += "SWMM.INP" + "\n"
                         if dat == "TOPO.DAT":
                             self.files_used += "MANNINGS_N.DAT" + "\n"
                         if dat == "MULT.DAT":
-                            self.files_used += "SIMPLE_MULT.DAT" + "\n"  
+                            self.files_used += "SIMPLE_MULT.DAT" + "\n"
                         pass
 
                 self.uc.log_info('{0:.3f} seconds => "{1}"'.format(time.time() - start_time, call))
-            
-            
+
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())
@@ -1008,7 +1033,7 @@ class Flo2D(object):
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 return
-            
+
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
                 self.uc.show_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
@@ -1233,9 +1258,13 @@ class Flo2D(object):
                     if field_index == -1:
                         QApplication.restoreOverrideCursor()
 
-                        add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
-                                                   + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                                                   QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                        add_new_colums = self.uc.customized_question(
+                            "FLO-2D",
+                            "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                            + "Would you like to add the 'col' and 'row' fields to the grid table?",
+                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                            QMessageBox.Cancel,
+                        )
 
                         if add_new_colums == QMessageBox.Cancel:
                             return
@@ -1249,7 +1278,9 @@ class Flo2D(object):
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
                             QApplication.restoreOverrideCursor()
-                            proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
+                            proceed = self.uc.question(
+                                "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
+                            )
                             if proceed:
                                 QApplication.setOverrideCursor(Qt.WaitCursor)
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -1268,22 +1299,28 @@ class Flo2D(object):
                         self.uc.show_info(
                             "Files read by this project:\n\n"
                             + self.files_used
-                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
+                            + (
+                                ""
+                                if self.files_not_used == ""
+                                else "\n\nFiles not found or empty:\n\n" + self.files_not_used
+                            )
                         )
 
                     msg = ""
                     if "import_swmmflo" in import_calls:
-                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                            msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                        msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                        msg += "must be done using the "
+                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
                             msg += "<br><br>"
-                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                        msg +="must be done using the "
+                        msg += (
+                            "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                        )
+                        msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
 
@@ -1291,21 +1328,266 @@ class Flo2D(object):
                         self.uc.show_info(msg)
 
     @connection_required
+    def import_hdf5(self):
+        """
+        Import HDF5 datasets into FLO-2D database (GeoPackage).
+        """
+        self.gutils.disable_geom_triggers()
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        import_calls = [
+            "import_cont_toler",
+            "import_mannings_n_topo",
+        ]
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        input_hdf5, _ = QFileDialog.getOpenFileName(
+            None, "Import FLO-2D model data from HDF5 format", directory=last_dir, filter="HDF5 file (*.hdf5; *.HDF5)"
+        )
+
+        if not input_hdf5:
+            return
+        indir = os.path.dirname(input_hdf5)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        self.f2g.set_parser(input_hdf5)
+        try:
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", indir)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.call_IO_methods(import_calls, True)
+            self.uc.bar_info("Flo2D model imported from " + input_hdf5, dur=3)
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()
+            empty = self.f2g.is_table_empty("grid")
+            # check if a grid exists in the grid table
+            if not empty:
+                q = "There is a grid already defined in GeoPackage. Overwrite it?"
+                if self.uc.question(q):
+                    pass
+                else:
+                    self.uc.bar_info("Import cancelled", dur=3)
+                    return
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                tables = [
+                    "all_schem_bc",
+                    "blocked_cells",
+                    "breach",
+                    "breach_cells",
+                    "breach_fragility_curves",
+                    "breach_global",
+                    "buildings_areas",
+                    "buildings_stats",
+                    "chan",
+                    "chan_confluences",
+                    "chan_elems",
+                    "chan_elems_interp",
+                    "chan_n",
+                    "chan_r",
+                    "chan_t",
+                    "chan_v",
+                    "chan_wsel",
+                    "chan_elems",
+                    "cont",
+                    "culvert_equations",
+                    "evapor",
+                    "evapor_hourly",
+                    "evapor_monthly",
+                    "fpfroude",
+                    "fpfroude_cells",
+                    "fpxsec",
+                    "fpxsec_cells",
+                    "grid",
+                    "gutter_areas",
+                    "gutter_cells",
+                    "gutter_globals",
+                    "infil",
+                    "infil_cells_green",
+                    "infil_cells_horton",
+                    "infil_cells_scs",
+                    "infil_chan_elems",
+                    "infil_chan_seg",
+                    "inflow",
+                    "inflow_cells",
+                    "inflow_time_series",
+                    "inflow_time_series_data",
+                    "levee_data",
+                    "levee_failure",
+                    "levee_fragility",
+                    "levee_general",
+                    "mud_areas",
+                    "mud_cells",
+                    "mult",
+                    "mult_areas",
+                    "mult_cells",
+                    "noexchange_chan_cells",
+                    "outflow",
+                    "outflow_cells",
+                    "outflow_time_series",
+                    "outflow_time_series_data",
+                    "qh_params",
+                    "qh_params_data",
+                    "qh_table",
+                    "qh_table_data",
+                    "rain",
+                    "rain_arf_areas",
+                    "rain_arf_cells",
+                    "rain_time_series",
+                    "rain_time_series_data",
+                    "raincell",
+                    "raincell_data",
+                    "rat_curves",
+                    "rat_table",
+                    "rbank",
+                    "reservoirs",
+                    "repl_rat_curves",
+                    "sed_group_areas",
+                    "sed_group_cells",
+                    "sed_groups",
+                    "sed_rigid_areas",
+                    "sed_rigid_cells",
+                    "sed_supply_areas",
+                    "sed_supply_cells",
+                    "spatialshallow",
+                    "spatialshallow_cells",
+                    "storm_drains",
+                    "street_elems",
+                    "street_general",
+                    "street_seg",
+                    "streets",
+                    "struct",
+                    "swmmflo",
+                    "swmmflort",
+                    "swmmflort_data",
+                    "swmmoutf",
+                    "tolspatial",
+                    "tolspatial_cells",
+                    "user_bc_lines",
+                    "user_bc_points",
+                    "user_bc_polygons",
+                    "user_blocked_areas",
+                    "user_chan_n",
+                    "user_chan_r",
+                    "user_chan_t",
+                    "user_chan_v",
+                    "user_elevation_points",
+                    "user_elevation_polygons",
+                    "user_fpxsec",
+                    "user_infiltration",
+                    "user_left_bank",
+                    "user_levee_lines",
+                    "user_model_boundary",
+                    "user_noexchange_chan_areas",
+                    "user_reservoirs",
+                    "user_right_bank",
+                    "user_roughness",
+                    "user_streets",
+                    "user_struct",
+                    "user_swmm_conduits",
+                    "user_swmm_nodes",
+                    "user_xsec_n_data",
+                    "user_xsections",
+                    "wstime",
+                    "wsurf",
+                    "xsec_n_data",
+                ]
+
+                for table in tables:
+                    self.gutils.clear_tables(table)
+
+                self.call_IO_methods(import_calls, True)
+
+                # save CRS to table cont
+                self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+
+                # load layers and tables
+                self.load_layers()
+                self.uc.bar_info("Flo2D model imported", dur=3)
+                self.gutils.enable_geom_triggers()
+
+                if "import_chan" in import_calls:
+                    self.gutils.create_schematized_rbank_lines_from_xs_tips()
+
+                self.setup_dock_widgets()
+                self.lyrs.refresh_layers()
+                self.lyrs.zoom_to_all()
+                # See if geopackage has grid with 'col' and 'row' fields:
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                field_index = grid_lyr.fields().indexFromName("col")
+                if field_index == -1:
+                    QApplication.restoreOverrideCursor()
+
+                    add_new_colums = self.uc.customized_question(
+                        "FLO-2D",
+                        "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                        + "Would you like to add the 'col' and 'row' fields to the grid table?",
+                        QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                        QMessageBox.Cancel,
+                    )
+
+                    if add_new_colums == QMessageBox.Cancel:
+                        return
+
+                    if add_new_colums == QMessageBox.No:
+                        return
+                    else:
+                        if add_col_and_row_fields(grid_lyr):
+                            assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
+                else:
+                    cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+                    if cell is None:
+                        QApplication.restoreOverrideCursor()
+                        proceed = self.uc.question(
+                            "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
+                        )
+                        if proceed:
+                            QApplication.setOverrideCursor(Qt.WaitCursor)
+                            assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
+                            QApplication.restoreOverrideCursor()
+                        else:
+                            return
+
+                QApplication.restoreOverrideCursor()
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 050521.0349: importing from .HDF5 file!.\n", e)
+            finally:
+                QApplication.restoreOverrideCursor()
+                msg = ""
+                if "import_swmmflo" in import_calls:
+                    msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                    msg += "must be done using the "
+                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                    msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+
+                if "import_inflow" in import_calls or "import_outflow" in import_calls:
+                    if msg:
+                        msg += "<br><br>"
+                    msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                    msg += "must be done using the "
+                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+
+                if msg:
+                    self.uc.show_info(msg)
+
+    @connection_required
     def import_components(self):
         """
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
-        imprt = self.uc.dialog_with_2_customized_buttons("Select import method", "", 
-                                                          " Several Components", " One Single Component ")
-                
-        if (imprt == QMessageBox.Yes):
+        imprt = self.uc.dialog_with_2_customized_buttons(
+            "Select import method", "", " Several Components", " One Single Component "
+        )
+
+        if imprt == QMessageBox.Yes:
             self.import_selected_components()
-        elif (imprt == QMessageBox.No):         
+        elif imprt == QMessageBox.No:
             self.import_selected_components2()
-            
+
     @connection_required
     def import_selected_components(self):
-        
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -1333,9 +1615,9 @@ class Flo2D(object):
             "import_fpfroude",
             "import_swmmflo",
             "import_swmmflort",
-            "import_swmmoutf"
-        ]  
-            
+            "import_swmmoutf",
+        ]
+
         # s = QSettings()
         # last_dir = s.value("FLO-2D/lastGdsDir", "")
         # fname, __ = QFileDialog.getOpenFileName(
@@ -1355,13 +1637,13 @@ class Flo2D(object):
         outdir = QFileDialog.getExistingDirectory(
             None, "Select directory of files to be imported", directory=project_dir
         )
-        if outdir:  
+        if outdir:
             bname = "CONT.DAT"
             fname = outdir + "/CONT.DAT"
             if self.f2g.set_parser(fname):
                 if bname not in self.f2g.parser.dat_files:
                     return
-                
+
             empty = self.f2g.is_table_empty("grid")
             # check if a grid exists in the grid table
             if empty:
@@ -1391,7 +1673,7 @@ class Flo2D(object):
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
-                        
+
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
 
@@ -1437,29 +1719,31 @@ class Flo2D(object):
 
                     if "Spatial Froude" not in dlg_components.components:
                         import_calls.remove("import_fpfroude")
-                        
-                    if import_calls:    
-                        self.call_IO_methods(import_calls, True)  # The strings list 'import_calls', contains the names of
+
+                    if import_calls:
+                        self.call_IO_methods(
+                            import_calls, True
+                        )  # The strings list 'import_calls', contains the names of
                         # the methods in the class Flo2dGeoPackage to import (read) the
                         # FLO-2D .DAT files
-    
+
                         # save CRS to table cont
                         self.gutils.set_cont_par("PROJ", self.crs.toProj4())
-    
+
                         # load layers and tables
                         self.load_layers()
                         self.uc.bar_info("Flo2D model imported", dur=3)
                         self.gutils.enable_geom_triggers()
-    
+
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
-    
+
                         self.setup_dock_widgets()
                         self.lyrs.refresh_layers()
                         self.lyrs.zoom_to_all()
                     else:
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_info("No component was selected!")                
+                        self.uc.show_info("No component was selected!")
 
                 finally:
                     QApplication.restoreOverrideCursor()
@@ -1467,7 +1751,11 @@ class Flo2D(object):
                         self.uc.show_info(
                             "Files read by this project:\n\n"
                             + self.files_used
-                            + ("" if self.files_not_used == "" else "\n\nFiles not found or empty:\n\n"  + self.files_not_used)
+                            + (
+                                ""
+                                if self.files_not_used == ""
+                                else "\n\nFiles not found or empty:\n\n" + self.files_not_used
+                            )
                         )
 
                     msg = ""
@@ -1491,14 +1779,16 @@ class Flo2D(object):
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
                             msg += "<br><br>"
-                        msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                        msg +="must be done using the "
+                        msg += (
+                            "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                        )
+                        msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
 
                     if msg:
                         self.uc.show_info(msg)
- 
+
     @connection_required
     def import_selected_components2(self):
         """
@@ -1507,7 +1797,7 @@ class Flo2D(object):
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         file_to_import_calls = {
-            "CONT.DAT":"import_cont_toler",
+            "CONT.DAT": "import_cont_toler",
             "TOLER.DAT": "import_cont_toler",
             "TOLSPATIAL.DAT": "import_tolspatial",
             "INFLOW.DAT": "import_inflow",
@@ -1534,7 +1824,7 @@ class Flo2D(object):
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTETF.DAT": "import_swmmoutf",
             "WSURF.DAT": "import_wsurf",
-            "WSTIME.DAT": "import_wstime"
+            "WSTIME.DAT": "import_wstime",
         }
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -1546,12 +1836,14 @@ class Flo2D(object):
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
         bname = os.path.basename(fname)
-    
+
         if bname not in file_to_import_calls:
-            QMessageBox.critical(self.iface.mainWindow(),
-                                 "Import selected GDS file",
-                                 "Import from {0} file is not supported.".format(bname))
-    
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                "Import selected GDS file",
+                "Import from {0} file is not supported.".format(bname),
+            )
+
         if self.f2g.set_parser(fname):
             call_string = file_to_import_calls[bname]
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1559,40 +1851,40 @@ class Flo2D(object):
                 method = getattr(self.f2g, call_string)
                 method()
                 QApplication.restoreOverrideCursor()
-                QMessageBox.information(self.iface.mainWindow(),
-                                        "Import selected GDS file",
-                                        "Import from {0} is successful".format(bname))
+                QMessageBox.information(
+                    self.iface.mainWindow(), "Import selected GDS file", "Import from {0} is successful".format(bname)
+                )
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
-    
+
                 self.setup_dock_widgets()
                 self.lyrs.refresh_layers()
-    
+
             except Exception as e:
                 QApplication.restoreOverrideCursor()
-                QMessageBox.critical(self.iface.mainWindow(),
-                                     "Import selected GDS file",
-                                     "Import from {0} fails".format(bname))
-    
+                QMessageBox.critical(
+                    self.iface.mainWindow(), "Import selected GDS file", "Import from {0} fails".format(bname)
+                )
+
             finally:
                 msg = ""
                 if call_string == "import_swmmflo":
                     self.clean_rating_tables()
-    
+
                     if self.gutils.is_table_empty("user_model_boundary"):
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-    
+
                     else:
                         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-    
+
                 if call_string == "import_inflow" or call_string == "import_outflow":
                     if msg:
                         msg += "<br><br>"
@@ -1600,11 +1892,10 @@ class Flo2D(object):
                     msg += "must be done using the "
                     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
-    
+
                 if msg:
                     self.uc.show_info(msg)
-                    
-                    
+
     def clean_rating_tables(self):
         remove_grid = []
         grids = self.gutils.execute("SELECT DISTINCT grid_fid, name FROM swmmflort").fetchall()
@@ -1625,15 +1916,15 @@ class Flo2D(object):
         """
         Export traditional GDS files into FLO-2D database (GeoPackage).
         """
-        if self.gutils.is_table_empty("grid"): 
+        if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-        
+
         project_dir = QgsProject.instance().absolutePath()
         outdir = QFileDialog.getExistingDirectory(
             None, "Select directory where FLO-2D model will be exported", directory=project_dir
         )
-        if outdir:        
+        if outdir:
             self.f2g = Flo2dGeoPackage(self.con, self.iface)
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
@@ -1668,148 +1959,188 @@ class Flo2D(object):
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
             ]
-    
+
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()
             if ok:
-    
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
                     export_calls.remove("export_xsec")
-    
+
                 if "Reduction Factors" not in dlg_components.components:
                     export_calls.remove("export_arf")
-    
+
                 if "Streets" not in dlg_components.components:
                     export_calls.remove("export_street")
-    
+
                 if "Outflow Elements" not in dlg_components.components:
                     export_calls.remove("export_outflow")
-    
+
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
                     export_calls.remove("export_tailings")
-                    
+
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
-                    
+
                 if "Multiple Channels" not in dlg_components.components:
                     export_calls.remove("export_mult")
-    
+
                 if "Breach" not in dlg_components.components:
                     export_calls.remove("export_breach")
-    
+
                 if "Gutters" not in dlg_components.components:
                     export_calls.remove("export_gutter")
-    
+
                 if "Infiltration" not in dlg_components.components:
                     export_calls.remove("export_infil")
-    
+
                 if "Floodplain Cross Sections" not in dlg_components.components:
                     export_calls.remove("export_fpxsec")
-    
+
                 if "Mudflow and Sediment Transport" not in dlg_components.components:
                     export_calls.remove("export_sed")
-    
+
                 if "Evaporation" not in dlg_components.components:
                     export_calls.remove("export_evapor")
-    
+
                 if "Hydraulic  Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
                     export_calls.remove("export_bridge_coeff_data")
-                else:    
-                    # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):       
+                else:
+                    # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
                     #     export_calls.remove("export_hystruc")
                     #     export_calls.remove("export_bridge_xsec")
                     #     export_calls.remove("export_bridge_coeff_data")
                     # else:
-                        xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
-                        if not xsecs:
-                            if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
-                                os.remove(outdir + r"\BRIDGE_XSEC.DAT")
-                            export_calls.remove("export_bridge_xsec")
-                            export_calls.remove("export_bridge_coeff_data")     
-    
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                        export_calls.remove("export_bridge_xsec")
+                        export_calls.remove("export_bridge_coeff_data")
+
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
-    
+
                 if "Storm Drain" not in dlg_components.components:
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
-    
+
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
-    
+
                 if "Spatial Tolerance" not in dlg_components.components:
                     export_calls.remove("export_tolspatial")
-    
+
                 if "Spatial Froude" not in dlg_components.components:
                     export_calls.remove("export_fpfroude")
-    
+
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
 
-                if 'export_swmmflort' in export_calls:
-                    if not self.uc.question("Did you schematize Storm Drains? Do you want to export Storm Drain files?"):       
+                if "export_swmmflort" in export_calls:
+                    if not self.uc.question(
+                        "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
+                    ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
-                        export_calls.remove("export_swmmoutf")                
-                
+                        export_calls.remove("export_swmmoutf")
+
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
                 try:
-    
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)      
-                    self.call_IO_methods(export_calls, True, outdir)                             
-                            
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    self.call_IO_methods(export_calls, True, outdir)
+
                     # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to export (write) the
                     # FLO-2D .DAT files
-                    
+
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
                     QApplication.restoreOverrideCursor()
 
                 finally:
                     QApplication.restoreOverrideCursor()
 
-                    if 'export_swmmflo' in export_calls:
+                    if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
                     # Delete .DAT files the model will try to use if existing:
                     if "export_mult" in export_calls:
                         if self.gutils.is_table_empty("simple_mult_cells"):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
-                            self.files_used = new_files_used                            
+                            self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                if self.uc.question("There are no simple multiple channel cells in the project but\n" +
-                                                    "there is a SIMPLE_MULT.DAT file in the directory.\n" +
-                                                    "If the file is not deleted it will be used by the model.\n\n" +
-                                                    "Delete SIMPLE_MULT.DAT?"):
+                                if self.uc.question(
+                                    "There are no simple multiple channel cells in the project but\n"
+                                    + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete SIMPLE_MULT.DAT?"
+                                ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
 
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
-                                if self.uc.question("There are no multiple channel cells in the project but\n" +
-                                                    "there is a MULT.DAT file in the directory.\n" +
-                                                    "If the file is not deleted it will be used by the model.\n\n" +
-                                                    "Delete MULT.DAT?"):
+                                if self.uc.question(
+                                    "There are no multiple channel cells in the project but\n"
+                                    + "there is a MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete MULT.DAT?"
+                                ):
                                     os.remove(outdir + r"\MULT.DAT")
-                      
+
                     if self.files_used != "":
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
-    
+
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
         QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def export_hdf5(self):
+        """
+        Export FLO-2D database (GeoPackage) data into HDF5 format.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        output_hdf5, _ = QFileDialog.getSaveFileName(
+            None, "Save FLO-2D model data into HDF5 format", directory=last_dir, filter="HDF5 file (*.hdf5; *.HDF5)"
+        )
+        if output_hdf5:
+            outdir = os.path.dirname(output_hdf5)
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+            self.f2g.set_parser(output_hdf5, get_cell_size=False)
+            export_calls = [
+                "export_cont_toler",
+                "export_mannings_n_topo",
+            ]
+            try:
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", outdir)
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                self.call_IO_methods(export_calls, True)
+                self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor()
+                if self.f2g.export_messages != "":
+                    info = "WARNINGS:\n\n" + self.f2g.export_messages
+                    self.uc.show_info(info)
 
     @connection_required
     def import_from_gpkg(self):
@@ -1880,15 +2211,14 @@ class Flo2D(object):
                         self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
                         return
                 else:
-                    break    
+                    break
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
-
     def activate_general_info_tool(self):
         self.canvas.setMapTool(self.info_tool)
-        self.info_tool.update_lyrs_list()       
+        self.info_tool.update_lyrs_list()
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -2028,17 +2358,17 @@ class Flo2D(object):
                 for no in sorted(dlg_levee_elev.methods):
                     if no == 1:
                         # processing for a spatial selection range is enabled on this type
-                        dlg_levee_elev.methods[no](rangeReq = ranger)
+                        dlg_levee_elev.methods[no](rangeReq=ranger)
                     else:
                         dlg_levee_elev.methods[no]()
             inctime = time.time()
-            print ("%s seconds to process levee features" % round(inctime - starttime, 2))
+            print("%s seconds to process levee features" % round(inctime - starttime, 2))
 
             # Delete duplicates:
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
             q = False
             if n_elements_total > 0:
-                print ("in clear loop")
+                print("in clear loop")
                 dletes = "Cell - Direction\n---------------\n"
                 levees = self.lyrs.data["levee_data"]["qlyr"]
 
@@ -2050,11 +2380,19 @@ class Flo2D(object):
                 levees_dup_qry = "SELECT min(fid), grid_fid, ldir, levcrest FROM levee_data GROUP BY grid_fid, ldir, levcrest HAVING COUNT(ldir) > 1 and count(levcrest) > 1 ORDER BY grid_fid"
                 leveeDups = self.gutils.execute(levees_dup_qry).fetchall()  # min FID, grid fid, ldir, min levcrest
                 # grab the values
-                print("Found {valer} levee elements with duplicated grid, ldir, and elev; deleting the duplicates;".format(valer=len(leveeDups)))
-                del_dup_data = ((item[1], item[2], item[3], item[0]) for item in leveeDups)  # grid fid, ldir, crest elev, fid
+                print(
+                    "Found {valer} levee elements with duplicated grid, ldir, and elev; deleting the duplicates;".format(
+                        valer=len(leveeDups)
+                    )
+                )
+                del_dup_data = (
+                    (item[1], item[2], item[3], item[0]) for item in leveeDups
+                )  # grid fid, ldir, crest elev, fid
 
                 # delete any duplicates in directions that aren't the min elevation
-                levees_dup_delete_qry = "DELETE FROM levee_data WHERE grid_fid = ? and ldir = ? and levcrest = ? and fid <> ?;"
+                levees_dup_delete_qry = (
+                    "DELETE FROM levee_data WHERE grid_fid = ? and ldir = ? and levcrest = ? and fid <> ?;"
+                )
                 self.gutils.con.executemany(levees_dup_delete_qry, (del_dup_data))
                 self.gutils.con.commit()
 
@@ -2062,8 +2400,10 @@ class Flo2D(object):
                 self.gutils.con.execute(qryIndexDrop)
                 self.gutils.con.commit()
 
-                leveesToDelete = delete_redundant_levee_directions_np(self.gutils, cellIDNumpyArray) # pass grid layer if it exists
-                #leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
+                leveesToDelete = delete_redundant_levee_directions_np(
+                    self.gutils, cellIDNumpyArray
+                )  # pass grid layer if it exists
+                # leveesToDelete = delete_levee_directions_duplicates(self.gutils, levees, grid_lyr)
                 if len(leveesToDelete) > 0:
                     k = 0
                     i = 0
@@ -2154,40 +2494,51 @@ class Flo2D(object):
                     #                     m.setInformativeText(dletes + '\n\nWould you like to delete them?')
                     q = m.exec_()
                     if q == QMessageBox.Yes:
-
                         #                     q = self.uc.question('The following are ' + str(len(leveesToDelete)) + ' opposite levees directions duplicated (with lower crest elevation).\n' +
                         #                                             'Would you like to delete them?\n\n' + dletes + '\n\nWould you like to delete them?')
                         #                     if q:
                         delete_levees_qry = """DELETE FROM levee_data WHERE grid_fid = ? AND ldir = ?;"""
                         delete_failure_qry = """DELETE FROM levee_failure WHERE grid_fid = ? and lfaildir = ?;"""
-                        print ("Deleting extra levee and levee failure features")
+                        print("Deleting extra levee and levee failure features")
 
                         # build indexes to speed up the process
-                        qryIndex = """CREATE INDEX if not exists leveeDataGridFID_LDIR  ON levee_data (grid_fid, ldir);"""
+                        qryIndex = (
+                            """CREATE INDEX if not exists leveeDataGridFID_LDIR  ON levee_data (grid_fid, ldir);"""
+                        )
                         self.gutils.execute(qryIndex)
                         qryIndex = """CREATE INDEX if not exists leveeFailureGridFID_LFAILDIR  ON levee_failure (grid_fid, lfaildir);"""
                         self.gutils.execute(qryIndex)
                         self.gutils.con.commit()
 
-                        #cur = self.gutils.con.cursor()
-                        #cur.executemany(delete_levees_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
-                        #self.gutils.con.commit()
-                        #cur.executemany(delete_failure_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
-                        #self.gutils.con.commit()
-                        #cur.close()
+                        # cur = self.gutils.con.cursor()
+                        # cur.executemany(delete_levees_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
+                        # self.gutils.con.commit()
+                        # cur.executemany(delete_failure_qry, list([(str(levee[0]), str(levee[1]),) for levee in leveesToDelete]))
+                        # self.gutils.con.commit()
+                        # cur.close()
 
                         for leveeCounter, levee in enumerate(leveesToDelete):
-                            #self.gutils.execute(delete_levees_qry, (levee[0], levee[1]))
-                            self.gutils.execute("DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1]))
+                            # self.gutils.execute(delete_levees_qry, (levee[0], levee[1]))
+                            self.gutils.execute(
+                                "DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1])
+                            )
                             if leveeCounter % 1000 == 0:
-                                print ("DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1]))
+                                print(
+                                    "DELETE FROM levee_data WHERE grid_fid = %i AND ldir = %i;" % (levee[0], levee[1])
+                                )
                             self.gutils.con.commit()
-                            #self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))
-                            self.gutils.execute("DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;" % (levee[0], levee[1]))
+                            # self.gutils.execute(delete_failure_qry, (levee[0], levee[1]))
+                            self.gutils.execute(
+                                "DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;"
+                                % (levee[0], levee[1])
+                            )
                             if leveeCounter % 1000 == 0:
-                                print ("DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;" % (levee[0], levee[1]))
+                                print(
+                                    "DELETE FROM levee_failure WHERE grid_fid = %i and lfaildir = %i;"
+                                    % (levee[0], levee[1])
+                                )
                             self.gutils.con.commit()
-                        print ("Done deleting extra levee and levee failure features")
+                        print("Done deleting extra levee and levee failure features")
                         qryIndex = """DROP INDEX if exists leveeDataGridFID_LDIR;"""
                         self.gutils.execute(qryIndex)
                         qryIndex = """DROP INDEX if exists leveeFailureGridFID_LFAILDIR;"""
@@ -2292,12 +2643,12 @@ class Flo2D(object):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-       
+
         dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
         dlg_ms.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_ms.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
         repeat = True
-        while repeat:            
+        while repeat:
             dlg_ms.show()
             ok = dlg_ms.exec_()
             if ok:
@@ -2310,7 +2661,7 @@ class Flo2D(object):
                             "ERROR 051021.0815: couldn't save Mud and Sediment tables!"
                             + "\n__________________________________________________",
                             e,
-                        )                
+                        )
             else:
                 return
 
@@ -2327,7 +2678,8 @@ class Flo2D(object):
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
 
             for n_elements, n_levee_directions, n_fail_features, regionReq in generate_schematic_levees(
-                self.gutils, levee_lyr, grid_lyr):
+                self.gutils, levee_lyr, grid_lyr
+            ):
                 yield (n_elements, n_levee_directions, n_fail_features, regionReq)
         except Exception as e:
             QApplication.restoreOverrideCursor()

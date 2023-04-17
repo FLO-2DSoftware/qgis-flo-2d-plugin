@@ -8,51 +8,60 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
 import os
 import time
+import traceback
 
-from .ui_utils import load_ui, set_icon
-from ..utils import time_taken
-from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
-from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
-
-from qgis.PyQt.QtCore import Qt, QThread, QSettings
-from qgis.core import QgsFeature, QgsGeometry, QgsWkbTypes, NULL, Qgis, QgsMessageLog
-from qgis.PyQt.QtWidgets import QApplication, QInputDialog, QProgressBar, QPushButton, QLabel, QWidget, QFileDialog, QMessageBox
+from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import QSettings, Qt, QThread
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QInputDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QWidget,
+)
 
 from ..flo2d_tools.grid_tools import (
-    square_grid,
-    add_col_and_row_fields,
-    evaluate_roughness,
-    update_roughness,
-    evaluate_arfwrf,
-    evaluate_spatial_tolerance,
-    evaluate_spatial_froude,
-    evaluate_spatial_shallow,
-    evaluate_spatial_gutter,
-    evaluate_spatial_noexchange,
     ZonalStatistics,
     ZonalStatisticsOther,
+    add_col_and_row_fields,
     assign_col_row_indexes_to_grid,
+    evaluate_arfwrf,
+    evaluate_roughness,
+    evaluate_spatial_froude,
+    evaluate_spatial_gutter,
+    evaluate_spatial_noexchange,
+    evaluate_spatial_shallow,
+    evaluate_spatial_tolerance,
     number_of_elements,
-    render_grid_elevations2
+    poly2grid,
+    poly2poly_geos,
+    render_grid_elevations2,
+    square_grid,
+    update_roughness,
 )
-from ..utils import second_smallest, set_min_max_elevs
-from ..gui.dlg_grid_elev import GridCorrectionDialog
-from ..gui.dlg_sampling_elev import SamplingElevDialog
-from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  #update this after elevation test is ok
-from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
-from ..gui.dlg_sampling_mann import SamplingManningDialog
-from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
-from ..gui.dlg_sampling_xyz import SamplingXYZDialog
-from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
+from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
 from ..gui.dlg_create_grid import CreateGridDialog
+from ..gui.dlg_grid_elev import GridCorrectionDialog
+from ..gui.dlg_sampling_elev import SamplingElevDialog
+from ..gui.dlg_sampling_mann import SamplingManningDialog
+from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
+from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  # update this after elevation test is ok
+from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
+from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
+from ..gui.dlg_sampling_xyz import SamplingXYZDialog
+from ..user_communication import UserCommunication
+from ..utils import second_smallest, set_min_max_elevs, time_taken
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
+
 
 class GridToolsWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
@@ -187,22 +196,27 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 xmin = bbox.xMinimum()
                 ymax = bbox.yMaximum()
                 from ..misc.gdal_utils import GDALRasterLayer
+
                 gdal_layer = GDALRasterLayer(raster_file)
                 # get pixel corresponding to xmin, ymax
-                row,col = gdal_layer.index(xmin,ymax)
+                row, col = gdal_layer.index(xmin, ymax)
                 # get coordinate of upper left corner of pixel
-                xmin_new,ymax_new = gdal_layer.xy(row,col,offset='ul')
-                upper_left_coords_override = (xmin_new,ymax_new)
+                xmin_new, ymax_new = gdal_layer.xy(row, col, offset="ul")
+                upper_left_coords_override = (xmin_new, ymax_new)
 
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             field_index = grid_lyr.fields().indexFromName("col")
             if field_index == -1:
                 QApplication.restoreOverrideCursor()
 
-                add_new_colums = self.uc.customized_question("FLO-2D", "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
-                                           + "Some functionality will be unavailable.\n\n"
-                                           + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                                           QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                add_new_colums = self.uc.customized_question(
+                    "FLO-2D",
+                    "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n"
+                    + "Some functionality will be unavailable.\n\n"
+                    + "Would you like to add the 'col' and 'row' fields to the grid table?",
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                    QMessageBox.Cancel,
+                )
 
                 if add_new_colums == QMessageBox.Cancel:
                     return
@@ -238,15 +252,25 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
 
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Grid created.\n\nCell size:  " + cell_size + units + "\n\nTotal number of cells:  " +  "{:,}".format(n_cells) +
-                              "\n\n(Elapsed time: " + duration + ")")
+            self.uc.show_info(
+                "Grid created.\n\nCell size:  "
+                + cell_size
+                + units
+                + "\n\nTotal number of cells:  "
+                + "{:,}".format(n_cells)
+                + "\n\n(Elapsed time: "
+                + duration
+                + ")"
+            )
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
                 "WARNING 060319.1709: Creating grid aborted!\n\n"
-                + "Please check Computational Domain layer and cell size.", e)
+                + "Please check Computational Domain layer and cell size.",
+                e,
+            )
 
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
@@ -312,16 +336,18 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def xyz_elevation(self):
         try:
             if self.gutils.is_table_empty("grid"):
-                self.uc.bar_warn("WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool.")
+                self.uc.bar_warn(
+                    "WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool."
+                )
                 return
-            
+
             grid = self.lyrs.data["grid"]["qlyr"]
-            # grid_extent = grid.extent()        
-            
+            # grid_extent = grid.extent()
+
             dlg = SamplingXYZDialog(self.con, self.iface, self.lyrs)
             ok = dlg.exec_()
             if ok:
-                if dlg.points_layer_grp.isChecked(): 
+                if dlg.points_layer_grp.isChecked():
                     # Interpolate from points layer:
                     points_lyr = dlg.current_lyr
                     if not points_lyr:
@@ -330,7 +356,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         zfield = dlg.fields_cbo.currentText()
                         calc_type = dlg.calc_cbo.currentText()
                         search_distance = dlg.search_spin_box.value()
-    
+
                         try:
                             ini_time = time.time()
                             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -350,40 +376,48 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                             self.gutils.execute("UPDATE grid SET elevation = -9999 WHERE elevation IS NULL;")
                             elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
-                            # elevs = [x if x is not None else -9999 for x in elevs] 
+                            # elevs = [x if x is not None else -9999 for x in elevs]
                             if elevs:
                                 mini = min(elevs)
-                                mini2 = second_smallest(elevs) 
-                                maxi = max(elevs)       
-                                render_grid_elevations2(grid, True, mini, mini2, maxi) 
-                                set_min_max_elevs(mini, maxi) 
+                                mini2 = second_smallest(elevs)
+                                maxi = max(elevs)
+                                render_grid_elevations2(grid, True, mini, mini2, maxi)
+                                set_min_max_elevs(mini, maxi)
                                 self.lyrs.lyrs_to_repaint = [grid]
                                 self.lyrs.repaint_layers()
 
                             QApplication.restoreOverrideCursor()
-    
+
                             fin_time = time.time()
                             duration = time_taken(ini_time, fin_time)
-                            self.uc.show_info("Calculating elevation finished." +
-                                              "\n\n(Elapsed time: " + duration + ")")
-    
+                            self.uc.show_info(
+                                "Calculating elevation finished." + "\n\n(Elapsed time: " + duration + ")"
+                            )
+
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())
-                            self.uc.show_error("ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n", e)
-    
-                else: 
+                            self.uc.show_error(
+                                "ERROR 060319.1712: Calculating grid elevation aborted! Please check elevation points layer.\n",
+                                e,
+                            )
+
+                else:
                     # Interpolate from LIDAR:
                     # grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid.fields().indexFromName("col")
                     if field_index == -1:
                         if self.gutils.is_table_empty("user_model_boundary"):
                             QApplication.restoreOverrideCursor()
-                            self.uc.show_warn("WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
-                                              "and there is no Computational Domain to create them!")
+                            self.uc.show_warn(
+                                "WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                                + "and there is no Computational Domain to create them!"
+                            )
                         else:
-                            proceed = self.uc.question("WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n" +
-                                                       "Would you like to add the 'col' and 'row' fields to the grid table?")
+                            proceed = self.uc.question(
+                                "WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                                + "Would you like to add the 'col' and 'row' fields to the grid table?"
+                            )
                             if proceed:
                                 if add_col_and_row_fields(grid):
                                     assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -394,7 +428,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             dlg.interpolate_from_lidar()
                         else:
                             QApplication.restoreOverrideCursor()
-                            proceed = self.uc.question("Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?")
+                            proceed = self.uc.question(
+                                "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
+                            )
                             if proceed:
                                 QApplication.setOverrideCursor(Qt.WaitCursor)
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -402,12 +438,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                 dlg.interpolate_from_lidar()
                             else:
                                 return
-    
+
                 QApplication.restoreOverrideCursor()
             else:
                 QApplication.restoreOverrideCursor()
                 return
-            
+
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR 100721.1952: is the grid defined?")
@@ -417,27 +453,27 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         LIDAR_walker_instance = LIDARWorker(layer)
 
         # configure the QgsMessageBar
-        messageBar = self.iface.messageBar().createMessage('Interpolating from LIDAR files...', )
+        messageBar = self.iface.messageBar().createMessage(
+            "Interpolating from LIDAR files...",
+        )
         self.advanceBar = QProgressBar()
         self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.cancelButton = QPushButton()
-        self.cancelButton.setText('Cancel')
+        self.cancelButton.setText("Cancel")
         self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)
         messageBar.layout().addWidget(self.advanceBar)
         messageBar.layout().addWidget(self.cancelButton)
         self.iface.messageBar().pushWidget(messageBar, Qgis.Info)
         self.messageBar = messageBar
 
-
         statBar = self.iface.mainWindow().statusBar()
-        self.statusLabel = QLabel();
-        self.statusLabel.setText('Interpolating from LIDAR files...');
+        self.statusLabel = QLabel()
+        self.statusLabel.setText("Interpolating from LIDAR files...")
         statBar.addWidget(self.statusLabel)
         statBar.addWidget(self.advanceBar)
         statBar.addWidget(self.cancelButton)
         self.iface.mainWindow().statusBar().addWidget(statBar)
         self.statBar = statBar
-
 
         # start the worker in a new thread
         thread = QThread(self)
@@ -455,27 +491,27 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         LIDAR_walker_instance = LIDARWorker(self.iface, lidar_files, lyrs)
 
         # configure the QgsMessageBar
-        messageBar = self.iface.messageBar().createMessage('Interpolating from LIDAR files...', )
+        messageBar = self.iface.messageBar().createMessage(
+            "Interpolating from LIDAR files...",
+        )
         self.advanceBar = QProgressBar()
         self.advanceBar.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.cancelButton = QPushButton()
-        self.cancelButton.setText('Cancel')
+        self.cancelButton.setText("Cancel")
         self.cancelButton.clicked.connect(LIDAR_walker_instance.THREAD_kill)
         messageBar.layout().addWidget(self.advanceBar)
         messageBar.layout().addWidget(self.cancelButton)
         self.iface.messageBar().pushWidget(messageBar, Qgis.Info)
         self.messageBar = messageBar
 
-
         statBar = self.iface.mainWindow().statusBar()
-        self.statusLabel = QLabel();
-        self.statusLabel.setText('Interpolating from LIDAR files...');
+        self.statusLabel = QLabel()
+        self.statusLabel.setText("Interpolating from LIDAR files...")
         statBar.addWidget(self.statusLabel)
         statBar.addWidget(self.advanceBar)
         statBar.addWidget(self.cancelButton)
         self.iface.mainWindow().statusBar().addWidget(statBar)
         self.statBar = statBar
-
 
         # start the worker in a new thread
         thread = QThread(self)
@@ -501,7 +537,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.statBar.removeWidget(self.cancelButton)
 
     def workerError(self, e, exception_string):
-        QgsMessageLog.logMessage('Worker thread raised an exception:\n'.format(exception_string), level=Qgis.Critical)
+        QgsMessageLog.logMessage("Worker thread raised an exception:\n".format(exception_string), level=Qgis.Critical)
 
     def other_variable(self):
         if self.gutils.is_table_empty("grid"):
@@ -681,28 +717,28 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid. Please, create it before sampling tailings.")
                 return
-            
+
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            qry = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]        
+            qry = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
 
             if tailings_dlg.use_external_layer():
                 external_layer, tailing_field = tailings_dlg.external_layer_parameters()
-                
+
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
                 writeVals = []
-                
-                use_centroid = True # Hardwired to use/not use centroid.
-                
-                if use_centroid: 
+
+                use_centroid = True  # Hardwired to use/not use centroid.
+
+                if use_centroid:
                     values2 = poly2grid(grid_lyr, external_layer, None, True, False, False, 1, tailing_field)
                     for value, gid in values2:
                         if value:
                             value = "%.2f" % value
-                            writeVals.append([gid, value])               
-                                                   
+                            writeVals.append([gid, value])
+
                 else:
-                    values = poly2poly_geos(grid_lyr, external_layer, None, tailing_field) # this returns 2 values
+                    values = poly2poly_geos(grid_lyr, external_layer, None, tailing_field)  # this returns 2 values
                     for gid, values in values:
                         if values:
                             thickness = sum(ma * float(subarea) for ma, subarea in values)
@@ -711,7 +747,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             thickness = "%.2f" % thickness
                             writeVals.append([gid, thickness])
                             # qry += [(gid, thickness)]
-                        
 
                 if len(writeVals) > 0:
                     self.gutils.clear_tables("tailing_cells")
@@ -720,11 +755,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     # self.con.executemany(qry, writeVals)
                     # self.con.commit()
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("Assigning tailing cells finished!")               
+                    self.uc.show_info("Assigning tailing cells finished!")
                 else:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("There are no intersections between the grid and layer '" + external_layer.name() + "' !")  
-                                           
+                    self.uc.show_info(
+                        "There are no intersections between the grid and layer '" + external_layer.name() + "' !"
+                    )
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
@@ -733,8 +770,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 "________________________________________________________________",
                 e,
             )
-            QApplication.restoreOverrideCursor()        
-        
+            QApplication.restoreOverrideCursor()
+
     def eval_arfwrf(self):
         eval_dlg = EvaluateReductionFactorsDialog()
         ok = eval_dlg.exec_()
@@ -1157,7 +1194,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 gutter_lyr.reload()
                 self.lyrs.update_layer_extents(gutter_lyr)
                 self.lyrs.data["gutter_cells"]["qlyr"].triggerRepaint()
-                
+
                 self.assign_gutter_globals()
                 self.iface.actionPan().trigger()
 
@@ -1177,14 +1214,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.globlyr = self.lyrs.data["gutter_globals"]["qlyr"]
             self.iface.setActiveLayer(self.globlyr)
             self.globlyr.featureAdded.connect(self.feature_added)
-    
+
             self.globlyr.startEditing()
             self.iface.actionAddFeature().trigger()
             self.globlyr.removeSelection()
 
     # Define a function called when a feature is added to the layer
     def feature_added(self):
-
         # Disconnect from the signal
         self.globlyr.featureAdded.disconnect()
 
