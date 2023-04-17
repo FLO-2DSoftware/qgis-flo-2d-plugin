@@ -107,7 +107,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.clear_tables("cont")
         for option, dataset in control_group.datasets.items():
             option_value = dataset.data[0]
-            sql += [(option, option_value, self.PARAMETER_DESCRIPTION[option])]
+            sql += [(option, option_value.decode(), self.PARAMETER_DESCRIPTION[option])]
         sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
         sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
         self.batch_execute(sql)
