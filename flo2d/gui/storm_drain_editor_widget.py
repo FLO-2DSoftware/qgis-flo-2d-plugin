@@ -69,10 +69,9 @@ from ..gui.dlg_orifices import OrificesDialog
 from ..gui.dlg_weirs import WeirsDialog
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from _ast import Pass
+from pandas.io import orc
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
-
-
 class INP_GroupsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface):
         qtBaseClass.__init__(self)
@@ -1023,9 +1022,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     remove_features(self.swmm_tidal_curve_data_lyr) 
                                           
                     for curve in storm_drain.INP_curves:
-                        if curve[1][0:4] == "Pump":
+                        if curve[1][0:4] in ["Pump", "PUMP"]:
                             self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3])) 
-                        elif curve[1][0:5] == "Tidal":
+                        elif curve[1][0:5].upper() == "TIDAL":
                             self.gutils.execute(insert_tidal_curves_sql, (curve[0], curve[1]))
                             self.gutils.execute(insert_tidal_curves_data_sql, (curve[0], curve[2], curve[3]))                            
                 
@@ -1866,7 +1865,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
             ok = dlg_INP_groups.exec_()
             if ok:
-
+                start_date = NULL
+                end_date = NULL
+                non_sync_dates = 0
+                
                 with open(swmm_file, "w") as swmm_inp_file:
                     no_in_out_conduits = 0
                     no_in_out_pumps = 0
@@ -1893,9 +1895,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\nFLOW_UNITS           " + dlg_INP_groups.flow_units_cbo.currentText())
                     swmm_inp_file.write("\nINFILTRATION         HORTON")
                     swmm_inp_file.write("\nFLOW_ROUTING         " + dlg_INP_groups.flow_routing_cbo.currentText())
-                    swmm_inp_file.write(
-                        "\nSTART_DATE           " + dlg_INP_groups.start_date.date().toString("MM/dd/yyyy")
-                    )
+                    start_date = dlg_INP_groups.start_date.date().toString("MM/dd/yyyy")
+                    swmm_inp_file.write("\nSTART_DATE           " + start_date)
+                    
                     swmm_inp_file.write(
                         "\nSTART_TIME           " + dlg_INP_groups.start_time.time().toString("hh:mm:ss")
                     )
@@ -1905,9 +1907,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write(
                         "\nREPORT_START_TIME    " + dlg_INP_groups.report_start_time.time().toString("hh:mm:ss")
                     )
-                    swmm_inp_file.write(
-                        "\nEND_DATE             " + dlg_INP_groups.end_date.date().toString("MM/dd/yyyy")
-                    )
+                    end_date = dlg_INP_groups.end_date.date().toString("MM/dd/yyyy")
+                    swmm_inp_file.write("\nEND_DATE             " + end_date)
                     swmm_inp_file.write("\nEND_TIME             " + dlg_INP_groups.end_time.time().toString("hh:mm:ss"))
                     swmm_inp_file.write("\nSWEEP_START          01/01")
                     swmm_inp_file.write("\nSWEEP_END            12/31")
@@ -2488,11 +2489,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                         description = [row[1]]
                                         swmm_inp_file.write(line1.format(*description))                                        
                                         for data in time_series_data:
+                                            date = data[0] if data[0] is not None else "00/00/0000"
                                             swmm_inp_file.write(line3.format(
-                                                                name if name is not None else " ",
-                                                                data[0] if data[0] is not None else "00/00/0000", 
+                                                                name if name is not None else " ", 
+                                                                date, 
                                                                 data[1] if data[1] is not None else "00:00", 
-                                                                data[2] if data[2] is not None else 0.0))
+                                                                data[2] if data[2] is not None else 0.0)
+                                                            )
+                                            try:
+                                                d0 = datetime.strptime(date, "%m/%d/%Y").date()
+                                                start = datetime.strptime(start_date, "%m/%d/%Y").date()
+                                                end = datetime.strptime(end_date, "%m/%d/%Y").date()
+                                                if ( d0 < start or d0 > end):
+                                                    non_sync_dates += 1
+                                            except ValueError:
+                                                non_sync_dates += 1     
                                         swmm_inp_file.write("\n;")                                       
                                         
                     except Exception as e:
@@ -2679,37 +2690,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(int(len(pattern_rows) / 24))
                     + "\t[PATTERNS]"
                 )
+                warn = ""
                 if no_in_out_conduits != 0:
-                    self.uc.show_warn(
-                        "WARNING 060319.1734: Storm Drain (export .INP file):\n\n"
-                        + str(no_in_out_conduits)
-                        + " conduits have no inlet and/or outlet! The value '?' was written.\n"
-                        + "Please review them because it will cause errors during their processing.\n"
-                    )
+                    warn += "* " + str(no_in_out_conduits) + " conduits have no inlet and/or outlet!\nThe value '?' was written in [CONDUITS] group.\n\n"
                     
                 if no_in_out_pumps != 0:
-                    self.uc.show_warn(
-                        "WARNING 271121.0516: Storm Drain (export .INP file):\n\n"
-                        + str(no_in_out_pumps)
-                        + " pumps have no inlet and/or outlet! The value '?' was written.\n"
-                        + "Please review them because it will cause errors during their processing.\n"
-                    )  
+                    warn += "* " + str(no_in_out_pumps) + " pumps have no inlet and/or outlet!\nThe value '?' was written in [PUMPS] group.\n\n"
                     
                 if no_in_out_orifices != 0:
-                    self.uc.show_warn(
-                        "WARNING 090422.0554: Storm Drain (export .INP file):\n\n"
-                        + str(no_in_out_orifices)
-                        + " orifices have no inlet and/or outlet! The value '?' was written.\n"
-                        + "Please review them because it will cause errors during their processing.\n"
-                    ) 
+                    warn += "* " + str(no_in_out_orifices) + " orifices have no inlet and/or outlet!\nThe value '?' was written in [ORIFICES] group.\n\n"
                     
                 if no_in_out_weirs != 0:
-                    self.uc.show_warn(
-                        "WARNING 090422.0555: Storm Drain (export .INP file):\n\n"
-                        + str(no_in_out_weirs)
-                        + " weirs have no inlet and/or outlet! The value '?' was written.\n"
-                        + "Please review them because it will cause errors during their processing.\n"
-                    )  
+                    warn += "* " + str(no_in_out_weirs)+ " weirs have no inlet and/or outlet!\nThe value '?' was written in [WEIRS] group.\n\n"
+                    
+                if non_sync_dates > 0:
+                    warn += "* " + str(non_sync_dates)+ " time series dates are outside the start and end times of the simulation!\nSee [TIMESERIES] group.\n\n"  
+                        
+                if warn != "":
+                    self.uc.show_warn("WARNING 090422.0554: SWMM.INP file:\n\n" +
+                                       warn + 
+                                       "Please review these issues because they will cause errors during their processing.")
+                        
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 
