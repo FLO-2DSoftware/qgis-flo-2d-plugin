@@ -371,7 +371,7 @@ class GeoPackageUtils(object):
             cells[g] = geom
         return cells
 
-    def grid_centroids_all(self, table="grid", field="fid", buffers=False):
+    def grid_centroids_all(self, table="grid", buffers=False):
         cells = []
         if buffers is False:
             sql = """SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""

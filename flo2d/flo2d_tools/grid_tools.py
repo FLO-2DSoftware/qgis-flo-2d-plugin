@@ -13,6 +13,7 @@ import os
 import sys
 import uuid
 from collections import defaultdict
+from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
@@ -1449,6 +1450,106 @@ def evaluate_arfwrf(gutils, grid, areas):
             "_______________________________________________________________________________"
         )
         return False
+
+
+def grid_compas_neighbors(gutils):
+    cell_size = float(gutils.get_cont_par("CELLSIZE"))
+
+    def n(x, y):
+        return x, y + cell_size
+
+    def e(x, y):
+        return x + cell_size, y
+
+    def s(x, y):
+        return x, y - cell_size
+
+    def w(x, y):
+        return x - cell_size, y
+
+    def ne(x, y):
+        return x + cell_size, y + cell_size
+
+    def se(x, y):
+        return x + cell_size, y - cell_size
+
+    def sw(x, y):
+        return x - cell_size, y - cell_size
+
+    def nw(x, y):
+        return x - cell_size, y + cell_size
+
+    grid_centroids_map = {QgsPointXY(*point): fid for fid, point in gutils.grid_centroids_all()}
+    compas_functions = (
+        n,
+        e,
+        s,
+        w,
+        ne,
+        se,
+        sw,
+        nw,
+    )
+    for point, fid in sorted(grid_centroids_map.items(), key=itemgetter(1)):
+        neighbors = []
+        centroid_x, centroid_y = point.x(), point.y()
+        for compas_fn in compas_functions:
+            neighbor_point = QgsPointXY(*compas_fn(centroid_x, centroid_y))
+            try:
+                neighbour_fid = grid_centroids_map[neighbor_point]
+            except KeyError:
+                neighbour_fid = 0
+            neighbors.append(neighbour_fid)
+        yield neighbors
+
+
+def grid_compas_neighbors_qgis(grid, cell_size):
+    def n(x, y):
+        return x, y + cell_size
+
+    def e(x, y):
+        return x + cell_size, y
+
+    def s(x, y):
+        return x, y - cell_size
+
+    def w(x, y):
+        return x - cell_size, y
+
+    def ne(x, y):
+        return x + cell_size, y + cell_size
+
+    def se(x, y):
+        return x + cell_size, y - cell_size
+
+    def sw(x, y):
+        return x - cell_size, y - cell_size
+
+    def nw(x, y):
+        return x - cell_size, y + cell_size
+
+    grid_centroids_map = {feat.geometry().centroid().asPoint(): feat["fid"] for feat in grid.getFeatures()}
+    compas_functions = (
+        n,
+        e,
+        s,
+        w,
+        ne,
+        se,
+        sw,
+        nw,
+    )
+    for point, fid in sorted(grid_centroids_map.items(), key=itemgetter(1)):
+        neighbors = []
+        centroid_x, centroid_y = point.x(), point.y()
+        for compas_fn in compas_functions:
+            neighbor_point = QgsPointXY(*compas_fn(centroid_x, centroid_y))
+            try:
+                neighbour_fid = grid_centroids_map[neighbor_point]
+            except KeyError:
+                neighbour_fid = 0
+            neighbors.append(neighbour_fid)
+        yield neighbors
 
 
 def calculate_arfwrf(grid, areas):
