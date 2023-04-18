@@ -8,7 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+
 import numpy as np
+
 from ..flo2d_tools.grid_tools import rasters2centroids
 
 try:
@@ -46,7 +48,6 @@ class ASCProcessor(object):
         return self.header
 
     def rainfall_sampling(self):
-
         for raster_values in rasters2centroids(self.vlayer, None, *self.asc_files):
             yield raster_values
 

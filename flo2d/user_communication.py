@@ -12,9 +12,21 @@
 # pylint: disable=C0325
 import sys
 import traceback
-from qgis.PyQt.QtWidgets import QMessageBox, QProgressBar, QDialog,  QWidget, QScrollArea, QVBoxLayout, QLabel, QGridLayout, QSizePolicy, QCheckBox
+
+from qgis.core import Qgis, QgsMessageLog
 from qgis.PyQt.QtCore import Qt
-from qgis.core import QgsMessageLog, Qgis
+from qgis.PyQt.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QGridLayout,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QScrollArea,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class UserCommunication(object):
@@ -45,49 +57,52 @@ class UserCommunication(object):
             print(msg)
 
     def show_error(self, msg, e):
-        # try: 
+        # try:
         if self.iface is not None:
-            
             exc_type, exc_obj, exc_tb = sys.exc_info()
             filename = exc_tb.tb_frame.f_code.co_filename
             function = exc_tb.tb_frame.f_code.co_name
             line = str(exc_tb.tb_lineno)
-            
+
             formatted_lines = traceback.format_exc().splitlines()
 
             QMessageBox.critical(
-                 self.iface.mainWindow(),
-                 self.context,
-                 msg
-                 + "\n\n"  
-                 + "Error:\n   "
-                 + str(exc_type.__name__) + ": " + str(exc_obj)  
-                 + "\n\n"                               
-                 + "In file:\n   "
-                 + filename
-                 + "\n\n"
-                 + "In function:\n   "
-                 + function
-                 + "\n\n"
-                 + "On line "
-                 + line + ":\n" + formatted_lines[-2].replace(" ", "")
-            )    
-                
+                self.iface.mainWindow(),
+                self.context,
+                msg
+                + "\n\n"
+                + "Error:\n   "
+                + str(exc_type.__name__)
+                + ": "
+                + str(exc_obj)
+                + "\n\n"
+                + "In file:\n   "
+                + filename
+                + "\n\n"
+                + "In function:\n   "
+                + function
+                + "\n\n"
+                + "On line "
+                + line
+                + ":\n"
+                + formatted_lines[-2].replace(" ", ""),
+            )
+
             # msg = msg + "<br><br>" + "<FONT COLOR=Crimson>In file:</FONT><br>" + filename \
             # + "<br><br>"  + "<FONT COLOR=Crimson>In function:</FONT><br>" + function  + "<br><br>"  \
             # + "<FONT COLOR=Crimson>On line </FONT>" + line + ":<br>"  + formatted_lines[-2] + "<br><br>"  \
-            # + "<FONT COLOR=Crimson>Error:</FONT><br>" + str(exc_type.__name__) + ": " + str(exc_obj)        
+            # + "<FONT COLOR=Crimson>Error:</FONT><br>" + str(exc_type.__name__) + ": " + str(exc_obj)
             #
             # QMessageBox.critical(
-                # self.iface.mainWindow(),
-                # self.context, msg                   
-            # ) 
- 
+            # self.iface.mainWindow(),
+            # self.context, msg
+            # )
+
         else:
-            print(msg)  
-        # except Exception:       
-            # self.show_critical("ERROR 200521.1222: Upsss! error within error!!!\n\n" + msg)
-            
+            print(msg)
+        # except Exception:
+        # self.show_critical("ERROR 200521.1222: Upsss! error within error!!!\n\n" + msg)
+
     def log(self, msg, level):
         if self.iface is not None:
             QgsMessageLog.logMessage(msg, self.context, level)
@@ -137,37 +152,44 @@ class UserCommunication(object):
         msgBox.setWindowTitle(title)
         if msg != "":
             msgBox.setText(msg)
-        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close )
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close)
         msgBox.setDefaultButton(QMessageBox.Yes)
         buttonY = msgBox.button(QMessageBox.Yes)
         buttonY.setText(text1)
         buttonN = msgBox.button(QMessageBox.No)
         buttonN.setText(text2)
-        
+
         # grid = QGridLayout
         # index = grid.indexOf(checkbox)
         # row, column, rowSpan, columnSpan = int
         # grid.getItemPosition(index, row, column, rowSpan, columnSpan)
         # grid.addWidget(geometryCheckBox, row + 1,  column, rowSpan, columnSpan)
-        
+
         ret = msgBox.exec()
         return ret
 
-    def customized_question(self, title, text, standard_buttons=QMessageBox.No | QMessageBox.Yes, default=QMessageBox.Yes, icon=QMessageBox.Information):
+    def customized_question(
+        self,
+        title,
+        text,
+        standard_buttons=QMessageBox.No | QMessageBox.Yes,
+        default=QMessageBox.Yes,
+        icon=QMessageBox.Information,
+    ):
         if self.iface is not None:
             m = QMessageBox()
             m.setWindowTitle(title)
             m.setText(text)
             m.setStandardButtons(standard_buttons)
             m.setDefaultButton(default)
-            m.setIcon(icon);
+            m.setIcon(icon)
             return m.exec_()
         else:
             print(text)
 
     def progress_bar(self, msg, minimum=0, maximum=0, init_value=0):
         pmb = self.iface.messageBar().createMessage(msg)
-        
+
         pb = QProgressBar()
         pb.setMinimum(minimum)
         pb.setMaximum(maximum)
@@ -177,26 +199,33 @@ class UserCommunication(object):
         self.iface.messageBar().pushWidget(pmb, Qgis.Info)
         return pb
 
-    def progress_bar2(self,  message, min=0, max=0, init_value=0, ):
+    def progress_bar2(
+        self,
+        message,
+        min=0,
+        max=0,
+        init_value=0,
+    ):
         pb = QProgressBar()
         pb.setMinimum(min)
         pb.setMaximum(max)
         pb.setValue(init_value)
         pb.setFormat("%v of %m")
-        pb.setAlignment(Qt.AlignCenter|Qt.AlignVCenter)
+        pb.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         pb.setStyleSheet("QProgressBar::chunk { background-color: lightskyblue}")
-        
+
         pbm = self.iface.messageBar().createMessage(message)
         pbm.layout().addWidget(pb)
-        
-        self.iface.messageBar().pushWidget(pbm, Qgis.Info)       
+
+        self.iface.messageBar().pushWidget(pbm, Qgis.Info)
         self.iface.mainWindow().repaint()
-        
-        return pb  
-    
+
+        return pb
+
     def clear_bar_messages(self):
         self.iface.messageBar().clearWidgets()
-        
+
+
 class ScrollMessageBox(QMessageBox):
     def __init__(self, msg, *args, **kwargs):
         QMessageBox.__init__(self, *args, **kwargs)
@@ -207,7 +236,8 @@ class ScrollMessageBox(QMessageBox):
         lay = QVBoxLayout(self.content)
         lay.addWidget(QLabel(msg, self))
         self.layout().addWidget(scroll, 0, 0, 1, self.layout().columnCount())
-        self.setStyleSheet("QScrollArea{min-width:300 px; min-height: 400px}")   
+        self.setStyleSheet("QScrollArea{min-width:300 px; min-height: 400px}")
+
 
 class ScrollMessageBox2(QMessageBox):
     def __init__(self, *args, **kwargs):
@@ -219,7 +249,7 @@ class ScrollMessageBox2(QMessageBox):
         lbl = QLabel(chldn[1].text(), self)
         lbl.setWordWrap(True)
         scrll.setWidget(lbl)
-        scrll.setMinimumSize (700,300)
+        scrll.setMinimumSize(700, 300)
         # grd.addWidget(scrll,0,1)
         grd.addWidget(scrll, 0, 1, 1, self.layout().columnCount())
-        chldn[1].setText('')
+        chldn[1].setText("")

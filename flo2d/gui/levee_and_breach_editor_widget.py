@@ -9,17 +9,18 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import Qt
-from .ui_utils import load_ui, set_icon
+from qgis.PyQt.QtWidgets import QApplication
+
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
 from ..gui.dlg_breach import (
     GlobalBreachDialog,
     IndividualBreachDialog,
-    LeveeFragilityCurvesDialog,
     IndividualLeveesDialog,
+    LeveeFragilityCurvesDialog,
 )
+from ..user_communication import UserCommunication
 from ..utils import float_or_zero
-from qgis.PyQt.QtWidgets import QApplication
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("levee_and_breach_editor")
 
@@ -72,7 +73,6 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             self.populate_levee_and_breach_widget()
 
     def populate_levee_and_breach_widget(self):
-
         qry = "SELECT ibreachsedeqn, gbratio, gweircoef, gbreachtime FROM breach_global"
         row = self.gutils.execute(qry).fetchone()
         if not row:

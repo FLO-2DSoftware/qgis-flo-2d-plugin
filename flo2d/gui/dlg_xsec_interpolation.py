@@ -8,10 +8,11 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .ui_utils import load_ui
-from ..user_communication import UserCommunication
 from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QFileDialog, QDialogButtonBox
+from qgis.PyQt.QtWidgets import QDialogButtonBox, QFileDialog
+
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("interpolate_xsections")
 

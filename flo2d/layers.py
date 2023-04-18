@@ -8,28 +8,28 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-from os.path import normpath
 import time
 from collections import OrderedDict
+from os.path import normpath
 
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
 from qgis.core import (
-    QgsProject,
-    QgsFeatureRequest,
-    QgsVectorLayer,
-    QgsRectangle,
-    QgsLayerTree,
-    QgsLayerTreeGroup,
     QgsDefaultValue,
     QgsEditorWidgetSetup,
+    QgsFeatureRequest,
+    QgsLayerTree,
+    QgsLayerTreeGroup,
+    QgsProject,
+    QgsRectangle,
+    QgsVectorLayer,
 )
-
 from qgis.gui import QgsRubberBand
-from .utils import is_number, get_file_path
-from .errors import Flo2dLayerInvalid, Flo2dNotString, Flo2dLayerNotFound, Flo2dError
-from .user_communication import UserCommunication
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication
+
+from .errors import Flo2dError, Flo2dLayerInvalid, Flo2dLayerNotFound, Flo2dNotString
+from .user_communication import UserCommunication
+from .utils import get_file_path, is_number
 
 
 class Layers(object):
@@ -51,10 +51,6 @@ class Layers(object):
         self.data = OrderedDict(
             [
                 # User layers:
-                
-                
-                
-                
                 # (
                 #     "user_bc_points",
                 #     {
@@ -122,7 +118,7 @@ class Layers(object):
                 #         "readonly": True,
                 #         "attrs_defaults": {"type": "'R'"},
                 #     },
-                # ),            
+                # ),
                 # (
                 #     "user_noexchange_chan_areas",
                 #     {
@@ -155,7 +151,7 @@ class Layers(object):
                 #         "module": ["all"],
                 #         "readonly": False,
                 #     },
-                # ),  
+                # ),
                 # (
                 #     "user_swmm_orifices",
                 #     {
@@ -166,7 +162,7 @@ class Layers(object):
                 #         "module": ["all"],
                 #         "readonly": False,
                 #     },
-                # ),  
+                # ),
                 # (
                 #     "user_swmm_weirs",
                 #     {
@@ -177,7 +173,7 @@ class Layers(object):
                 #         "module": ["all"],
                 #         "readonly": False,
                 #     },
-                # ),                  
+                # ),
                 # (
                 #     "user_swmm_nodes",
                 #     {
@@ -188,7 +184,7 @@ class Layers(object):
                 #         "module": ["all"],
                 #         "readonly": False,
                 #     },
-                # ), 
+                # ),
                 #
                 #
                 #
@@ -201,7 +197,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ), 
+                # ),
                 # (
                 #     "gutter_areas",
                 #     {
@@ -211,7 +207,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "spatialshallow",
                 #     {
@@ -221,7 +217,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "fpfroude",
                 #     {
@@ -231,7 +227,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "tolspatial",
                 #     {
@@ -241,7 +237,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "rain_arf_areas",
                 #     {
@@ -251,7 +247,7 @@ class Layers(object):
                 #         "attrs_edit_widgets": {},
                 #         "readonly": False,
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "user_blocked_areas",
                 #     {
@@ -267,7 +263,7 @@ class Layers(object):
                 #         "readonly": False,
                 #         "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
                 #     },
-                # ),                
+                # ),
                 # (
                 #     "user_roughness",
                 #     {
@@ -278,11 +274,7 @@ class Layers(object):
                 #         "module": ["all"],
                 #         "readonly": False,
                 #     },
-                # ),                 
-     
-     
-                
-                
+                # ),
                 (
                     "user_bc_points",
                     {
@@ -316,7 +308,6 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-
                 (
                     "user_left_bank",
                     {
@@ -350,7 +341,7 @@ class Layers(object):
                         "readonly": True,
                         "attrs_defaults": {"type": "'R'"},
                     },
-                ),            
+                ),
                 (
                     "user_noexchange_chan_areas",
                     {
@@ -383,7 +374,7 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),  
+                ),
                 (
                     "user_swmm_orifices",
                     {
@@ -394,7 +385,7 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),  
+                ),
                 (
                     "user_swmm_weirs",
                     {
@@ -405,7 +396,7 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),                  
+                ),
                 (
                     "user_swmm_nodes",
                     {
@@ -416,10 +407,7 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ), 
-                
-                
-
+                ),
                 (
                     "buildings_areas",
                     {
@@ -429,7 +417,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ), 
+                ),
                 (
                     "gutter_areas",
                     {
@@ -439,7 +427,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "spatialshallow",
                     {
@@ -449,7 +437,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "fpfroude",
                     {
@@ -459,7 +447,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "tolspatial",
                     {
@@ -469,7 +457,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "rain_arf_areas",
                     {
@@ -479,7 +467,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "user_blocked_areas",
                     {
@@ -487,15 +475,15 @@ class Layers(object):
                         "sgroup": "User Layers",
                         "styles": ["blocked_areas.qml"],
                         "attrs_edit_widgets": {
-                            "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                            "calc_arf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                            "calc_wrf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
+                            "collapse": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
+                            "calc_arf": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
+                            "calc_wrf": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
                         },
                         "module": ["redfac"],
                         "readonly": False,
                         "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
                     },
-                ),                
+                ),
                 (
                     "user_roughness",
                     {
@@ -506,7 +494,7 @@ class Layers(object):
                         "module": ["all"],
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "mult_areas",
                     {
@@ -539,7 +527,7 @@ class Layers(object):
                         "visible": True,
                         "readonly": False,
                     },
-                ), 
+                ),
                 (
                     "user_fpxsec",
                     {
@@ -550,7 +538,7 @@ class Layers(object):
                         "module": ["chan"],
                         "readonly": False,
                     },
-                ),                                                                          
+                ),
                 (
                     "user_struct",
                     {
@@ -595,7 +583,6 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-
                 (
                     "user_elevation_points",
                     {
@@ -625,13 +612,12 @@ class Layers(object):
                         "sgroup": "User Layers",
                         "styles": ["user_reservoirs.qml"],
                         "attrs_edit_widgets": {
-                            "use_n_value": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}}
+                            "use_n_value": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}}
                         },
                         "module": ["all"],
                         "readonly": False,
                     },
                 ),
-
                 (
                     "user_infiltration",
                     {
@@ -654,7 +640,6 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-
                 (
                     "gutter_lines",
                     {
@@ -665,8 +650,6 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-               
-         
                 # Schematic layers:
                 (
                     "chan",
@@ -826,7 +809,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": True,
                     },
-                ),                
+                ),
                 # Storm Drain layers:
                 (
                     "swmmflo",
@@ -879,7 +862,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "swmm_inflows",
                     {
@@ -919,7 +902,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),  
+                ),
                 (
                     "swmm_tidal_curve",
                     {
@@ -939,7 +922,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                              
+                ),
                 (
                     "swmm_pumps_curve_data",
                     {
@@ -949,8 +932,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ), 
-                               
+                ),
                 # Infiltration Layers
                 (
                     "infil",
@@ -1063,7 +1045,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": True,
                     },
-                ),                
+                ),
                 (
                     "inflow",
                     {
@@ -1204,7 +1186,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "rain_time_series",
                     {
@@ -1433,7 +1415,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": False,
                     },
-                ),               
+                ),
                 (
                     "sed_groups",
                     {
@@ -1455,7 +1437,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": False,
                     },
-                ),                
+                ),
                 (
                     "sed_group_cells",
                     {
@@ -1466,7 +1448,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": True,
                     },
-                ),       
+                ),
                 (
                     "sed_supply_cells",
                     {
@@ -1477,7 +1459,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": True,
                     },
-                ),                
+                ),
                 (
                     "sed_supply_frac_data",
                     {
@@ -1488,7 +1470,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": True,
                     },
-                ),                                
+                ),
                 (
                     "sed_rigid_cells",
                     {
@@ -1500,7 +1482,6 @@ class Layers(object):
                         "readonly": True,
                     },
                 ),
-                
                 (
                     "mud",
                     {
@@ -1522,7 +1503,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": True,
                     },
-                ),                
+                ),
                 # Channel  Tables:
                 (
                     "user_chan_r",
@@ -1697,7 +1678,7 @@ class Layers(object):
                         "visible": False,
                         "readonly": False,
                     },
-                ),                
+                ),
                 # Hydraulic Structures Tables:
                 (
                     "struct",
@@ -1749,7 +1730,6 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
-
                 (
                     "storm_drains",
                     {
@@ -1779,7 +1759,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
-                ),                
+                ),
             ]
         )
         # set QGIS layer (qlyr) to None for each table
@@ -2185,7 +2165,6 @@ class Layers(object):
             raise Flo2dNotString(msg)
 
     def load_all_layers(self, gutils):
-
         self.gutils = gutils
         self.clear_legend_selection()
         group = "FLO-2D_{}".format(os.path.basename(self.gutils.path).replace(".gpkg", ""))
@@ -2244,90 +2223,77 @@ class Layers(object):
                 msg = "ERROR 270123.1137: Unable to load  layer {}.".format(lyr)
                 self.uc.bar_error(msg)
 
+        # >>>>>>>>>>>>>>>>>111111111
 
-#>>>>>>>>>>>>>>>>>111111111
+        # <<<<<<<<<<<<<<<<111111111
 
-                        
-
-#<<<<<<<<<<<<<<<<111111111
-
-
-
-
-
-
-
-
-
-
-
-# #>>>>>>>>>>>>>>>>>2222222222222222222
-#
-#         # 0. Remove Boundary group if exists from previous project.
-#         root = QgsProject.instance().layerTreeRoot()
-#         for grp in root.findGroups():
-#             for subgroup in grp.findGroups():
-#                 for subsubgroup in subgroup.findGroups():
-#                     if subsubgroup.name() == "XXXX":
-#                         subsubgroup.removeAllChildren() 
-#                         subgroup.removeChildNode(subsubgroup)  
-#
-#
-#         # 1. Get group names and list of layer ids
-#         root = QgsProject.instance().layerTreeRoot()
-#         dictGroups={}
-#         prefix="Boundary Condition"
-#         for layer in self.root.findLayers():
-#           if QgsLayerTree.isLayer(layer):
-#             if prefix in layer.name():
-#                 if not prefix in dictGroups:
-#                   dictGroups[prefix]=[] 
-#                 if layer.layerId() not in dictGroups[prefix]:               
-#                     dictGroups[prefix].append(layer.layerId())
-#
-#
-#         # # 1.1 Rename layers
-#         # root = QgsProject.instance().layerTreeRoot()
-#         # prefix="Boundary Condition"
-#         # to_be_deleted = []
-#         # for layer in self.root.findLayers():
-#         #   if QgsLayerTree.isLayer(layer):
-#         #     if prefix in layer.name():
-#         #         # layer.setName("Delete") 
-#         #         to_be_deleted.append(layer)
-#
-#
-#
-#
-#         # # 2.1 Move "Boundaries" group to top of "User Layers"      
-#         # cloned_group1 = myNewGroup.clone()
-#         # myOriginalGroup.insertChildNode(0, cloned_group1)
-#         # myOriginalGroup.removeChildNode(myNewGroup)
-#
-#
-#
-#         # 2. Create Boundaries group
-#         myOriginalGroup = self.root.findGroup("User Layers")
-#         myNewGroup = myOriginalGroup.addGroup("XXXX")
-#         for key in reversed(dictGroups):
-#             for id in dictGroups[key]:
-#                 layer = self.root.findLayer(id)
-#                 clone = layer.clone()
-#                 myNewGroup.insertChildNode(0, clone)        
-#
-#         # # 3. Remove "Boundary Condition..." layers 
-#         # if to_be_deleted:
-#         #     for tbd in to_be_deleted:
-#         #         qinst = QgsProject.instance()
-#         #         qinst.removeMapLayer(qinst.mapLayersByName(tbd.name())[0].id())   
-#
-#         # grp = self.root.findGroup("User Layers")
-#         # for lyr in grp.findLayers():
-#         #     if "Boundary Condition" in lyr.name():
-#         #         self.remove_layer(id)
-#
-#
-# #<<<<<<<<<<<<<<<<2222222222222222222222222
+        # #>>>>>>>>>>>>>>>>>2222222222222222222
+        #
+        #         # 0. Remove Boundary group if exists from previous project.
+        #         root = QgsProject.instance().layerTreeRoot()
+        #         for grp in root.findGroups():
+        #             for subgroup in grp.findGroups():
+        #                 for subsubgroup in subgroup.findGroups():
+        #                     if subsubgroup.name() == "XXXX":
+        #                         subsubgroup.removeAllChildren()
+        #                         subgroup.removeChildNode(subsubgroup)
+        #
+        #
+        #         # 1. Get group names and list of layer ids
+        #         root = QgsProject.instance().layerTreeRoot()
+        #         dictGroups={}
+        #         prefix="Boundary Condition"
+        #         for layer in self.root.findLayers():
+        #           if QgsLayerTree.isLayer(layer):
+        #             if prefix in layer.name():
+        #                 if not prefix in dictGroups:
+        #                   dictGroups[prefix]=[]
+        #                 if layer.layerId() not in dictGroups[prefix]:
+        #                     dictGroups[prefix].append(layer.layerId())
+        #
+        #
+        #         # # 1.1 Rename layers
+        #         # root = QgsProject.instance().layerTreeRoot()
+        #         # prefix="Boundary Condition"
+        #         # to_be_deleted = []
+        #         # for layer in self.root.findLayers():
+        #         #   if QgsLayerTree.isLayer(layer):
+        #         #     if prefix in layer.name():
+        #         #         # layer.setName("Delete")
+        #         #         to_be_deleted.append(layer)
+        #
+        #
+        #
+        #
+        #         # # 2.1 Move "Boundaries" group to top of "User Layers"
+        #         # cloned_group1 = myNewGroup.clone()
+        #         # myOriginalGroup.insertChildNode(0, cloned_group1)
+        #         # myOriginalGroup.removeChildNode(myNewGroup)
+        #
+        #
+        #
+        #         # 2. Create Boundaries group
+        #         myOriginalGroup = self.root.findGroup("User Layers")
+        #         myNewGroup = myOriginalGroup.addGroup("XXXX")
+        #         for key in reversed(dictGroups):
+        #             for id in dictGroups[key]:
+        #                 layer = self.root.findLayer(id)
+        #                 clone = layer.clone()
+        #                 myNewGroup.insertChildNode(0, clone)
+        #
+        #         # # 3. Remove "Boundary Condition..." layers
+        #         # if to_be_deleted:
+        #         #     for tbd in to_be_deleted:
+        #         #         qinst = QgsProject.instance()
+        #         #         qinst.removeMapLayer(qinst.mapLayersByName(tbd.name())[0].id())
+        #
+        #         # grp = self.root.findGroup("User Layers")
+        #         # for lyr in grp.findLayers():
+        #         #     if "Boundary Condition" in lyr.name():
+        #         #         self.remove_layer(id)
+        #
+        #
+        # #<<<<<<<<<<<<<<<<2222222222222222222222222
 
         # lyr = QgsProject.instance().mapLayersByName("Boundary Condition Polygons")[0]
         # root = QgsProject.instance().layerTreeRoot()
@@ -2338,36 +2304,25 @@ class Layers(object):
         # grp.insertChildNode(0, myClone)
         # parent.removeChildNode(mylayer)
 
-
-
-
         # root = QgsProject.instance().layerTreeRoot()
         # lyr = QgsProject.instance().mapLayersByName("Boundary Condition Polygons")[0]
         # myClone= lyr.clone()
         # grp = root.children()[index] # index: group layer index
         # grp.insertChildNode(0, QgsLayerTreeLayer(myClone))
         # root.removeLayer(lyr)
-        
-        
 
         self.expand_flo2d_group(group)
         self.collapse_all_flo2d_subgroups(group)
         self.expand_flo2d_subgroup(group, "User Layers")
 
-
-
-
-
-
-
         # root = QgsProject.instance().layerTreeRoot()
         # grp = root.findGroup("User Layers")
-        # sub_group = grp.addGroup("Boundary Conditions")  
+        # sub_group = grp.addGroup("Boundary Conditions")
         #
         # sgrp = self.get_subgroup(self.group, "Boundary Condition Points")
         # # sgrp = self.get_group("Boundary Condition Points", create=False)
         # # ly = self.get_layer_by_name("Boundary Condition Points", group=self.group).layer()
-        # if sgrp:      
+        # if sgrp:
         #     mylayer = root.findLayer(sgrp.id())
         #     myClone = mylayer.clone()
         #
@@ -2382,20 +2337,11 @@ class Layers(object):
         #     QgsProject.instance().removeMapLayers( [ly.id()] )
         #
         # ly = self.get_layer_by_name("Boundary Condition Polygons", group=self.group).layer()
-        # if ly:  
+        # if ly:
         #     mylayer = root.findLayer(ly.id())
         #     myClone = mylayer.clone()
         #     sub_group.insertChildNode(0, myClone)
         #     QgsProject.instance().removeMapLayers( [ly.id()] )
-
-
-
-
-
-
-
-
-
 
     def update_style_blocked(self, lyr_id):
         cst = self.gutils.get_cont_par("CELLSIZE")
@@ -2430,7 +2376,7 @@ class Layers(object):
         )
         sym.symbolLayer(0).setGeometryExpression(exp_arf)
 
-    def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0), clear = True):
+    def show_feat_rubber(self, lyr_id, fid, color=QColor(255, 0, 0), clear=True):
         lyr = self.get_layer_tree_item(lyr_id).layer()
         gt = lyr.geometryType()
         if clear:

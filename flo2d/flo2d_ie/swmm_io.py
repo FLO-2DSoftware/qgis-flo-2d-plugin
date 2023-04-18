@@ -8,10 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from collections import OrderedDict
-from itertools import zip_longest, chain
-from ..utils import float_or_zero
+from itertools import chain, zip_longest
+
 from qgis.PyQt.QtWidgets import QApplication
+
 from ..user_communication import UserCommunication
+from ..utils import float_or_zero
 
 
 class StormDrainProject(object):
@@ -25,17 +27,17 @@ class StormDrainProject(object):
         self.INP_nodes = {}
         self.INP_inflows = {}
         self.INP_patterns = []
-        self.INP_timeseries = []       
+        self.INP_timeseries = []
         self.INP_conduits = {}
-        
+
         self.INP_pumps = {}
         self.INP_curves = []
-        
+
         self.INP_orifices = {}
         self.INP_weirs = {}
-        
+
         self.status_report = ""
-        
+
     def split_INP_groups_dictionary_by_tags(self):
         """
         Creates an ordered dictionary INP_groups with all groups in [xxxx] .INP
@@ -53,7 +55,9 @@ class StormDrainProject(object):
         """
         try:
             with open(self.inp_file) as swmm_inp:  # open(file, mode='r',...) defaults to mode 'r' read.
-                for chunk in swmm_inp.read().split("["):  #  chunk gets all text (including newlines) until next '[' (may be empty).
+                for chunk in swmm_inp.read().split(
+                    "["
+                ):  #  chunk gets all text (including newlines) until next '[' (may be empty).
                     try:
                         key, value = chunk.split("]")  # divide chunk into:
                         # key = name of group (e.g. JUNCTIONS) and
@@ -406,13 +410,12 @@ class StormDrainProject(object):
                     conduit_dict = dict(zip_longest(conduit_cols, cond.split()))
                     conduit = conduit_dict.pop("conduit_name")
                     self.INP_conduits[conduit] = conduit_dict
-                    
+
                     if conduit_dict["conduit_inlet"] == "?" or conduit_dict["conduit_outlet"] == "?":
-                        self.status_report +=  "Undefined Node (?) reference at \n[CONDUITS]\n" + cond + "\n\n"                                        
-                    
+                        self.status_report += "Undefined Node (?) reference at \n[CONDUITS]\n" + cond + "\n\n"
+
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
-
 
     def create_INP_pumps_dictionary_with_pumps(self):
         try:
@@ -421,11 +424,11 @@ class StormDrainProject(object):
                 "pump_inlet",
                 "pump_outlet",
                 "pump_curve",
-                "pump_init_status", 
-                "pump_startup_depth", 
-                "pump_shutoff_depth", 
+                "pump_init_status",
+                "pump_startup_depth",
+                "pump_shutoff_depth",
             ]
-            
+
             pumps = self.select_this_INP_group("pumps")
             if pumps:
                 for p in pumps:
@@ -437,7 +440,6 @@ class StormDrainProject(object):
         except Exception:
             self.uc.bar_warn("WARNING 221121.1019: Reading pumps from SWMM input data failed!")
 
-
     def create_INP_orifices_dictionary_with_orifices(self):
         try:
             orifices_cols = [
@@ -445,12 +447,12 @@ class StormDrainProject(object):
                 "ori_inlet",
                 "ori_outlet",
                 "ori_type",
-                "ori_crest_height", 
-                "ori_disch_coeff", 
-                "ori_flap_gate", 
-                "ori_open_close_time", 
+                "ori_crest_height",
+                "ori_disch_coeff",
+                "ori_flap_gate",
+                "ori_open_close_time",
             ]
-            
+
             orifices = self.select_this_INP_group("orifices")
             if orifices:
                 for ori in orifices:
@@ -469,13 +471,13 @@ class StormDrainProject(object):
                 "weir_inlet",
                 "weir_outlet",
                 "weir_type",
-                "weir_crest_height", 
-                "weir_disch_coeff", 
-                "weir_flap_gate", 
-                "weir_end_contrac", 
-                "weir_end_coeff", 
+                "weir_crest_height",
+                "weir_disch_coeff",
+                "weir_flap_gate",
+                "weir_end_contrac",
+                "weir_end_coeff",
             ]
-            
+
             weirs = self.select_this_INP_group("weirs")
             if weirs:
                 for we in weirs:
@@ -493,9 +495,9 @@ class StormDrainProject(object):
                 "pump_curve_name",
                 "pump_curve_type",
                 "x_value",
-                "y_value", 
+                "y_value",
             ]
-            
+
             curves = self.select_this_INP_group("curves")
             if curves:
                 for c in curves:
@@ -510,7 +512,7 @@ class StormDrainProject(object):
                         a_dict = dict(chain(self.INP_curves.items(), nxt.items()))
                         self.INP_curves = a_dict
                     else:
-                        self.INP_curves[curve_name] =  curve_dict                   
+                        self.INP_curves[curve_name] = curve_dict
 
         except Exception as e:
             self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)
@@ -525,13 +527,13 @@ class StormDrainProject(object):
                         continue
                     losses_dict = dict(zip_longest(losses_cols, lo.split()))
                     loss = losses_dict.pop("conduit_name")
-                    if loss in self.INP_conduits:   
+                    if loss in self.INP_conduits:
                         self.INP_conduits[loss].update(
                             losses_dict
                         )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
                         # an already existing key in dictionary INP_conduits.
                     else:
-                        self.status_report +=  "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
+                        self.status_report += "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
         except Exception as e:
             self.uc.show_error("ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!", e)
 
@@ -550,25 +552,24 @@ class StormDrainProject(object):
             if xsections is not None:
                 for xs in xsections:
                     if not xs or xs[0] in self.ignore:
-                        continue                        
+                        continue
                     xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
                     xsec = xsections_dict.pop("conduit_name")
-                    
-                    if xsec in self.INP_conduits:
-                        self.INP_conduits[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-                                                                        # an already existing key in dictionary INP_conduits.   
-                    elif xsec in self.INP_orifices:  
-                        pass   
-                    elif xsec in self.INP_weirs:  
-                        pass                                         
-                    else:
-                        self.status_report +=  "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
-                                                         
-        except Exception as e:
-            self.uc.show_error(
-                "ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
-            )
 
+                    if xsec in self.INP_conduits:
+                        self.INP_conduits[xsec].update(
+                            xsections_dict
+                        )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                        # an already existing key in dictionary INP_conduits.
+                    elif xsec in self.INP_orifices:
+                        pass
+                    elif xsec in self.INP_weirs:
+                        pass
+                    else:
+                        self.status_report += "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
+
+        except Exception as e:
+            self.uc.show_error("ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
 
     def add_XSECTIONS_to_INP_orifices_dictionary(self):
         try:
@@ -585,19 +586,18 @@ class StormDrainProject(object):
             if xsections is not None:
                 for xs in xsections:
                     if not xs or xs[0] in self.ignore:
-                        continue                        
+                        continue
                     xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
                     xsec = xsections_dict.pop("orifice_name")
-                    
-                    if xsec in self.INP_orifices:
-                        self.INP_orifices[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-                                                                        # an already existing key in dictionary INP_orifices.   
-                                                         
-        except Exception as e:
-            self.uc.show_error(
-                "ERROR 310322.1014: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
-            )
 
+                    if xsec in self.INP_orifices:
+                        self.INP_orifices[xsec].update(
+                            xsections_dict
+                        )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                        # an already existing key in dictionary INP_orifices.
+
+        except Exception as e:
+            self.uc.show_error("ERROR 310322.1014: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
 
     def add_XSECTIONS_to_INP_weirs_dictionary(self):
         try:
@@ -614,18 +614,18 @@ class StormDrainProject(object):
             if xsections is not None:
                 for xs in xsections:
                     if not xs or xs[0] in self.ignore:
-                        continue                        
+                        continue
                     xsections_dict = dict(zip_longest(xsections_cols, xs.split()))
                     xsec = xsections_dict.pop("weir_name")
-                    
+
                     if xsec in self.INP_weirs:
-                        self.INP_weirs[xsec].update(xsections_dict)  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
-                                                                        # an already existing key in dictionary INP_weirs.   
-                                                         
+                        self.INP_weirs[xsec].update(
+                            xsections_dict
+                        )  # Adds new values (from "xsections_dict" , that include the "xsections_cols") to
+                        # an already existing key in dictionary INP_weirs.
+
         except Exception as e:
-            self.uc.show_error(
-                "ERROR 080422.1050: couldn't create a [XSECTIONS] group from storm drain .INP file!", e
-            )
+            self.uc.show_error("ERROR 080422.1050: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):
         try:
@@ -682,14 +682,14 @@ class StormDrainProject(object):
                         i2 = "TIMESERIES"
                     else:
                         i2 = items[2]
-                        
+
                     if items[2] == "FIXED":
                         i3 = items[3]
-                    elif items[2] == "TIDAL" or items[2] == "TIMESERIES":    
-                        i3 = items[3] 
+                    elif items[2] == "TIDAL" or items[2] == "TIMESERIES":
+                        i3 = items[3]
                     else:
-                        i3 = ""  
-                        
+                        i3 = ""
+
                     if "YES" in items:
                         i4 = "True"
                     else:
@@ -806,14 +806,14 @@ class StormDrainProject(object):
                         else:    
                             name = timeSplit[0]
                             date = timeSplit[1]
-                            time  = timeSplit[2]
+                            time = timeSplit[2]
                             value = timeSplit[3]
                             timeSplit = [name, date, time, value]
                             time_list = list(zip_longest(time_cols_date, timeSplit))
                     time_list.insert(0, ["description", descr if descr is not None else ""])
                     self.INP_timeseries.append(time_list)
             if warn != "":
-               self.uc.bar_warn(warn)         
+                self.uc.bar_warn(warn)
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
 
@@ -829,16 +829,19 @@ class StormDrainProject(object):
                     items = c.split()
                     if len(items) == 4:
                         prev_type = items[1]
-                        self.INP_curves.append(items)    
+                        self.INP_curves.append(items)
                     elif len(items) == 3:
                         items.insert(1, prev_type)
-                        self.INP_curves.append(items)    
+                        self.INP_curves.append(items)
                     else:
                         msg += c + "\n"
-                
+
                 if msg:
-                    msg = "WARNING 251121.0538: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n" + msg
-                    self.uc.show_warn(msg)            
-                               
+                    msg = (
+                        "WARNING 251121.0538: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
+                        + msg
+                    )
+                    self.uc.show_warn(msg)
+
         except Exception as e:
             self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)

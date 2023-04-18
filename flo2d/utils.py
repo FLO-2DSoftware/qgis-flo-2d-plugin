@@ -16,17 +16,18 @@ old_IDEBRV = 0
 
 grid_index = {}
 
+import csv
+import io
+import os.path
+from datetime import datetime
 from heapq import nsmallest
 from itertools import filterfalse
-import os.path
-import io
-import csv
-from datetime import datetime
 from math import ceil, log10
-from qgis.PyQt.QtCore import Qt, QRegExp
-from qgis.PyQt.QtWidgets import (QMessageBox, QApplication, QStyledItemDelegate, 
-            QItemDelegate, QLineEdit, QDoubleSpinBox)
-from qgis.PyQt.QtGui import QRegExpValidator, QDoubleValidator
+
+from qgis.PyQt.QtCore import QRegExp, Qt
+from qgis.PyQt.QtGui import QDoubleValidator, QRegExpValidator
+from qgis.PyQt.QtWidgets import QApplication, QDoubleSpinBox, QItemDelegate, QLineEdit, QMessageBox, QStyledItemDelegate
+
 
 class NumericDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -36,7 +37,7 @@ class NumericDelegate(QStyledItemDelegate):
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
-    
+
     # def paint(self, painter, option, index):
     #     value = index.model().data(index, Qt.EditRole)
     #     try:
@@ -48,8 +49,8 @@ class NumericDelegate(QStyledItemDelegate):
 
     # def displayText(self,value,locale):
     #     return f"{value:.4f}"
-    
-    
+
+
 class NumericDelegate2(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(NumericDelegate2, self).createEditor(parent, option, index)
@@ -58,15 +59,16 @@ class NumericDelegate2(QStyledItemDelegate):
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
-    
+
     def paint(self, painter, option, index):
         value = index.model().data(index, Qt.EditRole)
         try:
             number = float(value)
             painter.drawText(option.rect, Qt.AlignLeft, "{:.{}f}".format(number, 2))
-        except :
-            QStyledItemDelegate.paint(self, painter, option, index)   
-                      
+        except:
+            QStyledItemDelegate.paint(self, painter, option, index)
+
+
 class HourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(HourDelegate, self).createEditor(parent, option, index)
@@ -76,14 +78,14 @@ class HourDelegate(QStyledItemDelegate):
                 validator = QRegExpValidator(reg_ex, editor)
                 editor.setValidator(validator)
         return editor
-    
+
     # def paint(self, painter, option, index):
     #     value = index.model().data(index, Qt.EditRole)
     #     try:
     #         hour = datetime.datetime.strptime(value, '%H:%M')
     #         painter.drawText(option.rect, Qt.AlignLeft, "%H:%M".format(hour))
     #     except :
-    #         QStyledItemDelegate.paint(self, painter, option, index)    
+    #         QStyledItemDelegate.paint(self, painter, option, index)
 
 
 # class NumericDelegate(QStyledItemDelegate):
@@ -95,6 +97,7 @@ class HourDelegate(QStyledItemDelegate):
 #             editor.setValidator(validator)
 #         return editor
 
+
 class TimeSeriesDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(TimeSeriesDelegate, self).createEditor(parent, option, index)
@@ -102,7 +105,7 @@ class TimeSeriesDelegate(QStyledItemDelegate):
             if isinstance(editor, QLineEdit):
                 reg_ex = QRegExp("^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d")
                 validator = QRegExpValidator(reg_ex, editor)
-                editor.setValidator(validator)        
+                editor.setValidator(validator)
         if index.column() == 1:
             if isinstance(editor, QLineEdit):
                 reg_ex = QRegExp("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
@@ -112,8 +115,9 @@ class TimeSeriesDelegate(QStyledItemDelegate):
             if isinstance(editor, QLineEdit):
                 reg_ex = QRegExp("^[0-9]{1,11}(?:\.[0-9]{1,3})?$")
                 validator = QRegExpValidator(reg_ex, editor)
-                editor.setValidator(validator)            
+                editor.setValidator(validator)
         return editor
+
 
 class FloatDelegate(QItemDelegate):
     def __init__(self, decimals, parent=None):
@@ -127,30 +131,35 @@ class FloatDelegate(QItemDelegate):
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor
-    
+
     def paint(self, painter, option, index):
         value = index.model().data(index, Qt.EditRole)
         try:
             number = float(value)
-            painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals ))
-        except :
+            painter.drawText(option.rect, Qt.AlignLeft, "{.3f}".format(number, self.nDecimals))
+        except:
             QItemDelegate.paint(self, painter, option, index)
+
 
 def get_BC_Border():
     global BC_BORDER
     return BC_BORDER
 
+
 def set_BC_Border(val):
     global BC_BORDER
     BC_BORDER = val
+
 
 def get_min_max_elevs():
     global MIN_ELEVS, MAX_ELEVS
     return MIN_ELEVS, MAX_ELEVS
 
+
 def set_min_max_elevs(mini, maxi):
     global MIN_ELEVS, MAX_ELEVS
     MIN_ELEVS, MAX_ELEVS = mini, maxi
+
 
 def is_grid_index():
     global grid_index
@@ -158,20 +167,24 @@ def is_grid_index():
         return True
     else:
         return False
-    
+
+
 def get_grid_index():
     global grid_index
     return grid_index
 
+
 def set_grid_index(val):
     global grid_index
     grid_index = val
-    
-def clear_grid_index():  
+
+
+def clear_grid_index():
     global grid_index
     for key, value in grid_index.items():
         grid_index[key][1] = 0.0
         grid_index[key][2] = 0
+
 
 def get_file_path(*paths):
     temp_dir = os.path.dirname(os.path.abspath(__file__))
@@ -260,11 +273,13 @@ def float_or_zero(value):
     except Exception:
         return 0.0
 
+
 def second_smallest(numbers):
     s = set()
     sa = s.add
     un = (sa(n) or n for n in filterfalse(s.__contains__, numbers))
-    return nsmallest(2, un)[-1]  
+    return nsmallest(2, un)[-1]
+
 
 def int_or_zero(value):
     #     if value is None:
@@ -290,12 +305,14 @@ def int_or_zero(value):
     else:
         return int(value.text())
 
-def time_taken(ini, fin):  
-    time_passed = round((fin - ini)/60.0 , 2)
+
+def time_taken(ini, fin):
+    time_passed = round((fin - ini) / 60.0, 2)
     hours, rem = divmod(fin - ini, 3600)
-    minutes, seconds = divmod(rem, 60)            
-    time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours),int(minutes),int(seconds))
-    return time_passed  
+    minutes, seconds = divmod(rem, 60)
+    time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+    return time_passed
+
 
 def Msge(msg_string, icon):
     msgBox = QMessageBox()
@@ -325,5 +342,3 @@ def copy_tablewidget_selection(tablewidget):
         stream = io.StringIO()
         csv.writer(stream, delimiter="\t").writerows(table)
         QApplication.clipboard().setText(stream.getvalue())
-
-  

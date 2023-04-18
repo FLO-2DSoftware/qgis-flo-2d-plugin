@@ -9,22 +9,23 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import QSize
-from .ui_utils import load_ui, set_icon
-from .grid_tools_widget import GridToolsWidget
-from .xs_editor_widget import XsecEditorWidget
+
+from ..user_communication import UserCommunication
 from .bc_editor_widget import BCEditorWidget
-from .struct_editor_widget import StructEditorWidget
-from .ic_editor_widget import ICEditorWidget
-from .street_editor_widget import StreetEditorWidget
-from .rain_editor_widget import RainEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
+from .fpxsec_editor_widget import FPXsecEditorWidget
+from .grid_tools_widget import GridToolsWidget
+from .ic_editor_widget import ICEditorWidget
+from .infil_editor_widget import InfilEditorWidget
 from .levee_and_breach_editor_widget import LeveeAndBreachEditorWidget
 from .multiple_channels_editor_widget import MultipleChannelsEditorWidget
 from .profile_tool import ProfileTool
-from .fpxsec_editor_widget import FPXsecEditorWidget
-from .infil_editor_widget import InfilEditorWidget
+from .rain_editor_widget import RainEditorWidget
 from .storm_drain_editor_widget import StormDrainEditorWidget
-from ..user_communication import UserCommunication
+from .street_editor_widget import StreetEditorWidget
+from .struct_editor_widget import StructEditorWidget
+from .ui_utils import load_ui, set_icon
+from .xs_editor_widget import XsecEditorWidget
 
 uiDialog, qtBaseClass = load_ui("f2d_widget")
 

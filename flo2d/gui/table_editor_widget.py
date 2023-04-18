@@ -8,22 +8,23 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt import QtCore
-from qgis.PyQt.QtCore import Qt, QEvent, QObject, QSize, pyqtSignal
-from qgis.PyQt.QtGui import QKeySequence, QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
-from .ui_utils import load_ui
-from ..utils import is_number
-from ..user_communication import UserCommunication
-import io
 import csv
+import io
+
 from qgis.core import QgsMessageLog
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QEvent, QObject, QSize, Qt, pyqtSignal
+from qgis.PyQt.QtGui import QKeySequence, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
+
+from ..user_communication import UserCommunication
+from ..utils import is_number
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("table_editor")
 
 
 class TableEditorWidget(qtBaseClass, uiDialog):
-
     before_paste = pyqtSignal()
     after_paste = pyqtSignal()
     after_delete = pyqtSignal()
@@ -128,7 +129,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols)
             )
         QApplication.restoreOverrideCursor()
-        
+
     def delete_selection(self):
         indices = []
         for i in self.tview.selectionModel().selectedRows():
@@ -138,6 +139,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             self.tview.model().removeRow(i.row())
         if indices:
             self.after_delete.emit()
+
 
 class CommandItemEdit(QUndoCommand):
     """
@@ -151,7 +153,6 @@ class CommandItemEdit(QUndoCommand):
         self.oldText = oldText
         self.newText = newText
 
-
     def redo(self):
         self.item.model().itemDataChanged.disconnect(self.widget.itemDataChangedSlot)
         self.item.setText(self.newText)
@@ -162,14 +163,15 @@ class CommandItemEdit(QUndoCommand):
         try:
             self.item.setText(self.oldText)
         except TypeError:
-            self.item.setText('')
+            self.item.setText("")
         self.item.model().itemDataChanged.connect(self.widget.itemDataChangedSlot)
+
 
 #     def redo(self):
 #         self.widget.connect_itemDataChanged(False)
 #         self.item.setText(self.newText)
 #         self.widget.connect_itemDataChanged(True)
-# 
+#
 #     def undo(self):
 #         self.widget.connect_itemDataChanged(False)
 #         try:

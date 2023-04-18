@@ -10,20 +10,22 @@
 
 import os
 import traceback
-from qgis.PyQt.QtCore import Qt, QSettings
-from qgis.PyQt.QtGui import QColor
+from math import isnan
+
 from qgis.core import QgsProject
-from qgis.PyQt.QtWidgets import QInputDialog, QFileDialog, QApplication, QMessageBox
-from .ui_utils import load_ui, try_disconnect, set_icon
-from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
+from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
+
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from ..utils import is_number, m_fdata
-from ..geopackage_utils import GeoPackageUtils
-from .table_editor_widget import StandardItemModel, StandardItem, CommandItemEdit
+from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from ..flo2dobjects import Rain
+from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from math import isnan
+from ..utils import is_number, m_fdata
+from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .ui_utils import load_ui, set_icon, try_disconnect
 
 uiDialog, qtBaseClass = load_ui("rain_editor")
 
@@ -54,13 +56,13 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.add_tseries_btn, "mActionAddRainTimeSeries.svg")
         set_icon(self.add_predefined_tseries_btn, "mActionOpenFile.svg")
         set_icon(self.rename_tseries_btn, "change_name.svg")
-        
+
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
-        
+
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
-        self.table.after_delete.connect(self.populate_tseries_data) 
-        
+        self.table.after_delete.connect(self.populate_tseries_data)
+
     def block_saving(self):
         try_disconnect(self.rain_data_model.dataChanged, self.save_tseries_data)
 
@@ -136,8 +138,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     self.simulate_rain_grp.setChecked(True)
 
         self.rain = Rain(self.con, self.iface)
-        self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)   
-         
+        self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)
+
     def import_rainfall(self):
         try:
             s = QSettings()
@@ -183,29 +185,31 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             )
 
     def export_rainfall_to_binary_hdf5(self):
-        export = self.uc.dialog_with_2_customized_buttons("Select RAINCELL file to export", "", 
-                                                          " RAINCELL.DAT ", " RAINCELL.HDF5 ")
-        if (export == QMessageBox.Yes):
+        export = self.uc.dialog_with_2_customized_buttons(
+            "Select RAINCELL file to export", "", " RAINCELL.DAT ", " RAINCELL.HDF5 "
+        )
+        if export == QMessageBox.Yes:
             # self.uc.show_info("Export RAINCELL.DAT")
-            if self.gutils.is_table_empty("grid"): 
+            if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return
             project_dir = QgsProject.instance().absolutePath()
             outdir = QFileDialog.getExistingDirectory(
-                None, "Select directory where RAINCEL.DAT will be exported", directory=project_dir)
-            if outdir:                    
+                None, "Select directory where RAINCEL.DAT will be exported", directory=project_dir
+            )
+            if outdir:
                 flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 out = flo2dgeo.export_raincell(outdir)
                 QApplication.restoreOverrideCursor()
                 if out:
-                    self.uc.show_info("RAINCELL.DAT was exported.") 
+                    self.uc.show_info("RAINCELL.DAT was exported.")
                 else:
-                    self.uc.show_info("RAINCELL.DAT could not was exported!")      
-            
-        elif (export == QMessageBox.No): 
-            # self.uc.show_info("Export RAINCELL.HDF5") 
-              
+                    self.uc.show_info("RAINCELL.DAT could not was exported!")
+
+        elif export == QMessageBox.No:
+            # self.uc.show_info("Export RAINCELL.HDF5")
+
             try:
                 import h5py
             except ImportError:
@@ -215,9 +219,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             last_dir = s.value("FLO-2D/lastHDF", "")
             # hdf_file, __ = QFileDialog.getSaveFileName(
             #     None, "Export Rainfall to HDF file", directory=last_dir, filter="*.hdf5"
-            # )        
+            # )
             hdf_dir = QFileDialog.getExistingDirectory(
-                None, "Select directory to export RAINCELL.HDF5 binary file", last_dir)
+                None, "Select directory to export RAINCELL.HDF5 binary file", last_dir
+            )
             if not hdf_dir:
                 return
             hdf_file = hdf_dir + "/RAINCELL.HDF5"
@@ -239,7 +244,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_info("Exporting Rainfall Data finished!")
                 else:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files.")
+                    self.uc.show_info(
+                        "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
+                    )
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 QApplication.restoreOverrideCursor()
@@ -259,7 +266,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Rain timeseries"
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
-    def check_simulate_rainfall(self):       
+    def check_simulate_rainfall(self):
         qry = """SELECT value FROM cont WHERE name = 'IRAIN';"""
         row = self.gutils.execute(qry).fetchone()
         if is_number(row[0]):
@@ -267,7 +274,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.simulate_rain_grp.setChecked(False)
             else:
                 self.simulate_rain_grp.setChecked(True)
-                
+
     def rain_properties(self):
         if not self.rain:
             return
@@ -337,8 +344,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.tseries_cbo.setCurrentIndex(self.tseries_cbo.count() - 1)
             else:
                 self.tseries_cbo.setCurrentIndex(newIdx)
-        self.populate_tseries_data()     
-             
+        self.populate_tseries_data()
+
     def add_predefined_tseries(self):
         self.uc.clear_bar_messages()
         s = QSettings()
@@ -410,9 +417,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Get current time series data, populate data table and create plot.
         """
-        self.table.after_delete.disconnect() 
-        self.table.after_delete.connect(self.save_tseries_data)        
-        
+        self.table.after_delete.disconnect()
+        self.table.after_delete.connect(self.save_tseries_data)
+
         cur_ts_idx = self.tseries_cbo.currentIndex()
         cur_ts_fid = self.tseries_cbo.itemData(cur_ts_idx)
         self.rain.series_fid = cur_ts_fid

@@ -9,11 +9,14 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import QgsWkbTypes
-from .ui_utils import load_ui
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("sampling_tailings")
+
+
 class SamplingTailingsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -61,11 +64,13 @@ class SamplingTailingsDialog(qtBaseClass, uiDialog):
             self.srcFieldCbo.clear()
             self.srcLayerCbo.clear()
             self.allGridElemsFrame.setEnabled(False)
-  
-  
-from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
+
+
+from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
 
 uiDialog, qtBaseClass = load_ui("sampling_tailings2")
+
+
 class SamplingTailingsDialog2(qtBaseClass, uiDialog):
     def __init__(self):
         qtBaseClass.__init__(self)
@@ -95,4 +100,4 @@ class SamplingTailingsDialog2(qtBaseClass, uiDialog):
     def external_layer_parameters(self):
         current_layer = self.external_lyr_cbo.currentLayer()
         tailing_field = self.tailings_cbo.currentField()
-        return current_layer, tailing_field      
+        return current_layer, tailing_field

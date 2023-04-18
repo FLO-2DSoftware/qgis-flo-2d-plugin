@@ -9,11 +9,13 @@
 # of the License, or (at your option) any later version
 
 import os
-from ..flo2d_ie.ras_io import RASProject
-from .ui_utils import load_ui
-from ..user_communication import UserCommunication
+
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
+
+from ..flo2d_ie.ras_io import RASProject
+from ..user_communication import UserCommunication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("ras_import")
 

@@ -9,8 +9,9 @@
 # of the License, or (at your option) any later version
 
 
+from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
+
 from .ui_utils import load_ui
-from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
 
 uiDialog, qtBaseClass = load_ui("evaluate_blocked_areas")
 

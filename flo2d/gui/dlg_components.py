@@ -9,11 +9,13 @@
 # of the License, or (at your option) any later version
 
 import os
+
 from qgis.PyQt.QtCore import QSettings, Qt
-from .ui_utils import load_ui
+from qgis.PyQt.QtWidgets import QApplication
+
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtWidgets import QApplication
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("components")
 
@@ -50,7 +52,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.file_lbl.setText(last_dir)
 
         if self.in_or_out == "in":
-
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
             self.mannings_n_and_Topo_chbox.setVisible(False)
@@ -94,7 +95,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 if os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
                     self.multiple_channels_chbox.setChecked(True)
                     self.multiple_channels_chbox.setEnabled(True)
-                    
+
             if os.path.isfile(last_dir + r"\BREACH.DAT"):
                 if os.path.getsize(last_dir + r"\BREACH.DAT") > 0:
                     self.breach_chbox.setChecked(True)
@@ -219,18 +220,20 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             if options["IMULTC"] == "1":
                 if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off.")  
+                    self.uc.show_info(
+                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
+                    )
                     self.gutils.set_cont_par("IMULTC", 0)
                     # self.multiple_channels_chbox.setChecked(False)
                     # self.multiple_channels_chbox.setEnabled(False)
-                    QApplication.setOverrideCursor(Qt.WaitCursor)  
-                else: # There are Mult or simple channels cells:                     
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                else:  # There are Mult or simple channels cells:
                     if self.gutils.is_table_empty("mult"):
                         # There are mult or simple channels but 'mult' (globals) is empty: set globals:
-                        self.gutils.fill_empty_mult_globals() 
-                    self.multiple_channels_chbox.setChecked(True)             
-                    self.multiple_channels_chbox.setEnabled(True)                                                 
-                            
+                        self.gutils.fill_empty_mult_globals()
+                    self.multiple_channels_chbox.setChecked(True)
+                    self.multiple_channels_chbox.setEnabled(True)
+
             if not self.gutils.is_table_empty("breach"):
                 self.breach_chbox.setChecked(True)
                 self.breach_chbox.setEnabled(True)
@@ -246,11 +249,11 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             if not self.gutils.is_table_empty("fpxsec"):
                 self.floodplain_xs_chbox.setChecked(True)
                 self.floodplain_xs_chbox.setEnabled(True)
-            
+
             # Mud and Sediment Transport:
             ISED = self.gutils.get_cont_par("ISED")
-            MUD = self.gutils.get_cont_par("MUD")        
-            if ISED == "1" or  MUD in ["1", "2"]:
+            MUD = self.gutils.get_cont_par("MUD")
+            if ISED == "1" or MUD in ["1", "2"]:
                 if not self.gutils.is_table_empty("mud") or not self.gutils.is_table_empty("sed"):
                     self.mud_and_sed_chbox.setChecked(True)
                     self.mud_and_sed_chbox.setEnabled(True)
@@ -294,7 +297,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
 
     def select_components(self):
-
         if self.channels_chbox.isChecked():
             self.components.append("Channels")
 
@@ -362,7 +364,6 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         self.check_components(self.select_all_chbox.isChecked())
 
     def check_components(self, select=True):
-
         if self.channels_chbox.isEnabled():
             self.channels_chbox.setChecked(select)
         if self.reduction_factors_chbox.isEnabled():

@@ -8,14 +8,17 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem
+
 from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
-from qgis.PyQt.QtWidgets import QTableWidgetItem, QApplication
-from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("individual_multiple_channels_data")
+
+
 class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -109,7 +112,10 @@ class IndividualMultipleChannelsDialog(qtBaseClass, uiDialog):
             )
             return False
 
+
 uiDialog, qtBaseClass = load_ui("individual_simple_multiple_channels_data")
+
+
 class IndividualSimplifiedMultipleChannelsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, lyrs):
         qtBaseClass.__init__(self)
@@ -123,7 +129,7 @@ class IndividualSimplifiedMultipleChannelsDialog(qtBaseClass, uiDialog):
 
         self.setup_connection()
         # self.individual_simple_multiple_channel_element_cbo.currentIndexChanged.connect(
-            # self.individual_simple_mc_element_cbo_currentIndexChanged
+        # self.individual_simple_mc_element_cbo_currentIndexChanged
         # )
         self.populate_individual_multiple_cells_dialog()
 
@@ -143,5 +149,3 @@ class IndividualSimplifiedMultipleChannelsDialog(qtBaseClass, uiDialog):
 
         for row in mc_rows:
             self.individual_simple_multiple_channel_element_cbo.addItem(str(row[0]))
-
-

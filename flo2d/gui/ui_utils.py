@@ -9,9 +9,10 @@
 # of the License, or (at your option) any later version
 
 import os
+
+from qgis.core import NULL, QgsRectangle
 from qgis.PyQt import uic
 from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsRectangle, NULL
 
 # month_names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
 #                "November", "December"]

@@ -9,16 +9,19 @@
 # of the License, or (at your option) any later version
 import os
 import traceback
-from functools import wraps
 from collections import defaultdict
-from .user_communication import UserCommunication
+from functools import wraps
+
 from qgis.core import QgsGeometry
+
+from .user_communication import UserCommunication
 
 
 def connection_required(fn):
     """
     Checking for active connection object.
     """
+
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         if not self.con:
@@ -26,7 +29,9 @@ def connection_required(fn):
             return
         else:
             return fn(self, *args, **kwargs)
+
     return wrapper
+
 
 def spatialite_connect(*args, **kwargs):
     # copied from https://github.com/qgis/QGIS/blob/master/python/utils.py#L587
@@ -164,7 +169,7 @@ class GeoPackageUtils(object):
         ["build", "Executable Build"],
         ["ITIMTEP", "Time Series Selection Switch"],
         ["STARTIMTEP", "Start time for time series output"],
-        ["ENDTIMTEP", "End time for time series output"],        
+        ["ENDTIMTEP", "End time for time series output"],
         ["XCONC", "Global Sediment Concentration"],
         ["ICHANNEL", "Channel Switch"],
         ["TIMTEP", "Time Series Output Interval"],
@@ -365,16 +370,16 @@ class GeoPackageUtils(object):
             geom = self.execute(sql.format(table, field), (g,)).fetchone()[0]
             cells[g] = geom
         return cells
-    
+
     def grid_centroids_all(self, table="grid", field="fid", buffers=False):
         cells = []
         if buffers is False:
             sql = """SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""
         else:
             sql = """SELECT fid, AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""
-        
+
         for g in self.execute(sql.format(table)).fetchall():
-            cells.append((g[0], [float(item) for item in g[1].replace('POINT(', "").replace(")","").split(' ')]))          
+            cells.append((g[0], [float(item) for item in g[1].replace("POINT(", "").replace(")", "").split(" ")]))
         return cells
 
     def single_centroid(self, gid, table="grid", field="fid", buffers=False):
@@ -439,7 +444,7 @@ class GeoPackageUtils(object):
             "7": (lambda x, y, s: (x - s / 2.414, y - s, x - s, y - s / 2.414)),
             "8": (lambda x, y, s: (x - s, y + s / 2.414, x - s / 2.414, y + s)),
         }
-        
+
         qry = """SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "{0}" WHERE "{1}" = ?;""".format(table, field)
         # "qry" ends up as '''SELECT ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM "grid" WHERE "fid" = ?;'''
 
@@ -505,11 +510,10 @@ class GeoPackageUtils(object):
         return gpb_buff
 
     def build_square_from_polygon2(self, polyColRow):
-        gpb = """SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))""".format(
-            *polyColRow[0]
-        )
+        gpb = """SELECT AsGPB(ST_GeomFromText('POLYGON(({} {}, {} {}, {} {}, {} {}, {} {}))'))""".format(*polyColRow[0])
         gpb_buff = self.execute(gpb).fetchone()[0]
-        return (gpb_buff, polyColRow[1], polyColRow[2])                                                     
+        return (gpb_buff, polyColRow[1], polyColRow[2])
+
     def get_max(self, table, field="fid"):
         sql = """SELECT MAX("{0}") FROM "{1}";""".format(field, table)
         max_val = self.execute(sql).fetchone()[0]
@@ -611,16 +615,19 @@ class GeoPackageUtils(object):
     def fill_empty_struct_names(self):
         qry = """UPDATE struct SET structname = 'Structure_' ||  cast(fid as text) WHERE structname IS NULL;"""
         self.execute(qry)
-        
-    def fill_empty_mult_globals(self): 
+
+    def fill_empty_mult_globals(self):
         self.clear_tables("mult")
-        sql_mult_defaults = ["""INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
-                                     xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""", 9]
+        sql_mult_defaults = [
+            """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                     xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""",
+            9,
+        ]
         if self.get_cont_par("METRIC") == "1":
             sql_mult_defaults += [(0.0, 1.0, 0.3, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
         else:
             sql_mult_defaults += [(0.0, 3.0, 1.0, 1, 0.04, 0.0, 0.0, 0.0, 0.04)]
-        self.batch_execute(sql_mult_defaults) 
+        self.batch_execute(sql_mult_defaults)
 
     def set_def_n(self):
         def_n = self.get_cont_par("MANNING")
@@ -719,7 +726,7 @@ class GeoPackageUtils(object):
         else:
             elev = None
         return elev
-        
+
     def grid_value(self, gid, field):
         qry = 'SELECT "{}" FROM grid WHERE fid=?;'.format(field)
         value = self.execute(qry, (gid,)).fetchone()[0]

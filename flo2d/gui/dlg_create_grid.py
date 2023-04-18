@@ -10,12 +10,15 @@
 
 
 import os
-from .ui_utils import load_ui
-from qgis.core import QgsMapLayerProxyModel, QgsFieldProxyModel
+
+from qgis.core import QgsFieldProxyModel, QgsMapLayerProxyModel
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 
+from .ui_utils import load_ui
+
 uiDialog, qtBaseClass = load_ui("create_grid")
+
 
 class CreateGridDialog(qtBaseClass, uiDialog):
     def __init__(self):
@@ -57,9 +60,9 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         """
         s = QSettings()
         last_elev_raster_dir = s.value("FLO-2D/lastElevRasterDir", "")
-        src_file, __ = QFileDialog.getOpenFileName(None, "Choose elevation raster...",
-                                                   directory=last_elev_raster_dir,
-                                                   filter='Elev (*.tif )')
+        src_file, __ = QFileDialog.getOpenFileName(
+            None, "Choose elevation raster...", directory=last_elev_raster_dir, filter="Elev (*.tif )"
+        )
         if not src_file:
             return
         s.setValue("FLO-2D/lastElevRasterDir", os.path.dirname(src_file))

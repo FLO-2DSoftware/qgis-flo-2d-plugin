@@ -10,18 +10,21 @@
 
 
 from math import sqrt
-from qgis.core import QgsFeatureRequest
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem, QColor, QIntValidator
-from qgis.PyQt.QtWidgets import QApplication
-from qgis.PyQt.QtCore import QSize, Qt
 
-from .ui_utils import load_ui, center_canvas, set_icon, zoom
-from ..utils import m_fdata, is_number, get_min_max_elevs, set_min_max_elevs, second_smallest
-from ..user_communication import UserCommunication
-from ..geopackage_utils import GeoPackageUtils
+from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtCore import QSize, Qt
+from qgis.PyQt.QtGui import QColor, QIntValidator, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtWidgets import QApplication
+
 from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2
+from ..geopackage_utils import GeoPackageUtils
+from ..user_communication import UserCommunication
+from ..utils import get_min_max_elevs, is_number, m_fdata, second_smallest, set_min_max_elevs
+from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
+
+
 class GridInfoWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
@@ -44,9 +47,9 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.n_cells = 0
         self.d1 = []
         self.d2 = []
-        
+
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
-        
+
         self.setup_connection()
         validator = QIntValidator()
         self.idEdit.setValidator(validator)
@@ -62,7 +65,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            
+
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
 
@@ -75,7 +78,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.grid = lyr
         self.n_cells = number_of_elements(self.gutils, self.grid)
         self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
-        
+
     def update_fields(self, fid):
         try:
             if not fid == -1:
@@ -83,7 +86,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
                 if feat["elevation"]:
-                    elev =  "{:10.4f}".format(feat["elevation"]).strip()
+                    elev = "{:10.4f}".format(feat["elevation"]).strip()
                     elev = elev if float(elev) > -9999 else "-9999"
                     n = feat["n_value"]
                     if not n:
@@ -99,14 +102,14 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
                     if self.plot_ckbox.isChecked():
                         self.plot_grid_rainfall(feat)
-                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))                        
+                    self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))
                 else:
                     self.idEdit.setText("")
                     self.elevEdit.setText("")
                     self.mannEdit.setText("")
                     self.cellEdit.setText("")
-                    self.n_cells_lbl.setText("Number of cells:       ")  
-                    self.lyrs.clear_rubber()                  
+                    self.n_cells_lbl.setText("Number of cells:       ")
+                    self.lyrs.clear_rubber()
             else:
                 self.idEdit.setText("")
                 self.elevEdit.setText("")
@@ -114,7 +117,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 self.cellEdit.setText("")
                 self.n_cells_lbl.setText("Number of cells:       ")
                 self.lyrs.clear_rubber()
-    
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -133,29 +136,29 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             else:
                 self.render_elevations_chbox.setChecked(True)
 
-    def render_elevations(self): 
+    def render_elevations(self):
         try:
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-                return        
+                return
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
-                return        
+                return
             elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
-            elevs = [x if x is not None else -9999 for x in elevs] 
+            elevs = [x if x is not None else -9999 for x in elevs]
             if elevs:
                 mini = min(elevs)
-                mini2 = second_smallest(elevs) 
-                maxi = max(elevs)       
-                render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, mini2, maxi) 
-                set_min_max_elevs(mini, maxi) 
+                mini2 = second_smallest(elevs)
+                maxi = max(elevs)
+                render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, mini2, maxi)
+                set_min_max_elevs(mini, maxi)
                 self.lyrs.lyrs_to_repaint = [self.grid]
                 self.lyrs.repaint_layers()
         except Exception as e:
-            self.uc.show_error("ERROR 110721.0545: render of elevations failed!.\n", e)            
+            self.uc.show_error("ERROR 110721.0545: render of elevations failed!.\n", e)
             # self.uc.bar_error("ERROR 100721.1759: is the grid defined?")
             self.lyrs.clear_rubber()
-                  
+
     def plot_grid_rainfall(self, feat):
         si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
         qry = "SELECT time_interval, iraindum FROM raincell_data WHERE rrgrid=? ORDER BY time_interval;"
@@ -231,7 +234,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 self.elevEdit.setText(str(feat["elevation"]).strip())
                                 self.cellEdit.setText(str(sqrt(feat.geometry().area())))
                                 self.n_cells = n_cells
-                                self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(n_cells) + "   ")                                
+                                self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(n_cells) + "   ")
                             else:
                                 self.uc.bar_warn("Cell " + str(cell) + " not found.")
                                 self.lyrs.clear_rubber()
@@ -241,16 +244,15 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     else:
                         self.uc.bar_warn("Cell " + str(cell) + " not found.")
                         self.lyrs.clear_rubber()
-                        
+
         except Exception:
             self.uc.bar_warn("Cell is not valid.")
             self.lyrs.clear_rubber()
-            pass  
-                                
+            pass
+
         # except ValueError:
         #     self.uc.bar_warn("Cell " + str(cell) + " is not valid.")
         #     self.lyrs.clear_rubber()
         #     pass
         finally:
             QApplication.restoreOverrideCursor()
-

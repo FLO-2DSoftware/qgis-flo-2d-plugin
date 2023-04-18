@@ -3,18 +3,35 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+import os
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
-from math import log, exp, log10, sqrt
-from qgis.core import QgsGeometry, QgsSpatialIndex, QgsFeature, QgsField, QgsFields, QgsProject, QgsRectangle, QgsFeatureRequest
-from qgis.PyQt.QtWidgets import QApplication
-from .grid_tools import poly2poly_geos_from_features, intersection_spatial_index, centroids2poly_geos, gridRegionGenerator
-from ..user_communication import UserCommunication
-from qgis.utils import iface
+from math import exp, log, log10, sqrt
+
+from qgis.core import (
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsField,
+    QgsFields,
+    QgsGeometry,
+    QgsProject,
+    QgsRectangle,
+    QgsSpatialIndex,
+)
 from qgis.PyQt.QtCore import QSettings
-import os
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.utils import iface
+
+from ..user_communication import UserCommunication
+from .grid_tools import (
+    centroids2poly_geos,
+    gridRegionGenerator,
+    intersection_spatial_index,
+    poly2poly_geos_from_features,
+)
 
 
 class InfiltrationCalculator(object):
@@ -61,7 +78,6 @@ class InfiltrationCalculator(object):
         ia_fld="field_3",
         rtimpl_fld="field_4",
     ):
-
         self.soil_lyr = soil
         self.land_lyr = land
 
@@ -89,7 +105,6 @@ class InfiltrationCalculator(object):
         self.curve_fld = curve_fld
 
     def setup_scs_multi(self, combined_lyr, landsoil_fld="LandSoil", cd_fld="cov_den", imp_fld="IMP"):
-
         self.combined_lyr = combined_lyr
         self.landsoil_fld = landsoil_fld
         self.cd_fld = cd_fld
@@ -105,10 +120,11 @@ class InfiltrationCalculator(object):
             if grid_element_count < 0:
                 grid_span = 100
             else:
-                grid_span = int(max(sqrt(grid_element_count) /10,10))
+                grid_span = int(max(sqrt(grid_element_count) / 10, 10))
 
-            for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=grid_span, regionPadding=5, showProgress=True):
-
+            for request in gridRegionGenerator(
+                self.gutils, self.grid_lyr, gridSpan=grid_span, regionPadding=5, showProgress=True
+            ):
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
                 grid_elem_extent = QgsRectangle()
@@ -116,8 +132,8 @@ class InfiltrationCalculator(object):
                 for grid_elem in grid_elems:
                     grid_elem_extent.combineExtentWith(grid_elem.geometry().boundingBox())
 
-                grid_elem_extent.grow(grid_elem_extent.width()/20.0)
-                soil_and_land_request=QgsFeatureRequest()
+                grid_elem_extent.grow(grid_elem_extent.width() / 20.0)
+                soil_and_land_request = QgsFeatureRequest()
                 soil_and_land_request.setFilterRect(grid_elem_extent)
 
                 soil_features, soil_index = intersection_spatial_index(self.soil_lyr, soil_and_land_request, clip=True)
@@ -126,7 +142,7 @@ class InfiltrationCalculator(object):
                 rtimp_features = {}
                 rtimp_index = QgsSpatialIndex()
                 rtimp_fields = QgsFields()
-                rtimp_fields.append(QgsField('rtimp'))
+                rtimp_fields.append(QgsField("rtimp"))
 
                 rtimp_fid = 0
 
@@ -147,7 +163,10 @@ class InfiltrationCalculator(object):
 
                         rtimp_feat.setGeometry(rtimp_geom)
                         rtimp_feat[0] = max(land_rtimp, soil_rtimp)
-                        rtimp_features[rtimp_fid] = (rtimp_feat, QgsGeometry.createGeometryEngine(rtimp_geom.constGet()))
+                        rtimp_features[rtimp_fid] = (
+                            rtimp_feat,
+                            QgsGeometry.createGeometryEngine(rtimp_geom.constGet()),
+                        )
                         rtimp_index.insertFeature(rtimp_feat)
                         rtimp_fid = rtimp_fid + 1
 
@@ -192,9 +211,9 @@ class InfiltrationCalculator(object):
                         )
                         return grid_params
 
-
                 land_values = poly2poly_geos_from_features(
-                    self.grid_lyr, land_features, land_index, request, self.saturation_fld, self.vc_fld, self.ia_fld)
+                    self.grid_lyr, land_features, land_index, request, self.saturation_fld, self.vc_fld, self.ia_fld
+                )
 
                 for gid, values in land_values:
                     try:
@@ -219,16 +238,18 @@ class InfiltrationCalculator(object):
                         params["abstrinf"] = iabstr
                         params["luParts"] = len(values)
 
-
-
                     except ValueError as e:
-                        raise ValueError("Calculation of land use variables failed for grid cell with fid: {}".format(gid))
+                        raise ValueError(
+                            "Calculation of land use variables failed for grid cell with fid: {}".format(gid)
+                        )
 
-                rtimp_values = poly2poly_geos_from_features( self.grid_lyr, rtimp_features, rtimp_index, request, 'rtimp'  )
+                rtimp_values = poly2poly_geos_from_features(
+                    self.grid_lyr, rtimp_features, rtimp_index, request, "rtimp"
+                )
 
                 for gid, values in rtimp_values:
                     params = grid_params[gid]
-                    rtimp_part = [(row[0]*0.01, row[-1]) for row in values]
+                    rtimp_part = [(row[0] * 0.01, row[-1]) for row in values]
                     params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_part)
 
             if writeDiagnosticCSV == True:
@@ -498,11 +519,11 @@ class SCPCurveNumber(object):
     @staticmethod
     def calculate_mountain_brush(soil_group, cover_density):
         if soil_group == "D":
-            cn = -0.0013 * cover_density ** 2 + -0.1737 * cover_density + 95
+            cn = -0.0013 * cover_density**2 + -0.1737 * cover_density + 95
         elif soil_group == "C":
-            cn = -0.0014 * cover_density ** 2 + -0.2942 * cover_density + 90
+            cn = -0.0014 * cover_density**2 + -0.2942 * cover_density + 90
         elif soil_group == "B":
-            cn = -0.0025 * cover_density ** 2 + -0.3522 * cover_density + 83
+            cn = -0.0025 * cover_density**2 + -0.3522 * cover_density + 83
         else:
             raise ValueError(soil_group)
         return cn
@@ -523,9 +544,9 @@ class SCPCurveNumber(object):
     def calculate_ponderosa_pine(soil_group, cover_density):
         if 0 < cover_density <= 10:
             if soil_group == "C":
-                cn = -0.08 * cover_density ** 2 + -1.9 * cover_density + 91
+                cn = -0.08 * cover_density**2 + -1.9 * cover_density + 91
             elif soil_group == "B":
-                cn = -0.1 * cover_density ** 2 + -2.4 * cover_density + 84
+                cn = -0.1 * cover_density**2 + -2.4 * cover_density + 84
             else:
                 raise ValueError(soil_group)
         elif 10 < cover_density <= 80:

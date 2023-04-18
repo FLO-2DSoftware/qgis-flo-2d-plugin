@@ -8,13 +8,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.PyQt.QtGui import QIcon
-from qgis.core import QgsFeatureRequest
-from ..user_communication import UserCommunication
-from ..flo2dobjects import CrossSection
-from .ui_utils import load_ui, center_canvas
 import os
 
+from qgis.core import QgsFeatureRequest
+from qgis.PyQt.QtGui import QIcon
+
+from ..flo2dobjects import CrossSection
+from ..user_communication import UserCommunication
+from .ui_utils import center_canvas, load_ui
 
 uiDialog, qtBaseClass = load_ui("schem_xs_info")
 

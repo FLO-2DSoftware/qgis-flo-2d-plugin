@@ -8,13 +8,13 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from collections import OrderedDict
-from math import isnan
+from math import isnan, sqrt
+
+from qgis.core import QgsCsException, QgsFeatureRequest, QgsPointXY, QgsRaster, QgsRectangle
 
 from .errors import Flo2dError
 from .geopackage_utils import GeoPackageUtils
 from .utils import is_number
-from qgis.core import QgsCsException, QgsRaster, QgsPointXY, QgsFeatureRequest, QgsRectangle
-from math import sqrt
 
 
 class CrossSection(GeoPackageUtils):
@@ -415,7 +415,6 @@ class UserCrossSection(GeoPackageUtils):
             )
 
     def sample_bank_elevation_from_grid(self, cross_section_line, grid_layer):
-
         self.get_row()
         if self.type == "N":
             return
@@ -770,7 +769,7 @@ class Outflow(GeoPackageUtils):
             self.chan_qhpar_fid,
             self.chan_qhtab_fid,
             self.fp_tser_fid,
-            self.typ
+            self.typ,
         )
         qry = """INSERT INTO outflow (
             name,
@@ -813,7 +812,7 @@ class Outflow(GeoPackageUtils):
             self.chan_qhtab_fid,
             self.fp_tser_fid,
             self.typ,
-            self.fid
+            self.fid,
         )
         qry = """UPDATE outflow
                     SET name=?,
@@ -862,32 +861,32 @@ class Outflow(GeoPackageUtils):
             self.fp_out = 1
         elif typ == 4:
             self.hydro_out = old_hydro_out
-        elif typ == 0: 
-            self.clear_data_fids()              
+        elif typ == 0:
+            self.clear_data_fids()
         else:
-            pass   
-             
+            pass
+
         # if typ == 4:
-            # # keep nr of outflow hydrograph to set it later
-            # old_hydro_out = self.hydro_out
+        # # keep nr of outflow hydrograph to set it later
+        # old_hydro_out = self.hydro_out
         # else:
-            # old_hydro_out = None
+        # old_hydro_out = None
         # self.clear_type_data()
         # self.typ = typ
         # if typ in (2, 8):
-            # self.chan_out = 1
+        # self.chan_out = 1
         # elif typ in (1, 7):
-            # self.fp_out = 1
+        # self.fp_out = 1
         # elif typ == 3:
-            # self.chan_out = 1
-            # self.fp_out = 1
+        # self.chan_out = 1
+        # self.fp_out = 1
         # elif typ == 4:
-            # self.clear_data_fids()
-            # self.hydro_out = old_hydro_out
-        # elif typ == 0: 
-            # self.clear_data_fids()   
+        # self.clear_data_fids()
+        # self.hydro_out = old_hydro_out
+        # elif typ == 0:
+        # self.clear_data_fids()
         # else:
-            # pass
+        # pass
 
     def get_time_series(self, order_by="name"):
         if order_by == "name":
@@ -1561,9 +1560,9 @@ class Structure(GeoPackageUtils):
         self.execute("DELETE FROM repl_rat_curves WHERE fid=?;", (self.fid,))
         self.execute("DELETE FROM struct WHERE fid=?", (self.fid,))
         self.execute("DELETE FROM bridge_variables WHERE struct_fid=?", (self.fid,))
-        self.execute("DELETE FROM bridge_xs WHERE struct_fid=?", (self.fid,))     
-        self.execute("DELETE FROM culvert_equations WHERE struct_fid=?", (self.fid,))   
-        self.execute("DELETE FROM storm_drains WHERE struct_fid=?", (self.fid,))         
+        self.execute("DELETE FROM bridge_xs WHERE struct_fid=?", (self.fid,))
+        self.execute("DELETE FROM culvert_equations WHERE struct_fid=?", (self.fid,))
+        self.execute("DELETE FROM storm_drains WHERE struct_fid=?", (self.fid,))
 
     def get_stormdrain(self):
         qry = "SELECT stormdmax FROM storm_drains WHERE struct_fid = ?;"
@@ -1626,7 +1625,9 @@ class Structure(GeoPackageUtils):
                 res = [""] * 3
         elif self.icurvtable == 2:
             # culvert equation
-            qry_tab = "SELECT typec, typeen, culvertn, ke, cubase, multibarrels FROM culvert_equations WHERE struct_fid = ?;"
+            qry_tab = (
+                "SELECT typec, typeen, culvertn, ke, cubase, multibarrels FROM culvert_equations WHERE struct_fid = ?;"
+            )
             res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
                 res = [""] * 6
@@ -1639,7 +1640,7 @@ class Structure(GeoPackageUtils):
             qry_tab = "SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY xup;"
             res = self.execute(qry_tab, (self.fid,)).fetchall()
             if not res:
-                res = [""] * 3                
+                res = [""] * 3
         else:
             if not res:
                 res = [""] * 3
@@ -1686,7 +1687,7 @@ class Structure(GeoPackageUtils):
             qry = "DELETE FROM bridge_xs WHERE struct_fid = ?;"
             self.execute(qry, (self.fid,))
             qry = "INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES ({}, ?, ?, ?);"
-            self.execute_many(qry.format(self.fid), [row[:3] for row in data])    
+            self.execute_many(qry.format(self.fid), [row[:3] for row in data])
         else:
             pass
 
@@ -1785,6 +1786,7 @@ class InletRatingTable(GeoPackageUtils):
             ),
         )
 
+
 class PumpCurves(GeoPackageUtils):
     """
     Pumps data representation.
@@ -1796,17 +1798,19 @@ class PumpCurves(GeoPackageUtils):
 
     def get_pump_curves(self, order_by="name"):
         if order_by == "name":
-            crv = self.execute("SELECT DISTINCT fid, pump_curve_name FROM swmm_pumps_curve_data ORDER BY pump_curve_name COLLATE NOCASE;").fetchall()
+            crv = self.execute(
+                "SELECT DISTINCT fid, pump_curve_name FROM swmm_pumps_curve_data ORDER BY pump_curve_name COLLATE NOCASE;"
+            ).fetchall()
         else:
             crv = self.execute("SELECT fid, pump_curve_name FROM swmm_pumps_curve_data ORDER BY fid;").fetchall()
         # if not crv:
-        #     crv = self.add_pump_curve() 
+        #     crv = self.add_pump_curve()
         return crv
 
     def add_pump_curve(self, name=None):
         if name == None:
             qry = """INSERT INTO swmm_pumps_curve_data (pump_curve_name, pump_curve_type) VALUES (?, ?);"""
-            rowid = self.execute(qry, (name,"Pump1"), get_rowid=True)
+            rowid = self.execute(qry, (name, "Pump1"), get_rowid=True)
             name_qry = """UPDATE swmm_pumps_curve_data SET pump_curve_name =  'PumpCurve' || cast(fid as text) WHERE fid = ?;"""
             self.execute(name_qry, (rowid,))
             if not name:
@@ -1855,10 +1859,9 @@ class PumpCurves(GeoPackageUtils):
 
     def set_pump_curve_data(self, name, data):
         qry = "DELETE FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;"
-        self.execute(qry, (name,))        
+        self.execute(qry, (name,))
         qry = "INSERT INTO swmm_pumps_curve_data (pump_curve_name, x_value, y_value) VALUES (?, ?, ?);"
         self.execute_many(qry, data)
-
 
     def set_pump_curve_name(self, name, new_name):
         # fids = self.execute("SELECT fid FROM swmm_pumps_curve_data WHERE pump_curve_name = ?;", (name,)).fetchall()
@@ -1867,5 +1870,17 @@ class PumpCurves(GeoPackageUtils):
         # for f in fids:
         #     v.append((new_name, f[0]))
         # self.execute_many( qry, v)
-        self.execute("UPDATE swmm_pumps_curve_data SET pump_curve_name = ? WHERE pump_curve_name = ?;", (new_name, name,))
-        self.execute("UPDATE user_swmm_pumps SET pump_curve = ? WHERE pump_curve = ?;", (new_name, name,))
+        self.execute(
+            "UPDATE swmm_pumps_curve_data SET pump_curve_name = ? WHERE pump_curve_name = ?;",
+            (
+                new_name,
+                name,
+            ),
+        )
+        self.execute(
+            "UPDATE user_swmm_pumps SET pump_curve = ? WHERE pump_curve = ?;",
+            (
+                new_name,
+                name,
+            ),
+        )
