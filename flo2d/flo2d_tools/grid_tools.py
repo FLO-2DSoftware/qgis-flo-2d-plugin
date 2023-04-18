@@ -1483,16 +1483,7 @@ def grid_compas_neighbors(gutils):
         return x - cell_size, y + cell_size
 
     grid_centroids_map = {QgsPointXY(*point): fid for fid, point in gutils.grid_centroids_all()}
-    compas_functions = (
-        n,
-        e,
-        s,
-        w,
-        ne,
-        se,
-        sw,
-        nw,
-    )
+    compas_functions = [n, e, s, w, ne, se, sw, nw]
     for point, fid in sorted(grid_centroids_map.items(), key=itemgetter(1)):
         neighbors = []
         centroid_x, centroid_y = point.x(), point.y()
