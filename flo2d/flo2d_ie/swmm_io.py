@@ -778,6 +778,7 @@ class StormDrainProject(object):
             time_cols_date = ["name", "date", "time", "value"]
             times = self.select_this_INP_group("timeseries")
             warn = ""
+            descr = ""
             if times:
                 for time in times:
                     if not time or time[:2] in ";;\n":
@@ -793,17 +794,23 @@ class StormDrainProject(object):
                         time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
                         if len(timeSplit) < 4:
-                            if warn == "":
-                                warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
-                                continue
-                        else:
+                            if warn  == "":
+                                if timeSplit[0] != name:
+                                    warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
+                                    continue
+                                else:
+                                    time  = timeSplit[1]
+                                    value = timeSplit[2]
+                                    timeSplit = [name, date, time, value]
+                                    time_list = list(zip_longest(time_cols_date, timeSplit))                                    
+                        else:    
                             name = timeSplit[0]
                             date = timeSplit[1]
                             time = timeSplit[2]
                             value = timeSplit[3]
                             timeSplit = [name, date, time, value]
                             time_list = list(zip_longest(time_cols_date, timeSplit))
-                    time_list.insert(0, ["description", descr])
+                    time_list.insert(0, ["description", descr if descr is not None else ""])
                     self.INP_timeseries.append(time_list)
             if warn != "":
                 self.uc.bar_warn(warn)
